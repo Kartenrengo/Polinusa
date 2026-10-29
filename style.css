@@ -146,3 +146,48 @@ button.pop{border:0;background:none;padding:4px 2px 4px 6px;margin:-4px -2px -4p
 .vital .ic{width:15px;height:15px}
 .vital .warn{color:var(--ochre)}
 .sheet-body .sec{margin:6px 0 0;font:800 12px/1 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+/* Hand-cut edges, drawn by script: no ruler-straight boxes, no perfect circles, nothing quite the same twice */
+.list li,.btn,.chip,.bbtn,.tbtn,.quest,.season,.mana,#toast,.step button,.x,.round,.state,.q-bar,#compass span{border:0!important;border-radius:0!important;background-color:transparent!important;background-repeat:no-repeat!important;background-position:0 0!important;background-size:100% 100%!important}
+.list li{background-image:var(--e1)}
+.list li:nth-child(3n+2){background-image:var(--e2)}
+.list li:nth-child(3n){background-image:var(--e3)}
+.list li.okk{background-image:var(--eok)}
+.list li.need{background-image:var(--eneed)}
+.btn{background-image:var(--e2)}
+.btn.primary{background-image:var(--eochre)}
+.chip{background-image:var(--e3)}
+.chip[aria-pressed="true"]{background-image:var(--edark)}
+.bbtn{background-image:var(--e1)}
+.bbtn:nth-child(2n){background-image:var(--e2)}
+.bbtn:nth-child(3n){background-image:var(--e3)}
+.bbtn[aria-pressed="true"],.bbtn.hint{background-image:var(--eturm)}
+.tbtn{background-image:var(--e2)}
+.quest{background-image:var(--e3);box-shadow:none;filter:drop-shadow(0 3px 0 rgba(43,29,20,.28))}
+.season,.mana{background-image:var(--e1)}
+.season{box-shadow:none;filter:drop-shadow(0 2px 0 rgba(43,29,20,.3));transform:rotate(-1.5deg)}
+#toast{background-image:var(--edark);box-shadow:none;filter:drop-shadow(0 3px 0 rgba(0,0,0,.25));padding:9px 16px}
+.state{background-image:var(--sok)}
+.state.low{background-image:var(--slow)}
+.state.out{background-image:var(--sout)}
+.step button,.x{background-image:var(--tag1)}
+.x{transform:rotate(4deg)}
+.q-bar{background-image:var(--ecream)}
+.q-bar i,.mbar i{background:repeating-linear-gradient(-55deg,#3E7A3A 0 3px,#5E9440 3px 5px)}
+.mbar{background:repeating-linear-gradient(-55deg,rgba(62,36,22,.12) 0 3px,rgba(62,36,22,.2) 3px 5px);border-radius:1px}
+#compass span{background-image:var(--edark);padding:3px 8px}
+/* The buttons on the right: pieces of bark cloth threaded on a cord, each cut a little differently */
+#zoomctl::before{content:"";position:absolute;left:50%;top:-12px;bottom:14px;width:2px;margin-left:-1px;background:repeating-linear-gradient(to bottom,#8C6440 0 4px,#5A3A26 4px 6px);z-index:-1}
+.round{background-image:var(--tag0);box-shadow:none;filter:drop-shadow(0 2px 0 rgba(43,29,20,.32));transform:rotate(-3deg)}
+#zoomctl .round:nth-child(2){background-image:var(--tag1);transform:rotate(2.5deg)}
+#zoomctl .round:nth-child(3){background-image:var(--tag2);transform:rotate(-1.5deg)}
+#zoomctl .round:nth-child(4){background-image:var(--tag3);transform:rotate(3.5deg)}
+.round:active{transform:translateY(1px) rotate(0)}
+.pop .dot,.bbtn.new::after{border-radius:62% 38% 55% 45%/48% 58% 42% 52%}
+/* the buttons on the right as square patches of bark cloth, each sewn on the cord at its own slant */
+#zoomctl{isolation:isolate}
+#zoomctl::before{z-index:-1;width:3px;margin-left:-1.5px;top:-10px}
+.round{background-image:var(--e1)}
+#zoomctl .round:nth-child(2){background-image:var(--e2)}
+#zoomctl .round:nth-child(3){background-image:var(--e3)}
+#zoomctl .round:nth-child(4){background-image:var(--e1)}
+.x,.step button{background-image:var(--e2)}

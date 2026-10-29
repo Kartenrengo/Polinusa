@@ -1,6 +1,30 @@
 'use strict';
 /* Interface: top bar, build bar, placing, sheets and messages. Plain HTML over the map. */
 
+/* ---------- hand-cut edges for the interface: bark cloth and mats are never quite straight, and no button is a perfect circle */
+function edgeURL(seed, fill, stroke = '#3E2416', sw = 1.6, round = false){
+  const r = rng(seed), P = [];
+  if (round) P.push(...ring(50, 50, 45, 45, 11, seed, .14));
+  else {
+    for (let i = 0; i <= 8; i++) P.push({x:4 + i * 24, y:4 + (r() - .5) * 5});
+    for (let i = 1; i <= 3; i++) P.push({x:196 + (r() - .5) * 2.4, y:4 + i * 23});
+    for (let i = 8; i >= 0; i--) P.push({x:4 + i * 24, y:96 + (r() - .5) * 5});
+    for (let i = 3; i >= 1; i--) P.push({x:4 + (r() - .5) * 2.4, y:4 + i * 23});
+  }
+  const d = smooth(P).d, svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${round ? '100 100' : '200 100'}" preserveAspectRatio="none"><path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+(function paintEdges(){
+  const set = (k, v) => document.documentElement.style.setProperty(k, v);
+  [11, 23, 37].forEach((sd, i) => set('--e' + (i + 1), edgeURL(sd, '#F6EDD8')));
+  set('--eok', edgeURL(41, '#F1EFD8', '#3E7A3A', 2)); set('--eneed', edgeURL(53, '#F6E3C4', '#A84A2C', 2));
+  set('--edark', edgeURL(61, '#2B1D14', '#1A110B')); set('--eochre', edgeURL(67, '#A84A2C', '#2B1D14', 1.8)); set('--eturm', edgeURL(71, '#F3D9A0', '#A84A2C', 2));
+  set('--ecream', edgeURL(79, '#F4ECD8', '#3E2416', 1.3));
+  set('--sok', edgeURL(83, '#3E7A3A', '#2B4A26', 1)); set('--slow', edgeURL(89, '#F3D9A0', '#8A6440', 1)); set('--sout', edgeURL(97, '#A84A2C', '#6B2A18', 1));
+  for (let i = 0; i < 4; i++) set('--tag' + i, edgeURL(101 + i * 13, '#F6EDD8', '#3E2416', 2, true));
+  const cs = document.querySelector('#compass svg'); if (cs){ cs.setAttribute('viewBox', '0 0 56 56'); cs.innerHTML = compassArt(); }
+})();
+
 /* ---------- top bar */
 let lastStock = {};
 function updateHUD(){

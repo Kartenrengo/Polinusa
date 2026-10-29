@@ -124,20 +124,19 @@ function putRising(c, x, y, s, m, rot, key, art, f, alpha){
   blit(c, key, art, alpha); c.restore();
 }
 function drawStakes(c, b, K, f, alpha){
-  const rx = Math.max(6, K.r * .95), ry = rx * .45, p = new Path2D(), cord = ellipse(b.x, b.y, rx, ry);
-  for (const a of [.8, 2.35, 3.95, 5.5]){ const x = b.x + Math.cos(a) * rx, y = b.y + Math.sin(a) * ry; p.moveTo(x, y + .6); p.lineTo(x, y - 2.8); }
-  c.globalAlpha = alpha; stroke(c, cord, '#F4ECD8', .6, [1.2, 1], null, .9); stroke(c, p, '#3B2618', 1, null, 'round'); c.globalAlpha = 1;
+  // four stakes, and a cord pulled straight from one to the next
+  const rx = Math.max(6, K.r * .95), ry = rx * .45, p = new Path2D(), cord = new Path2D(), pts = [.8, 2.35, 3.95, 5.5].map(a => ({x:b.x + Math.cos(a) * rx, y:b.y + Math.sin(a) * ry}));
+  pts.forEach((q, i) => { p.moveTo(q.x, q.y + .6); p.lineTo(q.x, q.y - 2.8); if (i) cord.lineTo(q.x, q.y - 2); else cord.moveTo(q.x, q.y - 2); }); cord.closePath();
+  c.globalAlpha = alpha; stroke(c, cord, '#E9DCC0', .5, null, null, .95); stroke(c, p, '#3B2618', 1, null, 'round'); c.globalAlpha = 1;
   // the wood for it, used up as the work goes on
   const logs = Math.ceil(3 * (1 - f)), L = new Path2D();
   for (let i = 0; i < logs; i++){ const x = b.x + rx + 2, y = b.y + 3 - i * 1.6 + (i ? 0 : 0); L.moveTo(x - 3.4 + i * .6, y); L.lineTo(x + 3.4 - i * .6, y); }
   if (logs){ stroke(c, L, '#2B1D14', 1.9, null, 'round', alpha); stroke(c, L, '#9C7246', 1.1, null, 'round', alpha); }
 }
+/* No bar over the site: the frame stands while the walls go up, and the rising building shows how far it is */
 function drawSite(c, b, K, f, alpha){
-  const w = Math.max(14, K.r * 1.4), s = clamp(K.r / 11, .7, 1.5);
+  const s = clamp(K.r / 11, .7, 1.5);
   if (f > .1 && f < .97) put(c, b.x, b.y, s, 1, 0, 'scaffold', '<use href="#scaffold"/>', alpha);
-  const bar = roundRect(b.x - w / 2, b.y + 5, w, 3.6, 1.8);
-  c.fillStyle = '#F4ECD8'; c.fill(bar); c.save(); c.clip(bar); c.fillStyle = '#3E7A3A'; c.fillRect(b.x - w / 2, b.y + 5, w * f, 3.6); c.restore();
-  stroke(c, bar, '#2B1D14', .8);
 }
 
 /* ---------- patterns: drawn at 8× and scaled back so they stay sharp when zoomed in */
@@ -158,6 +157,13 @@ function stroke(c, path, color, w, dash, cap, alpha = 1){
 }
 function roundRect(x, y, w, h, r){ const p = new Path2D(); p.moveTo(x + r, y); p.arcTo(x + w, y, x + w, y + h, r); p.arcTo(x + w, y + h, x, y + h, r); p.arcTo(x, y + h, x, y, r); p.arcTo(x, y, x + w, y, r); p.closePath(); return p; }
 const ellipse = (x, y, rx, ry) => { const p = new Path2D(); p.ellipse(x, y, rx, ry, 0, 0, TAU); return p; };
+/* Lines drawn by hand: a loop that wavers, drawn twice like a quick sketch; a tag with uneven edges */
+const loopPath = (x, y, rx, ry, seed, j = .07, n = 13) => new Path2D(wobble(x, y, rx, ry, seed, j, n).d);
+function sketch(c, x, y, rx, ry, seed, color, w, alpha = 1, dash){
+  stroke(c, loopPath(x, y, rx, ry, seed), color, w, dash, 'round', alpha);
+  if (!dash) stroke(c, loopPath(x, y, rx * 1.04, ry * 1.06, seed + 17, .09, 11), color, w * .45, null, 'round', alpha * .7);
+}
+const tagPath = (x, y, w, h, seed) => new Path2D(smooth(tagPts(x, y, w, h, seed, .9)).d);
 
 /* ---------- base layer: sea, islands, trade cords, buildings */
 const KNOT = '<ellipse rx="4.6" ry="5.4" fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"/><path d="M-1.4-2.6q1.6 2.6.2 5.2" fill="none" stroke="#C99A62" stroke-width=".8"/>';
@@ -170,8 +176,9 @@ const seen = I => I.discovered || fogHoles.some(h => ((h.cx - I.center.x) / (h.r
 function islandPaths(I){
   if (I._p) return I._p;
   const p = {lands:I.lands.map(L => new Path2D(L.d))};
-  p.ring = I.atoll ? ellipse(I.atoll.cx, I.atoll.cy, I.atoll.rx, I.atoll.ry) : new Path2D(I.reef.d);
-  p.harbor = ellipse(I.harbor.x, I.harbor.y, I.atoll ? 9 : 9.5, I.atoll ? 9 : 9.5);
+  // the reef of an atoll is no drawn ellipse but wavers like the real thing; the passage is an uneven gap of deep water
+  p.ring = I.atoll ? loopPath(I.atoll.cx, I.atoll.cy, I.atoll.rx, I.atoll.ry, I.center.x | 0, .022, 44) : new Path2D(I.reef.d);
+  p.harbor = loopPath(I.harbor.x, I.harbor.y, 11, 7.5, I.center.y | 0, .18, 9);
   if (I.river) p.river = new Path2D(smoothOpen(I.river));
   if (I.delta){
     // the arms are ribbons: as wide as the stream where they split, narrower on the way, wider again where they open into the sea
@@ -189,7 +196,7 @@ function islandPaths(I){
     // short hachures run down the slope, like on an old chart
     out.poly.forEach((q, i) => { if (i % 2) return; const dx = q.x - c.x, dy = q.y - c.y, l = Math.hypot(dx, dy) || 1; p.hach.moveTo(q.x - dx / l * 1.5, q.y - dy / l * 1.5); p.hach.lineTo(q.x + dx / l * 4.5, q.y + dy / l * 4.5); });
   }
-  if (I.patches){ p.patches = new Path2D(); for (const q of I.patches) p.patches.addPath(ellipse(q.x, q.y, q.rx, q.ry)); }
+  if (I.patches){ p.patches = new Path2D(); for (const q of I.patches) p.patches.addPath(loopPath(q.x, q.y, q.rx * 1.2, q.ry * 1.2, q.x * 3 + q.y | 0, .2, 7)); }
   return I._p = p;
 }
 function drawIsland(c, I, area){
@@ -317,7 +324,7 @@ function drawObjects(c, area){
 }
 function drawSel(c){
   if (lod === 'far' || !selectedId) return; const b = findB(selectedId); if (!b) return;
-  const r = KINDS[b.kind].r + 6; stroke(c, ellipse(b.x, b.y + 1, r, r * .45), '#F4ECD8', 4, [.1, 4], 'round');
+  const r = KINDS[b.kind].r + 6; sketch(c, b.x, b.y + 1, r, r * .45, b.id * 7 + 3, '#F4ECD8', 2.6);
 }
 function seaRect(c, v, color, pat, from){
   c.fillStyle = color; c.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
@@ -360,7 +367,7 @@ function drawAnim(c, now){
     if (!(I.feastEnd > tick) || !boxIn(I.box, v) || lod === 'far') continue;
     const h = I.buildings.find(b => b.kind === 'halle'); if (!h) continue;
     const fl = reduced ? 1 : 1 + Math.sin(now / 90) * .12 + Math.sin(now / 53) * .08;
-    c.save(); c.translate(h.x, h.y + 24); c.fillStyle = '#7E766A'; c.fill(ellipse(0, 0, 5, 2));
+    c.save(); c.translate(h.x, h.y + 24);
     c.scale(fl, fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore();
   }
   // a pair of frigate birds circles over each known island
@@ -433,7 +440,7 @@ function drawFishers(c, v, now){
         const a = t / 7, x = C.x + Math.cos(a) * 9, y = C.y + Math.sin(a) * 4, left = -Math.sin(a) < 0;
         put(c, x, y, 1, left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>');
         const n = ((now + b.id * 1300) % 9000) / 1400;
-        if (!reduced && n < 1){ const nx = x + (left ? -6 : 6), r = 2 + n * 7; stroke(c, ellipse(nx, y + 1, r, r * .55), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
+        if (!reduced && n < 1){ const nx = x + (left ? -6 : 6), r = 2 + n * 7; stroke(c, loopPath(nx, y + 1, r, r * .55, b.id, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
       } else if (cam.z > PEOPLE_Z){
         const sway = Math.sin(t / 3) * 5, x = w.x + ux * 7 - uy * sway, y = w.y + uy * 7 + ux * sway;
         c.save(); c.translate(x, y); if (Math.cos(t / 3) < 0) c.scale(-1, 1);
@@ -598,7 +605,7 @@ function drawCritter(c, a){
   blit(c, 'cr|' + a.kind, `<use href="#${a.kind}"/>`); c.restore();
 }
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
-const bubbleArt = inner => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.5" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9"/><path d="M-1.6-2.1L0 .6L1.6-2.1" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/><path d="M-1.5-2.4H1.5" stroke="#F4ECD8" stroke-width="1"/>${inner}`;
+const bubbleArt = inner => `<path d="M-6.1-13.7Q-1.2-14.5 6.4-13.8Q7-8.2 6.1-2.4Q3.4-1.9 1.6-2.2L0 .6L-1.5-2.1Q-4.2-1.8-6.4-2.5Q-7.1-8.1-6.1-13.7Z" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/>${inner}`;
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
@@ -630,13 +637,14 @@ function drawNeeds(c, v, now){
   }
 }
 function drawGhost(c){
-  const K = KINDS[placing.kind], r = K.r + 5, e = ellipse(placing.x, placing.y + 1, r, r * .45), ok = placing.ok, I = isl(placing.island);
+  const K = KINDS[placing.kind], r = K.r + 5, e = loopPath(placing.x, placing.y + 1, r, r * .45, 7, .06, 13), ok = placing.ok, I = isl(placing.island);
   // while placing, rings show where the deposit is and how far the workshop reaches for its plants
-  if (K.dep) for (const d of depsOf(I, K.dep)) stroke(c, ellipse(d.x, d.y, K.depR, K.depR * .8), '#F3D9A0', 2.2, [5, 4], 'round', .9);
-  if (K.near) stroke(c, ellipse(placing.x, placing.y, K.near.r, K.near.r * .8), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
-  const reach = K.trees || K.plants; if (reach) stroke(c, ellipse(placing.x, placing.y, reach.r, reach.r * .8), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
+  // how far a workshop reaches: a ring of dots laid on the ground by hand
+  if (K.dep) for (const d of depsOf(I, K.dep)) stroke(c, loopPath(d.x, d.y, K.depR, K.depR * .8, d.x | 0, .05, 16), '#F3D9A0', 2.2, [.1, 5], 'round', .9);
+  if (K.near) stroke(c, loopPath(placing.x, placing.y, K.near.r, K.near.r * .8, 11, .05, 16), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
+  const reach = K.trees || K.plants; if (reach) stroke(c, loopPath(placing.x, placing.y, reach.r, reach.r * .8, 13, .05, 16), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
   c.fillStyle = ok ? 'rgba(62,122,58,.25)' : 'rgba(168,74,44,.25)'; c.fill(e);
-  stroke(c, e, ok ? '#3E7A3A' : '#A84A2C', 2.4, [.1, 3.6], 'round');
+  sketch(c, placing.x, placing.y + 1, r, r * .45, 7, ok ? '#3E7A3A' : '#A84A2C', 2.2);
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
 }
 function drawTop(c, now){
@@ -646,7 +654,8 @@ function drawTop(c, now){
   if (S && S.state === 'sail' && S.pi < S.path.length){
     const p = new Path2D(); p.moveTo(S.x, S.y); for (let i = S.pi; i < S.path.length; i++) p.lineTo(S.path[i].x, S.path[i].y);
     stroke(c, p, '#F4ECD8', 2.4 / Math.min(1, cam.z), [.1, 7 / Math.min(1, cam.z)], 'round', .95);
-    const e = S.path[S.path.length - 1]; stroke(c, ellipse(e.x, e.y, 9 * ks, 5 * ks), '#F4ECD8', 2, [.1, 4], 'round', .9);
+    // where it is going: a cross as the navigators scratched it
+    const e = S.path[S.path.length - 1], q = 4 * ks, X = new Path2D(); X.moveTo(e.x - q, e.y - q * .6); X.lineTo(e.x + q, e.y + q * .5); X.moveTo(e.x + q * .9, e.y - q * .7); X.lineTo(e.x - q * .8, e.y + q * .6); stroke(c, X, '#F4ECD8', 2.2, null, 'round', .95);
   }
   for (const s of ships){
     if (!ptIn(s.x, s.y, v) || (!s.own && !revealed(s))) continue;
@@ -658,7 +667,7 @@ function drawTop(c, now){
       if (f > .85) stroke(c, ellipse(x + hx * 3, y + 4, 3, 1), '#F4ECD8', .6, [.5, .8], 'round', .8);
     }
     c.save(); c.translate(s.x, s.y); c.scale(ks, ks);
-    if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; stroke(c, ellipse(0, 1, 16 + 3 * t, 8 + 1.5 * t), '#F4ECD8', 2.4, [.1, 4], 'round', .95); }
+    if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; sketch(c, 0, 1, 16 + 3 * t, 8 + 1.5 * t, s.id * 5, '#F4ECD8', 2.2, .95); }
     c.save();
     if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
     else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
@@ -676,8 +685,8 @@ function shipPanel(c, s){
   const shown = ent.length > 5 ? [...ent.slice(0, 4), ['+', ent.length - 4]] : ent, sc = clamp(1 / cam.z, 1, 1.7);
   c.save(); c.translate(s.kind === 'oc' ? 3 : 6, s.kind === 'oc' ? -14 : -30); c.scale(sc, sc); c.font = SHIP_FONT;
   const ws = shown.map(([k, n]) => (k === '+' ? 2 : 13) + c.measureText(k === '+' ? '+' + n : String(n)).width + 4), w = ws.reduce((a, b) => a + b, 4);
-  const p = roundRect(0, -17, w, 15, 3.5);
-  c.fillStyle = s.own ? '#F4ECD8' : '#F3D9A0'; c.fill(p); stroke(c, p, '#3E2416', 1.1, [.1, 2], 'round');
+  const p = tagPath(0, -17, w, 15, s.id * 11 + shown.length);
+  c.fillStyle = s.own ? '#F4ECD8' : '#F3D9A0'; c.fill(p); stroke(c, p, '#3E2416', 1.1, null, 'round');
   stroke(c, SHIP_LINE, '#3E2416', .9);
   let x = 3; c.fillStyle = '#2B1D14'; c.textBaseline = 'alphabetic';
   shown.forEach(([k, n], i) => {
@@ -692,8 +701,9 @@ function label(c, x, y, k, text, sub, font = NAME_FONT){
   c.save(); c.translate(x, y); c.scale(k, k);
   c.font = font; let w = c.measureText(text).width + 16;
   if (sub){ c.font = SUB_FONT; w = Math.max(w, c.measureText(sub).width + 14); }
-  const top = font === NAME_FONT ? -15 : -11, p = roundRect(-w / 2, top, w, sub ? 30 : 20, 4);
-  c.fillStyle = '#F4ECD8'; c.fill(p); stroke(c, p, '#3E2416', 1.6, [.1, 2.6], 'round');
+  // a name tag of bark cloth with uneven edges, the same for the same name
+  const top = font === NAME_FONT ? -15 : -11, seed = [...text].reduce((t, ch) => t * 31 + ch.charCodeAt(0) | 0, 7), p = tagPath(-w / 2, top, w, sub ? 30 : 20, seed);
+  c.fillStyle = '#F4ECD8'; c.fill(p); stroke(c, p, '#3E2416', 1.4, null, 'round');
   c.textAlign = 'center'; c.fillStyle = '#2B1D14'; c.font = font; c.fillText(text, 0, font === NAME_FONT ? 0 : 4);
   if (sub){ c.font = SUB_FONT; c.fillStyle = '#5A3A26'; c.fillText(sub, 0, 11); }
   c.restore();

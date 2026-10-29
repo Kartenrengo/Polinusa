@@ -308,6 +308,21 @@ vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle
   Chronik, ein Klopfen, wenn etwas fertig gebaut ist, ein Platschen beim Stapellauf, klappernde Muscheln bei Gegengaben.
 - Klang und Tag und Nacht lassen sich im Menü ausschalten.
 
+## Von Hand gemacht
+
+Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
+
+- Der Dorfplatz ist festgetretene Erde ohne Rand, mit ein paar Steinen. Vor dem Versammlungshaus liegt eine Feuerstelle aus
+  Asche, Holzkohle und einem Ring von Hand gelegter Steine.
+- Tarofelder, Gärten, Pulakagruben, Gärgruben, Tanzplatz, Blumenbeete und Schweinepferch haben unregelmäßige Ränder,
+  Steine unterschiedlicher Größe und Zäune aus einzeln gesetzten Pfosten.
+- Der Riffring eines Atolls und die Durchfahrt sind keine Ellipsen mehr. Auswahl und Bauvorschau sind wie mit der Hand
+  gezogen, Reichweiten Punkte auf dem Boden, das Ziel eines Kanus ein eingeritztes Kreuz. Baustellen zeigen eine gespannte
+  Schnur zwischen Pflöcken statt eines Balkens.
+- Die Oberfläche hat handgeschnittene Ränder wie Rindenbaststoff. Die Knöpfe rechts sind Tapa-Flicken an einer Schnur,
+  jeder schief aufgenäht. Der Kompass ist ein Ring aus Steinen und Kaurimuscheln, ein dunkler Stein zeigt, woher der Wind
+  kommt, und ein Band mit Federn weht in seine Richtung.
+
 ## Lebendige Welt
 
 - **Tiere:** Die Lapita-Siedler brachten Schwein, Hund und Huhn in ihren Kanus mit. In jedem Dorf laufen Hühner, die

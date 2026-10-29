@@ -59,6 +59,15 @@ function ring(cx, cy, rx, ry, n, seed, jitter){
   for (let i = 0; i < n; i++){ const a = i / n * TAU, j = 1 + (r() - .5) * jitter; p.push({x:cx + Math.cos(a) * rx * j, y:cy + Math.sin(a) * ry * j}); }
   return p;
 }
+/* Shapes drawn by hand. A loop around an ellipse whose edge wavers a little, and the outline of a box with soft,
+   uneven corners, as if cut from bark cloth. The same seed always gives the same shape. */
+function wobble(cx, cy, rx, ry, seed, j = .08, n = 14){ return smooth(ring(cx, cy, rx, ry, n, (seed >>> 0) || 1, j * 2)); }
+function tagPts(x, y, w, h, seed, j = 1){
+  const r = rng((seed >>> 0) || 1), pts = [], nx = Math.max(3, Math.round(w / 14)), ny = Math.max(2, Math.round(h / 12));
+  const side = (x0, y0, x1, y1, n, jx, jy) => { for (let i = 0; i < n; i++){ const f = i / n; pts.push({x:x0 + (x1 - x0) * f + (r() - .5) * jx, y:y0 + (y1 - y0) * f + (r() - .5) * jy}); } };
+  side(x, y, x + w, y, nx, j, j * 1.6); side(x + w, y, x + w, y + h, ny, j * 1.6, j); side(x + w, y + h, x, y + h, nx, j, j * 1.6); side(x, y + h, x, y, ny, j * 1.6, j);
+  return pts;
+}
 function inPoly(p, poly){ let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){ const a = poly[i], b = poly[j]; if ((a.y > p.y) !== (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) ins = !ins; } return ins; }
 function segDist(p, a, b){ const dx = b.x - a.x, dy = b.y - a.y, l = dx*dx + dy*dy; const t = l ? clamp(((p.x - a.x)*dx + (p.y - a.y)*dy) / l, 0, 1) : 0; return Math.hypot(p.x - a.x - t*dx, p.y - a.y - t*dy); }
 function polyDist(p, poly, closed = true){ let m = Infinity; const n = poly.length; for (let i = 0; i < (closed ? n : n - 1); i++) m = Math.min(m, segDist(p, poly[i], poly[(i + 1) % n])); return m; }
