@@ -232,14 +232,20 @@ function startYard(I, kind){
   const S = SHIPS[kind]; if (I.yard) return;
   if (!canPay(I, S.cost)){ toast(`Zu wenig ${lacking(I, S.cost)}.`); return; }
   pay(I, S.cost); I.yard = {kind, left:S.bt}; invalidate(); updateHUD(); save();
-  toast(`Am Kanuhaus wird ein ${S.n} gebaut. Das dauert etwa ${S.bt * TICK / 1000} Sekunden.`, 3600);
+  toast(`Am Kanuhaus beginnt der Bau eines ${S.n}s. Mit ${YARD_CREW} Bauleuten dauert es etwa ${String(Math.round(S.bt * TICK / 30000) / 2).replace('.', ',')} Minuten. Tippe das Kanuhaus an, um zuzusehen.`, 4200);
 }
+/* Building a canoe goes in five steps that can be watched at the canoe house; three builders make full speed */
+const YARD_STEPS = {
+  oc:[['Der Stamm', 'Ein Stamm vom Brotfruchtbaum liegt auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut wird der Rumpf ausgehöhlt.'], ['Bordplanken', 'Planken werden mit Kokosschnur an den Rumpf genäht.'], ['Ausleger', 'Der Schwimmer wird mit zwei Bäumen am Rumpf festgebunden.'], ['Paddel', 'Die Fugen werden mit Brotfruchtharz gedichtet, die Paddel geschnitzt.']],
+  dc:[['Die Stämme', 'Zwei große Stämme liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden beide Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken werden mit Kokosschnur angenäht.'], ['Zweiter Rumpf', 'Querbäume verbinden die Rümpfe, darauf kommt eine Plattform.'], ['Mast und Segel', 'Der Mast wird gesetzt, das Segel aus Pandanusmatten genäht.']]
+};
+const yardStage = y => Math.min(4, Math.floor((1 - y.left / SHIPS[y.kind].bt) * 5));
 function stepYards(){
   for (const I of islands){
-    if (!I.settled || !I.yard || !staffOf(I).yard) continue;   // three people build the canoe, or it waits
-    invalidate();
-    if (--I.yard.left > 0) continue;
-    const kind = I.yard.kind; I.yard = null; sfx('splash');
+    const w = I.settled && I.yard ? staffOf(I).yard : 0; if (!w) continue;   // without builders the canoe waits
+    const before = yardStage(I.yard); I.yard.left -= w / YARD_CREW;
+    if (I.yard.left > 0){ const st = yardStage(I.yard); if (st !== before) invalidate(); if (st !== before && I.id === active){ const [n, t] = YARD_STEPS[I.yard.kind][st]; toast(`Kanuhaus: ${n}. ${t}`, 3200); sfx('knock'); } continue; }
+    const kind = I.yard.kind; I.yard = null; sfx('splash'); invalidate();
     const s = makeShip(kind, I); s.name = `${SHIPS[kind].n} ${own().filter(o => o.kind === kind).length}`;
     toast(`${s.name} ist fertig. Tippe es im Hafen an, um es zu beladen und zu steuern.`, 4200); checkQuest(); save();
   }

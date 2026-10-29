@@ -136,6 +136,33 @@ const HOUSE_PROPS = ['',
   '<g transform="translate(11.4 3.6)"><ellipse rx="3.2" ry="1.5" fill="#5E8A3A" stroke="#2B1D14" stroke-width=".4"/><path d="M-2.4-.4Q0-1.6 2.4-.4" fill="none" stroke="#97BE62" stroke-width=".4"/><path d="M-3 .8h.01M-1.2 1.4h.01M.8 1.5h.01M2.8.9h.01" stroke="#7E766A" stroke-width="1.1" stroke-linecap="round"/></g>'];
 const HALL_BANNERS = [-1, 1].map(k => `<g transform="scale(${k} 1)"><path d="M-20 3V-27" stroke="#2B1D14" stroke-width="1.5" stroke-linecap="round"/><path d="M-20 3V-27" stroke="#8C5F3E" stroke-width=".7"/><path d="M-20-26.4Q-15-25.4-11.6-23.4Q-15-22.4-20-21.2Z" fill="#E9DCC0" stroke="#2B1D14" stroke-width=".45"/><path d="M-19-24.6L-17.4-23.6L-15.8-24.4L-14.2-23.4" fill="none" stroke="#A84A2C" stroke-width=".55"/></g>`).join('');
 const HALL_SHELLS = '<path d="M-15.6-9.6Q0-6.4 15.6-9.6" fill="none" stroke="#5A3A26" stroke-width=".5"/><g fill="#F3E3C4" stroke="#2B1D14" stroke-width=".3">' + [-13, -9, -5, -1.5, 2, 5.5, 9.5, 13.5].map(x => `<ellipse cx="${x}" cy="${-9.2 + Math.abs(x) * Math.abs(x) * .0105 - 1.2}" rx=".9" ry="1.2"/>`).join('') + '</g>';
+/* A canoe being built, seen from the side, in five steps: the log on trestles, hollowed with adze and fire,
+   strakes sewn on with coconut cord, the outrigger (or the second hull and platform), then paddles (or mast and mat sail).
+   'ein' is the small dugout of a fisher or a jetty, carved in three steps. */
+function yardArt(kind, st){
+  const log = '<path d="M-13 0Q-13.4-3.4-10.6-3.6H10.6Q13.4-3.4 13 0Q13.4 3 10.6 3.2H-10.6Q-13.4 3-13 0Z" fill="#8C5F3E" stroke="#2B1D14" stroke-width=".7"/><path d="M-8-1.4H6M-5 1H9M-10.4.2H-7" stroke="#5A3A26" stroke-width=".5" stroke-linecap="round"/><ellipse cx="12.6" cy="-.2" rx="1" ry="3.2" fill="#D2A66E" stroke="#2B1D14" stroke-width=".45"/>';
+  const hull = '<path d="M-13.4-1.6Q-7-3.8 0-3.8Q8-3.8 13.8-2Q9.4 2.6 0 2.6Q-8.4 2.6-13.4-1.6Z" fill="#6B4A2E" stroke="#2B1D14" stroke-width=".7"/>';
+  const hollow = '<path d="M-10.6-2Q0-3.2 11-2.2Q0-1.1-10.6-2Z" fill="#2E1E14"/>';
+  const chips = '<g fill="#D2A66E" stroke="#2B1D14" stroke-width=".25"><ellipse cx="-9" cy="4.4" rx="1" ry=".45"/><ellipse cx="-4" cy="5.2" rx=".8" ry=".4"/><ellipse cx="3" cy="4.8" rx="1" ry=".45"/><ellipse cx="8" cy="5.4" rx=".7" ry=".35"/><ellipse cx="11.4" cy="4.2" rx=".9" ry=".4"/></g>';
+  const strake = '<path d="M-12.8-2.4Q0-5.8 13.2-2.6" fill="none" stroke="#2B1D14" stroke-width="2.2"/><path d="M-12.8-2.4Q0-5.8 13.2-2.6" fill="none" stroke="#B08048" stroke-width="1.3"/><path d="M-9-3.6v1.4M-4-4.4v1.4M1-4.6v1.4M6-4.2v1.4M10-3.4v1.4" stroke="#F1EBD9" stroke-width=".5"/>';
+  const trestle = '<path d="M-8 3.6L-7 .4M-6 3.6L-7 .4M7 3.6L8 .4M9 3.6L8 .4" stroke="#3B2618" stroke-width=".9" stroke-linecap="round"/>';
+  const outrig = '<path d="M-4-3.6L-4.6-9M5-3.8L4.6-9.2" stroke="#2B1D14" stroke-width="1.5"/><path d="M-4-3.6L-4.6-9M5-3.8L4.6-9.2" stroke="#9C7246" stroke-width=".7"/><path d="M-8-9.4Q0-10.6 8.4-9.4Q0-8.2-8-9.4Z" fill="#A57A4C" stroke="#2B1D14" stroke-width=".6"/>';
+  const twin = '<g transform="translate(2 -7) scale(.92)">' + hull + strake + '</g><path d="M-7-4.6L-5-9.6M4-4.8L6-9.8M12-3.4L13.6-8.2" stroke="#2B1D14" stroke-width="1.4"/><path d="M-7-4.6L-5-9.6M4-4.8L6-9.8M12-3.4L13.6-8.2" stroke="#9C7246" stroke-width=".6"/><path d="M-6-6.6H13V-5.4H-6Z" fill="#B08048" stroke="#2B1D14" stroke-width=".45"/>';
+  const sail = '<path d="M3-6V-24" stroke="#2B1D14" stroke-width="1.2"/><use href="#sail" transform="translate(3 -6) scale(.78)"/>';
+  const paddles = '<path d="M-15 4.6L-7 3.2M-14 5.8L-6 4.4" stroke="#2B1D14" stroke-width=".9" stroke-linecap="round"/><ellipse cx="-15.4" cy="4.7" rx="1.6" ry=".7" fill="#9C7246" stroke="#2B1D14" stroke-width=".35"/><ellipse cx="-14.4" cy="5.9" rx="1.6" ry=".7" fill="#9C7246" stroke="#2B1D14" stroke-width=".35"/>';
+  const second = '<g transform="translate(3 -6) scale(.9)">' + log + '</g>';
+  let h = kind === 'ein' ? '' : trestle;
+  if (st === 0) h += (kind === 'dc' ? second : '') + log;
+  else {
+    if (kind === 'dc' && st < 3) h += second;
+    h += hull + hollow + (st >= 2 && kind !== 'ein' ? strake : '');
+    if (st >= 3) h += kind === 'dc' ? twin : outrig;
+    if (st >= 4) h += kind === 'dc' ? sail : paddles;
+    if (kind === 'ein' ? st < 2 : st < 4) h += chips;
+  }
+  const L = kind === 'dc' ? 1.2 : kind === 'ein' ? .6 : 1;
+  return `<g transform="scale(${L} ${kind === 'ein' ? .75 : 1})">${h}</g>`;
+}
 /* ---------- buildings: the art without mirror, size or turn; those are applied when drawing */
 function artOf(kind, o = {}){
   const roof = o.roof || ROOF_NEW, hut = `<use href="#hc" fill="${roof}" transform="scale(.9)"/>`;
@@ -145,9 +172,9 @@ function artOf(kind, o = {}){
     case 'speicher': return `<use href="#hs" fill="${roof}"/>`;
     // the meeting house grows with the village: tapa banners for a village, a garland of shells for a chief's village
     case 'halle': return `<use href="#hm" fill="${roof}" transform="scale(.85)"/>` + (o.lvl >= 2 ? HALL_BANNERS : '') + (o.lvl >= 3 ? HALL_SHELLS : '');
-    case 'werft': return `<use href="#hk" fill="${roof}"/>` + (o.canoe === 'dc' ? `<use href="#dcHull" transform="translate(9 11) scale(.78)"/><use href="#scaffold" transform="translate(9 10) scale(.8)"/>` : o.canoe === 'oc' ? `<use href="#oc" transform="translate(10 10) scale(.9)"/><use href="#scaffold" transform="translate(10 10) scale(.6)"/>` : '');
+    case 'werft': return `<use href="#hk" fill="${roof}"/>` + (o.canoe ? `<g transform="translate(11 12)">${yardArt(o.canoe.slice(0, 2), +o.canoe[2])}</g>` : '');
     case 'taro': return `<use href="#tp"/>`;
-    case 'fisch': return `<use href="#beached" transform="translate(-9 6) scale(.75)"/><use href="#rack"/><use href="#rack" transform="translate(9 3) scale(.7)"/>`;
+    case 'fisch': return (o.boat ? `<g transform="translate(-9 7)">${yardArt('ein', o.boat - 1)}</g>` : `<use href="#beached" transform="translate(-9 6) scale(.75)"/>`) + `<use href="#rack"/><use href="#rack" transform="translate(9 3) scale(.7)"/>`;
     case 'toepfer': return hut + `<use href="#pt" transform="translate(9.5 2.5) scale(.62)"/><use href="#pt" transform="translate(13.5 4) scale(.52)"/><circle cx="-11" cy="1.5" r="2.4" fill="none" stroke="#7E766A" stroke-width="1.2" stroke-dasharray="1.3 .7"/><circle cx="-11" cy="1.5" r="1.1" fill="#E0803A"/>`;
     case 'beil': return hut + `<g fill="#8A8A86" stroke="#2B1D14" stroke-width=".5"><ellipse cx="11" cy="1.5" rx="3" ry="2"/><ellipse cx="15.5" cy="3" rx="2.4" ry="1.7"/><ellipse cx="13" cy="-1.6" rx="2.2" ry="1.5"/></g><use href="#ic-beile" transform="translate(-18 -6) scale(.5)"/>`;
     case 'flecht': return hut + `<rect x="7" y="-.5" width="8" height="5" fill="url(#pWeave)" stroke="#2B1D14" stroke-width=".6" transform="rotate(-8)"/><rect x="-16" y=".5" width="7" height="4.4" fill="url(#pWeave)" stroke="#2B1D14" stroke-width=".6" transform="rotate(6)"/>`;
@@ -165,7 +192,7 @@ function artOf(kind, o = {}){
     case 'pulaka': return `<ellipse cx="1" cy="1.6" rx="12" ry="5.6" fill="#1F140D" opacity=".16"/><rect x="-11" y="-6" width="22" height="12" rx="5" fill="#D6C08A" stroke="#2B1D14" stroke-width=".7"/><rect x="-8.4" y="-4" width="16.8" height="8" rx="3.4" fill="#3E6A5A" stroke="#2B1D14" stroke-width=".6"/><path d="M-6.4 1.6h2M2.4 2.6h2.4" stroke="#9CCFC6" stroke-width=".5" stroke-linecap="round"/>` + [[-4.6, 1.8, 1], [0, .4, 1.15], [4.6, 1.8, 1], [-2.2, 3.6, .85], [2.6, 3.8, .85]].map(([x, y, k]) => `<use href="#pleaf" transform="translate(${x} ${y}) scale(${k})"/>`).join('');
     case 'riff': return hut + `<g stroke="#2B1D14" stroke-width=".45"><path d="M7.4 1Q7.4 4.6 11.4 4.6Q15.4 4.6 15.4 1Z" fill="#B08048"/><path d="M7.4 1H15.4" stroke="#7A5434"/></g><path d="M8.6.8Q9.4-1 10.6.6M11.2.8Q12.4-1.2 13.6.6" fill="#E7B48E" stroke="#2B1D14" stroke-width=".35"/><path d="M-16.4 4.2L-11.6-4" stroke="#2B1D14" stroke-width=".8" stroke-linecap="round"/><path d="M-11.6-4l.5-1.4M-11.6-4l1.2-.8" stroke="#2B1D14" stroke-width=".5"/><circle cx="16.6" cy="3.4" r="1.1" fill="#3A2A3A" stroke="#2B1D14" stroke-width=".3"/><path d="M15.4 3.4h-.8M17.8 3.4h.8M16.6 2.2v-.7" stroke="#3A2A3A" stroke-width=".35"/>`;
     case 'reuse': return `<use href="#weir"/>`;
-    case 'steg': return `<path d="M-4 1.4H28" stroke="#1F140D" stroke-width="5" stroke-linecap="round" opacity=".18"/><path d="M-1-2.6V3.2M7-2.6V3.6M15-2.6V3.8M22-2.6V4M27-2.6V4" stroke="#3B2618" stroke-width="1.3"/><rect x="-4" y="-2.4" width="32" height="4" rx=".6" fill="#B08048" stroke="#2B1D14" stroke-width=".6"/><path d="M0-2.4V1.6M3-2.4V1.6M6-2.4V1.6M9-2.4V1.6M12-2.4V1.6M15-2.4V1.6M18-2.4V1.6M21-2.4V1.6M24-2.4V1.6" stroke="#7A5434" stroke-width=".45"/><path d="M26.4-4.6Q28.6-4 28-1.8" fill="none" stroke="#B08048" stroke-width=".9"/><circle cx="-2" cy="-.4" r="1.1" fill="#7A5434" stroke="#2B1D14" stroke-width=".35"/>`;
+    case 'steg': return `<path d="M-4 1.4H28" stroke="#1F140D" stroke-width="5" stroke-linecap="round" opacity=".18"/><path d="M-1-2.6V3.2M7-2.6V3.6M15-2.6V3.8M22-2.6V4M27-2.6V4" stroke="#3B2618" stroke-width="1.3"/><rect x="-4" y="-2.4" width="32" height="4" rx=".6" fill="#B08048" stroke="#2B1D14" stroke-width=".6"/><path d="M0-2.4V1.6M3-2.4V1.6M6-2.4V1.6M9-2.4V1.6M12-2.4V1.6M15-2.4V1.6M18-2.4V1.6M21-2.4V1.6M24-2.4V1.6" stroke="#7A5434" stroke-width=".45"/><path d="M26.4-4.6Q28.6-4 28-1.8" fill="none" stroke="#B08048" stroke-width=".9"/><circle cx="-2" cy="-.4" r="1.1" fill="#7A5434" stroke="#2B1D14" stroke-width=".35"/>` + (o.boat ? `<g transform="translate(4 7)">${yardArt('ein', o.boat - 1)}</g>` : '');
     case 'palme': return `<use href="#palm"/>`;
     case 'baum': return `<use href="#tree"/>`;
     case 'pandanus': return `<use href="#pan"/>`;

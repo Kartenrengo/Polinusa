@@ -86,9 +86,13 @@ function trimSprites(){
 }
 const pendingSprites = () => { const p = []; for (const e of sprites.values()) for (const lv of e.lv.values()) if (!lv.ready) p.push(lv.wait); return p; };
 /* Draws art at the current transform. The size step follows the real on-screen scale. */
-function blit(c, key, art, alpha = 1){
+function spriteOf(key, art){
   let e = sprites.get(key);
   if (!e){ const a = typeof art === 'function' ? art() : art; e = {art:a, box:artBox(a), lv:new Map()}; sprites.set(key, e); }
+  return e;
+}
+function blit(c, key, art, alpha = 1){
+  const e = spriteOf(key, art);
   const t = c.getTransform(), need = Math.hypot(t.a, t.b), L = LEVELS.find(l => l >= need) || LEVELS[LEVELS.length - 1];
   let lv = e.lv.get(L); if (!lv){ lv = rasterize(e, L); e.lv.set(L, lv); }
   lv.used = frameNo;
@@ -100,16 +104,37 @@ function blit(c, key, art, alpha = 1){
 function put(c, x, y, s, m, rot, key, art, alpha){ c.save(); c.translate(x, y); if (rot) c.rotate(rot); c.scale(s * m, s); blit(c, key, art, alpha); c.restore(); }
 function drawBuilding(c, b, I, alpha = 1){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
-  const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0}, t = xformOf(b.kind, v);
-  // young plants grow from a third of their size; a building site shows its frame and the building rising faintly
-  const site = b.bt && !K.plant, grown = b.bt && K.plant ? .35 + .65 * (1 - b.bt / K.bt) : 1;
-  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1) * grown, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}`, () => artOf(b.kind, o), site ? alpha * .4 : alpha);
-  if (site) drawSite(c, b, K, alpha);
+  const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
+  const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, boat}, t = xformOf(b.kind, v);
+  // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
+  // is piled up, then the building rises from the ground as the builders work
+  // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
+  const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
+  const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
+  if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
+  drawStakes(c, b, K, f, alpha);
+  if (f > .15) putRising(c, b.x, b.y, sc, t.m, t.rot, key, art, (f - .15) / .85, alpha);
+  drawSite(c, b, K, f, alpha);
 }
-function drawSite(c, b, K, alpha){
-  const f = 1 - b.bt / K.bt, w = Math.max(14, K.r * 1.4), s = clamp(K.r / 11, .7, 1.5);
-  put(c, b.x, b.y, s, 1, 0, 'scaffold', '<use href="#scaffold"/>', alpha);
+function putRising(c, x, y, s, m, rot, key, art, f, alpha){
+  const e = spriteOf(key, art), bx = e.box;
+  c.save(); c.translate(x, y); if (rot) c.rotate(rot); c.scale(s * m, s);
+  c.beginPath(); c.rect(bx.x - 2, bx.y + bx.h * (1 - f), bx.w + 4, bx.h * f + 2); c.clip();
+  blit(c, key, art, alpha); c.restore();
+}
+function drawStakes(c, b, K, f, alpha){
+  const rx = Math.max(6, K.r * .95), ry = rx * .45, p = new Path2D(), cord = ellipse(b.x, b.y, rx, ry);
+  for (const a of [.8, 2.35, 3.95, 5.5]){ const x = b.x + Math.cos(a) * rx, y = b.y + Math.sin(a) * ry; p.moveTo(x, y + .6); p.lineTo(x, y - 2.8); }
+  c.globalAlpha = alpha; stroke(c, cord, '#F4ECD8', .6, [1.2, 1], null, .9); stroke(c, p, '#3B2618', 1, null, 'round'); c.globalAlpha = 1;
+  // the wood for it, used up as the work goes on
+  const logs = Math.ceil(3 * (1 - f)), L = new Path2D();
+  for (let i = 0; i < logs; i++){ const x = b.x + rx + 2, y = b.y + 3 - i * 1.6 + (i ? 0 : 0); L.moveTo(x - 3.4 + i * .6, y); L.lineTo(x + 3.4 - i * .6, y); }
+  if (logs){ stroke(c, L, '#2B1D14', 1.9, null, 'round', alpha); stroke(c, L, '#9C7246', 1.1, null, 'round', alpha); }
+}
+function drawSite(c, b, K, f, alpha){
+  const w = Math.max(14, K.r * 1.4), s = clamp(K.r / 11, .7, 1.5);
+  if (f > .1 && f < .97) put(c, b.x, b.y, s, 1, 0, 'scaffold', '<use href="#scaffold"/>', alpha);
   const bar = roundRect(b.x - w / 2, b.y + 5, w, 3.6, 1.8);
   c.fillStyle = '#F4ECD8'; c.fill(bar); c.save(); c.clip(bar); c.fillStyle = '#3E7A3A'; c.fillRect(b.x - w / 2, b.y + 5, w * f, 3.6); c.restore();
   stroke(c, bar, '#2B1D14', .8);
@@ -401,7 +426,7 @@ function drawFishers(c, v, now){
     if (!lived(I) || !boxIn(I.box, v) || I.rahui) continue;
     const st = I.settled ? staffOf(I) : null;
     for (const b of I.buildings){
-      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || (st && KINDS[b.kind].crew && !st.staffed.has(b)) || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || b.boat > 0 || (st && KINDS[b.kind].crew && !st.staffed.has(b)) || !ptIn(b.x, b.y, grow(v, 40))) continue;
       const w = waterNear(I, b), dx = w.x - b.x, dy = w.y - b.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, t = reduced ? 0 : now / 1000 + b.id * 3.1;
       if (b.kind === 'fisch'){
         let C = {x:w.x + ux * 12, y:w.y + uy * 12}; if (landAt(I, C)) C = w;

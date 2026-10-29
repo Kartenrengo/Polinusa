@@ -23,10 +23,10 @@ const KINDS = {
   haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], bt:12, cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'Ein Zuhause für 4 Menschen, im Häuptlingsdorf für 6.', vb:'-17 -29 34 33'},
   taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist die wichtigste Grundnahrung der hohen Inseln.', vb:'-13 -11 26 22'},
   pulaka:{n:'Pulakagrube', s:'Pulaka', on:['atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'nahrung', every:3, inland:9, info:'Eine tiefe Grube bis hinab zum Süßwasser im Sand. Darin wächst Sumpftaro, die Grundnahrung der Atolle. Braucht Platz in der Mitte eines Motus.', vb:'-12 -10 24 16'},
-  fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:1, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:3, boost:{k:'schnur', per:8, slow:2}, coast:true, info:'Fischer fahren mit Speer und Angel in die Lagune, hier trocknet der Fang. Mit Netzen aus Schnur fangen sie doppelt so viel, ein Netz hält für 8 Fische. Steht am Strand.', vb:'-12 -14 26 18'},
+  fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:1, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:3, canoe:30, boost:{k:'schnur', per:8, slow:2}, coast:true, info:'Fischer fahren mit Speer und Angel in die Lagune, hier trocknet der Fang. Mit Netzen aus Schnur fangen sie doppelt so viel, ein Netz hält für 8 Fische. Steht am Strand.', vb:'-12 -14 26 18'},
   riff:{n:'Riffsammler', s:'Riff', on:['hoch','atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:6, prod:'meeres', every:4, coast:true, roof:true, info:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Steht am Strand.', vb:'-17 -17 34 21'},
   reuse:{n:'Steinreuse', s:'Reuse', on:['hoch','atoll'], bt:10, cost:{holz:1, beile:1}, r:13, hy:2, prod:'fisch', every:5, water:true, info:'Ein Pfeil aus aufgeschichteten Steinen in der Lagune. Mit der Flut schwimmen Fische hinein und finden nicht mehr heraus. Ein Einbaum vom Kanusteg holt sie.', vb:'-16 -9 32 18'},
-  steg:{n:'Kanusteg', s:'Steg', on:['hoch','atoll'], bt:8, cost:{holz:3}, r:9, hy:3, coast:true, serves:4, info:'Ein Steg mit Einbaum. Er bringt Leute zu bis zu 4 Pfahlhäusern, Reusen oder Arbeitsplätzen auf einem anderen Motu.', vb:'-6 -9 36 16'},
+  steg:{n:'Kanusteg', s:'Steg', on:['hoch','atoll'], bt:8, cost:{holz:3}, r:9, hy:3, coast:true, serves:4, canoe:30, info:'Ein Steg mit Einbaum. Er bringt Leute zu bis zu 4 Pfahlhäusern, Reusen oder Arbeitsplätzen auf einem anderen Motu.', vb:'-6 -9 36 16'},
   toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:8, use:{holz:1}, dep:'ton', depR:60, roof:true, info:'Formt Töpfe aus Ton und brennt sie mit Holz. Muss nah am Ton stehen.', vb:'-16 -17 34 21'},
   beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'beile', every:8, dep:'basalt', depR:60, roof:true, info:'Schleift Steinbeile aus Basalt. Muss nah am Felsen stehen.', vb:'-18 -17 36 21'},
   klingen:{n:'Klingenschläger', s:'Klingen', on:['hoch'], crew:2, bt:14, cost:{holz:3}, r:11, hy:6, prod:'klingen', every:10, dep:'obsidian', depR:60, roof:true, info:'Schlägt scharfe Klingen aus Obsidian. Nur am Vulkan.', vb:'-18 -17 36 21'},
@@ -58,8 +58,8 @@ const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','reuse','toepfer'
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
 const SHIPS = {
-  oc:{n:'Auslegerkanu', cost:{holz:4, beile:1}, bt:15, cap:12, people:4, speed:32, vision:150, fog:false, crew:2, crewN:'Paddler'},
-  dc:{n:'Doppelkanu', cost:{holz:6, beile:2, matten:3, schnur:3}, bt:40, cap:24, people:8, speed:40, vision:230, fog:true, crew:4, crewN:'Seefahrer'}
+  oc:{n:'Auslegerkanu', cost:{holz:4, beile:1}, bt:75, cap:12, people:4, speed:32, vision:150, fog:false, crew:2, crewN:'Paddler'},
+  dc:{n:'Doppelkanu', cost:{holz:6, beile:2, matten:3, schnur:3}, bt:150, cap:24, people:8, speed:40, vision:230, fog:true, crew:4, crewN:'Seefahrer'}
 };
 const SITE_CREW = 2, YARD_CREW = 3;   // people at each building site and at a canoe being built
 const STUMP_TICKS = 240, GROW_TICKS = 90;   // a stump sprouts again after eight minutes by itself, a young tree needs three to grow

@@ -101,17 +101,35 @@ das auch für Arbeitsplätze auf einem Motu, auf dem niemand wohnt. Ohne Einbaum
 Arbeitsplatz bleibt leer. Über ihm schwebt dann ein Einbaum in der Sprechblase. Die Einbäume paddeln sichtbar hin und her.
 Der Steg zeigt beim Bauen von selbst zum Wasser.
 
-## Bauen braucht Zeit und Leute
+## Arbeit, Bauleute und die Übersicht
 
-Jedes Gebäude kostet Holz und steht nicht sofort. Erst ist es eine Baustelle mit Gerüst und Fortschrittsbalken.
-An jeder Baustelle arbeiten 2 Leute, sie tragen Holz vom Speicher hin und hämmern. Ein Haus dauert etwa 24 Sekunden,
-eine Werkstatt 28, das Versammlungshaus eine Minute. Gleichzeitig wird an einer Stelle gebaut, je 10 Bewohner an einer mehr.
-Pflanzen kosten nichts, wachsen aber erst langsam heran. Was noch nicht fertig ist, arbeitet nicht und zählt nicht für die Aufgaben.
+Vorbild ist Manor Lords. Etwa sieben von zehn Bewohnern können arbeiten, Kinder und Alte nicht. Jede Arbeitskraft wird
+einer Aufgabe zugeteilt, und auf der Karte steht jede Figur für eine Person an ihrem Platz.
 
-**Arbeitskräfte:** Jeder Bewohner kann arbeiten. Felder, Fischgestelle, Holzfäller und Pflanzer brauchen eine Person,
-die meisten Werkstätten zwei, ein Kanu im Bau drei. Verteilt wird so: zuerst die Baustellen, dann das Kanuhaus, dann
-Essen, dann Holz, dann die übrigen Arbeitsplätze nach Alter. Wer baut, arbeitet nirgends sonst. Fehlen Leute, steht ein
-Arbeitsplatz still und zeigt eine Figur in der Sprechblase. Die Tafel „Bedarf“ zeigt, wie viele bauen, arbeiten und frei sind.
+- **Reihenfolge:** In der Übersicht (Bewohnerzahl oder die Zeile darunter antippen) legst du fest, welche Arbeit zuerst
+  Leute bekommt: Bauen, Grundnahrung, Fisch und Meer, Holz, Kanubau, Handwerk. Innerhalb jeder Gruppe zuerst das Älteste.
+- **Bauleute:** Jede Baustelle braucht 2 Leute, mit einer Person geht es halb so schnell. Sie kommen aus der Arbeit, die in der
+  Reihenfolge weiter unten steht. Man sieht sie hinübergehen, Holz vom Speicher schleppen und hämmern. Ihr Arbeitsplatz
+  steht still mit dem Hinweis „Die Leute bauen gerade“. Ist die Baustelle fertig, kehren sie zurück.
+- **Baustellen:** Erst markieren Pflöcke und eine Schnur den Platz, daneben liegt das Holz. Dann wächst das Gebäude vom Boden
+  nach oben, und der Holzstapel wird kleiner. Ein Haus dauert etwa 24 Sekunden, das Versammlungshaus eine Minute.
+- **Weniger Arbeiter:** In jedem Gebäude lässt sich die Zahl der Arbeiter begrenzen, bis auf null. Mit halber Besetzung geht
+  die Arbeit halb so schnell.
+- **Die Zeile oben** zeigt immer: wie viele arbeiten und wie viele bauen, wie lange das knappste Essen noch reicht, und wann
+  der Nächste zuzieht.
+- **Die Übersicht** zeigt Bewohner, Arbeitsfähige, Kinder und Alte, den Zuzug (alle 6 Sekunden jemand, solange Platz ist und
+  nichts fehlt), die Arbeit nach Reihenfolge mit besetzten Plätzen, für jedes Essen Lager, Erzeugung, Verbrauch und
+  Reichweite, und den weiteren Bedarf.
+
+## Kanus entstehen
+
+- **Erst das Kanu, dann das Wasser:** Ist ein Fischgestell gebaut, schnitzt der Fischer zuerst seinen Einbaum, etwa eine Minute.
+  Man sieht den Stamm, das Aushöhlen mit Spänen und das fertige Kanu am Strand. Erst dann fährt er hinaus. Ebenso am Kanusteg:
+  Er bedient Pfahlhäuser und Reusen erst, wenn sein Einbaum fertig ist.
+- **Im Kanuhaus** entsteht ein Auslegerkanu in etwa zweieinhalb Minuten, ein Doppelkanu in etwa fünf, mit 3 Bauleuten.
+  Fünf Schritte sind zu sehen und werden gemeldet: Stamm auf Böcken, Aushöhlen mit Steinbeil und Glut, Bordplanken mit
+  Kokosschnur angenäht, Ausleger oder zweiter Rumpf mit Plattform, Paddel oder Mast und Mattensegel. Die Tafel des
+  Kanuhauses zeigt, welcher Schritt dran ist.
 
 ## Holz und Wald
 
