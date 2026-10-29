@@ -98,23 +98,57 @@ function storeNear(I, p){
 }
 function syncWalkers(){
   for (const I of islands){
-    const mine = walkers.filter(w => w.isl === I.id), homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
+    const all = walkers.filter(w => w.isl === I.id), mine = all.filter(w => !w.child), kids = all.filter(w => w.child), homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
     const want = homes.length ? clamp(Math.round(popOf(I) / 4), 1, 10) : 0, jobs = jobsOf(I);
     for (const w of mine) if (w.job){ const j = jobs.find(q => q.key === w.job.key); if (j) w.job = j; else { w.job = null; w.carry = null; } }
-    for (let i = mine.length; i < want; i++){
-      const a = homes[Math.floor(Math.random() * homes.length)], n = walkers.length;
-      // every third person has no fixed work and strolls between the houses
-      const job = jobs.length && i % 3 !== 2 ? jobs[i % jobs.length] : null;
-      walkers.push({isl:I.id, look:figureLook(n * 7919 + I.center.x | 0), x:a.x + 4, y:a.y + 5, tx:a.x, ty:a.y + 5, job, leg:'work', carry:null, wait:Math.random() * 1500, phase:0, left:false, moving:false});
-    }
+    const spawn = (job, child) => { const a = homes[Math.floor(Math.random() * homes.length)], n = walkers.length; walkers.push({isl:I.id, look:figureLook(n * 7919 + I.center.x | 0), x:a.x + 4, y:a.y + 5, tx:a.x, ty:a.y + 5, job, child, leg:'work', carry:null, wait:Math.random() * 1500, phase:0, left:false, moving:false}); };
+    // every third person has no fixed work and strolls between the houses
+    for (let i = mine.length; i < want; i++) spawn(jobs.length && i % 3 !== 2 ? jobs[i % jobs.length] : null, false);
     // a newly built workplace takes a worker from the strollers, as long as a third keep strolling
     const free = jobs.filter(j => !walkers.some(o => o.job && o.job.key === j.key));
     // building sites always get someone, other new workplaces only while a third of the people keep strolling
     for (const w of mine){ if (!free.length) break; if (!w.job && (free[0].drop || mine.filter(o => !o.job).length > want / 3)) w.job = free.shift(); }
     if (mine.length > want){ const drop = new Set(mine.slice(want)); walkers = walkers.filter(w => !drop.has(w)); }
+    // children run about the village and play, about one for every nine people
+    const wantK = homes.length ? clamp(Math.round(popOf(I) / 9), 0, 4) : 0;
+    for (let i = kids.length; i < wantK; i++) spawn(null, true);
+    if (kids.length > wantK){ const drop = new Set(kids.slice(wantK)); walkers = walkers.filter(w => !drop.has(w)); }
+  }
+  syncCritters();
+}
+function spawnWalkers(){ walkers = []; critters = []; syncWalkers(); }
+/* ---------- the animals the Lapita settlers brought in their canoes: pigs, dogs and chickens. They roam the village. */
+let critters = [];
+const CRITTER = {dog:{v:.011, wait:[900, 2800], r:36}, chicken:{v:.005, wait:[300, 1500], r:26}, pig:{v:.0032, wait:[1600, 4200], r:30}};
+function syncCritters(){
+  for (const I of islands){
+    const mine = critters.filter(a => a.isl === I.id), homes = lived(I) ? I.buildings.filter(b => !b.bt && (b.kind === 'haus' || b.kind === 'halle')) : [];
+    const pens = lived(I) ? I.buildings.filter(b => b.kind === 'pferch' && !b.bt).length : 0, pop = popOf(I);
+    const want = homes.length ? {dog:clamp(Math.ceil(pop / 12), 1, 3), chicken:clamp(Math.ceil(pop / 6), 1, 6), pig:Math.min(4, pens + (I.clan ? 1 : 0))} : {dog:0, chicken:0, pig:0};
+    for (const kind of Object.keys(CRITTER)){
+      const have = mine.filter(a => a.kind === kind);
+      for (let i = have.length; i < want[kind]; i++){ const h = homes[Math.floor(Math.random() * homes.length)]; critters.push({isl:I.id, kind, home:h, x:h.x + (Math.random() - .5) * 12, y:h.y + 7, tx:h.x, ty:h.y + 7, wait:Math.random() * 2000, left:Math.random() < .5, moving:false, phase:0, peck:0}); }
+      if (have.length > want[kind]){ const drop = new Set(have.slice(want[kind])); critters = critters.filter(a => !drop.has(a)); }
+    }
+  }
+  critters = critters.filter(a => isl(a.isl).buildings.includes(a.home));
+}
+function stepCritters(dt){
+  for (const a of critters){
+    const C = CRITTER[a.kind]; a.moving = false;
+    if (a.wait > 0){ a.wait -= dt; if (a.kind === 'chicken' && a.peck <= 0 && Math.random() < dt / 600) a.peck = 260; a.peck -= dt; continue; }
+    const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
+    if (d < 1){
+      const I = isl(a.isl), L = landOf(I, a.home); let p = null;
+      // now and then a dog trots after someone
+      if (a.kind === 'dog' && Math.random() < .4){ const w = walkers.find(q => q.isl === a.isl && Math.hypot(q.x - a.x, q.y - a.y) < 70); if (w) p = {x:w.x - 6, y:w.y + 2}; }
+      for (let i = 0; !p && i < 6; i++){ const q = {x:a.home.x + (Math.random() - .5) * 2 * C.r, y:a.home.y + 7 + (Math.random() - .5) * C.r}; if (landOf(I, q) === L) p = q; }
+      if (p && landOf(I, p) === L){ a.tx = p.x; a.ty = p.y; }
+      a.wait = C.wait[0] + Math.random() * (C.wait[1] - C.wait[0]); continue;
+    }
+    const v = Math.min(d, dt * C.v); a.x += dx / d * v; a.y += dy / d * v; a.moving = true; a.left = dx < 0; a.phase += v * 1.6;
   }
 }
-function spawnWalkers(){ walkers = []; syncWalkers(); }
 function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
@@ -136,7 +170,10 @@ function nextLeg(w){
     }
   }
   const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && landOf(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
-  if (t){ w.tx = t.x + (Math.random() - .5) * 22; w.ty = t.y + 4 + Math.random() * 8; } w.wait = 600 + Math.random() * 1800;
+  if (t){ w.tx = t.x + (Math.random() - .5) * 22; w.ty = t.y + 4 + Math.random() * 8; }
+  // grown-ups who stroll sometimes sit down on a mat for a while; children are off again quickly
+  w.sit = !w.child && !w.job && Math.random() < .35;
+  w.wait = w.child ? 200 + Math.random() * 700 : w.sit ? 3500 + Math.random() * 4500 : 600 + Math.random() * 1800;
 }
 function stepWalkers(dt){
   for (const w of walkers){
@@ -149,7 +186,8 @@ function stepWalkers(dt){
     }
     const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
     if (d < 1.5){ nextLeg(w); continue; }
-    const v = Math.min(d, dt * (w.carry ? .006 : .007) * (w.hurry ? 2.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    w.sit = false;
+    const v = Math.min(d, dt * (w.carry ? .006 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1)); w.x += dx / d * v; w.y += dy / d * v;
     w.moving = true; w.left = dx < 0; w.phase += v * .9;
   }
 }
@@ -400,8 +438,9 @@ function renderAll(){ invalidate(true); spawnWalkers(); renderBuildBar(); }
 let last = performance.now(), lastDraw = 0;
 function frame(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); if (ships.length) stepShips(now, dt); if (cam.z > PEOPLE_Z) stepWalkers(dt);
-  if (needDraw || stale(now) || (animating() && now - lastDraw > 32)){ draw(now); lastDraw = now; }
+  stepCam(now); if (ships.length) stepShips(now, dt); if (cam.z > PEOPLE_Z){ stepWalkers(dt); stepCritters(dt); }
+  // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
+  if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
 }
 function start(data){

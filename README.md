@@ -253,6 +253,22 @@ eine Handelskette. Sie antworten später mit einem eigenen Kanu voller Waren. Wi
 hängt von den Knoten auf der Schnur ab. Muschelschmuck knüpft einen Knoten extra, ohne Gaben löst sich alle drei Minuten einer.
 So funktionierten Wertgegenstände im Pazifik: als Gaben, die Beziehungen stiften, nicht als Geld.
 
+## Lebendige Welt
+
+- **Tiere:** Die Lapita-Siedler brachten Schwein, Hund und Huhn in ihren Kanus mit. In jedem Dorf laufen Hühner, die
+  zwischendurch picken, Hunde, die manchmal jemandem hinterhertraben, und mit einem Schweinepferch auch Schweine frei herum.
+- **Dorf:** Kinder rennen und spielen, Erwachsene setzen sich zwischendurch auf eine Matte vor die Häuser. Über manchen
+  Häusern steigt Kochrauch auf. Neben den Häusern liegt Feuerholz, stehen Töpfe, trocknet eine Matte oder dampft ein Erdofen.
+  Trampelpfade führen von jedem Haus zum Versammlungshaus und von jeder Werkstatt zum nächsten Haus.
+- **Am Wasser:** Neben dem Fischgestell liegt ein Kanu am Strand, ein Fischer paddelt in der Lagune und wirft ab und zu
+  sein Netz. Riffsammler waten mit dem Korb im seichten Wasser. Beides ruht unter Rāhui.
+- **Im Meer:** Fischschwärme und Schildkröten ziehen durch die Lagunen. Auf offener, schon gesehener See taucht ab und zu
+  ein Wal auf, bläst und zeigt beim Abtauchen die Fluke. Neben fahrenden Kanus springen Delfine.
+- **Wetter:** Wolkenschatten ziehen mit dem Nordwind über Meer und Inseln, in der Sturmzeit als Regenschauer.
+
+Diese Kleinigkeiten laufen mit wenigen Bildern pro Sekunde, wenn sonst nichts animiert ist, und gar nicht, wenn das Gerät
+weniger Bewegung wünscht.
+
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,

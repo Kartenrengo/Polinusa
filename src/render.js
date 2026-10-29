@@ -101,10 +101,10 @@ function put(c, x, y, s, m, rot, key, art, alpha){ c.save(); c.translate(x, y); 
 function drawBuilding(c, b, I, alpha = 1){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size; a building site shows its frame and the building rising faintly
   const site = b.bt && !K.plant, grown = b.bt && K.plant ? .35 + .65 * (1 - b.bt / K.bt) : 1;
-  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1) * grown, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}`, () => artOf(b.kind, o), site ? alpha * .4 : alpha);
+  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1) * grown, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}`, () => artOf(b.kind, o), site ? alpha * .4 : alpha);
   if (site) drawSite(c, b, K, alpha);
 }
 function drawSite(c, b, K, alpha){
@@ -215,6 +215,25 @@ function ribbon(pts, w){
   P.moveTo(L[0].x, L[0].y); for (const q of L) P.lineTo(q.x, q.y); for (let i = n - 1; i >= 0; i--) P.lineTo(R[i].x, R[i].y); P.closePath();
   return P;
 }
+/* Worn footpaths from every house to the meeting house, and from each workplace to the nearest house */
+function drawPaths(c, I){
+  const key = I.buildings.map(b => b.bt ? 0 : b.x + b.y).join();
+  if (!I._fp || I._fp.key !== key){
+    const p = new Path2D(), on = I.buildings.filter(b => !b.bt && !KINDS[b.kind].water && !KINDS[b.kind].plant && !KINDS[b.kind].path && b.kind !== 'tanzplatz'), hall = on.find(b => b.kind === 'halle');
+    const houses = on.filter(b => b.kind === 'haus'), link = (a, b) => {
+      const L = landOf(I, a); if (L !== landOf(I, b) || L < 0) return;
+      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy); if (len < 14 || len > 170) return;
+      const bend = ((a.id * 7 + b.id) % 9 - 4) * .05 * len, cx = (a.x + b.x) / 2 - dy / len * bend, cy = (a.y + b.y) / 2 + 4 + dx / len * bend;
+      for (let i = 1; i < 6; i++){ const f = i / 6, u = 1 - f, q = {x:u * u * a.x + 2 * u * f * cx + f * f * b.x, y:u * u * (a.y + 4) + 2 * u * f * cy + f * f * (b.y + 4)}; if (landOf(I, q) !== L || (I.river && polyDist(q, I.river, false) < 3)) return; }
+      p.moveTo(a.x, a.y + 4); p.quadraticCurveTo(cx, cy, b.x, b.y + 4);
+    };
+    const nearest = (b, list) => list.filter(q => q !== b && landOf(I, q) === landOf(I, b)).reduce((m, q) => !m || Math.hypot(q.x - b.x, q.y - b.y) < Math.hypot(m.x - b.x, m.y - b.y) ? q : m, null);
+    for (const h of houses){ const t = hall && landOf(I, hall) === landOf(I, h) ? hall : nearest(h, houses); if (t) link(h, t); }
+    for (const b of on){ if (b.kind === 'haus' || b.kind === 'halle') continue; const t = nearest(b, houses.length ? houses : on); if (t) link(b, t); }
+    I._fp = {key, p};
+  }
+  stroke(c, I._fp.p, '#B89A62', 3.6, null, 'round', .4); stroke(c, I._fp.p, '#D9C48C', 1.6, null, 'round', .5);
+}
 /* The forest floor under the trees close up, one green mass far away. Cached until a tree changes. */
 function treePaths(I){
   if (I._tp) return I._tp;
@@ -280,6 +299,7 @@ function seaRect(c, v, color, pat, from){
 function drawBase(c, v){
   seaRect(c, v, '#2F5F73', 'pSea', .3);   // waves fade out far away, where they would only flicker
   for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I, v);
+  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)) drawPaths(c, I);
   drawSel(c); drawCords(c); drawObjects(c, v);
 }
 
@@ -325,10 +345,109 @@ function drawAnim(c, now){
       c.save(); c.translate(x, y); stroke(c, Math.sin(now / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, '#2B1D14', 1.3, null, 'round', .85); c.restore();
     }
   }
-  if (lod !== 'far') drawDugouts(c, v, now);
+  if (lod === 'near') for (const I of islands) if (lived(I) && boxIn(I.box, v)) for (const b of I.buildings){
+    // smoke from the cooking fires of some houses
+    if (b.kind !== 'haus' || b.bt || b.id % 3 || !ptIn(b.x, b.y, v)) continue;
+    const q = ((now / 3400 + b.id * .37) % 1) * TAU, al = reduced ? .3 : .3 - .2 * Math.cos(q), sc = (b.v && b.v.scale) || 1;
+    c.save(); c.translate(b.x - 4 * sc, b.y - KINDS.haus.hy * sc + 6 + (reduced ? 0 : Math.cos(q))); c.scale(.8, .8); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', al); c.restore();
+  }
+  if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
+  drawWhales(c, v, now);
   if (cam.z > PEOPLE_Z) drawPeople(c, v);
+  if (!reduced) drawWeather(c, v, now);
   if (lod !== 'far') drawNeeds(c, v, now);
   if (placing) drawGhost(c);
+}
+/* ---------- life on the water */
+/* Fish schools and a turtle swim round the lagoon */
+function lagoonLoop(I){
+  if (I._ll) return I._ll;
+  const pts = racePath(I), cum = [0];
+  for (let i = 1; i <= pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i % pts.length].x - pts[i - 1].x, pts[i % pts.length].y - pts[i - 1].y));
+  return I._ll = {pts, cum, len:cum[cum.length - 1]};
+}
+function alongLoop(lp, d){
+  d = ((d % lp.len) + lp.len) % lp.len; let j = 1; while (lp.cum[j] < d) j++;
+  const a = lp.pts[j - 1], b = lp.pts[j % lp.pts.length], f = (d - lp.cum[j - 1]) / (lp.cum[j] - lp.cum[j - 1] || 1);
+  return {x:a.x + (b.x - a.x) * f, y:a.y + (b.y - a.y) * f, a:Math.atan2(b.y - a.y, b.x - a.x)};
+}
+function drawLagoonLife(c, v, now){
+  const t = reduced ? 0 : now / 1000;
+  for (const I of islands){
+    if (!I.discovered || !boxIn(I.box, v)) continue;
+    const lp = lagoonLoop(I);
+    for (let k = 0; k < 2; k++){ const q = alongLoop(lp, t * 7 + k * lp.len / 2 + I.center.x); put(c, q.x, q.y, 1, 1, q.a, 'fishes', '<use href="#fishes"/>'); }
+    if ((I.center.x | 0) % 2 === 0){ const q = alongLoop(lp, -t * 2.6 + lp.len / 4); put(c, q.x + Math.sin(q.a) * 6, q.y - Math.cos(q.a) * 6, 1, 1, q.a + Math.PI, 'turtle', '<use href="#turtle"/>'); }
+  }
+}
+/* Fishers paddle about off their drying racks and cast a net now and then; reef gatherers wade in the shallows */
+function drawFishers(c, v, now){
+  for (const I of islands){
+    if (!lived(I) || !boxIn(I.box, v) || I.rahui) continue;
+    const st = I.settled ? staffOf(I) : null;
+    for (const b of I.buildings){
+      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || (st && KINDS[b.kind].crew && !st.staffed.has(b)) || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      const w = waterNear(I, b), dx = w.x - b.x, dy = w.y - b.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, t = reduced ? 0 : now / 1000 + b.id * 3.1;
+      if (b.kind === 'fisch'){
+        let C = {x:w.x + ux * 12, y:w.y + uy * 12}; if (landAt(I, C)) C = w;
+        const a = t / 7, x = C.x + Math.cos(a) * 9, y = C.y + Math.sin(a) * 4, left = -Math.sin(a) < 0;
+        put(c, x, y, 1, left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>');
+        const n = ((now + b.id * 1300) % 9000) / 1400;
+        if (!reduced && n < 1){ const nx = x + (left ? -6 : 6), r = 2 + n * 7; stroke(c, ellipse(nx, y + 1, r, r * .55), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
+      } else if (cam.z > PEOPLE_Z){
+        const sway = Math.sin(t / 3) * 5, x = w.x + ux * 7 - uy * sway, y = w.y + uy * 7 + ux * sway;
+        c.save(); c.translate(x, y); if (Math.cos(t / 3) < 0) c.scale(-1, 1);
+        blit(c, 'fig|' + figureLook(b.id * 31), () => figureArt(figureLook(b.id * 31))); blit(c, 'load|muschel', LOADS.muschel);
+        c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); c.restore();
+      }
+    }
+  }
+}
+const WADE = ellipse(0, .3, 3, 1.3);
+/* Now and then a whale surfaces in the open sea that the canoes have seen: its back, a spout, then the fluke as it dives */
+let whale = null, nextWhale = 0;
+function drawWhales(c, v, now){
+  if (reduced) return;
+  if (!whale && now > nextWhale){
+    nextWhale = now + 9000 + Math.random() * 14000;
+    for (let i = 0; i < 8; i++){
+      const p = {x:v.x0 + (v.x1 - v.x0) * (.15 + Math.random() * .7), y:v.y0 + (v.y1 - v.y0) * (.15 + Math.random() * .7)};
+      if (revealed(p) && islands.every(I => !boxIn(I.box, {x0:p.x - 50, y0:p.y - 50, x1:p.x + 50, y1:p.y + 50}))){ whale = {x:p.x, y:p.y, t0:now, dir:Math.random() < .5 ? -1 : 1}; break; }
+    }
+    if (!whale) nextWhale = now + 2500;   // no open water in sight yet, look again soon
+  }
+  if (!whale) return;
+  const t = (now - whale.t0) / 1000, k = clamp(.9 / cam.z, 1, 2.6);
+  if (t > 8){ whale = null; return; }
+  const x = whale.x + whale.dir * t * 3 * k, y = whale.y;
+  c.save(); c.translate(x, y); c.scale(k * whale.dir, k);
+  if (t < 5.6){ const up = Math.min(1, t / 1, (5.6 - t) / .8); c.globalAlpha = up; blit(c, 'whale', '<use href="#whale"/>'); if (t > 1.2 && t < 3.2){ c.globalAlpha = 1 - Math.abs(t - 2.2); c.translate(-6, -3); blit(c, 'spout', '<use href="#spout"/>'); } }
+  else { c.globalAlpha = Math.min(1, (8 - t) / .8); c.translate(-10, 0); blit(c, 'fluke', '<use href="#fluke"/>'); }
+  c.restore();
+}
+/* Cloud shadows drift over sea and land with the north wind; in the storm season they are rain showers */
+const CLOUD_T = 1100, PUFFS = [[0, 0, 1], [.55, -.18, .7], [-.6, .08, .62]];
+function drawWeather(c, v, now){
+  const rain = seasonOf().id === 'sturm', t = now / 1000, ox = t * 4, oy = t * 7, far = lod === 'far';   // far away one soft puff per cloud is enough
+  for (let ty = Math.floor((v.y0 - 200) / CLOUD_T); ty <= Math.floor((v.y1 + 200) / CLOUD_T); ty++) for (let tx = Math.floor((v.x0 - 200) / CLOUD_T); tx <= Math.floor((v.x1 + 200) / CLOUD_T); tx++){
+    for (let k = 0; k < 3; k++){
+      const h = Math.abs(Math.sin(tx * 12.9898 + ty * 78.233 + k * 37.719) * 43758.5453), r1 = h % 1, r2 = (h * 7.13) % 1, r3 = (h * 3.71) % 1;
+      const x = tx * CLOUD_T + ((r1 * CLOUD_T + ox) % CLOUD_T), y = ty * CLOUD_T + ((r2 * CLOUD_T + oy) % CLOUD_T), R = 60 + r3 * 70;
+      if (x + R * 1.6 < v.x0 || x - R * 1.6 > v.x1 || y + R < v.y0 || y - R > v.y1) continue;
+      // three soft puffs, dark in the middle and fading out at the edge
+      for (const [px, py, pr] of far ? [[0, 0, 1.15]] : PUFFS){
+        c.save(); c.translate(x + px * R, y + py * R); c.scale(1, .55);
+        const g = c.createRadialGradient(0, 0, 0, 0, 0, R * pr); g.addColorStop(0, rain ? 'rgba(22,34,44,.24)' : 'rgba(18,38,48,.12)'); g.addColorStop(.55, rain ? 'rgba(22,34,44,.15)' : 'rgba(18,38,48,.07)'); g.addColorStop(1, 'rgba(18,38,48,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(0, 0, R * pr, 0, TAU); c.fill(); c.restore();
+      }
+      if (rain && r3 > .35 && !far){
+        // streaks of rain, slanting with the wind
+        const p = new Path2D(), fall = (t * 60) % 14;
+        for (let i = 0; i < 26; i++){ const a = (i * 2.399) % TAU, d = Math.sqrt((i + .5) / 26) * R * .8, sx = x + Math.cos(a) * d * 1.3, sy = y + Math.sin(a) * d * .6 + ((fall + i * 5) % 14) - 7; p.moveTo(sx, sy); p.lineTo(sx + 1.6, sy + 6); }
+        stroke(c, p, '#EAF2F4', .8, null, 'round', .55);
+      }
+    }
+  }
 }
 /* A dugout paddles from its jetty to each place it serves and back, one after the other */
 function waterNear(I, b){
@@ -361,7 +480,7 @@ function drawDugouts(c, v, now){
 }
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v){
-  const vis = walkers.filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map();
+  const vis = [...walkers, ...critters].filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map();
   // buildings standing in front of someone are drawn again over them, so people can walk behind a house
   for (const w of vis){
     const I = isl(w.isl);
@@ -374,15 +493,25 @@ function drawPeople(c, v){
   for (const b of near.keys()) items.push([b.y, b]);
   items.sort((a, b) => a[0] - b[0]);
   for (const [, w] of items){
+    if (w.home){ drawCritter(c, w); continue; }
     if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
     if (w.st != null){ drawTree(c, w); continue; }
-    const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * .7 : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
+    const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
     c.save(); c.translate(w.x, w.y + bob); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
+    // someone sitting on a mat in front of a house; children are smaller
+    if (w.sit && !w.moving){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
+    if (w.child) c.scale(.7, .7);
     if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
     blit(c, 'fig|' + w.look, () => figureArt(w.look));
     if (w.carry && !LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
     c.restore();
   }
+}
+const MAT = roundRect(-3.2, -.9, 6.4, 1.8, .6);
+function drawCritter(c, a){
+  const hop = a.moving && !reduced ? -Math.abs(Math.sin(a.phase)) * (a.kind === 'chicken' ? .9 : .5) : 0;
+  c.save(); c.translate(a.x, a.y + hop); if (a.left) c.scale(-1, 1); if (a.kind === 'chicken' && a.peck > 0) c.rotate(.35);
+  blit(c, 'cr|' + a.kind, `<use href="#${a.kind}"/>`); c.restore();
 }
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
 const bubbleArt = inner => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.5" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9"/><path d="M-1.6-2.1L0 .6L1.6-2.1" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/><path d="M-1.5-2.4H1.5" stroke="#F4ECD8" stroke-width="1"/>${inner}`;
@@ -437,6 +566,13 @@ function drawTop(c, now){
   }
   for (const s of ships){
     if (!ptIn(s.x, s.y, v) || (!s.own && !revealed(s))) continue;
+    // dolphins leap alongside a canoe under way
+    if (!far && !reduced && s.state === 'sail') for (let k = 0; k < 2; k++){
+      const t = (now + s.id * 777 + k * 2300) % 4600; if (t > 1200) continue;
+      const f = t / 1200, hx = s.hx || 1, hy = s.hy || 0, side = k ? 11 : -11, x = s.x + hx * (8 + f * 14) - hy * side, y = s.y + hy * (8 + f * 14) + hx * side - Math.sin(f * Math.PI) * 4;
+      put(c, x, y, 1, hx < 0 ? -1 : 1, (f - .5) * 1.1 * (hx < 0 ? -1 : 1), 'dolphin', '<use href="#dolphin"/>');
+      if (f > .85) stroke(c, ellipse(x + hx * 3, y + 4, 3, 1), '#F4ECD8', .6, [.5, .8], 'round', .8);
+    }
     c.save(); c.translate(s.x, s.y); c.scale(ks, ks);
     if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; stroke(c, ellipse(0, 1, 16 + 3 * t, 8 + 1.5 * t), '#F4ECD8', 2.4, [.1, 4], 'round', .95); }
     c.save();
