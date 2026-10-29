@@ -53,7 +53,11 @@ function ghostRender(){
   const m = $('placeMsg'); m.textContent = !ok ? msg : few ? `Nur ${n} von ${K.near.n} ${NEAR_PL[K.near.kind]} in der Nähe, so steht sie still.` : K.near ? `Passt, ${n} ${NEAR_PL[K.near.kind]} in der Nähe.` :
     bare ? (tn ? `Nur ${tn} Bäume in Reichweite.` : 'Hier stehen keine Bäume in Reichweite.') : K.trees ? `Passt, ${tn} Bäume in Reichweite.` : mode === 'move' ? 'Passt.' : 'Passt. Tippe auf Bauen.';
   if (ok && bare) placing.msg = m.textContent;
-  m.classList.toggle('bad', !ok || few || bare);
+  // a workplace on an islet where nobody lives needs a dugout from a jetty
+  const homes = new Set(I.buildings.filter(b => b.kind === 'haus' && !b.bt).map(b => landOf(I, b))), L = landOf(I, placing);
+  const away = ok && I.atoll && K.crew && homes.size && L >= 0 && !homes.has(L), lg = lagoonOf(I), spare = lg.jetties.length * KINDS.steg.serves - lg.need.length;
+  if (away && spare <= 0) m.textContent = 'Auf diesem Motu wohnt niemand. Ohne Kanusteg kommt keiner zur Arbeit.';
+  m.classList.toggle('bad', !ok || few || bare || (away && spare <= 0));
   $('placeOk').disabled = !ok || (mode === 'place' && !canPay(I, costOf(placing.kind, I)));
   requestDraw();
 }
@@ -77,7 +81,9 @@ function startSpot(I, K){
   // woodcutters and planters go to the edge of the forest closest to the village
   if ((K.trees || K.plants) && I.trees.some(t => t.st !== 1)){ const t = pick(I.trees.filter(q => q.st !== 1)), d = Math.hypot(vc.x - t.x, vc.y - t.y) || 1; return {x:t.x + (vc.x - t.x) / d * 22, y:t.y + (vc.y - t.y) / d * 22}; }
   // next to the plant that has the most of its kind around it, nearest to the village if several are equal
-  if (K.near){ const src = I.buildings.filter(b => b.kind === K.near.kind); if (src.length){
+  // on an atoll, workplaces go on the islet where people live if the plants there are enough; others need a dugout
+  const home = new Set(I.buildings.filter(b => b.kind === 'haus' && !b.bt).map(b => landOf(I, b)));
+  if (K.near){ let src = I.buildings.filter(b => b.kind === K.near.kind); const local = src.filter(b => home.has(landOf(I, b)) && nearCount(I, K.near.kind, b.x, b.y, K.near.r * .7) >= K.near.n); if (local.length) src = local; if (src.length){
     const score = q => nearCount(I, K.near.kind, q.x, q.y, K.near.r * .7) * 1000 - Math.hypot(q.x - vc.x, q.y - vc.y);
     const c = src.reduce((m, q) => score(q) > score(m) ? q : m); return {x:c.x + 12, y:c.y + 6}; } }
   return vc;
@@ -146,7 +152,7 @@ function needsMarkup(I){
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
   if (nd.list.some(n => n.k === 'nahrung' && n.state === 'out')) h += `<p class="sub">Ohne Grundnahrung ziehen nach und nach Leute fort.</p>`;
   if (nd.next && nd.next.lvl < 3) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
-  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Töpfe und Matten reichen und Tapa, Schweine und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
+  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Töpfe, Matten und Meeresfrüchte reichen und Tapa, Schweine, Kava und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
   return h;
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
@@ -213,10 +219,11 @@ function renderSheet(){
       h += K.plant ? `<p><b>Wächst noch.</b> In etwa ${secs} Sekunden ist sie groß.</p>` : activeSites(I).includes(b) ? `<p><b>Baustelle, ${f} Prozent.</b> ${SITE_CREW} Leute bauen noch etwa ${secs} Sekunden.</p>` : `<p><b>Baustelle, ${f} Prozent.</b> Sie wartet auf Bauleute. Gleichzeitig wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} gebaut, je 10 Bewohner an einer mehr, mit je ${SITE_CREW} Leuten.</p>`;
       h += `<span class="mbar big"><i style="width:${f}%"></i></span>`;
     }
+    if (K.boost && !b.bt) h += `<p class="sub">${tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht die Arbeit schnell. ${K.boost.k === 'schnur' ? 'Ein Netz hält für' : 'Ein Beil hält für'} ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}. ${K.boost.k === 'schnur' ? 'Schnur kommt von den Seilereien der Atolle.' : 'Steinbeile macht die Beilwerkstatt.'}`}</p>`;
     if (K.crew && !b.bt) h += `<p class="sub">${staffOf(I).staffed.has(b) ? `Hier ${K.crew === 1 ? 'arbeitet eine Person' : `arbeiten ${K.crew} Leute`}.` : `Hier fehlen ${K.crew === 1 ? 'eine Person' : K.crew + ' Leute'}.`}${K.trees ? ` ${treesNear(I, b.x, b.y, K.trees.r).length} Bäume in Reichweite.` : ''}</p>`;
     if (K.plants && !b.bt) h += `<p>${b.idle ? `<b>Steht still.</b> ${b.idle.text}` : '<b>Arbeitet.</b>'} Setzt alle ${K.every * TICK / 1000} Sekunden einen jungen Baum. Ein Baum wächst in etwa ${Math.round(GROW_TICKS * TICK / 60000)} Minuten heran.</p>`;
     if (K.prod && !b.bt){
-      const w = b.idle || workState(I, b), rate = PER_MIN / K.every;
+      const w = b.idle || workState(I, b), rate = PER_MIN / K.every / pace(I, K);
       h += `<p>${w ? `<b>Steht still.</b> ${w.text}` : '<b>Arbeitet.</b>'} Macht ${perMin(rate)} ${GN[K.prod]} pro Minute${K.use ? `, braucht ${Object.entries(K.use).map(([k, v]) => `${perMin(rate * v)} ${GN[k]}`).join(' und ')}` : ''}.</p>`;
     }
     if (K.roof) h += `<p class="sub">${age < .34 ? 'Frisches Dach' : age < .8 ? 'Das Dach wird grau' : 'Altes Dach, bald erneuern'}</p>`;

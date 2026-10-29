@@ -14,29 +14,29 @@ const DEPOSITS = {
   obsidian:{n:'Obsidian', where:'Obsidian gibt es nur am Hang eines Vulkans.'}
 };
 /* prod: what it makes, every: ticks per piece, use: what each piece uses up, bt: ticks to build (or to grow, for plants),
-   crew: people it needs to work; while they work there they do nothing else, water: stands in the lagoon, inland: least distance from the beach,
+   crew: people it needs to work; while they work there they do nothing else, boost: a tool that wears out (k, used up every per pieces); without it the work is slow times slower, water: stands in the lagoon, inland: least distance from the beach,
    dep: deposit within depR, near: at least n of a kind within r (plants or a garden), coast: on the beach,
    beauty: how much it adorns the village */
 const KINDS = {
-  faeller:{n:'Holzfäller', s:'Holz', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, prod:'holz', every:2, trees:{r:80}, roof:true, info:'Fällt Bäume in der Nähe und bringt das Holz ins Lager. Ein gefällter Baum wächst nur langsam nach.', vb:'-18 -17 36 21'},
+  faeller:{n:'Holzfäller', s:'Holz', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, prod:'holz', every:2, trees:{r:80}, boost:{k:'beile', per:20, slow:1.5}, roof:true, info:'Fällt Bäume in der Nähe und bringt das Holz ins Lager. Mit Steinbeilen geht es schneller, ein Beil hält für 20 Holz. Ein gefällter Baum wächst nur langsam nach.', vb:'-18 -17 36 21'},
   pflanzer:{n:'Baumpflanzer', s:'Pflanzer', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, every:4, plants:{r:70}, roof:true, info:'Setzt junge Bäume auf Baumstümpfe und an den Waldrand in der Nähe. Wo Bäume stehen, kann nichts gebaut werden.', vb:'-18 -17 36 21'},
   haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], bt:12, cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'Ein Zuhause für 4 Menschen, im Häuptlingsdorf für 6.', vb:'-17 -29 34 33'},
   taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist die wichtigste Grundnahrung der hohen Inseln.', vb:'-13 -11 26 22'},
   pulaka:{n:'Pulakagrube', s:'Pulaka', on:['atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'nahrung', every:3, inland:9, info:'Eine tiefe Grube bis hinab zum Süßwasser im Sand. Darin wächst Sumpftaro, die Grundnahrung der Atolle. Braucht Platz in der Mitte eines Motus.', vb:'-12 -10 24 16'},
-  fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:1, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:3, coast:true, info:'Fischer fahren mit Netz und Speer in die Lagune, hier trocknet der Fang. Steht am Strand.', vb:'-12 -14 26 18'},
+  fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:1, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:3, boost:{k:'schnur', per:8, slow:2}, coast:true, info:'Fischer fahren mit Speer und Angel in die Lagune, hier trocknet der Fang. Mit Netzen aus Schnur fangen sie doppelt so viel, ein Netz hält für 8 Fische. Steht am Strand.', vb:'-12 -14 26 18'},
   riff:{n:'Riffsammler', s:'Riff', on:['hoch','atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:6, prod:'meeres', every:4, coast:true, roof:true, info:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Steht am Strand.', vb:'-17 -17 34 21'},
   reuse:{n:'Steinreuse', s:'Reuse', on:['hoch','atoll'], bt:10, cost:{holz:1, beile:1}, r:13, hy:2, prod:'fisch', every:5, water:true, info:'Ein Pfeil aus aufgeschichteten Steinen in der Lagune. Mit der Flut schwimmen Fische hinein und finden nicht mehr heraus. Ein Einbaum vom Kanusteg holt sie.', vb:'-16 -9 32 18'},
   steg:{n:'Kanusteg', s:'Steg', on:['hoch','atoll'], bt:8, cost:{holz:3}, r:9, hy:3, coast:true, serves:4, info:'Ein Steg mit Einbaum. Er bringt Leute zu bis zu 4 Pfahlhäusern, Reusen oder Arbeitsplätzen auf einem anderen Motu.', vb:'-6 -9 36 16'},
-  toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:3, use:{holz:1}, dep:'ton', depR:60, roof:true, info:'Formt Töpfe aus Ton und brennt sie mit Holz. Muss nah am Ton stehen.', vb:'-16 -17 34 21'},
-  beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'beile', every:4, dep:'basalt', depR:60, roof:true, info:'Schleift Steinbeile aus Basalt. Muss nah am Felsen stehen.', vb:'-18 -17 36 21'},
-  klingen:{n:'Klingenschläger', s:'Klingen', on:['hoch'], crew:2, bt:14, cost:{holz:3}, r:11, hy:6, prod:'klingen', every:5, dep:'obsidian', depR:60, roof:true, info:'Schlägt scharfe Klingen aus Obsidian. Nur am Vulkan.', vb:'-18 -17 36 21'},
-  flecht:{n:'Flechthütte', s:'Matten', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'matten', every:3, near:{kind:'pandanus', n:2, r:60}, roof:true, info:'Flicht Matten aus Pandanusblättern, für Segel und zum Schlafen. Braucht 2 Pandanus in der Nähe.', vb:'-17 -17 34 21'},
-  schnur:{n:'Seilerei', s:'Schnur', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'schnur', every:3, near:{kind:'palme', n:3, r:60}, roof:true, info:'Dreht Schnur aus Kokosfasern. Braucht 3 Kokospalmen in der Nähe.', vb:'-14 -17 30 21'},
-  schmuck:{n:'Schmuckschleiferei', s:'Schmuck', on:['atoll'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'schmuck', every:6, use:{klingen:1}, coast:true, roof:true, info:'Schleift Armringe aus Conus-Muscheln vom Riff. Zum Bohren braucht sie Klingen. Steht am Strand.', vb:'-17 -17 36 21'},
+  toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:8, use:{holz:1}, dep:'ton', depR:60, roof:true, info:'Formt Töpfe aus Ton und brennt sie mit Holz. Muss nah am Ton stehen.', vb:'-16 -17 34 21'},
+  beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'beile', every:8, dep:'basalt', depR:60, roof:true, info:'Schleift Steinbeile aus Basalt. Muss nah am Felsen stehen.', vb:'-18 -17 36 21'},
+  klingen:{n:'Klingenschläger', s:'Klingen', on:['hoch'], crew:2, bt:14, cost:{holz:3}, r:11, hy:6, prod:'klingen', every:10, dep:'obsidian', depR:60, roof:true, info:'Schlägt scharfe Klingen aus Obsidian. Nur am Vulkan.', vb:'-18 -17 36 21'},
+  flecht:{n:'Flechthütte', s:'Matten', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'matten', every:8, near:{kind:'pandanus', n:2, r:60}, roof:true, info:'Flicht Matten aus Pandanusblättern, für Segel und zum Schlafen. Braucht 2 Pandanus in der Nähe.', vb:'-17 -17 34 21'},
+  schnur:{n:'Seilerei', s:'Schnur', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'schnur', every:6, near:{kind:'palme', n:3, r:60}, roof:true, info:'Dreht Schnur aus Kokosfasern. Braucht 3 Kokospalmen in der Nähe.', vb:'-14 -17 30 21'},
+  schmuck:{n:'Schmuckschleiferei', s:'Schmuck', on:['atoll'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'schmuck', every:20, use:{klingen:1}, coast:true, roof:true, info:'Schleift Armringe aus Conus-Muscheln vom Riff. Zum Bohren braucht sie Klingen. Steht am Strand.', vb:'-17 -17 36 21'},
   gaergrube:{n:'Gärgrube', s:'Grube', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:9, hy:2, prod:'proviant', every:4, use:{nahrung:1}, near:{kind:'baum', n:2, r:70}, info:'Brotfrucht gärt hier unter Blättern und hält monatelang. Proviant für weite Fahrten. Braucht 2 Brotfruchtbäume in der Nähe.', vb:'-12 -9 25 14'},
   garten:{n:'Maulbeergarten', s:'Maulbeer', on:['hoch'], bt:6, cost:{holz:1}, r:10, hy:2, info:'Aus der Rinde des Papiermaulbeerbaums entsteht Tapa. Die Klopfhütte muss daneben stehen.', vb:'-12 -10 24 17'},
-  klopf:{n:'Klopfhütte', s:'Tapa', on:['hoch'], crew:2, bt:12, cost:{holz:2}, r:11, hy:6, prod:'tapa', every:4, near:{kind:'garten', n:1, r:60}, roof:true, info:'Klopft Rinde zu Tapa, dem Stoff für Kleidung. Braucht einen Maulbeergarten in der Nähe.', vb:'-17 -17 36 21'},
-  pferch:{n:'Schweinepferch', s:'Schweine', on:['hoch'], crew:1, bt:12, cost:{holz:3}, r:12, hy:4, prod:'schweine', every:8, use:{nahrung:2}, info:'Schweine fressen Taro und Kokos. Sie sind das Festessen.', vb:'-14 -12 28 18'},
+  klopf:{n:'Klopfhütte', s:'Tapa', on:['hoch'], crew:2, bt:12, cost:{holz:2}, r:11, hy:6, prod:'tapa', every:10, near:{kind:'garten', n:1, r:60}, roof:true, info:'Klopft Rinde zu Tapa, dem Stoff für Kleidung. Braucht einen Maulbeergarten in der Nähe.', vb:'-17 -17 36 21'},
+  pferch:{n:'Schweinepferch', s:'Schweine', on:['hoch'], crew:1, bt:12, cost:{holz:3}, r:12, hy:4, prod:'schweine', every:16, use:{nahrung:2}, info:'Schweine fressen Taro und Kokos. Sie sind das Festessen.', vb:'-14 -12 28 18'},
   werft:{n:'Kanuhaus', s:'Kanuhaus', on:['hoch'], bt:18, cost:{holz:4}, r:16, hy:6, max:1, coast:true, roof:true, info:'Hier entstehen die Kanus. Es steht am Strand.', vb:'-21 -19 44 24'},
   pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], bt:14, cost:{holz:3}, r:11, hy:18, cap:4, water:true, roof:true, info:'Ein Zuhause in der Lagune, das kein Land braucht. Ein Einbaum vom Kanusteg bringt die Leute an Land.', vb:'-17 -34 34 37'},
   speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:10, cost:{holz:2}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
@@ -44,7 +44,7 @@ const KINDS = {
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:20, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Kokosfasern für die Seilerei.', vb:'-13 -25 26 28'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:25, cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Trägt Brotfrucht, frisch zum Essen oder für die Gärgrube.', vb:'-10 -21 20 23'},
   pandanus:{n:'Pandanus', s:'Pandanus', on:['atoll'], bt:15, cost:{}, r:5, hy:9, beach:true, plant:true, info:'Die Blätter werden zu Matten geflochten.', vb:'-10 -21 20 23'},
-  kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'kava', every:8, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
+  kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'kava', every:12, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
   // things that only make the village beautiful
   hibiskus:{n:'Hibiskus', s:'Hibiskus', on:['hoch','atoll'], bt:8, cost:{}, r:5, hy:6, plant:true, beauty:1, info:'Rote Blüten für Haar und Kränze.', vb:'-9 -14 18 16'},
   blumen:{n:'Blumenbeet', s:'Blumen', on:['hoch','atoll'], bt:5, cost:{holz:1}, r:7, hy:3, beauty:2, info:'Duftende Tiare und Hibiskus, eingefasst mit Holz.', vb:'-11 -9 22 14'},
@@ -72,12 +72,13 @@ const VOYAGE_DAY = 3, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 pro
    a chief's village (level 3) also bark cloth, pigs and shell valuables. Pots come from high islands, mats from atolls. */
 const NEEDS = [
   {k:'nahrung', lvl:1, from:0, rate:1, hint:{hoch:'Lege Tarofelder an oder pflanze Brotfruchtbäume.', atoll:'Baue Pulakagruben in der Mitte eines Motus.'}},
-  {k:'fisch', lvl:1, from:10, rate:.3, hint:{hoch:'Baue ein Fischgestell am Strand oder eine Steinreuse in der Lagune.', atoll:'Baue ein Fischgestell am Strand oder eine Steinreuse in der Lagune.'}},
-  {k:'toepfe', lvl:2, from:20, rate:.1, hint:{hoch:'Baue eine Töpferei am Ton.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
-  {k:'meeres', lvl:2, from:25, rate:.2, hint:{hoch:'Baue einen Riffsammler am Strand.', atoll:'Baue einen Riffsammler am Strand.'}},
-  {k:'matten', lvl:2, from:30, rate:.1, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Baue eine Flechthütte bei den Pandanus.'}},
-  {k:'tapa', lvl:3, from:40, rate:.1, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln. Schick es mit einem Kanu her.'}},
+  {k:'fisch', lvl:1, from:10, rate:.3, hint:{hoch:'Baue ein Fischgestell am Strand oder eine Steinreuse in der Lagune. Schnur für Netze verdoppelt den Fang.', atoll:'Baue ein Fischgestell am Strand oder eine Steinreuse in der Lagune. Schnur für Netze verdoppelt den Fang.'}},
+  {k:'toepfe', lvl:2, from:20, rate:.07, hint:{hoch:'Baue eine Töpferei am Ton.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
+  {k:'meeres', lvl:2, from:25, rate:.15, hint:{hoch:'Baue einen Riffsammler am Strand.', atoll:'Baue einen Riffsammler am Strand.'}},
+  {k:'matten', lvl:2, from:30, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Baue eine Flechthütte bei den Pandanus.'}},
+  {k:'tapa', lvl:3, from:40, rate:.06, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln. Schick es mit einem Kanu her.'}},
   {k:'schweine', lvl:3, from:40, rate:.04, hint:{hoch:'Baue einen Schweinepferch.', atoll:'Schweine kommen von hohen Inseln. Schick sie mit einem Kanu her.'}},
+  {k:'kava', lvl:3, from:40, rate:.03, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Kavahain.', atoll:'Kava wächst auf hohen Inseln. Schick sie mit einem Kanu her.'}},
   {k:'schmuck', lvl:3, from:40, rate:.02, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt als Gegengabe von einem Clan vom Riff.', atoll:'Baue eine Schmuckschleiferei am Strand. Sie braucht Klingen.'}}
 ];
 const LEVEL_NAMES = ['', 'Weiler', 'Dorf', 'Häuptlingsdorf'];

@@ -155,7 +155,7 @@ mit mehr Knoten geht es schneller. Bei einem Clan wird die Ladung zur Gabe. Steu
 
 Hibiskus, Blumenbeet, Muschelweg, Fackel, Ahnenpfosten (wie die Gesichter auf der Lapita-Keramik), Schlitztrommel und
 Tanzplatz. Jedes Stück hat einen Schmuckwert. Alle halbe Minute bringt die Schönheit des Dorfes etwas Ansehen, so weit
-die Bewohner sie genießen können. Ein Häuptlingsdorf braucht Schönheit 10. Beim Fest der Plejaden zählt sie mit.
+die Bewohner sie genießen können, höchstens 2 pro Minute und Insel. Ein Häuptlingsdorf braucht Schönheit 10. Beim Fest der Plejaden zählt sie mit.
 
 ## Das Jahr
 
@@ -193,25 +193,30 @@ Vierzehn Waren: Grundnahrung, Fisch, Meeresfrüchte, Holz, Proviant, Töpfe, Ste
 Schweine, Kava, Muschelschmuck.
 Ketten haben höchstens drei Glieder.
 
-| Gebäude | Insel | Braucht | Macht |
-| --- | --- | --- | --- |
-| Holzfäller | hoch | Bäume in Reichweite | Holz |
-| Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | junge Bäume |
-| Tarofeld, Brotfruchtbaum | hoch | | Grundnahrung |
-| Pulakagrube | Atoll, in der Mitte eines Motus | | Grundnahrung |
-| Fischgestell | am Strand | | Fisch |
-| Steinreuse | in der Lagune | Einbaum, 1 Steinbeil beim Bau | Fisch |
-| Riffsammler | am Strand | | Meeresfrüchte |
-| Gärgrube | hoch | 2 Brotfruchtbäume daneben, Grundnahrung | Proviant |
-| Töpferei | hoch | Ton in der Nähe, Holz | Töpfe |
-| Beilwerkstatt | hoch | Basaltfelsen in der Nähe | Steinbeile |
-| Klingenschläger | Vulkan | Obsidian in der Nähe | Klingen |
-| Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | Tapa |
-| Schweinepferch | hoch | Grundnahrung als Futter | Schweine |
-| Flechthütte | Atoll | 2 Pandanus daneben | Matten |
-| Seilerei | Atoll | 3 Kokospalmen daneben | Schnur |
-| Schmuckschleiferei | Atoll, am Strand | Klingen | Muschelschmuck |
-| Kavagarten | hoch | | Kava |
+| Gebäude | Insel | Braucht | Macht pro Minute | reicht für etwa |
+| --- | --- | --- | --- | --- |
+| Holzfäller | hoch | Bäume in Reichweite, Steinbeile machen ihn schneller (1 Beil je 20 Holz) | 15 Holz, ohne Beile 10 | |
+| Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 7,5 junge Bäume | einen Holzfäller |
+| Tarofeld | hoch | | 15 Grundnahrung | 15 Menschen |
+| Brotfruchtbaum | hoch | | 5 Grundnahrung, je nach Jahreszeit | 5 Menschen |
+| Pulakagrube | Atoll, in der Mitte eines Motus | | 10 Grundnahrung | 10 Menschen |
+| Fischgestell | am Strand | Schnur für Netze verdoppelt den Fang (1 Schnur je 8 Fisch) | 10 Fisch, ohne Netze 5 | 33, ohne Netze 16 |
+| Steinreuse | in der Lagune | Einbaum, 1 Steinbeil beim Bau | 6 Fisch | 20 |
+| Riffsammler | am Strand | | 7,5 Meeresfrüchte | 50 |
+| Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Grundnahrung je Proviant | 7,5 Proviant | |
+| Töpferei | hoch | Ton in der Nähe, 1 Holz je Topf | 3,75 Töpfe | 53 |
+| Beilwerkstatt | hoch | Basaltfelsen in der Nähe | 3,75 Steinbeile | 5 Holzfäller |
+| Klingenschläger | Vulkan | Obsidian in der Nähe | 3 Klingen | 2 Schmuckschleifereien |
+| Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | 3 Tapa | 50 |
+| Schweinepferch | hoch | 2 Grundnahrung je Schwein | 1,9 Schweine | 47 |
+| Flechthütte | Atoll | 2 Pandanus daneben | 3,75 Matten | 62 |
+| Seilerei | Atoll | 3 Kokospalmen daneben | 5 Schnur | 4 Fischgestelle |
+| Schmuckschleiferei | Atoll, am Strand | 1 Klinge je Ring | 1,5 Muschelschmuck | 75 |
+| Kavagarten | hoch | | 2,5 Kava | 83 |
+
+Jede Werkstatt reicht für ein Dorf von etwa 50 bis 80 Menschen. Wer weiter wächst, braucht eine zweite, also mehr
+Arbeitskräfte, mehr Platz und mehr Handel. Schnur und Steinbeile werden dauerhaft verbraucht: Atolle liefern Schnur für die
+Netze der hohen Inseln, die hohen Inseln Beile und Holz.
 
 - **Vorkommen:** Ton liegt am Bach, Basalt an den grauen Felsen, Obsidian nur am Vulkan. Beim Bauen zeigen Ringe,
   wo sie liegen. Diese Rohstoffe werden nicht gelagert, die Werkstatt muss daneben stehen.
@@ -225,8 +230,8 @@ Ketten haben höchstens drei Glieder.
 | Stufe | Ab | Braucht pro Bewohner und Minute |
 | --- | --- | --- |
 | Weiler | Anfang | Grundnahrung 1, ab 10 Bewohnern Fisch 0,3 |
-| Dorf | 20 Bewohner | dazu Töpfe 0,1, ab 25 Bewohnern Meeresfrüchte 0,2, ab 30 Bewohnern Matten 0,1 |
-| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Töpfe und Matten reichen, Tapa, Schweine und Schmuck im Lager | dazu Tapa 0,1, Schweine 0,04, Muschelschmuck 0,02 |
+| Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 25 Bewohnern Meeresfrüchte 0,15, ab 30 Bewohnern Matten 0,06 |
+| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Töpfe, Matten und Meeresfrüchte reichen, Tapa, Schweine, Kava und Schmuck im Lager | dazu Tapa 0,06, Schweine 0,04, Kava 0,03, Muschelschmuck 0,02 |
 
 Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen geschnitzte Pfosten und Muschelschmuck.
 Fehlt dort 30 Takte lang etwas, wird es wieder ein Dorf, und die Leute ziehen nach und nach aus.

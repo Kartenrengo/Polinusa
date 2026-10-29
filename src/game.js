@@ -206,12 +206,23 @@ function workState(I, b){
 }
 /* ---------- needs: what each island uses, makes and lacks, per minute */
 const PER_MIN = 60000 / TICK;
+/* A tool that wears out: with it the work goes at full speed, without it slower */
+const tooled = (I, K) => !K.boost || (I.stock[K.boost.k] || 0) > 0;
+const pace = (I, K) => tooled(I, K) ? 1 : K.boost.slow;
 function makeRate(I, k){
   let m = 0;
-  for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every; }
+  for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !b.bt && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every / pace(I, K); }
   return m;
 }
-function workUse(I, k){ let u = 0; for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.use && K.use[k] && !(b.idle && b.idle.why === 'near')) u += PER_MIN / K.every * K.use[k]; } return u; }
+function workUse(I, k){
+  let u = 0;
+  for (const b of I.buildings){
+    const K = KINDS[b.kind]; if (b.bt || (b.idle && b.idle.why !== 'full')) continue;
+    if (K.use && K.use[k]) u += PER_MIN / K.every * K.use[k];
+    if (K.boost && K.boost.k === k && tooled(I, K)) u += PER_MIN / K.every / K.boost.per;
+  }
+  return u;
+}
 const needActive = (I, N) => N.lvl < 3 ? I.pop >= N.from : I.lvl === 3;
 function needsOf(I){
   const list = NEEDS.filter(N => needActive(I, N)).map(N => {
@@ -265,12 +276,13 @@ function econ(){
     if (working.size || I.buildings.some(b => b.bt)) invalidate();
     for (const b of I.buildings){
       const K = KINDS[b.kind]; if (!(K.prod || K.plants) || b.bt) continue;
-      const every = seasonalEvery(I, b, K); if (!every || tick % every) continue;
+      const every = Math.round(seasonalEvery(I, b, K) * pace(I, K)); if (!every || tick % every) continue;
       b.idle = workState(I, b); if (b.idle) continue;
       if (K.plants){ if (!plantTree(I, b)) b.idle = {why:'space', text:'In der Nähe ist kein Platz mehr für junge Bäume.'}; continue; }
       if (K.use) pay(I, K.use);
       if (K.trees) fellTree(I, b);
       if (K.prod === 'fisch') stats.fisch++;
+      if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }   // the net tears, the adze breaks
       add(K.prod, 1);
     }
     growTrees(I);
@@ -290,8 +302,8 @@ function econ(){
     if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; }
   }
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
-  // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it
-  if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6);
+  // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
+  if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
   answerGifts(); stepYards(); feedCrews(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
