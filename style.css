@@ -93,3 +93,19 @@ button:focus-visible{outline:3px dotted var(--ochre);outline-offset:2px}
 .help{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15px;max-width:62ch}
 .knotsline{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
 
+/* Task card: floats just above the bottom band, the next step is always in thumb reach */
+.quest{position:absolute;left:0;right:0;margin:0 auto;width:min(440px,calc(100% - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)));z-index:4;display:grid;gap:2px;padding:8px 12px 9px;border:2px solid var(--brown);border-radius:8px;background-color:var(--cloth-hi);background-image:var(--dots);background-size:8px 8px;box-shadow:0 3px 0 rgba(43,29,20,.3);text-align:left;color:var(--ink);cursor:pointer;font:500 14px/1.25 var(--font-ui)}
+.quest .q-t{font:800 17px/1.15 var(--font-name)}
+.quest .q-d{font-size:14px;color:var(--muted)}
+.q-foot{display:flex;align-items:center;gap:8px;margin-top:3px}
+.q-bar{flex:1;height:7px;border:1.5px solid var(--brown);border-radius:4px;background:var(--cream);overflow:hidden}
+.q-bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
+.q-p{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.quest.done{animation:qdone .9s ease-out}
+@keyframes qdone{0%{background-color:var(--turmeric);transform:translateY(-4px)}100%{transform:none}}
+/* Build bar: a dot on newly unlocked buildings, a pulse on the one a task points to */
+.bbtn{position:relative}
+.bbtn.new::after{content:"";position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:var(--ochre);border:1.5px solid var(--cloth-hi)}
+.bbtn.hint{border-style:solid;border-color:var(--ochre);background:var(--turmeric);animation:hint 1s ease-in-out 4}
+@keyframes hint{50%{transform:translateY(-4px);box-shadow:0 0 0 3px var(--ochre)}}
+@media (prefers-reduced-motion:reduce){.quest.done,.bbtn.hint{animation:none}.q-bar i{transition:none}}

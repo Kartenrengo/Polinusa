@@ -25,6 +25,8 @@ function measure(){
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
   const t = topH + 8; $('compass').style.top = t + 'px'; $('zoomctl').style.top = t + 'px'; $('toast').style.top = (topH + 10) + 'px';
+  $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
+  if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
 const zMin = () => clamp(Math.min(vw / (W * 1.05), vh / (H * .9)), .1, .4), zMax = 4.5;
 const clampZ = z => clamp(z, zMin(), zMax);
@@ -118,7 +120,10 @@ const ellipse = (x, y, rx, ry) => { const p = new Path2D(); p.ellipse(x, y, rx, 
 
 /* ---------- base layer: sea, islands, trade cords, buildings */
 const KNOT = '<ellipse rx="4.6" ry="5.4" fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"/><path d="M-1.4-2.6q1.6 2.6.2 5.2" fill="none" stroke="#C99A62" stroke-width=".8"/>';
-const VILLAGE = '<use href="#hw" fill="#8F8574" transform="translate(-9 2)"/><use href="#hr" fill="#C99A50" transform="translate(9 3) scale(.9)"/><use href="#hw" fill="#DDB060" transform="translate(0 8) scale(.9)"/>';
+/* Far away a village is one small picture that grows with it: one, two or three roofs */
+const VILLAGE = ['<use href="#hw" fill="#DDB060"/>',
+  '<use href="#hw" fill="#8F8574" transform="translate(-6 2)"/><use href="#hr" fill="#DDB060" transform="translate(6 5) scale(.9)"/>',
+  '<use href="#hw" fill="#8F8574" transform="translate(-9 2)"/><use href="#hr" fill="#C99A50" transform="translate(9 3) scale(.9)"/><use href="#hw" fill="#DDB060" transform="translate(0 8) scale(.9)"/>'];
 /* An island is drawn if it is known or a clearing in the fog reaches it */
 const seen = I => I.discovered || fogHoles.some(h => ((h.cx - I.center.x) / (h.rx * 1.1 + (I.box.x1 - I.box.x0) / 2)) ** 2 + ((h.cy - I.center.y) / (h.ry * 1.1 + (I.box.y1 - I.box.y0) / 2)) ** 2 < 1);
 function islandPaths(I){
@@ -171,12 +176,13 @@ function drawObjects(c, area){
   if (lod === 'far'){
     for (const I of islands){
       if (!I.settled) continue; const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) continue;
-      put(c, hs.reduce((t, b) => t + b.x, 0) / hs.length, hs.reduce((t, b) => t + b.y, 0) / hs.length, 2.6, 1, 0, 'village', VILLAGE);
+      const n = hs.length < 3 ? 0 : hs.length < 7 ? 1 : 2;
+      put(c, hs.reduce((t, b) => t + b.x, 0) / hs.length, hs.reduce((t, b) => t + b.y, 0) / hs.length, 2.6, 1, 0, 'village' + n, VILLAGE[n]);
     }
     return;
   }
   const v = grow(area, 60), all = [], movingId = mode === 'move' && placing ? placing.moveId : 0;
-  for (const I of islands){ if (!I.settled || !boxIn(I.box, v)) continue; for (const b of I.buildings) if (ptIn(b.x, b.y, v)) all.push([b, I]); }
+  for (const I of islands){ if (!I.discovered || !boxIn(I.box, v)) continue; for (const b of I.buildings) if (ptIn(b.x, b.y, v)) all.push([b, I]); }
   all.sort((a, b) => a[0].y - b[0].y);
   for (const [b, I] of all) drawBuilding(c, b, I, b.id === movingId ? .25 : 1);
 }
@@ -252,10 +258,15 @@ function drawTop(c, now){
   for (const b of boats){
     if (b.x == null || !ptIn(b.x, b.y, view(120))) continue;
     c.save(); c.translate(b.x, b.y); c.scale(b.k, b.k); c.globalAlpha = b.alpha;
-    c.save(); if (b.q === 'NW' || b.q === 'SE') c.scale(-1, 1); const up = b.q === 'NE' || b.q === 'NW'; blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); c.restore();
-    const icons = Object.keys(b.cargo || {}).filter(k => b.cargo[k] > 0).slice(0, 3);
+    const small = b.kind === 'oc';
+    c.save();
+    if (small){ if (b.left) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
+    else { if (b.q === 'NW' || b.q === 'SE') c.scale(-1, 1); const up = b.q === 'NE' || b.q === 'NW'; blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
+    c.restore();
+    const icons = (b.people ? ['pop'] : []).concat(Object.keys(b.cargo || {}).filter(k => b.cargo[k] > 0)).slice(0, 3);
     if (lod !== 'far' && icons.length){
-      c.translate(10, -40); const p = roundRect(0, 0, icons.length * 15 + 8, 19, 4);
+      if (small) c.scale(1 / 1.5, 1 / 1.5);   // the bubble keeps its size on the smaller, scaled-up canoe
+      c.translate(small ? 6 : 10, small ? -34 : -40); const p = roundRect(0, 0, icons.length * 15 + 8, 19, 4);
       c.fillStyle = '#F4ECD8'; c.fill(p); stroke(c, p, '#3E2416', 1.3, [.1, 2.2], 'round');
       icons.forEach((k, i) => put(c, 3 + i * 15, 1.5, .8, 1, 0, 'ic-' + k, `<use href="#ic-${k}"/>`));
       stroke(c, BUBBLE_LINE, '#3E2416', 1);
@@ -278,7 +289,7 @@ function drawLabels(c){
   if (lod === 'near') return;
   const k = clamp(.95 / cam.z, .75, 2.6), v = view(200);
   for (const I of islands){
-    if (I.discovered){ if (ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.settled ? `${I.pop} Bewohner` : ''); }
+    if (I.discovered){ if (ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.settled ? `${I.pop} Bewohner` : 'unbewohnt'); }
     else if (lod === 'far') label(c, I.center.x, I.center.y + 44, k, 'Wolke über Land', '', CLOUD_FONT);
   }
 }

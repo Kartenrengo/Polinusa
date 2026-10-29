@@ -6,9 +6,10 @@ function expCurve(S, T){
   const A = S.harbor, B = T.harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1;
   return curve(A, {x:(A.x + B.x) / 2 + dy / len * 60, y:(A.y + B.y) / 2 - dx / len * 60}, B);
 }
+/* Small outriggers (oc) carry goods and settlers, the double canoe (dc) sails into the unknown */
 function addBoat(o){
-  const b = {...o, t0:o.t0 != null ? o.t0 : performance.now(), q:'NE', x:null, k:1, alpha:0};
-  if (b.exp) b.cv = expCurve(isl(b.from), isl(b.to));
+  const b = {kind:o.exp ? 'dc' : 'oc', ...o, t0:o.t0 != null ? o.t0 : performance.now(), q:'NE', x:null, k:1, alpha:0};
+  if (b.exp || b.settle) b.cv = expCurve(isl(b.from), isl(b.to));
   boats.push(b); requestDraw(); return b;
 }
 function sendBoat(t){
@@ -18,6 +19,15 @@ function sendBoat(t){
   const days = tripDays(r, t.from, t.to), w = windOf(t.from, t.to);
   addBoat({route:t.r, from:t.from, to:t.to, cargo:{...t.cargo}, dur:days * DAY * 1000, up:w.f === 3, reverse:r.a !== t.from});
   closeSheet(); updateHUD(); save(); toast(`Das Kanu fährt nach ${isl(t.to).name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.`);
+}
+function startSettlers(S, T){
+  if (T.settled || boats.some(b => b.settle && b.to === T.id)) return;
+  if (!canPay(S, SETTLE.cost)){ toast(`Zu wenig ${lacking(S, SETTLE.cost)}.`); return; }
+  if (S.pop < SETTLE.people + SETTLE.keep){ toast(`Es braucht ${SETTLE.people + SETTLE.keep} Bewohner.`); return; }
+  pay(S, SETTLE.cost); S.pop -= SETTLE.people;
+  const w = windOf(S.id, T.id), days = Math.max(1, Math.round(w.len / 372 * w.f));
+  addBoat({settle:true, from:S.id, to:T.id, people:SETTLE.people, cargo:{...SETTLE.cost}, dur:days * DAY * 1000, up:w.f === 3});
+  closeSheet(); updateHUD(); save(); toast(`Das Auslegerkanu bringt ${SETTLE.people} Siedler nach ${T.name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.`);
 }
 function startTarget(I){
   if (!islands.some(J => !J.discovered)){ toast('Gerade ist kein neues Land in Sicht.'); return; }
@@ -29,57 +39,66 @@ function startExpedition(T){
   const c = dy / len, f = c < -.35 ? 3 : c > .35 ? 1 : 2, days = Math.max(2, Math.round(len / 480 * f));
   S.canoe = false; invalidate();
   addBoat({exp:true, from:S.id, to:T.id, dur:days * DAY * 1000, up:f === 3, cargo:{}});
-  save(); toast(`Das Doppelkanu legt ab. Etwa ${days} Tage.`);
+  save(); measure(); toast(`Das Doppelkanu legt ab. Etwa ${days} Tage.`);
 }
-function settle(T, S, cv){
-  T.discovered = true; T.settled = true; T.pop = 5; T.stock = {holz:4, nahrung:6, toepfe:1, beile:0, matten:0, schnur:0};
+/* Settlers land: the island gets its first house, a cord to where they came from and, if it was unknown, a clearing in the fog */
+function settle(T, S, cv, o){
+  const unknown = !T.discovered;
+  T.discovered = true; T.settled = true; T.pop = o.pop; T.stock = {holz:0, nahrung:0, toepfe:0, beile:0, matten:0, schnur:0, ...o.stock};
   const r = rng(T.center.x | 0);
-  if (T.atoll){ T.lands.forEach(L => { for (let i = 0; i < 5; i++){ const q = L.poly[Math.floor(r() * L.poly.length)], c = T.atoll; const p = {x:q.x + (c.cx - q.x) * .06, y:q.y + (c.cy - q.y) * .06}; if (!check('palme', T, p.x, p.y)) addB(T, 'palme', p, {mirror:i % 2, scale:fx(.62 + r() * .15)}, tick - 60); } }); }
-  else { palmsAlong(T, r, 16);
-    for (let i = 0; i < 4; i++){ const a = r() * TAU, p = {x:T.center.x + Math.cos(a) * 64, y:T.center.y + Math.sin(a) * 46}; if (!check('baum', T, p.x, p.y)) addB(T, 'baum', p, {scale:fx(.9 + r() * .15)}, tick - 60); } }
-  const toward = {x:T.harbor.x + (T.center.x - T.harbor.x) * .25, y:T.harbor.y + (T.center.y - T.harbor.y) * .25};
-  const hs = findSpot(T, 'haus', toward); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
+  if (!T.buildings.length){
+    if (T.atoll) seedAtollPlants(T, r);
+    else { palmsAlong(T, r, 16);
+      for (let i = 0; i < 4; i++){ const a = r() * TAU, p = {x:T.center.x + Math.cos(a) * 64, y:T.center.y + Math.sin(a) * 46}; if (!check('baum', T, p.x, p.y)) addB(T, 'baum', p, {scale:fx(.9 + r() * .15)}, tick - 60); } }
+  }
+  const hs = findSpot(T, 'haus', homeSpot(T)); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
   routes.push({a:S.id, b:T.id, knots:1});
-  fogHoles.push({cx:T.center.x, cy:T.center.y, rx:fx((T.box.x1 - T.box.x0) / 2 + 140), ry:fx((T.box.y1 - T.box.y0) / 2 + 140), seed:T.center.x | 0});
-  for (let i = 1; i < 8; i++){ const q = curveAt(cv, i / 8); fogHoles.push({cx:fx(q.x), cy:fx(q.y), rx:150, ry:130, seed:i * 7 + 1}); }
-  renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save();
+  if (unknown){
+    fogHoles.push({cx:T.center.x, cy:T.center.y, rx:fx((T.box.x1 - T.box.x0) / 2 + 140), ry:fx((T.box.y1 - T.box.y0) / 2 + 140), seed:T.center.x | 0});
+    for (let i = 1; i < 8; i++){ const q = curveAt(cv, i / 8); fogHoles.push({cx:fx(q.x), cy:fx(q.y), rx:150, ry:130, seed:i * 7 + 1}); }
+  }
+  renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
   toast(`Auf ${T.name} steht das erste Haus. Eine neue Schnur führt nach ${S.name}.`, 4200);
 }
 function stepBoats(now){
   for (let i = boats.length - 1; i >= 0; i--){
-    const b = boats[i], p = clamp((now - b.t0) / b.dur, 0, 1), cv = b.exp ? b.cv : routes[b.route] && routeCurve(routes[b.route]);
+    const b = boats[i], p = clamp((now - b.t0) / b.dur, 0, 1), cv = b.cv || routes[b.route] && routeCurve(routes[b.route]);
     if (!cv){ boats.splice(i, 1); continue; }
     const s = b.reverse ? 1 - p : p, q = curveAt(cv, s), q2 = curveAt(cv, clamp(s + (b.reverse ? -.01 : .01), 0, 1));
     let dx = q2.x - q.x, dy = q2.y - q.y; const dl = Math.hypot(dx, dy) || 1; let x = q.x, y = q.y;
     // against the wind the canoe tacks: it zigzags and turns its bow
     if (b.up){ const cyc = Math.max(3, Math.round(cv.len / 70)), off = Math.sin(p * TAU * cyc) * 13 * Math.sin(p * Math.PI); x += -dy / dl * off; y += dx / dl * off; const tilt = Math.cos(p * TAU * cyc); dx += -dy / dl * tilt * dl * 1.4; dy += dx / dl * tilt * .2; }
-    b.q = dy < 0 ? (dx >= 0 ? 'NE' : 'NW') : (dx < 0 ? 'SW' : 'SE');
-    b.k = lod === 'far' ? clamp(.9 / cam.z, 1.6, 3.2) : (b.exp ? 1.25 : 1);
+    if (p < 1){ b.q = dy < 0 ? (dx >= 0 ? 'NE' : 'NW') : (dx < 0 ? 'SW' : 'SE'); b.left = dx < 0; }
+    const small = b.kind === 'oc';
+    b.k = lod === 'far' ? clamp(.9 / cam.z, 1.6, 3.2) * (small ? 1.3 : 1) : (b.exp ? 1.25 : small ? 1.5 : 1);
     b.x = x; b.y = y; b.alpha = p < .04 ? p / .04 : p > .96 ? (1 - p) / .04 : 1;
     if (p >= 1){
       boats.splice(i, 1);
-      if (b.exp) settle(isl(b.to), isl(b.from), b.cv);
-      else { const T = isl(b.to), r = routes[b.route]; for (const [k2, v] of Object.entries(b.cargo)) T.stock[k2] = Math.min(storeCap(T), (T.stock[k2] || 0) + v); r.knots = Math.min(12, r.knots + 1); invalidate(); updateHUD(); if (sheetKind) renderSheet(); save(); toast(`Das Kanu ist in ${T.name}. ${r.knots} Knoten.`); }
+      if (b.exp) settle(isl(b.to), isl(b.from), b.cv, {pop:5, stock:{holz:4, nahrung:6, toepfe:1}});
+      else if (b.settle) settle(isl(b.to), isl(b.from), b.cv, {pop:b.people, stock:b.cargo});
+      else { const T = isl(b.to), r = routes[b.route]; for (const [k2, v] of Object.entries(b.cargo)) T.stock[k2] = Math.min(storeCap(T), (T.stock[k2] || 0) + v); r.knots = Math.min(12, r.knots + 1); invalidate(); updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest(); toast(`Das Kanu ist in ${T.name}. ${r.knots} Knoten.`); }
     }
   }
 }
 
 /* ---------- people walking between the houses (close up only) */
-function spawnWalkers(){
-  walkers = [];
-  const cols = ['#A84A2C', '#D9A441', '#6B4A2A', '#C8893A', '#8C5F6E'];
+const WALK_COLS = ['#A84A2C', '#D9A441', '#6B4A2A', '#C8893A', '#8C5F6E'];
+/* About one walker per six people, at most six per island. Kept in step with the village
+   without moving the ones already out walking. */
+function syncWalkers(){
   for (const I of islands){
-    if (!I.settled) continue;
-    const spots = I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof); if (spots.length < 2) continue;
-    const n = clamp(Math.round(I.pop / 8), 1, 5);
-    for (let i = 0; i < n; i++){ const a = spots[(i * 3) % spots.length]; walkers.push({isl:I.id, x:a.x + 4, y:a.y + 4, tx:a.x, ty:a.y, col:cols[i % cols.length], wait:0}); }
+    const mine = walkers.filter(w => w.isl === I.id), spots = I.settled ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
+    const want = spots.length ? clamp(Math.round(I.pop / 6), 1, 6) : 0;
+    for (let i = mine.length; i < want; i++){ const a = spots[Math.floor(Math.random() * spots.length)]; walkers.push({isl:I.id, x:a.x + 4, y:a.y + 4, tx:a.x, ty:a.y, col:WALK_COLS[walkers.length % WALK_COLS.length], wait:Math.random() * 1000}); }
+    if (mine.length > want){ const drop = new Set(mine.slice(want)); walkers = walkers.filter(w => !drop.has(w)); }
   }
 }
+function spawnWalkers(){ walkers = []; syncWalkers(); }
 function stepWalkers(dt){
   for (const w of walkers){
     if (w.wait > 0){ w.wait -= dt; continue; }
     const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
-    if (d < 1.5){ const I = isl(w.isl); const sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus'); const t = sp[Math.floor(Math.random() * sp.length)]; if (t){ w.tx = t.x + (Math.random() - .5) * 8; w.ty = t.y + 3 + Math.random() * 4; } w.wait = 600 + Math.random() * 1800; continue; }
+    if (d < 1.5){ const I = isl(w.isl); const sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus'); const t = sp[Math.floor(Math.random() * sp.length)]; if (t){ w.tx = t.x + (Math.random() - .5) * 22; w.ty = t.y + 4 + Math.random() * 8; } w.wait = 600 + Math.random() * 1800; continue; }
     const v = Math.min(d, dt * .007); w.x += dx / d * v; w.y += dy / d * v;
   }
 }
@@ -97,8 +116,9 @@ function econ(){
     if ((st.nahrung || 0) > 0 && I.pop < hc) I.pop++; else if (I.pop > hc) I.pop = hc;
   }
   if (tick % 8 === 0) invalidate();   // roofs age
-  requestDraw(); updateHUD(); if (placing) ghostRender();
-  if (sheetKind === 'info' && sheetSig() !== lastSig) renderSheet();
+  if (tick % 5 === 0) syncWalkers();
+  requestDraw(); updateHUD(); if (placing) ghostRender(); checkQuest();
+  if ((sheetKind === 'info' || sheetKind === 'quest') && sheetSig() !== lastSig) renderSheet();
   if (tick % 3 === 0) save();
 }
 
@@ -117,7 +137,9 @@ function onTap(p){
   const b = hitBuilding(p); if (b){ select(b); return; }
   const ri = hitCord(p); if (ri >= 0){ openTrade(ri); return; }
   const T = hitSign(p); if (T){ toast('Vögel kreisen über einer Wolke. Darunter liegt Land. Bau im Kanuhaus ein Doppelkanu.', 3600); return; }
-  const I = hitIsland(p); if (I){ closeSheet(); setActive(I.id); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
+  const I = hitIsland(p);
+  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Siedler schickst du vom Kanuhaus auf Panua.`, 3600); return; }
+  if (I){ closeSheet(); setActive(I.id); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   closeSheet();
 }
 const ptrs = new Map(); let ges = null;
@@ -162,7 +184,7 @@ $('zIn').addEventListener('click', () => zoomBtn(1.6));
 $('zOut').addEventListener('click', () => zoomBtn(1 / 1.6));
 $('zAll').addEventListener('click', overview);
 $('menuBtn').addEventListener('click', () => openSheet('menu', {}));
-$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (b) startPlace(b.dataset.kind); });
+$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('tradeBtn').addEventListener('click', () => { const i = routes.findIndex(r => r.a === active || r.b === active); if (i < 0){ toast('Von hier fährt noch kein Kanu.'); return; } openTrade(i); });
 $('placeOk').addEventListener('click', confirmPlace);
 $('placeDone').addEventListener('click', endPlace);
@@ -184,15 +206,16 @@ function start(data){
   try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); } catch (e){}
   if (!ok) newGame();
   renderAll(); measure();
-  const b = boxOf([isl('heimat'), isl('tochter')]), bw = b.x1 - b.x0, bh = b.y1 - b.y0;
-  const z = clampZ(Math.min((vw - 50) / bw, (vh - topH - botH - 40) / bh, 1));
+  // a new game opens close to the landing place, a saved one shows home and the first atoll
+  const b = ok ? boxOf([isl('heimat'), isl('tochter')]) : isl('heimat').box, bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+  const z = clampZ(Math.min((vw - 50) / bw, (vh - topH - botH - 40) / bh, ok ? 1 : 1.4));
   Object.assign(cam, camFor((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z)); clampCam(); applyCam();
   // fonts, patterns and the first bitmaps load before the first frame, so nothing pops in
   const fonts = document.fonts ? Promise.all([document.fonts.load(NAME_FONT), document.fonts.load(SUB_FONT)]).catch(() => {}) : null;
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(econ, TICK);
-    if (!ok){ openSheet('intro'); save(); }
+    if (!ok){ openSheet('intro', {first:true}); save(); }
   });
 }
 try { window.claude?.hot?.snapshot?.(() => ({save:serialize()})); } catch (e){}

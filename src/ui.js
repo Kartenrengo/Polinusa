@@ -16,11 +16,17 @@ function updateHUD(){
 function renderBuildBar(){
   const I = isl(active);
   $('buildWhere').textContent = 'auf ' + I.name;
-  $('buildList').innerHTML = ORDER.filter(k => KINDS[k].on.includes(I.type)).map(k => { const K = KINDS[k];
-    return `<button type="button" class="bbtn" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
+  const linked = routes.some(r => r.a === active || r.b === active);
+  $('tradeBtn').hidden = !linked; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !linked);
+  $('buildList').innerHTML = ORDER.filter(k => KINDS[k].on.includes(I.type) && unlocked(k)).map(k => { const K = KINDS[k];
+    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
   updateHUD();
 }
-function setActive(id){ if (active === id) return; active = id; renderBuildBar(); }
+function villageCenter(I){
+  const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) return I.anchor || I.center;
+  return {x:hs.reduce((t, b) => t + b.x, 0) / hs.length, y:hs.reduce((t, b) => t + b.y, 0) / hs.length};
+}
+function setActive(id){ if (active === id || !isl(id).settled) return; active = id; renderBuildBar(); }
 let toastT = 0;
 function toast(msg, ms = 2600){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, ms); }
 
@@ -40,8 +46,9 @@ function startPlace(kind){
   closeSheet(); selectedId = null; invalidate();
   mode = 'place'; placing = {kind, island:I.id, x:I.center.x, y:I.center.y, v:variant(kind)};
   showPlaceBar();
-  const vc = visCenter(), wc = toWorld(vc.sx, vc.sy), base = onIsland(I, wc) && lod !== 'far' ? wc : I.center;
-  if (lod === 'far' || !onIsland(I, wc)) flyTo(I.center.x, I.center.y, Math.max(cam.z, 1.6));
+  // close up the new building starts where you look, otherwise next to the village
+  const vc = visCenter(), wc = toWorld(vc.sx, vc.sy), near = lod === 'near' && onIsland(I, wc), base = near ? wc : villageCenter(I);
+  if (!near) flyTo(base.x, base.y, Math.max(cam.z, 1.6));
   const p = findSpot(I, kind, base) || base; placing.x = p.x; placing.y = p.y; ghostRender();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', b.dataset.kind === kind ? 'true' : 'false');
 }
@@ -68,7 +75,7 @@ function confirmPlace(){
   const I = isl(placing.island), K = KINDS[placing.kind];
   if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`); return; }
   const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`); return; }
-  pay(I, c); addB(I, placing.kind, placing, placing.v, tick); invalidate(); updateHUD(); save();
+  pay(I, c); addB(I, placing.kind, placing, placing.v, tick); invalidate(); updateHUD(); syncWalkers(); save(); checkQuest();
   toast(`${K.n} ${K.plant ? 'gepflanzt' : 'gebaut'}.`, 1600);
   if (K.max || !canPay(I, c)){ endPlace(); return; }
   placing.v = variant(placing.kind); const p = findSpot(I, placing.kind, {x:placing.x + K.r * 2.2, y:placing.y}); if (p){ placing.x = p.x; placing.y = p.y; } ghostRender();
@@ -104,9 +111,12 @@ function renderSheet(){
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
   } else if (sheetKind === 'intro'){
-    h += head('So geht es', '');
-    h += `<ul class="help"><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Ganz nah heran zum Bauen, weit weg für den Überblick.</li><li>Unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Tippe auf die Schnur zwischen zwei Inseln, um ein Kanu mit Waren zu schicken.</li><li>Im Kanuhaus entsteht das Doppelkanu für neues Land. Segelmatten und Schnur kommen von Motu.</li></ul>`;
+    const first = sheetData && sheetData.first;
+    h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Tippe auf die Schnur zwischen zwei Inseln, um ein Kanu mit Waren zu schicken.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
+  } else if (sheetKind === 'quest'){
+    h += questSheet();
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
@@ -116,13 +126,23 @@ function renderSheet(){
 }
 let lastSig = '';
 function sheetSig(){
+  if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
   if (sheetKind !== 'info' || !sheetData) return '';
   const b = findB(sheetData.id); if (!b) return 'gone';
   const I = islOfB(b.id), age = Math.floor(roofAge(b) * 3);
   if (b.kind !== 'werft') return 'a' + age;
-  return [I.canoe, ...Object.entries(CANOE).map(([k, v]) => Math.min(I.stock[k] || 0, v))].join();
+  return [I.canoe, I.pop >= SETTLE.people + SETTLE.keep, isl('tochter').settled, boats.length, ...GOODS.map(k => Math.min(I.stock[k] || 0, 6))].join();
 }
+const needList = (I, need) => `<ul class="list">${Object.entries(need).map(([k, v]) => { const have = k === 'pop' ? I.pop : I.stock[k] || 0, ok = have >= v; return `<li class="${ok ? 'okk' : 'need'}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span class="nm">${k === 'pop' ? 'Bewohner' : GN[k]}</span><span class="st">${Math.min(have, v)} von ${v}${ok ? ' ✓' : ''}</span></li>`; }).join('')}</ul>`;
 function werftMarkup(I){
+  const T = isl('tochter');
+  if (I.id === 'heimat' && !T.settled){
+    // first the outrigger to the atoll next door, the double canoe comes later
+    if (boats.some(b => b.settle && b.to === T.id)) return `<p><b>Das Auslegerkanu ist auf dem Weg nach ${T.name}.</b></p>`;
+    const need = {...SETTLE.cost, pop:SETTLE.people + SETTLE.keep}, ok = Object.entries(need).every(([k, v]) => (k === 'pop' ? I.pop : I.stock[k] || 0) >= v);
+    return `<p>Ein Auslegerkanu bringt ${SETTLE.people} Menschen mit Holz, Essen und einem Topf hinüber nach ${T.name}. Mindestens ${SETTLE.keep} bleiben hier.</p>` + needList(I, need) +
+      `<div class="rowx"><span class="sub">${ok ? 'Alles da.' : 'Es fehlt noch etwas.'}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Siedler schicken</button></div>`;
+  }
   let h = `<p>Ein Doppelkanu braucht Holz und Steinbeile von hier. Segelmatten und Schnur kommen vom Atoll.</p>`;
   if (I.canoe){
     const left = islands.filter(J => !J.discovered).length;
@@ -154,15 +174,17 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'kill'){ const I = islOfB(b.id), c = costOf(b.kind, I); for (const [k, v] of Object.entries(c)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + Math.floor(v / 2)); I.buildings = I.buildings.filter(x => x.id !== b.id); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} ist weg.`); return; }
     if (act === 'canoe'){ const I = islOfB(b.id); if (canPay(I, CANOE) && !I.canoe){ pay(I, CANOE); I.canoe = true; invalidate(); updateHUD(); save(); toast('Das Doppelkanu ist fertig.'); } renderSheet(); return; }
     if (act === 'target'){ startTarget(islOfB(b.id)); return; }
+    if (act === 'settle'){ startSettlers(islOfB(b.id), isl('tochter')); return; }
   }
+  if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (sheetKind === 'menu'){
     if (act === 'help'){ openSheet('intro'); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
-    if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); closeSheet(); renderAll(); fitBox(boxOf([isl('heimat'), isl('tochter')]), 1); save(); toast('Neues Spiel, neue Inseln.'); return; }
+    if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); closeSheet(); renderAll(); fitBox(isl('heimat').box, 1.4); save(); toast('Neues Spiel, neue Inseln.'); return; }
   }
 });
-function openTrade(ri){
+function openTrade(ri, cargo = {}){
   const r = routes[ri]; const from = (r.a === active || r.b === active) ? active : r.a; const to = from === r.a ? r.b : r.a;
-  setActive(from); selectedId = null; invalidate(); openSheet('trade', {r:ri, from, to, cargo:{}});
+  setActive(from); selectedId = null; invalidate(); openSheet('trade', {r:ri, from, to, cargo});
 }
 function select(b){ selectedId = b.id; invalidate(); setActive(islOfB(b.id).id); openSheet('info', {id:b.id}); }

@@ -28,6 +28,7 @@ Sie landet in `dist/polinusa.html`.
 | `src/state.js` | Spielstand, Startdörfer, Speichern und Laden |
 | `src/render.js` | Zeichnen auf Canvas |
 | `src/ui.js` | Bedienung, Bauen, Tafeln |
+| `src/quests.js` | Aufgaben für den Anfang, was sie freischalten |
 | `src/game.js` | Wirtschaft, Boote, Eingabe, Hauptschleife |
 
 Die Dateien sind einfache Skripte mit gemeinsamem globalem Bereich. Sie werden in dieser Reihenfolge geladen.
@@ -50,10 +51,22 @@ Die Welt ist 2400 × 3600 groß und hat neun Inseln: die Heimat Panua, das Atoll
 Gespeichert wird nur der Startwert und was sich geändert hat, ein Spielstand hat etwa 5 KB.
 Die Weltnummer steht im Menü.
 
+## Anfang
+
+Wie bei Age of Empires steht am Anfang nur das Versammlungshaus auf Panua. Motu ist zu sehen, aber unbewohnt.
+Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
+Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
+
+1. Zwei Häuser, 2. zwei Tarofelder, 3. 15 Bewohner, 4. Töpferei, 5. Beilwerkstatt, 6. Kanuhaus,
+7. Siedler im Auslegerkanu nach Motu, 8. Flechthütte und Seilerei auf Motu, 9. Segelmatten und Schnur nach Panua,
+10. Doppelkanu, 11. neues Land finden. Danach ist alles frei.
+
+Kleine Auslegerkanus bringen Siedler und Waren zwischen den Inseln. Das Doppelkanu fährt ins Unbekannte.
+
 ## Nächste Schritte
 
 1. ~~Fundament: Dateien, Canvas, Welt aus Startwert~~
-2. Start wie bei Age of Empires: nur das Dorfzentrum, geführte erste Aufgaben
+2. ~~Start wie bei Age of Empires: nur das Dorfzentrum, geführte erste Aufgaben~~
 3. Bedürfnisse auf einen Blick
 4. Menschen neu zeichnen
 5. Kleine Kanus in der Lagune
