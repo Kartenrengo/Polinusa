@@ -28,6 +28,18 @@ function smooth(pts){
   }
   return {d: d + 'Z', poly};
 }
+/* A Catmull-Rom curve through pts, sampled; the first and last point only steer the ends */
+function spline(pts, k = 6){
+  const out = [];
+  for (let i = 1; i < pts.length - 2; i++){
+    const p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2];
+    for (let j = 0; j < k; j++){
+      const t = j / k, t2 = t * t, t3 = t2 * t, f = (a, b, c, d) => .5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (3 * b - a - 3 * c + d) * t3);
+      out.push({x:f(p0.x, p1.x, p2.x, p3.x), y:f(p0.y, p1.y, p2.y, p3.y)});
+    }
+  }
+  out.push({...pts[pts.length - 2]}); return out;
+}
 function smoothOpen(pts){
   const n = pts.length; let d = `M${fx(pts[0].x)} ${fx(pts[0].y)}`;
   if (n === 2) return d + `L${fx(pts[1].x)} ${fx(pts[1].y)}`;

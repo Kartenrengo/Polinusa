@@ -149,8 +149,10 @@ function islandPaths(I){
   p.harbor = ellipse(I.harbor.x, I.harbor.y, I.atoll ? 9 : 9.5, I.atoll ? 9 : 9.5);
   if (I.river) p.river = new Path2D(smoothOpen(I.river));
   if (I.delta){
-    p.fan = new Path2D(smooth(I.delta.fan).d); p.arms = new Path2D();
-    for (const [a, b, e] of I.delta.arms){ p.arms.moveTo(a.x, a.y); p.arms.quadraticCurveTo(b.x, b.y, e.x, e.y); }
+    p.arms = new Path2D(); for (const arm of I.delta.arms) p.arms.addPath(new Path2D(smoothOpen(arm)));
+    // the coast line has a gap where an arm opens into the sea
+    p.gaps = new Path2D(); const b = I.box; p.gaps.rect(b.x0 - 20, b.y0 - 20, b.x1 - b.x0 + 40, b.y1 - b.y0 + 40);
+    for (const q of I.delta.exits){ p.gaps.moveTo(q.x + 3.4, q.y); p.gaps.arc(q.x, q.y, 3.4, 0, TAU); }
   }
   if (I.hills){
     const out = smooth(I.hills.out), c = I.hills.c; p.hill = new Path2D(out.d); p.top = new Path2D(smooth(I.hills.top).d); p.hach = new Path2D();
@@ -167,17 +169,22 @@ function drawIsland(c, I, area){
   stroke(c, p.ring, '#F4EEDC', 2, [.1, 3.6], 'round');
   fillWith(c, p.harbor, '#2F5F73', 'pSea');
   if (p.patches){ c.fillStyle = '#4E9C9A'; c.fill(p.patches); stroke(c, p.patches, '#F3F8EE', .6, null, null, .7); }
-  for (const L of p.lands){
+  // silt clouds the water off each mouth and fades out into the lagoon
+  if (I.delta) for (const q of I.delta.exits){ const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, 20); g.addColorStop(0, 'rgba(201,214,170,.75)'); g.addColorStop(1, 'rgba(201,214,170,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, 20, 0, TAU); c.fill(); }
+  p.lands.forEach((L, i) => {
     stroke(c, L, '#F1F6EC', 4.4, null, null, .4);   // surf along the beach
     fillWith(c, L, '#8DA757', 'pDots');
-    c.save(); c.clip(L); stroke(c, L, '#E8D29E', I.atoll ? 11 : 15); stroke(c, L, '#D2B67C', 3.4); c.restore();
-    stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]);
-  }
+    c.save(); c.clip(L); stroke(c, L, '#E8D29E', I.atoll ? 11 : 15); stroke(c, L, '#D2B67C', 3.4);
+    // fresh alluvial sand around the arms, fading into the grass; the arms run through it and end exactly where the land ends
+    if (p.arms && i === 0){
+      const f = I.delta.fan, g = c.createRadialGradient(f.x, f.y, 0, f.x, f.y, I.delta.reach);
+      g.addColorStop(0, 'rgba(222,204,146,.9)'); g.addColorStop(.6, 'rgba(214,200,140,.55)'); g.addColorStop(1, 'rgba(214,200,140,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(f.x, f.y, I.delta.reach, 0, TAU); c.fill(); stroke(c, p.arms, '#2B1D14', 3.8, null, 'round'); stroke(c, p.arms, '#6DB9BE', 2.3, null, 'round'); stroke(c, p.arms, '#EAF5F0', .7, [.1, 3], 'round', .8); }
+    c.restore();
+    if (p.gaps && i === 0){ c.save(); c.clip(p.gaps, 'evenodd'); stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]); c.restore(); }
+    else stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]);
+  });
   if (p.hill){ fillWith(c, p.hill, '#80A050', 'pDots'); stroke(c, p.hach, '#5E7A3A', .9, null, 'round', .8); c.fillStyle = '#76944A'; c.fill(p.top); stroke(c, p.top, '#5E7A3A', .7, [1.4, 1.4], null, .8); }
-  if (p.fan){
-    c.fillStyle = '#D9C892'; c.fill(p.fan); stroke(c, p.fan, '#8A6440', .7, [1.2, 1.2], null, .8);
-    c.save(); c.clip(p.fan); stroke(c, p.arms, '#2B1D14', 3.6, null, 'butt'); stroke(c, p.arms, '#79C6B8', 2, null, 'butt'); stroke(c, p.arms, '#EAF5F0', .7, [.1, 3], 'round', .8); c.restore();
-  }
   if (p.river){ stroke(c, p.river, '#2B1D14', 4.8, null, 'round'); stroke(c, p.river, '#6DB9BE', 3, null, 'round'); stroke(c, p.river, '#EAF5F0', .9, [.1, 3.4], 'round', .85); }
   const tp = treePaths(I);
   if (lod === 'far'){ if (tp.canopy){ stroke(c, tp.canopy, '#2B1D14', 2); c.fillStyle = '#3F6B2E'; c.fill(tp.canopy); } }

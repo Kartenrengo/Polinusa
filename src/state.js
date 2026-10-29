@@ -46,7 +46,11 @@ function seedStart(I, r){
 }
 function palmsAlong(I, r, n){
   const L = I.lands[0].poly, c = I.center;
-  for (let i = 0; i < n; i++){ const q = L[Math.floor(i / n * L.length)], p = {x:q.x + (c.x - q.x) * .07, y:q.y + (c.y - q.y) * .07}; if (!check('palme', I, p.x, p.y)) addB(I, 'palme', p, variant('palme', r), -60); }
+  for (let i = 0; i < n; i++){
+    const q = L[Math.floor(i / n * L.length)], p = {x:q.x + (c.x - q.x) * .07, y:q.y + (c.y - q.y) * .07};
+    if (I.delta && Math.hypot(p.x - I.delta.mouth.x, p.y - I.delta.mouth.y) < I.delta.reach) continue;   // the delta is mud and mangroves, no palms
+    if (!check('palme', I, p.x, p.y)) addB(I, 'palme', p, variant('palme', r), -60);
+  }
 }
 /* An empty atoll: palms and pandanus on every islet */
 function seedAtollPlants(I, r){
