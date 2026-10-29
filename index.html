@@ -1,0 +1,974 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style><title>Inselspiel</title></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700;800&family=Alegreya+Sans:wght@500;700;800&display=swap">
+<style>
+/* Layout: one full-screen sea chart; tapa-cloth bands pinned top and bottom; sheets rise over the bottom band */
+:root{
+  --cloth:#EEE3C8; --cloth-hi:#F6EDD8; --ink:#2B1D14; --brown:#3E2416; --ochre:#A84A2C;
+  --label:#6E4428; --muted:#5A3A26; --sea:#2F5F73; --turmeric:#F3D9A0; --ok:#3E7A3A; --cream:#F4ECD8;
+  --font-ui:'Alegreya Sans','Trebuchet MS',system-ui,sans-serif;
+  --font-name:'Alegreya',Georgia,'Times New Roman',serif;
+  --dots:radial-gradient(circle at 2px 2px,rgba(138,106,68,.36) .8px,transparent 1.1px),radial-gradient(circle at 6px 6px,rgba(138,106,68,.36) .8px,transparent 1.1px);
+  --manulua:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12' viewBox='0 0 16 12'%3E%3Crect width='16' height='12' fill='%23EEE3C8'/%3E%3Cpath d='M0 0H16L8 6ZM0 12H16L8 6Z' fill='%233E2416'/%3E%3Cpath d='M0 3.3L2.7 6L0 8.7ZM16 3.3L13.3 6L16 8.7Z' fill='%23A84A2C'/%3E%3C/svg%3E");
+  color-scheme:light;
+}
+html{height:100%;box-sizing:border-box;background:var(--cloth)}
+body{height:100%;margin:0;overflow:hidden;background:var(--cloth);color:var(--ink);font:500 14px/1.3 var(--font-ui);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+*,*::before,*::after{box-sizing:border-box}
+#app{position:relative;height:100%;overflow:hidden;background:var(--sea);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#map:focus-visible{outline:3px dotted var(--ochre);outline-offset:-6px}
+#map[data-lod="far"] .lod-mid,#map[data-lod="far"] .lod-near,#map[data-lod="mid"] .lod-near{display:none}
+#map:not([data-lod="far"]) .lod-far{display:none}
+#map[data-lod="near"] .lod-notnear{display:none}
+#map[data-lod="far"] .cord-shadow{stroke-width:18}
+#map[data-lod="far"] .cord-ink{stroke-width:13}
+#map[data-lod="far"] .cord-body,#map[data-lod="far"] .cord-twist{stroke-width:8}
+#map[data-lod="far"] .knot-s{transform:scale(2.4)}
+.b.moving{opacity:.25}
+.smoke{animation:smoke 3.4s ease-in-out infinite}
+@keyframes smoke{0%,100%{opacity:.12;transform:translateY(1.5px)}50%{opacity:.7;transform:translateY(-1.5px)}}
+.sign .pulse{display:none}
+#map.targeting .sign .pulse{display:inline;animation:pulse 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.5)}}
+@media (prefers-reduced-motion:reduce){.smoke,#map.targeting .sign .pulse{animation:none}}
+.band{position:absolute;left:0;right:0;z-index:5;background-color:var(--cloth);background-image:var(--dots);background-size:8px 8px}
+.manulua{height:13px;background:var(--manulua) repeat-x 0 0/16px 12px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+#top{top:0}
+.top-inner{display:flex;flex-direction:column;gap:5px;padding-block:8px 6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.isle{display:flex;align-items:baseline;gap:8px;min-width:0}
+.isle-name{font:800 20px/1 var(--font-name);white-space:nowrap}
+.cap{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--label)}
+.pop{display:flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pop b{font-size:17px;font-weight:800}
+.pop span{font-size:12px;color:var(--muted)}
+.goods{display:flex;justify-content:space-between;gap:4px;margin:0;padding:0;list-style:none}
+.goods li{display:flex;align-items:center;gap:3px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.goods li.zero{opacity:.42}
+.goods li.up{animation:up .7s}
+@keyframes up{0%{color:var(--ochre);transform:translateY(-2px)}100%{color:var(--ink);transform:none}}
+.ic{width:20px;height:20px;flex:none;display:block}
+#compass{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:84px;z-index:4;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+#compass span{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;line-height:1;color:var(--cream);background:var(--ink);padding:2px 6px;border-radius:3px}
+#zoomctl{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:84px;z-index:4;display:flex;flex-direction:column;gap:8px}
+.round{width:44px;height:44px;border-radius:50%;border:2px solid var(--brown);background:var(--cloth-hi);color:var(--ink);font:800 24px/1 var(--font-ui);display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 2px 0 rgba(43,29,20,.35)}
+.round svg{width:26px;height:26px}
+.round:active{transform:translateY(1px);box-shadow:none}
+button{font-family:var(--font-ui)}
+button:focus-visible{outline:3px dotted var(--ochre);outline-offset:2px}
+#toast{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:9;width:max-content;max-width:min(78vw,420px);background:var(--ink);color:var(--cream);font-weight:700;font-size:14px;line-height:1.3;padding:8px 14px;border-radius:6px;text-align:center;pointer-events:none;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+#bottom,#place,#sheet{bottom:0}
+.bottom-inner{padding-block:7px 10px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+.bottom-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 4px 5px}
+.where{font-size:13px;font-weight:700;color:var(--muted)}
+.bottom-row{display:flex;align-items:center;gap:8px}
+.build-list{display:flex;gap:8px;overflow-x:auto;flex:1;min-width:0;padding:2px 2px 4px;scrollbar-width:none;touch-action:pan-x}
+.build-list::-webkit-scrollbar{display:none}
+.bbtn{flex:none;width:58px;height:62px;border:2.5px dotted var(--brown);border-radius:8px;background:var(--cloth-hi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px 0 4px;cursor:pointer;color:var(--ink);font:700 11.5px/1 var(--font-ui)}
+.bbtn svg{width:42px;height:38px;display:block}
+.bbtn.poor{opacity:.45}
+.bbtn[aria-pressed="true"]{border-color:var(--ochre);background:var(--turmeric)}
+.hb{flex:none;width:10px;height:50px}
+.tbtn{flex:none;width:64px;height:62px;border:2.5px solid var(--brown);border-radius:8px;background:var(--cloth-hi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--ink);font:800 12px/1 var(--font-ui)}
+.tbtn svg{width:44px;height:22px}
+.place-inner{display:flex;align-items:center;gap:10px;padding-block:9px 12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.place-ic{width:48px;height:48px;flex:none}
+.place-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.place-txt b{font:800 17px/1.1 var(--font-name)}
+.place-txt span{font-size:13px;color:var(--muted)}
+.place-txt .msg{font-weight:800;color:var(--ok)}
+.place-txt .msg.bad{color:var(--ochre)}
+.btn{min-height:44px;padding:0 14px;border-radius:8px;border:2px solid var(--brown);background:var(--cloth-hi);font:800 15px/1 var(--font-ui);color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--ochre);border-color:var(--ink);color:#FBF3E2}
+.btn:disabled{opacity:.42;cursor:default}
+.btn.small{min-height:36px;padding:0 10px;font-size:13px}
+.sheet{max-height:74%;display:flex;flex-direction:column;box-shadow:0 -4px 0 rgba(43,29,20,.16)}
+.sheet-body{overflow-y:auto;padding-block:12px 16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));touch-action:pan-y;display:flex;flex-direction:column;gap:10px}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.sheet h2{margin:0;font:800 21px/1.15 var(--font-name);text-wrap:balance}
+.sheet p{margin:0;max-width:62ch}
+.sub{font-size:13.5px;color:var(--muted)}
+.x{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid var(--brown);background:var(--cloth-hi);font:800 22px/1 var(--font-ui);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+.list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.list li{display:flex;align-items:center;gap:8px;min-height:40px;padding:4px 8px;border:2px dotted rgba(62,36,22,.55);border-radius:8px;background:var(--cloth-hi)}
+.list li .nm{flex:1;min-width:0;font-weight:700;font-size:15px}
+.list li .st{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.list li.okk{border-color:var(--ok)}
+.list li.need{border-color:var(--ochre);background:#F6E3C4}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:40px;height:40px;border-radius:8px;border:2px solid var(--brown);background:var(--cream);font:800 20px/1 var(--font-ui);color:var(--ink);cursor:pointer;padding:0}
+.step output{min-width:26px;text-align:center;font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
+.rowx{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{min-height:36px;padding:0 12px;border-radius:18px;border:2px solid var(--brown);background:var(--cloth-hi);font:700 13.5px/1 var(--font-ui);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--cream)}
+.windline{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.windline .tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--ink);color:var(--cream)}
+.windline .tag.with{background:var(--ok)}
+.help{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15px;max-width:62ch}
+.knotsline{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+</style>
+
+<div id="app">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<defs>
+<g id="palm"><ellipse cx="3" cy=".6" rx="6" ry="1.8" fill="#1F140D" opacity=".2"/><path d="M0 0Q-1-8 2-16" fill="none" stroke="#2B1D14" stroke-width="2.6" stroke-linecap="round"/><path d="M0 0Q-1-8 2-16" fill="none" stroke="#A0754A" stroke-width="1.1" stroke-linecap="round"/><path d="M2-16Q-4-18-9-13M2-16Q-2-22-7-22.5M2-16Q4-23 9.5-22M2-16Q8-19 11.5-13M2-16Q6-13 6.5-8.5M2-16Q-1-13-3.5-8.5" fill="none" stroke="#2B1D14" stroke-width="3.2" stroke-linecap="round"/><path d="M2-16Q-4-18-9-13M2-16Q-2-22-7-22.5M2-16Q4-23 9.5-22M2-16Q8-19 11.5-13M2-16Q6-13 6.5-8.5M2-16Q-1-13-3.5-8.5" fill="none" stroke="#5E8A3A" stroke-width="1.7" stroke-linecap="round"/><circle cx="1" cy="-14.8" r="1.3" fill="#6B4A2A" stroke="#2B1D14" stroke-width=".5"/><circle cx="3.3" cy="-14.5" r="1.2" fill="#6B4A2A" stroke="#2B1D14" stroke-width=".5"/></g>
+<g id="pan"><ellipse cx="2" cy=".5" rx="5" ry="1.5" fill="#1F140D" opacity=".2"/><path d="M-3.2 0L-.4-4.4M0 0V-4.4M3.2 0L.4-4.4" stroke="#2B1D14" stroke-width=".9"/><path d="M0-4Q1.4-8 .4-11.5" fill="none" stroke="#2B1D14" stroke-width="2.4"/><path d="M0-4Q1.4-8 .4-11.5" fill="none" stroke="#9C7A50" stroke-width="1"/><path d="M.4-11.5L-7.5-14M.4-11.5L-6-17.6M.4-11.5L-2-19M.4-11.5L3-19M.4-11.5L7-17M.4-11.5L8-13.2M.4-11.5L-5.6-8.8M.4-11.5L6-8.8" stroke="#2B1D14" stroke-width="2.4" stroke-linecap="round"/><path d="M.4-11.5L-7.5-14M.4-11.5L-6-17.6M.4-11.5L-2-19M.4-11.5L3-19M.4-11.5L7-17M.4-11.5L8-13.2M.4-11.5L-5.6-8.8M.4-11.5L6-8.8" stroke="#6E9A4A" stroke-width="1.1" stroke-linecap="round"/><circle cx="2" cy="-10.4" r="1.7" fill="#D98A3A" stroke="#2B1D14" stroke-width=".5"/></g>
+<g id="tree"><ellipse cx="2" cy=".5" rx="7" ry="2" fill="#1F140D" opacity=".2"/><path d="M0 0V-5.5" stroke="#2B1D14" stroke-width="2.4"/><path d="M0 .2V-5.5" stroke="#7A5434" stroke-width="1"/><path d="M-7.5-9.5Q-8.5-15.5-3.5-16.5Q0-20.5 4-16.8Q9-16 8.4-10Q7.6-4.6 0-5.2Q-6.6-4.8-7.5-9.5Z" fill="#4F7A33" stroke="#2B1D14" stroke-width=".9"/><path d="M-4.5-12.5q2-2.2 4 0M.8-9.4q2-2.2 4 0M1.5-15q1.6-1.8 3.2 0" fill="none" stroke="#97BE62" stroke-width=".9" stroke-linecap="round"/><circle cx="-2.6" cy="-8.6" r="1.1" fill="#C3C65E" stroke="#2B1D14" stroke-width=".4"/></g>
+<g id="hw"><ellipse cx="2" cy=".4" rx="13" ry="2.6" fill="#1F140D" opacity=".22"/><path d="M-8 0V-5M-3 0V-5M3 0V-5M8 0V-5" stroke="#3B2618" stroke-width="1.2"/><rect x="-10.5" y="-6.5" width="21" height="2" fill="#6B4428" stroke="#2B1D14" stroke-width=".6"/><rect x="-8" y="-11.5" width="16" height="5.2" fill="#8C5C36" stroke="#2B1D14" stroke-width=".6"/><rect x="-1.7" y="-11" width="3.4" height="4.6" fill="#2B1D14"/><path d="M-11.5-21Q0-17.5 11.5-21L10-24.5Q0-22-10-24.5Z" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/><path d="M-11.5-21Q0-17.5 11.5-21L10-24.5Q0-22-10-24.5Z" fill="#2B1D14" opacity=".28"/><path d="M-13.5-10Q0-8.4 13.5-10L11.5-21Q0-17.5-11.5-21Z" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-9.5-11L-8.6-19.6M-5.2-10.4L-4.7-18.8M-1-10.1V-18.3M3.2-10.3L3-18.6M7.4-10.8L6.8-19.4M11-11.6L10-20" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".6"/><path d="M-11.5-21Q0-17.5 11.5-21" fill="none" stroke="#2B1D14" stroke-width="1.3"/><path d="M-11.5-21L-15-25.5M11.5-21L15-25.5" stroke="#2B1D14" stroke-width="1.2" stroke-linecap="round"/></g>
+<g id="hr"><ellipse cx="2" cy=".4" rx="12" ry="2.5" fill="#1F140D" opacity=".22"/><path d="M-7.5 0V-4.5M-3.8 0V-4.8M0 0V-5M3.8 0V-4.8M7.5 0V-4.5" stroke="#3B2618" stroke-width="1.1"/><rect x="-9.5" y="-5.8" width="19" height="1.8" fill="#6B4428" stroke="#2B1D14" stroke-width=".5"/><rect x="-9" y="-8.6" width="18" height="2.9" fill="#2B1D14" opacity=".7"/><path d="M-12-7.5Q-12.5-20.5 0-21.5Q12.5-20.5 12-7.5Q0-5.2-12-7.5Z" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-10.8-11Q0-8.6 10.8-11M-9.8-14.8Q0-12.5 9.8-14.8M-7.4-18.3Q0-16.6 7.4-18.3" fill="none" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".7"/><path d="M-3-21.2H3" stroke="#2B1D14" stroke-width="1.5" stroke-linecap="round"/></g>
+<g id="hs"><ellipse cx="2" cy=".4" rx="9" ry="2" fill="#1F140D" opacity=".22"/><path d="M-5 0V-10.5M-1.7 0V-10.5M1.7 0V-10.5M5 0V-10.5" stroke="#3B2618" stroke-width="1"/><ellipse cx="-1.7" cy="-6" rx="1.5" ry=".6" fill="#E7DAB8" stroke="#2B1D14" stroke-width=".45"/><ellipse cx="1.7" cy="-6" rx="1.5" ry=".6" fill="#E7DAB8" stroke="#2B1D14" stroke-width=".45"/><ellipse cx="-5" cy="-6" rx="2" ry=".75" fill="#E7DAB8" stroke="#2B1D14" stroke-width=".5"/><ellipse cx="5" cy="-6" rx="2" ry=".75" fill="#E7DAB8" stroke="#2B1D14" stroke-width=".5"/><rect x="-6.5" y="-16" width="13" height="5.6" fill="#7A4E2E" stroke="#2B1D14" stroke-width=".6"/><rect x="-1.2" y="-15.3" width="2.4" height="4.3" fill="#2B1D14"/><path d="M-9.5-15Q0-13.5 9.5-15L8-22.5Q0-20.1-8-22.5Z" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/><path d="M-6.5-15.6L-5.8-21.6M-2.2-14.9V-21M2.2-14.9V-21M6.5-15.6L5.8-21.6" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".6"/><path d="M-8-22.5Q0-20.1 8-22.5" fill="none" stroke="#2B1D14" stroke-width="1.2"/><path d="M-8-22.5L-10.8-26M8-22.5L10.8-26" stroke="#2B1D14" stroke-width="1.1" stroke-linecap="round"/></g>
+<g id="hp"><g fill="none" stroke="#F1EBD9" stroke-width=".8" opacity=".85"><ellipse cy=".6" rx="12.5" ry="2.2"/><ellipse cy=".6" rx="7" ry="1.2"/></g><path d="M-8 .6V-11M-3 .6V-11M3 .6V-11M8 .6V-11" stroke="#3B2618" stroke-width="1.2"/><path d="M-8-3L3-9M-3-9L8-3" stroke="#3B2618" stroke-width=".6"/><path d="M-11.5-10.6L-13.2 .4M-9.5-10.6L-11.2 .4M-12.4-7.4H-10.2M-12.9-4.2H-10.7M-13.3-1.2H-11.1" stroke="#3B2618" stroke-width=".7"/><rect x="-11" y="-12.5" width="22" height="2" fill="#6B4428" stroke="#2B1D14" stroke-width=".6"/><rect x="-8" y="-17.5" width="16" height="5.2" fill="#8C5C36" stroke="#2B1D14" stroke-width=".6"/><rect x="2" y="-17" width="3.2" height="4.6" fill="#2B1D14"/><path d="M-12-27Q0-23.5 12-27L10.5-30.5Q0-28-10.5-30.5Z" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/><path d="M-12-27Q0-23.5 12-27L10.5-30.5Q0-28-10.5-30.5Z" fill="#2B1D14" opacity=".28"/><path d="M-14-16Q0-14.4 14-16L12-27Q0-23.5-12-27Z" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-10-17L-9-25.6M-5.4-16.4L-4.9-24.8M-1-16.1V-24.3M3.4-16.3L3.2-24.6M7.8-16.8L7.2-25.4M11.4-17.6L10.4-26" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".6"/><path d="M-12-27Q0-23.5 12-27" fill="none" stroke="#2B1D14" stroke-width="1.3"/><path d="M-12-27L-15.5-31.5M12-27L15.5-31.5" stroke="#2B1D14" stroke-width="1.2" stroke-linecap="round"/></g>
+<g id="hm"><ellipse cx="3" cy=".6" rx="23" ry="3.8" fill="#1F140D" opacity=".22"/><rect x="-19.5" y="-4" width="39" height="4" fill="#A2957A" stroke="#2B1D14" stroke-width=".7"/><path d="M-15-4V0M-9-4V0M-3-4V0M3-4V0M9-4V0M15-4V0" stroke="#2B1D14" stroke-width=".5" opacity=".5"/><rect x="-16.5" y="-13.5" width="33" height="9.5" fill="#2B1D14" opacity=".62"/><path d="M-15-4V-13M-9-4V-13M-3-4V-13M3-4V-13M9-4V-13M15-4V-13" stroke="#5A3A24" stroke-width="1.4"/><path d="M-17-31Q0-25.5 17-31L15-36Q0-32-15-36Z" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-17-31Q0-25.5 17-31L15-36Q0-32-15-36Z" fill="#2B1D14" opacity=".28"/><path d="M-21.5-12.5Q0-10 21.5-12.5L17-31Q0-25.5-17-31Z" stroke="#2B1D14" stroke-width="1" stroke-linejoin="round"/><path d="M-17-13.4L-14-29.6M-11.5-12.5L-9.6-28.4M-6-12L-5-27.6M-.5-11.8V-27.2M5-12L4.6-27.5M10.5-12.4L9.4-28.2M16-13.1L14-29.4" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".65"/><path d="M-20-14.6Q0-12.2 20-14.6" fill="none" stroke="#A84A2C" stroke-width="1.7" stroke-dasharray=".1 2.5" stroke-linecap="round"/><path d="M-17-31Q0-25.5 17-31" fill="none" stroke="#2B1D14" stroke-width="1.5"/><path d="M-17-31L-22.5-37.5M17-31L22.5-37.5" stroke="#2B1D14" stroke-width="1.6" stroke-linecap="round"/></g>
+<g id="hk"><ellipse cx="2" cy=".4" rx="18" ry="2.4" fill="#1F140D" opacity=".22"/><rect x="-14" y="-5.6" width="28" height="5.2" fill="#2B1D14" opacity=".62"/><path d="M-13 0V-4.6M-5 0V-5M5 0V-5M13 0V-4.6" stroke="#3B2618" stroke-width="1.1"/><path d="M6-1.6Q14-2.2 20.5-4.6Q18.5-.8 11 .3Q8 .4 6-.2Z" fill="#5A3A26" stroke="#2B1D14" stroke-width=".6"/><path d="M-17.5-4.4Q0-2.8 17.5-4.4L15-12.8Q0-10.2-15-12.8Z" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-13-5L-11.6-12M-7.5-4.2L-6.8-11.4M-2.5-3.7V-11M2.5-3.7V-11M7.5-4.2L6.8-11.4M13-5L11.6-12" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".6"/><path d="M-15-12.8Q0-10.2 15-12.8" fill="none" stroke="#2B1D14" stroke-width="1.2"/><path d="M-15-12.8L-17.6-16M15-12.8L17.6-16" stroke="#2B1D14" stroke-width="1.1" stroke-linecap="round"/></g>
+<g id="hc"><ellipse cx="2" cy=".4" rx="10" ry="2" fill="#1F140D" opacity=".22"/><rect x="-7.5" y="-6.4" width="15" height="5.4" fill="#2B1D14" opacity=".45"/><path d="M-7 0V-6M7 0V-6M-2.5 0V-6.4M2.5 0V-6.4" stroke="#3B2618" stroke-width="1"/><path d="M-10-6Q0-4.8 10-6L6-12.5H-6Z" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-7-6.5L-4.4-12M-3.5-6L-2-12.2M0-5.8V-12.4M3.5-6L2-12.2M7-6.5L4.4-12" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".6"/><path d="M-6-12.5H6" stroke="#2B1D14" stroke-width="1.3" stroke-linecap="round"/></g>
+<g id="pp"><path d="M-1.9 0L0-4L1.9 0Z" stroke="#2B1D14" stroke-width=".45" stroke-linejoin="round"/><circle cy="-5.3" r="1.25" fill="#2B1D14"/></g>
+<g id="pt"><path d="M-3.5-9H3.5L2.5-7.5Q5.5-5 4-2Q0 1-4-2Q-5.5-5-2.5-7.5Z" fill="#B5562F" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/><path d="M-3.9-4.6H3.9" stroke="#F2E6CB" stroke-width="1.1" stroke-dasharray=".1 1.6" stroke-linecap="round"/></g>
+<g id="tp"><rect x="-10.5" y="-6.5" width="21" height="13" rx="4.5" fill="#A48A57"/><rect x="-9" y="-5" width="18" height="10" rx="3.4" fill="#6CB6A6" stroke="#2B1D14" stroke-width=".8" stroke-dasharray="1.6 1.1"/><path d="M-6-1.8h.1M-2-1.8h.1M2-1.8h.1M6-1.8h.1M-4 1.9h.1M0 1.9h.1M4 1.9h.1" stroke="#3E7A3A" stroke-width="2.8" stroke-linecap="round"/><path d="M-6.4-2.4h.1M-2.4-2.4h.1M1.6-2.4h.1M5.6-2.4h.1M-4.4 1.3h.1M-.4 1.3h.1M3.6 1.3h.1" stroke="#9BC96E" stroke-width="1" stroke-linecap="round"/></g>
+<g id="rack"><path d="M-7 0V-8M7 0V-8M-8.5-8H8.5" stroke="#3B2618" stroke-width="1.1"/><path d="M-5-8v3M-2-8v3M1-8v3M4-8v3" stroke="#2B1D14" stroke-width=".5"/><g fill="#9FB7C0" stroke="#2B1D14" stroke-width=".4"><ellipse cx="-5" cy="-3.8" rx=".9" ry="1.9"/><ellipse cx="-2" cy="-3.8" rx=".9" ry="1.9"/><ellipse cx="1" cy="-3.8" rx=".9" ry="1.9"/><ellipse cx="4" cy="-3.8" rx=".9" ry="1.9"/></g></g>
+<g id="oc"><path d="M-12 2.4h24" stroke="#F1EBD9" stroke-width="1" stroke-dasharray=".1 2.4" stroke-linecap="round" opacity=".9"/><path d="M-3.2-1.6L-3.6-7.4M4-1.8L3.8-7.5" stroke="#2B1D14" stroke-width="1.6"/><path d="M-3.2-1.6L-3.6-7.4M4-1.8L3.8-7.5" stroke="#9C7246" stroke-width=".7"/><path d="M-6.5-7.6Q0-8.6 7-7.6Q0-6.6-6.5-7.6Z" fill="#A57A4C" stroke="#2B1D14" stroke-width=".6"/><path d="M-10.5 0Q-6-2.6 0-2.6Q8-2.6 11.5-.4Q8 1.8 0 1.8Q-6 1.8-10.5 0Z" fill="#5A3A26" stroke="#2B1D14" stroke-width=".7"/><path d="M-7-.5Q0-1.6 8-.6" fill="none" stroke="#A07A50" stroke-width=".6"/></g>
+<g id="sail"><path d="M0 0Q-6-10-10-24Q-2-16 8-22Q4-10 0 0Z" fill="#A84A2C" stroke="#2B1D14" stroke-width="1" stroke-linejoin="round"/><path d="M-2.2-7.5L2.8-8.9M-4.6-13.6L4.6-15.2" stroke="#F2E6CB" stroke-width="1.3" stroke-dasharray=".1 2" stroke-linecap="round"/></g>
+<g id="dcHull"><ellipse cy="3" rx="17" ry="4.6" fill="#0F2F3D" opacity=".3" transform="rotate(-24)"/><g transform="rotate(-24)"><path d="M-15-5.2Q-9-7.8 0-7.8Q11-7.8 16-5.4Q11-3.2 0-3.2Q-9-3.2-15-5.2Z" fill="#6B4A2E" stroke="#2B1D14" stroke-width=".7"/><path d="M-16 3Q-9 .2 0 .2Q12 .2 17.5 2.8Q12 5.6 0 5.6Q-9 5.6-16 3Z" fill="#5A3A26" stroke="#2B1D14" stroke-width=".7"/><rect x="-8.5" y="-5" width="15" height="7" fill="#B98A55" stroke="#2B1D14" stroke-width=".6"/><path d="M-5.5-5V2M-2.5-5V2M.5-5V2M3.5-5V2" stroke="#8A6440" stroke-width=".5"/><rect x="-7.5" y="-4.4" width="6.4" height="5.6" rx=".8" fill="#C8893A" stroke="#2B1D14" stroke-width=".6"/><path d="M-13 1L-19 5.5" stroke="#2B1D14" stroke-width="1.1" stroke-linecap="round"/></g></g>
+<g id="dc"><path d="M-24-2.5H-16M-26 3.5H-17" transform="rotate(-24)" stroke="#F1EBD9" stroke-width="1" stroke-dasharray=".1 2.4" stroke-linecap="round"/><use href="#dcHull"/><use href="#sail" transform="translate(2.5 -3) scale(1.05)"/></g>
+<g id="dcIn"><path d="M-24-2.5H-16M-26 3.5H-17" transform="rotate(156)" stroke="#F1EBD9" stroke-width="1" stroke-dasharray=".1 2.4" stroke-linecap="round"/><use href="#dcHull" transform="rotate(180)"/><use href="#sail" transform="translate(-2.5 -3) scale(-1.05 1.05)"/></g>
+<g id="volcano"><path d="M-30 0Q-15-18-7-36H7Q15-18 30 0Q0 6-30 0Z" fill="#8C5638" stroke="#2B1D14" stroke-width="1" stroke-linejoin="round"/><path d="M0-36H7Q15-18 30 0Q15 3.6 0 3.8Z" fill="#2B1D14" opacity=".22"/><ellipse cy="-36" rx="7" ry="2.2" fill="#2B1D14"/><path d="M-3.5-34.5Q-9-20-17-4M3.5-34.5Q6.5-20 12-3" fill="none" stroke="#1C1719" stroke-width="2.8" stroke-linecap="round"/><path d="M-3.5-34Q-8-22-13.5-9M3.8-33.5Q6-22 9.5-10" fill="none" stroke="#77727C" stroke-width=".7" stroke-linecap="round"/><path class="smoke" d="M0-40q-3-3 0-6q3-3 0-6q-3-3 0-6" fill="none" stroke="#2B1D14" stroke-width=".9" stroke-linecap="round"/></g>
+<g id="cloud"><path d="M-21 7Q-24-2-14-3.5Q-13-13.5-2.5-12.5Q2-20.5 11-14Q20.5-15 20.5-4.5Q27-1.5 22.5 7Z" fill="#F7F1E3" stroke="#2B1D14" stroke-width="1"/><path d="M-11 1.5q3.4-3.4 6.8 0M2.5-2.5q3.4-3.4 6.8 0" fill="none" stroke="#2B1D14" stroke-width=".7" stroke-linecap="round"/><ellipse cx="1" cy="8" rx="19.5" ry="2.7" fill="#8FD0C4" stroke="#2B1D14" stroke-width=".6" stroke-dasharray="1.5 1.1"/></g>
+<g id="ic-holz"><path d="M3 12.5L15 6.5M5 16L17 10" stroke="#2B1D14" stroke-width="4.8" stroke-linecap="round"/><path d="M3 12.5L15 6.5" stroke="#9C7246" stroke-width="3" stroke-linecap="round"/><path d="M5 16L17 10" stroke="#B08456" stroke-width="3" stroke-linecap="round"/><circle cx="15.2" cy="6.5" r="1.6" fill="#D2AA72" stroke="#2B1D14" stroke-width=".6"/><circle cx="17.2" cy="10" r="1.6" fill="#D2AA72" stroke="#2B1D14" stroke-width=".6"/></g>
+<g id="ic-nahrung"><path d="M10 11C5.5 9.5 3.5 4.5 6.5 3C8 2.3 9.5 3.4 10 4.6C10.5 3.4 12 2.3 13.5 3C16.5 4.5 14.5 9.5 10 11Z" fill="#5E8A3A" stroke="#2B1D14" stroke-width=".9"/><path d="M10 4.8V10.6" stroke="#B9D08A" stroke-width=".7"/><path d="M10 11V12.8" stroke="#2B1D14" stroke-width="1"/><ellipse cx="10" cy="15.2" rx="3.6" ry="2.7" fill="#8C5F6E" stroke="#2B1D14" stroke-width=".9"/></g>
+<g id="ic-toepfe"><path d="M6 3.5H14L13 5.2Q16.6 8.4 15.1 12.8Q10 16.4 4.9 12.8Q3.4 8.4 7 5.2Z" fill="#B5562F" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M4.4 9H15.6" stroke="#F2E6CB" stroke-width="1.2" stroke-dasharray=".1 1.7" stroke-linecap="round"/></g>
+<g id="ic-beile"><path d="M5 17.5L12.5 4.5" stroke="#2B1D14" stroke-width="3.2" stroke-linecap="round"/><path d="M5 17.5L12.5 4.5" stroke="#9C7246" stroke-width="1.8" stroke-linecap="round"/><path d="M10.5 5.5L16.5 7.5L17.5 11L12 9Z" fill="#6F737A" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/><path d="M11 6.2L13 8.6M12.4 5.6L14.2 8" stroke="#E8D29E" stroke-width=".7"/></g>
+<g id="ic-matten"><path d="M2.5 6.5H15.5V14H2.5Z" fill="#DCC48C" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M5 6.5V14M7.5 6.5V14M10 6.5V14M12.5 6.5V14M2.5 9H15.5M2.5 11.5H15.5" stroke="#BFA169" stroke-width=".7"/><ellipse cx="15.5" cy="10.25" rx="2.2" ry="3.75" fill="#E8D4A0" stroke="#2B1D14" stroke-width=".9"/><path d="M15.5 8.6q1 .8 0 1.6q-1 .8 0 1.6" fill="none" stroke="#8A6A44" stroke-width=".6"/></g>
+<g id="ic-schnur"><circle cx="10" cy="10" r="6.3" fill="none" stroke="#2B1D14" stroke-width="2.8"/><circle cx="10" cy="10" r="6.3" fill="none" stroke="#B08048" stroke-width="1.5" stroke-dasharray="1.2 .8"/><circle cx="10" cy="10" r="3.2" fill="none" stroke="#2B1D14" stroke-width="2.5"/><circle cx="10" cy="10" r="3.2" fill="none" stroke="#B08048" stroke-width="1.2" stroke-dasharray="1.2 .8"/></g>
+<g id="ic-pop"><circle cx="10" cy="5.2" r="2.7" fill="#2B1D14"/><path d="M5.2 17.5L10 8.8L14.8 17.5Z" fill="#A84A2C" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M7.4 13.6H12.6" stroke="#F2E6CB" stroke-width="1.1" stroke-dasharray=".1 1.7" stroke-linecap="round"/></g>
+</defs>
+</svg>
+
+<svg id="map" role="application" aria-label="Seekarte. Ziehen schiebt die Karte. Zwei Finger, Mausrad, Plus und Minus zoomen." tabindex="0" data-lod="mid">
+<defs>
+<pattern id="pSea" width="16" height="10" patternUnits="userSpaceOnUse"><rect width="16" height="10" fill="#2F5F73"/><path d="M1 7q3.5-4 7 0M9 2q3.5-4 7 0" fill="none" stroke="#E6DBBF" stroke-opacity=".26" stroke-width=".9" stroke-linecap="round"/></pattern>
+<pattern id="pLag" width="14" height="9" patternUnits="userSpaceOnUse"><rect width="14" height="9" fill="#79C6B8"/><path d="M1 6q3-3.2 6 0M8 1.5q3-3.2 6 0" fill="none" stroke="#F3F8EE" stroke-opacity=".5" stroke-width=".8" stroke-linecap="round"/></pattern>
+<pattern id="pCloth" width="40" height="6" patternUnits="userSpaceOnUse"><rect width="40" height="6" fill="#EADFC6"/><path d="M0 2.5h17M21 2.5h12M5 5.3h9M27 5.3h10" stroke="#D8CAA8" stroke-width=".7"/></pattern>
+<pattern id="pDots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r=".75" fill="#2E4A1C" fill-opacity=".28"/><circle cx="6.5" cy="6.5" r=".75" fill="#2E4A1C" fill-opacity=".28"/></pattern>
+<pattern id="pForest" width="12" height="10" patternUnits="userSpaceOnUse"><path d="M1 4.5l2.5-3 2.5 3M7 9.5l2.5-3 2.5 3" fill="none" stroke="#8DB35A" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="2.5" r=".8" fill="#2E4A1C" fill-opacity=".45"/><circle cx="3.5" cy="8" r=".8" fill="#2E4A1C" fill-opacity=".45"/></pattern>
+<pattern id="pWeave" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="3" height="3" fill="#DCC48C"/><path d="M0 0h1.5v1.5H0zM1.5 1.5H3V3H1.5z" fill="#BFA169"/></pattern>
+<mask id="fogMask" maskUnits="userSpaceOnUse" x="-3000" y="-3000" width="7600" height="8400"><rect x="-3000" y="-3000" width="7600" height="8400" fill="#fff"/><g id="fogHoles" fill="#000"></g></mask>
+<g id="clips"></g>
+</defs>
+<rect x="-3000" y="-3000" width="7600" height="8400" fill="url(#pSea)"/>
+<g id="lTerrain"></g>
+<g id="lSel"></g>
+<g id="lCords"></g>
+<g id="lObjects"></g>
+<g id="lWalk" class="lod-near"></g>
+<g id="lGhost"></g>
+<g mask="url(#fogMask)"><rect x="-3000" y="-3000" width="7600" height="8400" fill="url(#pCloth)"/><g id="fogEdge" fill="none"></g></g>
+<g id="lSigns"></g>
+<g id="lBoats"></g>
+<g id="lLabels"></g>
+</svg>
+
+<header id="top" class="band">
+<div class="top-inner">
+<div class="top-row">
+<div class="isle"><span id="isleName" class="isle-name">Panua</span><span id="isleType" class="cap">Hohe Insel</span></div>
+<div class="pop" aria-label="Bewohner"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg><b id="popNum">0</b><span id="popCap">/0</span></div>
+</div>
+<ul id="goods" class="goods" aria-label="Lager der Insel"></ul>
+</div>
+<div class="manulua"></div>
+</header>
+
+<div id="compass" role="img" aria-label="Wind aus Nord">
+<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="26.5" fill="#EEE3C8" stroke="#2B1D14" stroke-width="1.3"/><circle cx="28" cy="28" r="22.6" fill="none" stroke="#3E2416" stroke-width="2.6" stroke-dasharray=".1 2.7" stroke-linecap="round"/><circle cx="28" cy="28" r="18.4" fill="none" stroke="#A84A2C" stroke-width="1.1"/><path d="M28 3L29.8 7.2H26.2Z" fill="#2B1D14"/><circle cx="28" cy="28" r="5.4" fill="none" stroke="#2B1D14" stroke-width="1.3"/><path d="M28 22.6V33.4M22.6 28H33.4" stroke="#2B1D14" stroke-width="1.3"/><path d="M28 11.5V36" stroke="#A84A2C" stroke-width="2.4" stroke-linecap="round"/><path d="M28 44.5L22.6 35.8H33.4Z" fill="#A84A2C" stroke="#2B1D14" stroke-width=".7" stroke-linejoin="round"/></svg>
+<span>Wind</span>
+</div>
+
+<div id="zoomctl">
+<button id="zIn" class="round" type="button" aria-label="Näher heran">+</button>
+<button id="zOut" class="round" type="button" aria-label="Weiter weg">−</button>
+<button id="zAll" class="round" type="button" aria-label="Alle Inseln zeigen"><svg viewBox="0 0 26 26" aria-hidden="true"><ellipse cx="9" cy="16" rx="6" ry="4.5" fill="#8DA757" stroke="#2B1D14" stroke-width="1.2"/><ellipse cx="18" cy="8" rx="5" ry="3.4" fill="none" stroke="#4E9C9A" stroke-width="2"/><path d="M12 13Q15 11 16 10" fill="none" stroke="#8A6440" stroke-width="1.8" stroke-dasharray="1.6 1.4"/></svg></button>
+<button id="menuBtn" class="round" type="button" aria-label="Menü"><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="6" cy="13" r="2.4" fill="#2B1D14"/><circle cx="13" cy="13" r="2.4" fill="#A84A2C"/><circle cx="20" cy="13" r="2.4" fill="#2B1D14"/></svg></button>
+</div>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<nav id="bottom" class="band" aria-label="Bauen">
+<div class="manulua"></div>
+<div class="bottom-inner">
+<div class="bottom-head"><span class="cap">Bauen</span><span id="buildWhere" class="where">auf Panua</span></div>
+<div class="bottom-row">
+<div id="buildList" class="build-list" role="toolbar" aria-label="Was bauen"></div>
+<svg class="hb" viewBox="0 0 10 50" aria-hidden="true"><path d="M5 2V48" stroke="#3E2416" stroke-width="1.2"/><path d="M1 5L5 8L9 5M1 11L5 14L9 11M1 17L5 20L9 17M1 23L5 26L9 23M1 29L5 32L9 29M1 35L5 38L9 35M1 41L5 44L9 41" fill="none" stroke="#3E2416" stroke-width="1.1" stroke-linejoin="round"/></svg>
+<button id="tradeBtn" class="tbtn" type="button" aria-label="Kanu mit Waren schicken"><svg viewBox="0 0 44 22" aria-hidden="true"><path d="M3 11H41" stroke="#2B1D14" stroke-width="4.4" stroke-linecap="round"/><path d="M3 11H41" stroke="#B08048" stroke-width="2.8" stroke-linecap="round"/><path d="M3 11H41" stroke="#6E4A28" stroke-width="2.8" stroke-dasharray="1.1 2.2"/><g fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"><ellipse cx="13" cy="11" rx="4.2" ry="5.2"/><ellipse cx="22" cy="11" rx="4.2" ry="5.2"/><ellipse cx="31" cy="11" rx="4.2" ry="5.2"/></g></svg><span>Tausch</span></button>
+</div>
+</div>
+</nav>
+
+<div id="place" class="band" hidden>
+<div class="manulua"></div>
+<div class="place-inner">
+<svg id="placeIc" class="place-ic" viewBox="-17 -29 34 33" aria-hidden="true"></svg>
+<div class="place-txt"><b id="placeName">Haus</b><span id="placeInfo"></span><span id="placeMsg" class="msg" role="status"></span></div>
+<button id="placeDone" class="btn" type="button">Fertig</button>
+<button id="placeOk" class="btn primary" type="button">Bauen</button>
+</div>
+</div>
+
+<section id="sheet" class="band sheet" hidden aria-label="Details">
+<div class="manulua"></div>
+<div id="sheetBody" class="sheet-body"></div>
+</section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const NS = 'http://www.w3.org/2000/svg';
+const W = 1600, H = 2400, TICK = 2000, DAY = 3, AGE_FULL = 150, LOAD = 12, SAVE_KEY = 'inselspiel-proto-1';
+const $ = id => document.getElementById(id);
+const svg = $('map');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fx = v => Math.round(v * 10) / 10;
+function rng(seed){ let s = (seed >>> 0) || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
+
+/* ---------- geometry helpers */
+function smooth(pts){
+  const n = pts.length, m = [];
+  for (let i = 0; i < n; i++){ const a = pts[i], b = pts[(i + 1) % n]; m.push({x:(a.x + b.x) / 2, y:(a.y + b.y) / 2}); }
+  let d = `M${fx(m[n-1].x)} ${fx(m[n-1].y)}`; const poly = []; let prev = m[n-1];
+  for (let i = 0; i < n; i++){
+    const c = pts[i], e = m[i];
+    d += `Q${fx(c.x)} ${fx(c.y)} ${fx(e.x)} ${fx(e.y)}`;
+    for (let k = 1; k <= 6; k++){ const t = k / 6, u = 1 - t; poly.push({x:u*u*prev.x + 2*u*t*c.x + t*t*e.x, y:u*u*prev.y + 2*u*t*c.y + t*t*e.y}); }
+    prev = e;
+  }
+  return {d: d + 'Z', poly};
+}
+function scallop(pts, sweep, k){
+  let d = `M${fx(pts[0].x)} ${fx(pts[0].y)}`;
+  for (let i = 1; i <= pts.length; i++){ const a = pts[i-1], b = pts[i % pts.length]; const r = Math.hypot(b.x - a.x, b.y - a.y) * k; d += `A${fx(r)} ${fx(r)} 0 0 ${sweep} ${fx(b.x)} ${fx(b.y)}`; }
+  return d + 'Z';
+}
+function ring(cx, cy, rx, ry, n, seed, jitter){
+  const r = rng(seed), p = [];
+  for (let i = 0; i < n; i++){ const a = i / n * Math.PI * 2, j = 1 + (r() - .5) * jitter; p.push({x:cx + Math.cos(a) * rx * j, y:cy + Math.sin(a) * ry * j}); }
+  return p;
+}
+function inPoly(p, poly){ let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){ const a = poly[i], b = poly[j]; if ((a.y > p.y) !== (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) ins = !ins; } return ins; }
+function segDist(p, a, b){ const dx = b.x - a.x, dy = b.y - a.y, l = dx*dx + dy*dy; const t = l ? clamp(((p.x - a.x)*dx + (p.y - a.y)*dy) / l, 0, 1) : 0; return Math.hypot(p.x - a.x - t*dx, p.y - a.y - t*dy); }
+function polyDist(p, poly, closed = true){ let m = Infinity; const n = poly.length; for (let i = 0; i < (closed ? n : n - 1); i++) m = Math.min(m, segDist(p, poly[i], poly[(i + 1) % n])); return m; }
+const P = (arr, dx = 0, dy = 0) => arr.map(([x, y]) => ({x:x + dx, y:y + dy}));
+
+/* ---------- goods and buildings */
+const GOODS = ['holz','nahrung','toepfe','beile','matten','schnur'];
+const GN = {holz:'Holz', nahrung:'Essen', toepfe:'Töpfe', beile:'Steinbeile', matten:'Segelmatten', schnur:'Schnur'};
+const G1 = {holz:'Holz', nahrung:'Essen', toepfe:'Topf', beile:'Steinbeil', matten:'Segelmatte', schnur:'Schnur'};
+const KINDS = {
+  haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'+4 Bewohner', vb:'-17 -29 34 33'},
+  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Bringt alle 4 Sekunden Essen.', vb:'-13 -11 26 22'},
+  fisch:{n:'Fischgestell', s:'Fisch', on:['atoll'], cost:{holz:1}, r:8, hy:4, prod:'nahrung', every:2, info:'Bringt alle 4 Sekunden Essen.', vb:'-12 -14 26 18'},
+  toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:3, roof:true, info:'Brennt alle 6 Sekunden einen Topf. Ton gibt es nur auf hohen Inseln.', vb:'-16 -17 34 21'},
+  beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], cost:{holz:2}, r:11, hy:6, prod:'beile', every:4, roof:true, info:'Schleift alle 8 Sekunden ein Steinbeil. Guter Stein liegt nur auf hohen Inseln.', vb:'-18 -17 36 21'},
+  flecht:{n:'Flechthütte', s:'Matten', on:['atoll'], cost:{holz:1}, r:10, hy:6, prod:'matten', every:3, roof:true, info:'Flicht alle 6 Sekunden eine Segelmatte aus Pandanus.', vb:'-17 -17 34 21'},
+  schnur:{n:'Seilerei', s:'Schnur', on:['atoll'], cost:{holz:1}, r:10, hy:6, prod:'schnur', every:3, roof:true, info:'Dreht alle 6 Sekunden Schnur aus Kokosfasern.', vb:'-14 -17 30 21'},
+  werft:{n:'Kanuhaus', s:'Kanuhaus', on:['hoch'], cost:{holz:4}, r:16, hy:6, max:1, coast:true, roof:true, info:'Hier entsteht das Doppelkanu. Es steht am Strand.', vb:'-21 -19 44 24'},
+  pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], cost:{holz:3}, r:11, hy:18, cap:4, water:true, roof:true, info:'+4 Bewohner. Steht in der Lagune.', vb:'-17 -34 34 37'},
+  speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], cost:{holz:2}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
+  halle:{n:'Versammlungshaus', s:'Dorfhaus', on:['hoch'], cost:{holz:6}, r:19, hy:16, max:1, roof:true, info:'Hier trifft sich das Dorf.', vb:'-21 -34 42 37'},
+  palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], cost:{}, r:5, hy:10, beach:true, plant:true, info:'Kostet nichts.', vb:'-13 -25 26 28'},
+  baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Bringt alle 12 Sekunden etwas Essen.', vb:'-10 -21 20 23'},
+  pandanus:{n:'Pandanus', s:'Pandanus', on:['atoll'], cost:{}, r:5, hy:9, beach:true, plant:true, info:'Kostet nichts.', vb:'-10 -21 20 23'}
+};
+const ORDER = ['haus','taro','fisch','toepfer','beil','flecht','schnur','werft','pfahl','speicher','halle','palme','baum','pandanus'];
+const CANOE = {holz:6, beile:2, matten:3, schnur:3};
+const costOf = (kind, I) => { const c = KINDS[kind].cost; return (c.hoch || c.atoll) ? (c[I.type] || {}) : c; };
+const canPay = (I, c) => Object.entries(c).every(([k, v]) => (I.stock[k] || 0) >= v);
+const lacking = (I, c) => { const m = Object.entries(c).find(([k, v]) => (I.stock[k] || 0) < v); return m ? GN[m[0]] : ''; };
+const pay = (I, c, f = 1) => { for (const [k, v] of Object.entries(c)) I.stock[k] = Math.max(0, (I.stock[k] || 0) - v * f); };
+const costText = c => { const e = Object.entries(c); return e.length ? e.map(([k, v]) => `${v} ${v === 1 ? G1[k] : GN[k]}`).join(' + ') : 'nichts'; };
+
+/* ---------- world geometry */
+const HDX = 470, HDY = 1150;
+const HC = [[30,470],[34,432],[46,404],[44,380],[60,356],[86,336],[100,316],[128,306],[156,296],[186,300],[206,292],[232,300],[248,318],[246,340],[238,360],[240,388],[252,412],[258,440],[254,470],[262,498],[252,526],[230,546],[214,572],[190,588],[176,612],[156,622],[140,608],[118,600],[92,604],[68,592],[54,566],[36,540],[34,506]];
+const HR = [[10,470],[14,428],[24,396],[26,372],[42,340],[70,316],[92,296],[124,284],[156,276],[188,280],[210,272],[242,278],[266,300],[278,330],[292,358],[302,386],[306,414],[308,446],[304,478],[298,508],[284,538],[260,562],[240,590],[214,612],[194,636],[162,648],[134,640],[108,638],[82,642],[52,630],[32,600],[14,560],[10,512]];
+const HF = [[52,428],[54,396],[60,372],[78,352],[100,334],[126,322],[156,320],[176,332],[178,356],[166,378],[146,394],[124,402],[104,418],[82,436],[64,440]];
+const HRIV = [[132,398],[139,423],[140,446],[142.5,469],[154,490],[169,510],[182,532],[194,551],[210,570]];
+const HPALMS = [[150,306],[184,304],[214,303],[236,316],[98,328],[242,340],[64,362],[44,412],[38,454],[252,470],[36,502],[255,522],[40,542],[236,550],[222,568],[56,574],[186,594],[84,598],[112,602],[142,606],[166,613]];
+
+function atollShape(cx, cy, rx, ry, defs){
+  const R = (t, k) => ({x:cx + rx * k * Math.cos(t * Math.PI / 180), y:cy + ry * k * Math.sin(t * Math.PI / 180)});
+  const lands = defs.map(([t0, t1, kin, steps]) => {
+    const ts = []; for (let i = 0; i < steps; i++) ts.push(t0 + (t1 - t0) * i / (steps - 1));
+    const kout = 1.02, mid = (kout + kin) / 2;
+    return smooth([...ts.map(t => R(t, kout)), R(t1 + 5, mid), ...ts.slice().reverse().map(t => R(t, kin)), R(t0 - 5, mid)]);
+  });
+  return {R, lands};
+}
+
+function makeIslands(){
+  const list = [];
+  const hc = smooth(P(HC, HDX, HDY)), hr = smooth(P(HR, HDX, HDY));
+  list.push({id:'heimat', name:'Panua', type:'hoch', center:{x:150 + HDX, y:460 + HDY}, lands:[hc], reef:hr, harbor:{x:302 + HDX, y:386 + HDY},
+    forest:P(HF, HDX, HDY), river:P(HRIV, HDX, HDY), blocked:[{x:205 + HDX, y:414 + HDY, r:20}, {x:84 + HDX, y:502 + HDY, r:25}, {x:107 + HDX, y:362 + HDY, r:16}],
+    deco:'heimat', box:{x0:480, y0:1422, x1:778, y1:1798}, labelAt:{x:620, y:1405}});
+  const t = atollShape(760, 1080, 124, 84, [[100,175,.64,6],[-25,25,.82,4],[-128,-74,.82,4],[46,68,.84,3]]);
+  list.push({id:'tochter', name:'Motu', type:'atoll', center:{x:760, y:1080}, lands:t.lands, R:t.R, atoll:{cx:760, cy:1080, rx:124, ry:84}, harbor:t.R(85, 1),
+    box:{x0:628, y0:988, x1:892, y1:1172}, labelAt:{x:760, y:975}});
+  const vc = ring(430, 640, 112, 84, 14, 7, .26), vr = ring(430, 640, 150, 118, 14, 9, .1);
+  const vcs = smooth(vc), vrs = smooth(vr);
+  let vh = vrs.poly[0]; for (const p of vrs.poly) if (p.y > vh.y) vh = p;
+  list.push({id:'vulkan', name:'Api', type:'hoch', center:{x:430, y:640}, lands:[vcs], reef:vrs, harbor:{x:vh.x, y:vh.y},
+    forest:ring(385, 612, 30, 20, 9, 4, .2), blocked:[{x:432, y:628, r:38}], deco:'vulkan', box:{x0:270, y0:515, x1:590, y1:765}, labelAt:{x:430, y:505}});
+  const a2 = atollShape(1130, 620, 104, 70, [[115,195,.66,6],[-45,10,.82,4],[35,80,.84,4]]);
+  list.push({id:'fern', name:'Namo', type:'atoll', center:{x:1130, y:620}, lands:a2.lands, R:a2.R, atoll:{cx:1130, cy:620, rx:104, ry:70}, harbor:a2.R(100, 1),
+    box:{x0:1015, y0:540, x1:1245, y1:700}, labelAt:{x:1130, y:532}});
+  for (const I of list){ I.discovered = false; I.settled = false; I.stock = {}; I.pop = 0; I.buildings = []; I.canoe = false; }
+  return list;
+}
+
+/* ---------- state */
+let islands = makeIslands();
+let routes = [];
+let fogHoles = [];
+let tick = 0, nextId = 1, active = 'heimat';
+let cam = {x:690, y:1380, z:.7}, lod = 'mid', camAnim = null;
+let mode = 'idle', placing = null, selectedId = null, sheetKind = null, sheetData = null;
+let boats = [], walkers = [], expSource = null;
+const isl = id => islands.find(I => I.id === id);
+
+function addB(I, kind, p, v = {}, born = 0){ const b = {id:nextId++, kind, x:fx(p.x), y:fx(p.y), born, v}; I.buildings.push(b); return b; }
+function newGame(){
+  islands = makeIslands(); routes = []; boats = []; tick = 0; nextId = 1; active = 'heimat';
+  const Hm = isl('heimat'), T = isl('tochter'), r = rng(11);
+  Object.assign(Hm, {discovered:true, settled:true, pop:30, stock:{holz:12, nahrung:16, toepfe:3, beile:2, matten:0, schnur:0}});
+  Object.assign(T, {discovered:true, settled:true, pop:8, stock:{holz:3, nahrung:6, toepfe:1, beile:0, matten:1, schnur:0}});
+  const h = (x, y) => ({x:x + HDX, y:y + HDY}), old = -AGE_FULL, mid = -AGE_FULL / 2;
+  addB(Hm, 'haus', h(224,366), {mirror:1, scale:.8}, old);
+  addB(Hm, 'werft', h(249,385), {}, mid);
+  addB(Hm, 'speicher', h(180,388), {scale:.85}, mid);
+  addB(Hm, 'halle', h(206,400), {}, -25);
+  addB(Hm, 'haus', h(236,410), {scale:.8}, old * .8);
+  addB(Hm, 'haus', h(176,420), {scale:.85}, -10);
+  addB(Hm, 'haus', h(190,446), {shape:'hr', scale:.85}, mid);
+  addB(Hm, 'haus', h(230,446), {mirror:1, scale:.75}, -30);
+  addB(Hm, 'toepfer', h(212,468), {}, mid);
+  addB(Hm, 'beil', h(183,476), {}, -40);
+  addB(Hm, 'haus', h(198,498), {shape:'hr', scale:.8}, old);
+  addB(Hm, 'speicher', h(246,508), {scale:.8}, old);
+  addB(Hm, 'pfahl', h(276,434), {scale:.85}, -30);
+  addB(Hm, 'pfahl', h(287,466), {scale:.8}, old);
+  addB(Hm, 'pfahl', h(272,498), {scale:.72}, -50);
+  [[122,440,80],[160,452,75],[126,474,70],[168,488,60],[148,512,50],[190,518,45]].forEach(([x, y, rot]) => addB(Hm, 'taro', h(x, y), {rot}));
+  [[220,334],[160,400],[62,472],[112,548],[78,566],[132,580]].forEach(([x, y]) => addB(Hm, 'baum', h(x, y), {scale:.9 + r() * .15}));
+  HPALMS.forEach(([x, y], i) => addB(Hm, 'palme', h(x, y), {mirror:i % 2, scale:.82 + r() * .12}));
+  const R = T.R;
+  addB(T, 'haus', R(118, .82), {scale:.7}, -20);
+  addB(T, 'haus', R(162, .8), {mirror:1, scale:.66}, -10);
+  addB(T, 'haus', R(140, .82), {shape:'hr', scale:.66}, -15);
+  addB(T, 'fisch', R(105, .86), {}, -25);
+  addB(T, 'flecht', R(129, .88), {}, -25);
+  [[110,.96],[151,.95],[172,.92],[-12,.92],[12,.92],[-115,.92],[-96,.92],[-80,.92],[57,.93]].forEach(([a, k], i) => addB(T, 'palme', R(a, k), {mirror:i % 2, scale:.66 + r() * .1}));
+  [[-104,.92],[2,.92]].forEach(([a, k]) => addB(T, 'pandanus', R(a, k), {scale:.66}));
+  routes = [{a:'heimat', b:'tochter', knots:3}];
+  fogHoles = [{cx:665, cy:1345, rx:385, ry:525, seed:3}];
+}
+
+/* ---------- save and load */
+function serialize(){
+  return JSON.stringify({v:1, tick, nextId, active, routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots})), fog:fogHoles,
+    isl:islands.map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, canoe:I.canoe, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v])})),
+    cargo:boats.filter(b => !b.exp).map(b => ({to:b.to, cargo:b.cargo}))});
+}
+function restore(raw){
+  try {
+    const s = JSON.parse(raw); if (!s || s.v !== 1) return false;
+    islands = makeIslands(); tick = s.tick | 0; nextId = s.nextId | 0 || 1; active = s.active || 'heimat';
+    for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = d.st || {}; I.pop = d.pop | 0; I.canoe = !!d.canoe;
+      I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v]) => ({id, kind, x, y, born, v:v || {}})); }
+    routes = (s.routes || []).filter(r => isl(r.a) && isl(r.b)); fogHoles = s.fog || [];
+    for (const c of s.cargo || []){ const I = isl(c.to); if (I) for (const [k, v] of Object.entries(c.cargo)) I.stock[k] = (I.stock[k] || 0) + v; }
+    if (!isl(active) || !isl(active).settled) active = 'heimat';
+    return isl('heimat').settled;
+  } catch (e){ return false; }
+}
+function save(){ try { localStorage.setItem(SAVE_KEY, serialize()); } catch (e){} }
+
+/* ---------- island rules */
+const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher').length;
+const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (KINDS[b.kind].cap || 0), 0);
+function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
+function inLagoon(I, p){
+  if (landAt(I, p)) return false;
+  for (const L of I.lands) if (polyDist(p, L.poly) < 5) return false;
+  if (I.atoll){ const a = I.atoll, e = ((p.x - a.cx) / a.rx) ** 2 + ((p.y - a.cy) / a.ry) ** 2; return e < .8; }
+  return inPoly(p, I.reef.poly) && polyDist(p, I.reef.poly) > 10;
+}
+function onIsland(I, p){
+  if (I.atoll){ const a = I.atoll; return ((p.x - a.cx) / a.rx) ** 2 + ((p.y - a.cy) / a.ry) ** 2 < 1.08; }
+  return inPoly(p, I.reef.poly);
+}
+function check(kind, I, x, y, ignoreId){
+  const K = KINDS[kind], p = {x, y};
+  if (!K.on.includes(I.type)) return 'Geht auf dieser Insel nicht';
+  if (K.water){ if (!inLagoon(I, p)) return 'Pfahlhäuser stehen in der Lagune'; }
+  else {
+    const L = landAt(I, p); if (!L) return 'Nur auf Land';
+    const dEdge = polyDist(p, L.poly);
+    if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
+    if (K.coast && dEdge > 18) return 'Das Kanuhaus gehört an den Strand';
+    if (I.forest && inPoly(p, I.forest)) return 'Hier steht Wald';
+    if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';
+    for (const z of I.blocked || []) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
+  }
+  for (const b of I.buildings){ if (b.id === ignoreId) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + KINDS[b.kind].r) * .8) return 'Zu eng'; }
+  return '';
+}
+function findSpot(I, kind, from){
+  if (!check(kind, I, from.x, from.y)) return {x:from.x, y:from.y};
+  for (let r = 6; r < 220; r += 5){ const n = Math.max(8, Math.round(r / 3)); for (let i = 0; i < n; i++){ const a = i / n * Math.PI * 2; const x = from.x + Math.cos(a) * r, y = from.y + Math.sin(a) * r * .8; if (!check(kind, I, x, y)) return {x, y}; } }
+  return null;
+}
+
+/* ---------- colours */
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => { const A = hex(a), B = hex(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+function roofColor(b){ const f = clamp((tick - b.born) / AGE_FULL, 0, 1); const base = mix('#DDB060', '#8F8574', f); return b.v && b.v.tint ? mix(base, '#C8893A', .25) : base; }
+
+/* ---------- building markup */
+function inner(b, roof){
+  const v = b.v || {}, m = v.mirror ? -1 : 1, s = v.scale || 1, sc = `scale(${fx(m * s)} ${fx(s)})`;
+  switch (b.kind){
+    case 'haus': return `<use class="roof" href="#${v.shape === 'hr' ? 'hr' : 'hw'}" fill="${roof}" transform="${sc}"/>`;
+    case 'pfahl': return `<use class="roof" href="#hp" fill="${roof}" transform="${sc}"/>`;
+    case 'speicher': return `<use class="roof" href="#hs" fill="${roof}" transform="${sc}"/>`;
+    case 'halle': return `<use class="roof" href="#hm" fill="${roof}" transform="scale(.85)"/>`;
+    case 'werft': { const I = b.isl ? isl(b.isl) : null; return `<use class="roof" href="#hk" fill="${roof}"/>` + (I && I.canoe ? `<use href="#dcHull" transform="translate(9 11) scale(.78)"/><use href="#sail" transform="translate(11 8) scale(.72)"/>` : ''); }
+    case 'taro': return `<use href="#tp" transform="rotate(${v.rot || 0})"/>`;
+    case 'fisch': return `<use href="#rack"/><use href="#rack" transform="translate(9 3) scale(.7)"/>`;
+    case 'toepfer': return `<use class="roof" href="#hc" fill="${roof}" transform="scale(.9)"/><use href="#pt" transform="translate(9.5 2.5) scale(.62)"/><use href="#pt" transform="translate(13.5 4) scale(.52)"/><circle cx="-11" cy="1.5" r="2.4" fill="none" stroke="#7E766A" stroke-width="1.2" stroke-dasharray="1.3 .7"/><circle cx="-11" cy="1.5" r="1.1" fill="#E0803A"/><path class="smoke lod-near" d="M-11-1.5q-2.6-2.6 0-5.2q2.6-2.6 0-5.2" fill="none" stroke="#2B1D14" stroke-width=".8" stroke-linecap="round"/>`;
+    case 'beil': return `<use class="roof" href="#hc" fill="${roof}" transform="scale(.9)"/><g fill="#8A8A86" stroke="#2B1D14" stroke-width=".5"><ellipse cx="11" cy="1.5" rx="3" ry="2"/><ellipse cx="15.5" cy="3" rx="2.4" ry="1.7"/><ellipse cx="13" cy="-1.6" rx="2.2" ry="1.5"/></g><use href="#ic-beile" transform="translate(-18 -6) scale(.5)"/>`;
+    case 'flecht': return `<use class="roof" href="#hc" fill="${roof}" transform="scale(.9)"/><rect x="7" y="-.5" width="8" height="5" fill="url(#pWeave)" stroke="#2B1D14" stroke-width=".6" transform="rotate(-8)"/><rect x="-16" y=".5" width="7" height="4.4" fill="url(#pWeave)" stroke="#2B1D14" stroke-width=".6" transform="rotate(6)"/>`;
+    case 'schnur': return `<use class="roof" href="#hc" fill="${roof}" transform="scale(.9)"/><use href="#ic-schnur" transform="translate(7.5 -4.5) scale(.55)"/>`;
+    case 'palme': return `<use href="#palm" transform="${sc}"/>`;
+    case 'baum': return `<use href="#tree" transform="scale(${fx(s)})"/>`;
+    case 'pandanus': return `<use href="#pan" transform="${sc}"/>`;
+  }
+  return '';
+}
+function iconMarkup(kind){ return inner({kind, v:{scale:kind === 'haus' ? 1 : (kind === 'pfahl' ? .95 : 1), rot:0}}, '#DDB060'); }
+
+/* ---------- rendering: terrain */
+function landMarkup(I, L, i){
+  const cid = `cp-${I.id}-${i}`;
+  return `<clipPath id="${cid}"><path d="${L.d}"/></clipPath><path d="${L.d}" fill="#8DA757"/><path d="${L.d}" fill="url(#pDots)"/>` +
+    `<g clip-path="url(#${cid})" fill="none"><path d="${L.d}" stroke="#E8D29E" stroke-width="${I.atoll ? 11 : 15}"/><path d="${L.d}" stroke="#D2B67C" stroke-width="3.4"/></g>` +
+    `<path d="${L.d}" fill="none" stroke="#2B1D14" stroke-width="1.4" stroke-dasharray="2.2 1.7"/>`;
+}
+function renderTerrain(){
+  let s = '';
+  for (const I of islands){
+    const hb = I.harbor;
+    if (I.atoll){
+      const a = I.atoll, e = `cx="${a.cx}" cy="${a.cy}" rx="${a.rx}" ry="${a.ry}"`, r = rng(a.cx);
+      s += `<ellipse ${e} fill="none" stroke="#24505F" stroke-width="16" opacity=".45"/><ellipse ${e} fill="url(#pLag)" stroke="#4E9C9A" stroke-width="8"/><ellipse ${e} fill="none" stroke="#F4EEDC" stroke-width="2" stroke-dasharray=".1 3.6" stroke-linecap="round"/>`;
+      s += `<circle cx="${fx(hb.x)}" cy="${fx(hb.y)}" r="9" fill="url(#pSea)"/>`;
+      for (let i = 0; i < 7; i++){ const t = r() * Math.PI * 2, k = .2 + r() * .45; s += `<ellipse cx="${fx(a.cx + Math.cos(t) * a.rx * k)}" cy="${fx(a.cy + Math.sin(t) * a.ry * k)}" rx="${fx(2 + r() * 2)}" ry="${fx(1.4 + r())}" fill="#4E9C9A" stroke="#F3F8EE" stroke-width=".6" stroke-opacity=".7"/>`; }
+      I.lands.forEach((L, i) => { s += landMarkup(I, L, i); });
+    } else {
+      s += `<path d="${I.reef.d}" fill="none" stroke="#24505F" stroke-width="16" opacity=".45"/><path d="${I.reef.d}" fill="url(#pLag)" stroke="#4E9C9A" stroke-width="8"/><path d="${I.reef.d}" fill="none" stroke="#F4EEDC" stroke-width="2" stroke-dasharray=".1 3.6" stroke-linecap="round"/>`;
+      s += `<circle cx="${fx(hb.x)}" cy="${fx(hb.y)}" r="9.5" fill="url(#pSea)"/>`;
+      I.lands.forEach((L, i) => { s += landMarkup(I, L, i); });
+      if (I.forest){ const fd = scallop(I.forest, 1, .62); s += `<path d="${fd}" fill="#557A37"/><path d="${fd}" fill="url(#pForest)"/><path d="${fd}" fill="none" stroke="#2B1D14" stroke-width="1"/>`; }
+      if (I.deco === 'heimat'){
+        s += `<g transform="translate(${HDX} ${HDY})"><path d="M93 372L98 357L105.5 350L113 354.5L120.5 370Q107 375 93 372Z" fill="#9A8C70" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M105.5 350L113 354.5L120.5 370Q114 372.6 108 373Z" fill="#2B1D14" opacity=".22"/>` +
+          `<g fill="none" stroke-linecap="round"><path d="M132 398Q142 424 140 446Q138 470 154 490Q170 510 182 532Q192 552 210 570" stroke="#2B1D14" stroke-width="4.8"/><path d="M132 398Q142 424 140 446Q138 470 154 490Q170 510 182 532Q192 552 210 570" stroke="#6DB9BE" stroke-width="3"/><path d="M132 398Q142 424 140 446Q138 470 154 490Q170 510 182 532Q192 552 210 570" stroke="#EAF5F0" stroke-width=".9" stroke-dasharray=".1 3.4" opacity=".85"/></g>` +
+          `<ellipse cx="205" cy="414" rx="21" ry="11" fill="#DCC690" stroke="#2B1D14" stroke-width=".8" stroke-dasharray="1.4 1.2"/><circle cx="205" cy="415" r="2.6" fill="none" stroke="#7E766A" stroke-width="1.6" stroke-dasharray="1.6 .8"/>` +
+          `<g transform="translate(84 502) rotate(-10)"><rect x="-24" y="-14" width="48" height="28" rx="6" fill="#B38C57" stroke="#2B1D14" stroke-width=".9" stroke-dasharray="1.8 1.3"/><path d="M-19-8H19M-20-1H20M-19 6H19" stroke="#7A5A33" stroke-width="3.4" stroke-dasharray=".1 5.4" stroke-linecap="round"/><path d="M-19-9H19M-20-2H20M-19 5H19" stroke="#5E9440" stroke-width="1.7" stroke-dasharray=".1 5.4" stroke-linecap="round"/></g></g>`;
+      }
+      if (I.deco === 'vulkan') s += `<use href="#volcano" transform="translate(432 656) scale(1.6)"/>`;
+    }
+  }
+  $('lTerrain').innerHTML = s;
+}
+
+/* ---------- rendering: fog, signs, cords */
+function holePath(h){ return scallop(ring(h.cx, h.cy, h.rx, h.ry, Math.max(16, Math.round((h.rx + h.ry) / 22)), h.seed || 1, .1), 0, .6); }
+function renderFog(){
+  let holes = '', edges = '';
+  for (const h of fogHoles){ const d = holePath(h); holes += `<path d="${d}"/>`; edges += `<path d="${d}" stroke="#A84A2C" stroke-width="10" stroke-dasharray="4.4 3.6"/><path d="${d}" stroke="#2B1D14" stroke-width="1.4"/>`; }
+  $('fogHoles').innerHTML = holes; $('fogEdge').innerHTML = edges;
+}
+function renderSigns(){
+  let s = '';
+  for (const I of islands){
+    if (I.discovered) continue;
+    const c = I.center;
+    s += `<g class="sign" data-isl="${I.id}" transform="translate(${c.x} ${c.y - 10})"><g class="sign-s"><circle class="pulse" r="42" fill="none" stroke="#A84A2C" stroke-width="4" stroke-dasharray="3 3"/><use href="#cloud" transform="scale(1.7)"/>` +
+      `<g fill="none" stroke="#2B1D14" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><g><animateMotion dur="11s" repeatCount="indefinite" path="M30-40A30 12 0 1 1-30-40A30 12 0 1 1 30-40"/><path d="M-5 0q2.5-3.2 5 0q2.5-3.2 5 0"/></g><g><animateMotion dur="15s" repeatCount="indefinite" path="M-36-34A36 14 0 1 0 36-34A36 14 0 1 0-36-34"/><path d="M-4.4 0q2.2-3 4.4 0q2.2-3 4.4 0"/></g></g></g></g>`;
+  }
+  $('lSigns').innerHTML = s;
+}
+function routePathD(r){
+  const A = isl(r.a).harbor, B = isl(r.b).harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1;
+  const k = len * .1, mx = (A.x + B.x) / 2 - dy / len * k, my = (A.y + B.y) / 2 + dx / len * k;
+  return `M${fx(A.x)} ${fx(A.y)}Q${fx(mx)} ${fx(my)} ${fx(B.x)} ${fx(B.y)}`;
+}
+function renderCords(){
+  let s = '';
+  routes.forEach((r, i) => { const d = routePathD(r);
+    s += `<g class="cord" data-r="${i}"><path class="cord-shadow" d="${d}" fill="none" stroke="#123544" stroke-width="8" opacity=".3"/><path class="cord-ink" d="${d}" fill="none" stroke="#2B1D14" stroke-width="5" stroke-linecap="round"/><path class="cord-body" id="cord-${i}" d="${d}" fill="none" stroke="#B08048" stroke-width="3.2" stroke-linecap="round"/><path class="cord-twist" d="${d}" fill="none" stroke="#6E4A28" stroke-width="3.2" stroke-dasharray="1.2 2.4"/><g class="knots"></g></g>`; });
+  $('lCords').innerHTML = s;
+  routes.forEach((r, i) => {
+    const p = $('cord-' + i); r.el = p; r.len = p.getTotalLength(); const n = Math.min(r.knots, 12); let k = '';
+    for (let j = 0; j < n; j++){ const q = p.getPointAtLength(r.len * (j + 1) / (n + 1)); k += `<g transform="translate(${fx(q.x)} ${fx(q.y)})"><g class="knot-s"><ellipse rx="4.6" ry="5.4" fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"/><path d="M-1.4-2.6q1.6 2.6.2 5.2" fill="none" stroke="#C99A62" stroke-width=".8"/></g></g>`; }
+    p.parentNode.querySelector('.knots').innerHTML = k;
+  });
+}
+
+/* ---------- rendering: objects, labels, walkers */
+function renderObjects(){
+  const all = [];
+  for (const I of islands) if (I.settled) for (const b of I.buildings){ b.isl = I.id; all.push(b); }
+  all.sort((a, b) => a.y - b.y);
+  let s = '';
+  for (const b of all){
+    const moving = (mode === 'move' && placing && placing.moveId === b.id) ? ' moving' : '';
+    s += `<g class="b lod-mid${moving}" data-id="${b.id}" transform="translate(${b.x} ${b.y})">${inner(b, roofColor(b))}</g>`;
+  }
+  for (const I of islands){
+    if (!I.settled) continue;
+    const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) continue;
+    const cx = hs.reduce((t, b) => t + b.x, 0) / hs.length, cy = hs.reduce((t, b) => t + b.y, 0) / hs.length;
+    s += `<g class="lod-far" transform="translate(${fx(cx)} ${fx(cy)}) scale(2.6)"><use href="#hw" fill="#8F8574" transform="translate(-9 2)"/><use href="#hr" fill="#C99A50" transform="translate(9 3) scale(.9)"/><use href="#hw" fill="#DDB060" transform="translate(0 8) scale(.9)"/></g>`;
+  }
+  $('lObjects').innerHTML = s;
+  renderSel();
+}
+function refreshRoofs(){
+  for (const g of $('lObjects').querySelectorAll('.b')){ const b = findB(+g.dataset.id); if (!b) continue; const u = g.querySelector('.roof'); if (u) u.setAttribute('fill', roofColor(b)); }
+}
+function findB(id){ for (const I of islands) { const b = I.buildings.find(x => x.id === id); if (b) return b; } return null; }
+function islOfB(id){ return islands.find(I => I.buildings.some(b => b.id === id)); }
+function renderSel(){
+  const b = selectedId ? findB(selectedId) : null;
+  $('lSel').innerHTML = b ? `<ellipse cx="${b.x}" cy="${b.y + 1}" rx="${KINDS[b.kind].r + 6}" ry="${(KINDS[b.kind].r + 6) * .45}" fill="none" stroke="#F4ECD8" stroke-width="4" stroke-dasharray=".1 4" stroke-linecap="round" class="lod-mid"/>` : '';
+}
+function renderLabels(){
+  let s = '';
+  for (const I of islands){
+    if (!I.discovered) continue;
+    const t = I.name, w = 16 + t.length * 7.6, sub = I.settled ? `${I.pop} Bewohner` : '', w2 = Math.max(w, 14 + sub.length * 5.6);
+    s += `<g class="lbl lod-notnear" data-x="${I.labelAt.x}" data-y="${I.labelAt.y}"><rect x="${-w2 / 2}" y="-15" width="${w2}" height="${sub ? 30 : 20}" rx="4" fill="#F4ECD8" stroke="#3E2416" stroke-width="1.6" stroke-dasharray=".1 2.6" stroke-linecap="round"/><text y="0" text-anchor="middle" font-family="Alegreya, Georgia, serif" font-weight="800" font-size="14" fill="#2B1D14">${t}</text>` +
+      (sub ? `<text y="11" text-anchor="middle" font-family="Alegreya Sans, sans-serif" font-weight="700" font-size="10" fill="#5A3A26">${sub}</text>` : '') + `</g>`;
+  }
+  for (const I of islands){ if (I.discovered) continue; s += `<g class="lbl lod-far" data-x="${I.center.x}" data-y="${I.center.y + 44}"><rect x="-62" y="-11" width="124" height="20" rx="4" fill="#F4ECD8" stroke="#3E2416" stroke-width="1.6" stroke-dasharray=".1 2.6" stroke-linecap="round"/><text y="4" text-anchor="middle" font-family="Alegreya Sans, sans-serif" font-weight="800" font-size="12" fill="#2B1D14">Wolke über Land</text></g>`; }
+  $('lLabels').innerHTML = s; scaleLabels();
+}
+function scaleLabels(){
+  const k = clamp(.95 / cam.z, .75, 2.6);
+  for (const g of $('lLabels').children) g.setAttribute('transform', `translate(${g.dataset.x} ${g.dataset.y}) scale(${fx(k * 100) / 100})`);
+  const ks = clamp(.85 / cam.z, 1, 2.6);
+  for (const g of $('lSigns').querySelectorAll('.sign-s')) g.setAttribute('transform', `scale(${fx(ks * 100) / 100})`);
+}
+function spawnWalkers(){
+  walkers = []; $('lWalk').innerHTML = '';
+  const cols = ['#A84A2C', '#D9A441', '#6B4A2A', '#C8893A', '#8C5F6E'];
+  for (const I of islands){
+    if (!I.settled) continue;
+    const spots = I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof); if (spots.length < 2) continue;
+    const n = clamp(Math.round(I.pop / 8), 1, 5);
+    for (let i = 0; i < n; i++){
+      const a = spots[(i * 3) % spots.length], el = document.createElementNS(NS, 'use');
+      el.setAttribute('href', '#pp'); el.setAttribute('fill', cols[i % cols.length]); $('lWalk').appendChild(el);
+      walkers.push({isl:I.id, x:a.x + 4, y:a.y + 4, tx:a.x, ty:a.y, el, wait:0});
+    }
+  }
+}
+function stepWalkers(dt){
+  for (const w of walkers){
+    if (w.wait > 0){ w.wait -= dt; continue; }
+    const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
+    if (d < 1.5){ const I = isl(w.isl); const sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus'); const t = sp[Math.floor(Math.random() * sp.length)]; if (t){ w.tx = t.x + (Math.random() - .5) * 8; w.ty = t.y + 3 + Math.random() * 4; } w.wait = 600 + Math.random() * 1800; continue; }
+    const v = Math.min(d, dt * .007); w.x += dx / d * v; w.y += dy / d * v;
+    w.el.setAttribute('transform', `translate(${fx(w.x)} ${fx(w.y)})`);
+  }
+}
+
+/* ---------- camera */
+let vw = 390, vh = 844, topH = 76, botH = 100;
+function measure(){
+  const r = svg.getBoundingClientRect(); vw = r.width || 390; vh = r.height || 844;
+  topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
+  const t = topH + 8; $('compass').style.top = t + 'px'; $('zoomctl').style.top = t + 'px'; $('toast').style.top = (topH + 10) + 'px';
+}
+const zMin = () => clamp(Math.min(vw / (W * 1.05), vh / (H * .9)), .16, .4), zMax = 4.5;
+const clampZ = z => clamp(z, zMin(), zMax);
+function clampCam(){ cam.x = clamp(cam.x, 0, W); cam.y = clamp(cam.y, 0, H); }
+function applyCam(){
+  const w = vw / cam.z, h = vh / cam.z;
+  svg.setAttribute('viewBox', `${fx(cam.x - w / 2)} ${fx(cam.y - h / 2)} ${fx(w)} ${fx(h)}`);
+  const nl = cam.z < .55 ? 'far' : cam.z < 1.3 ? 'mid' : 'near';
+  if (nl !== lod){ lod = nl; svg.dataset.lod = lod; }
+  scaleLabels();
+}
+function toWorld(sx, sy){ const r = svg.getBoundingClientRect(); return {x:cam.x + (sx - r.left - r.width / 2) / cam.z, y:cam.y + (sy - r.top - r.height / 2) / cam.z}; }
+function zoomAt(z, sx, sy, wp){ const r = svg.getBoundingClientRect(); cam.z = clampZ(z); cam.x = wp.x - (sx - r.left - r.width / 2) / cam.z; cam.y = wp.y - (sy - r.top - r.height / 2) / cam.z; clampCam(); camAnim = null; applyCam(); }
+function visCenter(){ const r = svg.getBoundingClientRect(); return {sx:r.left + r.width / 2, sy:r.top + topH + (r.height - topH - botH) / 2}; }
+function camFor(x, y, z){ const off = (topH - botH) / 2; return {x, y:y - off / z, z}; }
+const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function flyTo(x, y, z){ z = clampZ(z); const to = camFor(x, y, z); if (reduced){ Object.assign(cam, to); clampCam(); applyCam(); return; } camAnim = {from:{...cam}, to, t0:performance.now(), dur:520}; }
+function fitBox(b, maxZ = 2){ const bw = b.x1 - b.x0, bh = b.y1 - b.y0; const z = Math.min((vw - 140) / bw, (vh - topH - botH - 60) / bh, maxZ); flyTo((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z); }
+function boxOf(list){ const b = {x0:Infinity, y0:Infinity, x1:-Infinity, y1:-Infinity}; for (const I of list){ b.x0 = Math.min(b.x0, I.box.x0); b.y0 = Math.min(b.y0, I.box.y0); b.x1 = Math.max(b.x1, I.box.x1); b.y1 = Math.max(b.y1, I.box.y1); } return b; }
+function overview(){ const b = boxOf(islands); fitBox({x0:b.x0 - 90, y0:b.y0 - 60, x1:b.x1 + 90, y1:b.y1 + 40}, 1.2); }
+function stepCam(now){
+  if (!camAnim) return; const t = clamp((now - camAnim.t0) / camAnim.dur, 0, 1), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, a = camAnim.from, b = camAnim.to;
+  cam.z = Math.exp(Math.log(a.z) + (Math.log(b.z) - Math.log(a.z)) * e); cam.x = a.x + (b.x - a.x) * e; cam.y = a.y + (b.y - a.y) * e; clampCam(); applyCam();
+  if (t >= 1) camAnim = null;
+}
+
+/* ---------- HUD */
+let lastStock = {};
+function updateHUD(){
+  const I = isl(active);
+  $('isleName').textContent = I.name; $('isleType').textContent = I.type === 'hoch' ? 'Hohe Insel' : 'Atoll';
+  $('popNum').textContent = I.pop; $('popCap').textContent = '/' + houseCap(I);
+  const ul = $('goods'); if (!ul.children.length){ ul.innerHTML = GOODS.map(k => `<li data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span></li>`).join(''); }
+  for (const li of ul.children){ const k = li.dataset.k, v = I.stock[k] || 0; li.querySelector('span').textContent = v; li.setAttribute('aria-label', `${GN[k]}: ${v}`); li.classList.toggle('zero', !v);
+    if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
+  lastStock = {isl:active, ...I.stock};
+  for (const btn of $('buildList').children){ const k = btn.dataset.kind; btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
+}
+function renderBuildBar(){
+  const I = isl(active);
+  $('buildWhere').textContent = 'auf ' + I.name;
+  $('buildList').innerHTML = ORDER.filter(k => KINDS[k].on.includes(I.type)).map(k => { const K = KINDS[k];
+    return `<button type="button" class="bbtn" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
+  updateHUD();
+}
+function setActive(id){ if (active === id) return; active = id; renderBuildBar(); }
+let toastT = 0;
+function toast(msg, ms = 2600){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, ms); }
+
+/* ---------- placing */
+function ghostRender(){
+  const g = $('lGhost'); if (!placing){ g.innerHTML = ''; return; }
+  const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg, K = KINDS[placing.kind];
+  placing.ok = ok; placing.msg = msg;
+  g.innerHTML = `<g transform="translate(${fx(placing.x)} ${fx(placing.y)})"><ellipse cy="1" rx="${K.r + 5}" ry="${(K.r + 5) * .45}" fill="${ok ? 'rgba(62,122,58,.25)' : 'rgba(168,74,44,.25)'}" stroke="${ok ? '#3E7A3A' : '#A84A2C'}" stroke-width="2.4" stroke-dasharray=".1 3.6" stroke-linecap="round"/><g opacity=".78">${inner({kind:placing.kind, v:placing.v, isl:placing.island}, '#DDB060')}</g></g>`;
+  const m = $('placeMsg'); m.textContent = ok ? (mode === 'move' ? 'Passt.' : 'Passt. Tippe auf Bauen.') : msg; m.classList.toggle('bad', !ok);
+  $('placeOk').disabled = !ok || (mode === 'place' && !canPay(I, costOf(placing.kind, I)));
+}
+function variant(kind){ const r = Math.random; const v = {mirror:r() < .5 ? 1 : 0};
+  if (kind === 'haus') Object.assign(v, {shape:r() < .32 ? 'hr' : 'hw', scale:fx(.7 + r() * .18), tint:r() < .3 ? 1 : 0});
+  else if (kind === 'pfahl') v.scale = fx(.72 + r() * .14);
+  else if (kind === 'palme' || kind === 'pandanus') v.scale = fx(.7 + r() * .22);
+  else if (kind === 'baum') v.scale = fx(.85 + r() * .2);
+  else if (kind === 'taro') v.rot = Math.round(r() * 80);
+  else if (kind === 'speicher') v.scale = fx(.75 + r() * .12);
+  return v; }
+function startPlace(kind){
+  const I = isl(active), K = KINDS[kind];
+  if (K.max && I.buildings.filter(b => b.kind === kind).length >= K.max){ toast(`Nur ein ${K.n} pro Insel.`); return; }
+  const c = costOf(kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`); return; }
+  closeSheet(); selectedId = null; renderSel();
+  mode = 'place'; placing = {kind, island:I.id, x:I.center.x, y:I.center.y, v:variant(kind)};
+  showPlaceBar();
+  const vc = visCenter(), wc = toWorld(vc.sx, vc.sy), base = onIsland(I, wc) && lod !== 'far' ? wc : I.center;
+  if (lod === 'far' || !onIsland(I, wc)) flyTo(I.center.x, I.center.y, Math.max(cam.z, 1.6));
+  const p = findSpot(I, kind, base) || base; placing.x = p.x; placing.y = p.y; ghostRender();
+  for (const b of $('buildList').children) b.setAttribute('aria-pressed', b.dataset.kind === kind ? 'true' : 'false');
+}
+function startMove(b){
+  const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:b.v, moveId:b.id};
+  showPlaceBar(); renderObjects(); ghostRender(); if (lod === 'far') flyTo(b.x, b.y, 1.6);
+}
+function showPlaceBar(){
+  const K = KINDS[placing.kind], I = isl(placing.island);
+  $('placeName').textContent = (mode === 'move' ? 'Versetzen: ' : '') + K.n;
+  $('placeInfo').textContent = mode === 'move' ? 'Ziehen oder woanders hintippen.' : (Object.keys(costOf(placing.kind, I)).length ? `Kostet ${costText(costOf(placing.kind, I))}. ${K.info}` : K.info);
+  $('placeIc').setAttribute('viewBox', K.vb); $('placeIc').innerHTML = iconMarkup(placing.kind);
+  $('placeOk').textContent = mode === 'move' ? 'Hier hin' : 'Bauen';
+  $('bottom').hidden = true; $('place').hidden = false; measure();
+}
+function endPlace(){
+  const wasMove = mode === 'move'; mode = 'idle'; placing = null; ghostRender();
+  $('place').hidden = true; $('bottom').hidden = false; measure();
+  for (const b of $('buildList').children) b.setAttribute('aria-pressed', 'false');
+  if (wasMove) renderObjects();
+}
+function confirmPlace(){
+  if (!placing || !placing.ok) return;
+  const I = isl(placing.island), K = KINDS[placing.kind];
+  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); } endPlace(); renderObjects(); save(); toast(`${K.n} versetzt.`); return; }
+  const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`); return; }
+  pay(I, c); addB(I, placing.kind, placing, placing.v, tick); renderObjects(); updateHUD(); save();
+  toast(`${K.n} ${K.plant ? 'gepflanzt' : 'gebaut'}.`, 1600);
+  if (K.max || !canPay(I, c)){ endPlace(); return; }
+  placing.v = variant(placing.kind); const p = findSpot(I, placing.kind, {x:placing.x + K.r * 2.2, y:placing.y}); if (p){ placing.x = p.x; placing.y = p.y; } ghostRender();
+}
+
+/* ---------- sheets */
+function openSheet(kind, data){ sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
+function closeSheet(){ if (!sheetKind) return; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; renderSel(); measure(); }
+function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
+function windOf(from, to){
+  const A = isl(from).harbor, B = isl(to).harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy), c = dy / len;
+  const f = c < -.35 ? 3 : c > .35 ? 1 : 2; return {f, len, label:f === 3 ? 'Gegen den Wind' : f === 1 ? 'Mit dem Wind' : 'Seitenwind', cls:f === 1 ? 'with' : ''};
+}
+function tripDays(r, from, to){ const w = windOf(from, to); const k = Math.max(.6, 1 - .04 * r.knots); return Math.max(1, Math.round(w.len / 372 * w.f * k)); }
+function renderSheet(){
+  const body = $('sheetBody'); let h = '';
+  if (sheetKind === 'trade'){
+    const t = sheetData, r = routes[t.r], F = isl(t.from), T = isl(t.to), w = windOf(t.from, t.to), days = tripDays(r, t.from, t.to);
+    const load = Object.values(t.cargo).reduce((a, b) => a + b, 0);
+    const mine = routes.map((x, i) => [x, i]).filter(([x]) => x.a === active || x.b === active);
+    h += head(`Nach ${T.name}`, `Ladung von ${F.name}`);
+    if (mine.length > 1) h += `<div class="chips" role="group" aria-label="Ziel">${mine.map(([x, i]) => { const o = x.a === active ? x.b : x.a; return `<button class="chip" type="button" data-act="route" data-r="${i}" aria-pressed="${i === t.r}">${isl(o).name}</button>`; }).join('')}</div>`;
+    h += `<div class="rowx"><div class="windline"><span class="tag ${w.cls}">${w.label}</span><span>${days} ${days === 1 ? 'Tag' : 'Tage'} (${Math.round(days * DAY)} Sekunden)</span></div><button class="btn small" type="button" data-act="swap">Andersherum</button></div>`;
+    h += `<div class="knotsline"><svg viewBox="0 0 44 22" width="44" height="22" aria-hidden="true"><path d="M3 11H41" stroke="#2B1D14" stroke-width="4.4" stroke-linecap="round"/><path d="M3 11H41" stroke="#B08048" stroke-width="2.8" stroke-linecap="round"/><g fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"><ellipse cx="15" cy="11" rx="4.2" ry="5.2"/><ellipse cx="29" cy="11" rx="4.2" ry="5.2"/></g></svg><span>${r.knots} Knoten. Jede Fahrt knüpft einen dazu. Je mehr Knoten, desto kürzer die Fahrt.</span></div>`;
+    h += `<ul class="list">${GOODS.map(k => { const have = F.stock[k] || 0, n = t.cargo[k] || 0; return `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span class="nm">${GN[k]}</span><span class="st">Lager ${have}</span><span class="step"><button type="button" data-act="minus" data-k="${k}" aria-label="${GN[k]} weniger" ${n ? '' : 'disabled'}>−</button><output aria-live="polite">${n}</output><button type="button" data-act="plus" data-k="${k}" aria-label="${GN[k]} mehr" ${n < have && load < LOAD ? '' : 'disabled'}>+</button></span></li>`; }).join('')}</ul>`;
+    h += `<div class="rowx"><span class="sub">Ladung ${load} von ${LOAD}</span><button class="btn primary" type="button" data-act="send" ${load ? '' : 'disabled'}>Ablegen</button></div>`;
+  } else if (sheetKind === 'info'){
+    const b = findB(sheetData.id); if (!b){ closeSheet(); return; }
+    const K = KINDS[b.kind], I = islOfB(b.id), age = clamp((tick - b.born) / AGE_FULL, 0, 1);
+    h += head(K.n, `Auf ${I.name}. ${K.info}`);
+    if (K.roof) h += `<p class="sub">${age < .34 ? 'Frisches Dach' : age < .8 ? 'Das Dach wird grau' : 'Altes Dach, bald erneuern'}</p>`;
+    if (b.kind === 'werft') h += werftMarkup(I);
+    if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
+  } else if (sheetKind === 'intro'){
+    h += head('So geht es', '');
+    h += `<ul class="help"><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Ganz nah heran zum Bauen, weit weg für den Überblick.</li><li>Unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Tippe auf die Schnur zwischen zwei Inseln, um ein Kanu mit Waren zu schicken.</li><li>Im Kanuhaus entsteht das Doppelkanu für neues Land. Segelmatten und Schnur kommen von Motu.</li></ul>`;
+    h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
+  } else if (sheetKind === 'menu'){
+    h += head('Menü', 'Dein Spiel bleibt in diesem Browser gespeichert.');
+    if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="askreset">Neu anfangen</button></span></div>`;
+  }
+  body.innerHTML = h; lastSig = sheetSig();
+}
+let lastSig = '';
+function sheetSig(){
+  if (sheetKind !== 'info' || !sheetData) return '';
+  const b = findB(sheetData.id); if (!b) return 'gone';
+  const I = islOfB(b.id), age = Math.floor(clamp((tick - b.born) / AGE_FULL, 0, 1) * 3);
+  if (b.kind !== 'werft') return 'a' + age;
+  return [I.canoe, ...Object.entries(CANOE).map(([k, v]) => Math.min(I.stock[k] || 0, v))].join();
+}
+function werftMarkup(I){
+  let h = `<p>Ein Doppelkanu braucht Holz und Steinbeile von hier. Segelmatten und Schnur kommen vom Atoll.</p>`;
+  if (I.canoe){
+    const left = islands.filter(J => !J.discovered).length;
+    h += left ? `<p><b>Das Doppelkanu liegt bereit.</b> Such dir eine Wolke im Nebel aus.</p><div class="rowx"><span></span><button class="btn primary" type="button" data-act="target">Ziel wählen</button></div>` : `<p><b>Das Doppelkanu liegt bereit.</b> Gerade ist kein neues Land in Sicht.</p>`;
+    return h;
+  }
+  h += `<ul class="list">${Object.entries(CANOE).map(([k, v]) => { const have = I.stock[k] || 0, ok = have >= v; return `<li class="${ok ? 'okk' : 'need'}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span class="nm">${GN[k]}</span><span class="st">${Math.min(have, v)} von ${v}${ok ? ' ✓' : ''}</span></li>`; }).join('')}</ul>`;
+  h += `<div class="rowx"><span class="sub">${canPay(I, CANOE) ? 'Alles da.' : 'Es fehlt noch etwas. Schick es mit einem Kanu her.'}</span><button class="btn primary" type="button" data-act="canoe" ${canPay(I, CANOE) ? '' : 'disabled'}>Doppelkanu bauen</button></div>`;
+  return h;
+}
+$('sheetBody').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  const act = btn.dataset.act;
+  if (act === 'close'){ closeSheet(); return; }
+  if (sheetKind === 'trade'){
+    const t = sheetData, F = isl(t.from), load = Object.values(t.cargo).reduce((a, b) => a + b, 0);
+    if (act === 'plus'){ const k = btn.dataset.k; if ((t.cargo[k] || 0) < (F.stock[k] || 0) && load < LOAD) t.cargo[k] = (t.cargo[k] || 0) + 1; }
+    if (act === 'minus'){ const k = btn.dataset.k; t.cargo[k] = Math.max(0, (t.cargo[k] || 0) - 1); }
+    if (act === 'swap'){ [t.from, t.to] = [t.to, t.from]; t.cargo = {}; setActive(t.from); }
+    if (act === 'route'){ const r = routes[+btn.dataset.r]; t.r = +btn.dataset.r; t.from = active; t.to = r.a === active ? r.b : r.a; t.cargo = {}; }
+    if (act === 'send'){ sendBoat(t); return; }
+    renderSheet(); return;
+  }
+  if (sheetKind === 'info'){
+    const b = findB(sheetData.id); if (!b) return;
+    if (act === 'move'){ startMove(b); return; }
+    if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
+    if (act === 'nokill'){ sheetData.confirm = false; renderSheet(); return; }
+    if (act === 'kill'){ const I = islOfB(b.id), c = costOf(b.kind, I); for (const [k, v] of Object.entries(c)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + Math.floor(v / 2)); I.buildings = I.buildings.filter(x => x.id !== b.id); closeSheet(); renderObjects(); updateHUD(); save(); toast(`${KINDS[b.kind].n} ist weg.`); return; }
+    if (act === 'canoe'){ const I = islOfB(b.id); if (canPay(I, CANOE) && !I.canoe){ pay(I, CANOE); I.canoe = true; renderObjects(); updateHUD(); save(); toast('Das Doppelkanu ist fertig.'); } renderSheet(); return; }
+    if (act === 'target'){ startTarget(islOfB(b.id)); return; }
+  }
+  if (sheetKind === 'menu'){
+    if (act === 'help'){ openSheet('intro'); return; }
+    if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
+    if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); closeSheet(); renderAll(); fitBox(boxOf([isl('heimat'), isl('tochter')]), 1); toast('Neues Spiel.'); return; }
+  }
+});
+function openTrade(ri){
+  const r = routes[ri]; const from = (r.a === active || r.b === active) ? active : r.a; const to = from === r.a ? r.b : r.a;
+  setActive(from); selectedId = null; renderSel(); openSheet('trade', {r:ri, from, to, cargo:{}});
+}
+function select(b){ selectedId = b.id; renderSel(); setActive(islOfB(b.id).id); openSheet('info', {id:b.id}); }
+
+/* ---------- boats and expeditions */
+function sendBoat(t){
+  const r = routes[t.r], F = isl(t.from), load = Object.values(t.cargo).reduce((a, b) => a + b, 0); if (!load) return;
+  for (const [k, v] of Object.entries(t.cargo)){ if ((F.stock[k] || 0) < v){ toast(`Zu wenig ${GN[k]}.`); return; } }
+  for (const [k, v] of Object.entries(t.cargo)) F.stock[k] -= v;
+  const days = tripDays(r, t.from, t.to), w = windOf(t.from, t.to);
+  addBoat({route:t.r, from:t.from, to:t.to, cargo:{...t.cargo}, dur:days * DAY * 1000, up:w.f === 3, reverse:r.a !== t.from});
+  closeSheet(); updateHUD(); save(); toast(`Das Kanu fährt nach ${isl(t.to).name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.`);
+}
+function addBoat(o){
+  const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'boat');
+  const icons = Object.keys(o.cargo || {}).filter(k => o.cargo[k] > 0).slice(0, 3);
+  const bub = icons.length ? `<g class="lod-mid" transform="translate(10 -40)"><rect width="${icons.length * 15 + 8}" height="19" rx="4" fill="#F4ECD8" stroke="#3E2416" stroke-width="1.3" stroke-dasharray=".1 2.2" stroke-linecap="round"/>${icons.map((k, i) => `<use href="#ic-${k}" transform="translate(${3 + i * 15} 1.5) scale(.8)"/>`).join('')}<path d="M8 19L2 28" stroke="#3E2416" stroke-width="1"/></g>` : '';
+  g.innerHTML = `<g class="spr"><use href="#dc"/></g>${bub}`; $('lBoats').appendChild(g);
+  boats.push({...o, el:g, spr:g.firstChild, t0:performance.now(), q:'NE'});
+}
+function startTarget(I){
+  if (!islands.some(J => !J.discovered)){ toast('Gerade ist kein neues Land in Sicht.'); return; }
+  expSource = I.id; closeSheet(); mode = 'target'; svg.classList.add('targeting'); overview(); toast('Tippe auf eine Wolke im Nebel.', 4200);
+}
+function startExpedition(T){
+  const S = isl(expSource); mode = 'idle'; svg.classList.remove('targeting'); if (!S || !S.canoe) return;
+  const A = S.harbor, B = T.harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
+  const d = `M${fx(A.x)} ${fx(A.y)}Q${fx((A.x + B.x) / 2 + dy / len * 60)} ${fx((A.y + B.y) / 2 - dx / len * 60)} ${fx(B.x)} ${fx(B.y)}`;
+  const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#F1EBD9'); p.setAttribute('stroke-width', '2.4'); p.setAttribute('stroke-dasharray', '.1 6'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('opacity', '.9'); $('lBoats').appendChild(p);
+  const c = dy / len, f = c < -.35 ? 3 : c > .35 ? 1 : 2, days = Math.max(2, Math.round(len / 480 * f));
+  S.canoe = false; renderObjects(); save();
+  addBoat({exp:true, from:S.id, to:T.id, path:p, len:p.getTotalLength(), dur:days * DAY * 1000, up:f === 3, cargo:{}});
+  toast(`Das Doppelkanu legt ab. Etwa ${days} Tage.`);
+}
+function settle(T, S, path){
+  T.discovered = true; T.settled = true; T.pop = 5; T.stock = {holz:4, nahrung:6, toepfe:1, beile:0, matten:0, schnur:0};
+  const r = rng(T.center.x | 0);
+  if (T.atoll){ T.lands.forEach((L, li) => { for (let i = 0; i < 5; i++){ const q = L.poly[Math.floor(r() * L.poly.length)], c = T.atoll; const p = {x:q.x + (c.cx - q.x) * .06, y:q.y + (c.cy - q.y) * .06}; if (!check('palme', T, p.x, p.y)) addB(T, 'palme', p, {mirror:i % 2, scale:fx(.62 + r() * .15)}, tick - 60); } }); }
+  else { const L = T.lands[0]; for (let i = 0; i < 16; i++){ const q = L.poly[Math.floor(i / 16 * L.poly.length)]; const p = {x:q.x + (T.center.x - q.x) * .07, y:q.y + (T.center.y - q.y) * .07}; if (!check('palme', T, p.x, p.y)) addB(T, 'palme', p, {mirror:i % 2, scale:fx(.75 + r() * .15)}, tick - 60); }
+    for (let i = 0; i < 4; i++){ const a = r() * Math.PI * 2, p = {x:T.center.x + Math.cos(a) * 64, y:T.center.y + Math.sin(a) * 46}; if (!check('baum', T, p.x, p.y)) addB(T, 'baum', p, {scale:fx(.9 + r() * .15)}, tick - 60); } }
+  const toward = {x:T.harbor.x + (T.center.x - T.harbor.x) * .25, y:T.harbor.y + (T.center.y - T.harbor.y) * .25};
+  const hs = findSpot(T, 'haus', toward); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
+  routes.push({a:S.id, b:T.id, knots:1});
+  fogHoles.push({cx:T.center.x, cy:T.center.y, rx:(T.box.x1 - T.box.x0) / 2 + 140, ry:(T.box.y1 - T.box.y0) / 2 + 140, seed:T.center.x | 0});
+  const L = path.getTotalLength(); for (let i = 1; i < 8; i++){ const q = path.getPointAtLength(L * i / 8); fogHoles.push({cx:fx(q.x), cy:fx(q.y), rx:150, ry:130, seed:i * 7 + 1}); }
+  renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save();
+  toast(`Auf ${T.name} steht das erste Haus. Eine neue Schnur führt nach ${S.name}.`, 4200);
+}
+function stepBoats(now){
+  for (let i = boats.length - 1; i >= 0; i--){
+    const b = boats[i], p = clamp((now - b.t0) / b.dur, 0, 1);
+    const path = b.exp ? b.path : routes[b.route].el, L = b.exp ? b.len : routes[b.route].len;
+    if (!path) { boats.splice(i, 1); b.el.remove(); continue; }
+    const s = b.reverse ? 1 - p : p, q = path.getPointAtLength(L * s), q2 = path.getPointAtLength(L * clamp(s + (b.reverse ? -.01 : .01), 0, 1));
+    let dx = q2.x - q.x, dy = q2.y - q.y; const dl = Math.hypot(dx, dy) || 1; let x = q.x, y = q.y;
+    if (b.up){ const cyc = Math.max(3, Math.round(L / 70)), off = Math.sin(p * Math.PI * 2 * cyc) * 13 * Math.sin(p * Math.PI); x += -dy / dl * off; y += dx / dl * off; const tilt = Math.cos(p * Math.PI * 2 * cyc); dx += -dy / dl * tilt * dl * 1.4; dy += dx / dl * tilt * .2; }
+    const qd = dy < 0 ? (dx >= 0 ? 'NE' : 'NW') : (dx < 0 ? 'SW' : 'SE');
+    if (qd !== b.q){ b.q = qd; b.spr.innerHTML = qd === 'NE' ? '<use href="#dc"/>' : qd === 'NW' ? '<use href="#dc" transform="scale(-1 1)"/>' : qd === 'SW' ? '<use href="#dcIn"/>' : '<use href="#dcIn" transform="scale(-1 1)"/>'; }
+    const k = lod === 'far' ? clamp(.9 / cam.z, 1.6, 3.2) : (b.exp ? 1.25 : 1);
+    b.el.setAttribute('transform', `translate(${fx(x)} ${fx(y)}) scale(${fx(k * 100) / 100})`);
+    b.el.style.opacity = p < .04 ? p / .04 : p > .96 ? (1 - p) / .04 : 1;
+    if (p >= 1){
+      boats.splice(i, 1); b.el.remove();
+      if (b.exp){ const T = isl(b.to), S = isl(b.from); b.path.remove(); settle(T, S, b.path); }
+      else { const T = isl(b.to), r = routes[b.route]; for (const [k2, v] of Object.entries(b.cargo)) T.stock[k2] = Math.min(storeCap(T), (T.stock[k2] || 0) + v); r.knots = Math.min(12, r.knots + 1); renderCords(); updateHUD(); if (sheetKind) renderSheet(); save(); toast(`Das Kanu ist in ${T.name}. ${r.knots} Knoten.`); }
+    }
+  }
+}
+
+/* ---------- economy */
+function econ(){
+  tick++;
+  for (const I of islands){
+    if (!I.settled) continue;
+    const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
+    if (I.type === 'hoch') add('holz', 1);
+    for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod && tick % K.every === 0) add(K.prod, 1); }
+    if (tick % 2 === 0) st.nahrung = Math.max(0, (st.nahrung || 0) - Math.ceil(I.pop / 12));
+    const hc = houseCap(I);
+    if ((st.nahrung || 0) > 0 && I.pop < hc) I.pop++; else if (I.pop > hc) I.pop = hc;
+  }
+  if (tick % 8 === 0) refreshRoofs();
+  if (tick % 5 === 0) renderLabels();
+  updateHUD(); if (placing) ghostRender();
+  if (sheetKind === 'info' && sheetSig() !== lastSig) renderSheet();
+  if (tick % 3 === 0) save();
+}
+
+/* ---------- hit tests and input */
+function hitBuilding(p){
+  if (lod === 'far') return null; let best = null, bd = Infinity;
+  for (const I of islands){ if (!I.settled) continue; for (const b of I.buildings){ const K = KINDS[b.kind]; const d = Math.hypot(p.x - b.x, p.y - (b.y - K.hy * .6)); const lim = Math.max(K.r + 3, 14 / cam.z); if (d < lim && d < bd){ bd = d; best = b; } } }
+  return best;
+}
+function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ const r = routes[i]; if (!r.el) continue; for (let j = 0; j <= 40; j++){ const q = r.el.getPointAtLength(r.len * j / 40); if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } } return -1; }
+function hitSign(p){ const lim = Math.max(55, 40 / cam.z); return islands.find(I => !I.discovered && Math.hypot(p.x - I.center.x, p.y - (I.center.y - 10)) < lim) || null; }
+function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
+function onTap(p){
+  if (mode === 'target'){ const T = hitSign(p); if (T) startExpedition(T); else toast('Tippe auf eine Wolke im Nebel.'); return; }
+  if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
+  const b = hitBuilding(p); if (b){ select(b); return; }
+  const ri = hitCord(p); if (ri >= 0){ openTrade(ri); return; }
+  const T = hitSign(p); if (T){ toast('Vögel kreisen über einer Wolke. Darunter liegt Land. Bau im Kanuhaus ein Doppelkanu.', 3600); return; }
+  const I = hitIsland(p); if (I){ closeSheet(); setActive(I.id); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
+  closeSheet();
+}
+const ptrs = new Map(); let ges = null;
+svg.addEventListener('pointerdown', e => {
+  svg.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); camAnim = null;
+  if (ptrs.size === 1){
+    const wp = toWorld(e.clientX, e.clientY);
+    const onGhost = placing && Math.hypot(wp.x - placing.x, wp.y - (placing.y - KINDS[placing.kind].hy * .6)) < Math.max(KINDS[placing.kind].r + 8, 26 / cam.z);
+    ges = {type:onGhost ? 'ghost' : 'tap', sx:e.clientX, sy:e.clientY, t:performance.now(), cx:cam.x, cy:cam.y, gx:onGhost ? placing.x - wp.x : 0, gy:onGhost ? placing.y - wp.y : 0};
+  } else if (ptrs.size === 2){
+    const [a, b] = [...ptrs.values()], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    ges = {type:'pinch', d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, z0:cam.z, w0:toWorld(mx, my)};
+  }
+});
+svg.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); if (!ges) return;
+  if (ges.type === 'pinch' && ptrs.size >= 2){ const [a, b] = [...ptrs.values()]; zoomAt(ges.z0 * Math.hypot(a.x - b.x, a.y - b.y) / ges.d0, (a.x + b.x) / 2, (a.y + b.y) / 2, ges.w0); return; }
+  if (ges.type === 'ghost'){ const wp = toWorld(e.clientX, e.clientY); placing.x = wp.x + ges.gx; placing.y = wp.y + ges.gy; ghostRender(); return; }
+  const dx = e.clientX - ges.sx, dy = e.clientY - ges.sy;
+  if (ges.type === 'tap' && Math.hypot(dx, dy) > 8) ges.type = 'pan';
+  if (ges.type === 'pan'){ cam.x = ges.cx - dx / cam.z; cam.y = ges.cy - dy / cam.z; clampCam(); applyCam(); }
+});
+function endPtr(e){
+  if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId);
+  if (ges && ges.type === 'tap' && ptrs.size === 0 && performance.now() - ges.t < 600) onTap(toWorld(e.clientX, e.clientY));
+  if (ptrs.size === 0) ges = null;
+  else if (ges && ges.type === 'pinch'){ const [q] = [...ptrs.values()]; ges = {type:'pan', sx:q.x, sy:q.y, cx:cam.x, cy:cam.y}; }
+}
+svg.addEventListener('pointerup', endPtr); svg.addEventListener('pointercancel', endPtr);
+svg.addEventListener('wheel', e => { e.preventDefault(); zoomAt(cam.z * Math.exp(-e.deltaY * .0016), e.clientX, e.clientY, toWorld(e.clientX, e.clientY)); }, {passive:false});
+svg.addEventListener('keydown', e => {
+  const s = 70 / cam.z, vc = visCenter();
+  if (e.key === 'ArrowLeft') cam.x -= s; else if (e.key === 'ArrowRight') cam.x += s; else if (e.key === 'ArrowUp') cam.y -= s; else if (e.key === 'ArrowDown') cam.y += s;
+  else if (e.key === '+' || e.key === '=') { zoomAt(cam.z * 1.3, vc.sx, vc.sy, toWorld(vc.sx, vc.sy)); return; }
+  else if (e.key === '-') { zoomAt(cam.z / 1.3, vc.sx, vc.sy, toWorld(vc.sx, vc.sy)); return; }
+  else if (e.key === 'Escape'){ if (placing) endPlace(); else if (mode === 'target'){ mode = 'idle'; svg.classList.remove('targeting'); } else closeSheet(); return; }
+  else return;
+  e.preventDefault(); clampCam(); applyCam();
+});
+function zoomBtn(f){ const vc = visCenter(); const w = toWorld(vc.sx, vc.sy), z = clampZ(cam.z * f); flyTo(w.x, w.y, z); }
+$('zIn').addEventListener('click', () => zoomBtn(1.6));
+$('zOut').addEventListener('click', () => zoomBtn(1 / 1.6));
+$('zAll').addEventListener('click', overview);
+$('menuBtn').addEventListener('click', () => openSheet('menu', {}));
+$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (b) startPlace(b.dataset.kind); });
+$('tradeBtn').addEventListener('click', () => { const i = routes.findIndex(r => r.a === active || r.b === active); if (i < 0){ toast('Von hier fährt noch kein Kanu.'); return; } openTrade(i); });
+$('placeOk').addEventListener('click', confirmPlace);
+$('placeDone').addEventListener('click', endPlace);
+window.addEventListener('resize', () => { measure(); applyCam(); });
+
+/* ---------- loop and boot */
+function renderAll(){ renderTerrain(); renderFog(); renderSigns(); renderCords(); renderObjects(); renderLabels(); spawnWalkers(); renderBuildBar(); }
+let last = performance.now();
+function frame(now){ const dt = Math.min(64, now - last); last = now; stepCam(now); if (boats.length) stepBoats(now); if (lod === 'near') stepWalkers(dt); requestAnimationFrame(frame); }
+function start(data){
+  let ok = false;
+  try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); } catch (e){}
+  if (!ok) newGame();
+  renderAll(); measure();
+  const b = boxOf([isl('heimat'), isl('tochter')]), bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+  const z = clampZ(Math.min((vw - 50) / bw, (vh - topH - botH - 40) / bh, 1));
+  Object.assign(cam, camFor((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z)); clampCam(); applyCam();
+  requestAnimationFrame(frame); setInterval(econ, TICK);
+  if (!ok) openSheet('intro');
+}
+try { window.claude?.hot?.snapshot?.(() => ({save:serialize()})); } catch (e){}
+const hot = window.claude?.hot;
+if (hot && hot.ready) hot.ready(start); else start(hot?.data ?? {});
+})();
+</script>
+</body></html>
