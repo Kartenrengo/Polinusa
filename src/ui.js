@@ -45,6 +45,7 @@ function toast(msg, ms = 2600){ const t = $('toast'); t.textContent = msg; t.hid
 function ghostRender(){
   if (!placing){ requestDraw(); return; }
   const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
+  if (placing.kind === 'steg' && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
   placing.ok = ok; placing.msg = msg;
   // workshops that need plants close by can stand anywhere, but the bar says whether they will run
   const K = KINDS[placing.kind], n = K.near ? nearCount(I, K.near.kind, placing.x, placing.y, K.near.r) : 0, few = K.near && n < K.near.n;
@@ -104,7 +105,7 @@ function endPlace(){
 function confirmPlace(){
   if (!placing || !placing.ok) return;
   const I = isl(placing.island), K = KINDS[placing.kind];
-  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); clearStumps(I, b); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`); return; }
+  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`); return; }
   const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`); return; }
   // nothing stands at once: a building site waits for builders, a young plant grows
   pay(I, c); const b = addB(I, placing.kind, placing, placing.v, tick); if (K.bt) b.bt = K.bt; clearStumps(I, b);
@@ -142,7 +143,7 @@ function needsMarkup(I){
   if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
   if (sf.short) tips.push('Wer an einer Baustelle arbeitet, fehlt in den Werkstätten. Mehr Häuser bringen mehr Leute.');
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
-  if (nd.list.some(n => n.k === 'nahrung' && n.state === 'out')) h += `<p class="sub">Ohne Essen ziehen nach und nach Leute fort.</p>`;
+  if (nd.list.some(n => n.k === 'nahrung' && n.state === 'out')) h += `<p class="sub">Ohne Grundnahrung ziehen nach und nach Leute fort.</p>`;
   if (nd.next && nd.next.lvl < 3) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
   if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Töpfe und Matten reichen und Tapa, Schweine und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
   return h;
@@ -178,6 +179,16 @@ function clanMarkup(T){
   if (r) h += `<p>${r.knots} Knoten Vertrauen. ${T.debt >= 1 ? 'Eine Gegengabe ist unterwegs oder kommt bald.' : 'Gerade schulden sie euch nichts.'}</p>`;
   h += r ? `<div class="rowx"><span class="sub">Fahr mit einem beladenen Kanu hin oder setze eines in die Schnur.</span><button class="btn primary" type="button" data-act="gift">Schnur ansehen</button></div>` : `<p class="sub">Fahr mit einem Kanu hin, dann entsteht eine Schnur.</p>`;
   return h;
+}
+/* The end of the tasks: what the clan has built, and the sea stays open */
+function finaleMarkup(){
+  const mine = islands.filter(I => I.settled), people = mine.reduce((t, I) => t + I.pop, 0), friends = routes.filter(r => isl(r.a).clan || isl(r.b).clan);
+  const row = (k, label, v) => `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">${k ? `<use href="#ic-${k}"/>` : ''}</svg><span class="nm">${label}</span><b class="qty">${v}</b></li>`;
+  let h = head('Das Lapita-Netz ist geknüpft', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`);
+  h += `<p>Vom ersten Versammlungshaus auf Panua aus ist ein Netz aus Dörfern und Freundschaften entstanden, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben.</p>`;
+  h += `<ul class="list needs">${row('pop', 'Eigene Dörfer', mine.length)}${row('pop', 'Menschen', people)}${row('schnur', 'Befreundete Clans', friends.length)}${row('schnur', 'Knoten auf allen Schnüren', routes.reduce((t, r) => t + r.knots, 0))}${row('einbaum', 'Kanus', own().length)}${row('mana', 'Ansehen', Math.floor(mana))}${row('', 'Entdeckte Inseln', islands.filter(I => I.discovered).length)}</ul>`;
+  h += `<p class="sub">Das Meer bleibt offen. Es gibt noch Nebel zu lichten, Dörfer zu Häuptlingsdörfern zu machen und Feste zu feiern.</p>`;
+  return h + `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Weiterspielen</button></div>`;
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 function renderSheet(){
@@ -216,7 +227,7 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl, dann siehst du, was die Menschen brauchen und was fehlt. Der Punkt daneben ist grün, solange das Dorf wächst.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>An jeder Baustelle arbeiten 2 Leute. Solange sie bauen, fehlen sie auf den Feldern und in den Werkstätten.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl, dann siehst du, was die Menschen brauchen und was fehlt. Der Punkt daneben ist grün, solange das Dorf wächst.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>An jeder Baustelle arbeiten 2 Leute. Solange sie bauen, fehlen sie auf den Feldern und in den Werkstätten.</li><li>Zu jeder Mahlzeit gehört Grundnahrung wie Taro und Brotfrucht und etwas aus dem Meer: Fisch, später Meeresfrüchte vom Riff.</li><li>Pfahlhäuser und Steinreusen in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -228,10 +239,12 @@ function renderSheet(){
     h += manaMarkup(isl(active));
   } else if (sheetKind === 'clan'){
     h += clanMarkup(isl(sheetData.id));
+  } else if (sheetKind === 'finale'){
+    h += finaleMarkup();
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="askreset">Neu anfangen</button></span></div>`;
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : ''}<button class="btn" type="button" data-act="askreset">Neu anfangen</button></span></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig();
 }
@@ -276,6 +289,7 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'clan' && act === 'gift'){ const ri = routes.findIndex(r => r.a === sheetData.id || r.b === sheetData.id); if (ri >= 0) openRoute(ri); return; }
   if (sheetKind === 'menu'){
     if (act === 'help'){ openSheet('intro'); return; }
+    if (act === 'finale'){ openSheet('finale'); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
     if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); closeSheet(); renderAll(); fitBox(isl('heimat').box, 1.4); save(); toast('Neues Spiel, neue Inseln.'); return; }
   }

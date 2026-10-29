@@ -40,7 +40,7 @@ function answerGifts(){
 
 /* ---------- people: they carry the village's work from field, workshop or forest to the store and back.
    About one figure for every four residents, at most ten per island. Close up only. */
-const JOB_LOAD = {taro:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
+const JOB_LOAD = {taro:'taro', pulaka:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const lived = I => I.settled || (I.clan && I.discovered);
 const popOf = I => I.settled ? I.pop : I.clan ? I.clan.pop : 0;
@@ -48,6 +48,7 @@ const popOf = I => I.settled ? I.pop : I.clan ? I.clan.pop : 0;
    Woodcutters walk to the tree they fell, planters carry a sapling to where it goes. Only workplaces with people show workers. */
 function jobsOf(I){
   const jobs = [], st = lived(I) && I.settled ? staffOf(I) : null, manned = b => !KINDS[b.kind].crew || !st || st.staffed.has(b);
+  // people walk only on the islet they live on; to the others they paddle, which the dugouts show
   for (const b of activeSites(I)){ const sp = storeNear(I, b); if (sp) jobs.push({key:'s' + b.id, x:sp.x, y:sp.y, drop:{x:b.x + 6, y:b.y + 5}, load:'holz', site:true}); }
   for (const b of I.buildings){
     if (b.bt || !manned(b)) continue;
@@ -55,18 +56,32 @@ function jobsOf(I){
     else if (b.kind === 'pflanzer'){ const t = b.plantAt && b.plantAt.st === 2 ? b.plantAt : null; jobs.push({key:'p' + b.id, x:b.x, y:b.y + 4, drop:t ? {x:t.x + 3, y:t.y + 2} : {x:b.x + 26, y:b.y + 8}, load:'setzling', plant:true}); }
     else if (JOB_LOAD[b.kind]) jobs.push({key:b.x + ',' + b.y, x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]});
   }
-  return jobs.filter(j => landOf(I, j) >= 0 && (!j.drop || landOf(I, j.drop) >= 0));
+  const homes = new Set(I.buildings.filter(b => KINDS[b.kind].roof && !KINDS[b.kind].water).map(b => landOf(I, b)));
+  return jobs.filter(j => homes.has(landOf(I, j)) && (!j.drop || landOf(I, j.drop) === landOf(I, j)));
 }
+/* ---------- the lagoon: stilt houses, fish traps and workplaces on an islet without houses are reached by dugout.
+   Each jetty has one dugout and serves four of them, the oldest first. */
+function lagoonOf(I){
+  const key = I.buildings.map(b => b.bt ? 0 : b.x + b.y).join();
+  if (I._lg && I._lg.key === key) return I._lg;
+  const homes = new Set(I.buildings.filter(b => !b.bt && (b.kind === 'haus' || b.kind === 'halle')).map(b => landOf(I, b)));
+  const far = b => !!I.atoll && !KINDS[b.kind].water && !!KINDS[b.kind].crew && homes.size > 0 && !homes.has(landOf(I, b));
+  const need = I.buildings.filter(b => !b.bt && (KINDS[b.kind].water || far(b)));
+  const jetties = I.buildings.filter(b => b.kind === 'steg' && !b.bt);
+  return I._lg = {key, need, jetties, served:new Set(need.slice(0, jetties.length * KINDS.steg.serves)), far:new Set(need.filter(far))};
+}
+const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) && !lg.served.has(b); };
 /* ---------- work force: everyone who lives here can work. Building sites come first, two people each, then a canoe in the
    canoe house, then the workplaces: food first, then wood, then the oldest. Who builds does nothing else meanwhile. */
 const builders = I => 1 + Math.floor(I.pop / 10);
-const workOrder = b => KINDS[b.kind].prod === 'nahrung' ? 0 : b.kind === 'faeller' ? 1 : 2;
+const FOOD = new Set(['nahrung', 'fisch', 'meeres']);
+const workOrder = b => FOOD.has(KINDS[b.kind].prod) ? 0 : b.kind === 'faeller' ? 1 : 2;
 function staff(I){
   let free = I.pop; const sites = [], staffed = new Set();
   for (const b of I.buildings){ if (!b.bt || KINDS[b.kind].plant) continue; if (sites.length >= builders(I) || free < SITE_CREW) break; sites.push(b); free -= SITE_CREW; }
   const yard = !!I.yard && I.buildings.some(b => b.kind === 'werft' && !b.bt) && free >= YARD_CREW; if (yard) free -= YARD_CREW;
   const work = I.buildings.filter(b => KINDS[b.kind].crew && !b.bt).sort((a, b) => workOrder(a) - workOrder(b) || a.id - b.id);
-  for (const b of work) if (free >= KINDS[b.kind].crew){ staffed.add(b); free -= KINDS[b.kind].crew; }
+  for (const b of work) if (free >= KINDS[b.kind].crew && !unserved(I, b)){ staffed.add(b); free -= KINDS[b.kind].crew; }
   const need = work.reduce((t, b) => t + KINDS[b.kind].crew, 0);
   return I.staff = {key:staffKey(I), sites, yard, staffed, free, build:sites.length * SITE_CREW + (yard ? YARD_CREW : 0), need, short:work.length - staffed.size};
 }
@@ -143,6 +158,7 @@ function stepWalkers(dt){
 const NEAR_PL = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten', wald:'Bäume'};
 function workState(I, b){
   const K = KINDS[b.kind];
+  if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Ein Kanusteg bringt die Leute hin, jeder Steg für bis zu 4 Plätze.'};
   if (K.crew && I.settled && !staffOf(I).staffed.has(b)) return {why:'crew', text:staffOf(I).build ? `Es fehlen ${K.crew === 1 ? 'eine Person' : K.crew + ' Leute'}. Viele bauen gerade, oder das Dorf muss wachsen.` : `Es fehlen ${K.crew === 1 ? 'eine Person' : K.crew + ' Leute'}. Das Dorf muss wachsen.`};
   if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }

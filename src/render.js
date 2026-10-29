@@ -174,7 +174,10 @@ function drawIsland(c, I, area){
     stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]);
   }
   if (p.hill){ fillWith(c, p.hill, '#80A050', 'pDots'); stroke(c, p.hach, '#5E7A3A', .9, null, 'round', .8); c.fillStyle = '#76944A'; c.fill(p.top); stroke(c, p.top, '#5E7A3A', .7, [1.4, 1.4], null, .8); }
-  if (p.fan){ c.fillStyle = '#D9C892'; c.fill(p.fan); stroke(c, p.fan, '#8A6440', .7, [1.2, 1.2], null, .8); stroke(c, p.arms, '#2B1D14', 3.6, null, 'round'); stroke(c, p.arms, '#6DB9BE', 2, null, 'round'); }
+  if (p.fan){
+    c.fillStyle = '#D9C892'; c.fill(p.fan); stroke(c, p.fan, '#8A6440', .7, [1.2, 1.2], null, .8);
+    c.save(); c.clip(p.fan); stroke(c, p.arms, '#2B1D14', 3.6, null, 'butt'); stroke(c, p.arms, '#79C6B8', 2, null, 'butt'); stroke(c, p.arms, '#EAF5F0', .7, [.1, 3], 'round', .8); c.restore();
+  }
   if (p.river){ stroke(c, p.river, '#2B1D14', 4.8, null, 'round'); stroke(c, p.river, '#6DB9BE', 3, null, 'round'); stroke(c, p.river, '#EAF5F0', .9, [.1, 3.4], 'round', .85); }
   const tp = treePaths(I);
   if (lod === 'far'){ if (tp.canopy){ stroke(c, tp.canopy, '#2B1D14', 2); c.fillStyle = '#3F6B2E'; c.fill(tp.canopy); } }
@@ -295,9 +298,39 @@ function drawAnim(c, now){
       c.save(); c.translate(x, y); stroke(c, Math.sin(now / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, '#2B1D14', 1.3, null, 'round', .85); c.restore();
     }
   }
+  if (lod !== 'far') drawDugouts(c, v, now);
   if (cam.z > PEOPLE_Z) drawPeople(c, v);
   if (lod !== 'far') drawNeeds(c, v, now);
   if (placing) drawGhost(c);
+}
+/* A dugout paddles from its jetty to each place it serves and back, one after the other */
+function waterNear(I, b){
+  if (b._wp && b._wp.k === b.x + b.y) return b._wp;
+  let p = {x:b.x, y:b.y + 4};
+  if (b.kind === 'steg'){ const a = ((b.v && b.v.rot) || 0) * Math.PI / 180; p = {x:b.x + Math.cos(a) * 30, y:b.y + Math.sin(a) * 30 + 2}; }
+  else if (!KINDS[b.kind].water){
+    const c = I.atoll ? {x:I.atoll.cx, y:I.atoll.cy} : I.center, out = I.atoll && !(b.kind === 'steg' && !inLagoonSide(I, b)) ? -1 : 1, d = Math.hypot(b.x - c.x, b.y - c.y) || 1, ux = (b.x - c.x) / d * out, uy = (b.y - c.y) / d * out;
+    for (let k = 4; k < 60; k += 2){ const q = {x:b.x + ux * k, y:b.y + uy * k}; if (!landAt(I, q) && I.lands.every(L => polyDist(q, L.poly) > 5)){ p = q; break; } }
+  }
+  return b._wp = {x:p.x, y:p.y, k:b.x + b.y};
+}
+const inLagoonSide = (I, b) => { const a = I.atoll; return ((b.x - a.cx) / a.rx) ** 2 + ((b.y - a.cy) / a.ry) ** 2 < .78; };
+function drawDugouts(c, v, now){
+  for (const I of islands){
+    if (!I.settled || !boxIn(I.box, v)) continue;
+    const lg = lagoonOf(I), served = [...lg.served];
+    lg.jetties.forEach((j, n) => {
+      const A = waterNear(I, j), goals = served.slice(n * KINDS.steg.serves, (n + 1) * KINDS.steg.serves).map(b => waterNear(I, b)).filter(B => !overLand(A, B, 1));
+      if (!goals.length){ put(c, A.x, A.y, 1, 1, 0, 'einbaum', '<use href="#einbaum"/>'); return; }
+      const legs = goals.map(B => ({B, d:Math.hypot(B.x - A.x, B.y - A.y)})), per = l => l.d / 18 * 2000 + 2600, cyc = legs.reduce((t, l) => t + per(l), 0);
+      let t = reduced ? 0 : (now + j.id * 977) % cyc, l = legs[0];
+      for (const q of legs){ if (t < per(q)){ l = q; break; } t -= per(q); }
+      // out, a pause there, back, a pause at the jetty
+      const go = l.d / 18 * 1000, f = t < go ? t / go : t < go + 1300 ? 1 : t < 2 * go + 1300 ? 1 - (t - go - 1300) / go : 0;
+      const x = A.x + (l.B.x - A.x) * f, y = A.y + (l.B.y - A.y) * f, left = (t < go + 1300) === (l.B.x < A.x);
+      put(c, x, y, 1, left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>');
+    });
+  }
 }
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v){
@@ -329,7 +362,7 @@ const bubbleArt = inner => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
-const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
+const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
   w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
@@ -340,6 +373,7 @@ function drawNeeds(c, v, now){
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
       put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
     }
+    for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - KINDS[b.kind].hy - 14, s, 1, 0, 'need|einbaum', needBubble('einbaum'));
     const miss = needsOf(I).missing; if (!miss.length) continue;
     for (const b of I.buildings){
       if (!(b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle') || b.id % 3 || !ptIn(b.x, b.y, v)) continue;
@@ -458,4 +492,4 @@ function draw(now){
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => !!selShip || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => !!selShip || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));

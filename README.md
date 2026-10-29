@@ -55,7 +55,8 @@ das Atoll Motu, beide in einer Lichtung im Nebel. Alles andere entsteht erst, we
 Dann wird das Feld aus Startwert und Feldnummer gewürfelt, vielleicht mit einer hohen Insel, einem Vulkan oder
 einem Atoll, weiter draußen manchmal mit einem fremden Clan. Es gibt keine Markierungen, wo Land liegt.
 Insgesamt entstehen etwa 30 Inseln. Hohe Inseln haben Hügel mit Schraffur, einen Wald aus einzelnen Bäumen, oft einen Bach,
-der an der Küste in einem kleinen Delta aus Sand und drei Armen mündet, dazu Gras, Blumen, Farne, Schilf, Muscheln,
+der an der Küste in einem kleinen Delta aus Sand mündet. Es zeigt gerade von der Küste weg, und jeder seiner drei Arme
+endet genau an der Sandkante im Wasser, dazu Gras, Blumen, Farne, Schilf, Muscheln,
 Treibholz und Steine am Strand und Korallenköpfe in der Lagune. Über jeder bekannten Insel kreisen Fregattvögel. Weil das Würfeln nur vom Startwert abhängt, liegt nach dem Laden alles wieder
 an derselben Stelle. Gespeichert werden nur Startwert, gesehene Felder und was sich geändert hat, etwa 5 KB.
 
@@ -65,11 +66,39 @@ Wie bei Age of Empires steht am Anfang nur das Versammlungshaus auf Panua. Motu 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
 Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
 
-1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. 15 Bewohner, 5. Baumpflanzer, 6. Töpferei am Ton,
-7. Beilwerkstatt am Felsen, 8. Kanuhaus (dann Blumen, Muschelwege, Fackeln und Hibiskus), 9. Auslegerkanu bauen,
-10. vier Siedler nach Motu fahren und ein Dorf gründen, 11. Flechthütte und Seilerei auf Motu, 12. Handelskette: Matten und
-Schnur nach Panua, 13. 6 Proviant aus der Gärgrube (dann Doppelkanu und Ahnenpfosten), 14. Doppelkanu bauen, 15. im Nebel
-neues Land finden, 16. ein Fest, 17. das Fest der Plejaden, 18. ein Häuptlingsdorf.
+1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. Fischgestell, 5. 15 Bewohner, 6. Baumpflanzer,
+7. Töpferei am Ton, 8. Riffsammler, 9. Kanusteg und Pfahlhaus, 10. Beilwerkstatt am Felsen, 11. Kanuhaus (dann Blumen,
+Muschelwege, Fackeln und Hibiskus), 12. Auslegerkanu bauen, 13. vier Siedler nach Motu fahren und ein Dorf gründen,
+14. Flechthütte und Seilerei auf Motu, 15. Handelskette: Matten und Schnur nach Panua, 16. 6 Proviant aus der Gärgrube
+(dann Doppelkanu und Ahnenpfosten), 17. Doppelkanu bauen, 18. im Nebel neues Land finden, 19. ein Fest, 20. das Fest der
+Plejaden, 21. ein Häuptlingsdorf, 22. das Lapita-Netz: 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten.
+
+Ist das Netz geknüpft, zeigt eine Tafel den Rückblick: Dörfer, Menschen, Clans, Knoten, Kanus, Ansehen und entdeckte Inseln.
+Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen.
+
+## Essen
+
+Eine Mahlzeit ist Grundnahrung und etwas aus dem Meer dazu, wie auf Fidschi (kakana und i coi) oder in Tonga
+(me'akai und kiki).
+
+| Ware | Woher | Gebraucht ab |
+| --- | --- | --- |
+| Grundnahrung | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro in der Mitte eines Motus (Atolle) | Anfang |
+| Fisch | Fischgestell am Strand, Steinreuse in der Lagune | 10 Bewohnern |
+| Meeresfrüchte | Riffsammler am Strand: Muscheln, Krebse, Seeigel, Tintenfisch | 25 Bewohnern |
+
+Fehlt Grundnahrung, ziehen Leute fort. Fehlen Fisch oder Meeresfrüchte, wächst das Dorf nicht mehr. Das Kleine Fest braucht
+Fisch, das Große Meeresfrüchte, die ersten Früchte beim Fest der Plejaden Grundnahrung, Fisch und Schweine. Unter Rāhui
+ruhen Fischgestell, Reuse und Riffsammler, nach dem Fest fangen sie dreimal so viel. In der Palolo-Nacht gibt es
+Meeresfrüchte für alle.
+
+## Die Lagune und der Einbaum
+
+Pfahlhäuser und Steinreusen stehen in der Lagune. Sie brauchen kein Land, das Wald und Felder belegen. Hin kommt man nur mit
+dem Einbaum vom Kanusteg. Ein Steg hat einen Einbaum, der bis zu 4 Plätze anfährt, die ältesten zuerst. Auf einem Atoll gilt
+das auch für Arbeitsplätze auf einem Motu, auf dem niemand wohnt. Ohne Einbaum zählt ein Pfahlhaus nicht als Wohnraum, und der
+Arbeitsplatz bleibt leer. Über ihm schwebt dann ein Einbaum in der Sprechblase. Die Einbäume paddeln sichtbar hin und her.
+Der Steg zeigt beim Bauen von selbst zum Wasser.
 
 ## Bauen braucht Zeit und Leute
 
@@ -141,13 +170,13 @@ Antippen öffnet den Kalender.
 | Magere Zeit | 10–12 | Brotfrucht trägt nicht, Proviant aus der Gärgrube hilft |
 
 - **Palolo:** Eine Woche nach Vollmond im ersten Mond steigt der Palolo-Wurm aus dem Riff. Drei Takte lang
-  sammeln alle Inseln zusätzliches Essen, mit Fischgestellen mehr.
-- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischgestellen ihr Riff sperren. Bis zum Fest ruht der Fang,
-  danach ist er doppelt reich, und das Ansehen steigt um 3.
+  schöpfen alle Inseln Meeresfrüchte, mit Fischgestellen, Reusen und Riffsammlern mehr.
+- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischgestell, Reuse oder Riffsammler ihr Riff sperren. Bis zum Fest
+  ruht der Fang, danach ist er dreimal so reich, und das Ansehen steigt um 3.
 
 ## Fest der Plejaden
 
-In der Zeit der Plejaden im Versammlungshaus. Die ersten Früchte (15 Essen, 2 Schweine) gehören den Ahnen, das bringt
+In der Zeit der Plejaden im Versammlungshaus. Die ersten Früchte (12 Grundnahrung, 6 Fisch, 2 Schweine) gehören den Ahnen, das bringt
 Ansehen 10. Dazu kann man wählen:
 
 - Kava-Runde (3 Kava): +5, Gäste der Clans knüpfen einen Knoten mehr. Kava wächst im Kavagarten oder kommt vom Clan vom Kavahain.
@@ -159,21 +188,25 @@ bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Zwölf Waren: Essen, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa, Schweine, Kava, Muschelschmuck.
+Vierzehn Waren: Grundnahrung, Fisch, Meeresfrüchte, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa,
+Schweine, Kava, Muschelschmuck.
 Ketten haben höchstens drei Glieder.
 
 | Gebäude | Insel | Braucht | Macht |
 | --- | --- | --- | --- |
 | Holzfäller | hoch | Bäume in Reichweite | Holz |
 | Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | junge Bäume |
-| Tarofeld, Brotfruchtbaum | hoch | | Essen |
-| Fischgestell | Atoll, am Strand | | Essen |
-| Gärgrube | hoch | 2 Brotfruchtbäume daneben, Essen | Proviant |
+| Tarofeld, Brotfruchtbaum | hoch | | Grundnahrung |
+| Pulakagrube | Atoll, in der Mitte eines Motus | | Grundnahrung |
+| Fischgestell | am Strand | | Fisch |
+| Steinreuse | in der Lagune | Einbaum, 1 Steinbeil beim Bau | Fisch |
+| Riffsammler | am Strand | | Meeresfrüchte |
+| Gärgrube | hoch | 2 Brotfruchtbäume daneben, Grundnahrung | Proviant |
 | Töpferei | hoch | Ton in der Nähe, Holz | Töpfe |
 | Beilwerkstatt | hoch | Basaltfelsen in der Nähe | Steinbeile |
 | Klingenschläger | Vulkan | Obsidian in der Nähe | Klingen |
 | Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | Tapa |
-| Schweinepferch | hoch | Essen als Futter | Schweine |
+| Schweinepferch | hoch | Grundnahrung als Futter | Schweine |
 | Flechthütte | Atoll | 2 Pandanus daneben | Matten |
 | Seilerei | Atoll | 3 Kokospalmen daneben | Schnur |
 | Schmuckschleiferei | Atoll, am Strand | Klingen | Muschelschmuck |
@@ -190,21 +223,21 @@ Ketten haben höchstens drei Glieder.
 
 | Stufe | Ab | Braucht pro Bewohner und Minute |
 | --- | --- | --- |
-| Weiler | Anfang | Essen 1,25 |
-| Dorf | 20 Bewohner | dazu Töpfe 0,1, ab 30 Bewohnern Matten 0,1 |
+| Weiler | Anfang | Grundnahrung 1, ab 10 Bewohnern Fisch 0,3 |
+| Dorf | 20 Bewohner | dazu Töpfe 0,1, ab 25 Bewohnern Meeresfrüchte 0,2, ab 30 Bewohnern Matten 0,1 |
 | Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Töpfe und Matten reichen, Tapa, Schweine und Schmuck im Lager | dazu Tapa 0,1, Schweine 0,04, Muschelschmuck 0,02 |
 
 Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen geschnitzte Pfosten und Muschelschmuck.
 Fehlt dort 30 Takte lang etwas, wird es wieder ein Dorf, und die Leute ziehen nach und nach aus.
-Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Essen ziehen langsam Leute fort.
+Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Grundnahrung ziehen langsam Leute fort.
 
 - Die Bewohnerzahl oben öffnet die Tafel „Bedarf“. Der Punkt daneben: grün wächst, gelb Häuser voll, rot es fehlt etwas.
 - Fehlt etwas, schwebt das Zeichen der Ware über einigen Häusern. Zieht jemand ein, steigt ein Herz auf.
 
 ## Ansehen
 
-Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 12 Essen und 2 Töpfe, +5;
-Großes Fest: 4 Schweine, 15 Essen und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
+Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Grundnahrung, 4 Fisch und 2 Töpfe, +5;
+Großes Fest: 4 Schweine, 12 Grundnahrung, 4 Meeresfrüchte und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
 schönen Dorf. Es sinkt um etwa 1 pro Minute.
 Gebraucht wird es für jede weitere Siedlungsfahrt (8 mehr pro Siedlung nach den ersten beiden) und für ein Häuptlingsdorf.
 Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus.
@@ -234,8 +267,10 @@ Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unter
 2. ~~Start wie bei Age of Empires: nur das Dorfzentrum, geführte erste Aufgaben~~
 3. ~~Bedürfnisse auf einen Blick~~
 4. ~~Menschen neu zeichnen~~ (Feinschliff nach dem Vorlagebild)
-5. Kleine Kanus in der Lagune
+5. ~~Kleine Kanus in der Lagune~~
 6. ~~Handel mit kleinen Kanus~~
 7. ~~Erkunden mit dem Hochseekanu, ohne Markierungen~~
 8. ~~Bauzeiten, gesteuerte Kanus, Inseln aus dem Nebel, Schmuck, Jahr und Fest der Plejaden~~
-9. Android-App mit Capacitor
+9. ~~Wald mit Holzfäller und Pflanzer, Arbeitskräfte, Flussdelta, Inseldetails~~
+10. ~~Fisch und Meeresfrüchte, Einbäume in der Lagune, Lapita-Netz als Ziel~~
+11. Android-App mit Capacitor

@@ -148,24 +148,41 @@ function genHigh(s, hdir, r, volcano, home){
   smallThings(I, r2, coast, reef, inland);
   return I;
 }
-/* The stream ends where it meets the beach and fans out into a small delta of sand and three arms */
+/* The stream ends where it meets the beach and fans out into a small delta of sand and three arms.
+   The fan faces straight out from the coast; each arm is checked to open into water, not onto the beach. */
 function riverMouth(I, pts, land){
   const a = pts[pts.length - 2], b = pts[pts.length - 1];
   let lo = 0, hi = 1; for (let i = 0; i < 12; i++){ const m = (lo + hi) / 2; if (inPoly({x:a.x + (b.x - a.x) * m, y:a.y + (b.y - a.y) * m}, land.poly)) lo = m; else hi = m; }
-  const M = {x:a.x + (b.x - a.x) * lo, y:a.y + (b.y - a.y) * lo}, dl = Math.hypot(b.x - a.x, b.y - a.y) || 1, n = {x:(b.x - a.x) / dl, y:(b.y - a.y) / dl}, t = {x:-n.y, y:n.x};
+  const M = {x:a.x + (b.x - a.x) * lo, y:a.y + (b.y - a.y) * lo};
+  // the coast's outward normal at the mouth
+  const P = land.poly; let bi = 0, bd = Infinity;
+  for (let i = 0; i < P.length; i++){ const d = segDist(M, P[i], P[(i + 1) % P.length]); if (d < bd){ bd = d; bi = i; } }
+  const e0 = P[bi], e1 = P[(bi + 1) % P.length], el = Math.hypot(e1.x - e0.x, e1.y - e0.y) || 1;
+  let n = {x:-(e1.y - e0.y) / el, y:(e1.x - e0.x) / el}; if (inPoly({x:M.x + n.x * 4, y:M.y + n.y * 4}, P)) n = {x:-n.x, y:-n.y};
+  const t = {x:-n.y, y:n.x}, at = (u, v) => ({x:M.x + n.x * u + t.x * v, y:M.y + n.y * u + t.y * v});
   // the arms split a little inland
-  const S = {x:M.x - n.x * 20, y:M.y - n.y * 20}, main = pts.slice(0, -1).filter(q => Math.hypot(q.x - M.x, q.y - M.y) > 22);
+  const S = at(-20, 0), main = pts.slice(0, -1).filter(q => Math.hypot(q.x - M.x, q.y - M.y) > 24);
   main.push(S);
   I.river = main.map(q => ({x:fx(q.x), y:fx(q.y)}));
-  const arms = [-1, 0, 1].map(k => {
-    const E = {x:M.x + n.x * (k ? 4 : 7) + t.x * k * 12, y:M.y + n.y * (k ? 4 : 7) + t.y * k * 12};
-    const C = {x:(S.x + E.x) / 2 + t.x * k * 3, y:(S.y + E.y) / 2 + t.y * k * 3};
-    return [S, C, E].map(q => ({x:fx(q.x), y:fx(q.y)}));
-  });
-  // the fan is a little larger than the arms, so they end in the sand and not in open water
-  const fan = [S, {x:M.x - n.x * 9 + t.x * 19, y:M.y - n.y * 9 + t.y * 19}, {x:M.x + n.x * 9 + t.x * 23, y:M.y + n.y * 9 + t.y * 23},
-    {x:M.x + n.x * 16, y:M.y + n.y * 16}, {x:M.x + n.x * 9 - t.x * 23, y:M.y + n.y * 9 - t.y * 23}, {x:M.x - n.x * 9 - t.x * 19, y:M.y - n.y * 9 - t.y * 19}];
+  // its tip lies further inland than the split, so the arms start inside the sand
+  const fan = [at(-30, 0), at(-9, 19), at(9, 23), at(16, 0), at(9, -23), at(-9, -19)];
+  const edge = smooth(fan).poly, wet = q => !inPoly(q, P) && polyDist(q, P) > 2;
+  const arms = [];
+  for (const k of [-1, 0, 1]){
+    // the arms run on past the sand; drawing cuts them at its edge. Where an arm would leave the sand onto the beach, it bends in.
+    for (const spread of [22, 15, 8, 0]){
+      const E = at(30, k * spread), C = at(5, k * spread * .45), arm = [S, C, E];
+      let out = null;
+      for (let i = 1; i <= 40; i++){ const u = i / 40, q = {x:(1 - u) ** 2 * S.x + 2 * (1 - u) * u * C.x + u * u * E.x, y:(1 - u) ** 2 * S.y + 2 * (1 - u) * u * C.y + u * u * E.y}; if (!inPoly(q, edge)){ out = q; break; } }
+      if (out && wet(out)){ arms.push(arm.map(q => ({x:fx(q.x), y:fx(q.y)}))); break; }
+    }
+  }
   I.delta = {fan:fan.map(q => ({x:fx(q.x), y:fx(q.y)})), arms, mouth:{x:fx(M.x), y:fx(M.y)}};
+}
+/* Which way the water lies from a spot on the beach, in degrees */
+function seaward(I, p){
+  const L = landAt(I, p) || I.lands[0], q = L.poly.reduce((m, a) => Math.hypot(a.x - p.x, a.y - p.y) < Math.hypot(m.x - p.x, m.y - p.y) ? a : m);
+  return Math.round(Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI);
 }
 const inDelta = (I, p, m = 0) => !!I.delta && (inPoly(p, I.delta.fan) || polyDist(p, I.delta.fan) < m);
 /* Hills under the forest: a slope and a summit, drawn with hachures like on an old chart */
@@ -259,7 +276,8 @@ function genAtoll(s, hdir, r){
 /* ---------- island rules */
 const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher' && !b.bt).length;
 /* In a chief's village every house and stilt house holds 6 instead of 4 */
-const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (b.bt ? 0 : I.lvl === 3 && (b.kind === 'haus' || b.kind === 'pfahl') ? CHIEF.cap : KINDS[b.kind].cap || 0), 0);
+/* A stilt house only counts when a dugout reaches it */
+const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (b.bt || (b.kind === 'pfahl' && I.settled && unserved(I, b)) ? 0 : I.lvl === 3 && (b.kind === 'haus' || b.kind === 'pfahl') ? CHIEF.cap : KINDS[b.kind].cap || 0), 0);
 const DEP_DECO = {ton:'clay', basalt:'rock', obsidian:'obsidian'};
 const depsOf = (I, dep) => I.deco.filter(d => d.t === DEP_DECO[dep]);
 const depNear = (I, dep, x, y, r) => depsOf(I, dep).find(d => Math.hypot(d.x - x, d.y - y) < r) || null;
@@ -283,12 +301,13 @@ function onIsland(I, p){
 function check(kind, I, x, y, ignoreId){
   const K = KINDS[kind], p = {x, y};
   if (!K.on.includes(I.type)) return 'Geht auf dieser Insel nicht';
-  if (K.water){ if (!inLagoon(I, p)) return 'Pfahlhäuser stehen in der Lagune'; }
+  if (K.water){ if (!inLagoon(I, p)) return `${K.n} steht in der Lagune`; }
   else {
     const L = landAt(I, p); if (!L) return 'Nur auf Land';
     const dEdge = polyDist(p, L.poly);
     if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
     if (K.coast && dEdge > 18) return `${K.n} gehört an den Strand`;
+    if (K.inland && dEdge < K.inland) return `${K.n} braucht Platz in der Mitte des Landes`;
     if (K.dep && !depNear(I, K.dep, x, y, K.depR)) return `Hier ist kein ${DEPOSITS[K.dep].n} in der Nähe. ${DEPOSITS[K.dep].where}`;
     if (treeAt(I, x, y, (K.r + TREE_R) * .8)) return 'Hier stehen Bäume. Ein Holzfäller kann sie fällen.';
     if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';

@@ -15,12 +15,13 @@ const untilFestival = () => festivalTime() ? 0 : YEAR - yearTick();
 const minutes = ticks => Math.max(1, Math.round(ticks * TICK / 60000));
 const SEASON_ICON = {plejaden:'ic-plejaden', sturm:'ic-sturm', passat:'ic-passat', mager:'ic-mager'};
 
-/* Production that follows the year: breadfruit by season, fish under rāhui, the palolo night */
+/* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night */
+const SEA_KINDS = new Set(['fisch', 'riff', 'reuse']);
 function seasonalEvery(I, b, K){
   if (b.kind === 'baum'){ const m = seasonOf().baum; return m ? Math.round(K.every / m) : 0; }
-  if (b.kind === 'fisch'){
+  if (SEA_KINDS.has(b.kind)){
     if (I.rahui && seasonOf().id === 'mager') return 0;   // the reef rests
-    if (I.rahuiDone === yearOf() && festivalTime()) return 1;   // after the rāhui the lagoon is full
+    if (I.rahuiDone === yearOf() && festivalTime()) return Math.max(1, Math.round(K.every / 3));   // after the rāhui the lagoon is full
   }
   return K.every;
 }
@@ -36,17 +37,17 @@ function calendarTick(){
     if (moonOf() === 11) toast('Nur noch ein Mond, dann stehen die Plejaden am Abendhimmel. Bereitet das Fest der ersten Früchte vor.', 5000);
   }
   if (isPalolo()){
-    if (dayOf() === PALOLO.from) toast('Palolo-Nacht: Eine Woche nach Vollmond steigt der Riffwurm aus dem Riff. Alle sammeln am Ufer.', 5000);
+    if (dayOf() === PALOLO.from) toast('Palolo-Nacht: Eine Woche nach Vollmond steigt der Riffwurm aus dem Riff. Alle schöpfen ihn am Ufer mit Körben, eine Köstlichkeit.', 5000);
     for (const I of islands){
       if (!I.settled) continue;
-      const racks = I.buildings.filter(b => b.kind === 'fisch' && !b.bt).length, gain = Math.ceil(I.pop / 8) + racks * 2;
-      I.stock.nahrung = Math.min(storeCap(I), (I.stock.nahrung || 0) + gain * (I.rahuiDone === yearOf() ? 2 : 1));
+      const reef = I.buildings.filter(b => SEA_KINDS.has(b.kind) && !b.bt).length, gain = Math.ceil(I.pop / 8) + reef * 2;
+      I.stock.meeres = Math.min(storeCap(I), (I.stock.meeres || 0) + gain * (I.rahuiDone === yearOf() ? 2 : 1));
     }
   }
 }
 function declareRahui(I){
-  if (seasonOf().id !== 'mager' || I.rahui || !I.buildings.some(b => b.kind === 'fisch')) return;
-  I.rahui = true; save(); toast(`Rāhui auf ${I.name}: Bis zum Fest der Plejaden ruht der Fischfang. Dann ist der Fang doppelt reich.`, 4600);
+  if (seasonOf().id !== 'mager' || I.rahui || !I.buildings.some(b => SEA_KINDS.has(b.kind))) return;
+  I.rahui = true; save(); toast(`Rāhui auf ${I.name}: Bis zum Fest der Plejaden ruhen Fischfang und Riff. Dann ist der Fang dreimal so reich.`, 4600);
 }
 
 /* ---------- the feast of the first fruits */

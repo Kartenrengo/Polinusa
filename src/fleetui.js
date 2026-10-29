@@ -26,7 +26,7 @@ function shipMarkup(s){
     h += `<ul class="list needs">`;
     h += `<li>${icon('pop')}<span class="nm">Siedler<small>Auf ${P.name}: ${P.pop}</small></span>${stepper('pp', 'pop', s.people, s.people > 0, s.people < S.people && P.pop > SETTLE.keep, 'Siedler')}</li>`;
     h += goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${P.stock[k] || 0}</small></span>${stepper('cg', k, s.cargo[k] || 0, (s.cargo[k] || 0) > 0, load < S.cap && (P.stock[k] || 0) > 0, GN[k])}</li>`).join('');
-    h += `</ul>${s.people ? `<p class="sub">Siedler an Bord. Nimm auch Holz und Essen mit, damit sie am neuen Ort gleich bauen können.</p>` : ''}<div class="rowx"><span class="sub">Ladung ${load} von ${S.cap}, Siedler ${s.people} von ${S.people}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
+    h += `</ul>${s.people ? `<p class="sub">Siedler an Bord. Nimm auch Holz, Grundnahrung und Fisch mit, damit sie am neuen Ort gleich bauen und essen können.</p>` : ''}<div class="rowx"><span class="sub">Ladung ${load} von ${S.cap}, Siedler ${s.people} von ${S.people}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
     const here = routes.map((r, i) => [r, i]).filter(([r]) => r.a === P.id || r.b === P.id);
     if (here.length) h += `<div class="rowx"><span class="sub">In eine Handelskette einsetzen:</span><span class="chips">${here.map(([r, i]) => `<button class="chip" type="button" data-act="assign" data-r="${i}">${isl(r.a === P.id ? r.b : r.a).name}</button>`).join('')}</span></div>`;
   } else if (load || s.people) h += `<p class="sub">${aboard}</p>`;
@@ -83,7 +83,7 @@ function calendarMarkup(){
   let h = head(`${S.n}, ${moonOf() + 1}. Mond`, S.text);
   h += `<ul class="list needs">${SEASONS.map(Q => `<li class="${Q === S ? 'okk' : ''}">${icon(Q.id)}<span class="nm">${Q.n}<small>${Q.to - Q.from} Monde${Q.baum !== 1 ? `, Brotfrucht ${Q.baum ? 'reichlich' : 'keine'}` : ''}${Q.sea !== 1 ? `, Kanus ${Q.sea < 1 ? 'langsamer' : 'schneller'}` : ''}</small></span></li>`).join('')}</ul>`;
   h += `<p class="sub">${festivalTime() ? 'Jetzt ist Festzeit. Feiert das Fest der ersten Früchte im Versammlungshaus.' : `Das Fest der Plejaden beginnt in etwa ${minutes(untilFestival())} Minuten.`} Eine Woche nach Vollmond im ersten Mond steigt der Palolo aus dem Riff.</p>`;
-  if (S.id === 'mager' && I.buildings.some(b => b.kind === 'fisch')) h += I.rahui ? `<p class="sub">Auf ${I.name} gilt Rāhui. Der Fischfang ruht bis zum Fest.</p>` : `<div class="rowx"><span class="sub">Rāhui auf ${I.name}: Fischfang bis zum Fest sperren, dann doppelter Fang und Ansehen +3.</span><button class="btn" type="button" data-act="rahui">Rāhui ausrufen</button></div>`;
+  if (S.id === 'mager' && I.buildings.some(b => SEA_KINDS.has(b.kind))) h += I.rahui ? `<p class="sub">Auf ${I.name} gilt Rāhui. Fischfang und Riff ruhen bis zum Fest.</p>` : `<div class="rowx"><span class="sub">Rāhui auf ${I.name}: Fischfang und Riff bis zum Fest sperren, dann dreifacher Fang und Ansehen +3.</span><button class="btn" type="button" data-act="rahui">Rāhui ausrufen</button></div>`;
   return h;
 }
 /* The feast of the first fruits, in the meeting house when the Pleiades rise */
