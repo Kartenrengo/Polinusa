@@ -94,9 +94,10 @@ function blit(c, key, art, alpha = 1){
 }
 function put(c, x, y, s, m, rot, key, art, alpha){ c.save(); c.translate(x, y); if (rot) c.rotate(rot); c.scale(s * m, s); blit(c, key, art, alpha); c.restore(); }
 function drawBuilding(c, b, I, alpha = 1){
-  const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && !!(I && I.canoe), o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe};
-  const t = xformOf(b.kind, v);
-  put(c, b.x, b.y, t.s, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe ? 1 : ''}`, () => artOf(b.kind, o), alpha);
+  // houses of a chief's village are a little bigger, with carved posts and shell ornaments
+  const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && !!(I && I.canoe), chief = b.kind === 'haus' && !!I && I.lvl === 3;
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief}, t = xformOf(b.kind, v);
+  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1), t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe ? 1 : ''}|${chief ? 1 : ''}`, () => artOf(b.kind, o), alpha);
 }
 
 /* ---------- patterns: drawn at 8× and scaled back so they stay sharp when zoomed in */
@@ -175,7 +176,7 @@ function drawCords(c){
 function drawObjects(c, area){
   if (lod === 'far'){
     for (const I of islands){
-      if (!I.settled) continue; const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) continue;
+      if (!lived(I)) continue; const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) continue;
       const n = hs.length < 3 ? 0 : hs.length < 7 ? 1 : 2;
       put(c, hs.reduce((t, b) => t + b.x, 0) / hs.length, hs.reduce((t, b) => t + b.y, 0) / hs.length, 2.6, 1, 0, 'village' + n, VILLAGE[n]);
     }
@@ -217,6 +218,7 @@ function drawFog(c, v){
 /* ---------- moving things */
 const SMOKE_V = new Path2D('M0-40q-3-3 0-6q3-3 0-6q-3-3 0-6'), SMOKE_T = new Path2D('M-11-1.5q-2.6-2.6 0-5.2q2.6-2.6 0-5.2');
 const PEOPLE_Z = .9;   // people show from this zoom on
+const FLAME = new Path2D('M0 0C-3.4 0-4-2.6-2.6-4.6C-2-3.4-1-3.2-1-3.2C-1.6-5.6 0-7.6 1.2-9C1.2-6.6 3.8-5.4 3-2.4C2.6-.8 1.6 0 0 0Z');
 const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4-5 3-2.5 0 0Z'), BIRD1 = new Path2D('M-5 0q2.5-3.2 5 0q2.5-3.2 5 0'), BIRD2 = new Path2D('M-4.4 0q2.2-3 4.4 0q2.2-3 4.4 0');
 const BUBBLE_LINE = new Path2D('M8 19L2 28');
 function drawAnim(c, now){
@@ -226,6 +228,13 @@ function drawAnim(c, now){
     c.save(); c.translate(I.volcano.x, I.volcano.y + dy * 1.6); c.scale(1.6, 1.6); stroke(c, SMOKE_V, '#2B1D14', .9, null, 'round', a); c.restore();
   }
   if (lod === 'near') for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings) if (b.kind === 'toepfer' && ptIn(b.x, b.y, v)){ c.save(); c.translate(b.x, b.y + dy); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', a); c.restore(); }
+  for (const I of islands){
+    if (!(I.feastEnd > tick) || !boxIn(I.box, v) || lod === 'far') continue;
+    const h = I.buildings.find(b => b.kind === 'halle'); if (!h) continue;
+    const fl = reduced ? 1 : 1 + Math.sin(now / 90) * .12 + Math.sin(now / 53) * .08;
+    c.save(); c.translate(h.x, h.y + 24); c.fillStyle = '#7E766A'; c.fill(ellipse(0, 0, 5, 2));
+    c.scale(fl, fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore();
+  }
   if (cam.z > PEOPLE_Z) drawPeople(c, v);
   if (lod !== 'far') drawNeeds(c, v, now);
   if (placing) drawGhost(c);
@@ -254,11 +263,20 @@ function drawPeople(c, v){
   }
 }
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
-const needBubble = k => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.5" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9"/><path d="M-1.6-2.1L0 .6L1.6-2.1" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/><path d="M-1.5-2.4H1.5" stroke="#F4ECD8" stroke-width="1"/><use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`;
+const bubbleArt = inner => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.5" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9"/><path d="M-1.6-2.1L0 .6L1.6-2.1" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/><path d="M-1.5-2.4H1.5" stroke="#F4ECD8" stroke-width="1"/>${inner}`;
+const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
+const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
+/* An idle workshop shows what it lacks: a good, or the plants it needs close by */
+const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
+    for (const b of I.buildings){
+      if (!b.idle || b.idle.why === 'full' || !ptIn(b.x, b.y, v)) continue;
+      const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
+      put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
+    }
     const miss = needsOf(I).missing; if (!miss.length) continue;
     for (const b of I.buildings){
       if (!(b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle') || b.id % 3 || !ptIn(b.x, b.y, v)) continue;
@@ -269,13 +287,16 @@ function drawNeeds(c, v, now){
   const t = now;
   hearts = hearts.filter(h => t - h.t0 < 1600);
   for (const h of hearts){
-    const f = (t - h.t0) / 1600;
+    const f = (t - h.t0) / 1600; if (f < 0) continue;
     c.save(); c.translate(h.x, h.y - f * 12); c.scale(s * .9, s * .9); c.fillStyle = '#C8402C'; c.globalAlpha = f < .2 ? f / .2 : 1 - (f - .2) / .8; c.fill(HEART);
     c.lineWidth = .45; c.strokeStyle = '#2B1D14'; c.setLineDash([]); c.stroke(HEART); c.restore();
   }
 }
 function drawGhost(c){
-  const K = KINDS[placing.kind], r = K.r + 5, e = ellipse(placing.x, placing.y + 1, r, r * .45), ok = placing.ok;
+  const K = KINDS[placing.kind], r = K.r + 5, e = ellipse(placing.x, placing.y + 1, r, r * .45), ok = placing.ok, I = isl(placing.island);
+  // while placing, rings show where the deposit is and how far the workshop reaches for its plants
+  if (K.dep) for (const d of depsOf(I, K.dep)) stroke(c, ellipse(d.x, d.y, K.depR, K.depR * .8), '#F3D9A0', 2.2, [5, 4], 'round', .9);
+  if (K.near) stroke(c, ellipse(placing.x, placing.y, K.near.r, K.near.r * .8), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
   c.fillStyle = ok ? 'rgba(62,122,58,.25)' : 'rgba(168,74,44,.25)'; c.fill(e);
   stroke(c, e, ok ? '#3E7A3A' : '#A84A2C', 2.4, [.1, 3.6], 'round');
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
@@ -328,7 +349,7 @@ function drawLabels(c){
   if (lod === 'near') return;
   const k = clamp(.95 / cam.z, .75, 2.6), v = view(200);
   for (const I of islands){
-    if (I.discovered){ if (ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.settled ? `${I.pop} Bewohner` : 'unbewohnt'); }
+    if (I.discovered){ if (ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : 'unbewohnt'); }
     else if (lod === 'far') label(c, I.center.x, I.center.y + 44, k, 'Wolke über Land', '', CLOUD_FONT);
   }
 }
@@ -366,4 +387,4 @@ function draw(now){
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => boats.length > 0 || !!placing || hearts.length > 0 || cam.z > PEOPLE_Z || islands.some(I => !I.discovered || (I.volcano && seen(I)));
+const animating = () => boats.length > 0 || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => !I.discovered || (I.volcano && seen(I)));

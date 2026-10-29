@@ -6,19 +6,21 @@ function expCurve(S, T){
   const A = S.harbor, B = T.harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1;
   return curve(A, {x:(A.x + B.x) / 2 + dy / len * 60, y:(A.y + B.y) / 2 - dx / len * 60}, B);
 }
-/* Small outriggers (oc) carry goods and settlers, the double canoe (dc) sails into the unknown */
+/* Small outriggers (oc) carry goods, gifts and settlers, the double canoe (dc) sails into the unknown */
 function addBoat(o){
   const b = {kind:o.exp ? 'dc' : 'oc', ...o, t0:o.t0 != null ? o.t0 : performance.now(), q:'NE', x:null, k:1, alpha:0};
   if (b.exp || b.settle) b.cv = expCurve(isl(b.from), isl(b.to));
   boats.push(b); requestDraw(); return b;
 }
+const routeIndex = (a, b) => routes.findIndex(r => (r.a === a && r.b === b) || (r.a === b && r.b === a));
 function sendBoat(t){
-  const r = routes[t.r], F = isl(t.from), load = Object.values(t.cargo).reduce((a, b) => a + b, 0); if (!load) return;
+  const r = routes[t.r], F = isl(t.from), T = isl(t.to), load = Object.values(t.cargo).reduce((a, b) => a + b, 0); if (!load) return;
   for (const [k, v] of Object.entries(t.cargo)){ if ((F.stock[k] || 0) < v){ toast(`Zu wenig ${GN[k]}.`); return; } }
   for (const [k, v] of Object.entries(t.cargo)) F.stock[k] -= v;
   const days = tripDays(r, t.from, t.to), w = windOf(t.from, t.to);
   addBoat({route:t.r, from:t.from, to:t.to, cargo:{...t.cargo}, dur:days * DAY * 1000, up:w.f === 3, reverse:r.a !== t.from});
-  closeSheet(); updateHUD(); save(); toast(`Das Kanu fährt nach ${isl(t.to).name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.`);
+  closeSheet(); updateHUD(); save();
+  toast(T.clan ? `Das Kanu bringt eure Gabe zum ${T.clan.name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.` : `Das Kanu fährt nach ${T.name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.`);
 }
 function startSettlers(S, T){
   if (T.settled || boats.some(b => b.settle && b.to === T.id)) return;
@@ -29,22 +31,30 @@ function startSettlers(S, T){
   addBoat({settle:true, from:S.id, to:T.id, people:SETTLE.people, cargo:{...SETTLE.cost}, dur:days * DAY * 1000, up:w.f === 3});
   closeSheet(); updateHUD(); save(); toast(`Das Auslegerkanu bringt ${SETTLE.people} Siedler nach ${T.name}. ${days} ${days === 1 ? 'Tag' : 'Tage'}.`);
 }
+/* Each colony after the first two needs more standing: people follow a chief they respect */
+const manaNeeded = () => Math.max(0, islands.filter(I => I.settled).length - 2) * MANA_PER_COLONY;
+function voyageDays(S, T){ const A = S.harbor, B = T.harbor, dy = B.y - A.y, len = Math.hypot(B.x - A.x, dy), c = dy / len, f = c < -.35 ? 3 : c > .35 ? 1 : 2; return {days:Math.max(2, Math.round(len / 480 * f)), up:f === 3}; }
 function startTarget(I){
   if (!islands.some(J => !J.discovered)){ toast('Gerade ist kein neues Land in Sicht.'); return; }
+  if (mana < manaNeeded()){ toast(`Für eine weitere Fahrt braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200); return; }
   expSource = I.id; closeSheet(); mode = 'target'; overview(); requestDraw(); toast('Tippe auf eine Wolke im Nebel.', 4200);
 }
 function startExpedition(T){
-  const S = isl(expSource); mode = 'idle'; if (!S || !S.canoe) return;
-  const A = S.harbor, B = T.harbor, dy = B.y - A.y, len = Math.hypot(B.x - A.x, dy);
-  const c = dy / len, f = c < -.35 ? 3 : c > .35 ? 1 : 2, days = Math.max(2, Math.round(len / 480 * f));
-  S.canoe = false; invalidate();
-  addBoat({exp:true, from:S.id, to:T.id, dur:days * DAY * 1000, up:f === 3, cargo:{}});
-  save(); measure(); toast(`Das Doppelkanu legt ab. Etwa ${days} Tage.`);
+  const S = isl(expSource); if (!S || !S.canoe){ mode = 'idle'; return; }
+  const {days, up} = voyageDays(S, T), need = days * PROVIANT_PER_DAY, have = S.stock.proviant || 0;
+  if (have < need){ toast(`Bis dorthin sind es etwa ${days} Tage. Das braucht ${need} Proviant, im Lager sind ${have}.`, 4200); return; }
+  mode = 'idle'; S.stock.proviant -= need; S.canoe = false; invalidate();
+  addBoat({exp:true, from:S.id, to:T.id, dur:days * DAY * 1000, up, cargo:{}});
+  updateHUD(); save(); measure(); toast(`Das Doppelkanu legt ab, mit ${need} Proviant für ${days} Tage.`);
 }
 /* Settlers land: the island gets its first house, a cord to where they came from and, if it was unknown, a clearing in the fog */
+function clearFog(T, cv){
+  fogHoles.push({cx:T.center.x, cy:T.center.y, rx:fx((T.box.x1 - T.box.x0) / 2 + 140), ry:fx((T.box.y1 - T.box.y0) / 2 + 140), seed:T.center.x | 0});
+  for (let i = 1; i < 8; i++){ const q = curveAt(cv, i / 8); fogHoles.push({cx:fx(q.x), cy:fx(q.y), rx:150, ry:130, seed:i * 7 + 1}); }
+}
 function settle(T, S, cv, o){
   const unknown = !T.discovered;
-  T.discovered = true; T.settled = true; T.pop = o.pop; T.stock = {holz:0, nahrung:0, toepfe:0, beile:0, matten:0, schnur:0, ...o.stock};
+  T.discovered = true; T.settled = true; T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock};
   const r = rng(T.center.x | 0);
   if (!T.buildings.length){
     if (T.atoll) seedAtollPlants(T, r);
@@ -53,12 +63,39 @@ function settle(T, S, cv, o){
   }
   const hs = findSpot(T, 'haus', homeSpot(T)); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
   routes.push({a:S.id, b:T.id, knots:1});
-  if (unknown){
-    fogHoles.push({cx:T.center.x, cy:T.center.y, rx:fx((T.box.x1 - T.box.x0) / 2 + 140), ry:fx((T.box.y1 - T.box.y0) / 2 + 140), seed:T.center.x | 0});
-    for (let i = 1; i < 8; i++){ const q = curveAt(cv, i / 8); fogHoles.push({cx:fx(q.x), cy:fx(q.y), rx:150, ry:130, seed:i * 7 + 1}); }
-  }
+  if (unknown) clearFog(T, cv);
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
   toast(`Auf ${T.name} steht das erste Haus. Eine neue Schnur führt nach ${S.name}.`, 4200);
+}
+/* The double canoe reaches an island where a clan already lives: first contact, then the canoe sails home */
+function meetClan(T, S, cv){
+  T.discovered = true; clearFog(T, cv);
+  if (routeIndex(S.id, T.id) < 0) routes.push({a:S.id, b:T.id, knots:0, lastGift:tick});
+  const back = voyageDays(T, S);
+  addBoat({exp:true, back:true, from:T.id, to:S.id, dur:back.days * DAY * 1000, up:back.up, cargo:{}});
+  renderAll(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
+  const C = T.clan;
+  toast(`Auf ${T.name} lebt der ${C.name}. Sie machen ${C.makes.map(k => GN[k]).join(' und ')} und schätzen ${C.wants.map(k => GN[k]).join(', ')}. Schick ihnen eine Gabe.`, 6000);
+}
+/* A gift is not paid for. The clan remembers it and answers later with what they make; trust (knots) makes the answer richer. */
+function receiveGift(T, cargo, from, r){
+  const C = T.clan, worth = giftValue(C, cargo);
+  T.debt = (T.debt || 0) + worth * returnRate(r.knots);
+  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick;
+  T.lastFrom = from; if (!(T.returnAt > tick)) T.returnAt = tick + 15 + Math.round(Math.random() * 10);
+  mana += Math.min(4, Math.round(worth / 4)) + 1;
+  toast(`Der ${C.name} nimmt eure Gabe an. Die Gegengabe kommt später. ${r.knots} Knoten Vertrauen.`, 4200);
+}
+function answerGifts(){
+  for (const T of islands){
+    if (!T.clan || !T.discovered || !(T.debt >= 1) || tick < (T.returnAt || 0)) continue;
+    const ri = routeIndex(T.id, T.lastFrom); if (ri < 0) continue;
+    const {cargo, left, load} = returnGoods(T.clan, T.debt);
+    if (!load){ T.returnAt = 0; continue; }
+    T.debt = Math.max(0, left); T.returnAt = T.debt >= 1 ? tick + 20 : 0;
+    const r = routes[ri], w = windOf(T.id, T.lastFrom), days = tripDays(r, T.id, T.lastFrom);
+    addBoat({route:ri, from:T.id, to:T.lastFrom, cargo, gift:true, dur:days * DAY * 1000, up:w.f === 3, reverse:r.a !== T.id});
+  }
 }
 function stepBoats(now){
   for (let i = boats.length - 1; i >= 0; i--){
@@ -72,19 +109,30 @@ function stepBoats(now){
     const small = b.kind === 'oc';
     b.k = lod === 'far' ? clamp(.9 / cam.z, 1.6, 3.2) * (small ? 1.3 : 1) : (b.exp ? 1.25 : small ? 1.5 : 1);
     b.x = x; b.y = y; b.alpha = p < .04 ? p / .04 : p > .96 ? (1 - p) / .04 : 1;
-    if (p >= 1){
-      boats.splice(i, 1);
-      if (b.exp) settle(isl(b.to), isl(b.from), b.cv, {pop:5, stock:{holz:4, nahrung:6, toepfe:1}});
-      else if (b.settle) settle(isl(b.to), isl(b.from), b.cv, {pop:b.people, stock:b.cargo});
-      else { const T = isl(b.to), r = routes[b.route]; for (const [k2, v] of Object.entries(b.cargo)) T.stock[k2] = Math.min(storeCap(T), (T.stock[k2] || 0) + v); r.knots = Math.min(12, r.knots + 1); invalidate(); updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest(); toast(`Das Kanu ist in ${T.name}. ${r.knots} Knoten.`); }
-    }
+    if (p >= 1){ boats.splice(i, 1); arrive(b); }
   }
+}
+function arrive(b){
+  const T = isl(b.to), S = isl(b.from);
+  if (b.exp && b.back){ T.canoe = true; invalidate(); save(); toast(`Das Doppelkanu ist zurück auf ${T.name}.`); return; }
+  if (b.exp){ if (T.clan) meetClan(T, S, b.cv); else settle(T, S, b.cv, {pop:5, stock:{holz:4, nahrung:6, toepfe:1}}); return; }
+  if (b.settle){ settle(T, S, b.cv, {pop:b.people, stock:b.cargo}); return; }
+  const r = routes[b.route];
+  if (T.clan) receiveGift(T, b.cargo, b.from, r);
+  else {
+    for (const [k, v] of Object.entries(b.cargo)) T.stock[k] = Math.min(storeCap(T), (T.stock[k] || 0) + v);
+    if (b.gift) toast(`Gegengabe vom ${S.clan.name}: ${giftText(b.cargo)}.`, 4200);
+    else { r.knots = Math.min(12, r.knots + 1); toast(`Das Kanu ist in ${T.name}. ${r.knots} Knoten.`); }
+  }
+  invalidate(); updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
 }
 
 /* ---------- people: they carry the village's work from field, workshop or forest to the store and back.
    About one figure for every four residents, at most ten per island. Close up only. */
-const JOB_LOAD = {taro:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle'};
+const JOB_LOAD = {taro:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
+const lived = I => I.settled || (I.clan && I.discovered);
+const popOf = I => I.settled ? I.pop : I.clan ? I.clan.pop : 0;
 function jobsOf(I){
   const jobs = I.buildings.filter(b => JOB_LOAD[b.kind]).map(b => ({x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]}));
   if (I.forest){ const c = villageCenter(I), q = nearestOn(I.forest, c); jobs.push({x:q.x + (c.x - q.x) * .1, y:q.y + (c.y - q.y) * .1, load:'holz'}); }
@@ -93,14 +141,15 @@ function jobsOf(I){
 function storeNear(I, p){
   // the nearest store or meeting house on the same piece of land; on an atoll the lagoon is in the way otherwise
   const L = landOf(I, p), st = I.buildings.filter(b => (b.kind === 'speicher' || b.kind === 'halle') && landOf(I, b) === L);
-  if (!st.length) return null;
-  const b = st.reduce((m, q) => Math.hypot(q.x - p.x, q.y - p.y) < Math.hypot(m.x - p.x, m.y - p.y) ? q : m);
+  const pool = st.length ? st : I.buildings.filter(b => b.kind === 'haus' && landOf(I, b) === L);
+  if (!pool.length) return null;
+  const b = pool.reduce((m, q) => Math.hypot(q.x - p.x, q.y - p.y) < Math.hypot(m.x - p.x, m.y - p.y) ? q : m);
   return {x:b.x + (Math.random() - .5) * 10, y:b.y + 4 + Math.random() * 4};
 }
 function syncWalkers(){
   for (const I of islands){
-    const mine = walkers.filter(w => w.isl === I.id), homes = I.settled ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
-    const want = homes.length ? clamp(Math.round(I.pop / 4), 1, 10) : 0, jobs = jobsOf(I);
+    const mine = walkers.filter(w => w.isl === I.id), homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
+    const want = homes.length ? clamp(Math.round(popOf(I) / 4), 1, 10) : 0, jobs = jobsOf(I);
     for (const w of mine) if (w.job && !jobs.some(j => j.x === w.job.x && j.y === w.job.y)){ w.job = null; w.carry = null; }
     for (let i = mine.length; i < want; i++){
       const a = homes[Math.floor(Math.random() * homes.length)], n = walkers.length;
@@ -117,6 +166,8 @@ function syncWalkers(){
 function spawnWalkers(){ walkers = []; syncWalkers(); }
 function nextLeg(w){
   const I = isl(w.isl);
+  // during a feast everyone gathers in front of the meeting house
+  if (I.feastEnd > tick){ const h = I.buildings.find(b => b.kind === 'halle'); if (h){ w.carry = null; w.tx = h.x + (Math.random() - .5) * 40; w.ty = h.y + 14 + Math.random() * 16; w.wait = 700 + Math.random() * 1400; return; } }
   if (w.job){
     if (w.leg === 'work'){
       // at the workplace: pick up the load, then carry it to the store
@@ -137,17 +188,60 @@ function stepWalkers(dt){
   }
 }
 
+/* ---------- work: a workshop runs only with its deposit, its plants nearby and its input goods */
+const NEAR_PL = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten'};
+function workState(I, b){
+  const K = KINDS[b.kind];
+  if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
+  if (K.prod && (I.stock[K.prod] || 0) >= storeCap(I)) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
+  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => (I.stock[q] || 0) < K.use[q]); return {why:'use', k, text:`Es fehlt ${GN[k]}.`}; }
+  return null;
+}
 /* ---------- needs: what each island uses, makes and lacks, per minute */
 const PER_MIN = 60000 / TICK;
-function makeRate(I, k){ let m = k === 'holz' && I.type === 'hoch' ? PER_MIN : 0; for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k) m += PER_MIN / K.every; } return m; }
+function makeRate(I, k){
+  let m = k === 'holz' && I.type === 'hoch' ? PER_MIN : 0;
+  for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every; }
+  return m;
+}
+function workUse(I, k){ let u = 0; for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.use && K.use[k] && !(b.idle && b.idle.why === 'near')) u += PER_MIN / K.every * K.use[k]; } return u; }
+const needActive = (I, N) => N.lvl < 3 ? I.pop >= N.from : I.lvl === 3;
 function needsOf(I){
-  const list = NEEDS.filter(N => I.pop >= N.from).map(N => {
-    const use = I.pop * N.rate, make = makeRate(I, N.k), stock = I.stock[N.k] || 0;
-    const state = make >= use ? 'ok' : stock > 0 ? 'low' : 'out';
-    return {N, k:N.k, use, make, stock, state, mins:make < use ? stock / (use - make) : Infinity};
+  const list = NEEDS.filter(N => needActive(I, N)).map(N => {
+    const use = I.pop * N.rate, work = workUse(I, N.k), make = makeRate(I, N.k), stock = I.stock[N.k] || 0, all = use + work;
+    const state = make >= all ? 'ok' : stock > 0 ? 'low' : 'out';
+    return {N, k:N.k, use, work, make, stock, state, mins:make < all ? stock / (all - make) : Infinity};
   });
   const cap = houseCap(I), missing = list.filter(n => n.state === 'out');
-  return {list, cap, missing, full:I.pop >= cap, next:NEEDS.find(N => I.pop < N.from), growing:I.pop < cap && !missing.length && (I.stock.nahrung || 0) > 0};
+  return {list, cap, missing, full:I.pop >= cap, next:NEEDS.find(N => !needActive(I, N)), growing:I.pop < cap && !missing.length && (I.stock.nahrung || 0) > 0};
+}
+/* Level: a village from 20 people; a chief's village with enough people, standing, pots and mats. It stays one while its needs hold. */
+function updateLevel(I, nd){
+  const lowOut = nd.missing.some(n => n.N.lvl < 3);
+  if (I.lvl === 3){
+    I.chiefMiss = nd.missing.length ? (I.chiefMiss || 0) + 1 : 0;
+    if (I.chiefMiss >= 30){ I.lvl = 2; I.chiefMiss = 0; I.chiefBan = tick + 60; invalidate(); toast(`${I.name} ist kein Häuptlingsdorf mehr. Es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`, 4200); }
+    return;
+  }
+  // to rise, the chief's goods must already be in store, and after a fall the village needs two minutes
+  if (I.pop >= CHIEF.pop && mana >= CHIEF.mana && !lowOut && chiefGoods(I) && tick >= (I.chiefBan || 0)){ I.lvl = 3; invalidate(); toast(`${I.name} ist jetzt ein Häuptlingsdorf. In jedem Haus wohnen nun ${CHIEF.cap} Menschen.`, 4600); return; }
+  I.lvl = I.pop >= 20 ? 2 : 1;
+}
+const chiefGoods = I => NEEDS.filter(N => N.lvl === 3).every(N => (I.stock[N.k] || 0) > 0);
+/* ---------- feasts: food, pots, pigs and bark cloth for standing */
+function feastState(I, F){
+  if (!I.buildings.some(b => b.kind === 'halle')) return 'Feste feiert man im Versammlungshaus.';
+  const wait = (I.feastAt || -FEAST_PAUSE) + FEAST_PAUSE - tick; if (I.feastAt && wait > 0) return `Das nächste Fest geht in ${Math.ceil(wait * TICK / 1000)} Sekunden.`;
+  if (!canPay(I, F.cost)) return `Es fehlt ${lacking(I, F.cost)}.`;
+  return '';
+}
+function holdFeast(I, F){
+  const no = feastState(I, F); if (no){ toast(no); return; }
+  pay(I, F.cost); mana += F.mana; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN;
+  for (const w of walkers) if (w.isl === I.id) w.wait = 0;
+  for (let i = 0; i < 6; i++) heartAt(I);
+  updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
+  toast(`${F.n} auf ${I.name}. Ansehen +${F.mana}.`, 3600);
 }
 let hearts = [];   // a heart rises over a house when someone moves in
 function econ(){
@@ -156,32 +250,42 @@ function econ(){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     if (I.type === 'hoch') add('holz', 1);
-    for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod && tick % K.every === 0) add(K.prod, 1); }
+    for (const b of I.buildings){
+      const K = KINDS[b.kind]; if (!K.prod || tick % K.every) continue;
+      b.idle = workState(I, b); if (b.idle) continue;
+      if (K.use) pay(I, K.use);
+      add(K.prod, 1);
+    }
     // use up what people need; fractions carry over so small villages use little
     I.owe = I.owe || {};
     for (const N of NEEDS){
-      if (I.pop < N.from) continue;
+      if (!needActive(I, N)) continue;
       I.owe[N.k] = (I.owe[N.k] || 0) + I.pop * N.rate / PER_MIN;
       const take = Math.floor(I.owe[N.k]); if (take > 0){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); I.owe[N.k] -= take; }
     }
-    const nd = needsOf(I);
+    let nd = needsOf(I);
+    updateLevel(I, nd); nd = needsOf(I);
     if (nd.growing){ I.pop++; heartAt(I); }
-    else if (I.pop > nd.cap) I.pop = nd.cap;
+    else if (I.pop > nd.cap) I.pop--;   // when houses shrink back, people move away one by one
     // without food people leave, slowly, but a few always stay
     I.hunger = nd.missing.some(n => n.k === 'nahrung') ? (I.hunger || 0) + 1 : 0;
     if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; }
   }
+  if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
+  answerGifts();
+  // a cord to a clan slackens when no gift has gone along it for a long time
+  for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
   if (tick % 8 === 0) invalidate();   // roofs age
   if (tick % 5 === 0) syncWalkers();
   requestDraw(); updateHUD(); if (placing) ghostRender(); checkQuest();
-  if ((sheetKind === 'info' || sheetKind === 'quest' || sheetKind === 'needs') && sheetSig() !== lastSig) renderSheet();
+  if (sheetKind && sheetKind !== 'trade' && sheetSig() !== lastSig) renderSheet();
   if (tick % 3 === 0) save();
 }
 function heartAt(I){
   if (lod === 'far' || !boxIn(I.box, view(60))) return;
   const hs = I.buildings.filter(b => b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle'); if (!hs.length) return;
   const b = hs[Math.floor(Math.random() * hs.length)];
-  hearts.push({x:b.x, y:b.y - KINDS[b.kind].hy - 10, t0:performance.now()});
+  hearts.push({x:b.x + (Math.random() - .5) * 8, y:b.y - KINDS[b.kind].hy - 10, t0:performance.now() + Math.random() * 600});
 }
 
 /* ---------- hit tests and input */
@@ -200,6 +304,7 @@ function onTap(p){
   const ri = hitCord(p); if (ri >= 0){ openTrade(ri); return; }
   const T = hitSign(p); if (T){ toast('Vögel kreisen über einer Wolke. Darunter liegt Land. Bau im Kanuhaus ein Doppelkanu.', 3600); return; }
   const I = hitIsland(p);
+  if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); return; }
   if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Siedler schickst du vom Kanuhaus auf Panua.`, 3600); return; }
   if (I){ closeSheet(); setActive(I.id); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   closeSheet();
@@ -247,6 +352,8 @@ $('zOut').addEventListener('click', () => zoomBtn(1 / 1.6));
 $('zAll').addEventListener('click', overview);
 $('menuBtn').addEventListener('click', () => openSheet('menu', {}));
 $('popBtn').addEventListener('click', () => openSheet('needs'));
+$('storeBtn').addEventListener('click', () => openSheet('store'));
+$('manaBtn').addEventListener('click', () => openSheet('mana'));
 $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('tradeBtn').addEventListener('click', () => { const i = routes.findIndex(r => r.a === active || r.b === active); if (i < 0){ toast('Von hier fährt noch kein Kanu.'); return; } openTrade(i); });
 $('placeOk').addEventListener('click', confirmPlace);

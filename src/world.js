@@ -39,9 +39,14 @@ function makeWorld(seed){
     const o = i < 2 ? spots[1 - i] : spots.filter(q => q !== s).reduce((b, q) => Math.hypot(q.x - s.x, q.y - s.y) < Math.hypot(b.x - s.x, b.y - s.y) ? q : b);
     const len = Math.hypot(o.x - s.x, o.y - s.y) || 1, dir = {x:(o.x - s.x) / len, y:(o.y - s.y) / len};
     const I = s.kind === 'atoll' ? genAtoll(s, dir, rng(seed ^ (i + 1) * 7919)) : genHigh(s, dir, rng(seed ^ (i + 1) * 7919), s.kind === 'vulkan', i === 0);
-    Object.assign(I, {id:s.id, name:s.name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false});
+    Object.assign(I, {id:s.id, name:s.name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1});
     return I;
   });
+  // two other clans already live out there: one on a volcano, one on an atoll
+  for (const [id, C] of Object.entries(CLANS)){
+    const i = spots.findIndex((q, j) => j >= 2 && q.kind === C.on && !islands[j].clan && (C.on !== 'vulkan' || islands[j].deco.some(d => d.t === 'obsidian')));
+    if (i >= 0) islands[i].clan = {id, ...C};
+  }
   return {islands, hole};
 }
 function startHoleFor(spots){
@@ -108,7 +113,26 @@ function genHigh(s, hdir, r, volcano, home){
     return null;
   };
   if (home){ const pz = place('plaza', 20, I.anchor); if (pz) I.anchor = {x:pz.x, y:pz.y}; place('garden', 32, {x:(I.anchor.x + cx) / 2, y:(I.anchor.y + cy) / 2}); }
-  if (r() < .8) place('rock', 20);
+  r(); place('rock', 20);   // basalt for stone adzes on every high island
+  // clay: on the bank of the stream, or in a damp hollow near the shore
+  if (home || r() < .7){
+    let done = false;
+    if (I.river) for (let i = 0; i < 40 && !done; i++){
+      const j = 1 + Math.floor(r() * (I.river.length - 2)), a = I.river[j], b = I.river[j + 1] || I.river[j - 1], l = Math.hypot(b.x - a.x, b.y - a.y) || 1, side = r() < .5 ? -1 : 1;
+      const p = {x:a.x - (b.y - a.y) / l * 16 * side, y:a.y + (b.x - a.x) / l * 16 * side};
+      if (inland(p, 16) && !(I.forest && inPoly(p, I.forest)) && polyDist(p, I.river, false) > 10 && I.blocked.every(z => Math.hypot(p.x - z.x, p.y - z.y) > z.r + 18)){ I.deco.push({t:'clay', x:fx(p.x), y:fx(p.y), rot:0}); I.blocked.push({x:fx(p.x), y:fx(p.y), r:10}); done = true; }
+    }
+    if (!done) place('clay', 10);
+  }
+  // obsidian: dark glass on the slopes around the volcano, up to two places
+  if (volcano){
+    const v = I.volcano; let n = 0;
+    for (let i = 0; i < 40 && n < 2; i++){
+      const a = (i % 2 ? Math.PI - .5 : .5) + (r() - .5) * 1.6 + (i > 10 ? r() * TAU : 0), d = 46 + r() * 22;
+      const q = {x:v.x + Math.cos(a) * d, y:v.y - 10 + Math.sin(a) * d * .7};
+      if (free(q, 10) && depsOf(I, 'obsidian').every(o => Math.hypot(o.x - q.x, o.y - q.y) > 50)){ I.deco.push({t:'obsidian', x:fx(q.x), y:fx(q.y), rot:0}); I.blocked.push({x:fx(q.x), y:fx(q.y), r:10}); n++; }
+    }
+  }
 
   I.box = polyBox(rf.poly, 6);
   I.labelAt = {x:fx(cx), y:fx(I.box.y0 - 12)};
@@ -142,7 +166,12 @@ function genAtoll(s, hdir, r){
 
 /* ---------- island rules */
 const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher').length;
-const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (KINDS[b.kind].cap || 0), 0);
+/* In a chief's village every house and stilt house holds 6 instead of 4 */
+const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (I.lvl === 3 && (b.kind === 'haus' || b.kind === 'pfahl') ? CHIEF.cap : KINDS[b.kind].cap || 0), 0);
+const DEP_DECO = {ton:'clay', basalt:'rock', obsidian:'obsidian'};
+const depsOf = (I, dep) => I.deco.filter(d => d.t === DEP_DECO[dep]);
+const depNear = (I, dep, x, y, r) => depsOf(I, dep).find(d => Math.hypot(d.x - x, d.y - y) < r) || null;
+const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && Math.hypot(b.x - x, b.y - y) < r).length;
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
 function inLagoon(I, p){
   if (landAt(I, p)) return false;
@@ -162,7 +191,8 @@ function check(kind, I, x, y, ignoreId){
     const L = landAt(I, p); if (!L) return 'Nur auf Land';
     const dEdge = polyDist(p, L.poly);
     if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
-    if (K.coast && dEdge > 18) return 'Das Kanuhaus gehört an den Strand';
+    if (K.coast && dEdge > 18) return `${K.n} gehört an den Strand`;
+    if (K.dep && !depNear(I, K.dep, x, y, K.depR)) return `Hier ist kein ${DEPOSITS[K.dep].n} in der Nähe. ${DEPOSITS[K.dep].where}`;
     if (I.forest && inPoly(p, I.forest)) return 'Hier steht Wald';
     if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';
     for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
