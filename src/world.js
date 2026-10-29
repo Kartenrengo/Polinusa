@@ -184,13 +184,17 @@ function riverMouth(I, pts, land){
   land.poly = poly.map(q => ({x:fx(q.x), y:fx(q.y)}));
   land.d = 'M' + land.poly.map(q => `${q.x} ${q.y}`).join('L') + 'Z';
   // the arms split a little inland and wind out to their bays
-  const S = at(-24, jit(2)), main = pts.slice(0, -1).filter(q => Math.hypot(q.x - M.x, q.y - M.y) > 24);
-  main.push(S);
+  // the fork lies on the stream itself, about 26 steps back from the coast, so the stream runs straight into it
+  const course = [...pts.slice(0, -1), M]; let S = course[0], k = course.length - 1;
+  for (let left = 26; k > 0; k--){ const a2 = course[k - 1], b2 = course[k], l = Math.hypot(b2.x - a2.x, b2.y - a2.y); if (l >= left){ const f = left / l; S = {x:b2.x + (a2.x - b2.x) * f, y:b2.y + (a2.y - b2.y) * f}; break; } left -= l; }
+  const main = [...course.slice(0, k), S];
   I.river = main.map(q => ({x:fx(q.x), y:fx(q.y)}));
-  const arms = vs.map((v, i) => spline([at(-34, 0), S, at(-13, v * .28 + jit(4)), at(-2, v * .72 + jit(3)), at(us[i] - 5, v + jit(2)), at(us[i] + 8, v), at(us[i] + 13, v)], 4).map(q => ({x:fx(q.x), y:fx(q.y)})));
+  // each arm leaves the split in the direction the stream comes from, so there is no kink
+  const before = main.length > 1 ? main[main.length - 2] : at(-34, 0), via = (q, f, side) => ({x:S.x + (q.x - S.x) * f + t.x * side, y:S.y + (q.y - S.y) * f + t.y * side});
+  const arms = vs.map((v, i) => { const mo = at(us[i] - 5, v + jit(2)); return spline([before, S, via(mo, .34, jit(3)), via(mo, .68, jit(2)), mo, at(us[i] + 8, v), at(us[i] + 13, v)], 4).map(q => ({x:fx(q.x), y:fx(q.y)})); });
   // where each arm leaves the land: the bay that opens into the sea
-  const exits = arms.map(arm => { for (let i = 1; i < arm.length; i++) if (!inPoly(arm[i], land.poly)) return arm[i]; return arm[arm.length - 1]; });
-  I.delta = {arms, exits, mouth:{x:fx(M.x), y:fx(M.y)}, n, reach:fx(Math.max(W, W2) + 6), fan:at(4, (vs[0] + vs[vs.length - 1]) / 2),
+  const out = arms.map(arm => { for (let i = 1; i < arm.length; i++) if (!inPoly(arm[i], land.poly)) return i; return arm.length - 1; });
+  I.delta = {arms, exits:out.map((k, i) => arms[i][k]), exitAt:out, mouth:{x:fx(M.x), y:fx(M.y)}, n, reach:fx(Math.max(W, W2) + 6), fan:at(4, (vs[0] + vs[vs.length - 1]) / 2),
     bars:vs.filter(() => r() < .55).map((v, i) => at(us[vs.indexOf(v)] + 10 + r() * 4, v + jit(6))),
     lobes:[at(us[0] * .5, vs[0] - 8), ...vs.slice(1).map((v, i) => at(Math.max(us[i], us[i + 1]) - 1, (v + vs[i]) / 2)), at(us[us.length - 1] * .5, vs[vs.length - 1] + 8)]};
 }

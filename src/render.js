@@ -149,7 +149,12 @@ function islandPaths(I){
   p.harbor = ellipse(I.harbor.x, I.harbor.y, I.atoll ? 9 : 9.5, I.atoll ? 9 : 9.5);
   if (I.river) p.river = new Path2D(smoothOpen(I.river));
   if (I.delta){
-    p.arms = new Path2D(); for (const arm of I.delta.arms) p.arms.addPath(new Path2D(smoothOpen(arm)));
+    // the arms are ribbons: as wide as the stream where they split, narrower on the way, wider again where they open into the sea
+    p.armInk = new Path2D(); p.armWater = new Path2D(); p.arms = new Path2D();
+    I.delta.arms.forEach((arm, k) => {
+      const e = I.delta.exitAt[k], w = i => { const f = i / e; return f < .3 ? 1.5 - .4 * f / .3 : f < .7 ? 1.1 : Math.min(1.75, 1.1 + .65 * (f - .7) / .3); };
+      p.armInk.addPath(ribbon(arm, i => w(i) + .9)); p.armWater.addPath(ribbon(arm, w)); p.arms.addPath(new Path2D(smoothOpen(arm)));
+    });
     // the coast line has a gap where an arm opens into the sea
     p.gaps = new Path2D(); const b = I.box; p.gaps.rect(b.x0 - 20, b.y0 - 20, b.x1 - b.x0 + 40, b.y1 - b.y0 + 40);
     for (const q of I.delta.exits){ p.gaps.moveTo(q.x + 3.4, q.y); p.gaps.arc(q.x, q.y, 3.4, 0, TAU); }
@@ -179,13 +184,18 @@ function drawIsland(c, I, area){
     if (p.arms && i === 0){
       const f = I.delta.fan, g = c.createRadialGradient(f.x, f.y, 0, f.x, f.y, I.delta.reach);
       g.addColorStop(0, 'rgba(222,204,146,.9)'); g.addColorStop(.6, 'rgba(214,200,140,.55)'); g.addColorStop(1, 'rgba(214,200,140,0)');
-      c.fillStyle = g; c.beginPath(); c.arc(f.x, f.y, I.delta.reach, 0, TAU); c.fill(); stroke(c, p.arms, '#2B1D14', 3.8, null, 'round'); stroke(c, p.arms, '#6DB9BE', 2.3, null, 'round'); stroke(c, p.arms, '#EAF5F0', .7, [.1, 3], 'round', .8); }
+      c.fillStyle = g; c.beginPath(); c.arc(f.x, f.y, I.delta.reach, 0, TAU); c.fill(); c.fillStyle = '#2B1D14'; c.fill(p.armInk); }
     c.restore();
     if (p.gaps && i === 0){ c.save(); c.clip(p.gaps, 'evenodd'); stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]); c.restore(); }
     else stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]);
   });
   if (p.hill){ fillWith(c, p.hill, '#80A050', 'pDots'); stroke(c, p.hach, '#5E7A3A', .9, null, 'round', .8); c.fillStyle = '#76944A'; c.fill(p.top); stroke(c, p.top, '#5E7A3A', .7, [1.4, 1.4], null, .8); }
-  if (p.river){ stroke(c, p.river, '#2B1D14', 4.8, null, 'round'); stroke(c, p.river, '#6DB9BE', 3, null, 'round'); stroke(c, p.river, '#EAF5F0', .9, [.1, 3.4], 'round', .85); }
+  // river and delta arms are one water: first every bank, then all the water, then the glints, so no bank crosses the water at the fork
+  if (p.river){
+    stroke(c, p.river, '#2B1D14', 4.8, null, 'round'); stroke(c, p.river, '#6DB9BE', 3, null, 'round');
+    if (p.armWater){ c.save(); c.clip(p.lands[0]); c.fillStyle = '#6DB9BE'; c.fill(p.armWater); stroke(c, p.arms, '#EAF5F0', .8, [.1, 3.2], 'round', .85); c.restore(); }
+    stroke(c, p.river, '#EAF5F0', .9, [.1, 3.4], 'round', .85);
+  }
   const tp = treePaths(I);
   if (lod === 'far'){ if (tp.canopy){ stroke(c, tp.canopy, '#2B1D14', 2); c.fillStyle = '#3F6B2E'; c.fill(tp.canopy); } }
   else if (tp.under){ c.globalAlpha = .55; c.fillStyle = '#5E8440'; c.fill(tp.under); c.globalAlpha = 1; }
@@ -194,6 +204,16 @@ function drawIsland(c, I, area){
   const v = area ? grow(area, 40) : I.box;
   for (const d of I.deco) if (ptIn(d.x, d.y, v) && !(d.s && (lod === 'far' || under(d)))) put(c, d.x, d.y, 1, 1, d.rot * Math.PI / 180, d.t, `<use href="#${d.t}"/>`);
   if (I.volcano) put(c, I.volcano.x, I.volcano.y, 1.6, 1, 0, 'volcano', '<use href="#volcano"/>');
+}
+/* A band along a line whose half width changes along it; its start hides under the round end of the stream */
+function ribbon(pts, w){
+  const L = [], R = [], n = pts.length, P = new Path2D();
+  for (let i = 0; i < n; i++){
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1, h = w(i);
+    L.push({x:pts[i].x - dy / l * h, y:pts[i].y + dx / l * h}); R.push({x:pts[i].x + dy / l * h, y:pts[i].y - dx / l * h});
+  }
+  P.moveTo(L[0].x, L[0].y); for (const q of L) P.lineTo(q.x, q.y); for (let i = n - 1; i >= 0; i--) P.lineTo(R[i].x, R[i].y); P.closePath();
+  return P;
 }
 /* The forest floor under the trees close up, one green mass far away. Cached until a tree changes. */
 function treePaths(I){
