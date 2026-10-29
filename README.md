@@ -253,6 +253,38 @@ eine Handelskette. Sie antworten später mit einem eigenen Kanu voller Waren. Wi
 hängt von den Knoten auf der Schnur ab. Muschelschmuck knüpft einen Knoten extra, ohne Gaben löst sich alle drei Minuten einer.
 So funktionierten Wertgegenstände im Pazifik: als Gaben, die Beziehungen stiften, nicht als Geld.
 
+## Ereignisse und Chronik
+
+Alle fünf bis acht Minuten geschieht auf einer eigenen Insel etwas, angekündigt vom Muschelhorn. Jedes Ereignis hat zwei oder
+drei Antworten, manche kosten Waren:
+
+| Ereignis | Wann | Antworten |
+| --- | --- | --- |
+| Wirbelsturm | Sturmzeit | Dächer mit Schnur und Holz festbinden, oder abwarten: Dächer vergrauen, eine Werkstatt muss neu gebaut werden |
+| Schiffbrüchige | jederzeit | aufnehmen (bis zu 4 neue Bewohner), mit Proviant weiterschicken (Ansehen), nichts geben |
+| Thunfischschwarm | Passatzeit | alle Kanus hinaus (12 Fisch) oder weiterarbeiten |
+| Dürre | Magere Zeit | Regenzeremonie mit Kava, Wasser in Töpfen tragen (halber Mond halbe Ernte), durchhalten (ein Mond) |
+| Bitte eines Clans | mit einer Schnur zu einem Clan | schicken, was sie brauchen (zwei Knoten, spätere Gegengabe) oder ablehnen (ein Knoten weniger) |
+| Hochzeit | ab 20 Bewohnern | ein Fest (das Dorf wächst eine Weile doppelt) oder im kleinen Kreis |
+| Fremder Navigator | nach der ersten Fahrt ins Unbekannte | bewirten: er zeigt den Weg zur nächsten unbekannten Insel |
+| Brotfruchternte | Zeit der Plejaden | alles ernten (Grundnahrung und Proviant) |
+
+Wer ein Ereignis schließt, ohne zu wählen, lässt es vorübergehen. Die **Chronik** im Menü hält zwanzig Meilensteine fest,
+vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle drei Clans, 30 Knoten, 150 Menschen,
+50 gepflanzte Bäume und 500 gefangene Fische. Jeder bringt Ansehen und wird mit dem Jahr eingetragen.
+
+## Tag, Nacht und Klang
+
+- Ein Tag dauert sechs Minuten. Am Abend wird das Licht warm, die Nacht ist tiefblau. Fackeln, das Feuer vor dem
+  Versammlungshaus, Türen, Töpferöfen und Vulkane leuchten.
+- Brandung läuft am Riff entlang und schwillt an, auf den Lagunen glitzert die Sonne. In der mageren Zeit wird das Gras
+  trocken, in der Sturmzeit dunkler.
+- Das Versammlungshaus bekommt im Dorf Tapa-Fahnen und im Häuptlingsdorf eine Muschelgirlande.
+- Der Klang entsteht im Browser, ohne Tondateien: Brandung, die beim Heranzoomen lauter wird, Vögel am Tag, Grillen in der
+  Nacht, Schlitztrommeln beim Fest, das Muschelhorn bei Ereignissen und am Fest der Plejaden, Holztöne bei Aufgaben und
+  Chronik, ein Klopfen, wenn etwas fertig gebaut ist, ein Platschen beim Stapellauf, klappernde Muscheln bei Gegengaben.
+- Klang und Tag und Nacht lassen sich im Menü ausschalten.
+
 ## Lebendige Welt
 
 - **Tiere:** Die Lapita-Siedler brachten Schwein, Hund und Huhn in ihren Kanus mit. In jedem Dorf laufen Hühner, die

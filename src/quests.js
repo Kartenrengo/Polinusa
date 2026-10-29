@@ -83,7 +83,7 @@ function checkQuest(){
     if (quest >= QUESTS.length) parts.push('Jetzt steht dir alles offen.');
     if (done.id === 'netz') setTimeout(() => openSheet('finale'), 2600);
     toast(parts.join(' '), 4600); renderBuildBar(); save();
-    const el = $('quest'); el.classList.remove('done'); void el.offsetWidth; el.classList.add('done');
+    const el = $('quest'); el.classList.remove('done'); void el.offsetWidth; el.classList.add('done'); sfx('quest');
   }
   renderQuest();
 }

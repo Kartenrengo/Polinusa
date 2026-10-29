@@ -18,7 +18,9 @@ const SEASON_ICON = {plejaden:'ic-plejaden', sturm:'ic-sturm', passat:'ic-passat
 /* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night */
 const SEA_KINDS = new Set(['fisch', 'riff', 'reuse']);
 function seasonalEvery(I, b, K){
-  if (b.kind === 'baum'){ const m = seasonOf().baum; return m ? Math.round(K.every / m) : 0; }
+  const dry = I.drought > tick && (b.kind === 'taro' || b.kind === 'pulaka' || b.kind === 'baum') ? 2 : 1;   // a drought halves what the fields give
+  if (b.kind === 'baum'){ const m = seasonOf().baum; return m ? Math.round(K.every * dry / m) : 0; }
+  if (dry > 1) return K.every * 2;
   if (SEA_KINDS.has(b.kind)){
     if (I.rahui && seasonOf().id === 'mager') return 0;   // the reef rests
     if (I.rahuiDone === yearOf() && festivalTime()) return Math.max(1, Math.round(K.every / 3));   // after the rāhui the lagoon is full
@@ -29,7 +31,7 @@ function calendarTick(){
   const t = yearTick();
   if (t % MOON === 0){
     const S = seasonOf();
-    if (moonOf() === S.from) toast(`${S.n}. ${S.text}`, 6000);
+    if (moonOf() === S.from){ toast(`${S.n}. ${S.text}`, 6000); invalidate(true); }   // the land changes colour with the season
     if (moonOf() === 0){
       // the rāhui is lifted at the feast: the reef opens again
       for (const I of islands) if (I.settled && I.rahui){ I.rahui = false; I.rahuiDone = yearOf(); mana += 3; }
@@ -76,7 +78,7 @@ function festivalGain(I, chosen){
 function holdFestival(I, chosen){
   const no = festivalState(I); if (no){ toast(no); return; }
   const parts = festivalParts(I).filter(p => p.ok && chosen.includes(p.P.id)), gain = festivalGain(I, chosen);
-  pay(I, FESTIVAL.offering); for (const p of parts) if (p.P.cost) pay(I, p.P.cost);
+  pay(I, FESTIVAL.offering); for (const p of parts) if (p.P.cost) pay(I, p.P.cost); sfx('horn');
   mana += gain; I.festYear = yearOf(); I.feastAt = tick; I.feastEnd = tick + FEAST_LEN; I.joyUntil = tick + MOON;
   if (parts.some(p => p.P.id === 'rennen')) startRace(I, shipAt(I.id).slice(0, 4));
   // clans who trust us come as guests, with gifts; after a kava round they leave as closer friends

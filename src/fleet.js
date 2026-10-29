@@ -165,7 +165,7 @@ function arriveShip(s){
     // a clan canoe hands over its return gift and goes home again out of sight
     const T = isl(s.to), C = isl(s.clan).clan;
     for (const [k, v] of Object.entries(s.cargo)) T.stock[k] = Math.min(storeCap(T), (T.stock[k] || 0) + v);
-    ships.splice(ships.indexOf(s), 1); updateHUD(); save(); checkQuest();
+    ships.splice(ships.indexOf(s), 1); updateHUD(); save(); checkQuest(); sfx('shells');
     toast(`${s.guest ? 'Gäste' : 'Gegengabe'} vom ${C.name}: ${giftText(s.cargo)}.`, 4200); return;
   }
   if (!d || !d.isl){ s.state = 'sea'; if (sheetKind === 'ship') renderSheet(); save(); return; }
@@ -239,7 +239,7 @@ function stepYards(){
     if (!I.settled || !I.yard || !staffOf(I).yard) continue;   // three people build the canoe, or it waits
     invalidate();
     if (--I.yard.left > 0) continue;
-    const kind = I.yard.kind; I.yard = null;
+    const kind = I.yard.kind; I.yard = null; sfx('splash');
     const s = makeShip(kind, I); s.name = `${SHIPS[kind].n} ${own().filter(o => o.kind === kind).length}`;
     toast(`${s.name} ist fertig. Tippe es im Hafen an, um es zu beladen und zu steuern.`, 4200); checkQuest(); save();
   }

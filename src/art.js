@@ -134,6 +134,8 @@ const HOUSE_PROPS = ['',
   '<use href="#pt" transform="translate(11.4 4) scale(.5)"/><use href="#pt" transform="translate(14 4.6) scale(.38)"/>',
   '<rect x="8" y="2" width="7.4" height="3.4" rx=".6" fill="url(#pWeave)" stroke="#2B1D14" stroke-width=".45" transform="rotate(-6 11.7 3.7)"/>',
   '<g transform="translate(11.4 3.6)"><ellipse rx="3.2" ry="1.5" fill="#5E8A3A" stroke="#2B1D14" stroke-width=".4"/><path d="M-2.4-.4Q0-1.6 2.4-.4" fill="none" stroke="#97BE62" stroke-width=".4"/><path d="M-3 .8h.01M-1.2 1.4h.01M.8 1.5h.01M2.8.9h.01" stroke="#7E766A" stroke-width="1.1" stroke-linecap="round"/></g>'];
+const HALL_BANNERS = [-1, 1].map(k => `<g transform="scale(${k} 1)"><path d="M-20 3V-27" stroke="#2B1D14" stroke-width="1.5" stroke-linecap="round"/><path d="M-20 3V-27" stroke="#8C5F3E" stroke-width=".7"/><path d="M-20-26.4Q-15-25.4-11.6-23.4Q-15-22.4-20-21.2Z" fill="#E9DCC0" stroke="#2B1D14" stroke-width=".45"/><path d="M-19-24.6L-17.4-23.6L-15.8-24.4L-14.2-23.4" fill="none" stroke="#A84A2C" stroke-width=".55"/></g>`).join('');
+const HALL_SHELLS = '<path d="M-15.6-9.6Q0-6.4 15.6-9.6" fill="none" stroke="#5A3A26" stroke-width=".5"/><g fill="#F3E3C4" stroke="#2B1D14" stroke-width=".3">' + [-13, -9, -5, -1.5, 2, 5.5, 9.5, 13.5].map(x => `<ellipse cx="${x}" cy="${-9.2 + Math.abs(x) * Math.abs(x) * .0105 - 1.2}" rx=".9" ry="1.2"/>`).join('') + '</g>';
 /* ---------- buildings: the art without mirror, size or turn; those are applied when drawing */
 function artOf(kind, o = {}){
   const roof = o.roof || ROOF_NEW, hut = `<use href="#hc" fill="${roof}" transform="scale(.9)"/>`;
@@ -141,7 +143,8 @@ function artOf(kind, o = {}){
     case 'haus': return `<use href="#${o.shape === 'hr' ? 'hr' : 'hw'}" fill="${roof}"/>` + (HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '');
     case 'pfahl': return `<use href="#hp" fill="${roof}"/>`;
     case 'speicher': return `<use href="#hs" fill="${roof}"/>`;
-    case 'halle': return `<use href="#hm" fill="${roof}" transform="scale(.85)"/>`;
+    // the meeting house grows with the village: tapa banners for a village, a garland of shells for a chief's village
+    case 'halle': return `<use href="#hm" fill="${roof}" transform="scale(.85)"/>` + (o.lvl >= 2 ? HALL_BANNERS : '') + (o.lvl >= 3 ? HALL_SHELLS : '');
     case 'werft': return `<use href="#hk" fill="${roof}"/>` + (o.canoe === 'dc' ? `<use href="#dcHull" transform="translate(9 11) scale(.78)"/><use href="#scaffold" transform="translate(9 10) scale(.8)"/>` : o.canoe === 'oc' ? `<use href="#oc" transform="translate(10 10) scale(.9)"/><use href="#scaffold" transform="translate(10 10) scale(.6)"/>` : '');
     case 'taro': return `<use href="#tp"/>`;
     case 'fisch': return `<use href="#beached" transform="translate(-9 6) scale(.75)"/><use href="#rack"/><use href="#rack" transform="translate(9 3) scale(.7)"/>`;

@@ -101,10 +101,10 @@ function put(c, x, y, s, m, rot, key, art, alpha){ c.save(); c.translate(x, y); 
 function drawBuilding(c, b, I, alpha = 1){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size; a building site shows its frame and the building rising faintly
   const site = b.bt && !K.plant, grown = b.bt && K.plant ? .35 + .65 * (1 - b.bt / K.bt) : 1;
-  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1) * grown, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}`, () => artOf(b.kind, o), site ? alpha * .4 : alpha);
+  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1) * grown, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}`, () => artOf(b.kind, o), site ? alpha * .4 : alpha);
   if (site) drawSite(c, b, K, alpha);
 }
 function drawSite(c, b, K, alpha){
@@ -179,6 +179,7 @@ function drawIsland(c, I, area){
   p.lands.forEach((L, i) => {
     stroke(c, L, '#F1F6EC', 4.4, null, null, .4);   // surf along the beach
     fillWith(c, L, '#8DA757', 'pDots');
+    const tint = SEASON_TINT[seasonOf().id]; if (tint){ c.fillStyle = tint; c.fill(L); }   // dry grass in the lean months, lush and dark in the rains
     c.save(); c.clip(L); stroke(c, L, '#E8D29E', I.atoll ? 11 : 15); stroke(c, L, '#D2B67C', 3.4);
     // fresh alluvial sand around the arms, fading into the grass; the arms run through it and end exactly where the land ends
     if (p.arms && i === 0){
@@ -205,6 +206,7 @@ function drawIsland(c, I, area){
   for (const d of I.deco) if (ptIn(d.x, d.y, v) && !(d.s && (lod === 'far' || under(d)))) put(c, d.x, d.y, 1, 1, d.rot * Math.PI / 180, d.t, `<use href="#${d.t}"/>`);
   if (I.volcano) put(c, I.volcano.x, I.volcano.y, 1.6, 1, 0, 'volcano', '<use href="#volcano"/>');
 }
+const SEASON_TINT = {mager:'rgba(212,180,92,.2)', sturm:'rgba(34,74,56,.08)'};
 /* A band along a line whose half width changes along it; its start hides under the round end of the stream */
 function ribbon(pts, w){
   const L = [], R = [], n = pts.length, P = new Path2D();
@@ -351,6 +353,13 @@ function drawAnim(c, now){
     const q = ((now / 3400 + b.id * .37) % 1) * TAU, al = reduced ? .3 : .3 - .2 * Math.cos(q), sc = (b.v && b.v.scale) || 1;
     c.save(); c.translate(b.x - 4 * sc, b.y - KINDS.haus.hy * sc + 6 + (reduced ? 0 : Math.cos(q))); c.scale(.8, .8); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', al); c.restore();
   }
+  if (lod !== 'far' && !reduced) for (const I of islands){
+    // surf runs along the reef and swells now and then
+    if (!seen(I) || !boxIn(I.box, v)) continue;
+    const p = islandPaths(I), sw = .5 + .5 * Math.sin(now / 1900 + I.center.x);
+    stroke(c, p.ring, '#F4EEDC', 7, null, null, .05 + .09 * sw);
+    c.lineDashOffset = -(now / 240) % 3.7; stroke(c, p.ring, '#F4EEDC', 2.2, [.1, 3.6], 'round', .5); c.lineDashOffset = 0;
+  }
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
   drawWhales(c, v, now);
   if (cam.z > PEOPLE_Z) drawPeople(c, v);
@@ -377,6 +386,12 @@ function drawLagoonLife(c, v, now){
     if (!I.discovered || !boxIn(I.box, v)) continue;
     const lp = lagoonLoop(I);
     for (let k = 0; k < 2; k++){ const q = alongLoop(lp, t * 7 + k * lp.len / 2 + I.center.x); put(c, q.x, q.y, 1, 1, q.a, 'fishes', '<use href="#fishes"/>'); }
+    // the sun glints on the lagoon
+    if (!reduced && nightLevel() < .3) for (let k = 0; k < 7; k++){
+      const tw = Math.sin(now / 650 + k * 2.1 + I.center.x); if (tw < .6) continue;
+      const q = alongLoop(lp, k * lp.len / 7 + I.center.y), off = ((k * 37) % 11 - 5) * 1.4, x = q.x + Math.sin(q.a) * off, y = q.y - Math.cos(q.a) * off, r = 1.2 + (tw - .6) * 4;
+      stroke(c, glint(x, y, r), '#FFFFFF', .7, null, 'round', (tw - .6) * 2.2);
+    }
     if ((I.center.x | 0) % 2 === 0){ const q = alongLoop(lp, -t * 2.6 + lp.len / 4); put(c, q.x + Math.sin(q.a) * 6, q.y - Math.cos(q.a) * 6, 1, 1, q.a + Math.PI, 'turtle', '<use href="#turtle"/>'); }
   }
 }
@@ -404,6 +419,50 @@ function drawFishers(c, v, now){
   }
 }
 const WADE = ellipse(0, .3, 3, 1.3);
+const glint = (x, y, r) => { const p = new Path2D(); p.moveTo(x - r, y); p.lineTo(x + r, y); p.moveTo(x, y - r * .7); p.lineTo(x, y + r * .7); return p; };
+/* ---------- day and night: a day lasts six minutes. At dusk the light turns warm, the night is deep blue,
+   and fires, torches and doorways shine. It can be switched off in the menu. */
+const DAY_TICKS = 180;
+let lastEconAt = 0;
+function dayPhase(){ const f = lastEconAt ? clamp((performance.now() - lastEconAt) / TICK, 0, 1) : 0; return ((tick + f + 30) % DAY_TICKS) / DAY_TICKS; }
+const smooth01 = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+function nightLevel(){
+  if (!opts.night) return 0;
+  const p = dayPhase();
+  return .55 * (p < .06 ? 1 - smooth01(p / .06) : p < .58 ? 0 : p < .68 ? smooth01((p - .58) / .1) : 1);
+}
+const nightC = document.createElement('canvas'), nightX = nightC.getContext('2d');
+function lightsOf(v, now){
+  const L = [], fl = id => reduced ? 1 : 1 + .07 * Math.sin(now / 95 + id) + .04 * Math.sin(now / 41 + id * 3);
+  for (const I of islands){
+    if (!seen(I) || !boxIn(I.box, grow(v, 80))) continue;
+    if (I.volcano) L.push({x:I.volcano.x, y:I.volcano.y - 40, r:46, c:'255,90,40'});
+    if (!lived(I)) continue;
+    for (const b of I.buildings){
+      if (b.bt || !ptIn(b.x, b.y, grow(v, 60))) continue;
+      if (b.kind === 'fackel') L.push({x:b.x, y:b.y - 12, r:34 * fl(b.id), c:'255,170,70'});
+      else if (b.kind === 'halle') L.push({x:b.x, y:b.y + 18, r:(I.feastEnd > tick ? 62 : 30) * fl(b.id), c:'255,150,60'});
+      else if (b.kind === 'haus' && b.id % 2 === 0) L.push({x:b.x, y:b.y - 2, r:13 * fl(b.id), c:'255,180,90'});
+      else if (b.kind === 'toepfer') L.push({x:b.x - 11, y:b.y + 2, r:16 * fl(b.id), c:'255,130,50'});
+    }
+  }
+  return L;
+}
+function drawNight(now){
+  const lv = nightLevel(); if (lv <= .01) return;
+  if (nightC.width !== mapC.width || nightC.height !== mapC.height){ nightC.width = mapC.width; nightC.height = mapC.height; }
+  // the colour runs from a warm dusk to the blue of the night
+  const f = lv / .55, dusk = dayPhase() > .5, warm = dusk ? [120, 58, 40] : [110, 70, 92], blue = [10, 22, 54], col = warm.map((w, i) => Math.round(w + (blue[i] - w) * f));
+  const n = nightX, v = view(40), lights = lightsOf(v, now);
+  n.setTransform(1, 0, 0, 1, 0, 0); n.globalCompositeOperation = 'source-over'; n.clearRect(0, 0, nightC.width, nightC.height);
+  n.fillStyle = `rgba(${col.join()},${lv})`; n.fillRect(0, 0, nightC.width, nightC.height);
+  n.globalCompositeOperation = 'destination-out'; camXform(n);
+  for (const L of lights){ const g = n.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(.45, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)'); n.fillStyle = g; n.beginPath(); n.arc(L.x, L.y, L.r, 0, TAU); n.fill(); }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(nightC, 0, 0);
+  camXform(ctx); ctx.globalCompositeOperation = 'lighter';
+  for (const L of lights){ const r = L.r * .55, g = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, r); g.addColorStop(0, `rgba(${L.c},${.32 * f})`); g.addColorStop(1, `rgba(${L.c},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(L.x, L.y, r, 0, TAU); ctx.fill(); }
+  ctx.globalCompositeOperation = 'source-over';
+}
 /* Now and then a whale surfaces in the open sea that the canoes have seen: its back, a spout, then the fluke as it dives */
 let whale = null, nextWhale = 0;
 function drawWhales(c, v, now){
@@ -651,7 +710,7 @@ function draw(now){
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2F5F73'; ctx.fillRect(0, 0, mapC.width, mapC.height); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
-  camXform(ctx); drawTop(ctx, now); drawLabels(ctx);
+  camXform(ctx); drawTop(ctx, now); drawNight(now); camXform(ctx); drawLabels(ctx);
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */

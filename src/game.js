@@ -23,7 +23,7 @@ function settle(T, S, o){
 function receiveGift(T, cargo, from, r){
   const C = T.clan, worth = giftValue(C, cargo);
   T.debt = (T.debt || 0) + worth * returnRate(r.knots);
-  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick;
+  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++;
   T.lastFrom = from; if (!(T.returnAt > tick)) T.returnAt = tick + 15 + Math.round(Math.random() * 10);
   mana += Math.min(4, Math.round(worth / 4)) + 1; invalidate();
   toast(`Der ${C.name} nimmt eure Gabe an. Die Gegengabe kommt später. ${r.knots} Knoten Vertrauen.`, 4200);
@@ -252,7 +252,7 @@ function holdFeast(I, F){
 }
 let hearts = [];   // a heart rises over a house when someone moves in
 function econ(){
-  tick++;
+  tick++; lastEconAt = performance.now();
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
@@ -270,6 +270,7 @@ function econ(){
       if (K.plants){ if (!plantTree(I, b)) b.idle = {why:'space', text:'In der Nähe ist kein Platz mehr für junge Bäume.'}; continue; }
       if (K.use) pay(I, K.use);
       if (K.trees) fellTree(I, b);
+      if (K.prod === 'fisch') stats.fisch++;
       add(K.prod, 1);
     }
     growTrees(I);
@@ -291,7 +292,7 @@ function econ(){
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6);
-  answerGifts(); stepYards(); feedCrews(); calendarTick();
+  answerGifts(); stepYards(); feedCrews(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
   if (tick % 8 === 0) invalidate();   // roofs age
@@ -305,7 +306,7 @@ function econ(){
 function fellTree(I, b){
   const t = b.cutAt && b.cutAt.st === 0 && b.cutAt.w > 0 && I.trees.includes(b.cutAt) ? b.cutAt : treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).sort((p, q) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(q.x - b.x, q.y - b.y))[0];
   if (!t) return; b.cutAt = t;
-  if (--t.w <= 0){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; b.cutAt = null; }
+  if (--t.w <= 0){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; b.cutAt = null; stats.gefaellt++; }
   treesChanged(I);
 }
 function plantable(I, p){
@@ -318,7 +319,7 @@ function plantable(I, p){
 function plantTree(I, b){
   const R = KINDS[b.kind].plants.r, T = I.trees, dist = t => Math.hypot(t.x - b.x, (t.y - b.y) * 1.25);
   const stump = T.filter(t => t.st === 1 && dist(t) < R).sort((p, q) => dist(p) - dist(q))[0];
-  if (stump){ stump.st = 2; stump.g = GROW_TICKS; b.plantAt = stump; treesChanged(I); return true; }
+  if (stump){ stump.st = 2; stump.g = GROW_TICKS; b.plantAt = stump; stats.gepflanzt++; treesChanged(I); return true; }
   if (T.filter(t => dist(t) < R).length >= 36) return false;   // the forest here is dense enough
   // new trees go where others already stand, so the forest grows at its edge and not across the village
   let best = null, bs = -1;
@@ -329,7 +330,7 @@ function plantTree(I, b){
   }
   if (!best) return false;
   const k = Math.random(), t = {x:fx(best.x), y:fx(best.y), v:k < .55 ? 0 : k < .85 ? 1 : 2, m:Math.random() < .5 ? 1 : 0, s:fx(.86 + Math.random() * .24), st:2, w:0, g:GROW_TICKS};
-  T.push(t); b.plantAt = t; treesChanged(I); return true;
+  T.push(t); b.plantAt = t; stats.gepflanzt++; treesChanged(I); return true;
 }
 function growTrees(I){
   if (!I.treeWork) return;
@@ -348,7 +349,7 @@ function treesChanged(I){ I.treeWork = true; I.treesSaved = true; I._tp = null; 
 function clearStumps(I, b){ const r = (KINDS[b.kind].r + TREE_R) * .8, n = I.trees.length; I.trees = I.trees.filter(t => !(t.st === 1 && Math.hypot(t.x - b.x, t.y - b.y) < r)); if (I.trees.length !== n) treesChanged(I); }
 function done(I, b){
   const K = KINDS[b.kind];
-  if (!K.plant && !K.path && I.id === active) toast(`${K.n} ist fertig.`, 1600);
+  if (!K.plant && !K.path && I.id === active){ toast(`${K.n} ist fertig.`, 1600); sfx('knock'); }
   syncWalkers(); checkQuest();
 }
 function heartAt(I){
@@ -438,7 +439,7 @@ function renderAll(){ invalidate(true); spawnWalkers(); renderBuildBar(); }
 let last = performance.now(), lastDraw = 0;
 function frame(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); if (ships.length) stepShips(now, dt); if (cam.z > PEOPLE_Z){ stepWalkers(dt); stepCritters(dt); }
+  stepCam(now); if (ships.length) stepShips(now, dt); if (cam.z > PEOPLE_Z){ stepWalkers(dt); stepCritters(dt); } audioTick(now);
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
   if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ draw(now); lastDraw = now; }
   requestAnimationFrame(frame);

@@ -14,6 +14,7 @@ const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>>
 function newGame(s = newSeed()){
   seed = s; home0 = makeWorld(seed);
   islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
+  stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0}; chronik = {}; nextEvent = 300; lastEvent = ''; eventNow = null;
   resetGrid(); for (const I of islands) markLand(I);
   const Hm = isl('heimat'), T = isl('tochter'), r = rng(seed ^ 0x5eed);
   Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:10, nahrung:10}});
@@ -90,11 +91,11 @@ function homeSpot(I){
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:3, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells],
+  return JSON.stringify({v:3, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
-      fy:I.festYear, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
+      fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt || 0])})),
     ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null}))});
@@ -106,8 +107,9 @@ function restore(raw){
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
     tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
+    stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
-      I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rd; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
+      I.drought = d.dr || 0; I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rd; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
       if (I.clan && d.cl){ I.debt = d.cl.debt || 0; I.returnAt = d.cl.ra || 0; I.lastFrom = d.cl.lf || ''; }
       I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {})}));
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
