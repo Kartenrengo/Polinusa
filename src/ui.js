@@ -7,6 +7,10 @@ function updateHUD(){
   const I = isl(active);
   $('isleName').textContent = I.name; $('isleType').textContent = I.volcano ? 'Vulkaninsel' : I.type === 'hoch' ? 'Hohe Insel' : 'Atoll';
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + houseCap(I);
+  // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
+  const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
+  $('popDot').className = 'dot ' + st;
+  $('popBtn').setAttribute('aria-label', `${I.pop} Bewohner, Platz für ${nd.cap}. ${growText(I, nd)} Tippen zeigt den Bedarf.`);
   const ul = $('goods'); if (!ul.children.length){ ul.innerHTML = GOODS.map(k => `<li data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span></li>`).join(''); }
   for (const li of ul.children){ const k = li.dataset.k, v = I.stock[k] || 0; li.querySelector('span').textContent = v; li.setAttribute('aria-label', `${GN[k]}: ${v}`); li.classList.toggle('zero', !v);
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
@@ -84,6 +88,30 @@ function confirmPlace(){
 /* ---------- sheets */
 function openSheet(kind, data){ sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
 function closeSheet(){ if (!sheetKind) return; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
+const perMin = v => v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
+function growText(I, nd){
+  if (nd.missing.length) return `Das Dorf wächst nicht, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
+  if (nd.full) return 'Alle Häuser sind voll.';
+  return 'Das Dorf wächst.';
+}
+/* Needs sheet: room first, then every good the people use, with what the island makes per minute */
+function needsMarkup(I){
+  const nd = needsOf(I), chip = (cls, t) => `<span class="state ${cls}">${t}</span>`, bar = f => `<span class="mbar"><i style="width:${clamp(f, 0, 1) * 100}%"></i></span>`;
+  let h = head(`Bedarf auf ${I.name}`, `${I.pop} Bewohner, Platz für ${nd.cap}. ${growText(I, nd)}`);
+  h += `<ul class="list needs">`;
+  h += `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg><span class="nm">Wohnraum<small>${I.pop} von ${nd.cap} Plätzen belegt</small>${bar(I.pop / Math.max(1, nd.cap))}</span>${nd.full ? chip('low', 'voll') : chip('ok', 'frei')}</li>`;
+  for (const n of nd.list){
+    const st = n.state === 'ok' ? chip('ok', 'reicht') : n.state === 'low' ? chip('low', n.mins < 1 ? 'knapp' : `noch ${Math.floor(n.mins)} Min`) : chip('out', 'fehlt');
+    h += `<li class="${n.state === 'ok' ? '' : 'need'}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${n.k}"/></svg><span class="nm">${GN[n.k]}<small>Bedarf ${perMin(n.use)}, Ernte ${perMin(n.make)} pro Minute, im Lager ${n.stock}</small>${bar(n.use ? n.make / n.use : 1)}</span>${st}</li>`;
+  }
+  h += `</ul>`;
+  const tips = nd.list.filter(n => n.state !== 'ok').map(n => n.N.hint[I.type]);
+  if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
+  if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
+  if (nd.list.some(n => n.k === 'nahrung' && n.state === 'out')) h += `<p class="sub">Ohne Essen ziehen nach und nach Leute fort.</p>`;
+  if (nd.next) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
+  return h;
+}
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 function windOf(from, to){
   const A = isl(from).harbor, B = isl(to).harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy), c = dy / len;
@@ -113,10 +141,12 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Tippe auf die Schnur zwischen zwei Inseln, um ein Kanu mit Waren zu schicken.</li></ul>`;
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl, dann siehst du, was die Menschen brauchen und was fehlt. Der Punkt daneben ist grün, solange das Dorf wächst.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Tippe auf die Schnur zwischen zwei Inseln, um ein Kanu mit Waren zu schicken.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
+  } else if (sheetKind === 'needs'){
+    h += needsMarkup(isl(active));
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
@@ -127,6 +157,7 @@ function renderSheet(){
 let lastSig = '';
 function sheetSig(){
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
+  if (sheetKind === 'needs'){ const I = isl(active), nd = needsOf(I); return [active, I.pop, nd.cap, ...nd.list.map(n => n.state + Math.round(n.make) + ':' + n.stock)].join(); }
   if (sheetKind !== 'info' || !sheetData) return '';
   const b = findB(sheetData.id); if (!b) return 'gone';
   const I = islOfB(b.id), age = Math.floor(roofAge(b) * 3);
@@ -143,7 +174,7 @@ function werftMarkup(I){
     return `<p>Ein Auslegerkanu bringt ${SETTLE.people} Menschen mit Holz, Essen und einem Topf hinüber nach ${T.name}. Mindestens ${SETTLE.keep} bleiben hier.</p>` + needList(I, need) +
       `<div class="rowx"><span class="sub">${ok ? 'Alles da.' : 'Es fehlt noch etwas.'}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Siedler schicken</button></div>`;
   }
-  let h = `<p>Ein Doppelkanu braucht Holz und Steinbeile von hier. Segelmatten und Schnur kommen vom Atoll.</p>`;
+  let h = `<p>Ein Doppelkanu braucht Holz und Steinbeile von hier. Matten für das Segel und Schnur kommen vom Atoll.</p>`;
   if (I.canoe){
     const left = islands.filter(J => !J.discovered).length;
     h += left ? `<p><b>Das Doppelkanu liegt bereit.</b> Such dir eine Wolke im Nebel aus.</p><div class="rowx"><span></span><button class="btn primary" type="button" data-act="target">Ziel wählen</button></div>` : `<p><b>Das Doppelkanu liegt bereit.</b> Gerade ist kein neues Land in Sicht.</p>`;

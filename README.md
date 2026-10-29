@@ -63,12 +63,29 @@ Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Baulei
 
 Kleine Auslegerkanus bringen Siedler und Waren zwischen den Inseln. Das Doppelkanu fährt ins Unbekannte.
 
+## Bedarf
+
+Essen brauchen alle, 1,25 pro Bewohner und Minute. Ab 20 Bewohnern kommen Töpfe dazu, ab 40 Matten
+(je 0,1 pro Bewohner und Minute). Töpfe gibt es nur auf hohen Inseln, Matten nur auf Atollen.
+Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Essen ziehen langsam Leute fort.
+
+- Die Bewohnerzahl oben öffnet die Tafel „Bedarf“: Wohnraum, dann jede Ware mit Bedarf, Ernte pro Minute und Lager.
+- Der Punkt daneben: grün wächst, gelb Häuser voll, rot es fehlt etwas.
+- Fehlt etwas, schwebt das Zeichen der Ware über einigen Häusern. Zieht jemand ein, steigt ein Herz auf.
+
+## Menschen
+
+Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,
+drei Hauttöne. Etwa ein Viertel der Bewohner ist zu sehen. Zwei von dreien haben Arbeit und tragen sie sichtbar
+vom Feld, der Werkstatt oder dem Waldrand zum Speicher: Taro oder Brotfrucht im Korb auf dem Kopf, Töpfe,
+Steine, Schnur, Holz, Fisch an der Stange, Matten. Die anderen schlendern zwischen den Häusern.
+
 ## Nächste Schritte
 
 1. ~~Fundament: Dateien, Canvas, Welt aus Startwert~~
 2. ~~Start wie bei Age of Empires: nur das Dorfzentrum, geführte erste Aufgaben~~
-3. Bedürfnisse auf einen Blick
-4. Menschen neu zeichnen
+3. ~~Bedürfnisse auf einen Blick~~
+4. ~~Menschen neu zeichnen~~ (Feinschliff nach dem Vorlagebild)
 5. Kleine Kanus in der Lagune
 6. Handel mit kleinen Kanus
 7. Erkunden mit dem Hochseekanu, ohne Markierungen

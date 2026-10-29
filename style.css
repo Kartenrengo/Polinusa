@@ -109,3 +109,17 @@ button:focus-visible{outline:3px dotted var(--ochre);outline-offset:2px}
 .bbtn.hint{border-style:solid;border-color:var(--ochre);background:var(--turmeric);animation:hint 1s ease-in-out 4}
 @keyframes hint{50%{transform:translateY(-4px);box-shadow:0 0 0 3px var(--ochre)}}
 @media (prefers-reduced-motion:reduce){.quest.done,.bbtn.hint{animation:none}.q-bar i{transition:none}}
+/* People count doubles as the button to the needs sheet */
+button.pop{border:0;background:none;padding:4px 2px 4px 6px;margin:-4px -2px -4px 0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}
+.pop .dot{width:9px;height:9px;border-radius:50%;margin-left:3px;border:1.5px solid var(--ink);background:var(--ok)}
+.pop .dot.full{background:var(--turmeric)}
+.pop .dot.out{background:var(--ochre)}
+.needs li{align-items:center}
+.needs .nm{display:flex;flex-direction:column;gap:2px}
+.needs small{font-size:12.5px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.mbar{display:block;height:5px;margin-top:2px;border-radius:3px;background:rgba(62,36,22,.15);overflow:hidden}
+.mbar i{display:block;height:100%;background:var(--ok)}
+.need .mbar i{background:var(--ochre)}
+.state{flex:none;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:4px;color:var(--cream);background:var(--ok);white-space:nowrap}
+.state.low{background:var(--turmeric);color:var(--ink)}
+.state.out{background:var(--ochre)}

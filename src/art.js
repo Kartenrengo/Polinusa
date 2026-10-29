@@ -101,3 +101,38 @@ function iconMarkup(kind){ const a = artOf(kind); return kind === 'pfahl' ? `<g 
 const mixHex = (a, b, t) => { const h = x => [1, 3, 5].map(i => parseInt(x.slice(i, i + 2), 16)); const A = h(a), B = h(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 const roofAge = b => clamp((tick - b.born) / AGE_FULL, 0, 1);
 function roofColor(b){ const f = Math.round(roofAge(b) * 8) / 8, base = mixHex(ROOF_NEW, ROOF_OLD, f); return b.v && b.v.tint ? mixHex(base, '#C8893A', .25) : base; }
+
+/* ---------- people: little carved figures without arms and legs, in tapa wraps, carrying their work.
+   The look is a short code: skin, wrap, hair. Origin is at the feet, they face right. */
+const SKINS = ['#8A5A3C', '#9C6644', '#74462E'];
+const WRAPS = [['#E9DCC0', '#6B4428'], ['#A84A2C', '#F2E6CB'], ['#D9A441', '#5A3A26'], ['#5A3A26', '#D9A441']];
+const HAIR = [
+  '<circle cx="-.4" cy="-10.8" r=".8" fill="#1E1410"/>',   // top knot
+  '<circle cx="-1.1" cy="-9.5" r=".7" fill="#C8402C" stroke="#2B1D14" stroke-width=".25"/><circle cx="-1.1" cy="-9.5" r=".22" fill="#F3D9A0"/>',   // hibiscus behind the ear
+  '<path d="M-1.6-9.2Q-2.1-7.6-1.4-6.9" fill="none" stroke="#1E1410" stroke-width=".9" stroke-linecap="round"/>'   // long hair
+];
+function figureLook(seed){ const r = rng(seed); return '' + Math.floor(r() * SKINS.length) + Math.floor(r() * WRAPS.length) + Math.floor(r() * HAIR.length); }
+function figureArt(look){
+  const skin = SKINS[+look[0]], [w0, w1] = WRAPS[+look[1]], ink = 'stroke="#2B1D14" stroke-width=".45" stroke-linejoin="round"';
+  return `<ellipse cy=".2" rx="2.8" ry=".85" fill="#1F140D" opacity=".25"/>` +
+    `<path d="M-1.5-3.9H1.5L2.4-.5Q0 .2-2.4-.5Z" fill="${w0}" ${ink}/>` +
+    `<path d="M-1.95-2Q0-1.5 1.95-2" fill="none" stroke="${w1}" stroke-width=".7"/><path d="M-1.2-1.15h.01M0-1h.01M1.2-1.15h.01" stroke="${w1}" stroke-width=".5" stroke-linecap="round"/>` +
+    `<path d="M-1.5-3.9L-1.95-6.5Q-2-7.3-1.1-7.4H1.1Q2-7.3 1.95-6.5L1.5-3.9Z" fill="${skin}" ${ink}/>` +
+    `<path d="M.3-7.3Q1.8-7.2 1.85-6.4L1.45-4" fill="none" stroke="#2B1D14" stroke-opacity=".18" stroke-width=".8"/>` +
+    `<path d="M-1.1-7Q0-5.9 1.1-7" fill="none" stroke="#F1EBD9" stroke-width=".45" stroke-dasharray=".1 .55" stroke-linecap="round"/>` +
+    `<circle cy="-8.9" r="1.6" fill="${skin}" ${ink}/><circle cx=".75" cy="-9.05" r=".22" fill="#2B1D14"/>` +
+    `<path d="M-1.62-8.8Q-1.7-10.6 0-10.6Q1.5-10.6 1.62-9.3Q.9-9.9.1-9.8Q-.9-9.7-1.62-8.8Z" fill="#1E1410"/>` + HAIR[+look[2]];
+}
+/* Loads: on the head in front of the figure, over the shoulder behind it */
+const BASKET = '<path d="M-2.5-10.3H2.5L2-12.1H-2Z" fill="#B08048" stroke="#2B1D14" stroke-width=".4" stroke-linejoin="round"/><path d="M-2.2-11.2H2.2" stroke="#7A5434" stroke-width=".35"/>';
+const LOADS = {
+  taro:BASKET + '<path d="M-1.2-12.1Q-2.4-14.2-.6-13.9Q-.1-13-.4-12.1M.5-12.1Q1.2-14.4 2.3-13.2Q1.9-12.5 1.1-12.1" fill="#5E8A3A" stroke="#2B1D14" stroke-width=".3" stroke-linejoin="round"/>',
+  frucht:BASKET + '<circle cx="-.9" cy="-12.5" r=".9" fill="#97BE62" stroke="#2B1D14" stroke-width=".3"/><circle cx=".9" cy="-12.6" r=".95" fill="#8DB35A" stroke="#2B1D14" stroke-width=".3"/>',
+  stein:BASKET + '<ellipse cx="-.8" cy="-12.3" rx=".9" ry=".6" fill="#8A8A86" stroke="#2B1D14" stroke-width=".3"/><ellipse cx=".8" cy="-12.4" rx=".8" ry=".55" fill="#6F737A" stroke="#2B1D14" stroke-width=".3"/>',
+  topf:'<use href="#pt" transform="translate(0 -10.2) scale(.42)"/>',
+  rolle:'<ellipse cy="-10.9" rx="2.1" ry=".8" fill="#B08048" stroke="#2B1D14" stroke-width=".4"/><ellipse cy="-11.5" rx="1.7" ry=".65" fill="#C99A62" stroke="#2B1D14" stroke-width=".35"/>',
+  holz:'<path d="M-4.6-5.2L2.4-8.1M-4.3-4.3L2.6-7.2" stroke="#2B1D14" stroke-width="1.6" stroke-linecap="round"/><path d="M-4.6-5.2L2.4-8.1M-4.3-4.3L2.6-7.2" stroke="#9C7246" stroke-width=".9" stroke-linecap="round"/>',
+  fisch:'<path d="M-4.6-7.3L3.6-7.7" stroke="#2B1D14" stroke-width=".9" stroke-linecap="round"/><path d="M-4.6-7.3L3.6-7.7" stroke="#9C7246" stroke-width=".45"/><path d="M-4.1-7.3V-6.4M3.2-7.6V-6.7" stroke="#2B1D14" stroke-width=".3"/><path d="M-4.1-6.4Q-5.2-5-4.1-3.6Q-3-5-4.1-6.4ZM3.2-6.7Q2.1-5.3 3.2-3.9Q4.3-5.3 3.2-6.7Z" fill="#9FB7C0" stroke="#2B1D14" stroke-width=".35"/>',
+  matte:'<rect x="-5.2" y="-7.7" width="4.8" height="1.8" rx=".9" fill="#DCC48C" stroke="#2B1D14" stroke-width=".4"/><path d="M-3.9-7.7V-5.9M-2.6-7.7V-5.9M-1.4-7.7V-5.9" stroke="#BFA169" stroke-width=".3"/>'
+};
+const LOAD_BACK = new Set(['holz', 'fisch', 'matte']);

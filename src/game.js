@@ -81,29 +81,75 @@ function stepBoats(now){
   }
 }
 
-/* ---------- people walking between the houses (close up only) */
-const WALK_COLS = ['#A84A2C', '#D9A441', '#6B4A2A', '#C8893A', '#8C5F6E'];
-/* About one walker per six people, at most six per island. Kept in step with the village
-   without moving the ones already out walking. */
+/* ---------- people: they carry the village's work from field, workshop or forest to the store and back.
+   About one figure for every four residents, at most ten per island. Close up only. */
+const JOB_LOAD = {taro:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle'};
+const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
+function jobsOf(I){
+  const jobs = I.buildings.filter(b => JOB_LOAD[b.kind]).map(b => ({x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]}));
+  if (I.forest){ const c = villageCenter(I), q = nearestOn(I.forest, c); jobs.push({x:q.x + (c.x - q.x) * .1, y:q.y + (c.y - q.y) * .1, load:'holz'}); }
+  return jobs.filter(j => landOf(I, j) >= 0);
+}
+function storeNear(I, p){
+  // the nearest store or meeting house on the same piece of land; on an atoll the lagoon is in the way otherwise
+  const L = landOf(I, p), st = I.buildings.filter(b => (b.kind === 'speicher' || b.kind === 'halle') && landOf(I, b) === L);
+  if (!st.length) return null;
+  const b = st.reduce((m, q) => Math.hypot(q.x - p.x, q.y - p.y) < Math.hypot(m.x - p.x, m.y - p.y) ? q : m);
+  return {x:b.x + (Math.random() - .5) * 10, y:b.y + 4 + Math.random() * 4};
+}
 function syncWalkers(){
   for (const I of islands){
-    const mine = walkers.filter(w => w.isl === I.id), spots = I.settled ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
-    const want = spots.length ? clamp(Math.round(I.pop / 6), 1, 6) : 0;
-    for (let i = mine.length; i < want; i++){ const a = spots[Math.floor(Math.random() * spots.length)]; walkers.push({isl:I.id, x:a.x + 4, y:a.y + 4, tx:a.x, ty:a.y, col:WALK_COLS[walkers.length % WALK_COLS.length], wait:Math.random() * 1000}); }
+    const mine = walkers.filter(w => w.isl === I.id), homes = I.settled ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
+    const want = homes.length ? clamp(Math.round(I.pop / 4), 1, 10) : 0, jobs = jobsOf(I);
+    for (const w of mine) if (w.job && !jobs.some(j => j.x === w.job.x && j.y === w.job.y)){ w.job = null; w.carry = null; }
+    for (let i = mine.length; i < want; i++){
+      const a = homes[Math.floor(Math.random() * homes.length)], n = walkers.length;
+      // every third person has no fixed work and strolls between the houses
+      const job = jobs.length && i % 3 !== 2 ? jobs[i % jobs.length] : null;
+      walkers.push({isl:I.id, look:figureLook(n * 7919 + I.center.x | 0), x:a.x + 4, y:a.y + 5, tx:a.x, ty:a.y + 5, job, leg:'work', carry:null, wait:Math.random() * 1500, phase:0, left:false, moving:false});
+    }
+    // a newly built workplace takes a worker from the strollers, as long as a third keep strolling
+    const same = (a, b) => a && b && a.x === b.x && a.y === b.y, free = jobs.filter(j => !walkers.some(o => same(o.job, j)));
+    for (const w of mine){ if (!free.length || mine.filter(o => !o.job).length <= want / 3) break; if (!w.job) w.job = free.shift(); }
     if (mine.length > want){ const drop = new Set(mine.slice(want)); walkers = walkers.filter(w => !drop.has(w)); }
   }
 }
 function spawnWalkers(){ walkers = []; syncWalkers(); }
+function nextLeg(w){
+  const I = isl(w.isl);
+  if (w.job){
+    if (w.leg === 'work'){
+      // at the workplace: pick up the load, then carry it to the store
+      const s = storeNear(I, w.job); if (s){ w.carry = w.job.load; w.leg = 'store'; w.tx = s.x; w.ty = s.y; w.wait = 900 + Math.random() * 1600; return; }
+    } else { w.carry = null; w.leg = 'work'; w.tx = w.job.x + (Math.random() - .5) * 8; w.ty = w.job.y + Math.random() * 4; w.wait = 400 + Math.random() * 600; return; }
+  }
+  const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && landOf(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
+  if (t){ w.tx = t.x + (Math.random() - .5) * 22; w.ty = t.y + 4 + Math.random() * 8; } w.wait = 600 + Math.random() * 1800;
+}
 function stepWalkers(dt){
   for (const w of walkers){
+    w.moving = false;
     if (w.wait > 0){ w.wait -= dt; continue; }
     const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
-    if (d < 1.5){ const I = isl(w.isl); const sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus'); const t = sp[Math.floor(Math.random() * sp.length)]; if (t){ w.tx = t.x + (Math.random() - .5) * 22; w.ty = t.y + 4 + Math.random() * 8; } w.wait = 600 + Math.random() * 1800; continue; }
-    const v = Math.min(d, dt * .007); w.x += dx / d * v; w.y += dy / d * v;
+    if (d < 1.5){ nextLeg(w); continue; }
+    const v = Math.min(d, dt * (w.carry ? .006 : .007)); w.x += dx / d * v; w.y += dy / d * v;
+    w.moving = true; w.left = dx < 0; w.phase += v * .9;
   }
 }
 
-/* ---------- economy: one step every two seconds, for every island, seen or not */
+/* ---------- needs: what each island uses, makes and lacks, per minute */
+const PER_MIN = 60000 / TICK;
+function makeRate(I, k){ let m = k === 'holz' && I.type === 'hoch' ? PER_MIN : 0; for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k) m += PER_MIN / K.every; } return m; }
+function needsOf(I){
+  const list = NEEDS.filter(N => I.pop >= N.from).map(N => {
+    const use = I.pop * N.rate, make = makeRate(I, N.k), stock = I.stock[N.k] || 0;
+    const state = make >= use ? 'ok' : stock > 0 ? 'low' : 'out';
+    return {N, k:N.k, use, make, stock, state, mins:make < use ? stock / (use - make) : Infinity};
+  });
+  const cap = houseCap(I), missing = list.filter(n => n.state === 'out');
+  return {list, cap, missing, full:I.pop >= cap, next:NEEDS.find(N => I.pop < N.from), growing:I.pop < cap && !missing.length && (I.stock.nahrung || 0) > 0};
+}
+let hearts = [];   // a heart rises over a house when someone moves in
 function econ(){
   tick++;
   for (const I of islands){
@@ -111,15 +157,31 @@ function econ(){
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     if (I.type === 'hoch') add('holz', 1);
     for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod && tick % K.every === 0) add(K.prod, 1); }
-    if (tick % 2 === 0) st.nahrung = Math.max(0, (st.nahrung || 0) - Math.ceil(I.pop / 12));
-    const hc = houseCap(I);
-    if ((st.nahrung || 0) > 0 && I.pop < hc) I.pop++; else if (I.pop > hc) I.pop = hc;
+    // use up what people need; fractions carry over so small villages use little
+    I.owe = I.owe || {};
+    for (const N of NEEDS){
+      if (I.pop < N.from) continue;
+      I.owe[N.k] = (I.owe[N.k] || 0) + I.pop * N.rate / PER_MIN;
+      const take = Math.floor(I.owe[N.k]); if (take > 0){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); I.owe[N.k] -= take; }
+    }
+    const nd = needsOf(I);
+    if (nd.growing){ I.pop++; heartAt(I); }
+    else if (I.pop > nd.cap) I.pop = nd.cap;
+    // without food people leave, slowly, but a few always stay
+    I.hunger = nd.missing.some(n => n.k === 'nahrung') ? (I.hunger || 0) + 1 : 0;
+    if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; }
   }
   if (tick % 8 === 0) invalidate();   // roofs age
   if (tick % 5 === 0) syncWalkers();
   requestDraw(); updateHUD(); if (placing) ghostRender(); checkQuest();
-  if ((sheetKind === 'info' || sheetKind === 'quest') && sheetSig() !== lastSig) renderSheet();
+  if ((sheetKind === 'info' || sheetKind === 'quest' || sheetKind === 'needs') && sheetSig() !== lastSig) renderSheet();
   if (tick % 3 === 0) save();
+}
+function heartAt(I){
+  if (lod === 'far' || !boxIn(I.box, view(60))) return;
+  const hs = I.buildings.filter(b => b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle'); if (!hs.length) return;
+  const b = hs[Math.floor(Math.random() * hs.length)];
+  hearts.push({x:b.x, y:b.y - KINDS[b.kind].hy - 10, t0:performance.now()});
 }
 
 /* ---------- hit tests and input */
@@ -184,6 +246,7 @@ $('zIn').addEventListener('click', () => zoomBtn(1.6));
 $('zOut').addEventListener('click', () => zoomBtn(1 / 1.6));
 $('zAll').addEventListener('click', overview);
 $('menuBtn').addEventListener('click', () => openSheet('menu', {}));
+$('popBtn').addEventListener('click', () => openSheet('needs'));
 $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('tradeBtn').addEventListener('click', () => { const i = routes.findIndex(r => r.a === active || r.b === active); if (i < 0){ toast('Von hier fährt noch kein Kanu.'); return; } openTrade(i); });
 $('placeOk').addEventListener('click', confirmPlace);
@@ -196,7 +259,7 @@ function renderAll(){ invalidate(true); spawnWalkers(); renderBuildBar(); }
 let last = performance.now(), lastDraw = 0;
 function frame(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); if (boats.length) stepBoats(now); if (lod === 'near') stepWalkers(dt);
+  stepCam(now); if (boats.length) stepBoats(now); if (cam.z > PEOPLE_Z) stepWalkers(dt);
   if (needDraw || stale(now) || (animating() && now - lastDraw > 32)){ draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
 }

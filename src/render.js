@@ -216,7 +216,8 @@ function drawFog(c, v){
 
 /* ---------- moving things */
 const SMOKE_V = new Path2D('M0-40q-3-3 0-6q3-3 0-6q-3-3 0-6'), SMOKE_T = new Path2D('M-11-1.5q-2.6-2.6 0-5.2q2.6-2.6 0-5.2');
-const WALKER = new Path2D('M-1.9 0L0-4L1.9 0Z'), BIRD1 = new Path2D('M-5 0q2.5-3.2 5 0q2.5-3.2 5 0'), BIRD2 = new Path2D('M-4.4 0q2.2-3 4.4 0q2.2-3 4.4 0');
+const PEOPLE_Z = .9;   // people show from this zoom on
+const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4-5 3-2.5 0 0Z'), BIRD1 = new Path2D('M-5 0q2.5-3.2 5 0q2.5-3.2 5 0'), BIRD2 = new Path2D('M-4.4 0q2.2-3 4.4 0q2.2-3 4.4 0');
 const BUBBLE_LINE = new Path2D('M8 19L2 28');
 function drawAnim(c, now){
   const v = view(40), ph = (now % 3400) / 3400 * TAU, a = reduced ? .4 : .41 - .29 * Math.cos(ph), dy = reduced ? 0 : 1.5 * Math.cos(ph);
@@ -224,16 +225,54 @@ function drawAnim(c, now){
     if (!I.volcano || !seen(I) || !boxIn(I.box, v)) continue;
     c.save(); c.translate(I.volcano.x, I.volcano.y + dy * 1.6); c.scale(1.6, 1.6); stroke(c, SMOKE_V, '#2B1D14', .9, null, 'round', a); c.restore();
   }
-  if (lod === 'near'){
-    for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings) if (b.kind === 'toepfer' && ptIn(b.x, b.y, v)){ c.save(); c.translate(b.x, b.y + dy); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', a); c.restore(); }
-    c.setLineDash([]); c.lineWidth = .45; c.strokeStyle = '#2B1D14'; c.lineJoin = 'round';
-    for (const w of walkers){
-      if (!ptIn(w.x, w.y, v)) continue;
-      c.save(); c.translate(w.x, w.y); c.fillStyle = w.col; c.fill(WALKER); c.stroke(WALKER);
-      c.beginPath(); c.arc(0, -5.3, 1.25, 0, TAU); c.fillStyle = '#2B1D14'; c.fill(); c.restore();
+  if (lod === 'near') for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings) if (b.kind === 'toepfer' && ptIn(b.x, b.y, v)){ c.save(); c.translate(b.x, b.y + dy); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', a); c.restore(); }
+  if (cam.z > PEOPLE_Z) drawPeople(c, v);
+  if (lod !== 'far') drawNeeds(c, v, now);
+  if (placing) drawGhost(c);
+}
+/* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
+function drawPeople(c, v){
+  const vis = walkers.filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map();
+  // buildings standing in front of someone are drawn again over them, so people can walk behind a house
+  for (const w of vis){
+    const I = isl(w.isl);
+    for (const b of I.buildings){
+      const K = KINDS[b.kind]; if (b.kind === 'taro' || near.has(b)) continue;
+      if (b.y > w.y && b.y - w.y < K.hy * ((b.v && b.v.scale) || 1) + 14 && Math.abs(b.x - w.x) < K.r + 6) near.set(b, I);
     }
   }
-  if (placing) drawGhost(c);
+  for (const b of near.keys()) items.push([b.y, b]);
+  items.sort((a, b) => a[0] - b[0]);
+  for (const [, w] of items){
+    if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
+    const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * .7 : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
+    c.save(); c.translate(w.x, w.y + bob); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
+    if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
+    blit(c, 'fig|' + w.look, () => figureArt(w.look));
+    if (w.carry && !LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
+    c.restore();
+  }
+}
+/* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
+const needBubble = k => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.5" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9"/><path d="M-1.6-2.1L0 .6L1.6-2.1" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/><path d="M-1.5-2.4H1.5" stroke="#F4ECD8" stroke-width="1"/><use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`;
+function drawNeeds(c, v, now){
+  const s = clamp(1 / cam.z, 1, 1.8);
+  for (const I of islands){
+    if (!I.settled || !boxIn(I.box, v)) continue;
+    const miss = needsOf(I).missing; if (!miss.length) continue;
+    for (const b of I.buildings){
+      if (!(b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle') || b.id % 3 || !ptIn(b.x, b.y, v)) continue;
+      const k = miss[(b.id / 3 | 0) % miss.length].k, bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
+      put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
+    }
+  }
+  const t = now;
+  hearts = hearts.filter(h => t - h.t0 < 1600);
+  for (const h of hearts){
+    const f = (t - h.t0) / 1600;
+    c.save(); c.translate(h.x, h.y - f * 12); c.scale(s * .9, s * .9); c.fillStyle = '#C8402C'; c.globalAlpha = f < .2 ? f / .2 : 1 - (f - .2) / .8; c.fill(HEART);
+    c.lineWidth = .45; c.strokeStyle = '#2B1D14'; c.setLineDash([]); c.stroke(HEART); c.restore();
+  }
 }
 function drawGhost(c){
   const K = KINDS[placing.kind], r = K.r + 5, e = ellipse(placing.x, placing.y + 1, r, r * .45), ok = placing.ok;
@@ -327,4 +366,4 @@ function draw(now){
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => boats.length > 0 || !!placing || lod === 'near' || islands.some(I => !I.discovered || (I.volcano && seen(I)));
+const animating = () => boats.length > 0 || !!placing || hearts.length > 0 || cam.z > PEOPLE_Z || islands.some(I => !I.discovered || (I.volcano && seen(I)));

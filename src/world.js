@@ -108,7 +108,7 @@ function genHigh(s, hdir, r, volcano, home){
     return null;
   };
   if (home){ const pz = place('plaza', 20, I.anchor); if (pz) I.anchor = {x:pz.x, y:pz.y}; place('garden', 32, {x:(I.anchor.x + cx) / 2, y:(I.anchor.y + cy) / 2}); }
-  if (r() < .8) place('rock', 15);
+  if (r() < .8) place('rock', 20);
 
   I.box = polyBox(rf.poly, 6);
   I.labelAt = {x:fx(cx), y:fx(I.box.y0 - 12)};
