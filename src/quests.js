@@ -2,7 +2,7 @@
 /* Guided start: one task at a time, shown above the build bar. Each finished task unlocks new buildings,
    so the build bar starts with just the house and grows with the village. */
 
-const START_KINDS = ['haus'];
+const START_KINDS = ['haus', 'faeller'];
 // only what is finished counts; building sites and young plants do not
 const count = (id, kind) => isl(id).buildings.filter(b => b.kind === kind && !b.bt).length;
 const newLand = () => islands.filter(I => I.discovered && I.id !== 'heimat' && I.id !== 'tochter').length;
@@ -10,12 +10,16 @@ const stockOf = (id, k) => isl(id).stock[k] || 0;
 const fleetOf = kind => own().filter(s => s.kind === kind).length;
 /* n() counts progress towards of. show says where "Zeig es mir" leads: a build button, a building's sheet, a canoe, a trade chain or the calendar. */
 const QUESTS = [
-  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause. Jeder Bau braucht Holz und etwas Zeit, bis die Bauleute fertig sind.',
+  {id:'holz', t:'Holz schlagen', d:'Baue einen Holzfäller am Waldrand.', why:'Alles wird aus Holz gebaut. Der Holzfäller fällt die Bäume in seiner Nähe, einen nach dem anderen. Jeder Baum gibt 3 Holz, dann bleibt ein Stumpf, der erst nach langer Zeit wieder austreibt.',
+    n:() => count('heimat', 'faeller'), of:1, show:{build:'faeller'}, unlock:[], gift:{holz:2}},
+  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause. An jeder Baustelle arbeiten 2 Leute, und solange sie bauen, fehlen sie anderswo.',
     n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:['taro'], gift:{holz:3}},
   {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Jeder Mensch isst. Solange Essen im Lager liegt und Platz in den Häusern ist, ziehen neue Leute zu.',
     n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:['baum', 'palme'], gift:{nahrung:4}},
-  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Neue Menschen kommen von allein, wenn Häuser frei sind und das Essen reicht. Tippe oben auf die Bewohnerzahl, dann siehst du, was fehlt. Je 8 Bewohner kann an einer Baustelle mehr gearbeitet werden.',
-    n:() => isl('heimat').pop, of:15, show:{build:'haus'}, unlock:['speicher', 'toepfer'], gift:{holz:4}},
+  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Neue Menschen kommen von allein, wenn Häuser frei sind und das Essen reicht. Tippe oben auf die Bewohnerzahl, dann siehst du, was fehlt. Je 10 Bewohner kann an einer Baustelle mehr gearbeitet werden.',
+    n:() => isl('heimat').pop, of:15, show:{build:'haus'}, unlock:['speicher', 'toepfer', 'pflanzer'], gift:{holz:4}},
+  {id:'wald', t:'Der Wald wächst nach', d:'Baue einen Baumpflanzer am Wald.', why:'Gefällte Bäume treiben von selbst erst nach acht Minuten wieder aus. Der Pflanzer setzt sofort junge Bäume auf die Stümpfe und an den Waldrand. Aber bedenke: Wo Bäume stehen, kann nichts gebaut werden.',
+    n:() => count('heimat', 'pflanzer'), of:1, show:{build:'pflanzer'}, unlock:[], gift:{}},
   {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ton liegt am Bach. Die Töpferei formt ihn zu Töpfen und brennt sie mit Holz. Ab 20 Bewohnern braucht jede Familie Töpfe.',
     n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:['beil', 'pfahl'], gift:{}},
   {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Aus dem grauen Basalt entstehen Steinbeile. Ohne sie lässt sich kein Stamm für ein Kanu aushöhlen.',

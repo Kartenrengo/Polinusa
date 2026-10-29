@@ -14,46 +14,51 @@ const DEPOSITS = {
   obsidian:{n:'Obsidian', where:'Obsidian gibt es nur am Hang eines Vulkans.'}
 };
 /* prod: what it makes, every: ticks per piece, use: what each piece uses up, bt: ticks to build (or to grow, for plants),
+   crew: people it needs to work; while they work there they do nothing else,
    dep: deposit within depR, near: at least n of a kind within r (plants or a garden), coast: on the beach,
    beauty: how much it adorns the village */
 const KINDS = {
-  haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], bt:5, cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'Ein Zuhause für 4 Menschen, im Häuptlingsdorf für 6.', vb:'-17 -29 34 33'},
-  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], bt:3, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist das wichtigste Essen der hohen Inseln.', vb:'-13 -11 26 22'},
-  fisch:{n:'Fischgestell', s:'Fisch', on:['atoll'], bt:3, cost:{holz:1}, r:8, hy:4, prod:'nahrung', every:2, coast:true, info:'Hier trocknet der Fang aus der Lagune. Steht am Strand.', vb:'-12 -14 26 18'},
-  toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], bt:8, cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:3, use:{holz:1}, dep:'ton', depR:60, roof:true, info:'Formt Töpfe aus Ton und brennt sie mit Holz. Muss nah am Ton stehen.', vb:'-16 -17 34 21'},
-  beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], bt:8, cost:{holz:2}, r:11, hy:6, prod:'beile', every:4, dep:'basalt', depR:60, roof:true, info:'Schleift Steinbeile aus Basalt. Muss nah am Felsen stehen.', vb:'-18 -17 36 21'},
-  klingen:{n:'Klingenschläger', s:'Klingen', on:['hoch'], bt:8, cost:{holz:3}, r:11, hy:6, prod:'klingen', every:5, dep:'obsidian', depR:60, roof:true, info:'Schlägt scharfe Klingen aus Obsidian. Nur am Vulkan.', vb:'-18 -17 36 21'},
-  flecht:{n:'Flechthütte', s:'Matten', on:['atoll'], bt:6, cost:{holz:1}, r:10, hy:6, prod:'matten', every:3, near:{kind:'pandanus', n:2, r:60}, roof:true, info:'Flicht Matten aus Pandanusblättern, für Segel und zum Schlafen. Braucht 2 Pandanus in der Nähe.', vb:'-17 -17 34 21'},
-  schnur:{n:'Seilerei', s:'Schnur', on:['atoll'], bt:6, cost:{holz:1}, r:10, hy:6, prod:'schnur', every:3, near:{kind:'palme', n:3, r:60}, roof:true, info:'Dreht Schnur aus Kokosfasern. Braucht 3 Kokospalmen in der Nähe.', vb:'-14 -17 30 21'},
-  schmuck:{n:'Schmuckschleiferei', s:'Schmuck', on:['atoll'], bt:8, cost:{holz:2}, r:11, hy:6, prod:'schmuck', every:6, use:{klingen:1}, coast:true, roof:true, info:'Schleift Armringe aus Conus-Muscheln vom Riff. Zum Bohren braucht sie Klingen. Steht am Strand.', vb:'-17 -17 36 21'},
-  gaergrube:{n:'Gärgrube', s:'Grube', on:['hoch'], bt:4, cost:{holz:1}, r:9, hy:2, prod:'proviant', every:4, use:{nahrung:1}, near:{kind:'baum', n:2, r:70}, info:'Brotfrucht gärt hier unter Blättern und hält monatelang. Proviant für weite Fahrten. Braucht 2 Brotfruchtbäume in der Nähe.', vb:'-12 -9 25 14'},
-  garten:{n:'Maulbeergarten', s:'Maulbeer', on:['hoch'], bt:3, cost:{holz:1}, r:10, hy:2, info:'Aus der Rinde des Papiermaulbeerbaums entsteht Tapa. Die Klopfhütte muss daneben stehen.', vb:'-12 -10 24 17'},
-  klopf:{n:'Klopfhütte', s:'Tapa', on:['hoch'], bt:6, cost:{holz:2}, r:11, hy:6, prod:'tapa', every:4, near:{kind:'garten', n:1, r:60}, roof:true, info:'Klopft Rinde zu Tapa, dem Stoff für Kleidung. Braucht einen Maulbeergarten in der Nähe.', vb:'-17 -17 36 21'},
-  pferch:{n:'Schweinepferch', s:'Schweine', on:['hoch'], bt:6, cost:{holz:3}, r:12, hy:4, prod:'schweine', every:8, use:{nahrung:2}, info:'Schweine fressen Taro und Kokos. Sie sind das Festessen.', vb:'-14 -12 28 18'},
-  werft:{n:'Kanuhaus', s:'Kanuhaus', on:['hoch'], bt:10, cost:{holz:4}, r:16, hy:6, max:1, coast:true, roof:true, info:'Hier entstehen die Kanus. Es steht am Strand.', vb:'-21 -19 44 24'},
-  pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], bt:7, cost:{holz:3}, r:11, hy:18, cap:4, water:true, roof:true, info:'Ein Zuhause in der Lagune.', vb:'-17 -34 34 37'},
-  speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:5, cost:{holz:2}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
-  halle:{n:'Versammlungshaus', s:'Dorfhaus', on:['hoch'], bt:15, cost:{holz:6}, r:19, hy:16, max:1, cap:6, roof:true, info:'Das Herz des Dorfes. +6 Bewohner. Hier werden Feste gefeiert.', vb:'-21 -34 42 37'},
+  faeller:{n:'Holzfäller', s:'Holz', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, prod:'holz', every:2, trees:{r:80}, roof:true, info:'Fällt Bäume in der Nähe und bringt das Holz ins Lager. Ein gefällter Baum wächst nur langsam nach.', vb:'-18 -17 36 21'},
+  pflanzer:{n:'Baumpflanzer', s:'Pflanzer', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, every:4, plants:{r:70}, roof:true, info:'Setzt junge Bäume auf Baumstümpfe und an den Waldrand in der Nähe. Wo Bäume stehen, kann nichts gebaut werden.', vb:'-18 -17 36 21'},
+  haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], bt:12, cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'Ein Zuhause für 4 Menschen, im Häuptlingsdorf für 6.', vb:'-17 -29 34 33'},
+  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist das wichtigste Essen der hohen Inseln.', vb:'-13 -11 26 22'},
+  fisch:{n:'Fischgestell', s:'Fisch', on:['atoll'], crew:1, bt:6, cost:{holz:1}, r:8, hy:4, prod:'nahrung', every:2, coast:true, info:'Hier trocknet der Fang aus der Lagune. Steht am Strand.', vb:'-12 -14 26 18'},
+  toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:3, use:{holz:1}, dep:'ton', depR:60, roof:true, info:'Formt Töpfe aus Ton und brennt sie mit Holz. Muss nah am Ton stehen.', vb:'-16 -17 34 21'},
+  beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'beile', every:4, dep:'basalt', depR:60, roof:true, info:'Schleift Steinbeile aus Basalt. Muss nah am Felsen stehen.', vb:'-18 -17 36 21'},
+  klingen:{n:'Klingenschläger', s:'Klingen', on:['hoch'], crew:2, bt:14, cost:{holz:3}, r:11, hy:6, prod:'klingen', every:5, dep:'obsidian', depR:60, roof:true, info:'Schlägt scharfe Klingen aus Obsidian. Nur am Vulkan.', vb:'-18 -17 36 21'},
+  flecht:{n:'Flechthütte', s:'Matten', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'matten', every:3, near:{kind:'pandanus', n:2, r:60}, roof:true, info:'Flicht Matten aus Pandanusblättern, für Segel und zum Schlafen. Braucht 2 Pandanus in der Nähe.', vb:'-17 -17 34 21'},
+  schnur:{n:'Seilerei', s:'Schnur', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'schnur', every:3, near:{kind:'palme', n:3, r:60}, roof:true, info:'Dreht Schnur aus Kokosfasern. Braucht 3 Kokospalmen in der Nähe.', vb:'-14 -17 30 21'},
+  schmuck:{n:'Schmuckschleiferei', s:'Schmuck', on:['atoll'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'schmuck', every:6, use:{klingen:1}, coast:true, roof:true, info:'Schleift Armringe aus Conus-Muscheln vom Riff. Zum Bohren braucht sie Klingen. Steht am Strand.', vb:'-17 -17 36 21'},
+  gaergrube:{n:'Gärgrube', s:'Grube', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:9, hy:2, prod:'proviant', every:4, use:{nahrung:1}, near:{kind:'baum', n:2, r:70}, info:'Brotfrucht gärt hier unter Blättern und hält monatelang. Proviant für weite Fahrten. Braucht 2 Brotfruchtbäume in der Nähe.', vb:'-12 -9 25 14'},
+  garten:{n:'Maulbeergarten', s:'Maulbeer', on:['hoch'], bt:6, cost:{holz:1}, r:10, hy:2, info:'Aus der Rinde des Papiermaulbeerbaums entsteht Tapa. Die Klopfhütte muss daneben stehen.', vb:'-12 -10 24 17'},
+  klopf:{n:'Klopfhütte', s:'Tapa', on:['hoch'], crew:2, bt:12, cost:{holz:2}, r:11, hy:6, prod:'tapa', every:4, near:{kind:'garten', n:1, r:60}, roof:true, info:'Klopft Rinde zu Tapa, dem Stoff für Kleidung. Braucht einen Maulbeergarten in der Nähe.', vb:'-17 -17 36 21'},
+  pferch:{n:'Schweinepferch', s:'Schweine', on:['hoch'], crew:1, bt:12, cost:{holz:3}, r:12, hy:4, prod:'schweine', every:8, use:{nahrung:2}, info:'Schweine fressen Taro und Kokos. Sie sind das Festessen.', vb:'-14 -12 28 18'},
+  werft:{n:'Kanuhaus', s:'Kanuhaus', on:['hoch'], bt:18, cost:{holz:4}, r:16, hy:6, max:1, coast:true, roof:true, info:'Hier entstehen die Kanus. Es steht am Strand.', vb:'-21 -19 44 24'},
+  pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], bt:14, cost:{holz:3}, r:11, hy:18, cap:4, water:true, roof:true, info:'Ein Zuhause in der Lagune.', vb:'-17 -34 34 37'},
+  speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:10, cost:{holz:2}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
+  halle:{n:'Versammlungshaus', s:'Dorfhaus', on:['hoch'], bt:30, cost:{holz:6}, r:19, hy:16, max:1, cap:6, roof:true, info:'Das Herz des Dorfes. +6 Bewohner. Hier werden Feste gefeiert.', vb:'-21 -34 42 37'},
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:20, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Kokosfasern für die Seilerei.', vb:'-13 -25 26 28'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:25, cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Trägt Brotfrucht, frisch zum Essen oder für die Gärgrube.', vb:'-10 -21 20 23'},
   pandanus:{n:'Pandanus', s:'Pandanus', on:['atoll'], bt:15, cost:{}, r:5, hy:9, beach:true, plant:true, info:'Die Blätter werden zu Matten geflochten.', vb:'-10 -21 20 23'},
-  kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], bt:4, cost:{holz:1}, r:10, hy:3, prod:'kava', every:8, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
+  kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'kava', every:8, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
   // things that only make the village beautiful
   hibiskus:{n:'Hibiskus', s:'Hibiskus', on:['hoch','atoll'], bt:8, cost:{}, r:5, hy:6, plant:true, beauty:1, info:'Rote Blüten für Haar und Kränze.', vb:'-9 -14 18 16'},
-  blumen:{n:'Blumenbeet', s:'Blumen', on:['hoch','atoll'], bt:3, cost:{holz:1}, r:7, hy:3, beauty:2, info:'Duftende Tiare und Hibiskus, eingefasst mit Holz.', vb:'-11 -9 22 14'},
-  weg:{n:'Muschelweg', s:'Weg', on:['hoch','atoll'], bt:1, cost:{holz:1}, r:6, hy:0, beauty:1, path:true, info:'Ein Weg aus zerstoßenen Muscheln und Korallensand.', vb:'-13 -6 26 12'},
-  fackel:{n:'Fackel', s:'Fackel', on:['hoch','atoll'], bt:2, cost:{holz:1}, r:4, hy:14, beauty:1, info:'Leuchtet bei Festen am Abend.', vb:'-6 -19 12 21'},
-  pfosten:{n:'Ahnenpfosten', s:'Pfosten', on:['hoch','atoll'], bt:6, cost:{holz:2}, r:6, hy:18, beauty:3, info:'Ein geschnitzter Pfosten mit dem Gesicht der Ahnen, wie auf der Lapita-Keramik.', vb:'-7 -26 14 28'},
-  trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:6, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Sie ruft das Dorf und gibt beim Tanz den Takt.', vb:'-13 -10 26 14'},
-  tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:8, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Ein Platz aus festgestampfter Erde, mit Steinen eingefasst. Hier wird zur Trommel getanzt.', vb:'-21 -12 42 22'}
+  blumen:{n:'Blumenbeet', s:'Blumen', on:['hoch','atoll'], bt:5, cost:{holz:1}, r:7, hy:3, beauty:2, info:'Duftende Tiare und Hibiskus, eingefasst mit Holz.', vb:'-11 -9 22 14'},
+  weg:{n:'Muschelweg', s:'Weg', on:['hoch','atoll'], bt:2, cost:{holz:1}, r:6, hy:0, beauty:1, path:true, info:'Ein Weg aus zerstoßenen Muscheln und Korallensand.', vb:'-13 -6 26 12'},
+  fackel:{n:'Fackel', s:'Fackel', on:['hoch','atoll'], bt:4, cost:{holz:1}, r:4, hy:14, beauty:1, info:'Leuchtet bei Festen am Abend.', vb:'-6 -19 12 21'},
+  pfosten:{n:'Ahnenpfosten', s:'Pfosten', on:['hoch','atoll'], bt:10, cost:{holz:2}, r:6, hy:18, beauty:3, info:'Ein geschnitzter Pfosten mit dem Gesicht der Ahnen, wie auf der Lapita-Keramik.', vb:'-7 -26 14 28'},
+  trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:10, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Sie ruft das Dorf und gibt beim Tanz den Takt.', vb:'-13 -10 26 14'},
+  tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:14, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Ein Platz aus festgestampfter Erde, mit Steinen eingefasst. Hier wird zur Trommel getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','taro','fisch','toepfer','beil','flecht','schnur','gaergrube','werft','pfahl','speicher','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','palme','baum','pandanus','hibiskus','blumen','weg','fackel','pfosten','trommel','tanzplatz'];
+const ORDER = ['haus','faeller','taro','fisch','toepfer','beil','flecht','schnur','gaergrube','werft','pfahl','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','palme','baum','pandanus','hibiskus','blumen','weg','fackel','pfosten','trommel','tanzplatz'];
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
 const SHIPS = {
-  oc:{n:'Auslegerkanu', cost:{holz:4, beile:1}, bt:15, cap:12, people:4, speed:32, vision:150, fog:false},
-  dc:{n:'Doppelkanu', cost:{holz:6, beile:2, matten:3, schnur:3}, bt:40, cap:24, people:8, speed:40, vision:230, fog:true}
+  oc:{n:'Auslegerkanu', cost:{holz:4, beile:1}, bt:15, cap:12, people:4, speed:32, vision:150, fog:false, crew:2, crewN:'Paddler'},
+  dc:{n:'Doppelkanu', cost:{holz:6, beile:2, matten:3, schnur:3}, bt:40, cap:24, people:8, speed:40, vision:230, fog:true, crew:4, crewN:'Seefahrer'}
 };
+const SITE_CREW = 2, YARD_CREW = 3;   // people at each building site and at a canoe being built
+const STUMP_TICKS = 240, GROW_TICKS = 90;   // a stump sprouts again after eight minutes by itself, a young tree needs three to grow
 const CANOE = SHIPS.dc.cost;
 const SETTLE = {people:4, keep:4};   // a new village needs at least 4 settlers, and 4 must stay behind
 const VOYAGE_DAY = 3, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 provision every 3 ticks; each colony after the first two needs 8 more standing

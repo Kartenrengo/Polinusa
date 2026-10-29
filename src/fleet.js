@@ -7,8 +7,9 @@
 
 let ships = [], nextShip = 1, selShip = null;   // selShip: the canoe being steered
 
-/* ---------- a coarse sea grid to find a way around land */
-const G = 40, GW = Math.ceil(W / G), GH = Math.ceil(H / G);
+/* ---------- a sea grid to find a way around land. A cell is shut as soon as land comes near any part of it,
+   so a canoe on open cells always keeps clear of the beach. Leaving and reaching a harbour is checked against the coast itself. */
+const G = 20, GW = Math.ceil(W / G), GH = Math.ceil(H / G), SHORE = G * .75 + 3;
 let blocked = new Uint8Array(GW * GH);
 function resetGrid(){ blocked = new Uint8Array(GW * GH); }
 const cellOf = p => clamp(Math.floor(p.y / G), 0, GH - 1) * GW + clamp(Math.floor(p.x / G), 0, GW - 1);
@@ -18,28 +19,51 @@ function markLand(I){
   for (let gy = Math.max(0, Math.floor(b.y0 / G)); gy <= Math.min(GH - 1, Math.floor(b.y1 / G)); gy++)
     for (let gx = Math.max(0, Math.floor(b.x0 / G)); gx <= Math.min(GW - 1, Math.floor(b.x1 / G)); gx++){
       const p = {x:(gx + .5) * G, y:(gy + .5) * G};
-      if (I.lands.some(L => inPoly(p, L.poly) || polyDist(p, L.poly) < 8)) blocked[gy * GW + gx] = 1;
+      if (I.lands.some(L => inPoly(p, L.poly) || polyDist(p, L.poly) < SHORE)) blocked[gy * GW + gx] = 1;
     }
 }
-function nearestFree(i){
-  if (!blocked[i]) return i;
-  const x0 = i % GW, y0 = Math.floor(i / GW);
-  for (let r = 1; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){
-    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-    const x = x0 + dx, y = y0 + dy; if (x < 0 || y < 0 || x >= GW || y >= GH) continue;
-    if (!blocked[y * GW + x]) return y * GW + x;
+/* Does the straight line p → q touch land? Exact, against the coast of every island near it. */
+function overLand(p, q, m = 3){
+  const x0 = Math.min(p.x, q.x) - m, x1 = Math.max(p.x, q.x) + m, y0 = Math.min(p.y, q.y) - m, y1 = Math.max(p.y, q.y) + m;
+  for (const I of islands){
+    const b = I.box; if (b.x1 < x0 || b.x0 > x1 || b.y1 < y0 || b.y0 > y1) continue;
+    for (const L of I.lands){
+      const P = L.poly, n = P.length;
+      if (inPoly(p, P) || inPoly(q, P)) return true;
+      for (let i = 0; i < n; i++){ const a = P[i], c = P[(i + 1) % n]; if (segsCross(p, q, a, c) || segDist(a, p, q) < m) return true; }
+    }
+  }
+  return false;
+}
+function segsCross(a, b, c, d){
+  const o = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
+}
+/* The open cell nearest to p that p can reach in a straight line over water */
+function freeNear(p){
+  const i0 = cellOf(p); if (!blocked[i0]) return i0;
+  const x0 = i0 % GW, y0 = Math.floor(i0 / GW);
+  for (let r = 1; r < 24; r++){
+    const ring = [];
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      const x = x0 + dx, y = y0 + dy; if (x < 0 || y < 0 || x >= GW || y >= GH || blocked[y * GW + x]) continue;
+      ring.push(y * GW + x);
+    }
+    ring.sort((a, b) => { const A = cellPt(a), B = cellPt(b); return Math.hypot(A.x - p.x, A.y - p.y) - Math.hypot(B.x - p.x, B.y - p.y); });
+    for (const c of ring) if (!overLand(p, cellPt(c))) return c;
   }
   return -1;
 }
 function clearLine(p, q){
-  const d = Math.hypot(q.x - p.x, q.y - p.y), n = Math.ceil(d / (G / 3));
+  const d = Math.hypot(q.x - p.x, q.y - p.y), n = Math.ceil(d / (G / 4));
   for (let k = 1; k < n; k++){ const t = k / n; if (blocked[cellOf({x:p.x + (q.x - p.x) * t, y:p.y + (q.y - p.y) * t})]) return false; }
   return true;
 }
 /* A* over the grid, then the path is pulled straight wherever the sea is open */
 function findPath(a, b){
-  const s = nearestFree(cellOf(a)), g = nearestFree(cellOf(b)); if (s < 0 || g < 0) return null;
-  if (clearLine(a, b) && !blocked[cellOf(b)]) return [{x:b.x, y:b.y}];
+  if (!overLand(a, b)) return [{x:b.x, y:b.y}];
+  const s = freeNear(a), g = freeNear(b); if (s < 0 || g < 0) return null;
   const N = GW * GH, cost = new Float32Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
   const heap = [], hf = [];
   const push = (i, f) => { heap.push(i); hf.push(f); let c = heap.length - 1; while (c > 0){ const p = (c - 1) >> 1; if (hf[p] <= hf[c]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; [hf[p], hf[c]] = [hf[c], hf[p]]; c = p; } };
@@ -59,11 +83,19 @@ function findPath(a, b){
     }
   }
   let goal = g;
-  if (from[g] < 0 && g !== s){ if (hcost(best) > 6) return null; goal = best; }
-  const cellsOnWay = []; for (let i = goal; i >= 0 && i !== s; i = from[i]) cellsOnWay.push(cellPt(i)); cellsOnWay.reverse();
-  const end = goal !== g || blocked[cellOf(b)] ? cellPt(goal) : {x:b.x, y:b.y}, pts = [...cellsOnWay, end], out = [];
-  let cur = {x:a.x, y:a.y}, k = 0;
-  while (k < pts.length){ let far = k; for (let j = pts.length - 1; j > k; j--) if (clearLine(cur, pts[j])){ far = j; break; } cur = pts[far]; out.push(cur); k = far + 1; }
+  if (from[g] < 0 && g !== s){ if (hcost(best) > 12) return null; goal = best; }
+  const way = []; for (let i = goal; i >= 0; i = from[i]){ way.push(cellPt(i)); if (i === s) break; } way.reverse();
+  // the last step into the harbour only if it is open water, otherwise the canoe stops at the last open cell
+  const pts = goal === g ? [...way, {x:b.x, y:b.y}] : way, out = [];
+  let cur = {x:a.x, y:a.y}, k = 0, first = true;
+  while (k < pts.length){
+    let far = k;
+    for (let j = pts.length - 1; j > k; j--){
+      const end = j === pts.length - 1 && goal === g, ok = first || end ? !overLand(cur, pts[j]) : clearLine(cur, pts[j]);
+      if (ok){ far = j; break; }
+    }
+    cur = pts[far]; out.push(cur); k = far + 1; first = false;
+  }
   return out;
 }
 
@@ -204,7 +236,7 @@ function startYard(I, kind){
 }
 function stepYards(){
   for (const I of islands){
-    if (!I.settled || !I.yard || !I.buildings.some(b => b.kind === 'werft' && !b.bt)) continue;
+    if (!I.settled || !I.yard || !staffOf(I).yard) continue;   // three people build the canoe, or it waits
     invalidate();
     if (--I.yard.left > 0) continue;
     const kind = I.yard.kind; I.yard = null;
@@ -233,7 +265,7 @@ function clanShip(T, toId, cargo, guest){
 
 /* ---------- steering: tap a canoe, then tap the sea or an island */
 function selectShip(s){ selShip = s; mode = 'steer'; openSheet('ship', {id:s.id}); requestDraw(); }
-function hitShip(p){ const lim = Math.max(12, 18 / cam.z); let best = null, bd = lim; for (const s of ships){ if (!s.own) continue; const d = Math.hypot(p.x - s.x, p.y - (s.y - 6)); if (d < bd){ bd = d; best = s; } } return best; }
+function hitShip(p){ const lim = Math.max(12, 18 / cam.z); let best = null, bd = lim; for (const s of ships){ if (!s.own && !revealed(s)) continue; const d = Math.hypot(p.x - s.x, p.y - (s.y - 6)); if (d < bd){ bd = d; best = s; } } return best; }
 function steerTap(p){
   const s = selShip; if (!s) return;
   const I = islands.find(J => J.discovered && onIsland(J, p));

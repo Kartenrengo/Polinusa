@@ -147,12 +147,20 @@ function islandPaths(I){
   const p = {lands:I.lands.map(L => new Path2D(L.d))};
   p.ring = I.atoll ? ellipse(I.atoll.cx, I.atoll.cy, I.atoll.rx, I.atoll.ry) : new Path2D(I.reef.d);
   p.harbor = ellipse(I.harbor.x, I.harbor.y, I.atoll ? 9 : 9.5, I.atoll ? 9 : 9.5);
-  if (I.forest) p.forest = new Path2D(scallop(I.forest, 1, .62));
   if (I.river) p.river = new Path2D(smoothOpen(I.river));
+  if (I.delta){
+    p.fan = new Path2D(smooth(I.delta.fan).d); p.arms = new Path2D();
+    for (const [a, b, e] of I.delta.arms){ p.arms.moveTo(a.x, a.y); p.arms.quadraticCurveTo(b.x, b.y, e.x, e.y); }
+  }
+  if (I.hills){
+    const out = smooth(I.hills.out), c = I.hills.c; p.hill = new Path2D(out.d); p.top = new Path2D(smooth(I.hills.top).d); p.hach = new Path2D();
+    // short hachures run down the slope, like on an old chart
+    out.poly.forEach((q, i) => { if (i % 2) return; const dx = q.x - c.x, dy = q.y - c.y, l = Math.hypot(dx, dy) || 1; p.hach.moveTo(q.x - dx / l * 1.5, q.y - dy / l * 1.5); p.hach.lineTo(q.x + dx / l * 4.5, q.y + dy / l * 4.5); });
+  }
   if (I.patches){ p.patches = new Path2D(); for (const q of I.patches) p.patches.addPath(ellipse(q.x, q.y, q.rx, q.ry)); }
   return I._p = p;
 }
-function drawIsland(c, I){
+function drawIsland(c, I, area){
   const p = islandPaths(I);
   stroke(c, p.ring, '#24505F', 16, null, null, .45);
   fillWith(c, p.ring, '#79C6B8', 'pLag'); stroke(c, p.ring, '#4E9C9A', 8);
@@ -160,14 +168,39 @@ function drawIsland(c, I){
   fillWith(c, p.harbor, '#2F5F73', 'pSea');
   if (p.patches){ c.fillStyle = '#4E9C9A'; c.fill(p.patches); stroke(c, p.patches, '#F3F8EE', .6, null, null, .7); }
   for (const L of p.lands){
+    stroke(c, L, '#F1F6EC', 4.4, null, null, .4);   // surf along the beach
     fillWith(c, L, '#8DA757', 'pDots');
     c.save(); c.clip(L); stroke(c, L, '#E8D29E', I.atoll ? 11 : 15); stroke(c, L, '#D2B67C', 3.4); c.restore();
     stroke(c, L, '#2B1D14', 1.4, [2.2, 1.7]);
   }
-  if (p.forest){ fillWith(c, p.forest, '#557A37', 'pForest'); stroke(c, p.forest, '#2B1D14', 1); }
+  if (p.hill){ fillWith(c, p.hill, '#80A050', 'pDots'); stroke(c, p.hach, '#5E7A3A', .9, null, 'round', .8); c.fillStyle = '#76944A'; c.fill(p.top); stroke(c, p.top, '#5E7A3A', .7, [1.4, 1.4], null, .8); }
+  if (p.fan){ c.fillStyle = '#D9C892'; c.fill(p.fan); stroke(c, p.fan, '#8A6440', .7, [1.2, 1.2], null, .8); stroke(c, p.arms, '#2B1D14', 3.6, null, 'round'); stroke(c, p.arms, '#6DB9BE', 2, null, 'round'); }
   if (p.river){ stroke(c, p.river, '#2B1D14', 4.8, null, 'round'); stroke(c, p.river, '#6DB9BE', 3, null, 'round'); stroke(c, p.river, '#EAF5F0', .9, [.1, 3.4], 'round', .85); }
-  for (const d of I.deco) put(c, d.x, d.y, 1, 1, d.rot * Math.PI / 180, d.t, `<use href="#${d.t}"/>`);
+  const tp = treePaths(I);
+  if (lod === 'far'){ if (tp.canopy){ stroke(c, tp.canopy, '#2B1D14', 2); c.fillStyle = '#3F6B2E'; c.fill(tp.canopy); } }
+  else if (tp.under){ c.globalAlpha = .55; c.fillStyle = '#5E8440'; c.fill(tp.under); c.globalAlpha = 1; }
+  // grass, shells and such hide where a building stands on them
+  const under = d => d.s && I.buildings.some(b => { const r = KINDS[b.kind].r; return Math.abs(b.x - d.x) < r + 3 && Math.abs(b.y - d.y) < r * .7 + 3; });
+  const v = area ? grow(area, 40) : I.box;
+  for (const d of I.deco) if (ptIn(d.x, d.y, v) && !(d.s && (lod === 'far' || under(d)))) put(c, d.x, d.y, 1, 1, d.rot * Math.PI / 180, d.t, `<use href="#${d.t}"/>`);
   if (I.volcano) put(c, I.volcano.x, I.volcano.y, 1.6, 1, 0, 'volcano', '<use href="#volcano"/>');
+}
+/* The forest floor under the trees close up, one green mass far away. Cached until a tree changes. */
+function treePaths(I){
+  if (I._tp) return I._tp;
+  const T = (I.trees || []).filter(t => t.st === 0 || (t.st === 2 && t.g < GROW_TICKS * .5));
+  if (!T.length) return I._tp = {};
+  const under = new Path2D(), canopy = new Path2D();
+  for (const t of T){ under.moveTo(t.x + 8.5, t.y - 1); under.ellipse(t.x, t.y - 1, 8.5, 5.5, 0, 0, TAU); canopy.moveTo(t.x + 8, t.y - 8); canopy.arc(t.x, t.y - 8, 8, 0, TAU); }
+  return I._tp = {under, canopy};
+}
+const TREE_ART = ['wt0', 'wt1', 'wt2'];
+function drawTree(c, t){
+  const m = t.m ? -1 : 1;
+  if (t.st === 1){ put(c, t.x, t.y, t.s, m, 0, 'stump', '<use href="#stump"/>'); return; }
+  const f = t.st === 2 ? 1 - t.g / GROW_TICKS : 1;
+  if (f < .3){ put(c, t.x, t.y, .8 + f * 1.4, m, 0, 'sapling', '<use href="#sapling"/>'); return; }
+  const k = TREE_ART[t.v]; put(c, t.x, t.y, t.s * (.45 + .55 * f), m, 0, k, `<use href="#${k}"/>`);
 }
 function routeCurve(r){
   if (!r._cv){
@@ -198,9 +231,13 @@ function drawObjects(c, area){
     return;
   }
   const v = grow(area, 60), all = [], movingId = mode === 'move' && placing ? placing.moveId : 0;
-  for (const I of islands){ if (!I.discovered || !boxIn(I.box, v)) continue; for (const b of I.buildings) if (ptIn(b.x, b.y, v)) all.push([b, I]); }
+  for (const I of islands){
+    if (!seen(I) || !boxIn(I.box, v)) continue;
+    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v)) all.push([b, I]);
+    for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) all.push([t, null]);
+  }
   all.sort((a, b) => a[0].y - b[0].y);
-  for (const [b, I] of all) drawBuilding(c, b, I, b.id === movingId ? .25 : 1);
+  for (const [b, I] of all) if (I) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); else drawTree(c, b);
 }
 function drawSel(c){
   if (lod === 'far' || !selectedId) return; const b = findB(selectedId); if (!b) return;
@@ -212,7 +249,7 @@ function seaRect(c, v, color, pat, from){
 }
 function drawBase(c, v){
   seaRect(c, v, '#2F5F73', 'pSea', .3);   // waves fade out far away, where they would only flicker
-  for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I);
+  for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I, v);
   drawSel(c); drawCords(c); drawObjects(c, v);
 }
 
@@ -235,7 +272,6 @@ const SMOKE_V = new Path2D('M0-40q-3-3 0-6q3-3 0-6q-3-3 0-6'), SMOKE_T = new Pat
 const PEOPLE_Z = .9;   // people show from this zoom on
 const FLAME = new Path2D('M0 0C-3.4 0-4-2.6-2.6-4.6C-2-3.4-1-3.2-1-3.2C-1.6-5.6 0-7.6 1.2-9C1.2-6.6 3.8-5.4 3-2.4C2.6-.8 1.6 0 0 0Z');
 const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4-5 3-2.5 0 0Z'), BIRD1 = new Path2D('M-5 0q2.5-3.2 5 0q2.5-3.2 5 0'), BIRD2 = new Path2D('M-4.4 0q2.2-3 4.4 0q2.2-3 4.4 0');
-const BUBBLE_LINE = new Path2D('M8 19L2 28');
 function drawAnim(c, now){
   const v = view(40), ph = (now % 3400) / 3400 * TAU, a = reduced ? .4 : .41 - .29 * Math.cos(ph), dy = reduced ? 0 : 1.5 * Math.cos(ph);
   for (const I of islands){
@@ -249,6 +285,15 @@ function drawAnim(c, now){
     const fl = reduced ? 1 : 1 + Math.sin(now / 90) * .12 + Math.sin(now / 53) * .08;
     c.save(); c.translate(h.x, h.y + 24); c.fillStyle = '#7E766A'; c.fill(ellipse(0, 0, 5, 2));
     c.scale(fl, fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore();
+  }
+  // a pair of frigate birds circles over each known island
+  if (!reduced && lod !== 'far') for (const I of islands){
+    if (!I.discovered || !boxIn(I.box, v)) continue;
+    const w = (I.box.x1 - I.box.x0) * .4, h = (I.box.y1 - I.box.y0) * .32;
+    for (let k = 0; k < 2; k++){
+      const a = now / (9000 + k * 4000) * (k ? -1 : 1) + k * 2.4 + I.center.x, x = I.center.x + Math.cos(a) * w, y = I.center.y + Math.sin(a) * h - 24;
+      c.save(); c.translate(x, y); stroke(c, Math.sin(now / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, '#2B1D14', 1.3, null, 'round', .85); c.restore();
+    }
   }
   if (cam.z > PEOPLE_Z) drawPeople(c, v);
   if (lod !== 'far') drawNeeds(c, v, now);
@@ -264,11 +309,13 @@ function drawPeople(c, v){
       const K = KINDS[b.kind]; if (b.kind === 'taro' || near.has(b)) continue;
       if (b.y > w.y && b.y - w.y < K.hy * ((b.v && b.v.scale) || 1) + 14 && Math.abs(b.x - w.x) < K.r + 6) near.set(b, I);
     }
+    for (const t of I.trees) if (t.st !== 1 && !near.has(t) && t.y > w.y && t.y - w.y < 24 && Math.abs(t.x - w.x) < 9) near.set(t, null);
   }
   for (const b of near.keys()) items.push([b.y, b]);
   items.sort((a, b) => a[0] - b[0]);
   for (const [, w] of items){
     if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
+    if (w.st != null){ drawTree(c, w); continue; }
     const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * .7 : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
     c.save(); c.translate(w.x, w.y + bob); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
     if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
@@ -282,7 +329,8 @@ const bubbleArt = inner => `<rect x="-6.5" y="-14" width="13" height="12" rx="3.
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
-const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
+  w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
   for (const I of islands){
@@ -312,6 +360,7 @@ function drawGhost(c){
   // while placing, rings show where the deposit is and how far the workshop reaches for its plants
   if (K.dep) for (const d of depsOf(I, K.dep)) stroke(c, ellipse(d.x, d.y, K.depR, K.depR * .8), '#F3D9A0', 2.2, [5, 4], 'round', .9);
   if (K.near) stroke(c, ellipse(placing.x, placing.y, K.near.r, K.near.r * .8), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
+  const reach = K.trees || K.plants; if (reach) stroke(c, ellipse(placing.x, placing.y, reach.r, reach.r * .8), '#F4ECD8', 1.8, [.1, 4], 'round', .9);
   c.fillStyle = ok ? 'rgba(62,122,58,.25)' : 'rgba(168,74,44,.25)'; c.fill(e);
   stroke(c, e, ok ? '#3E7A3A' : '#A84A2C', 2.4, [.1, 3.6], 'round');
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
@@ -333,16 +382,30 @@ function drawTop(c, now){
     if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
     else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
     c.restore();
-    const icons = (s.people ? ['pop'] : []).concat(Object.keys(s.cargo || {}).filter(k => s.cargo[k] > 0)).slice(0, 3);
-    if (!far && icons.length){
-      c.translate(s.kind === 'oc' ? 6 : 10, s.kind === 'oc' ? -34 : -40); const p = roundRect(0, 0, icons.length * 15 + 8, 19, 4);
-      c.fillStyle = s.own ? '#F4ECD8' : '#F3D9A0'; c.fill(p); stroke(c, p, '#3E2416', 1.3, [.1, 2.2], 'round');
-      icons.forEach((k, i) => put(c, 3 + i * 15, 1.5, .8, 1, 0, 'ic-' + k, `<use href="#ic-${k}"/>`));
-      stroke(c, BUBBLE_LINE, '#3E2416', 1);
-    }
+    if (!far) shipPanel(c, s);
     c.restore();
   }
 }
+/* Over every canoe: who is aboard (crew, settlers or guests) and what it carries, with numbers */
+const SHIP_FONT = '800 9px "Alegreya Sans", "Trebuchet MS", sans-serif';
+function shipPanel(c, s){
+  const ent = [[s.own ? 'crew' : 'gast', s.own ? SHIPS[s.kind].crew : s.guest ? 4 : 2]];
+  if (s.people) ent.push(['pop', s.people]);
+  for (const k of GOODS) if (s.cargo && s.cargo[k] > 0) ent.push([k, s.cargo[k]]);
+  const shown = ent.length > 5 ? [...ent.slice(0, 4), ['+', ent.length - 4]] : ent, sc = clamp(1 / cam.z, 1, 1.7);
+  c.save(); c.translate(s.kind === 'oc' ? 3 : 6, s.kind === 'oc' ? -14 : -30); c.scale(sc, sc); c.font = SHIP_FONT;
+  const ws = shown.map(([k, n]) => (k === '+' ? 2 : 13) + c.measureText(k === '+' ? '+' + n : String(n)).width + 4), w = ws.reduce((a, b) => a + b, 4);
+  const p = roundRect(0, -17, w, 15, 3.5);
+  c.fillStyle = s.own ? '#F4ECD8' : '#F3D9A0'; c.fill(p); stroke(c, p, '#3E2416', 1.1, [.1, 2], 'round');
+  stroke(c, SHIP_LINE, '#3E2416', .9);
+  let x = 3; c.fillStyle = '#2B1D14'; c.textBaseline = 'alphabetic';
+  shown.forEach(([k, n], i) => {
+    if (k !== '+') put(c, x, -15.6, .6, 1, 0, 'ic-' + k, `<use href="#ic-${k}"/>`);
+    c.fillText(k === '+' ? '+' + n : String(n), x + (k === '+' ? 1 : 12.5), -6.2); x += ws[i];
+  });
+  c.restore();
+}
+const SHIP_LINE = new Path2D('M5-2L1 5');
 const NAME_FONT = '800 14px Alegreya, Georgia, serif', SUB_FONT = '700 10px "Alegreya Sans", "Trebuchet MS", sans-serif';
 function label(c, x, y, k, text, sub, font = NAME_FONT){
   c.save(); c.translate(x, y); c.scale(k, k);

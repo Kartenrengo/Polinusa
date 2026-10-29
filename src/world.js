@@ -87,10 +87,10 @@ function genHigh(s, hdir, r, volcano, home){
     I.blocked.push({x:I.volcano.x, y:I.volcano.y - 28, r:38});
   }
   // forest on the far side of the harbour, shrunk until it fits inside the coast
-  const fd = volcano ? .62 : .36, fc = {x:cx + Math.cos(away) * rx * fd, y:cy + Math.sin(away) * ry * fd};
+  const fd = volcano ? .62 : .34, fc = {x:cx + Math.cos(away) * rx * fd, y:cy + Math.sin(away) * ry * fd};
   const fs = r() * 1e9 | 0;
   for (let sc = 1; sc > .3; sc -= .1){
-    const pts = ring(fc.x, fc.y, rx * (volcano ? .2 : .3) * sc, ry * (volcano ? .16 : .24) * sc, volcano ? 9 : 14, fs, .2);
+    const pts = ring(fc.x, fc.y, rx * (volcano ? .22 : .4) * sc, ry * (volcano ? .18 : .32) * sc, volcano ? 9 : 14, fs, .2);
     if (pts.every(p => inland(p, 10))){ I.forest = pts.map(p => ({x:fx(p.x), y:fx(p.y)})); break; }
   }
   // a stream runs from the forest sideways to the sea, away from the village
@@ -102,11 +102,11 @@ function genHigh(s, hdir, r, volcano, home){
       ang += (r() - .5) * .6; p = {x:p.x + Math.cos(ang) * 22, y:p.y + Math.sin(ang) * 22}; pts.push(p);
       if (!inPoly(p, land.poly)) break;
     }
-    if (pts.length > 3 && !inPoly(p, land.poly)) I.river = pts.map(q => ({x:fx(q.x), y:fx(q.y)}));
+    if (pts.length > 4 && !inPoly(p, land.poly)) riverMouth(I, pts, land);
   }
   // things that take up ground: the village plaza and a garden on the home island, a rock on most
   const free = (p, rad) => inland(p, rad + 6) && !(I.forest && (inPoly(p, I.forest) || polyDist(p, I.forest) < rad + 6)) &&
-    !(I.river && polyDist(p, I.river, false) < rad + 8) && I.blocked.every(z => Math.hypot(p.x - z.x, p.y - z.y) > z.r + rad + 10);
+    !(I.river && polyDist(p, I.river, false) < rad + 8) && !inDelta(I, p, rad + 6) && I.blocked.every(z => Math.hypot(p.x - z.x, p.y - z.y) > z.r + rad + 10);
   const place = (t, rad, near) => {
     for (let i = 0; i < 300; i++){
       const p = near ? {x:near.x + (r() - .5) * 2 * (20 + i), y:near.y + (r() - .5) * 2 * (16 + i * .8)} : {x:cx + (r() - .5) * 1.5 * rx, y:cy + (r() - .5) * 1.5 * ry};
@@ -141,7 +141,87 @@ function genHigh(s, hdir, r, volcano, home){
 
   I.box = polyBox(rf.poly, 6);
   I.labelAt = {x:fx(cx), y:fx(I.box.y0 - 12)};
+  // the rest only adorns the island and comes from its own random numbers, so it never shifts the world
+  const r2 = rng((Math.round(cx * 7 + cy * 13) ^ 0x51ab) >>> 0);
+  if (!volcano) hillsOf(I, r2, fc, inland);
+  treesOf(I, r2, inland, home);
+  smallThings(I, r2, coast, reef, inland);
   return I;
+}
+/* The stream ends where it meets the beach and fans out into a small delta of sand and three arms */
+function riverMouth(I, pts, land){
+  const a = pts[pts.length - 2], b = pts[pts.length - 1];
+  let lo = 0, hi = 1; for (let i = 0; i < 12; i++){ const m = (lo + hi) / 2; if (inPoly({x:a.x + (b.x - a.x) * m, y:a.y + (b.y - a.y) * m}, land.poly)) lo = m; else hi = m; }
+  const M = {x:a.x + (b.x - a.x) * lo, y:a.y + (b.y - a.y) * lo}, dl = Math.hypot(b.x - a.x, b.y - a.y) || 1, n = {x:(b.x - a.x) / dl, y:(b.y - a.y) / dl}, t = {x:-n.y, y:n.x};
+  // the arms split a little inland
+  const S = {x:M.x - n.x * 20, y:M.y - n.y * 20}, main = pts.slice(0, -1).filter(q => Math.hypot(q.x - M.x, q.y - M.y) > 22);
+  main.push(S);
+  I.river = main.map(q => ({x:fx(q.x), y:fx(q.y)}));
+  const arms = [-1, 0, 1].map(k => {
+    const E = {x:M.x + n.x * (k ? 4 : 7) + t.x * k * 12, y:M.y + n.y * (k ? 4 : 7) + t.y * k * 12};
+    const C = {x:(S.x + E.x) / 2 + t.x * k * 3, y:(S.y + E.y) / 2 + t.y * k * 3};
+    return [S, C, E].map(q => ({x:fx(q.x), y:fx(q.y)}));
+  });
+  // the fan is a little larger than the arms, so they end in the sand and not in open water
+  const fan = [S, {x:M.x - n.x * 9 + t.x * 19, y:M.y - n.y * 9 + t.y * 19}, {x:M.x + n.x * 9 + t.x * 23, y:M.y + n.y * 9 + t.y * 23},
+    {x:M.x + n.x * 16, y:M.y + n.y * 16}, {x:M.x + n.x * 9 - t.x * 23, y:M.y + n.y * 9 - t.y * 23}, {x:M.x - n.x * 9 - t.x * 19, y:M.y - n.y * 9 - t.y * 19}];
+  I.delta = {fan:fan.map(q => ({x:fx(q.x), y:fx(q.y)})), arms, mouth:{x:fx(M.x), y:fx(M.y)}};
+}
+const inDelta = (I, p, m = 0) => !!I.delta && (inPoly(p, I.delta.fan) || polyDist(p, I.delta.fan) < m);
+/* Hills under the forest: a slope and a summit, drawn with hachures like on an old chart */
+function hillsOf(I, r, fc, inland){
+  const hc = {x:fc.x + (I.center.x - fc.x) * .3, y:fc.y + (I.center.y - fc.y) * .3}, rx = I.box.x1 - I.box.x0, ry = I.box.y1 - I.box.y0, sd = r() * 1e9 | 0;
+  for (let sc = 1; sc > .35; sc -= .08){
+    const out = ring(hc.x, hc.y, rx * .23 * sc, ry * .19 * sc, 18, sd, .16);
+    if (!out.every(p => inland(p, 14))) continue;
+    const top = ring(hc.x + rx * .02, hc.y - ry * .02, rx * .1 * sc, ry * .08 * sc, 12, sd + 7, .18);
+    I.hills = {out:out.map(p => ({x:fx(p.x), y:fx(p.y)})), top:top.map(p => ({x:fx(p.x), y:fx(p.y)})), c:{x:fx(hc.x), y:fx(hc.y)}};
+    return;
+  }
+}
+/* Trees: a forest of single trees, each with some wood in it, and a few groves elsewhere */
+const TREE_WOOD = 3, TREE_R = 6;
+function treesOf(I, r, inland, home){
+  const T = I.trees = [];
+  const ok = p => inland(p, 9) && !(I.river && polyDist(p, I.river, false) < 9) && !inDelta(I, p, 8) && I.blocked.every(z => Math.hypot(p.x - z.x, p.y - z.y) > z.r + 7) &&
+    T.every(q => Math.hypot(q.x - p.x, q.y - p.y) > 10);
+  const add = p => { const wet = I.river && polyDist(p, I.river, false) < 30, k = r(); T.push({x:fx(p.x), y:fx(p.y), v:wet && k < .45 ? 2 : k < .55 ? 0 : k < .85 ? 1 : 2, m:r() < .5 ? 1 : 0, s:fx(.86 + r() * .24), st:0, w:TREE_WOOD, g:0}); };
+  if (I.forest){
+    const b = polyBox(I.forest, 0);
+    for (let y = b.y0; y < b.y1; y += 11) for (let x = b.x0 + (Math.round(y / 11) % 2) * 6; x < b.x1; x += 13){
+      const p = {x:x + (r() - .5) * 7, y:y + (r() - .5) * 5};
+      if ((inPoly(p, I.forest) || (polyDist(p, I.forest) < 10 && r() < .4)) && ok(p)) add(p);
+    }
+  }
+  // groves away from the village
+  const an = I.anchor;
+  for (let g = 0, tries = 0; g < 3 && tries < 60; tries++){
+    const c = {x:I.center.x + (r() - .5) * (I.box.x1 - I.box.x0) * .7, y:I.center.y + (r() - .5) * (I.box.y1 - I.box.y0) * .7};
+    if (!inland(c, 20) || Math.hypot(c.x - an.x, c.y - an.y) < (home ? 110 : 80)) continue;
+    g++; for (let i = 0, n = 3 + Math.floor(r() * 4); i < n * 3 && n > 0; i++){ const a = r() * TAU, d = r() * 22, p = {x:c.x + Math.cos(a) * d, y:c.y + Math.sin(a) * d * .8}; if (ok(p)){ add(p); n--; } }
+  }
+  T.sort((a, b) => a.y - b.y);
+}
+/* Small things that make an island look lived in by nature: grass, flowers, ferns, reeds, shells, driftwood, coral */
+function smallThings(I, r, coast, reef, inland){
+  const D = I.deco, put = (t, p, rot = 0) => D.push({t, x:fx(p.x), y:fx(p.y), rot:Math.round(rot), s:1});
+  const L = I.lands[0].poly, rnd = (a, b) => a + r() * (b - a);
+  const clear = p => !(I.river && polyDist(p, I.river, false) < 7) && !inDelta(I, p, 4) && I.blocked.every(z => Math.hypot(p.x - z.x, p.y - z.y) > z.r + 4);
+  const inner = () => ({x:I.center.x + rnd(-.5, .5) * (I.box.x1 - I.box.x0), y:I.center.y + rnd(-.5, .5) * (I.box.y1 - I.box.y0)});
+  for (let i = 0, n = 0; i < 140 && n < 34; i++){ const p = inner(); if (inland(p, 10) && clear(p)){ put(r() < .8 ? 'tuft' : 'flowers', p, rnd(-20, 20)); n++; } }
+  if (I.forest) for (let i = 0; i < 10; i++){ const q = I.forest[Math.floor(r() * I.forest.length)], p = {x:q.x + rnd(-8, 8), y:q.y + rnd(-6, 6)}; if (inland(p, 8) && clear(p)) put('fern', p); }
+  if (I.river) for (let i = 0; i < 9; i++){ const j = 1 + Math.floor(r() * (I.river.length - 2)), a = I.river[j], b = I.river[j + 1], l = Math.hypot(b.x - a.x, b.y - a.y) || 1, sd = r() < .5 ? -1 : 1;
+    const p = {x:a.x - (b.y - a.y) / l * 7 * sd, y:a.y + (b.x - a.x) / l * 7 * sd}; if (inland(p, 6)) put('reed', p); }
+  if (I.delta) for (const sd of [-1, 1]){ const m = I.delta.mouth, f = I.delta.fan[sd < 0 ? 5 : 1]; put('reed', {x:(m.x + f.x) / 2, y:(m.y + f.y) / 2}); }
+  // the beach: shells, driftwood and dark stones in the sand
+  for (let i = 0; i < 22; i++){
+    const q = L[Math.floor(r() * L.length)], c = I.center, d = Math.hypot(c.x - q.x, c.y - q.y) || 1, k = rnd(3, 6), p = {x:q.x + (c.x - q.x) / d * k, y:q.y + (c.y - q.y) / d * k};
+    if (!clear(p) || inDelta(I, p, 10)) continue;
+    const t = i < 12 ? 'shell' : i < 15 ? 'drift' : 'stone'; put(t, p, t === 'drift' ? Math.atan2(c.y - q.y, c.x - q.x) * 180 / Math.PI + 90 : rnd(0, 360));
+  }
+  // coral heads between the beach and the reef
+  for (let i = 0; i < 14; i++){ const j = Math.floor(r() * coast.length), a = coast[j], b = reef[j], f = rnd(.4, .75), p = {x:a.x + (b.x - a.x) * f, y:a.y + (b.y - a.y) * f};
+    if (polyDist(p, L) > 8 && !inPoly(p, L) && !inDelta(I, p, 6)) put('coral', p, rnd(0, 360)); }
 }
 
 /* ---------- atoll: a ring of low sandy islets around a lagoon, the widest gap is the passage */
@@ -164,8 +244,15 @@ function genAtoll(s, hdir, r){
   });
   const patches = [];
   for (let i = 0; i < 7; i++){ const a = r() * TAU, k = .2 + r() * .45; patches.push({x:fx(cx + Math.cos(a) * rx * k), y:fx(cy + Math.sin(a) * ry * k), rx:fx(2 + r() * 2), ry:fx(1.4 + r())}); }
-  const hb = R(th, 1);
-  return {type:'atoll', center:{x:cx, y:cy}, lands, R, segs, patches, atoll:{cx, cy, rx, ry}, harbor:{x:fx(hb.x), y:fx(hb.y)}, blocked:[], deco:[],
+  const hb = R(th, 1), deco = [], r2 = rng((Math.round(cx * 7 + cy * 13) ^ 0x51ab) >>> 0), put = (t, p, rot = 0) => deco.push({t, x:fx(p.x), y:fx(p.y), rot:Math.round(rot), s:1});
+  // shells and driftwood on the outer beach, grass on the islets, coral heads in the lagoon
+  for (const [t0, t1, kin] of segs){
+    const n = Math.max(2, Math.round((t1 - t0) / 12));
+    for (let i = 0; i < n; i++){ const q = t0 + (t1 - t0) * r2(); put(r2() < .75 ? 'shell' : 'drift', R(q, .995 - r2() * .01), r2() * 360); }
+    for (let i = 0; i < n - 1; i++) put('tuft', R(t0 + (t1 - t0) * (.15 + r2() * .7), (1.02 + kin) / 2 + (r2() - .5) * .04), (r2() - .5) * 40);
+  }
+  for (let i = 0; i < 9; i++){ const a = r2() * TAU, k = .25 + r2() * .4; put('coral', {x:cx + Math.cos(a) * rx * k, y:cy + Math.sin(a) * ry * k}, r2() * 360); }
+  return {type:'atoll', center:{x:cx, y:cy}, lands, R, segs, patches, atoll:{cx, cy, rx, ry}, harbor:{x:fx(hb.x), y:fx(hb.y)}, blocked:[], deco, trees:[],
     box:{x0:cx - rx - 8, y0:cy - ry - 8, x1:cx + rx + 8, y1:cy + ry + 8}, labelAt:{x:fx(cx), y:fx(cy - ry - 18)}};
 }
 
@@ -176,6 +263,9 @@ const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (b.bt ? 0 : I.lvl ===
 const DEP_DECO = {ton:'clay', basalt:'rock', obsidian:'obsidian'};
 const depsOf = (I, dep) => I.deco.filter(d => d.t === DEP_DECO[dep]);
 const depNear = (I, dep, x, y, r) => depsOf(I, dep).find(d => Math.hypot(d.x - x, d.y - y) < r) || null;
+/* Trees standing or growing block the ground; a stump does not, building on it clears it */
+const treeAt = (I, x, y, rad) => I.trees && I.trees.find(t => t.st !== 1 && Math.hypot(t.x - x, t.y - y) < rad);
+const treesNear = (I, x, y, rad) => (I.trees || []).filter(t => t.st === 0 && t.w > 0 && Math.hypot(t.x - x, (t.y - y) * 1.25) < rad);
 const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
 /* Beauty: what adorns an island, counted from finished decorations */
 const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0);
@@ -200,8 +290,9 @@ function check(kind, I, x, y, ignoreId){
     if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
     if (K.coast && dEdge > 18) return `${K.n} gehört an den Strand`;
     if (K.dep && !depNear(I, K.dep, x, y, K.depR)) return `Hier ist kein ${DEPOSITS[K.dep].n} in der Nähe. ${DEPOSITS[K.dep].where}`;
-    if (I.forest && inPoly(p, I.forest)) return 'Hier steht Wald';
+    if (treeAt(I, x, y, (K.r + TREE_R) * .8)) return 'Hier stehen Bäume. Ein Holzfäller kann sie fällen.';
     if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';
+    if (inDelta(I, p, 3) || (I.delta && I.delta.arms.some(a => polyDist(p, a, false) < 5))) return 'Hier mündet der Bach ins Meer';
     for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
   }
   for (const b of I.buildings){ if (b.id === ignoreId) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + KINDS[b.kind].r) * .8) return 'Zu eng'; }

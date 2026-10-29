@@ -54,7 +54,9 @@ Die Welt ist 4800 × 7200 groß und in Felder von 800 × 800 geteilt. Am Anfang 
 das Atoll Motu, beide in einer Lichtung im Nebel. Alles andere entsteht erst, wenn ein Kanu dorthin schaut:
 Dann wird das Feld aus Startwert und Feldnummer gewürfelt, vielleicht mit einer hohen Insel, einem Vulkan oder
 einem Atoll, weiter draußen manchmal mit einem fremden Clan. Es gibt keine Markierungen, wo Land liegt.
-Insgesamt entstehen etwa 30 Inseln. Weil das Würfeln nur vom Startwert abhängt, liegt nach dem Laden alles wieder
+Insgesamt entstehen etwa 30 Inseln. Hohe Inseln haben Hügel mit Schraffur, einen Wald aus einzelnen Bäumen, oft einen Bach,
+der an der Küste in einem kleinen Delta aus Sand und drei Armen mündet, dazu Gras, Blumen, Farne, Schilf, Muscheln,
+Treibholz und Steine am Strand und Korallenköpfe in der Lagune. Über jeder bekannten Insel kreisen Fregattvögel. Weil das Würfeln nur vom Startwert abhängt, liegt nach dem Laden alles wieder
 an derselben Stelle. Gespeichert werden nur Startwert, gesehene Felder und was sich geändert hat, etwa 5 KB.
 
 ## Anfang
@@ -63,18 +65,31 @@ Wie bei Age of Empires steht am Anfang nur das Versammlungshaus auf Panua. Motu 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
 Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
 
-1. Zwei Häuser, 2. zwei Tarofelder, 3. 15 Bewohner, 4. Töpferei am Ton, 5. Beilwerkstatt am Felsen, 6. Kanuhaus
-(dann Blumen, Muschelwege, Fackeln und Hibiskus), 7. Auslegerkanu bauen, 8. vier Siedler nach Motu fahren und ein Dorf
-gründen, 9. Flechthütte und Seilerei auf Motu, 10. Handelskette: Matten und Schnur nach Panua, 11. 6 Proviant aus der
-Gärgrube (dann Doppelkanu und Ahnenpfosten), 12. Doppelkanu bauen, 13. im Nebel neues Land finden, 14. ein Fest,
-15. das Fest der Plejaden, 16. ein Häuptlingsdorf.
+1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. 15 Bewohner, 5. Baumpflanzer, 6. Töpferei am Ton,
+7. Beilwerkstatt am Felsen, 8. Kanuhaus (dann Blumen, Muschelwege, Fackeln und Hibiskus), 9. Auslegerkanu bauen,
+10. vier Siedler nach Motu fahren und ein Dorf gründen, 11. Flechthütte und Seilerei auf Motu, 12. Handelskette: Matten und
+Schnur nach Panua, 13. 6 Proviant aus der Gärgrube (dann Doppelkanu und Ahnenpfosten), 14. Doppelkanu bauen, 15. im Nebel
+neues Land finden, 16. ein Fest, 17. das Fest der Plejaden, 18. ein Häuptlingsdorf.
 
-## Bauen braucht Zeit
+## Bauen braucht Zeit und Leute
 
 Jedes Gebäude kostet Holz und steht nicht sofort. Erst ist es eine Baustelle mit Gerüst und Fortschrittsbalken.
-Bauleute tragen Holz vom Speicher hin. Gleichzeitig wird an einer Stelle gebaut, je 8 Bewohner an einer mehr,
-die übrigen Baustellen warten. Ein Haus dauert etwa 10 Sekunden, das Versammlungshaus 30. Pflanzen kosten nichts,
-wachsen aber erst langsam heran. Was noch nicht fertig ist, arbeitet nicht und zählt nicht für die Aufgaben.
+An jeder Baustelle arbeiten 2 Leute, sie tragen Holz vom Speicher hin und hämmern. Ein Haus dauert etwa 24 Sekunden,
+eine Werkstatt 28, das Versammlungshaus eine Minute. Gleichzeitig wird an einer Stelle gebaut, je 10 Bewohner an einer mehr.
+Pflanzen kosten nichts, wachsen aber erst langsam heran. Was noch nicht fertig ist, arbeitet nicht und zählt nicht für die Aufgaben.
+
+**Arbeitskräfte:** Jeder Bewohner kann arbeiten. Felder, Fischgestelle, Holzfäller und Pflanzer brauchen eine Person,
+die meisten Werkstätten zwei, ein Kanu im Bau drei. Verteilt wird so: zuerst die Baustellen, dann das Kanuhaus, dann
+Essen, dann Holz, dann die übrigen Arbeitsplätze nach Alter. Wer baut, arbeitet nirgends sonst. Fehlen Leute, steht ein
+Arbeitsplatz still und zeigt eine Figur in der Sprechblase. Die Tafel „Bedarf“ zeigt, wie viele bauen, arbeiten und frei sind.
+
+## Holz und Wald
+
+Holz gibt es nur noch vom Holzfäller. Er fällt die Bäume in seiner Reichweite, den nächsten zuerst. Jeder Baum hat 3 Holz,
+danach bleibt ein Stumpf. Von selbst treibt er erst nach acht Minuten wieder aus, dann wächst der junge Baum drei Minuten.
+Der Baumpflanzer setzt sofort Setzlinge auf Stümpfe und an den Waldrand, aber nur neben stehende Bäume. Wo Bäume stehen,
+kann nichts gebaut werden. Auf einem Stumpf darf man bauen, dann ist er weg. Der Platz auf einer Insel reicht also nicht für
+alles: Wald, Felder und Dorf teilen sich das Land. Atolle haben keinen Wald, ihr Holz kommt mit dem Kanu.
 
 ## Kanus
 
@@ -93,6 +108,11 @@ Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der hal
 - **Siedeln:** Mit 4 Siedlern an Bord vor einer leeren Insel „Dorf gründen“. Mitgebrachtes Holz und Essen kommt ins Lager.
 - **Wind und Jahreszeit:** Gegen den Nordwind geht es langsamer, in der Sturmzeit auch. In der Passatzeit schneller.
 - **Flotte:** Der Knopf rechts in der Bauleiste listet alle Kanus und Handelsketten.
+- **Wer und was an Bord ist:** Über jedem Kanu steht eine kleine Tafel mit Zahlen: die Besatzung (Paddler oder Seefahrer,
+  blau mit Paddel), Siedler (rot), dann jede Ware. Kanus der Clans haben eine gelbe Tafel mit Boten oder Festgästen.
+  Antippen zeigt mehr.
+- **Wege:** Kanus fahren nie über Land. Das Meer ist in ein Raster von 20 × 20 geteilt, Felder nahe der Küste sind gesperrt,
+  und das Ablegen und Anlegen wird genau gegen die Küstenlinie geprüft.
 
 ## Handelsketten
 
@@ -144,6 +164,8 @@ Ketten haben höchstens drei Glieder.
 
 | Gebäude | Insel | Braucht | Macht |
 | --- | --- | --- | --- |
+| Holzfäller | hoch | Bäume in Reichweite | Holz |
+| Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | junge Bäume |
 | Tarofeld, Brotfruchtbaum | hoch | | Essen |
 | Fischgestell | Atoll, am Strand | | Essen |
 | Gärgrube | hoch | 2 Brotfruchtbäume daneben, Essen | Proviant |
@@ -203,7 +225,8 @@ Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, H
 drei Hauttöne. Etwa ein Viertel der Bewohner ist zu sehen. Zwei von dreien haben Arbeit und tragen sie sichtbar
 vom Feld, der Werkstatt oder dem Waldrand zum Speicher: Taro oder Brotfrucht im Korb auf dem Kopf, Töpfe,
 Steine, Obsidian, Muscheln, Schnur, Tapa, Proviant, Holz, Fisch an der Stange, Matten. Die anderen schlendern zwischen den
-Häusern. Bauleute tragen Holz zu den Baustellen. Auch in den Dörfern der Clans sind Menschen unterwegs.
+Häusern. Bauleute tragen Holz zu den Baustellen und hämmern dort, Holzfäller schlagen am Baum, Pflanzer tragen Setzlinge.
+Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unterwegs.
 
 ## Nächste Schritte
 

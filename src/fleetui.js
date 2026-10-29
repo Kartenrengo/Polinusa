@@ -15,6 +15,7 @@ function shipStatus(s){
 function shipMarkup(s){
   const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = cargoLoad(s);
   let h = head(s.name, shipStatus(s));
+  h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind === 'dc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
   h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? ' Ins Unbekannte nur mit Proviant an Bord, 1 pro Reisetag.' : ' Ins Unbekannte fährt es nicht.'}</p>`;
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', load ? giftText(s.cargo) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
@@ -59,7 +60,7 @@ function openRoute(ri){ const r = routes[ri]; if (isl(r.a).settled && r.a !== ac
 function fleetMarkup(){
   const mine = own();
   let h = head('Flotte', mine.length ? 'Tippe auf Steuern, dann auf das Meer oder eine Insel.' : 'Kanus entstehen im Kanuhaus.');
-  h += mine.length ? `<ul class="list needs">${mine.map(s => `<li>${shipIcon(s.kind)}<span class="nm">${s.name}<small>${shipStatus(s)}${s.hungry ? ' Kein Proviant.' : ''}</small></span><button class="btn small" type="button" data-act="steer" data-s="${s.id}">Steuern</button></li>`).join('')}</ul>` : '';
+  h += mine.length ? `<ul class="list needs">${mine.map(s => `<li>${shipIcon(s.kind)}<span class="nm">${s.name}<small>${SHIPS[s.kind].crew} ${SHIPS[s.kind].crewN}${s.people ? `, ${s.people} Siedler` : ''}${cargoLoad(s) ? `, ${giftText(s.cargo)}` : ''}. ${shipStatus(s)}${s.hungry ? ' Kein Proviant.' : ''}</small></span><button class="btn small" type="button" data-act="steer" data-s="${s.id}">Steuern</button></li>`).join('')}</ul>` : '';
   if (routes.length) h += `<p><b>Handelsketten</b></p><ul class="list needs">${routes.map((r, i) => { const A = isl(r.a), B = isl(r.b), n = ships.filter(s => s.own && s.route === i).length;
     return `<li>${icon('schnur')}<span class="nm">${A.name} – ${B.name}<small>${r.knots} Knoten, ${n ? `${n} ${n === 1 ? 'Kanu' : 'Kanus'}` : 'kein Kanu'}</small></span><button class="btn small" type="button" data-act="chain" data-r="${i}">Ansehen</button></li>`; }).join('')}</ul>`;
   return h;
@@ -70,7 +71,8 @@ function steerShip(s){ closeSheet(); selectShip(s); flyTo(s.x, s.y, Math.max(cam
 function yardMarkup(I){
   if (I.yard){
     const S = SHIPS[I.yard.kind], f = 1 - I.yard.left / S.bt;
-    return `<p><b>Hier entsteht ein ${S.n}.</b> Noch etwa ${Math.ceil(I.yard.left * TICK / 1000)} Sekunden. In der Zeit kannst du das Dorf schmücken oder die Handelsketten einrichten.</p><span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
+    return (staffOf(I).yard ? `<p><b>Hier entsteht ein ${S.n}.</b> ${YARD_CREW} Leute bauen noch etwa ${Math.ceil(I.yard.left * TICK / 1000)} Sekunden. In der Zeit kannst du das Dorf schmücken oder die Handelsketten einrichten.</p>` :
+      `<p><b>Der Bau des ${S.n}s ruht.</b> Es fehlen ${YARD_CREW} freie Leute. Baustellen gehen vor.</p>`) + `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
   }
   return Object.entries(SHIPS).filter(([k]) => k === 'oc' || unlocked('dc')).map(([k, S]) => `<div class="rowx"><span><b>${S.n}</b><br><span class="sub">${costText(S.cost)}, etwa ${S.bt * TICK / 1000} Sekunden. ${k === 'oc' ? `Trägt ${S.cap} Waren und ${S.people} Menschen, bleibt im Bekannten.` : `Trägt ${S.cap} Waren und ${S.people} Menschen, fährt ins Unbekannte.`}</span></span><button class="btn${canPay(I, S.cost) ? ' primary' : ''}" type="button" data-act="yard" data-k="${k}" ${canPay(I, S.cost) ? '' : 'disabled'}>Bauen</button></div>`).join('') +
     `<p class="sub">Kanus im Hafen: ${shipAt(I.id).map(s => s.name).join(', ') || 'keine'}.</p>`;

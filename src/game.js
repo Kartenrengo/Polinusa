@@ -44,17 +44,35 @@ const JOB_LOAD = {taro:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', bei
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const lived = I => I.settled || (I.clan && I.discovered);
 const popOf = I => I.settled ? I.pop : I.clan ? I.clan.pop : 0;
-/* Building sites come first: a builder fetches wood from the store and carries it to the site */
+/* Building sites come first: a builder fetches wood from the store and carries it to the site.
+   Woodcutters walk to the tree they fell, planters carry a sapling to where it goes. Only workplaces with people show workers. */
 function jobsOf(I){
-  const jobs = [];
-  for (const b of activeSites(I)){ const st = storeNear(I, b); if (st) jobs.push({key:'s' + b.id, x:st.x, y:st.y, drop:{x:b.x + 6, y:b.y + 5}, load:'holz'}); }
-  for (const b of I.buildings) if (JOB_LOAD[b.kind] && !b.bt) jobs.push({key:b.x + ',' + b.y, x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]});
-  if (I.forest){ const c = villageCenter(I), q = nearestOn(I.forest, c); jobs.push({key:'wald', x:q.x + (c.x - q.x) * .1, y:q.y + (c.y - q.y) * .1, load:'holz'}); }
-  return jobs.filter(j => landOf(I, j) >= 0);
+  const jobs = [], st = lived(I) && I.settled ? staffOf(I) : null, manned = b => !KINDS[b.kind].crew || !st || st.staffed.has(b);
+  for (const b of activeSites(I)){ const sp = storeNear(I, b); if (sp) jobs.push({key:'s' + b.id, x:sp.x, y:sp.y, drop:{x:b.x + 6, y:b.y + 5}, load:'holz', site:true}); }
+  for (const b of I.buildings){
+    if (b.bt || !manned(b)) continue;
+    if (b.kind === 'faeller'){ const t = b.cutAt && b.cutAt.st === 0 ? b.cutAt : treesNear(I, b.x, b.y, KINDS.faeller.trees.r)[0]; if (t) jobs.push({key:'f' + b.id, x:t.x + 4, y:t.y + 3, load:'holz', chop:true}); }
+    else if (b.kind === 'pflanzer'){ const t = b.plantAt && b.plantAt.st === 2 ? b.plantAt : null; jobs.push({key:'p' + b.id, x:b.x, y:b.y + 4, drop:t ? {x:t.x + 3, y:t.y + 2} : {x:b.x + 26, y:b.y + 8}, load:'setzling', plant:true}); }
+    else if (JOB_LOAD[b.kind]) jobs.push({key:b.x + ',' + b.y, x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]});
+  }
+  return jobs.filter(j => landOf(I, j) >= 0 && (!j.drop || landOf(I, j.drop) >= 0));
 }
-/* How many sites are worked at once grows with the village: one, and one more for every eight people */
-const builders = I => 1 + Math.floor(I.pop / 8);
-function activeSites(I){ return I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).sort((a, b) => a.id - b.id).slice(0, builders(I)); }
+/* ---------- work force: everyone who lives here can work. Building sites come first, two people each, then a canoe in the
+   canoe house, then the workplaces: food first, then wood, then the oldest. Who builds does nothing else meanwhile. */
+const builders = I => 1 + Math.floor(I.pop / 10);
+const workOrder = b => KINDS[b.kind].prod === 'nahrung' ? 0 : b.kind === 'faeller' ? 1 : 2;
+function staff(I){
+  let free = I.pop; const sites = [], staffed = new Set();
+  for (const b of I.buildings){ if (!b.bt || KINDS[b.kind].plant) continue; if (sites.length >= builders(I) || free < SITE_CREW) break; sites.push(b); free -= SITE_CREW; }
+  const yard = !!I.yard && I.buildings.some(b => b.kind === 'werft' && !b.bt) && free >= YARD_CREW; if (yard) free -= YARD_CREW;
+  const work = I.buildings.filter(b => KINDS[b.kind].crew && !b.bt).sort((a, b) => workOrder(a) - workOrder(b) || a.id - b.id);
+  for (const b of work) if (free >= KINDS[b.kind].crew){ staffed.add(b); free -= KINDS[b.kind].crew; }
+  const need = work.reduce((t, b) => t + KINDS[b.kind].crew, 0);
+  return I.staff = {key:staffKey(I), sites, yard, staffed, free, build:sites.length * SITE_CREW + (yard ? YARD_CREW : 0), need, short:work.length - staffed.size};
+}
+const staffKey = I => [tick, I.pop, I.buildings.length, I.buildings.filter(b => b.bt).length, !!I.yard].join();
+const staffOf = I => I.staff && I.staff.key === staffKey(I) ? I.staff : staff(I);
+const activeSites = I => staffOf(I).sites;
 function storeNear(I, p){
   // the nearest store or meeting house on the same piece of land; on an atoll the lagoon is in the way otherwise
   const L = landOf(I, p), st = I.buildings.filter(b => (b.kind === 'speicher' || b.kind === 'halle') && landOf(I, b) === L);
@@ -67,7 +85,7 @@ function syncWalkers(){
   for (const I of islands){
     const mine = walkers.filter(w => w.isl === I.id), homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof) : [];
     const want = homes.length ? clamp(Math.round(popOf(I) / 4), 1, 10) : 0, jobs = jobsOf(I);
-    for (const w of mine) if (w.job && !jobs.some(j => j.key === w.job.key)){ w.job = null; w.carry = null; }
+    for (const w of mine) if (w.job){ const j = jobs.find(q => q.key === w.job.key); if (j) w.job = j; else { w.job = null; w.carry = null; } }
     for (let i = mine.length; i < want; i++){
       const a = homes[Math.floor(Math.random() * homes.length)], n = walkers.length;
       // every third person has no fixed work and strolls between the houses
@@ -85,7 +103,7 @@ function spawnWalkers(){ walkers = []; syncWalkers(); }
 function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
-  w.dance = false; w.hurry = I.feastEnd > tick;   // people hurry to a feast
+  w.dance = false; w.busy = null; w.hurry = I.feastEnd > tick;   // people hurry to a feast
   if (I.feastEnd > tick){
     const d = I.festYear === yearOf() && I.buildings.find(b => b.kind === 'tanzplatz' && !b.bt);
     if (d){ const a = Math.random() * TAU; w.carry = null; w.tx = d.x + Math.cos(a) * 15; w.ty = d.y + Math.sin(a) * 6; w.wait = 1800 + Math.random() * 1400; w.dance = d; return; }
@@ -94,8 +112,13 @@ function nextLeg(w){
   if (w.job){
     if (w.leg === 'work'){
       // at the workplace: pick up the load, then carry it to the store
-      const s = w.job.drop || storeNear(I, w.job); if (s){ w.carry = w.job.load; w.leg = 'store'; w.tx = s.x + (Math.random() - .5) * 6; w.ty = s.y; w.wait = w.job.drop ? 400 : 900 + Math.random() * 1600; return; }
-    } else { w.carry = null; w.leg = 'work'; w.tx = w.job.x + (Math.random() - .5) * 8; w.ty = w.job.y + Math.random() * 4; w.wait = 400 + Math.random() * 600; return; }
+      // a woodcutter first swings the axe a while
+      const s = w.job.drop || storeNear(I, w.job); if (s){ w.carry = w.job.load; w.leg = 'store'; w.tx = s.x + (Math.random() - .5) * 6; w.ty = s.y; w.wait = w.job.drop ? 400 : w.job.chop ? 2400 + Math.random() * 1200 : 900 + Math.random() * 1600; if (w.job.chop) w.busy = {x:w.x, y:w.y}; return; }
+    } else {
+      // at a building site they hammer a while, a planter kneels to set the sapling
+      const at = w.job.site || w.job.plant; w.busy = at ? {x:w.x, y:w.y} : null;
+      w.carry = null; w.leg = 'work'; w.tx = w.job.x + (Math.random() - .5) * 8; w.ty = w.job.y + Math.random() * 4; w.wait = at ? 2200 + Math.random() * 1400 : 400 + Math.random() * 600; return;
+    }
   }
   const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && landOf(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
   if (t){ w.tx = t.x + (Math.random() - .5) * 22; w.ty = t.y + 4 + Math.random() * 8; } w.wait = 600 + Math.random() * 1800;
@@ -103,7 +126,12 @@ function nextLeg(w){
 function stepWalkers(dt){
   for (const w of walkers){
     w.moving = false;
-    if (w.wait > 0){ w.wait -= dt; if (w.dance && Math.hypot(w.x - w.dance.x, (w.y - w.dance.y) * 2) < 26){ w.moving = true; w.phase += dt * .008; } continue; }
+    if (w.wait > 0){
+      w.wait -= dt;
+      if (w.dance && Math.hypot(w.x - w.dance.x, (w.y - w.dance.y) * 2) < 26){ w.moving = true; w.phase += dt * .008; }
+      else if (w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3){ w.moving = true; w.phase += dt * .014; }
+      continue;
+    }
     const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
     if (d < 1.5){ nextLeg(w); continue; }
     const v = Math.min(d, dt * (w.carry ? .006 : .007) * (w.hurry ? 2.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
@@ -112,9 +140,11 @@ function stepWalkers(dt){
 }
 
 /* ---------- work: a workshop runs only with its deposit, its plants nearby and its input goods */
-const NEAR_PL = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten'};
+const NEAR_PL = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten', wald:'Bäume'};
 function workState(I, b){
   const K = KINDS[b.kind];
+  if (K.crew && I.settled && !staffOf(I).staffed.has(b)) return {why:'crew', text:staffOf(I).build ? `Es fehlen ${K.crew === 1 ? 'eine Person' : K.crew + ' Leute'}. Viele bauen gerade, oder das Dorf muss wachsen.` : `Es fehlen ${K.crew === 1 ? 'eine Person' : K.crew + ' Leute'}. Das Dorf muss wachsen.`};
+  if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
   if (K.prod && (I.stock[K.prod] || 0) >= storeCap(I)) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
   if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => (I.stock[q] || 0) < K.use[q]); return {why:'use', k, text:`Es fehlt ${GN[k]}.`}; }
@@ -123,7 +153,7 @@ function workState(I, b){
 /* ---------- needs: what each island uses, makes and lacks, per minute */
 const PER_MIN = 60000 / TICK;
 function makeRate(I, k){
-  let m = k === 'holz' && I.type === 'hoch' ? PER_MIN : 0;
+  let m = 0;
   for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every; }
   return m;
 }
@@ -172,21 +202,23 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
-    if (I.type === 'hoch') add('holz', 1);
     // building sites and young plants: sites need builders, plants just grow
-    const working = new Set(activeSites(I));
+    const working = new Set(staff(I).sites);
     for (const b of I.buildings){
       if (!b.bt) continue;
       if (KINDS[b.kind].plant || working.has(b)){ b.bt--; if (!b.bt){ delete b.bt; done(I, b); } }
     }
     if (working.size || I.buildings.some(b => b.bt)) invalidate();
     for (const b of I.buildings){
-      const K = KINDS[b.kind]; if (!K.prod || b.bt) continue;
+      const K = KINDS[b.kind]; if (!(K.prod || K.plants) || b.bt) continue;
       const every = seasonalEvery(I, b, K); if (!every || tick % every) continue;
       b.idle = workState(I, b); if (b.idle) continue;
+      if (K.plants){ if (!plantTree(I, b)) b.idle = {why:'space', text:'In der Nähe ist kein Platz mehr für junge Bäume.'}; continue; }
       if (K.use) pay(I, K.use);
+      if (K.trees) fellTree(I, b);
       add(K.prod, 1);
     }
+    growTrees(I);
     // use up what people need; fractions carry over so small villages use little
     I.owe = I.owe || {};
     for (const N of NEEDS){
@@ -214,6 +246,52 @@ function econ(){
   if (sheetKind && sheetSig() !== lastSig) renderSheet();
   if (tick % 3 === 0) save();
 }
+/* ---------- trees: each holds a little wood. Felled, it leaves a stump that sprouts again only after a long while;
+   a planter sets saplings on stumps and free ground at once. */
+function fellTree(I, b){
+  const t = b.cutAt && b.cutAt.st === 0 && b.cutAt.w > 0 && I.trees.includes(b.cutAt) ? b.cutAt : treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).sort((p, q) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(q.x - b.x, q.y - b.y))[0];
+  if (!t) return; b.cutAt = t;
+  if (--t.w <= 0){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; b.cutAt = null; }
+  treesChanged(I);
+}
+function plantable(I, p){
+  const L = landAt(I, p); if (!L || polyDist(p, L.poly) < 9) return false;
+  if ((I.river && polyDist(p, I.river, false) < 9) || inDelta(I, p, 8)) return false;
+  if (I.blocked.some(z => Math.hypot(p.x - z.x, p.y - z.y) < z.r + 6)) return false;
+  if (I.buildings.some(q => Math.hypot(q.x - p.x, q.y - p.y) < KINDS[q.kind].r + 8)) return false;
+  return !I.trees.some(t => Math.hypot(t.x - p.x, t.y - p.y) < 10);
+}
+function plantTree(I, b){
+  const R = KINDS[b.kind].plants.r, T = I.trees, dist = t => Math.hypot(t.x - b.x, (t.y - b.y) * 1.25);
+  const stump = T.filter(t => t.st === 1 && dist(t) < R).sort((p, q) => dist(p) - dist(q))[0];
+  if (stump){ stump.st = 2; stump.g = GROW_TICKS; b.plantAt = stump; treesChanged(I); return true; }
+  if (T.filter(t => dist(t) < R).length >= 36) return false;   // the forest here is dense enough
+  // new trees go where others already stand, so the forest grows at its edge and not across the village
+  let best = null, bs = -1;
+  for (let i = 0; i < 18; i++){
+    const a = Math.random() * TAU, d = 14 + Math.random() * (R - 14), p = {x:b.x + Math.cos(a) * d, y:b.y + Math.sin(a) * d * .8};
+    if (!plantable(I, p)) continue;
+    const sc = T.filter(t => Math.hypot(t.x - p.x, t.y - p.y) < 32).length; if (sc >= 2 && sc > bs){ bs = sc; best = p; }   // only next to standing trees
+  }
+  if (!best) return false;
+  const k = Math.random(), t = {x:fx(best.x), y:fx(best.y), v:k < .55 ? 0 : k < .85 ? 1 : 2, m:Math.random() < .5 ? 1 : 0, s:fx(.86 + Math.random() * .24), st:2, w:0, g:GROW_TICKS};
+  T.push(t); b.plantAt = t; treesChanged(I); return true;
+}
+function growTrees(I){
+  if (!I.treeWork) return;
+  let n = 0;
+  for (const t of I.trees){
+    if (t.st === 0) continue; n++;
+    if (--t.g > 0) continue;
+    if (t.st === 1){ t.st = 2; t.g = GROW_TICKS; } else { t.st = 0; t.w = TREE_WOOD; }
+    treesChanged(I);
+  }
+  if (tick % 5 === 0 && n) invalidate();   // young trees grow a little
+  I.treeWork = n > 0;
+}
+function treesChanged(I){ I.treeWork = true; I.treesSaved = true; I._tp = null; invalidate(); }
+/* A building on stumps clears them */
+function clearStumps(I, b){ const r = (KINDS[b.kind].r + TREE_R) * .8, n = I.trees.length; I.trees = I.trees.filter(t => !(t.st === 1 && Math.hypot(t.x - b.x, t.y - b.y) < r)); if (I.trees.length !== n) treesChanged(I); }
 function done(I, b){
   const K = KINDS[b.kind];
   if (!K.plant && !K.path && I.id === active) toast(`${K.n} ist fertig.`, 1600);
@@ -236,7 +314,9 @@ function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < ro
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
-  const sh = hitShip(p); if (sh){ if (sh === selShip){ closeSheet(); return; } closeSheet(); selectShip(sh); return; }
+  const sh = hitShip(p);
+  if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu vom ${C.name}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200); return; }
+  if (sh){ if (sh === selShip){ closeSheet(); return; } closeSheet(); selectShip(sh); return; }
   if (mode === 'steer'){ steerTap(p); return; }
   const b = hitBuilding(p); if (b){ select(b); return; }
   const ri = hitCord(p); if (ri >= 0){ openRoute(ri); return; }
@@ -324,6 +404,7 @@ function start(data){
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(econ, TICK);
     if (!ok){ openSheet('intro', {first:true}); save(); }
+    else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });
 }
 try { window.claude?.hot?.snapshot?.(() => ({save:serialize()})); } catch (e){}
