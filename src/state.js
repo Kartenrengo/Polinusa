@@ -1,10 +1,10 @@
 'use strict';
 /* Game state, the starting villages, save and load */
 
-let seed = 1, islands = [], routes = [], fogHoles = [];
+let seed = 1, islands = [], routes = [], fogHoles = [], cells = new Set(), home0 = null;   // cells: the sea already rolled; home0: home, Motu and the first clearing
 let tick = 0, nextId = 1, active = 'heimat';
 let mode = 'idle', placing = null, selectedId = null, sheetKind = null, sheetData = null;
-let boats = [], walkers = [], expSource = null, mana = 0;   // mana: the clan's standing, from feasts and gifts
+let walkers = [], mana = 0;   // mana: the clan's standing, from feasts, gifts and a beautiful village
 const isl = id => islands.find(I => I.id === id);
 function findB(id){ for (const I of islands){ const b = I.buildings.find(x => x.id === id); if (b) return b; } return null; }
 function islOfB(id){ return islands.find(I => I.buildings.some(b => b.id === id)); }
@@ -12,16 +12,27 @@ function addB(I, kind, p, v = {}, born = 0){ const b = {id:nextId++, kind, x:fx(
 const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>> 0) || 1;
 
 function newGame(s = newSeed()){
-  seed = s; const w = makeWorld(seed);
-  islands = w.islands; routes = []; boats = []; tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
+  seed = s; home0 = makeWorld(seed);
+  islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
+  resetGrid(); for (const I of islands) markLand(I);
   const Hm = isl('heimat'), T = isl('tochter'), r = rng(seed ^ 0x5eed);
   Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:8, nahrung:10}});
   Object.assign(T, {discovered:true, settled:false, pop:0, stock:{}});
   seedStart(Hm, r); seedAtollPlants(T, r);
   // the first settlers on Motu must find enough palms and pandanus for rope and mats near their landing place
   const hs = homeSpot(T); topUp(T, 'pandanus', 3, hs, r); topUp(T, 'palme', 4, hs, r);
-  for (const I of islands) if (I.clan) seedClan(I, rng(seed ^ I.center.x));
-  fogHoles = [w.hole];
+  fogHoles = [home0.hole];
+  const h = home0.hole; for (let cy = Math.floor((h.cy - h.ry) / CELL); cy <= Math.floor((h.cy + h.ry) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx) / CELL); cx <= Math.floor((h.cx + h.rx) / CELL); cx++) ensureCell(cx, cy, true);
+}
+/* Roll a cell of sea the first time it is seen. Fresh cells get their clan village; on load the village comes from the save. */
+function ensureCell(cx, cy, fresh){
+  if (cx < 0 || cy < 0 || cx >= W / CELL || cy >= H / CELL) return null;
+  const key = cx + ',' + cy; if (cells.has(key)) return null; cells.add(key);
+  const I = genCell(seed, cx, cy, home0, new Set(islands.map(J => J.name)));
+  if (!I) return null;
+  islands.push(I); markLand(I);
+  if (fresh && I.clan) seedClan(I, rng(seed ^ (I.center.x | 0)));
+  return I;
 }
 
 /* Like the first landing: only the meeting house on the plaza, palms on the beach, two wild breadfruit trees */
@@ -74,29 +85,42 @@ function homeSpot(I){
 
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 function serialize(){
-  const now = performance.now();
-  return JSON.stringify({v:2, seed, tick, nextId, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0})), fog:fogHoles.map(h => ({cx:h.cx, cy:h.cy, rx:h.rx, ry:h.ry, seed:h.seed})),
-    isl:islands.map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, canoe:I.canoe, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
-      cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v])})),
-    boats:boats.map(b => ({kind:b.kind, exp:!!b.exp, back:!!b.back, settle:!!b.settle, gift:!!b.gift, people:b.people || 0, route:b.route, from:b.from, to:b.to, cargo:b.cargo, dur:b.dur, up:b.up, reverse:b.reverse, p:clamp((now - b.t0) / b.dur, 0, 1)}))});
+  const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
+  return JSON.stringify({v:3, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells],
+    routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
+    fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
+    isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
+      fy:I.festYear, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
+      cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt || 0])})),
+    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null}))});
 }
 function restore(raw){
   try {
-    const s = JSON.parse(raw); if (!s || s.v !== 2 || !s.seed) return false;
-    seed = s.seed >>> 0; islands = makeWorld(seed).islands; tick = s.tick | 0; nextId = s.nextId | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
+    const s = JSON.parse(raw); if (!s || s.v !== 3 || !s.seed) return false;
+    seed = s.seed >>> 0; home0 = makeWorld(seed); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
+    for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
+    tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
-    for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0; I.canoe = !!d.canoe;
-      I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0;
+    for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
+      I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rd; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
       if (I.clan && d.cl){ I.debt = d.cl.debt || 0; I.returnAt = d.cl.ra || 0; I.lastFrom = d.cl.lf || ''; }
-      I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v]) => ({id, kind, x, y, born, v:v || {}})); }
-    for (const I of islands) if (I.clan && !I.buildings.length) seedClan(I, rng(seed ^ I.center.x));   // saves from before the clans
-    routes = (s.routes || []).filter(r => isl(r.a) && isl(r.b)).map(r => ({a:r.a, b:r.b, knots:r.knots | 0, lastGift:r.lg || 0})); fogHoles = s.fog || [];
-    boats = [];
-    for (const b of s.boats || []) if (isl(b.from) && isl(b.to) && (b.exp || b.settle || routes[b.route])) addBoat({...b, t0:performance.now() - b.p * b.dur});
+      I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {})})); }
+    for (const I of islands) if (I.clan && !I.buildings.length) seedClan(I, rng(seed ^ (I.center.x | 0)));
+    routes = (s.routes || []).filter(r => isl(r.a) && isl(r.b)).map(r => ({a:r.a, b:r.b, knots:r.knots | 0, lastGift:r.lg || 0, plan:r.plan || {a:{}, b:{}}}));
+    fogHoles = (s.fog || []).map(([cx, cy, rx, ry, sd]) => ({cx, cy, rx, ry, seed:sd}));
+    ships = []; selShip = null;
+    for (const o of s.ships || []){
+      if (o.port && !isl(o.port)) o.port = null;
+      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf};
+      ships.push(sh);
+      if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
+      if (sh.route != null && !routes[sh.route]) sh.route = null;
+      if (sh.route != null && sh.state === 'moored') sh.state = 'wait', sh.wait = 800;
+    }
     for (const I of islands) I.lvl = I.lvl || 1;
     if (!isl(active) || !isl(active).settled) active = 'heimat';
     return isl('heimat').settled;
-  } catch (e){ return false; }
+  } catch (e){ console.error(e); return false; }
 }
 /* Saves name the current task by id. Older saves counted tasks; this maps the old order onto the new list. */
 function questFromSave(s){

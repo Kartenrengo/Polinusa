@@ -8,6 +8,8 @@ function updateHUD(){
   $('isleName').textContent = I.name; $('isleType').textContent = (I.volcano ? 'Vulkan' : I.type === 'hoch' ? 'Hohe Insel' : 'Atoll') + ' · ' + LEVEL_NAMES[I.lvl || 1];
   $('manaBtn').hidden = mana <= 0 && !feastsOpen();
   $('manaNum').textContent = Math.floor(mana);
+  const S = seasonOf(); $('seasonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('seasonTxt').textContent = `${moonOf() + 1}. Mond`;
+  $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + houseCap(I);
   // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
   const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
@@ -25,8 +27,8 @@ function updateHUD(){
 function renderBuildBar(){
   const I = isl(active);
   $('buildWhere').textContent = 'auf ' + I.name;
-  const linked = routes.some(r => r.a === active || r.b === active);
-  $('tradeBtn').hidden = !linked; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !linked);
+  const fleet = own().length > 0 || routes.length > 0;
+  $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
   $('buildList').innerHTML = ORDER.filter(k => KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length)).map(k => { const K = KINDS[k];
     return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
   updateHUD();
@@ -97,15 +99,19 @@ function confirmPlace(){
   const I = isl(placing.island), K = KINDS[placing.kind];
   if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`); return; }
   const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`); return; }
-  pay(I, c); addB(I, placing.kind, placing, placing.v, tick); invalidate(); updateHUD(); syncWalkers(); save(); checkQuest();
-  toast(`${K.n} ${K.plant ? 'gepflanzt' : 'gebaut'}.`, 1600);
+  // nothing stands at once: a building site waits for builders, a young plant grows
+  pay(I, c); const b = addB(I, placing.kind, placing, placing.v, tick); if (K.bt) b.bt = K.bt;
+  invalidate(); updateHUD(); syncWalkers(); save(); checkQuest();
+  const busy = !K.plant && activeSites(I).length >= builders(I) && !activeSites(I).includes(b);
+  toast(K.plant ? `${K.n} gepflanzt. Sie wächst jetzt.` : busy ? `Baustelle ${K.n}. Sie wartet, bis Bauleute frei sind.` : `Baustelle ${K.n}. Fertig in etwa ${Math.round(K.bt * TICK / 1000)} Sekunden.`, 2200);
   if (K.max || !canPay(I, c)){ endPlace(); return; }
   placing.v = variant(placing.kind); const p = findSpot(I, placing.kind, {x:placing.x + K.r * 2.2, y:placing.y}); if (p){ placing.x = p.x; placing.y = p.y; } ghostRender();
 }
 
 /* ---------- sheets */
-function openSheet(kind, data){ sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
-function closeSheet(){ if (!sheetKind) return; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
+function openSheet(kind, data){ if (kind !== 'ship') endSteer(); sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
+function closeSheet(){ endSteer(); if (!sheetKind) return; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
+function endSteer(){ if (mode === 'steer'){ mode = 'idle'; selShip = null; requestDraw(); } }
 const perMin = v => v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
 function growText(I, nd){
   if (nd.missing.length) return `Das Dorf wächst nicht, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
@@ -128,7 +134,7 @@ function needsMarkup(I){
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
   if (nd.list.some(n => n.k === 'nahrung' && n.state === 'out')) h += `<p class="sub">Ohne Essen ziehen nach und nach Leute fort.</p>`;
   if (nd.next && nd.next.lvl < 3) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
-  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern und Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}), wenn Töpfe und Matten reichen und Tapa, Schweine und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
+  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Töpfe und Matten reichen und Tapa, Schweine und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
   return h;
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
@@ -149,7 +155,7 @@ function feastMarkup(I){
 }
 function manaMarkup(I){
   let h = head(`Ansehen ${Math.floor(mana)}`, 'Das Ansehen des Clans. Es wächst mit Festen und Gaben und sinkt langsam, etwa 1 pro Minute.');
-  h += `<ul class="help"><li>Für jede weitere Siedlung mit dem Doppelkanu: Ansehen ${MANA_PER_COLONY} mehr. Jetzt nötig: ${manaNeeded()}.</li><li>Für ein Häuptlingsdorf: Ansehen ${CHIEF.mana}.</li></ul>`;
+  h += `<ul class="help"><li>Für jede weitere Siedlung mit dem Doppelkanu: Ansehen ${MANA_PER_COLONY} mehr. Jetzt nötig: ${manaNeeded()}.</li><li>Für ein Häuptlingsdorf: Ansehen ${CHIEF.mana}.</li><li>Ein schönes Dorf bringt alle halbe Minute etwas Ansehen. Schönheit auf ${I.name}: ${beautyOf(I)}. Blumen, Wege, Fackeln und Ahnenpfosten machen es schöner.</li><li>Das Fest der Plejaden zu Beginn des Jahres bringt am meisten.</li></ul>`;
   h += I.buildings.some(b => b.kind === 'halle') ? `<p class="sub">Feste auf ${I.name}:</p>` + feastMarkup(I) : `<p class="sub">Auf ${I.name} steht kein Versammlungshaus. Feste feiert man dort.</p>`;
   return h;
 }
@@ -160,45 +166,45 @@ function clanMarkup(T){
   h += `<p>Sie machen ${icons(C.makes)}.<br>Sie schätzen ${icons(C.wants)}.</p>`;
   h += `<p class="sub">Bei diesem Clan gibt es keine Preise. Ihr schickt eine Gabe, und sie antworten später mit dem, was sie machen. Je mehr Knoten die Schnur hat, desto reicher fällt die Gegengabe aus. Muschelschmuck knüpft einen Knoten extra. Kommt lange nichts, löst sich ein Knoten.</p>`;
   if (r) h += `<p>${r.knots} Knoten Vertrauen. ${T.debt >= 1 ? 'Eine Gegengabe ist unterwegs oder kommt bald.' : 'Gerade schulden sie euch nichts.'}</p>`;
-  h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="gift" ${r ? '' : 'disabled'}>Gabe schicken</button></div>`;
+  h += r ? `<div class="rowx"><span class="sub">Fahr mit einem beladenen Kanu hin oder setze eines in die Schnur.</span><button class="btn primary" type="button" data-act="gift">Schnur ansehen</button></div>` : `<p class="sub">Fahr mit einem Kanu hin, dann entsteht eine Schnur.</p>`;
   return h;
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
-function windOf(from, to){
-  const A = isl(from).harbor, B = isl(to).harbor, dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy), c = dy / len;
-  const f = c < -.35 ? 3 : c > .35 ? 1 : 2; return {f, len, label:f === 3 ? 'Gegen den Wind' : f === 1 ? 'Mit dem Wind' : 'Seitenwind', cls:f === 1 ? 'with' : ''};
-}
-function tripDays(r, from, to){ const w = windOf(from, to); const k = Math.max(.6, 1 - .04 * r.knots); return Math.max(1, Math.round(w.len / 372 * w.f * k)); }
 function renderSheet(){
   const body = $('sheetBody'); let h = '';
-  if (sheetKind === 'trade'){
-    const t = sheetData, r = routes[t.r], F = isl(t.from), T = isl(t.to), w = windOf(t.from, t.to), days = tripDays(r, t.from, t.to);
-    const load = Object.values(t.cargo).reduce((a, b) => a + b, 0);
-    const mine = routes.map((x, i) => [x, i]).filter(([x]) => x.a === active || x.b === active);
-    h += T.clan ? head(`Gabe an den ${T.clan.name}`, `Von ${F.name} nach ${T.name}`) : head(`Nach ${T.name}`, `Ladung von ${F.name}`);
-    if (T.clan){ const worth = giftValue(T.clan, t.cargo) * returnRate(r.knots); h += `<p class="sub">Sie schätzen ${T.clan.wants.map(k => GN[k]).join(', ')} und antworten mit ${T.clan.makes.map(k => GN[k]).join(' und ')}. ${load ? `Diese Gabe bringt später etwa ${giftGuess(T.clan, worth)} zurück.` : ''}</p>`; }
-    if (mine.length > 1) h += `<div class="chips" role="group" aria-label="Ziel">${mine.map(([x, i]) => { const o = x.a === active ? x.b : x.a; return `<button class="chip" type="button" data-act="route" data-r="${i}" aria-pressed="${i === t.r}">${isl(o).name}</button>`; }).join('')}</div>`;
-    h += `<div class="rowx"><div class="windline"><span class="tag ${w.cls}">${w.label}</span><span>${days} ${days === 1 ? 'Tag' : 'Tage'} (${Math.round(days * DAY)} Sekunden)</span></div>${T.clan ? '' : '<button class="btn small" type="button" data-act="swap">Andersherum</button>'}</div>`;
-    h += `<div class="knotsline"><svg viewBox="0 0 44 22" width="44" height="22" aria-hidden="true"><path d="M3 11H41" stroke="#2B1D14" stroke-width="4.4" stroke-linecap="round"/><path d="M3 11H41" stroke="#B08048" stroke-width="2.8" stroke-linecap="round"/><g fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"><ellipse cx="15" cy="11" rx="4.2" ry="5.2"/><ellipse cx="29" cy="11" rx="4.2" ry="5.2"/></g></svg><span>${r.knots} Knoten. Jede Fahrt knüpft einen dazu. Je mehr Knoten, desto kürzer die Fahrt.</span></div>`;
-    h += `<ul class="list">${GOODS.filter(k => (F.stock[k] || 0) > 0 || t.cargo[k]).map(k => { const have = F.stock[k] || 0, n = t.cargo[k] || 0; return `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span class="nm">${GN[k]}</span><span class="st">Lager ${have}</span><span class="step"><button type="button" data-act="minus" data-k="${k}" aria-label="${GN[k]} weniger" ${n ? '' : 'disabled'}>−</button><output aria-live="polite">${n}</output><button type="button" data-act="plus" data-k="${k}" aria-label="${GN[k]} mehr" ${n < have && load < LOAD ? '' : 'disabled'}>+</button></span></li>`; }).join('')}</ul>`;
-    h += `<div class="rowx"><span class="sub">Ladung ${load} von ${LOAD}</span><button class="btn primary" type="button" data-act="send" ${load ? '' : 'disabled'}>Ablegen</button></div>`;
+  if (sheetKind === 'ship'){
+    const sh = ships.find(q => q.id === sheetData.id); if (!sh){ closeSheet(); return; }
+    h += shipMarkup(sh);
+  } else if (sheetKind === 'route'){
+    if (!routes[sheetData.r]){ closeSheet(); return; }
+    h += routeMarkup(sheetData.r);
+  } else if (sheetKind === 'fleet'){
+    h += fleetMarkup();
+  } else if (sheetKind === 'calendar'){
+    h += calendarMarkup();
   } else if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b){ closeSheet(); return; }
     const K = KINDS[b.kind], I = islOfB(b.id), age = roofAge(b);
     h += head(K.n, `Auf ${I.name}. ${K.info}`);
-    if (K.prod){
+    if (b.bt){
+      const f = Math.round((1 - b.bt / K.bt) * 100), secs = Math.ceil(b.bt * TICK / 1000);
+      h += K.plant ? `<p><b>Wächst noch.</b> In etwa ${secs} Sekunden ist sie groß.</p>` : activeSites(I).includes(b) ? `<p><b>Baustelle, ${f} Prozent.</b> Noch etwa ${secs} Sekunden.</p>` : `<p><b>Baustelle, ${f} Prozent.</b> Sie wartet auf Bauleute. Gleichzeitig wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} gebaut, je 8 Bewohner eine mehr.</p>`;
+      h += `<span class="mbar big"><i style="width:${f}%"></i></span>`;
+    }
+    if (K.prod && !b.bt){
       const w = b.idle || workState(I, b), rate = PER_MIN / K.every;
       h += `<p>${w ? `<b>Steht still.</b> ${w.text}` : '<b>Arbeitet.</b>'} Macht ${perMin(rate)} ${GN[K.prod]} pro Minute${K.use ? `, braucht ${Object.entries(K.use).map(([k, v]) => `${perMin(rate * v)} ${GN[k]}`).join(' und ')}` : ''}.</p>`;
     }
     if (K.roof) h += `<p class="sub">${age < .34 ? 'Frisches Dach' : age < .8 ? 'Das Dach wird grau' : 'Altes Dach, bald erneuern'}</p>`;
-    if (b.kind === 'werft') h += werftMarkup(I);
-    if (b.kind === 'halle' && feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I);
+    if (K.beauty && !b.bt) h += `<p class="sub">Schmuck für das Dorf: +${K.beauty}. Schönheit auf ${I.name}: ${beautyOf(I)}.</p>`;
+    if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
+    if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl, dann siehst du, was die Menschen brauchen und was fehlt. Der Punkt daneben ist grün, solange das Dorf wächst.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Tippe auf die Schnur zwischen zwei Inseln, um ein Kanu mit Waren zu schicken.</li></ul>`;
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl, dann siehst du, was die Menschen brauchen und was fehlt. Der Punkt daneben ist grün, solange das Dorf wächst.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und etwas Zeit. Bauleute tragen das Holz zur Baustelle.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -222,61 +228,40 @@ function sheetSig(){
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
   if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : '')].join(); }
   if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1].join(); }
+  if (sheetKind === 'calendar') return [moonOf(), isl(active).rahui, Math.floor(untilFestival() / 30)].join();
+  if (sheetKind === 'fleet') return own().map(s => [s.state, s.port, s.route, s.hungry].join(':')).join() + routes.map(r => r.knots).join();
+  if (sheetKind === 'ship'){
+    const s = ships.find(q => q.id === sheetData.id); if (!s) return 'gone';
+    const P = s.port ? isl(s.port) : null;
+    return [s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
+  }
+  if (sheetKind === 'route'){
+    const r = routes[sheetData.r]; if (!r) return 'gone';
+    return [r.knots, ...ships.filter(s => s.own && (s.route === sheetData.r || s.port === r.a || s.port === r.b)).map(s => s.id + s.state + s.route), ...[isl(r.a), isl(r.b)].flatMap(I => GOODS.map(k => (I.stock[k] || 0) > 0))].join();
+  }
   if (sheetKind !== 'info' || !sheetData) return '';
   const b = findB(sheetData.id); if (!b) return 'gone';
   const I = islOfB(b.id), age = Math.floor(roofAge(b) * 3);
-  if (b.kind !== 'werft') return ['a' + age, b.idle && b.idle.why, b.kind === 'halle' && [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost))].join()].join();
-  return [I.canoe, I.stock.proviant, Math.floor(mana), I.pop >= SETTLE.people + SETTLE.keep, isl('tochter').settled, boats.length, ...GOODS.map(k => Math.min(I.stock[k] || 0, 6))].join();
-}
-const needList = (I, need) => `<ul class="list">${Object.entries(need).map(([k, v]) => { const have = k === 'pop' ? I.pop : I.stock[k] || 0, ok = have >= v; return `<li class="${ok ? 'okk' : 'need'}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span class="nm">${k === 'pop' ? 'Bewohner' : GN[k]}</span><span class="st">${Math.min(have, v)} von ${v}${ok ? ' ✓' : ''}</span></li>`; }).join('')}</ul>`;
-function werftMarkup(I){
-  const T = isl('tochter');
-  if (I.id === 'heimat' && !T.settled){
-    // first the outrigger to the atoll next door, the double canoe comes later
-    if (boats.some(b => b.settle && b.to === T.id)) return `<p><b>Das Auslegerkanu ist auf dem Weg nach ${T.name}.</b></p>`;
-    const need = {...SETTLE.cost, pop:SETTLE.people + SETTLE.keep}, ok = Object.entries(need).every(([k, v]) => (k === 'pop' ? I.pop : I.stock[k] || 0) >= v);
-    return `<p>Ein Auslegerkanu bringt ${SETTLE.people} Menschen mit Holz, Essen und einem Topf hinüber nach ${T.name}. Mindestens ${SETTLE.keep} bleiben hier.</p>` + needList(I, need) +
-      `<div class="rowx"><span class="sub">${ok ? 'Alles da.' : 'Es fehlt noch etwas.'}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Siedler schicken</button></div>`;
-  }
-  let h = `<p>Ein Doppelkanu braucht Holz und Steinbeile von hier. Matten für das Segel und Schnur kommen vom Atoll.</p>`;
-  if (I.canoe){
-    const left = islands.filter(J => !J.discovered).length;
-    const need = manaNeeded(), pv = I.stock.proviant || 0;
-    h += `<p class="sub">Proviant im Lager: ${pv}, das reicht für etwa ${Math.floor(pv / PROVIANT_PER_DAY)} Tage auf See.${need ? ` Für eine weitere Siedlung braucht es Ansehen ${need}, jetzt ${Math.floor(mana)}.` : ''}</p>`;
-    h += left ? `<p><b>Das Doppelkanu liegt bereit.</b> Such dir eine Wolke im Nebel aus.</p><div class="rowx"><span></span><button class="btn primary" type="button" data-act="target" ${mana >= need ? '' : 'disabled'}>Ziel wählen</button></div>` : `<p><b>Das Doppelkanu liegt bereit.</b> Gerade ist kein neues Land in Sicht.</p>`;
-    return h;
-  }
-  h += `<ul class="list">${Object.entries(CANOE).map(([k, v]) => { const have = I.stock[k] || 0, ok = have >= v; return `<li class="${ok ? 'okk' : 'need'}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span class="nm">${GN[k]}</span><span class="st">${Math.min(have, v)} von ${v}${ok ? ' ✓' : ''}</span></li>`; }).join('')}</ul>`;
-  h += `<div class="rowx"><span class="sub">${canPay(I, CANOE) ? 'Alles da.' : 'Es fehlt noch etwas. Schick es mit einem Kanu her.'}</span><button class="btn primary" type="button" data-act="canoe" ${canPay(I, CANOE) ? '' : 'disabled'}>Doppelkanu bauen</button></div>`;
-  return h;
+  const yard = b.kind === 'werft' ? [I.yard && I.yard.left, shipAt(I.id).length, ...Object.values(SHIPS).map(S => canPay(I, S.cost))].join() : '';
+  const hall = b.kind === 'halle' ? [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost)), festivalState(I), festivalParts(I).map(p => p.ok).join(), guestsFor().length].join() : '';
+  return ['a' + age, b.bt, b.idle && b.idle.why, yard, hall].join();
 }
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;
   const act = btn.dataset.act;
   if (act === 'close'){ closeSheet(); return; }
-  if (sheetKind === 'trade'){
-    const t = sheetData, F = isl(t.from), load = Object.values(t.cargo).reduce((a, b) => a + b, 0);
-    if (act === 'plus'){ const k = btn.dataset.k; if ((t.cargo[k] || 0) < (F.stock[k] || 0) && load < LOAD) t.cargo[k] = (t.cargo[k] || 0) + 1; }
-    if (act === 'minus'){ const k = btn.dataset.k; t.cargo[k] = Math.max(0, (t.cargo[k] || 0) - 1); }
-    if (act === 'swap'){ [t.from, t.to] = [t.to, t.from]; t.cargo = {}; setActive(t.from); }
-    if (act === 'route'){ const r = routes[+btn.dataset.r]; t.r = +btn.dataset.r; t.from = active; t.to = r.a === active ? r.b : r.a; t.cargo = {}; }
-    if (act === 'send'){ sendBoat(t); return; }
-    renderSheet(); return;
-  }
+  if (fleetAct(act, btn)) return;
   if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b) return;
     if (act === 'move'){ startMove(b); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
     if (act === 'nokill'){ sheetData.confirm = false; renderSheet(); return; }
     if (act === 'kill'){ const I = islOfB(b.id), c = costOf(b.kind, I); for (const [k, v] of Object.entries(c)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + Math.floor(v / 2)); I.buildings = I.buildings.filter(x => x.id !== b.id); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} ist weg.`); return; }
-    if (act === 'canoe'){ const I = islOfB(b.id); if (canPay(I, CANOE) && !I.canoe){ pay(I, CANOE); I.canoe = true; invalidate(); updateHUD(); save(); toast('Das Doppelkanu ist fertig.'); } renderSheet(); return; }
-    if (act === 'target'){ startTarget(islOfB(b.id)); return; }
-    if (act === 'settle'){ startSettlers(islOfB(b.id), isl('tochter')); return; }
     if (act === 'feast'){ holdFeast(islOfB(b.id), FEASTS.find(F => F.id === btn.dataset.f)); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (sheetKind === 'mana' && act === 'feast'){ holdFeast(isl(active), FEASTS.find(F => F.id === btn.dataset.f)); return; }
-  if (sheetKind === 'clan' && act === 'gift'){ const ri = routes.findIndex(r => r.a === sheetData.id || r.b === sheetData.id); if (ri >= 0) openTrade(ri); return; }
+  if (sheetKind === 'clan' && act === 'gift'){ const ri = routes.findIndex(r => r.a === sheetData.id || r.b === sheetData.id); if (ri >= 0) openRoute(ri); return; }
   if (sheetKind === 'menu'){
     if (act === 'help'){ openSheet('intro'); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
@@ -284,8 +269,4 @@ $('sheetBody').addEventListener('click', e => {
   }
 });
 const giftGuess = (C, worth) => { const g = returnGoods(C, worth); return g.load ? giftText(g.cargo) : 'eine kleine Gabe'; };
-function openTrade(ri, cargo = {}){
-  const r = routes[ri], mine = id => isl(id).settled, from = (r.a === active || r.b === active) && mine(active) ? active : mine(r.a) ? r.a : r.b, to = from === r.a ? r.b : r.a;
-  setActive(from); selectedId = null; invalidate(); openSheet('trade', {r:ri, from, to, cargo});
-}
 function select(b){ selectedId = b.id; invalidate(); setActive(islOfB(b.id).id); openSheet('info', {id:b.id}); }

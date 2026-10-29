@@ -22,14 +22,17 @@ Sie landet in `dist/polinusa.html`.
 | --- | --- |
 | `index.html`, `style.css` | Leisten, Tafeln und Knöpfe über der Karte |
 | `src/util.js` | Zufall mit Startwert, Geometrie, Kurven |
-| `src/data.js` | Waren, Gebäude, Kosten |
+| `src/data.js` | Waren, Gebäude, Kanus, Jahreszeiten, Feste, Kosten |
 | `src/art.js` | Alle Bilder als kleine SVG-Bausteine |
-| `src/world.js` | Inseln aus einem Startwert erzeugen, Bauregeln |
+| `src/world.js` | Inseln aus Startwert und Meeresfeld erzeugen, Bauregeln |
 | `src/state.js` | Spielstand, Startdörfer, Speichern und Laden |
 | `src/render.js` | Zeichnen auf Canvas |
 | `src/ui.js` | Bedienung, Bauen, Tafeln |
 | `src/quests.js` | Aufgaben für den Anfang, was sie freischalten |
-| `src/game.js` | Wirtschaft, Boote, Eingabe, Hauptschleife |
+| `src/fleet.js` | Kanus: Wege um Land herum, Nebel lichten, Handelsketten, Kanuhaus, Proviant |
+| `src/calendar.js` | Zwölf Monde, Jahreszeiten, Palolo, Rāhui, Fest der Plejaden |
+| `src/fleetui.js` | Tafeln für Kanu, Flotte, Handelskette, Kanuhaus, Kalender und Fest |
+| `src/game.js` | Wirtschaft, Baustellen, Menschen, Eingabe, Hauptschleife |
 
 Die Dateien sind einfache Skripte mit gemeinsamem globalem Bereich. Sie werden in dieser Reihenfolge geladen.
 
@@ -40,17 +43,19 @@ Die Dateien sind einfache Skripte mit gemeinsamem globalem Bereich. Sie werden i
 - Meer, Inseln und Häuser liegen in einer Grundebene, der Nebel in einer zweiten. Beide sind etwas größer als
   der Bildschirm und werden beim Schieben nur verschoben. Neu gemalt wird erst am Rand, nach einer Änderung
   im Dorf oder wenn ein Zoom zur Ruhe kommt.
-- Rauch, Menschen und Boote kommen darüber, höchstens 30-mal pro Sekunde.
-- Gezeichnet wird nur, was im Bild ist. Unentdeckte Inseln unter dem Nebel gar nicht.
+- Rauch, Menschen und Kanus kommen darüber, höchstens 30-mal pro Sekunde.
+- Gezeichnet wird nur, was im Bild ist. Inseln, die noch kein Kanu gesehen hat, gibt es noch gar nicht.
+- Neue Lichtungen im Nebel entstehen nur dort, wo die alten nicht schon hinreichen. So bleiben es wenige.
 - Die Wirtschaft rechnet alle zwei Sekunden für alle Inseln, getrennt von der Grafik.
 
 ## Welt
 
-Die Welt ist 2400 × 3600 groß und hat neun Inseln: die Heimat Panua, das Atoll Motu und sieben weitere
-(hohe Inseln, Vulkane, Atolle), zwei davon mit fremden Clans. Lage, Küsten, Wald, Bach, Riff und Vorkommen
-entstehen aus dem Startwert.
-Gespeichert wird nur der Startwert und was sich geändert hat, ein Spielstand hat etwa 5 KB.
-Die Weltnummer steht im Menü.
+Die Welt ist 4800 × 7200 groß und in Felder von 800 × 800 geteilt. Am Anfang gibt es nur die Heimat Panua und
+das Atoll Motu, beide in einer Lichtung im Nebel. Alles andere entsteht erst, wenn ein Kanu dorthin schaut:
+Dann wird das Feld aus Startwert und Feldnummer gewürfelt, vielleicht mit einer hohen Insel, einem Vulkan oder
+einem Atoll, weiter draußen manchmal mit einem fremden Clan. Es gibt keine Markierungen, wo Land liegt.
+Insgesamt entstehen etwa 30 Inseln. Weil das Würfeln nur vom Startwert abhängt, liegt nach dem Laden alles wieder
+an derselben Stelle. Gespeichert werden nur Startwert, gesehene Felder und was sich geändert hat, etwa 5 KB.
 
 ## Anfang
 
@@ -58,15 +63,83 @@ Wie bei Age of Empires steht am Anfang nur das Versammlungshaus auf Panua. Motu 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
 Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
 
-1. Zwei Häuser, 2. zwei Tarofelder, 3. 15 Bewohner, 4. Töpferei am Ton, 5. Beilwerkstatt am Felsen, 6. Kanuhaus,
-7. Siedler im Auslegerkanu nach Motu, 8. Flechthütte und Seilerei auf Motu, 9. Matten und Schnur nach Panua,
-10. 6 Proviant aus der Gärgrube, 11. Doppelkanu, 12. neues Land finden, 13. ein Fest, 14. ein Häuptlingsdorf.
+1. Zwei Häuser, 2. zwei Tarofelder, 3. 15 Bewohner, 4. Töpferei am Ton, 5. Beilwerkstatt am Felsen, 6. Kanuhaus
+(dann Blumen, Muschelwege, Fackeln und Hibiskus), 7. Auslegerkanu bauen, 8. vier Siedler nach Motu fahren und ein Dorf
+gründen, 9. Flechthütte und Seilerei auf Motu, 10. Handelskette: Matten und Schnur nach Panua, 11. 6 Proviant aus der
+Gärgrube (dann Doppelkanu und Ahnenpfosten), 12. Doppelkanu bauen, 13. im Nebel neues Land finden, 14. ein Fest,
+15. das Fest der Plejaden, 16. ein Häuptlingsdorf.
 
-Kleine Auslegerkanus bringen Siedler, Waren und Gaben zwischen den Inseln. Das Doppelkanu fährt ins Unbekannte.
+## Bauen braucht Zeit
+
+Jedes Gebäude kostet Holz und steht nicht sofort. Erst ist es eine Baustelle mit Gerüst und Fortschrittsbalken.
+Bauleute tragen Holz vom Speicher hin. Gleichzeitig wird an einer Stelle gebaut, je 8 Bewohner an einer mehr,
+die übrigen Baustellen warten. Ein Haus dauert etwa 10 Sekunden, das Versammlungshaus 30. Pflanzen kosten nichts,
+wachsen aber erst langsam heran. Was noch nicht fertig ist, arbeitet nicht und zählt nicht für die Aufgaben.
+
+## Kanus
+
+Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der halbfertige Rumpf im Gerüst.
+
+| Kanu | Kosten | Bauzeit | Trägt | Darf |
+| --- | --- | --- | --- | --- |
+| Auslegerkanu | 4 Holz, 1 Steinbeil | 30 s | 12 Waren, 4 Menschen | nur ins Bekannte |
+| Doppelkanu | 6 Holz, 2 Steinbeile, 3 Matten, 3 Schnur | 80 s | 24 Waren, 8 Menschen | auch in den Nebel |
+
+- **Steuern:** Kanu antippen, dann auf das Meer oder eine Insel tippen. Es sucht sich den Weg um das Land herum.
+  Der restliche Weg ist gepunktet zu sehen. Unten öffnet sich die Tafel des Kanus, „Beladen“ klappt die Ladeliste auf.
+- **Nebel:** Wo ein Kanu fährt, lichtet sich der Nebel. Das Doppelkanu sieht weiter als das Auslegerkanu.
+- **Proviant:** Auf freier Fahrt isst die Mannschaft des Doppelkanus jeden Reisetag (6 Sekunden) 1 Proviant.
+  Ohne Proviant fährt sie nicht ins Unbekannte, und geht er aus, kehrt sie langsam zur nächsten eigenen Insel zurück.
+- **Siedeln:** Mit 4 Siedlern an Bord vor einer leeren Insel „Dorf gründen“. Mitgebrachtes Holz und Essen kommt ins Lager.
+- **Wind und Jahreszeit:** Gegen den Nordwind geht es langsamer, in der Sturmzeit auch. In der Passatzeit schneller.
+- **Flotte:** Der Knopf rechts in der Bauleiste listet alle Kanus und Handelsketten.
+
+## Handelsketten
+
+Sobald ein Kanu von einer eigenen Insel zu einer anderen eigenen Insel oder zu einem Clan gefahren ist, verbindet sie
+eine Schnur. Tippt man sie an, kann man Kanus in die Kette setzen und für jede Richtung einstellen, was mitfahren soll.
+Ein Kanu in der Kette fährt dann allein hin und her, lädt aus, lädt ein und wartet kurz. Jede Fahrt knüpft einen Knoten,
+mit mehr Knoten geht es schneller. Bei einem Clan wird die Ladung zur Gabe. Steuert man ein Kanu selbst, verlässt es die Kette.
+
+## Schmuck im Dorf
+
+Hibiskus, Blumenbeet, Muschelweg, Fackel, Ahnenpfosten (wie die Gesichter auf der Lapita-Keramik), Schlitztrommel und
+Tanzplatz. Jedes Stück hat einen Schmuckwert. Alle halbe Minute bringt die Schönheit des Dorfes etwas Ansehen, so weit
+die Bewohner sie genießen können. Ein Häuptlingsdorf braucht Schönheit 10. Beim Fest der Plejaden zählt sie mit.
+
+## Das Jahr
+
+Ein Mond dauert eine Minute, das Jahr hat zwölf. Es beginnt, wenn die Plejaden nach Sonnenuntergang aufgehen, wie
+beim Makahiki auf Hawaiʻi oder bei Matariki in Aotearoa. Das Spiel beginnt im 6. Mond. Der Mond steht unter dem Kompass,
+Antippen öffnet den Kalender.
+
+| Zeit | Monde | Wirkung |
+| --- | --- | --- |
+| Zeit der Plejaden | 1–2 | Neujahr und Fest, Brotfrucht reichlich |
+| Sturmzeit | 3–5 | Kanus langsamer |
+| Passatzeit | 6–9 | Kanus schneller |
+| Magere Zeit | 10–12 | Brotfrucht trägt nicht, Proviant aus der Gärgrube hilft |
+
+- **Palolo:** Eine Woche nach Vollmond im ersten Mond steigt der Palolo-Wurm aus dem Riff. Drei Takte lang
+  sammeln alle Inseln zusätzliches Essen, mit Fischgestellen mehr.
+- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischgestellen ihr Riff sperren. Bis zum Fest ruht der Fang,
+  danach ist er doppelt reich, und das Ansehen steigt um 3.
+
+## Fest der Plejaden
+
+In der Zeit der Plejaden im Versammlungshaus. Die ersten Früchte (15 Essen, 2 Schweine) gehören den Ahnen, das bringt
+Ansehen 10. Dazu kann man wählen:
+
+- Kava-Runde (3 Kava): +5, Gäste der Clans knüpfen einen Knoten mehr. Kava wächst im Kavagarten oder kommt vom Clan vom Kavahain.
+- Tanz zur Schlitztrommel: +4, braucht Schlitztrommel und Tanzplatz. Die Leute tanzen dann im Kreis auf dem Tanzplatz.
+- Kanurennen in der Lagune: +2 je Kanu im Hafen, höchstens vier. Die Kanus fahren um das Riff.
+
+Die Schönheit des Dorfes bringt bis zu 8 mehr. Clans mit mindestens 2 Knoten kommen als Gäste mit Gaben, und ihre Schnur
+bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell. Einmal im Jahr pro Insel.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Elf Waren: Essen, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa, Schweine, Muschelschmuck.
+Zwölf Waren: Essen, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa, Schweine, Kava, Muschelschmuck.
 Ketten haben höchstens drei Glieder.
 
 | Gebäude | Insel | Braucht | Macht |
@@ -82,6 +155,7 @@ Ketten haben höchstens drei Glieder.
 | Flechthütte | Atoll | 2 Pandanus daneben | Matten |
 | Seilerei | Atoll | 3 Kokospalmen daneben | Schnur |
 | Schmuckschleiferei | Atoll, am Strand | Klingen | Muschelschmuck |
+| Kavagarten | hoch | | Kava |
 
 - **Vorkommen:** Ton liegt am Bach, Basalt an den grauen Felsen, Obsidian nur am Vulkan. Beim Bauen zeigen Ringe,
   wo sie liegen. Diese Rohstoffe werden nicht gelagert, die Werkstatt muss daneben stehen.
@@ -96,7 +170,7 @@ Ketten haben höchstens drei Glieder.
 | --- | --- | --- |
 | Weiler | Anfang | Essen 1,25 |
 | Dorf | 20 Bewohner | dazu Töpfe 0,1, ab 30 Bewohnern Matten 0,1 |
-| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Töpfe und Matten reichen, Tapa, Schweine und Schmuck im Lager | dazu Tapa 0,1, Schweine 0,04, Muschelschmuck 0,02 |
+| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Töpfe und Matten reichen, Tapa, Schweine und Schmuck im Lager | dazu Tapa 0,1, Schweine 0,04, Muschelschmuck 0,02 |
 
 Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen geschnitzte Pfosten und Muschelschmuck.
 Fehlt dort 30 Takte lang etwas, wird es wieder ein Dorf, und die Leute ziehen nach und nach aus.
@@ -108,22 +182,20 @@ Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Essen
 ## Ansehen
 
 Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 12 Essen und 2 Töpfe, +5;
-Großes Fest: 4 Schweine, 15 Essen und 2 Tapa, +15) und mit Gaben an andere Clans. Es sinkt um etwa 1 pro Minute.
+Großes Fest: 4 Schweine, 15 Essen und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
+schönen Dorf. Es sinkt um etwa 1 pro Minute.
 Gebraucht wird es für jede weitere Siedlungsfahrt (8 mehr pro Siedlung nach den ersten beiden) und für ein Häuptlingsdorf.
 Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus.
 
 ## Fremde Clans
 
-Auf zwei der unentdeckten Inseln lebt schon jemand: der Clan vom Feuerberg auf einem Vulkan (macht Klingen und Schweine,
-schätzt Matten, Schnur und Muschelschmuck) und der Clan vom Riff auf einem Atoll (macht Muschelschmuck und Matten,
-schätzt Töpfe, Steinbeile und Klingen). Erreicht das Doppelkanu einen Clan, gibt es eine Schnur dorthin, und das Kanu
-fährt heim. Waren an einen Clan sind Gaben: Sie antworten später mit ihren Waren. Wie reich die Gegengabe ausfällt,
+Weiter draußen leben schon Menschen: der Clan vom Feuerberg auf Vulkanen (macht Klingen und Schweine, schätzt Matten,
+Schnur und Muschelschmuck), der Clan vom Riff auf Atollen (macht Muschelschmuck und Matten, schätzt Töpfe, Steinbeile
+und Klingen) und der Clan vom Kavahain auf hohen Inseln (macht Kava und Tapa, schätzt Matten, Muschelschmuck und Klingen).
+Erreicht ein Kanu einen Clan, entsteht eine Schnur. Waren an einen Clan sind Gaben: „Gabe übergeben“ im Kanu oder
+eine Handelskette. Sie antworten später mit einem eigenen Kanu voller Waren. Wie reich die Gegengabe ausfällt,
 hängt von den Knoten auf der Schnur ab. Muschelschmuck knüpft einen Knoten extra, ohne Gaben löst sich alle drei Minuten einer.
 So funktionierten Wertgegenstände im Pazifik: als Gaben, die Beziehungen stiften, nicht als Geld.
-
-## Proviant
-
-Das Doppelkanu verbraucht 2 Proviant pro Reisetag. Die Fahrt startet nur, wenn genug im Lager ist.
 
 ## Menschen
 
@@ -131,7 +203,7 @@ Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, H
 drei Hauttöne. Etwa ein Viertel der Bewohner ist zu sehen. Zwei von dreien haben Arbeit und tragen sie sichtbar
 vom Feld, der Werkstatt oder dem Waldrand zum Speicher: Taro oder Brotfrucht im Korb auf dem Kopf, Töpfe,
 Steine, Obsidian, Muscheln, Schnur, Tapa, Proviant, Holz, Fisch an der Stange, Matten. Die anderen schlendern zwischen den
-Häusern. Auch in den Dörfern der Clans sind Menschen unterwegs.
+Häusern. Bauleute tragen Holz zu den Baustellen. Auch in den Dörfern der Clans sind Menschen unterwegs.
 
 ## Nächste Schritte
 
@@ -140,6 +212,7 @@ Häusern. Auch in den Dörfern der Clans sind Menschen unterwegs.
 3. ~~Bedürfnisse auf einen Blick~~
 4. ~~Menschen neu zeichnen~~ (Feinschliff nach dem Vorlagebild)
 5. Kleine Kanus in der Lagune
-6. Handel mit kleinen Kanus
-7. Erkunden mit dem Hochseekanu, ohne Markierungen
-8. Android-App mit Capacitor
+6. ~~Handel mit kleinen Kanus~~
+7. ~~Erkunden mit dem Hochseekanu, ohne Markierungen~~
+8. ~~Bauzeiten, gesteuerte Kanus, Inseln aus dem Nebel, Schmuck, Jahr und Fest der Plejaden~~
+9. Android-App mit Capacitor

@@ -4,7 +4,7 @@
    - Sea, islands and buildings sit in a base layer, the fog in a second one. Both are painted a bit larger
      than the screen and only shifted while you pan. They are repainted when a village changes, when you
      reach their edge or when a zoom comes to rest.
-   - Smoke, people and boats go on top, at most 30 times a second.
+   - Smoke, people and canoes go on top, at most 30 times a second.
    - Only what is on screen is drawn. */
 
 const mapC = $('map'), ctx = mapC.getContext('2d');
@@ -24,7 +24,7 @@ function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t = topH + 8; $('compass').style.top = t + 'px'; $('zoomctl').style.top = t + 'px'; $('toast').style.top = (topH + 10) + 'px';
+  const t = topH + 8; $('compass').style.top = t + 'px'; $('seasonBtn').style.top = (t + $('compass').offsetHeight + 8) + 'px'; $('zoomctl').style.top = t + 'px'; $('toast').style.top = (topH + 10) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -44,7 +44,12 @@ function camFor(x, y, z){ const off = (topH - botH) / 2; return {x, y:y - off / 
 function flyTo(x, y, z){ z = clampZ(z); const to = camFor(x, y, z); if (reduced){ Object.assign(cam, to); clampCam(); applyCam(); return; } camAnim = {from:{...cam}, to, t0:performance.now(), dur:520}; }
 function fitBox(b, maxZ = 2){ const bw = b.x1 - b.x0, bh = b.y1 - b.y0; const z = Math.min((vw - 140) / bw, (vh - topH - botH - 60) / bh, maxZ); flyTo((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z); }
 function boxOf(list){ const b = {x0:Infinity, y0:Infinity, x1:-Infinity, y1:-Infinity}; for (const I of list){ b.x0 = Math.min(b.x0, I.box.x0); b.y0 = Math.min(b.y0, I.box.y0); b.x1 = Math.max(b.x1, I.box.x1); b.y1 = Math.max(b.y1, I.box.y1); } return b; }
-function overview(){ const b = boxOf(islands); fitBox({x0:b.x0 - 90, y0:b.y0 - 60, x1:b.x1 + 90, y1:b.y1 + 40}, 1.2); }
+function overview(){
+  // everything known: the islands found so far and the sea the canoes have seen
+  const b = boxOf(islands.filter(I => I.discovered));
+  for (const h of fogHoles){ b.x0 = Math.min(b.x0, h.cx - h.rx * .8); b.y0 = Math.min(b.y0, h.cy - h.ry * .8); b.x1 = Math.max(b.x1, h.cx + h.rx * .8); b.y1 = Math.max(b.y1, h.cy + h.ry * .8); }
+  fitBox({x0:b.x0 - 40, y0:b.y0 - 40, x1:b.x1 + 40, y1:b.y1 + 30}, 1.2);
+}
 function stepCam(now){
   if (!camAnim) return; const t = clamp((now - camAnim.t0) / camAnim.dur, 0, 1), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, a = camAnim.from, b = camAnim.to;
   cam.z = Math.exp(Math.log(a.z) + (Math.log(b.z) - Math.log(a.z)) * e); cam.x = a.x + (b.x - a.x) * e; cam.y = a.y + (b.y - a.y) * e; clampCam(); applyCam();
@@ -95,9 +100,19 @@ function blit(c, key, art, alpha = 1){
 function put(c, x, y, s, m, rot, key, art, alpha){ c.save(); c.translate(x, y); if (rot) c.rotate(rot); c.scale(s * m, s); blit(c, key, art, alpha); c.restore(); }
 function drawBuilding(c, b, I, alpha = 1){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
-  const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && !!(I && I.canoe), chief = b.kind === 'haus' && !!I && I.lvl === 3;
+  const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief}, t = xformOf(b.kind, v);
-  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1), t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe ? 1 : ''}|${chief ? 1 : ''}`, () => artOf(b.kind, o), alpha);
+  // young plants grow from a third of their size; a building site shows its frame and the building rising faintly
+  const site = b.bt && !K.plant, grown = b.bt && K.plant ? .35 + .65 * (1 - b.bt / K.bt) : 1;
+  put(c, b.x, b.y, t.s * (chief ? 1.12 : 1) * grown, t.m, t.rot, `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}`, () => artOf(b.kind, o), site ? alpha * .4 : alpha);
+  if (site) drawSite(c, b, K, alpha);
+}
+function drawSite(c, b, K, alpha){
+  const f = 1 - b.bt / K.bt, w = Math.max(14, K.r * 1.4), s = clamp(K.r / 11, .7, 1.5);
+  put(c, b.x, b.y, s, 1, 0, 'scaffold', '<use href="#scaffold"/>', alpha);
+  const bar = roundRect(b.x - w / 2, b.y + 5, w, 3.6, 1.8);
+  c.fillStyle = '#F4ECD8'; c.fill(bar); c.save(); c.clip(bar); c.fillStyle = '#3E7A3A'; c.fillRect(b.x - w / 2, b.y + 5, w * f, 3.6); c.restore();
+  stroke(c, bar, '#2B1D14', .8);
 }
 
 /* ---------- patterns: drawn at 8× and scaled back so they stay sharp when zoomed in */
@@ -302,39 +317,33 @@ function drawGhost(c){
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
 }
 function drawTop(c, now){
-  const v = view(80), ks = clamp(.85 / cam.z, 1, 2.6);
-  // a cloud with circling birds marks land below the fog
-  for (const I of islands){
-    if (I.discovered) continue; const x = I.center.x, y = I.center.y - 10; if (!ptIn(x, y, v)) continue;
-    c.save(); c.translate(x, y); c.scale(ks, ks);
-    if (mode === 'target'){ const t = reduced ? .5 : (now % 1400) / 1400; stroke(c, ellipse(0, 0, 42 * (.6 + .9 * t), 42 * (.6 + .9 * t)), '#A84A2C', 4, [3, 3], null, .9 * (1 - t)); }
-    put(c, 0, 0, 1.7, 1, 0, 'cloud', '<use href="#cloud"/>');
-    const t1 = reduced ? 0 : (now % 11000) / 11000 * TAU, t2 = reduced ? 0 : (now % 15000) / 15000 * TAU;
-    c.save(); c.translate(30 * Math.cos(t1), -40 + 12 * Math.sin(t1)); stroke(c, BIRD1, '#2B1D14', 1.6, null, 'round'); c.restore();
-    c.save(); c.translate(-36 * Math.cos(t2), -34 - 14 * Math.sin(t2)); stroke(c, BIRD2, '#2B1D14', 1.6, null, 'round'); c.restore();
-    c.restore();
+  const v = view(120), far = lod === 'far', ks = far ? clamp(.6 / cam.z, 1, 2.4) : 1;
+  // the steered canoe: a ring around it and the way it still has to go
+  const S = selShip && ships.includes(selShip) ? selShip : null;
+  if (S && S.state === 'sail' && S.pi < S.path.length){
+    const p = new Path2D(); p.moveTo(S.x, S.y); for (let i = S.pi; i < S.path.length; i++) p.lineTo(S.path[i].x, S.path[i].y);
+    stroke(c, p, '#F4ECD8', 2.4 / Math.min(1, cam.z), [.1, 7 / Math.min(1, cam.z)], 'round', .95);
+    const e = S.path[S.path.length - 1]; stroke(c, ellipse(e.x, e.y, 9 * ks, 5 * ks), '#F4ECD8', 2, [.1, 4], 'round', .9);
   }
-  for (const b of boats) if (b.exp){ if (!b._p) b._p = new Path2D(b.cv.d); stroke(c, b._p, '#F1EBD9', 2.4, [.1, 6], 'round', .9); }
-  for (const b of boats){
-    if (b.x == null || !ptIn(b.x, b.y, view(120))) continue;
-    c.save(); c.translate(b.x, b.y); c.scale(b.k, b.k); c.globalAlpha = b.alpha;
-    const small = b.kind === 'oc';
+  for (const s of ships){
+    if (!ptIn(s.x, s.y, v) || (!s.own && !revealed(s))) continue;
+    c.save(); c.translate(s.x, s.y); c.scale(ks, ks);
+    if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; stroke(c, ellipse(0, 1, 16 + 3 * t, 8 + 1.5 * t), '#F4ECD8', 2.4, [.1, 4], 'round', .95); }
     c.save();
-    if (small){ if (b.left) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
-    else { if (b.q === 'NW' || b.q === 'SE') c.scale(-1, 1); const up = b.q === 'NE' || b.q === 'NW'; blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
+    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
+    else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
     c.restore();
-    const icons = (b.people ? ['pop'] : []).concat(Object.keys(b.cargo || {}).filter(k => b.cargo[k] > 0)).slice(0, 3);
-    if (lod !== 'far' && icons.length){
-      if (small) c.scale(1 / 1.5, 1 / 1.5);   // the bubble keeps its size on the smaller, scaled-up canoe
-      c.translate(small ? 6 : 10, small ? -34 : -40); const p = roundRect(0, 0, icons.length * 15 + 8, 19, 4);
-      c.fillStyle = '#F4ECD8'; c.fill(p); stroke(c, p, '#3E2416', 1.3, [.1, 2.2], 'round');
+    const icons = (s.people ? ['pop'] : []).concat(Object.keys(s.cargo || {}).filter(k => s.cargo[k] > 0)).slice(0, 3);
+    if (!far && icons.length){
+      c.translate(s.kind === 'oc' ? 6 : 10, s.kind === 'oc' ? -34 : -40); const p = roundRect(0, 0, icons.length * 15 + 8, 19, 4);
+      c.fillStyle = s.own ? '#F4ECD8' : '#F3D9A0'; c.fill(p); stroke(c, p, '#3E2416', 1.3, [.1, 2.2], 'round');
       icons.forEach((k, i) => put(c, 3 + i * 15, 1.5, .8, 1, 0, 'ic-' + k, `<use href="#ic-${k}"/>`));
       stroke(c, BUBBLE_LINE, '#3E2416', 1);
     }
     c.restore();
   }
 }
-const NAME_FONT = '800 14px Alegreya, Georgia, serif', SUB_FONT = '700 10px "Alegreya Sans", "Trebuchet MS", sans-serif', CLOUD_FONT = '800 12px "Alegreya Sans", "Trebuchet MS", sans-serif';
+const NAME_FONT = '800 14px Alegreya, Georgia, serif', SUB_FONT = '700 10px "Alegreya Sans", "Trebuchet MS", sans-serif';
 function label(c, x, y, k, text, sub, font = NAME_FONT){
   c.save(); c.translate(x, y); c.scale(k, k);
   c.font = font; let w = c.measureText(text).width + 16;
@@ -349,8 +358,7 @@ function drawLabels(c){
   if (lod === 'near') return;
   const k = clamp(.95 / cam.z, .75, 2.6), v = view(200);
   for (const I of islands){
-    if (I.discovered){ if (ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : 'unbewohnt'); }
-    else if (lod === 'far') label(c, I.center.x, I.center.y + 44, k, 'Wolke über Land', '', CLOUD_FONT);
+    if (I.discovered && ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : 'unbewohnt');
   }
 }
 
@@ -387,4 +395,4 @@ function draw(now){
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => boats.length > 0 || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => !I.discovered || (I.volcano && seen(I)));
+const animating = () => !!selShip || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));

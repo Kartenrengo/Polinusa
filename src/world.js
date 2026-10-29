@@ -1,53 +1,58 @@
 'use strict';
 /* The world: islands generated from one seed, plus the rules for where things may stand.
-   Only the seed is saved, so the save stays tiny and every new game looks different. */
+   Only the start is laid out at once. The sea is cut into cells; a cell is rolled the moment a canoe first sees into it,
+   always with the same result for the same seed. Before that the game itself does not know what lies there.
+   Only the seed and the cells already seen are saved. */
 
-const W = 2400, H = 3600;
+const W = 4800, H = 7200, CELL = 800;
 /* Island names are Proto-Oceanic words */
 const NAMES = {
-  hoch: ['Patu', 'Kuro', 'Langi', 'Talise', 'Wai'],   // Stein, Topf, Himmel, Mandelbaum, Süßwasser
-  atoll: ['Namo', 'One', 'Niu', 'Ika', 'Tasi', 'Manu'] // Lagune, Sand, Kokospalme, Fisch, Meer, Vogel
+  hoch: ['Patu', 'Kuro', 'Langi', 'Talise', 'Wai', 'Ulu', 'Mata'],   // Stein, Topf, Himmel, Mandelbaum, Süßwasser, Kopf, Auge
+  vulkan: ['Api', 'Ulu', 'Langi', 'Patu'],                            // Feuer, Kopf, Himmel, Stein
+  atoll: ['Namo', 'One', 'Niu', 'Ika', 'Tasi', 'Manu', 'Ponu']        // Lagune, Sand, Kokospalme, Fisch, Meer, Vogel, Schildkröte
 };
+const NUMBER = ['', ' Rua', ' Tolu', ' Pati', ' Lima'];               // the second, third ... island of a name: zwei, drei, vier, fünf
 const radOf = (kind, size) => kind === 'atoll' ? size + 12 : size * 1.36 + 50;
 
+/* The start: Panua with its first atoll Motu next door */
 function makeWorld(seed){
   const r = rng(seed), spots = [];
-  const hx = W * (.36 + r() * .12), hy = H * (.6 + r() * .1);
+  const hx = W * (.42 + r() * .1), hy = H * (.55 + r() * .1);
   spots.push({id:'heimat', name:'Panua', kind:'hoch', x:hx, y:hy, size:138 + r() * 16});
   const a = (-100 + r() * 70) * Math.PI / 180, d = 470 + r() * 70;
   spots.push({id:'tochter', name:'Motu', kind:'atoll', x:hx + Math.cos(a) * d, y:hy + Math.sin(a) * d, size:112 + r() * 16});
   for (const s of spots) s.rad = radOf(s.kind, s.size);
   const hole = startHoleFor(spots);
-
-  const kinds = shuffle(r, ['vulkan', 'atoll', 'hoch', 'atoll', 'hoch', 'atoll', 'vulkan']);
-  const names = {hoch:shuffle(r, NAMES.hoch), atoll:shuffle(r, NAMES.atoll)};
-  let volcanoes = 0, n = 0;
-  for (const kind of kinds){
-    const size = kind === 'atoll' ? 92 + r() * 36 : kind === 'vulkan' ? 104 + r() * 22 : 108 + r() * 32, rad = radOf(kind, size);
-    for (let t = 0; t < 400; t++){
-      const x = rad + 50 + r() * (W - 2 * rad - 100), y = rad + 50 + r() * (H - 2 * rad - 100);
-      if (spots.some(s => Math.hypot(s.x - x, s.y - y) < s.rad + rad + 150)) continue;
-      const ex = (x - hole.cx) / (hole.rx + rad + 100), ey = (y - hole.cy) / (hole.ry + rad + 100);
-      if (ex * ex + ey * ey < 1) continue;
-      const name = kind === 'vulkan' && !volcanoes++ ? 'Api' : names[kind === 'atoll' ? 'atoll' : 'hoch'].pop();
-      spots.push({id:'i' + (++n), name, kind, x, y, size, rad});
-      break;
-    }
-  }
-  // each harbour faces the nearest neighbour, the first two face each other
   const islands = spots.map((s, i) => {
-    const o = i < 2 ? spots[1 - i] : spots.filter(q => q !== s).reduce((b, q) => Math.hypot(q.x - s.x, q.y - s.y) < Math.hypot(b.x - s.x, b.y - s.y) ? q : b);
-    const len = Math.hypot(o.x - s.x, o.y - s.y) || 1, dir = {x:(o.x - s.x) / len, y:(o.y - s.y) / len};
-    const I = s.kind === 'atoll' ? genAtoll(s, dir, rng(seed ^ (i + 1) * 7919)) : genHigh(s, dir, rng(seed ^ (i + 1) * 7919), s.kind === 'vulkan', i === 0);
+    const o = spots[1 - i], len = Math.hypot(o.x - s.x, o.y - s.y) || 1, dir = {x:(o.x - s.x) / len, y:(o.y - s.y) / len};
+    const I = s.kind === 'atoll' ? genAtoll(s, dir, rng(seed ^ (i + 1) * 7919)) : genHigh(s, dir, rng(seed ^ (i + 1) * 7919), false, true);
     Object.assign(I, {id:s.id, name:s.name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1});
     return I;
   });
-  // two other clans already live out there: one on a volcano, one on an atoll
-  for (const [id, C] of Object.entries(CLANS)){
-    const i = spots.findIndex((q, j) => j >= 2 && q.kind === C.on && !islands[j].clan && (C.on !== 'vulkan' || islands[j].deco.some(d => d.t === 'obsidian')));
-    if (i >= 0) islands[i].clan = {id, ...C};
-  }
-  return {islands, hole};
+  return {islands, hole, home:{x:hx, y:hy}, keep:spots};
+}
+/* One cell of open sea: maybe an island, maybe a clan on it. Near home islands are more likely. */
+function genCell(seed, cx, cy, start, used){
+  const r = rng((seed ^ Math.imul(cx + 101, 73856093) ^ Math.imul(cy + 211, 19349663)) >>> 0);
+  const hc = {x:Math.floor(start.home.x / CELL), y:Math.floor(start.home.y / CELL)}, dc = Math.max(Math.abs(cx - hc.x), Math.abs(cy - hc.y));
+  if (r() > (dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
+  const roll = r(), kind = roll < .42 ? 'atoll' : roll < .66 ? 'vulkan' : 'hoch';
+  const size = kind === 'atoll' ? 92 + r() * 36 : kind === 'vulkan' ? 104 + r() * 22 : 108 + r() * 32, rad = radOf(kind, size), m = rad + 50;
+  const x = cx * CELL + m + r() * (CELL - 2 * m), y = cy * CELL + m + r() * (CELL - 2 * m);
+  // never crowd the start
+  if (start.keep.some(k => Math.hypot(k.x - x, k.y - y) < k.rad + rad + 160)) return null;
+  const h = start.hole, ex = (x - h.cx) / (h.rx + rad + 60), ey = (y - h.cy) / (h.ry + rad + 60); if (ex * ex + ey * ey < 1) return null;
+  const len = Math.hypot(start.home.x - x, start.home.y - y) || 1, dir = {x:(start.home.x - x) / len, y:(start.home.y - y) / len};
+  const sp = {x, y, size, kind};
+  const I = kind === 'atoll' ? genAtoll(sp, dir, r) : genHigh(sp, dir, r, kind === 'vulkan', false);
+  const pool = NAMES[kind], base = pool[Math.floor(r() * pool.length)];
+  let name = base; for (let i = 1; used.has(name) && i < NUMBER.length; i++) name = base + NUMBER[i];
+  if (used.has(name)) name = base + ' ' + (cx * 10 + cy);
+  // a clan, further out: on a volcano with obsidian, on an atoll, or in a kava grove on a high island
+  const clanRoll = r();
+  if (dc >= 2 && clanRoll < .3){ const t = kind === 'vulkan' ? 'feuer' : kind === 'atoll' ? 'riff' : 'hain'; if (t !== 'feuer' || I.deco.some(d => d.t === 'obsidian')) I.clan = {id:t, ...CLANS[t]}; }
+  Object.assign(I, {id:`c${cx}_${cy}`, name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy]});
+  return I;
 }
 function startHoleFor(spots){
   const [a, b] = spots, x0 = Math.min(a.x - a.rad, b.x - b.rad), x1 = Math.max(a.x + a.rad, b.x + b.rad), y0 = Math.min(a.y - a.rad, b.y - b.rad), y1 = Math.max(a.y + a.rad, b.y + b.rad);
@@ -165,13 +170,15 @@ function genAtoll(s, hdir, r){
 }
 
 /* ---------- island rules */
-const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher').length;
+const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher' && !b.bt).length;
 /* In a chief's village every house and stilt house holds 6 instead of 4 */
-const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (I.lvl === 3 && (b.kind === 'haus' || b.kind === 'pfahl') ? CHIEF.cap : KINDS[b.kind].cap || 0), 0);
+const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (b.bt ? 0 : I.lvl === 3 && (b.kind === 'haus' || b.kind === 'pfahl') ? CHIEF.cap : KINDS[b.kind].cap || 0), 0);
 const DEP_DECO = {ton:'clay', basalt:'rock', obsidian:'obsidian'};
 const depsOf = (I, dep) => I.deco.filter(d => d.t === DEP_DECO[dep]);
 const depNear = (I, dep, x, y, r) => depsOf(I, dep).find(d => Math.hypot(d.x - x, d.y - y) < r) || null;
-const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && Math.hypot(b.x - x, b.y - y) < r).length;
+const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
+/* Beauty: what adorns an island, counted from finished decorations */
+const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0);
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
 function inLagoon(I, p){
   if (landAt(I, p)) return false;
@@ -213,6 +220,8 @@ function variant(kind, r = Math.random){
   else if (kind === 'palme' || kind === 'pandanus') v.scale = fx(.7 + r() * .22);
   else if (kind === 'baum') v.scale = fx(.85 + r() * .2);
   else if (kind === 'taro') v.rot = Math.round(r() * 80);
+  else if (kind === 'weg') v.rot = Math.round((r() - .5) * 60);
+  else if (kind === 'hibiskus') v.scale = fx(.85 + r() * .25);
   else if (kind === 'speicher') v.scale = fx(.75 + r() * .12);
   return v;
 }

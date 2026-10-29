@@ -3,40 +3,49 @@
    so the build bar starts with just the house and grows with the village. */
 
 const START_KINDS = ['haus'];
-const count = (id, kind) => isl(id).buildings.filter(b => b.kind === kind).length;
+// only what is finished counts; building sites and young plants do not
+const count = (id, kind) => isl(id).buildings.filter(b => b.kind === kind && !b.bt).length;
 const newLand = () => islands.filter(I => I.discovered && I.id !== 'heimat' && I.id !== 'tochter').length;
 const stockOf = (id, k) => isl(id).stock[k] || 0;
-/* n() counts progress towards of. show says where "Zeig es mir" leads: a build button, a building's sheet or a trade. */
+const fleetOf = kind => own().filter(s => s.kind === kind).length;
+/* n() counts progress towards of. show says where "Zeig es mir" leads: a build button, a building's sheet, a canoe, a trade chain or the calendar. */
 const QUESTS = [
-  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause.',
+  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause. Jeder Bau braucht Holz und etwas Zeit, bis die Bauleute fertig sind.',
     n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:['taro'], gift:{holz:3}},
   {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Jeder Mensch isst. Solange Essen im Lager liegt und Platz in den Häusern ist, ziehen neue Leute zu.',
     n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:['baum', 'palme'], gift:{nahrung:4}},
-  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Neue Menschen kommen von allein, wenn Häuser frei sind und das Essen reicht. Tippe oben auf die Bewohnerzahl, dann siehst du, was fehlt.',
+  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Neue Menschen kommen von allein, wenn Häuser frei sind und das Essen reicht. Tippe oben auf die Bewohnerzahl, dann siehst du, was fehlt. Je 8 Bewohner kann an einer Baustelle mehr gearbeitet werden.',
     n:() => isl('heimat').pop, of:15, show:{build:'haus'}, unlock:['speicher', 'toepfer'], gift:{holz:4}},
   {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ton liegt am Bach. Die Töpferei formt ihn zu Töpfen und brennt sie mit Holz. Ab 20 Bewohnern braucht jede Familie Töpfe.',
     n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:['beil', 'pfahl'], gift:{}},
   {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Aus dem grauen Basalt entstehen Steinbeile. Ohne sie lässt sich kein Stamm für ein Kanu aushöhlen.',
     n:() => count('heimat', 'beil'), of:1, show:{build:'beil'}, unlock:['werft'], gift:{holz:4}},
   {id:'wasser', t:'Ans Wasser', d:'Baue ein Kanuhaus am Strand.', why:'Im Kanuhaus entstehen die Boote. Es muss direkt am Strand stehen.',
-    n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:[], gift:{holz:4, nahrung:4}},
-  {id:'motu', t:'Hinüber nach Motu', d:'Schick Siedler im Auslegerkanu nach Motu.', why:'Auf dem Atoll wachsen Pandanus und Kokospalmen. Daraus entstehen Matten für die Segel und Schnur für das große Kanu.',
-    n:() => isl('tochter').settled ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:['fisch', 'flecht', 'schnur', 'pandanus', 'halle'], gift:{}},
-  {id:'segel', t:'Segel und Schnur', d:'Baue auf Motu eine Flechthütte und eine Seilerei.', why:'Die Flechthütte braucht Pandanus in der Nähe, die Seilerei Kokospalmen. Beim Bauen siehst du, ob genug da sind.',
+    n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'weg', 'fackel'], gift:{holz:4, nahrung:4}},
+  {id:'ausleger', t:'Ein Auslegerkanu', d:'Baue im Kanuhaus ein Auslegerkanu.', why:'Ein Kanu braucht seine Zeit. Solange daran gebaut wird, kannst du das Dorf mit Blumen, Muschelwegen und Fackeln schmücken. Ein schönes Dorf bringt Ansehen.',
+    n:() => fleetOf('oc') || isl('tochter').settled ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
+  {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', why:'Tippe das Kanu im Hafen an. Lade 4 Siedler, Holz und Essen ein. Dann tippe auf Motu, und das Kanu fährt hinüber. Auf dem Atoll wachsen Pandanus und Kokospalmen für Segel und Schnur.',
+    n:() => isl('tochter').settled ? 1 : 0, of:1, show:{ship:'oc'}, unlock:['fisch', 'flecht', 'schnur', 'pandanus', 'halle'], gift:{}},
+  {id:'segel', t:'Segel und Schnur', d:'Baue auf Motu eine Flechthütte und eine Seilerei.', why:'Die Flechthütte braucht Pandanus in der Nähe, die Seilerei Kokospalmen. Beim Bauen siehst du, ob genug da sind. Holz kommt von Panua. Ein Fischgestell am Strand gibt den Siedlern Essen.',
     n:() => Math.min(1, count('tochter', 'flecht')) + Math.min(1, count('tochter', 'schnur')), of:2, show:{island:'tochter', build:'flecht'}, unlock:[], gift:{holz:2}, giftTo:'tochter'},
-  {id:'tausch', t:'Waren tauschen', d:'Bring 3 Matten und 3 Schnüre nach Panua.', why:'Tippe auf die Schnur zwischen den Inseln und belade ein Kanu. Jede Fahrt knüpft einen Knoten, dann geht die nächste schneller.',
-    n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{island:'tochter', trade:{matten:3, schnur:3}}, unlock:['gaergrube'], gift:{}},
-  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'In der Gärgrube hält Brotfrucht monatelang. Auf dem offenen Meer isst die Mannschaft jeden Tag 2 Proviant.',
-    n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:[], gift:{}},
-  {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu trägt genug Menschen, Pflanzen und Tiere über das offene Meer.',
-    n:() => isl('heimat').canoe || boats.some(b => b.exp) || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
-  {id:'land', t:'Neues Land', d:'Finde mit dem Doppelkanu eine neue Insel.', why:'Wo Vögel über einer Wolke kreisen, liegt Land darunter. Vielleicht lebt dort schon jemand.',
-    n:() => newLand(), of:1, show:{sheet:'werft'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck'], gift:{}},
+  {id:'tausch', t:'Eine Handelskette', d:'Bring 3 Matten und 3 Schnüre nach Panua.', why:'Tippe auf die Schnur zwischen den Inseln. Setze ein Kanu in die Kette und stell ein, was es in jede Richtung mitnimmt. Dann fährt es von allein hin und her. Jede Fahrt knüpft einen Knoten.',
+    n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube'], gift:{}},
+  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'In der Gärgrube hält Brotfrucht monatelang. Auf freier Fahrt isst die Mannschaft eines Doppelkanus jeden Reisetag 1 Proviant.',
+    n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:['dc', 'pfosten'], gift:{}},
+  {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu trägt genug Menschen, Pflanzen und Tiere über das offene Meer. Es dauert lange. Richte in der Zeit die Handelskette ein oder schmücke das Dorf.',
+    n:() => fleetOf('dc') || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
+  {id:'land', t:'Neues Land', d:'Fahre mit dem Doppelkanu in den Nebel und finde eine neue Insel.', why:'Niemand weiß, was im Nebel liegt. Lade Proviant ein, tippe das Kanu an und dann auf den Nebel. Wo das Kanu fährt, lichtet sich der Nebel.',
+    n:() => newLand(), of:1, show:{ship:'dc'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck', 'kavagarten', 'trommel', 'tanzplatz'], gift:{}},
   {id:'fest', t:'Ein Fest', d:'Feiere ein Fest im Versammlungshaus.', why:'Feste bringen Ansehen. Mit Ansehen folgen dir Siedler auf weitere Fahrten, und ein Dorf kann Häuptlingsdorf werden.',
     n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
-  {id:'chief', t:'Ein Häuptlingsdorf', d:'Mach ein Dorf zum Häuptlingsdorf.', why:`Dafür braucht es ${CHIEF.pop} Bewohner, Ansehen ${CHIEF.mana}, genug Töpfe und Matten und dazu Tapa, Schweine und Muschelschmuck im Lager. Dann wohnen 6 Menschen in jedem Haus.`,
+  {id:'plejaden', t:'Das Fest der Plejaden', d:() => festivalTime() ? 'Jetzt ist Festzeit. Feiere das Fest der ersten Früchte.' : `Feiere das Fest der ersten Früchte. Die Plejaden erscheinen in etwa ${minutes(untilFestival())} Minuten.`,
+    why:'Wenn die Plejaden nach Sonnenuntergang aufgehen, beginnt das neue Jahr. Die ersten Früchte gehören den Ahnen. Mit Kava, Tanz zur Schlitztrommel und einem Kanurennen wird das Fest größer, und befreundete Clans kommen zu Besuch.',
+    n:() => islands.some(I => I.festYear != null) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
+  {id:'chief', t:'Ein Häuptlingsdorf', d:'Mach ein Dorf zum Häuptlingsdorf.', why:`Dafür braucht es ${CHIEF.pop} Bewohner, Ansehen ${CHIEF.mana}, Schönheit ${CHIEF.beauty}, genug Töpfe und Matten und dazu Tapa, Schweine und Muschelschmuck im Lager. Dann wohnen 6 Menschen in jedem Haus.`,
     n:() => islands.some(I => I.settled && I.lvl === 3) ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{}}
 ];
+const dOf = Q => typeof Q.d === 'function' ? Q.d() : Q.d;
+const unlockName = k => (KINDS[k] || SHIPS[k]).n;
 const feastsOpen = () => quest >= QUESTS.findIndex(Q => Q.id === 'fest');
 let quest = 0;               // index of the current task; QUESTS.length means all are done
 const newKinds = new Set();  // unlocked but not yet tapped, they get a dot in the build bar
@@ -56,7 +65,7 @@ function checkQuest(){
     done = Q;
   }
   if (done){
-    const kinds = done.unlock.map(k => KINDS[k].n), parts = [`Geschafft: ${done.t}.`];
+    const kinds = done.unlock.map(unlockName), parts = [`Geschafft: ${done.t}.`];
     if (kinds.length) parts.push(`Neu zum Bauen: ${kinds.join(', ')}.`);
     if (Object.keys(done.gift).length) parts.push(`Dazu ${giftText(done.gift)}.`);
     if (quest >= QUESTS.length) parts.push('Jetzt steht dir alles offen.');
@@ -71,17 +80,17 @@ function renderQuest(){
   const Q = QUESTS[quest], n = clamp(Q.n(), 0, Q.of);
   el.querySelector('.q-n').textContent = `Aufgabe ${quest + 1} von ${QUESTS.length}`;
   el.querySelector('.q-t').textContent = Q.t;
-  el.querySelector('.q-d').textContent = Q.d;
+  el.querySelector('.q-d').textContent = dOf(Q);
   el.querySelector('.q-p').textContent = `${n} von ${Q.of}`;
   el.querySelector('.q-bar i').style.width = (n / Q.of * 100) + '%';
-  el.setAttribute('aria-label', `Aufgabe: ${Q.t}. ${Q.d} ${n} von ${Q.of}.`);
+  el.setAttribute('aria-label', `Aufgabe: ${Q.t}. ${dOf(Q)} ${n} von ${Q.of}.`);
 }
 function questSheet(){
   const Q = QUESTS[quest]; if (!Q) return '';
   const n = clamp(Q.n(), 0, Q.of);
   return head(Q.t, `Aufgabe ${quest + 1} von ${QUESTS.length}`) +
-    `<p><b>${Q.d}</b> Bisher ${n} von ${Q.of}.</p><p class="sub">${Q.why}</p>` +
-    (Q.unlock.length ? `<p class="sub">Danach neu zum Bauen: ${Q.unlock.map(k => KINDS[k].n).join(', ')}.</p>` : '') +
+    `<p><b>${dOf(Q)}</b> Bisher ${n} von ${Q.of}.</p><p class="sub">${Q.why}</p>` +
+    (Q.unlock.length ? `<p class="sub">Danach neu zum Bauen: ${Q.unlock.map(unlockName).join(', ')}.</p>` : '') +
     `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="close">Später</button><button class="btn primary" type="button" data-act="showq">Zeig es mir</button></span></div>`;
 }
 /* "Zeig es mir": go to the right island and point at the button or building that does the job */
@@ -89,9 +98,10 @@ function showQuest(){
   const Q = QUESTS[quest]; if (!Q) return;
   const s = Q.show, id = s.island || 'heimat', I = isl(id);
   closeSheet();
-  if (s.sheet){ const b = isl('heimat').buildings.find(x => x.kind === s.sheet); if (b){ flyTo(b.x, b.y, Math.max(cam.z, 1.8)); select(b); return; } }
+  if (s.ship){ const sh = own().find(q => q.kind === s.ship) || own()[0]; if (sh){ steerShip(sh); return; } }
+  if (s.sheet || s.ship){ const b = isl('heimat').buildings.find(x => x.kind === (s.sheet || 'werft')); if (b){ flyTo(b.x, b.y, Math.max(cam.z, 1.8)); select(b); return; } }
   if (s.needs){ openSheet('needs'); return; }
-  if (s.trade){ const i = routes.findIndex(r => r.a === id || r.b === id); if (i >= 0){ setActive(id); openTrade(i, Object.fromEntries(Object.entries(s.trade).map(([k, v]) => [k, Math.min(v, stockOf(id, k))]))); return; } }
+  if (s.route){ const i = routes.findIndex(r => r.a === s.route || r.b === s.route); if (i >= 0){ const I2 = isl(s.route); flyTo(I2.harbor.x, I2.harbor.y, Math.min(cam.z, 1)); openRoute(i); return; } }
   if (I.settled) setActive(id);
   if (lod === 'far' || !boxIn(I.box, view())) fitBox(I.box, 1.6);
   if (s.build) hintBuild(s.build);
