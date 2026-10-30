@@ -138,7 +138,7 @@ function makeShip(kind, I, o = {}){
 function sailTo(s, dest){
   const goal = dest.isl ? moorSpot(isl(dest.isl), s) : {x:dest.x, y:dest.y};
   const path = findPath(s, goal);
-  if (!path){ if (s.own) toast('Dorthin findet das Kanu keinen Weg.'); return false; }
+  if (!path){ if (s.own) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
   s.path = path; s.pi = 0; s.dest = dest; s.state = 'sail'; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
@@ -197,8 +197,8 @@ function giveGift(s){
 function settleFrom(s){
   const T = isl(s.port);
   if (!T || T.settled || T.clan) return;
-  if (s.people < SETTLE.people){ toast(`Es braucht ${SETTLE.people} Siedler an Bord.`); return; }
-  if (mana < manaNeeded()){ toast(`Für eine weitere Siedlung braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200); return; }
+  if (s.people < SETTLE.people){ toast(`Es braucht ${SETTLE.people} Siedler an Bord.`, 2600, false); return; }
+  if (mana < manaNeeded()){ toast(`Für eine weitere Siedlung braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200, false); return; }
   const from = isl(s.last);
   settle(T, from, {pop:s.people, stock:s.cargo}); s.people = 0; s.cargo = {}; s.last = T.id;
 }
@@ -230,7 +230,7 @@ function routeDepart(s){
 /* ---------- canoe houses build one canoe at a time */
 function startYard(I, kind){
   const S = SHIPS[kind]; if (I.yard) return;
-  if (!canPay(I, S.cost)){ toast(`Zu wenig ${lacking(I, S.cost)}.`); return; }
+  if (!canPay(I, S.cost)){ toast(`Zu wenig ${lacking(I, S.cost)}.`, 2600, false); return; }
   pay(I, S.cost); I.yard = {kind, left:S.bt, got:0, st:0}; invalidate(); updateHUD(); syncWalkers(); save();
   toast(`Kanubau beginnt: ${S.n}. ${YARD_CREW} Bauleute holen Holz, dann bauen sie, etwa ${String(Math.round(S.bt * TICK / 30000) / 2).replace('.', ',')} Minuten.`, 3600);
 }
@@ -277,12 +277,12 @@ function steerTap(p){
   const s = selShip; if (!s) return;
   const I = islands.find(J => J.discovered && onIsland(J, p));
   if (s.race) return;
-  if (I){ if (s.route != null) unassign(s); if (sailTo(s, {isl:I.id})) toast(`${s.name} fährt nach ${I.name}.`); renderSheet(); save(); return; }
+  if (I){ if (s.route != null) unassign(s); if (sailTo(s, {isl:I.id})) toast(`${s.name} fährt nach ${I.name}.`, 2600, false); renderSheet(); save(); return; }
   const open = revealed(p);
-  if (!open && !SHIPS[s.kind].fog){ toast('Ins Unbekannte fährt nur das Doppelkanu.'); return; }
-  if (!open && !(s.cargo.proviant > 0)){ toast('Ohne Proviant an Bord fährt die Mannschaft nicht ins Unbekannte. Lade Proviant ein.', 3600); return; }
+  if (!open && !SHIPS[s.kind].fog){ toast('Ins Unbekannte fährt nur das Doppelkanu.', 2600, false); return; }
+  if (!open && !(s.cargo.proviant > 0)){ toast('Ohne Proviant an Bord fährt die Mannschaft nicht ins Unbekannte. Lade Proviant ein.', 3600, false); return; }
   if (s.route != null) unassign(s);
-  if (sailTo(s, {x:p.x, y:p.y})) toast(open ? `${s.name} fährt los.` : `${s.name} fährt ins Unbekannte.`);
+  if (sailTo(s, {x:p.x, y:p.y})) toast(open ? `${s.name} fährt los.` : `${s.name} fährt ins Unbekannte.`, 2600, false);
   renderSheet(); save();
 }
 

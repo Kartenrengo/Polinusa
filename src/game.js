@@ -397,7 +397,7 @@ function feastState(I, F){
   return '';
 }
 function holdFeast(I, F){
-  const no = feastState(I, F); if (no){ toast(no); return; }
+  const no = feastState(I, F); if (no){ toast(no, 2600, false); return; }
   pay(I, F.cost); mana += F.mana; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN;
   for (const w of walkers) if (w.isl === I.id){ nextLeg(w); w.wait = 0; }
   for (let i = 0; i < 6; i++) heartAt(I);
@@ -538,22 +538,23 @@ function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) 
 function onTap(p){
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   const sh = hitShip(p);
-  if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu vom ${C.name}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200); return; }
+  if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu vom ${C.name}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
   if (sh){ if (sh === selShip){ closeSheet(); return; } closeSheet(); selectShip(sh); return; }
   if (mode === 'steer'){ steerTap(p); return; }
   // a tap on someone: who it is and what they do, and their workplace opens
   const w = hitWalker(p);
-  if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${w.name} · ${whatDoes(w)}`, 3200); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
+  if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${w.name} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
   const b = hitBuilding(p); if (b){ select(b); return; }
   const ri = hitCord(p); if (ri >= 0){ openRoute(ri); return; }
   const I = hitIsland(p);
   if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); return; }
-  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600); return; }
+  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); return; }
   if (I){ closeSheet(); setActive(I.id); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   closeSheet();
 }
 const ptrs = new Map(); let ges = null;
 mapC.addEventListener('pointerdown', e => {
+  closeNews();
   try { mapC.setPointerCapture(e.pointerId); } catch (err){} ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); camAnim = null;
   if (ptrs.size === 1){
     const wp = toWorld(e.clientX, e.clientY);
@@ -585,14 +586,10 @@ mapC.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') cam.x -= s; else if (e.key === 'ArrowRight') cam.x += s; else if (e.key === 'ArrowUp') cam.y -= s; else if (e.key === 'ArrowDown') cam.y += s;
   else if (e.key === '+' || e.key === '=') { zoomAt(cam.z * 1.3, vc.sx, vc.sy, toWorld(vc.sx, vc.sy)); return; }
   else if (e.key === '-') { zoomAt(cam.z / 1.3, vc.sx, vc.sy, toWorld(vc.sx, vc.sy)); return; }
-  else if (e.key === 'Escape'){ if (placing) endPlace(); else closeSheet(); return; }
+  else if (e.key === 'Escape'){ if (newsOpen()) closeNews(); else if (placing) endPlace(); else closeSheet(); return; }
   else return;
   e.preventDefault(); clampCam(); applyCam();
 });
-function zoomBtn(f){ const vc = visCenter(); const w = toWorld(vc.sx, vc.sy), z = clampZ(cam.z * f); flyTo(w.x, w.y, z); }
-$('zIn').addEventListener('click', () => zoomBtn(1.6));
-$('zOut').addEventListener('click', () => zoomBtn(1 / 1.6));
-$('zAll').addEventListener('click', overview);
 $('menuBtn').addEventListener('click', () => openSheet('menu', {}));
 $('popBtn').addEventListener('click', () => openSheet('needs'));
 $('vitalBtn').addEventListener('click', () => openSheet('needs'));

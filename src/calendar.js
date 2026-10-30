@@ -76,7 +76,7 @@ function festivalGain(I, chosen){
   return FESTIVAL.mana + parts.reduce((s, p) => s + p.gain, 0) + Math.min(8, Math.floor(beautyOf(I) / 3)) + guestsFor().length * 2;
 }
 function holdFestival(I, chosen){
-  const no = festivalState(I); if (no){ toast(no); return; }
+  const no = festivalState(I); if (no){ toast(no, 2600, false); return; }
   const parts = festivalParts(I).filter(p => p.ok && chosen.includes(p.P.id)), gain = festivalGain(I, chosen);
   pay(I, FESTIVAL.offering); for (const p of parts) if (p.P.cost) pay(I, p.P.cost); sfx('horn');
   mana += gain; I.festYear = yearOf(); I.feastAt = tick; I.feastEnd = tick + FEAST_LEN; I.joyUntil = tick + MOON;

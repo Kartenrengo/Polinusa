@@ -335,8 +335,12 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
 - Der Riffring eines Atolls und die Durchfahrt sind keine Ellipsen mehr. Auswahl und Bauvorschau sind wie mit der Hand
   gezogen, Reichweiten Punkte auf dem Boden, das Ziel eines Kanus ein eingeritztes Kreuz. Baustellen zeigen eine gespannte
   Schnur zwischen Pflöcken statt eines Balkens.
-- Die Oberfläche hat handgeschnittene Ränder wie Rindenbaststoff. Die Knöpfe rechts sind Tapa-Flicken an einer Schnur,
-  jeder schief aufgenäht. Der Kompass ist ein Ring aus Steinen und Kaurimuscheln, ein dunkler Stein zeigt, woher der Wind
+- Die Oberfläche hat handgeschnittene Ränder wie Rindenbaststoff. Rechts hängen nur zwei Tapa-Flicken an einer Schnur,
+  jeder schief aufgenäht: die Muschel für Nachrichten und das Menü. Gezoomt wird mit zwei Fingern oder dem Mausrad,
+  Knöpfe dafür gibt es nicht.
+- **Nachrichten** rollen wie ein Streifen Rindenbaststoff aus der Muschel aus und rollen sich wieder ein. Was in der Welt
+  geschieht, wird aufbewahrt; eine Zahl an der Muschel sagt, wie viele neu sind. Die Muschel antippen klappt die letzten
+  40 Nachrichten auf, mit der Zeit seit jeder. Kurze Antworten auf ein Antippen („Zu wenig Holz“) werden nur gezeigt. Der Kompass ist ein Ring aus Steinen und Kaurimuscheln, ein dunkler Stein zeigt, woher der Wind
   kommt, und ein Band mit Federn weht in seine Richtung.
 
 ## Lebendige Welt

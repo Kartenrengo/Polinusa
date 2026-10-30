@@ -24,7 +24,7 @@ function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t = topH + 8; $('compass').style.top = t + 'px'; $('seasonBtn').style.top = (t + $('compass').offsetHeight + 8) + 'px'; $('zoomctl').style.top = t + 'px'; $('toast').style.top = (topH + 10) + 'px';
+  const t = topH + 8; $('compass').style.top = t + 'px'; $('seasonBtn').style.top = (t + $('compass').offsetHeight + 8) + 'px'; $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -44,12 +44,6 @@ function camFor(x, y, z){ const off = (topH - botH) / 2; return {x, y:y - off / 
 function flyTo(x, y, z){ z = clampZ(z); const to = camFor(x, y, z); if (reduced){ Object.assign(cam, to); clampCam(); applyCam(); return; } camAnim = {from:{...cam}, to, t0:performance.now(), dur:520}; }
 function fitBox(b, maxZ = 2){ const bw = b.x1 - b.x0, bh = b.y1 - b.y0; const z = Math.min((vw - 140) / bw, (vh - topH - botH - 60) / bh, maxZ); flyTo((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z); }
 function boxOf(list){ const b = {x0:Infinity, y0:Infinity, x1:-Infinity, y1:-Infinity}; for (const I of list){ b.x0 = Math.min(b.x0, I.box.x0); b.y0 = Math.min(b.y0, I.box.y0); b.x1 = Math.max(b.x1, I.box.x1); b.y1 = Math.max(b.y1, I.box.y1); } return b; }
-function overview(){
-  // everything known: the islands found so far and the sea the canoes have seen
-  const b = boxOf(islands.filter(I => I.discovered));
-  for (const h of fogHoles){ b.x0 = Math.min(b.x0, h.cx - h.rx * .8); b.y0 = Math.min(b.y0, h.cy - h.ry * .8); b.x1 = Math.max(b.x1, h.cx + h.rx * .8); b.y1 = Math.max(b.y1, h.cy + h.ry * .8); }
-  fitBox({x0:b.x0 - 40, y0:b.y0 - 40, x1:b.x1 + 40, y1:b.y1 + 30}, 1.2);
-}
 function stepCam(now){
   if (!camAnim) return; const t = clamp((now - camAnim.t0) / camAnim.dur, 0, 1), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, a = camAnim.from, b = camAnim.to;
   cam.z = Math.exp(Math.log(a.z) + (Math.log(b.z) - Math.log(a.z)) * e); cam.x = a.x + (b.x - a.x) * e; cam.y = a.y + (b.y - a.y) * e; clampCam(); applyCam();
