@@ -231,8 +231,8 @@ function routeDepart(s){
 function startYard(I, kind){
   const S = SHIPS[kind]; if (I.yard) return;
   if (!canPay(I, S.cost)){ toast(`Zu wenig ${lacking(I, S.cost)}.`); return; }
-  pay(I, S.cost); I.yard = {kind, left:S.bt}; invalidate(); updateHUD(); save();
-  toast(`Am Kanuhaus beginnt der Bau eines ${S.n}s. Mit ${YARD_CREW} Bauleuten dauert es etwa ${String(Math.round(S.bt * TICK / 30000) / 2).replace('.', ',')} Minuten. Tippe das Kanuhaus an, um zuzusehen.`, 4200);
+  pay(I, S.cost); I.yard = {kind, left:S.bt, got:0, st:0}; invalidate(); updateHUD(); syncWalkers(); save();
+  toast(`Kanubau beginnt: ${S.n}. ${YARD_CREW} Bauleute holen Holz, dann bauen sie, etwa ${String(Math.round(S.bt * TICK / 30000) / 2).replace('.', ',')} Minuten.`, 3600);
 }
 /* Building a canoe goes in five steps that can be watched at the canoe house; three builders make full speed */
 const YARD_STEPS = {
@@ -242,9 +242,10 @@ const YARD_STEPS = {
 const yardStage = y => Math.min(4, Math.floor((1 - y.left / SHIPS[y.kind].bt) * 5));
 function stepYards(){
   for (const I of islands){
-    const w = I.settled && I.yard ? staffOf(I).yard : 0; if (!w) continue;   // without builders the canoe waits
-    const before = yardStage(I.yard); I.yard.left -= w / YARD_CREW;
-    if (I.yard.left > 0){ const st = yardStage(I.yard); if (st !== before) invalidate(); if (st !== before && I.id === active){ const [n, t] = YARD_STEPS[I.yard.kind][st]; toast(`Kanuhaus: ${n}. ${t}`, 3200); sfx('knock'); } continue; }
+    // the builders at the canoe house move the work on (see buildBit); here each new step is shown
+    if (!I.settled || !I.yard) continue;
+    const st = yardStage(I.yard);
+    if (I.yard.left > .001){ if (st !== I.yard.st){ const first = I.yard.st == null; I.yard.st = st; invalidate(); if (!first && I.id === active){ const [n, t] = YARD_STEPS[I.yard.kind][st]; toast(`Kanuhaus: ${n}. ${t}`, 3200); sfx('knock'); } } continue; }
     const kind = I.yard.kind; I.yard = null; sfx('splash'); invalidate();
     const s = makeShip(kind, I); s.name = `${SHIPS[kind].n} ${own().filter(o => o.kind === kind).length}`;
     toast(`${s.name} ist fertig. Tippe es im Hafen an, um es zu beladen und zu steuern.`, 4200); checkQuest(); save();

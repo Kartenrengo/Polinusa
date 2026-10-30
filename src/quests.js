@@ -12,7 +12,7 @@ const fleetOf = kind => own().filter(s => s.kind === kind).length;
 const QUESTS = [
   {id:'holz', t:'Holz schlagen', d:'Baue einen Holzfäller am Waldrand.', why:'Alles wird aus Holz gebaut. Der Holzfäller fällt die Bäume in seiner Nähe, einen nach dem anderen. Jeder Baum gibt 3 Holz, dann bleibt ein Stumpf, der erst nach langer Zeit wieder austreibt.',
     n:() => count('heimat', 'faeller'), of:1, show:{build:'faeller'}, unlock:[], gift:{holz:2}},
-  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause. An jeder Baustelle arbeiten 2 Leute, und solange sie bauen, fehlen sie anderswo.',
+  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause. An jeder Baustelle arbeiten 2 Leute. Erst holen sie das Holz aus dem Lager, dann bauen sie. Solange fehlen sie anderswo.',
     n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:['taro'], gift:{holz:3}},
   {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Jeder Mensch isst. Taro und Brotfrucht sind die Grundnahrung. Solange sie im Lager liegt und Platz in den Häusern ist, ziehen neue Leute zu.',
     n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:['baum', 'palme', 'fisch'], gift:{nahrung:4}},
@@ -32,7 +32,7 @@ const QUESTS = [
     n:() => count('heimat', 'beil'), of:1, show:{build:'beil'}, unlock:['werft'], gift:{holz:4}},
   {id:'wasser', t:'Ans Wasser', d:'Baue ein Kanuhaus am Strand.', why:'Im Kanuhaus entstehen die Boote. Es muss direkt am Strand stehen.',
     n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'weg', 'fackel'], gift:{holz:4, nahrung:4}},
-  {id:'ausleger', t:'Ein Auslegerkanu', d:'Baue im Kanuhaus ein Auslegerkanu.', why:'Ein Kanu braucht seine Zeit: etwa zweieinhalb Minuten mit drei Bauleuten. Tippe das Kanuhaus an und sieh zu, wie aus dem Stamm ein Kanu wird. Solange kannst du das Dorf mit Blumen, Muschelwegen und Fackeln schmücken.',
+  {id:'ausleger', t:'Ein Auslegerkanu', d:'Baue im Kanuhaus ein Auslegerkanu.', why:'Ein Kanu braucht seine Zeit: Drei Bauleute holen das Holz und bauen dann etwa zweieinhalb Minuten. Tippe das Kanuhaus an und sieh zu, wie aus dem Stamm ein Kanu wird. Solange kannst du das Dorf mit Blumen, Muschelwegen und Fackeln schmücken.',
     n:() => fleetOf('oc') || isl('tochter').settled ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
   {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', why:'Tippe das Kanu im Hafen an. Lade 4 Siedler, Holz, Grundnahrung und Fisch ein. Dann tippe auf Motu, und das Kanu fährt hinüber. Auf dem Atoll wachsen Pandanus und Kokospalmen für Segel und Schnur.',
     n:() => isl('tochter').settled ? 1 : 0, of:1, show:{ship:'oc'}, unlock:['pulaka', 'flecht', 'schnur', 'pandanus', 'halle'], gift:{}},

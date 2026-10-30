@@ -113,7 +113,7 @@ function drawBuilding(c, b, I, alpha = 1){
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
   const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
   if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
-  drawStakes(c, b, K, f, alpha);
+  drawStakes(c, b, K, f, alpha, I);
   if (f > .15) putRising(c, b.x, b.y, sc, t.m, t.rot, key, art, (f - .15) / .85, alpha);
   drawSite(c, b, K, f, alpha);
 }
@@ -123,13 +123,13 @@ function putRising(c, x, y, s, m, rot, key, art, f, alpha){
   c.beginPath(); c.rect(bx.x - 2, bx.y + bx.h * (1 - f), bx.w + 4, bx.h * f + 2); c.clip();
   blit(c, key, art, alpha); c.restore();
 }
-function drawStakes(c, b, K, f, alpha){
+function drawStakes(c, b, K, f, alpha, I){
   // four stakes, and a cord pulled straight from one to the next
   const rx = Math.max(6, K.r * .95), ry = rx * .45, p = new Path2D(), cord = new Path2D(), pts = [.8, 2.35, 3.95, 5.5].map(a => ({x:b.x + Math.cos(a) * rx, y:b.y + Math.sin(a) * ry}));
   pts.forEach((q, i) => { p.moveTo(q.x, q.y + .6); p.lineTo(q.x, q.y - 2.8); if (i) cord.lineTo(q.x, q.y - 2); else cord.moveTo(q.x, q.y - 2); }); cord.closePath();
   c.globalAlpha = alpha; stroke(c, cord, '#E9DCC0', .5, null, null, .95); stroke(c, p, '#3B2618', 1, null, 'round'); c.globalAlpha = 1;
-  // the wood for it, used up as the work goes on
-  const logs = Math.ceil(3 * (1 - f)), L = new Path2D();
+  // the wood the builders have brought, used up as the work goes on
+  const need = I ? costOf(b.kind, I).holz || 0 : 0, logs = clamp(Math.ceil((b.got || 0) - f * need - .01), 0, 4), L = new Path2D();
   for (let i = 0; i < logs; i++){ const x = b.x + rx + 2, y = b.y + 3 - i * 1.6 + (i ? 0 : 0); L.moveTo(x - 3.4 + i * .6, y); L.lineTo(x + 3.4 - i * .6, y); }
   if (logs){ stroke(c, L, '#2B1D14', 1.9, null, 'round', alpha); stroke(c, L, '#9C7246', 1.1, null, 'round', alpha); }
 }
@@ -394,7 +394,8 @@ function drawAnim(c, now){
   }
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
   drawWhales(c, v, now);
-  if (cam.z > PEOPLE_Z) drawPeople(c, v);
+  if (cam.z > PEOPLE_Z) drawPeople(c, v, now);
+  drawWork(c, v);
   if (!reduced) drawWeather(c, v, now);
   if (lod !== 'far') drawNeeds(c, v, now);
   if (placing) drawGhost(c);
@@ -431,9 +432,10 @@ function drawLagoonLife(c, v, now){
 function drawFishers(c, v, now){
   for (const I of islands){
     if (!lived(I) || !boxIn(I.box, v) || I.rahui) continue;
-    const st = I.settled ? staffOf(I) : null;
+    // on your islands a canoe is out only while its fisher is, and the reef gatherers are the people themselves
+    const out = I.settled ? new Set(walkers.filter(w => w.sea && w.isl === I.id).map(w => w.job.b)) : null;
     for (const b of I.buildings){
-      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || b.boat > 0 || (st && KINDS[b.kind].crew && !st.staffed.has(b)) || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || b.boat > 0 || (out && (b.kind === 'riff' || !out.has(b))) || !ptIn(b.x, b.y, grow(v, 40))) continue;
       const w = waterNear(I, b), dx = w.x - b.x, dy = w.y - b.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, t = reduced ? 0 : now / 1000 + b.id * 3.1;
       if (b.kind === 'fisch'){
         let C = {x:w.x + ux * 12, y:w.y + uy * 12}; if (landAt(I, C)) C = w;
@@ -570,8 +572,8 @@ function drawDugouts(c, v, now){
   }
 }
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
-function drawPeople(c, v){
-  const vis = [...walkers, ...critters].filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map();
+function drawPeople(c, v, now){
+  const vis = [...walkers, ...critters].filter(w => !w.sea && ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
   // buildings standing in front of someone are drawn again over them, so people can walk behind a house
   for (const w of vis){
     const I = isl(w.isl);
@@ -587,15 +589,52 @@ function drawPeople(c, v){
     if (w.home){ drawCritter(c, w); continue; }
     if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
     if (w.st != null){ drawTree(c, w); continue; }
+    // across the lagoon they paddle a dugout
+    if (w.paddle && w.moving){ put(c, w.x, w.y, 1, w.left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>'); continue; }
     const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
     c.save(); c.translate(w.x, w.y + bob); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
     // someone sitting on a mat in front of a house; children are smaller
     if (w.sit && !w.moving){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
     if (w.child) c.scale(.7, .7);
     if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
-    blit(c, 'fig|' + w.look, () => figureArt(w.look));
+    blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
+    const tool = w.old ? 'stab' : !w.carry && w.job && w.job.tool;
+    if (tool) blit(c, 'tool|' + tool, TOOLS[tool]);
     if (w.carry && !LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
+    if (w.busy && w.job && w.job.type === 'wade'){ c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); }
+    // who works at the selected place, or the one you tapped: a small mark over the head
+    if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
     c.restore();
+  }
+}
+const MARK = new Path2D('M-2.3-18.2Q0-18.8 2.4-18.1L.2-14.6Q-.4-15.6-2.3-18.2Z');
+/* Who works where: over each workplace a little tag with one mark per place. Close up, or for the selected building. */
+function slotsOf(I, b, sf, on){
+  const K = KINDS[b.kind]; let n, open;
+  if (b.bt){ if (K.plant) return null; n = open = SITE_CREW; }
+  else if (b.kind === 'werft'){ if (!I.yard) return null; n = open = YARD_CREW; }
+  else if (b.boat > 0) n = open = 1;
+  else if (K.crew){ n = K.crew; open = capOf(b); }
+  else return null;
+  const crew = sf.crew.get(b) || 0, here = Math.min(crew, on.get(b) || 0);
+  return Array.from({length:n}, (_, i) => i < here ? 'on' : i < crew ? 'way' : i < open ? 'free' : 'off');
+}
+function drawWork(c, v){
+  if (lod === 'far') return;
+  const s = clamp(1.7 / cam.z, .7, 1.6);
+  for (const I of islands){
+    if (!I.settled || !boxIn(I.box, v)) continue;
+    let sf = null, on = null;
+    for (const b of I.buildings){
+      if ((lod !== 'near' && b.id !== selectedId) || !ptIn(b.x, b.y, v)) continue;
+      if (!sf){ sf = staffOf(I); on = presentAt(I); }
+      const sl = slotsOf(I, b, sf, on); if (!sl) continue;
+      const K = KINDS[b.kind], w = sl.length * 5 + 3, top = b.bt ? K.hy * Math.max(.35, 1 - b.bt / K.bt) : K.hy * ((b.v && b.v.scale) || 1);
+      c.save(); c.translate(b.x, b.y - top - 4); c.scale(s, s);
+      const p = tagPath(-w / 2, -7.4, w, 8.4, b.id); c.globalAlpha = .92; c.fillStyle = '#F4ECD8'; c.fill(p); c.globalAlpha = 1; stroke(c, p, '#3E2416', .6, null, 'round');
+      sl.forEach((k, i) => { c.save(); c.translate(-w / 2 + 4 + i * 5, -.9); blit(c, 'pip|' + k, PIP[k]); c.restore(); });
+      c.restore();
+    }
   }
 }
 const MAT = roundRect(-3.2, -.9, 6.4, 1.8, .6);
@@ -609,14 +648,14 @@ const bubbleArt = inner => `<path d="M-6.1-13.7Q-1.2-14.5 6.4-13.8Q7-8.2 6.1-2.4
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
-const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
+const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
   w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
-      if (!b.idle || b.idle.why === 'full' || !ptIn(b.x, b.y, v)) continue;
+      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
       put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
     }

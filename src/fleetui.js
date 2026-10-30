@@ -70,10 +70,11 @@ function steerShip(s){ closeSheet(); selectShip(s); flyTo(s.x, s.y, Math.max(cam
 /* The canoe house: one canoe at a time, it takes a while */
 function yardMarkup(I){
   if (I.yard){
-    const S = SHIPS[I.yard.kind], f = 1 - I.yard.left / S.bt, w = staffOf(I).yard, st = yardStage(I.yard), secs = w ? Math.ceil(I.yard.left * YARD_CREW / w * TICK / 1000) : 0;
-    let h = w ? `<p><b>Hier entsteht ein ${S.n}.</b> ${w} von ${YARD_CREW} Bauleuten arbeiten daran, noch etwa ${secs < 90 ? secs + ' Sekunden' : Math.round(secs / 60) + ' Minuten'}. Schau ihnen zu, oder schmücke solange das Dorf.</p>` :
-      `<p><b>Der Bau des ${S.n}s ruht.</b> Es sind keine Leute frei. Setze den Kanubau in der Übersicht weiter nach vorn.</p>`;
-    h += `<span class="mbar big"><i style="width:${f * 100}%"></i></span><ul class="list needs">${YARD_STEPS[I.yard.kind].map(([n, t], i) => `<li class="${i < st ? 'okk' : ''}"><span class="nm">${i < st ? '✓ ' : i === st ? '▸ ' : ''}${n}<small>${t}</small></span></li>`).join('')}</ul>`;
+    // the canoe: who builds it is shown above; here how far it is, the wood that is there, and the steps
+    const S = SHIPS[I.yard.kind], f = 1 - I.yard.left / S.bt, w = staffOf(I).yard, here = presentAt(I).get(I.buildings.find(b => b.kind === 'werft')) || 0, st = yardStage(I.yard), secs = here ? I.yard.left * YARD_CREW / here * TICK / 1000 : 0;
+    const state = !w ? '<span class="state out">ruht, keine Leute</span>' : !here ? '<span class="state low">Bauleute kommen</span>' : (I.yard.got || 0) < S.cost.holz && I.yard.left <= S.bt * (1 - (I.yard.got || 0) / S.cost.holz) + .01 ? '<span class="state low">Holz wird geholt</span>' : '<span class="state ok">wird gebaut</span>';
+    let h = `<p class="sec">${S.n}</p><span class="mbar big"><i style="width:${f * 100}%"></i></span><div class="stat">${state}<span>${icon('holz')}${I.yard.got || 0}/${S.cost.holz}</span><span>${Math.round(f * 100)} %</span>${here ? `<span>noch ${secsText(secs)}</span>` : ''}</div>`;
+    h += `<ul class="list needs">${YARD_STEPS[I.yard.kind].map(([n, t], i) => `<li class="${i < st ? 'okk' : ''}"><span class="nm">${i < st ? '✓ ' : i === st ? '▸ ' : ''}${n}${i === st ? `<small>${t}</small>` : ''}</span></li>`).join('')}</ul>`;
     return h;
   }
   return Object.entries(SHIPS).filter(([k]) => k === 'oc' || unlocked('dc')).map(([k, S]) => `<div class="rowx"><span><b>${S.n}</b><br><span class="sub">${costText(S.cost)}, etwa ${String(Math.round(S.bt * TICK / 60000 * 2) / 2).replace('.', ',')} Minuten mit ${YARD_CREW} Bauleuten. ${k === 'oc' ? `Trägt ${S.cap} Waren und ${S.people} Menschen, bleibt im Bekannten.` : `Trägt ${S.cap} Waren und ${S.people} Menschen, fährt ins Unbekannte.`}</span></span><button class="btn${canPay(I, S.cost) ? ' primary' : ''}" type="button" data-act="yard" data-k="${k}" ${canPay(I, S.cost) ? '' : 'disabled'}>Bauen</button></div>`).join('') +

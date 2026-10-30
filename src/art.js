@@ -252,8 +252,8 @@ const HAIR = [
   '<path d="M-1.6-9.2Q-2.1-7.6-1.4-6.9" fill="none" stroke="#1E1410" stroke-width=".9" stroke-linecap="round"/>'   // long hair
 ];
 function figureLook(seed){ const r = rng(seed); return '' + Math.floor(r() * SKINS.length) + Math.floor(r() * WRAPS.length) + Math.floor(r() * HAIR.length); }
-function figureArt(look){
-  const skin = SKINS[+look[0]], [w0, w1] = WRAPS[+look[1]], ink = 'stroke="#2B1D14" stroke-width=".45" stroke-linejoin="round"';
+function figureArt(look, old){
+  const skin = SKINS[+look[0]], [w0, w1] = WRAPS[+look[1]], ink = 'stroke="#2B1D14" stroke-width=".45" stroke-linejoin="round"', hair = old ? '#D6CFBF' : '#1E1410';
   return `<ellipse cy=".2" rx="2.8" ry=".85" fill="#1F140D" opacity=".25"/>` +
     `<path d="M-1.5-3.9H1.5L2.4-.5Q0 .2-2.4-.5Z" fill="${w0}" ${ink}/>` +
     `<path d="M-1.95-2Q0-1.5 1.95-2" fill="none" stroke="${w1}" stroke-width=".7"/><path d="M-1.2-1.15h.01M0-1h.01M1.2-1.15h.01" stroke="${w1}" stroke-width=".5" stroke-linecap="round"/>` +
@@ -261,8 +261,25 @@ function figureArt(look){
     `<path d="M.3-7.3Q1.8-7.2 1.85-6.4L1.45-4" fill="none" stroke="#2B1D14" stroke-opacity=".18" stroke-width=".8"/>` +
     `<path d="M-1.1-7Q0-5.9 1.1-7" fill="none" stroke="#F1EBD9" stroke-width=".45" stroke-dasharray=".1 .55" stroke-linecap="round"/>` +
     `<circle cy="-8.9" r="1.6" fill="${skin}" ${ink}/><circle cx="-.38" cy="-8.85" r=".23" fill="#2B1D14"/><circle cx=".78" cy="-8.85" r=".23" fill="#2B1D14"/>` +
-    `<path d="M-1.62-8.8Q-1.7-10.6 0-10.6Q1.5-10.6 1.62-9.3Q.9-9.9.1-9.8Q-.9-9.7-1.62-8.8Z" fill="#1E1410"/>` + HAIR[+look[2]];
+    `<path d="M-1.62-8.8Q-1.7-10.6 0-10.6Q1.5-10.6 1.62-9.3Q.9-9.9.1-9.8Q-.9-9.7-1.62-8.8Z" fill="${hair}" stroke="${old ? '#2B1D14' : 'none'}" stroke-width=".25"/>` + HAIR[+look[2]].replace(/#1E1410/g, hair);
 }
+/* What people hold, so you can tell who does what: builders and woodcutters the stone adze, field workers and planters
+   the digging stick, fishers the spear, the old a walking staff */
+const TOOLS = {
+  toki:'<path d="M1.3-4.2L3.6-7.9" stroke="#2B1D14" stroke-width="1" stroke-linecap="round"/><path d="M1.3-4.2L3.6-7.9" stroke="#9C7246" stroke-width=".45" stroke-linecap="round"/><path d="M3.1-8.4L5.3-7.5L5-6.8L3.4-7.3Z" fill="#5C6066" stroke="#2B1D14" stroke-width=".35" stroke-linejoin="round"/>',
+  ko:'<path d="M2.7-9.4L1.6.3" stroke="#2B1D14" stroke-width=".95" stroke-linecap="round"/><path d="M2.7-9.4L1.6.3" stroke="#B08048" stroke-width=".4" stroke-linecap="round"/>',
+  speer:'<path d="M2-.3L3.3-12.4" stroke="#2B1D14" stroke-width=".8" stroke-linecap="round"/><path d="M2-.3L3.3-12.4" stroke="#C99A62" stroke-width=".32"/><path d="M3.05-12.3L3.25-14.4L3.75-12.25Z" fill="#2B1D14"/>',
+  stab:'<path d="M2.5-7.4Q2.2-3.6 2.1.3" fill="none" stroke="#2B1D14" stroke-width=".95" stroke-linecap="round"/><path d="M2.5-7.4Q2.2-3.6 2.1.3" fill="none" stroke="#8A6040" stroke-width=".4" stroke-linecap="round"/>'
+};
+/* A mark for each place of work: dark for someone at work, yellow for someone on the way, empty for a free place,
+   struck out where the work is held back */
+const PIP_BODY = 'M-2.1 0Q-2.3-3.1 0-3.25Q2.2-3.05 2.1 0Q0 .35-2.1 0Z';
+const PIP = {
+  on:`<circle cx=".1" cy="-4.75" r="1.4" fill="#2B1D14"/><path d="${PIP_BODY}" fill="#2B1D14"/>`,
+  way:`<circle cx=".1" cy="-4.75" r="1.3" fill="#D9A441" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="#D9A441" stroke="#2B1D14" stroke-width=".5" stroke-linejoin="round"/>`,
+  free:`<circle cx=".1" cy="-4.75" r="1.3" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".5" stroke-linejoin="round"/>`,
+  off:`<g opacity=".4"><circle cx=".1" cy="-4.75" r="1.3" fill="none" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="none" stroke="#2B1D14" stroke-width=".5"/></g><path d="M-2.3-.6L2.4-5.9" stroke="#A84A2C" stroke-width=".8" stroke-linecap="round"/>`
+};
 /* Loads: on the head in front of the figure, over the shoulder behind it */
 const BASKET = '<path d="M-2.5-10.3H2.5L2-12.1H-2Z" fill="#B08048" stroke="#2B1D14" stroke-width=".4" stroke-linejoin="round"/><path d="M-2.2-11.2H2.2" stroke="#7A5434" stroke-width=".35"/>';
 const LOADS = {

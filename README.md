@@ -103,30 +103,46 @@ Der Steg zeigt beim Bauen von selbst zum Wasser.
 
 ## Arbeit, Bauleute und die Übersicht
 
-Vorbild ist Manor Lords. Etwa sieben von zehn Bewohnern können arbeiten, Kinder und Alte nicht. Jede Arbeitskraft wird
-einer Aufgabe zugeteilt, und auf der Karte steht jede Figur für eine Person an ihrem Platz.
+Vorbild sind Manor Lords und Foundation. Etwa sieben von zehn Bewohnern können arbeiten, Kinder und Alte nicht. Jede
+Arbeitskraft wird einer Aufgabe zugeteilt, und **jeder Bewohner ist auf der Karte eine Figur**: 16 Bewohner sind 16 Figuren.
+Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt dann, wie viele.
 
+- **Wer wo arbeitet:** Über jedem Arbeitsplatz hängt nah herangezoomt ein kleines Schild mit einer Figur je Platz: dunkel
+  bei der Arbeit, gelb auf dem Weg, leer für einen freien Platz, durchgestrichen, wo du den Platz geschlossen hast. Wer
+  arbeitet, hält sein Werkzeug: Steinbeil für Bauleute, Holzfäller und Kanubauer, Grabstock für Feld und Pflanzer, Speer
+  für Fischer. Alte gehen mit Stock und haben graues Haar, Kinder sind kleiner.
+- **Antippen:** Eine Figur antippen zeigt ihren Namen und was sie tut („Lupe · Bau Haus · holt Holz“) und öffnet ihren
+  Arbeitsplatz. Ist ein Gebäude gewählt, tragen seine Leute eine kleine Marke über dem Kopf.
 - **Reihenfolge:** In der Übersicht (Bewohnerzahl oder die Zeile darunter antippen) legst du fest, welche Arbeit zuerst
   Leute bekommt: Bauen, Grundnahrung, Fisch und Meer, Holz, Kanubau, Handwerk. Innerhalb jeder Gruppe zuerst das Älteste.
-- **Bauleute:** Jede Baustelle braucht 2 Leute, mit einer Person geht es halb so schnell. Sie kommen aus der Arbeit, die in der
-  Reihenfolge weiter unten steht. Man sieht sie hinübergehen, Holz vom Speicher schleppen und hämmern. Ihr Arbeitsplatz
-  steht still mit dem Hinweis „Die Leute bauen gerade“. Ist die Baustelle fertig, kehren sie zurück.
-- **Baustellen:** Erst markieren Pflöcke und eine Schnur den Platz, daneben liegt das Holz. Dann wächst das Gebäude vom Boden
-  nach oben, und der Holzstapel wird kleiner. Ein Haus dauert etwa 24 Sekunden, das Versammlungshaus eine Minute.
+  Unter jeder Gruppe stehen ihre Arbeitsplätze mit denselben Figuren wie auf den Schildern.
+- **Bauleute:** Jede Baustelle braucht 2 Leute. Sie kommen aus der Arbeit, die weiter unten steht, und gehen sichtbar
+  hinüber. Erst holen sie das Holz aus dem Lager, ein Stück pro Gang, dann bauen sie. **Gebaut wird nur, solange Bauleute an
+  der Baustelle sind, und nur so weit, wie Holz da ist.** Ein Speicher in der Nähe spart Wege. Ist die Baustelle fertig,
+  kehren sie zurück.
+- **Baustellen:** Erst markieren Pflöcke und eine Schnur den Platz. Daneben liegt das Holz, das schon gebracht wurde. Dann
+  wächst das Gebäude vom Boden nach oben, und der Holzstapel wird kleiner. Ein Haus dauert etwa 40 bis 50 Sekunden mit den
+  Wegen, das Versammlungshaus gut zwei Minuten.
+- **Wer da ist, arbeitet:** Eine Werkstatt oder ein Feld erzeugt erst, wenn die Leute angekommen sind. Fischer paddeln im
+  Einbaum hinaus und kommen mit dem Fang zurück, Riffsammler waten im flachen Wasser. Auf einem Atoll paddeln die Leute
+  im Einbaum über die Lagune zu ihrem Motu.
 - **Weniger Arbeiter:** In jedem Gebäude lässt sich die Zahl der Arbeiter begrenzen, bis auf null. Mit halber Besetzung geht
   die Arbeit halb so schnell.
+- **Die Arbeit läuft weiter,** auch wenn die Karte nicht gezeichnet wird: Die Schritte der Leute werden dann nachgeholt.
+- **Gebäude-Tafeln** sind kurz: oben die Leute mit Namen, eine Zeile mit Zustand und Ertrag, alles Weitere unter „Mehr dazu“.
 - **Die Zeile oben** zeigt immer: wie viele arbeiten und wie viele bauen, wie lange das knappste Essen noch reicht, und wann
   der Nächste zuzieht.
-- **Die Übersicht** zeigt Bewohner, Arbeitsfähige, Kinder und Alte, den Zuzug (alle 6 Sekunden jemand, solange Platz ist und
-  nichts fehlt), die Arbeit nach Reihenfolge mit besetzten Plätzen, für jedes Essen Lager, Erzeugung, Verbrauch und
-  Reichweite, und den weiteren Bedarf.
+- **Die Übersicht** zeigt Bewohner (arbeiten, ohne Arbeit, Kinder, Alte), den Zuzug (alle 6 Sekunden jemand, solange Platz
+  ist und nichts fehlt), die Arbeit nach Reihenfolge mit allen Arbeitsplätzen, für jedes Essen Lager, Erzeugung, Verbrauch
+  und Reichweite, und den weiteren Bedarf.
 
 ## Kanus entstehen
 
 - **Erst das Kanu, dann das Wasser:** Ist ein Fischgestell gebaut, schnitzt der Fischer zuerst seinen Einbaum, etwa eine Minute.
   Man sieht den Stamm, das Aushöhlen mit Spänen und das fertige Kanu am Strand. Erst dann fährt er hinaus. Ebenso am Kanusteg:
   Er bedient Pfahlhäuser und Reusen erst, wenn sein Einbaum fertig ist.
-- **Im Kanuhaus** entsteht ein Auslegerkanu in etwa zweieinhalb Minuten, ein Doppelkanu in etwa fünf, mit 3 Bauleuten.
+- **Im Kanuhaus** entsteht ein Auslegerkanu in etwa zweieinhalb Minuten, ein Doppelkanu in etwa fünf, mit 3 Bauleuten,
+  die vorher das Holz herbeitragen.
   Fünf Schritte sind zu sehen und werden gemeldet: Stamm auf Böcken, Aushöhlen mit Steinbeil und Glut, Bordplanken mit
   Kokosschnur angenäht, Ausleger oder zweiter Rumpf mit Plattform, Paddel oder Mast und Mattensegel. Die Tafel des
   Kanuhauses zeigt, welcher Schritt dran ist.
@@ -342,10 +358,11 @@ weniger Bewegung wünscht.
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,
-drei Hauttöne. Etwa ein Viertel der Bewohner ist zu sehen. Zwei von dreien haben Arbeit und tragen sie sichtbar
+drei Hauttöne, Alte mit grauem Haar und Stock. Jeder Bewohner ist zu sehen und hat einen Namen. Wer Arbeit hat, trägt sie sichtbar
 vom Feld, der Werkstatt oder dem Waldrand zum Speicher: Taro oder Brotfrucht im Korb auf dem Kopf, Töpfe,
 Steine, Obsidian, Muscheln, Schnur, Tapa, Proviant, Holz, Fisch an der Stange, Matten. Die anderen schlendern zwischen den
-Häusern. Bauleute tragen Holz zu den Baustellen und hämmern dort, Holzfäller schlagen am Baum, Pflanzer tragen Setzlinge.
+Häusern, die Alten sitzen oft auf Matten. Bauleute tragen Holz zu den Baustellen und hämmern dort, Holzfäller schlagen am
+Baum, Pflanzer tragen Setzlinge, Fischer fahren hinaus, Riffsammler waten.
 Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unterwegs.
 
 ## Nächste Schritte

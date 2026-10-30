@@ -97,7 +97,7 @@ function serialize(){
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
       fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined,
-      tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, pr:I.prio, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat || 0])})),
+      tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, pr:I.prio, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0])})),
     ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null}))});
 }
 function restore(raw){
@@ -111,7 +111,7 @@ function restore(raw){
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
       I.drought = d.dr || 0; I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rd; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
       if (I.clan && d.cl){ I.debt = d.cl.debt || 0; I.returnAt = d.cl.ra || 0; I.lastFrom = d.cl.lf || ''; }
-      I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {}), ...(boat ? {boat} : {})}));
+      I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat, got]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {}), ...(boat ? {boat} : {}), ...(bt && got != null ? {got} : {})}));
       if (d.pr) I.prio = d.pr;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
     for (const I of islands) if (I.clan && !I.buildings.length) seedClan(I, rng(seed ^ (I.center.x | 0)));
