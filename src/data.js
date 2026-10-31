@@ -41,6 +41,7 @@ const KINDS = {
   werft:{n:'Kanuhaus', s:'Kanuhaus', on:['hoch'], bt:18, cost:{holz:4}, r:16, hy:6, max:1, coast:true, roof:true, info:'Hier entstehen die Kanus. Es steht am Strand.', vb:'-21 -19 44 24'},
   pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], bt:14, cost:{holz:3}, r:11, hy:18, cap:4, water:true, roof:true, info:'Ein Zuhause in der Lagune, das kein Land braucht. Ein Einbaum vom Kanusteg bringt die Leute an Land.', vb:'-17 -34 34 37'},
   speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:10, cost:{holz:2}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
+  ahnenhaus:{n:'Ahnenhaus', s:'Ahnen', on:['hoch','atoll'], bt:16, cost:{holz:3}, r:9, hy:15, max:1, roof:true, beauty:2, info:'Hier werden die Schädel der Ahnen verwahrt. So machten es die Lapita in Teouma vor dreitausend Jahren: Die Toten wurden bestattet, später ihr Schädel genommen und an besonderem Ort niedergelegt. Stirbt jemand, bringt das dem Clan Ansehen, ein Häuptling mehr.', vb:'-14 -32 28 35'},
   halle:{n:'Versammlungshaus', s:'Dorfhaus', on:['hoch'], bt:30, cost:{holz:6}, r:19, hy:16, max:1, cap:6, roof:true, info:'Das Herz des Dorfes. +6 Bewohner. Hier werden Feste gefeiert.', vb:'-21 -34 42 37'},
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:20, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Kokosfasern für die Seilerei.', vb:'-13 -25 26 28'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:25, cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Trägt Brotfrucht, frisch zum Essen oder für die Gärgrube.', vb:'-10 -21 20 23'},
@@ -55,7 +56,7 @@ const KINDS = {
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:10, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Sie ruft das Dorf und gibt beim Tanz den Takt.', vb:'-13 -10 26 14'},
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:14, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Ein Platz aus festgestampfter Erde, mit Steinen eingefasst. Hier wird zur Trommel getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','taucher','toepfer','beil','flecht','schnur','gaergrube','werft','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
+const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','taucher','toepfer','beil','flecht','schnur','gaergrube','werft','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
 const DECO = ['hibiskus', 'blumen', 'weg', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */

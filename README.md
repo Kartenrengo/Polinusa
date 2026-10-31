@@ -170,6 +170,28 @@ Die Inseln leben weiter, wenn das Spiel geschlossen ist oder im Hintergrund lieg
   wird auch beim Schließen, damit die Zeit stimmt. Acht Stunden rechnet das Spiel in einer Viertelsekunde nach: das Dorf
   Minute für Minute, das Meer Tick für Tick.
 
+## Generationen und Ahnen
+
+Jeder Bewohner ist ein Mensch mit Namen, Geburt und Lebensspanne, und jede Figur im Dorf ist genau dieser Mensch.
+
+- **Lebenslauf:** Kinder wachsen in sechs Jahren heran und arbeiten dann. Ab vierzig sind die Leute alt und arbeiten
+  nicht mehr. Zwischen 44 und 58 sterben sie und gehen zu den Ahnen. Ein Jahr auf den Inseln dauert zwölf Minuten:
+  nah dran sieht man Kinder groß werden, und wer nach einem Tag wiederkommt, findet eine neue Generation.
+- **Neue Menschen:** Wächst das Dorf, ziehen Leute zu, und ab zehn Bewohnern wird gut jedes dritte Kind im Dorf geboren.
+  Kinder bekommen oft den Namen eines Ahnen, wie es in Polynesien üblich ist.
+- **Siedler** gehen mit ihrem Namen an Bord und gründen das neue Dorf selbst.
+- **Häuptlinge:** Im Häuptlingsdorf führt der Älteste, der kein Kind mehr ist. Stirbt er, folgt der nächste. Die Reihe
+  der Häuptlinge wird festgehalten, wie Häuptlingsgenealogien vorgetragen wurden.
+- **Ahnenhaus** (mit der Aufgabe „Ein Fest“): Hier werden die Schädel der Ahnen verwahrt, wie es die Lapita in Teouma vor
+  dreitausend Jahren taten, die ihre Toten bestatteten und später den Schädel an besonderem Ort niederlegten. Stirbt
+  jemand, bringt das Ansehen +1, ein Häuptling +3.
+- **Alle Menschen:** In der Übersicht unter den Bewohnern, oder im Ahnenhaus unter „Ahnenreihe“: Erwachsene, Kinder und
+  Alte mit Alter, die Häuptlinge und die Ahnen mit ihrem Lebensalter. Eine Figur antippen zeigt Namen und Alter.
+- **Nachrichten:** Ein Tod rollt aus der Muschel; dass ein Kind erwachsen geworden ist, kommt still in die Liste. Der
+  Bericht „Während ihr fort wart“ sagt, wie viele geboren wurden, zugezogen und erwachsen geworden sind, wer zu den Ahnen
+  gegangen ist und wer Häuptling wurde.
+- Ältere Spielstände bekommen beim Laden Menschen mit gemischtem Alter für ihre Bewohnerzahl.
+
 ## Die große Fahrt
 
 Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jahren bis Fidschi, Tonga und Samoa fuhren.

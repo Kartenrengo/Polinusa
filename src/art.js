@@ -213,6 +213,11 @@ function artOf(kind, o = {}){
     case 'taro': return `<use href="#tp"/>` + fieldState(o);
     // on the map the catch on the racks is drawn over them (see drawFishers), the dugout lies on the beach while nobody is out
     case 'fisch': return (o.boat ? `<g transform="translate(-9 7)">${yardArt('ein', o.boat - 1)}</g>` : o.dry ? '' : `<use href="#beached" transform="translate(-9 6) scale(.75)"/>`) + `<use href="#${o.dry ? 'rack0' : 'rack'}"/><use href="#${o.dry ? 'rack0' : 'rack'}" transform="translate(9 3) scale(.7)"/>`;
+    case 'ahnenhaus': return `<path d="M-11 0V-9M11 0V-9" stroke="#3B2618" stroke-width="1.6"/><path d="M-11-2.6h22" stroke="#3B2618" stroke-width="1"/>` +
+      `<path d="M-12.6-9H12.6L13.4-11.6H-13.4Z" fill="#6B4A2E" stroke="#2B1D14" stroke-width=".7"/><path d="M-9.6-11.6V-19H9.6V-11.6Z" fill="#8C6440" stroke="#2B1D14" stroke-width=".7"/>` +
+      `<g fill="#EFE6D2" stroke="#2B1D14" stroke-width=".4">${[-6, -2, 2, 6].map(x => `<path d="M${x - 1.5}-12.6Q${x - 1.7}-15.4 ${x}-15.6Q${x + 1.7}-15.4 ${x + 1.5}-12.6Z"/>`).join('')}</g>` +
+      `<path d="M-14.6-18.6L0-31L14.6-18.6Q0-20.4-14.6-18.6Z" fill="${roof}" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/><path d="M-6-25L0-30.2L6-25" fill="none" stroke="#2B1D14" stroke-width=".4" opacity=".5"/>` +
+      `<g transform="translate(-12.4 1) scale(.42)"><use href="#pfosten"/></g><g transform="translate(12.4 1) scale(.42)"><use href="#pfosten"/></g>`;
     case 'taucher': return `<use href="#hc" fill="${roof}" transform="scale(.72)"/>` + (o.boat ? `<g transform="translate(-9 7)">${yardArt('ein', o.boat - 1)}</g>` : '') +
       `<g stroke="#2B1D14" stroke-width=".45"><ellipse cx="9" cy="2.6" rx="1.7" ry="1.2" fill="#6F737A"/><ellipse cx="11.6" cy="3.4" rx="1.4" ry="1" fill="#8A8A86"/><path d="M9 1.4Q10 -1.4 12.6-1.2" fill="none" stroke="#8C6440" stroke-width=".6"/><ellipse cx="13.4" cy="-.6" rx="2" ry=".9" fill="none" stroke="#B08048" stroke-width=".9"/></g>` +
       `<path d="M-14.6 3.4Q-12 1 -9.4 3.4Q-12 4.8 -14.6 3.4Z" fill="#E8E4DA" stroke="#2B1D14" stroke-width=".45"/><path d="M-13.8 3.2L-12 2.2L-10.2 3.2" fill="none" stroke="#9FC3C8" stroke-width=".4"/><g transform="translate(-6 13.6)">${LOADS.muschel}</g>`;

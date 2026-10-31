@@ -195,7 +195,7 @@ function autoNext(s){
   if (P && P.settled){
     // at home: everything but provisions goes ashore, provisions come aboard
     for (const k of GOODS) if (k !== 'proviant' && s.cargo[k]){ P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + s.cargo[k]); delete s.cargo[k]; }
-    if (s.people){ P.pop += s.people; s.people = 0; }
+    if (s.people){ syncPeople(P); P.people.push(...(s.folk || [])); s.folk = []; P.pop += s.people; s.people = 0; }
     const take = Math.min(AUTO_LOAD - (s.cargo.proviant || 0), P.stock.proviant || 0); if (take > 0){ s.cargo.proviant = (s.cargo.proviant || 0) + take; P.stock.proviant -= take; }
   }
   const t = frontier(s, H);
@@ -275,7 +275,7 @@ const cargoLoad = s => Object.values(s.cargo).reduce((a, b) => a + b, 0);
 function unloadAll(s){
   const I = isl(s.port); if (!I || !I.settled) return;
   for (const [k, v] of Object.entries(s.cargo)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + v);
-  I.pop += s.people; s.cargo = {}; s.people = 0; updateHUD(); save();
+  syncPeople(I); I.people.push(...(s.folk || [])); s.folk = []; I.pop += s.people; s.cargo = {}; s.people = 0; updateHUD(); syncWalkers(); save();
 }
 function giveGift(s){
   const T = isl(s.port), ri = routeIndex(s.last, T.id); if (!T.clan || ri < 0 || !cargoLoad(s)) return;
@@ -287,7 +287,7 @@ function settleFrom(s){
   if (s.people < SETTLE.people){ toast(`Es braucht ${SETTLE.people} Siedler an Bord.`, 2600, false); return; }
   if (mana < manaNeeded()){ toast(`Für eine weitere Siedlung braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200, false); return; }
   const from = isl(s.last);
-  settle(T, from, {pop:s.people, stock:s.cargo}); s.people = 0; s.cargo = {}; s.last = T.id;
+  settle(T, from, {pop:s.people, stock:s.cargo, folk:s.folk}); s.people = 0; s.folk = []; s.cargo = {}; s.last = T.id;
 }
 
 /* ---------- trade chains: a canoe on a chain unloads, loads what the chain says, waits a moment and sails on */

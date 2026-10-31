@@ -14,7 +14,7 @@ function addB(I, kind, p, v = {}, born = 0){ const b = {id:nextId++, kind, x:fx(
 const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>> 0) || 1;
 
 function newGame(s = newSeed()){
-  seed = s; worldV = 2; home0 = makeWorld(seed, worldV);
+  seed = s; worldV = 2; nextPid = 1; home0 = makeWorld(seed, worldV);
   islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
   stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0}; chronik = {}; nextEvent = 300; lastEvent = ''; eventNow = null;
   resetGrid(); for (const I of islands) markLand(I);
@@ -93,22 +93,23 @@ function homeSpot(I){
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:3, wv:worldV, qn:QUESTS.length, at:Date.now(), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
+  return JSON.stringify({v:3, wv:worldV, qn:QUESTS.length, at:Date.now(), np:nextPid, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
       fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined,
+      ppl:I.people ? I.people.map(p => [p.id, p.n, p.b, p.l, p.a]) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
       nm:I.custom ? I.name : undefined, ts:I.treasure ? I.treasure.left : undefined, wr:I._wg ? wearCode(I._wg) : I.wearSaved || undefined, rd:I.roads && I.roads.length ? I.roads.map(r => r.map(p => [Math.round(p.x), Math.round(p.y)])) : undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, pr:I.prio, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0, b.soil != null ? Math.round(b.soil * 100) / 100 : null, b.fallow ? 1 : 0])})),
-    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined}))});
+    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined, fk:s.folk && s.folk.length ? s.folk.map(p => [p.id, p.n, p.b, p.l, p.a]) : undefined}))});
 }
 function restore(raw){
   try {
     const s = JSON.parse(raw); if (!s || s.v !== 3 || !s.seed) return false;
     seed = s.seed >>> 0; worldV = s.wv || 1; home0 = makeWorld(seed, worldV); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
-    savedAt = +s.at || 0; tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
+    savedAt = +s.at || 0; nextPid = s.np || 1; tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
     stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
@@ -117,6 +118,7 @@ function restore(raw){
       I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat, got, soil, fal]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {}), ...(boat ? {boat} : {}), ...(bt && got != null ? {got} : {}), ...(soil != null ? {soil} : {}), ...(fal ? {fallow:true} : {})}));
       if (d.pr) I.prio = d.pr;
       if (d.nm){ I.name0 = I.name; I.name = d.nm; I.custom = true; }
+      I.people = d.ppl ? d.ppl.map(([id, n, b, l, a]) => ({id, n, b, l, a})) : null; I.ahnen = d.anc || []; I.chief = d.chf || 0; I.chiefs = d.chl || [];
       if (I.treasure && d.ts != null) I.treasure.left = d.ts;
       I.wearSaved = d.wr || null; I._wg = null; I._wp = null; I.roads = (d.rd || []).map(r => r.map(([x, y]) => ({x, y}))); I._rp = null;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
@@ -126,7 +128,7 @@ function restore(raw){
     ships = []; selShip = null;
     for (const o of s.ships || []){
       if (o.port && !isl(o.port)) o.port = null;
-      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, auto:!!o.au};
+      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, auto:!!o.au, folk:(o.fk || []).map(([id, n, b, l, a]) => ({id, n, b, l, a}))};
       ships.push(sh);
       if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
       if (sh.route != null && !routes[sh.route]) sh.route = null;

@@ -7,7 +7,7 @@ const routeIndex = (a, b) => routes.findIndex(r => (r.a === a && r.b === b) || (
 const manaNeeded = () => Math.max(0, islands.filter(I => I.settled).length - 2) * MANA_PER_COLONY;
 /* Settlers land: the island gets its first house and a cord to where they came from */
 function settle(T, S, o){
-  T.discovered = true; T.settled = true; T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock};
+  T.discovered = true; T.settled = true; T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock}; T.people = (o.folk || []).slice(0, o.pop); syncPeople(T);
   const r = rng(T.center.x | 0);
   if (!T.buildings.length){
     if (T.atoll) seedAtollPlants(T, r);
@@ -93,7 +93,7 @@ const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) 
    within each the oldest place first. Whoever builds is missing from what comes later and goes back once the site is done.
    Each workplace can be held to fewer workers than it has room for. */
 const WORK_SHARE = .7, GROW_EVERY = 3;   // a new person moves in every third tick while there is room and nothing is missing
-const workers = I => Math.round(I.pop * WORK_SHARE);
+const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.pop * WORK_SHARE);
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
 const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Feldfrüchte'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
 const prioOf = I => I.prio && I.prio.length === PRIO.length ? I.prio : (I.prio = PRIO.map(q => q.id));
@@ -121,7 +121,7 @@ function staff(I){
   const short = I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !(b.boat > 0) && (crew.get(b) || 0) < capOf(b) && !unserved(I, b)).length;
   return I.staff = {key:staffKey(I), crew, sites, yard, boats, staffed, cats, free, total:workers(I), build, short};
 }
-const staffKey = I => [tick, I.pop, I.buildings.length, I.buildings.filter(b => b.bt).length, I.buildings.filter(b => b.boat > 0).length, !!I.yard, prioOf(I).join(), I.buildings.reduce((t, b) => t + ((b.v && b.v.mc) != null ? b.v.mc + 1 : 0), 0)].join();
+const staffKey = I => [tick, I.pop, I.people ? I.people.filter(isAdult).length : '', I.buildings.length, I.buildings.filter(b => b.bt).length, I.buildings.filter(b => b.boat > 0).length, !!I.yard, prioOf(I).join(), I.buildings.reduce((t, b) => t + ((b.v && b.v.mc) != null ? b.v.mc + 1 : 0), 0)].join();
 const staffOf = I => I.staff && I.staff.key === staffKey(I) ? I.staff : staff(I);
 const activeSites = I => staffOf(I).sites;
 const crewAt = (I, b) => staffOf(I).crew.get(b) || 0;
@@ -158,13 +158,70 @@ function presentAt(I){
 const MAX_FIG = 80;
 const PEOPLE_NAMES = ['Tama', 'Hina', 'Manu', 'Lupe', 'Fetu', 'Lagi', 'Vai', 'Niu', 'Ula', 'Talo', 'Moana', 'Nalu', 'Pua', 'Toa', 'Ata', 'Ao', 'Kula', 'Mahina', 'Tane', 'Ika', 'Fala', 'Tui', 'Sina', 'Lani', 'Kai', 'Ola', 'Rua', 'Tasi', 'Koa', 'Lea', 'Hoku', 'Malu', 'Fai', 'Rehu', 'Tiare', 'Nohea', 'Siva'];
 let nameNo = 0, initSync = false;
-function spawnFig(I, homes, role, at){
+/* ---------- the people themselves. Every resident of your villages is a person with a name, a birth and a span of life.
+   Children grow up in six years and then work; from forty they are old, and between 44 and 58 they die and join the
+   ancestors. A year on the islands is twelve minutes, so close up you see children grow, and coming back after a day a
+   generation has passed. Newcomers are born to the village or move in; children are often named after an ancestor, as is
+   done across Polynesia. In a chief's village the eldest leads, and the line of chiefs is remembered, as chiefly
+   genealogies were recited. With an ancestor house the dead lend the clan their standing, as at Teouma, where the Lapita
+   people took up the skulls of their dead and laid them anew. */
+const CHILD_Y = 6, OLD_Y = 40, MORE_NAMES = ['Ngaru', 'Hau', 'Marama', 'Ahi', 'Ua', 'Masina', 'Matagi', 'Sau', 'Tala', 'Hiva', 'Kahu', 'Atea', 'Fetu', 'Moe', 'Rongo', 'Tavake', 'Ngaio', 'Peka', 'Uru', 'Vailea', 'Toki', 'Lino', 'Tiki', 'Ono', 'Fiti'];
+const ageOf = p => (tick - p.b) / YEAR, stageOf = p => { const a = ageOf(p); return a < CHILD_Y ? 'kid' : a < OLD_Y ? 'adult' : 'old'; };
+let nextPid = 1, lifeLog = null;   // lifeLog: while missed time is made up, births and deaths are counted here
+function person(I, age, name){
+  const pool = PEOPLE_NAMES.concat(MORE_NAMES);
+  return {id:nextPid++, n:name || pool[Math.floor(Math.random() * pool.length)], b:tick - Math.round(age * YEAR), l:Math.round((44 + Math.random() * 14) * YEAR), a:age >= CHILD_Y ? 1 : 0};
+}
+/* a village's first people: mostly grown-ups, some children, a few old ones */
+function seedPeople(I, n){ const P = []; for (let i = 0; i < n; i++){ const k = i % 7; P.push(person(I, k === 4 ? 1 + Math.random() * 6 : k === 6 ? 40 + Math.random() * 6 : 14 + Math.random() * 24)); } return P; }
+/* someone new: in a village with families mostly born, otherwise moved in; a child often gets an ancestor's name */
+function newcomer(I){
+  const adults = I.people.filter(p => stageOf(p) === 'adult').length, baby = adults >= 2 && I.people.length >= 10 && Math.random() < .35;
+  const anc = I.ahnen || [], name = baby && anc.length && Math.random() < .4 ? anc[Math.floor(Math.random() * anc.length)][0] : null;
+  if (baby){ if (lifeLog) lifeLog.born++; } else if (lifeLog) lifeLog.came++;
+  return person(I, baby ? 0 : 14 + Math.random() * 20, name);
+}
+/* the number of people is what the economy counts; the records follow it: the newest arrive, those who leave go */
+function syncPeople(I){
+  if (!I.settled) return;
+  if (!I.people) I.people = seedPeople(I, I.pop);
+  while (I.people.length < I.pop) I.people.push(newcomer(I));
+  while (I.people.length > I.pop){ const ad = I.people.filter(p => stageOf(p) === 'adult'), list = ad.length ? ad : I.people; const p = list[Math.floor(Math.random() * list.length)]; I.people.splice(I.people.indexOf(p), 1); }
+}
+const isAdult = p => stageOf(p) === 'adult';
+/* Growing up, growing old, dying, and the chief */
+function lifeTick(I){
+  if (!I.settled || !I.people) return;
+  let changed = false;
+  for (const p of I.people.slice()){
+    if (!p.a && ageOf(p) >= CHILD_Y){ p.a = 1; changed = true; if (lifeLog) lifeLog.grown++; else if (I.id === active) note(`${p.n} ist erwachsen und kann jetzt arbeiten.`); }
+    if (tick - p.b < p.l || I.pop <= 2) continue;
+    // a death: the name goes to the ancestors; with an ancestor house the dead add to the clan's standing
+    I.people.splice(I.people.indexOf(p), 1); I.pop--; changed = true;
+    const chief = I.chief === p.id, house = I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt);
+    (I.ahnen = I.ahnen || []).push([p.n, p.b, tick, chief ? 1 : 0]); if (I.ahnen.length > 80) I.ahnen.shift();
+    if (house) mana += chief ? 3 : 1;
+    if (chief) I.chief = 0;
+    if (lifeLog) lifeLog.died.push(p.n);
+    else toast(`${chief ? 'Häuptling ' : ''}${p.n} ist mit ${Math.floor(ageOf(p))} Jahren gestorben. ${house ? 'Im Ahnenhaus wacht der Schädel nun über das Dorf.' : `${I.name} bestattet ${p.n} bei den Ahnen.`}`, 4200);
+  }
+  // in a chief's village the eldest who is not a child leads
+  if (I.lvl === 3 && !I.people.some(p => p.id === I.chief)){
+    const c = I.people.filter(p => stageOf(p) !== 'kid').sort((a, b) => a.b - b.b)[0];
+    if (c){ I.chief = c.id; (I.chiefs = I.chiefs || []).push(c.n); if (lifeLog) lifeLog.chiefs.push(c.n); else toast(`${c.n} ist jetzt Häuptling von ${I.name}.`, 3600); changed = true; }
+  }
+  if (changed){ I.staff = null; if (!lifeLog) syncWalkers(); }
+}
+/* a quiet message: into the list of the conch, without unrolling */
+function note(msg){ news.unshift({msg, at:Date.now()}); if (news.length > 40) news.length = 40; if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
+
+function spawnFig(I, homes, role, at, p){
   const h = homes[Math.floor(Math.random() * homes.length)], n = nameNo++;
-  const w = {isl:I.id, name:PEOPLE_NAMES[(n * 7 + (I.center.x | 0)) % PEOPLE_NAMES.length], look:figureLook(n * 7919 + I.center.x | 0), role, child:role === 'kid', old:role === 'old',
+  const w = {isl:I.id, name:p ? p.n : PEOPLE_NAMES[(n * 7 + (I.center.x | 0)) % PEOPLE_NAMES.length], look:figureLook(p ? p.id * 7919 + 13 : n * 7919 + I.center.x | 0), pid:p ? p.id : 0, role, child:role === 'kid', old:role === 'old',
     x:h.x + 4, y:h.y + 5, tx:h.x + 4, ty:h.y + 5, job:null, leg:'free', carry:null, wait:Math.random() * 800, phase:0, left:false, moving:false, on:false, bout:false};
   // at the start everyone is already about the village
-  const p = at || (initSync && homes[Math.floor(Math.random() * homes.length)]);
-  if (p){ w.x = w.tx = p.x + rnd(8); w.y = w.ty = p.y + 5 + Math.random() * 4; }
+  const q = at || (initSync && homes[Math.floor(Math.random() * homes.length)]);
+  if (q){ w.x = w.tx = q.x + rnd(8); w.y = w.ty = q.y + 5 + Math.random() * 4; }
   walkers.push(w); return w;
 }
 function setJob(I, w, j){
@@ -178,6 +235,7 @@ function syncWalkers(){
     const mine = walkers.filter(w => w.isl === I.id);
     const homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && KINDS[b.kind].roof && !b.bt) : [];
     if (!homes.length){ if (mine.length) walkers = walkers.filter(w => w.isl !== I.id); I.inside = 0; continue; }
+    if (I.settled){ syncFolk(I, homes, mine); continue; }
     let slots = [], idle, kids, old;
     if (I.settled){
       const sf = staffOf(I);
@@ -204,8 +262,37 @@ function syncWalkers(){
   }
   syncCritters();
 }
+/* Your villages: one figure for each person, workers at their places, the rest about the village */
+function syncFolk(I, homes, mine){
+  syncPeople(I);
+  const sf = staffOf(I), slots = []; for (const [b, n] of sf.crew) for (let i = 0; i < n; i++) slots.push(jobFor(I, b, i));
+  // a very big village: some stay in their houses, the old first, then children, then those without work
+  const stage = new Map(I.people.map(p => [p.id, stageOf(p)])), order = I.people.slice().sort((a, b) => ({adult:0, kid:1, old:2})[stage.get(a.id)] - ({adult:0, kid:1, old:2})[stage.get(b.id)]);
+  const shown = new Set(order.slice(0, MAX_FIG).map(p => p.id)); I.inside = I.people.length - shown.size;
+  const byPid = new Map(), keep = new Set();
+  for (const w of mine){ if (w.pid && shown.has(w.pid) && !byPid.has(w.pid)) byPid.set(w.pid, w); }
+  for (const p of I.people){
+    if (!shown.has(p.id)) continue;
+    const st = stage.get(p.id), w = byPid.get(p.id) || spawnFig(I, homes, st === 'adult' ? 'idle' : st, null, p);
+    w.name = p.n; keep.add(w);
+    if (st !== 'adult'){ if (w.job || w.role !== st) freeFig(w); w.role = st; w.child = st === 'kid'; w.old = st === 'old'; }
+    else { w.child = w.old = false; if (w.role === 'kid' || w.role === 'old') freeFig(w); }
+  }
+  const adults = [...keep].filter(w => !w.child && !w.old), want = new Map(slots.map(j => [j.key, j])), loose = [];
+  for (const w of adults){ const j = w.job && want.get(w.job.key); if (j){ w.job = j; want.delete(j.key); } else loose.push(w); }
+  for (const j of want.values()){
+    if (!loose.length) break;
+    let bi = 0, bd = Infinity;
+    loose.forEach((w, i) => { const d = (w.job && w.job.b === j.b ? 0 : 1e6) + Math.hypot(w.x - j.x, w.y - j.y); if (d < bd){ bd = d; bi = i; } });
+    const w = loose.splice(bi, 1)[0]; if (initSync){ w.x = w.tx = j.x + rnd(6); w.y = w.ty = j.y + rnd(3); } setJob(I, w, j);
+  }
+  for (const w of loose) if (w.role !== 'idle') freeFig(w);
+  if (keep.size !== mine.length) walkers = walkers.filter(w => w.isl !== I.id || keep.has(w));
+}
 function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syncWalkers(); } finally { initSync = false; } }
 /* Who someone is and what they do, for a tap on a figure */
+const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.people.find(p => p.id === w.pid) : null; };
+const whoIs = w => { const p = personOf(w), I = isl(w.isl); return p ? `${I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
   if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return 'hat gerade keine Arbeit';
@@ -568,6 +655,7 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
+    syncPeople(I); lifeTick(I);
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){
@@ -738,7 +826,7 @@ function onTap(p){
   if (mode === 'steer'){ steerTap(p); return; }
   // a tap on someone: who it is and what they do, and their workplace opens
   const w = hitWalker(p);
-  if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${w.name} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
+  if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${whoIs(w)} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
   const b = hitBuilding(p); if (b){ select(b); return; }
   const rd = hitRoad(p); if (rd){ closeSheet(); openSheet('road', rd); return; }
   const ri = hitCord(p); if (ri >= 0){ openRoute(ri); return; }
@@ -875,13 +963,13 @@ function awayMinute(I, R){
   }
   let nd = needsOf(I); updateLevel(I, nd); nd = needsOf(I);
   if (nd.growing) I.pop = Math.min(nd.cap, I.pop + Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1));
-  I.hunger = 0;
+  I.hunger = 0; syncPeople(I); lifeTick(I);
 }
 function catchUp(ms){
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
   const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
   const mana0 = mana, knots = routes.map(r => r.knots);
-  awayQuiet = true;
+  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[]};
   try {
     for (let i = 1; i <= n; i++){
       tick++;
@@ -891,7 +979,7 @@ function catchUp(ms){
       if (i % 150 === 0){ chronikTick(); checkQuest(); }
     }
     chronikTick(); checkQuest();
-  } finally { awayQuiet = false; }
+  } finally { awayQuiet = false; lifeLog = null; }
   mana = Math.max(mana0, mana);   // standing does not fade while you are away; the chronicle may add to it
   routes.forEach((r, i) => { if (knots[i] != null) r.knots = Math.max(r.knots, knots[i]); });
   lastEconAt = performance.now(); walkAt = performance.now(); for (const I of islands){ I.staff = null; I._eroT = -1; }
@@ -905,8 +993,14 @@ function awayReport(R){
   for (const I of mine){
     const before = (R.pop.find(p => p[0] === I.id) || [0, 0])[1];
     if (!before){ lines.push(['pop', `${I.name}: ein neues Dorf`, `${I.pop} Bewohner`]); continue; }
-    if (I.pop !== before) lines.push(['pop', `${I.name}: ${I.pop > before ? `${I.pop - before} Menschen sind zugezogen` : `${before - I.pop} sind fortgezogen`}`, `jetzt ${I.pop}`]);
+    if (I.pop !== before) lines.push(['pop', `${I.name}: ${I.pop} Menschen`, `vorher ${before}`]);
   }
+  // the generations: who was born, who grew up, who went to the ancestors, who leads now
+  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
+  if (L.born || L.came) lines.push(['pop', [L.born && `${L.born} ${L.born === 1 ? 'Kind geboren' : 'Kinder geboren'}`, L.came && `${L.came} zugezogen`].filter(Boolean).join(', '), '']);
+  if (L.grown) lines.push(['pop', `${L.grown} ${L.grown === 1 ? 'Kind ist' : 'Kinder sind'} erwachsen geworden`, '']);
+  if (L.died.length) lines.push(['mana', `Zu den Ahnen gegangen: ${names(L.died)}`, '']);
+  if (L.chiefs.length) lines.push(['mana', `Häuptling geworden: ${names(L.chiefs)}`, '']);
   const built = R.built.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {});
   if (R.built.length) lines.push(['beile', `Fertig gebaut: ${Object.entries(built).map(([n, c]) => c > 1 ? `${c}× ${n}` : n).join(', ')}`, '']);
   const made = Object.entries(R.made).sort((a, b) => b[1] - a[1]).slice(0, 5);

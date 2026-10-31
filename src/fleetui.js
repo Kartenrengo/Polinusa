@@ -119,8 +119,8 @@ function fleetAct(act, btn){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return false;
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
     if (act === 'auto'){ setAuto(s, !s.auto); return true; }
-    if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ s.people++; P.pop--; }
-    else if (act === 'pp-' && P && s.people > 0){ s.people--; P.pop++; }
+    if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ syncPeople(P); const ad = P.people.filter(isAdult), q = (ad.length ? ad : P.people).sort((a, b) => b.b - a.b)[0]; if (q){ P.people.splice(P.people.indexOf(q), 1); (s.folk = s.folk || []).push(q); } s.people++; P.pop--; P.staff = null; syncWalkers(); }
+    else if (act === 'pp-' && P && s.people > 0){ const q = (s.folk || []).pop(); if (q){ syncPeople(P); P.people.push(q); } s.people--; P.pop++; P.staff = null; syncWalkers(); }
     else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && cargoLoad(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }
     else if (act === 'cg-' && P && s.cargo[k] > 0){ s.cargo[k]--; if (!s.cargo[k]) delete s.cargo[k]; P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + 1); }
     else if (act === 'unload') unloadAll(s);

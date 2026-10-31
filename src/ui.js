@@ -89,7 +89,7 @@ function showIdle(){
   const I = isl(active), list = walkers.filter(w => w.isl === I.id && w.role === 'idle');
   if (!list.length){ toast('Alle, die arbeiten können, haben Arbeit.', 2600, false); return; }
   const n = idleNo++ % list.length, w = list[n]; markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 2.2));
-  toast(`${w.name} hat keine Arbeit, ${n + 1} von ${list.length}. Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
+  toast(`${whoIs(w)} hat keine Arbeit, ${n + 1} von ${list.length}. Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
 }
 function villageCenter(I){
   const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) return I.anchor || I.center;
@@ -273,8 +273,9 @@ function needsMarkup(I){
   let h = head(`Übersicht ${I.name}`, `${LEVEL_NAMES[I.lvl || 1]}. ${growText(I, nd)}`);
   // people and who comes next
   h += `<p class="sec">Bewohner</p><ul class="list needs">`;
-  const rest = Math.max(0, I.pop - sf.total), kids = Math.round(rest * .6);
+  const P = I.people || [], kids = P.filter(p => stageOf(p) === 'kid').length, rest = kids + P.filter(p => stageOf(p) === 'old').length;
   h += row('pop', `${I.pop} Bewohner`, `${sf.total - sf.free} arbeiten, ${sf.free} ohne Arbeit, ${kids} Kinder, ${rest - kids} Alte${I.inside ? `, ${I.inside} davon zu Hause` : ''}. Platz für ${nd.cap}.`, bar(I.pop / Math.max(1, nd.cap)), nd.full ? chip('low', 'voll') : chip('ok', `${nd.cap - I.pop} frei`));
+  h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Die Menschen mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${I.ahnen.length} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li>`;
   h += row('pop', 'Zuzug', arrivalText(I, nd), '', nd.growing ? chip('ok', 'wächst') : chip(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll'), nd.growing ? '' : 'need');
   h += `</ul>`;
   // the land: how much forest still holds the soil, and how many fields are worn out
@@ -457,6 +458,7 @@ function renderSheet(){
     const [main, more] = infoMarkup(I, b);
     h += head(K.n, I.name) + main;
     if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
+    if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${(I.ahnen || []).length} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
@@ -467,6 +469,15 @@ function renderSheet(){
     h += head('Während ihr fort wart', `${awayTime(R.ms)}${years > 0 ? `, auf den Inseln ${years === 1 ? 'ein Jahr' : `${years} Jahre`}` : ''}.`);
     h += lines.length ? `<ul class="list needs">${lines.map(([k, t, r]) => `<li>${icon(k)}<span class="nm">${t}</span>${r ? `<span class="st">${r}</span>` : ''}</li>`).join('')}</ul>` : '<p class="sub">Alles ist ruhig geblieben.</p>';
     h += `<p class="sub">In der Zeit ist niemand hungrig fortgezogen, kein Sturm kam, und das Ansehen ist geblieben.</p><div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Weiter</button></div>`;
+  } else if (sheetKind === 'folk'){
+    // everyone by name: the chief and the line of chiefs, grown-ups, children, the old, and the ancestors
+    const I = isl(sheetData.id), P = (I.people || []).slice().sort((a, b) => a.b - b.b), by = st => P.filter(p => stageOf(p) === st);
+    const chip = p => `<span class="who${I.chief === p.id ? ' chief' : ''}">${p.n}<small>${Math.floor(ageOf(p))}</small></span>`, group = (t, list) => list.length ? `<p class="sec">${t} · ${list.length}</p><div class="folk">${list.map(chip).join('')}</div>` : '';
+    h += head(`Die Menschen von ${I.name}`, `${P.length} leben hier${(I.ahnen || []).length ? `, ${I.ahnen.length} sind bei den Ahnen` : ''}. Die Zahl ist das Alter in Jahren; ein Jahr dauert zwölf Minuten.`);
+    if (I.chiefs && I.chiefs.length) h += `<p class="sub"><b>Häuptlinge:</b> ${I.chiefs.join(' · ')}</p>`;
+    h += group('Erwachsene', by('adult')) + group('Kinder', by('kid')) + group('Alte', by('old'));
+    const A = (I.ahnen || []).slice().reverse();
+    if (A.length) h += `<p class="sec">Ahnen · ${A.length}</p><div class="folk">${A.map(([n, b, d, c]) => `<span class="who off">${c ? 'Häuptling ' : ''}${n}<small>${Math.floor((d - b) / YEAR)}</small></span>`).join('')}</div>` + (I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt) ? '' : `<p class="sub">Mit einem Ahnenhaus bringt jeder, der stirbt, dem Clan Ansehen.</p>`);
   } else if (sheetKind === 'rename'){
     // an island can get the name its people give it
     const I = isl(sheetData.id);
@@ -477,7 +488,7 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Die Inseln leben weiter, wenn das Spiel zu ist, bis zu acht Stunden. Wenn du wiederkommst, steht da, was geschehen ist. In der Zeit geht nichts verloren.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur. Tippe jemanden an, dann siehst du den Namen und was die Person tut.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Das Doppelkanu kann von selbst erkunden: antippen, dann „Erkunden lassen“. Es kehrt rechtzeitig um und holt Proviant.</li><li>Im Osten liegt die Weite See, dahinter die Fernen Inseln. Dort und auf Tifa liegen Schätze, die es sonst nirgends gibt.</li><li>Felder laugen aus. Lass sie brachliegen, Bäume daneben schonen den Boden. Fällt zu viel Wald, spült der Regen die Erde fort.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Die Inseln leben weiter, wenn das Spiel zu ist, bis zu acht Stunden. Wenn du wiederkommst, steht da, was geschehen ist. In der Zeit geht nichts verloren.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur mit Namen und Alter. Kinder wachsen in sechs Jahren heran und arbeiten dann, ab vierzig sind die Leute alt, und irgendwann gehen sie zu den Ahnen. Ein Jahr dauert zwölf Minuten. In der Übersicht zeigt „Alle Menschen“ jeden mit Namen.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Das Doppelkanu kann von selbst erkunden: antippen, dann „Erkunden lassen“. Es kehrt rechtzeitig um und holt Proviant.</li><li>Im Osten liegt die Weite See, dahinter die Fernen Inseln. Dort und auf Tifa liegen Schätze, die es sonst nirgends gibt.</li><li>Felder laugen aus. Lass sie brachliegen, Bäume daneben schonen den Boden. Fällt zu viel Wald, spült der Regen die Erde fort.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -548,6 +559,7 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
   if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); renderBuildBar(); toast('Der Weg ist weg.', 2000, false); return; }
+  if (act === 'folk'){ openSheet('folk', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : active}); return; }
   if (sheetKind === 'needs' && (act === 'pup' || act === 'pdown')){
     const I = isl(active), pr = prioOf(I), i = pr.indexOf(btn.dataset.c), j = i + (act === 'pup' ? -1 : 1);
     if (j >= 0 && j < pr.length){ [pr[i], pr[j]] = [pr[j], pr[i]]; I.staff = null; syncWalkers(); updateHUD(); save(); }

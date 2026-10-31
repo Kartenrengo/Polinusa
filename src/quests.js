@@ -47,7 +47,7 @@ const QUESTS = [
   {id:'land', t:'Neues Land', d:'Fahre mit dem Doppelkanu in den Nebel und finde eine neue Insel.', why:'Niemand weiß, was im Nebel liegt. Lade Proviant ein, tippe das Kanu an und dann auf den Nebel. Wo das Kanu fährt, lichtet sich der Nebel.',
     n:() => newLand(), of:1, show:{ship:'dc'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck', 'kavagarten', 'trommel', 'tanzplatz'], gift:{}},
   {id:'fest', t:'Ein Fest', d:'Feiere ein Fest im Versammlungshaus.', why:'Feste bringen Ansehen. Mit Ansehen folgen dir Siedler auf weitere Fahrten, und ein Dorf kann Häuptlingsdorf werden.',
-    n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
+    n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:['ahnenhaus'], gift:{}},
   {id:'plejaden', t:'Das Fest der Plejaden', d:() => festivalTime() ? 'Jetzt ist Festzeit. Feiere das Fest der ersten Früchte.' : `Feiere das Fest der ersten Früchte. Die Plejaden erscheinen in etwa ${minutes(untilFestival())} Minuten.`,
     why:'Wenn die Plejaden nach Sonnenuntergang aufgehen, beginnt das neue Jahr. Die ersten Früchte gehören den Ahnen. Mit Kava, Tanz zur Schlitztrommel und einem Kanurennen wird das Fest größer, und befreundete Clans kommen zu Besuch.',
     n:() => islands.some(I => I.festYear != null) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
