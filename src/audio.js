@@ -49,7 +49,7 @@ function noise(t, dur, peak, type, freq, q = 1){
 /* wooden notes like a marimba: a sine and a quickly fading overtone */
 const wood = (f, t, peak = .12) => { tone(f, t, peak, .9); tone(f * 4, t, peak * .25, .12); };
 function sfx(name){
-  if (!actx || !opts.sound || actx.state !== 'running') return;
+  if (awayQuiet || !actx || !opts.sound || actx.state !== 'running') return;
   const t = now0() + .02;
   if (name === 'quest') [523, 659, 784].forEach((f, i) => wood(f, t + i * .12));
   else if (name === 'chronik') [392, 523, 659, 880].forEach((f, i) => wood(f, t + i * .14, .1));

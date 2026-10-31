@@ -152,6 +152,24 @@ Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt
   ist und nichts fehlt), die Arbeit nach Reihenfolge mit allen Arbeitsplätzen, für jedes Essen Lager, Erzeugung, Verbrauch
   und Reichweite, und den weiteren Bedarf.
 
+## Während ihr fort wart
+
+Die Inseln leben weiter, wenn das Spiel geschlossen ist oder im Hintergrund liegt, bis zu acht Stunden.
+
+- **Was weiterläuft:** Baustellen werden fertig, Einbäume geschnitzt, das Kanuhaus baut weiter, Felder, Werkstätten,
+  Fischer und Taucher erzeugen, so weit Platz im Lager und Material da ist, Bäume wachsen nach, Menschen ziehen zu, solange
+  Häuser frei sind und nichts fehlt. Die Jahreszeiten gehen weiter. Kanus fahren ihre Kurse, Handelsketten handeln,
+  ein Doppelkanu, das von selbst erkundet, erkundet weiter. Clans schicken ihre Gegengaben.
+- **Was nicht passiert:** Niemand zieht hungrig fort, kein Wirbelsturm und kein anderes Ereignis kommt, keine Schnur
+  verliert Knoten, das Ansehen schwindet nicht (Chronik-Einträge bringen trotzdem ihr Ansehen). Ausgelaugte Felder lassen
+  die Leute selbst brachliegen.
+- **Der Bericht:** Beim Zurückkommen öffnet sich „Während ihr fort wart“: wie lange, wie viele Jahre auf den Inseln, wer
+  zugezogen ist, was fertig gebaut und erzeugt wurde, welche Felder ruhen, welche Inseln entdeckt und welche Kanus vom
+  Stapel gelaufen sind, neue Chronik-Einträge und geschaffte Aufgaben. Dasselbe steht in den Nachrichten der Muschel.
+- Das gilt beim Öffnen eines gespeicherten Spiels und beim Zurückkehren in einen Tab, der im Hintergrund lag. Gespeichert
+  wird auch beim Schließen, damit die Zeit stimmt. Acht Stunden rechnet das Spiel in einer Viertelsekunde nach: das Dorf
+  Minute für Minute, das Meer Tick für Tick.
+
 ## Die große Fahrt
 
 Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jahren bis Fidschi, Tonga und Samoa fuhren.

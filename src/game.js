@@ -827,11 +827,118 @@ function frame(now){
   if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
 }
+/* ---------- while you were away. The islands live on when the game is closed or out of sight, up to eight hours: canoes
+   are finished and sail on, building sites are completed, the workshops make what they make, people move in while there is
+   room and food. Nothing is lost in that time: nobody leaves hungry, no cyclone comes, no cord slackens, standing neither
+   grows nor fades, and where a field is worn out the people let it lie fallow themselves. Afterwards a report says what
+   happened. The village is reckoned in whole minutes, the sea tick by tick, so canoes still find their way. */
+const AWAY_MAX = 8 * 3600 * 1000;
+function awayMinute(I, R){
+  const sf = staff(I), st = I.stock, cap = storeCap(I);
+  // building sites and canoes: the builders work as if they were there
+  for (const b of I.buildings){
+    if (!b.bt) continue;
+    b.bt -= KINDS[b.kind].plant ? 30 : 30 * (sf.crew.get(b) || 0) / SITE_CREW;
+    if (b.bt <= .001){ delete b.bt; delete b.got; done(I, b); if (!KINDS[b.kind].plant) R.built.push(KINDS[b.kind].n); }
+  }
+  for (const b of I.buildings) if (b.boat > 0 && sf.crew.get(b)){ b.boat -= 30; if (b.boat <= .001) delete b.boat; }
+  if (I.yard && sf.yard){ I.yard.got = SHIPS[I.yard.kind].cost.holz; I.yard.left = Math.max(1e-4, I.yard.left - 30 * sf.yard / YARD_CREW); }
+  // the workshops, fields and fishers: what they make in a minute, as far as there is room and material
+  for (const b of I.buildings){
+    const K = KINDS[b.kind]; if (!(K.prod || K.plants) || b.bt || b.boat > 0) continue;
+    if (b.fallow){ b.soil = Math.min(1, (b.soil ?? 1) + .36); if (b.soil >= .98){ b.fallow = false; I.staff = null; } continue; }
+    const n = K.crew ? sf.crew.get(b) || 0 : 1, ev = seasonalEvery(I, b, K); if (!n || !ev) continue;
+    const w = workState(I, b); if (w) continue;
+    b._away = (b._away || 0) + 30 / ev / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? n / K.crew : 1);
+    let whole = Math.floor(b._away); b._away -= whole;
+    if (K.plants){ while (whole-- > 0 && plantTree(I, b)); continue; }
+    for (; whole > 0 && (st[K.prod] || 0) < cap; whole--){
+      if (K.use){ if (!canPay(I, K.use)) break; pay(I, K.use); }
+      if (K.trees){ if (!treesNear(I, b.x, b.y, K.trees.r).length) break; fellTree(I, b); }
+      if (K.soil) drainSoil(I, b);
+      if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }
+      st[K.prod] = (st[K.prod] || 0) + 1; R.made[K.prod] = (R.made[K.prod] || 0) + 1; if (K.prod === 'fisch') stats.fisch++;
+    }
+    if (K.soil && (b.soil ?? 1) < .3){ b.fallow = true; I.staff = null; R.fallow.add(b); }   // the people rest a worn-out field themselves
+  }
+  // the trees grow on, a minute at a time
+  let grew = false;
+  for (const t of I.trees){ if (t.st === 0) continue; t.g -= 30; if (t.g > 0) continue; grew = true; if (t.st === 1){ t.st = 2; t.g += GROW_TICKS; } else { t.st = 0; t.w = TREE_WOOD; } }
+  if (grew) treesChanged(I);
+  // what people use; when something runs out nobody leaves, the village only stops growing
+  I.owe = I.owe || {};
+  for (const N of NEEDS){
+    if (!needActive(I, N)) continue;
+    I.owe[N.k] = (I.owe[N.k] || 0) + I.pop * N.rate; const take = Math.floor(I.owe[N.k]); I.owe[N.k] -= take;
+    if (N.k !== 'essen'){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
+    for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
+  }
+  let nd = needsOf(I); updateLevel(I, nd); nd = needsOf(I);
+  if (nd.growing) I.pop = Math.min(nd.cap, I.pop + Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1));
+  I.hunger = 0;
+}
+function catchUp(ms){
+  ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
+  const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
+  const mana0 = mana, knots = routes.map(r => r.knots);
+  awayQuiet = true;
+  try {
+    for (let i = 1; i <= n; i++){
+      tick++;
+      if (ships.length) stepShips(performance.now(), TICK);
+      feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
+      if (i % 30 === 0) for (const I of islands) if (I.settled) awayMinute(I, R);
+      if (i % 150 === 0){ chronikTick(); checkQuest(); }
+    }
+    chronikTick(); checkQuest();
+  } finally { awayQuiet = false; }
+  mana = Math.max(mana0, mana);   // standing does not fade while you are away; the chronicle may add to it
+  routes.forEach((r, i) => { if (knots[i] != null) r.knots = Math.max(r.knots, knots[i]); });
+  lastEconAt = performance.now(); walkAt = performance.now(); for (const I of islands){ I.staff = null; I._eroT = -1; }
+  invalidate(true); syncWalkers(); updateHUD(); renderBuildBar(); save();
+  return R;
+}
+const awayTime = ms => { const m = Math.round(ms / 60000), h = Math.floor(m / 60); return h ? `${h} ${h === 1 ? 'Stunde' : 'Stunden'}${m % 60 ? ` ${m % 60} Minuten` : ''}` : `${m} Minuten`; };
+/* The report: what became of each village, what the canoes found, what the chronicle gained */
+function awayReport(R){
+  const lines = [], mine = islands.filter(I => I.settled);
+  for (const I of mine){
+    const before = (R.pop.find(p => p[0] === I.id) || [0, 0])[1];
+    if (!before){ lines.push(['pop', `${I.name}: ein neues Dorf`, `${I.pop} Bewohner`]); continue; }
+    if (I.pop !== before) lines.push(['pop', `${I.name}: ${I.pop > before ? `${I.pop - before} Menschen sind zugezogen` : `${before - I.pop} sind fortgezogen`}`, `jetzt ${I.pop}`]);
+  }
+  const built = R.built.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {});
+  if (R.built.length) lines.push(['beile', `Fertig gebaut: ${Object.entries(built).map(([n, c]) => c > 1 ? `${c}× ${n}` : n).join(', ')}`, '']);
+  const made = Object.entries(R.made).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (made.length) lines.push(['essen', `Erzeugt: ${made.map(([k, v]) => `${v} ${GN[k]}`).join(', ')}`, '']);
+  const fal = R.fallow.size; if (fal) lines.push(['soil', `${fal === 1 ? 'Ein ausgelaugtes Feld haben' : `${fal} ausgelaugte Felder haben`} die Leute brachliegen lassen`, '']);
+  const found = islands.filter(I => I.discovered).length - R.found; if (found > 0) lines.push(['einbaum', `${found} ${found === 1 ? 'neue Insel' : 'neue Inseln'} entdeckt`, '']);
+  const canoes = own().length - R.ships; if (canoes > 0) lines.push(['einbaum', `${canoes} ${canoes === 1 ? 'neues Kanu' : 'neue Kanus'} vom Stapel gelaufen`, '']);
+  const ch = CHRONIK.filter(M => chronik[M.id] != null).length - R.chronik; if (ch > 0) lines.push(['mana', `${ch} ${ch === 1 ? 'neuer Eintrag' : 'neue Einträge'} in der Chronik`, '']);
+  if (quest > R.quest) lines.push(['mana', `Geschafft: ${QUESTS.slice(R.quest, quest).map(Q => Q.t).join(', ')}`, '']);
+  return lines;
+}
+let hiddenAt = 0, hiddenTick = 0;
+function welcomeBack(R){
+  if (!R || R.ms < 3 * 60000) return;
+  const lines = awayReport(R), years = yearOf() - R.years;
+  news.unshift({msg:`Ihr wart ${awayTime(R.ms)} fort.${lines.length ? ' ' + lines.map(l => l[1]).join('. ') + '.' : ' Alles ist ruhig geblieben.'}`, at:Date.now()}); unread++; newsBadge();
+  openSheet('away', {R, lines, years});
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ hiddenAt = Date.now(); hiddenTick = tick; save(); return; }
+  if (!hiddenAt) return;
+  // back again: what the throttled clock did not manage while out of sight is made up now
+  const el = Date.now() - hiddenAt, missing = Math.min(AWAY_MAX, el) - (tick - hiddenTick) * TICK; hiddenAt = 0;
+  if (el > 60000 && missing > 60000) welcomeBack(catchUp(missing));
+});
+addEventListener('pagehide', () => save());
 function start(data){
   injectDefs();
   let ok = false;
   try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); } catch (e){}
   if (!ok) newGame();
+  const away = ok && savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
   renderAll(); measure();
   // a new game opens close to the landing place, a saved one shows home and the first atoll
   const b = ok ? boxOf([isl('heimat'), isl('tochter')]) : isl('heimat').box, bw = b.x1 - b.x0, bh = b.y1 - b.y0;
@@ -843,6 +950,7 @@ function start(data){
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
     if (!ok){ openSheet('intro', {first:true}); save(); }
+    else if (away && away.ms >= 3 * 60000) welcomeBack(away);
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });
 }

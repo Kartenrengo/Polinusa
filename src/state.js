@@ -1,7 +1,9 @@
 'use strict';
 /* Game state, the starting villages, save and load */
 
-let seed = 1, islands = [], routes = [], fogHoles = [], cells = new Set(), home0 = null, worldV = 2;   // worldV: which rules the sea was rolled with   // cells: the sea already rolled; home0: home, Motu and the first clearing
+// awayQuiet: no messages or sounds while missed time is made up; savedAt: when the game was last saved
+// cells: the sea already rolled; home0: home, Motu and the first clearing; worldV: which rules the sea was rolled with
+let awayQuiet = false, savedAt = 0, seed = 1, islands = [], routes = [], fogHoles = [], cells = new Set(), home0 = null, worldV = 2;
 let tick = 0, nextId = 1, active = 'heimat';
 let mode = 'idle', placing = null, selectedId = null, sheetKind = null, sheetData = null;
 let walkers = [], mana = 0;   // mana: the clan's standing, from feasts, gifts and a beautiful village
@@ -91,7 +93,7 @@ function homeSpot(I){
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:3, wv:worldV, qn:QUESTS.length, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
+  return JSON.stringify({v:3, wv:worldV, qn:QUESTS.length, at:Date.now(), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
@@ -106,7 +108,7 @@ function restore(raw){
     const s = JSON.parse(raw); if (!s || s.v !== 3 || !s.seed) return false;
     seed = s.seed >>> 0; worldV = s.wv || 1; home0 = makeWorld(seed, worldV); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
-    tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
+    savedAt = +s.at || 0; tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
     stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
