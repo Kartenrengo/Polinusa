@@ -248,6 +248,26 @@ Generationen aus.
   nächste Art stirbt, und heben es auf, wenn das Wild sich erholt hat.
 - **Sichtbar:** Über jeder Insel kreisen so viele Vögel, wie es Wild gibt; über leergejagtem Land nur einer.
 
+## Muster auf den Töpfen
+
+Lapita-Töpfe sind berühmt für ihre Muster: Mit gezähnten Stempeln drückten die Töpfer Reihen winziger Punkte in den
+feuchten Ton und rieben weißen Kalk hinein. Gleiche Muster von Neuguinea bis Samoa zeigen, wie eng die Inseln verbunden
+waren; wo der Kontakt abriss, wurden die Töpfe schlichter.
+
+- **Eigenes Muster:** Ein Dorf findet es mit seiner ersten Töpferei. Panua stempelt das Gesicht der Ahnen mit der langen
+  Nase, andere Dörfer Mäander, Rauten, Spirale oder Leiter. Jeder Clan hat sein eigenes (Zickzack, Bögen, Kreise).
+  Ansehen +2.
+- **Muster wandern mit Töpfen:** Kommt ein Kanu mit Töpfen an ein Dorf oder einen Clan, kennen sie dort von nun an alle
+  Muster des Ortes, von dem es kam, auch die geborgten. Siedler nehmen die Muster ihres Dorfes mit. Gegengaben der Clans
+  kommen in ihren gestempelten Töpfen. Jedes neue Muster an einem Ort bringt Ansehen +1.
+- **Vergessen:** Ein geborgtes Muster, das zwei Jahre lang kein Topf wieder bringt, ist vergessen. Eine Handelskette mit
+  Töpfen hält es frisch. Atolle haben keinen Ton; ihre Muster kommen immer von anderswo.
+- **Wozu:** Jedes fremde Muster schmückt ein Dorf (Schönheit +1, höchstens 3). Stempelt ein Clan euer Muster, seid ihr
+  verwandt: Eure Gaben zählen bei ihm ein Fünftel mehr, und die Gegengabe wird reicher.
+- **Sichtbar:** Auf der Karte stehen unter jedem Dorf und Clan die Muster, die man dort stempelt, das eigene zuerst. So
+  sieht man, wie weit ein Muster gewandert ist. Töpferei, Übersicht und Clan zeigen sie mit Herkunft und wie lange sie
+  noch halten. Die Chronik kennt „Ein eigenes Muster“, „Ein Muster wandert“ (auf vier Inseln) und „Verwandte im Ton“.
+
 ## Wie alles ineinandergreift
 
 - **Erkunden → Wissen → Erkunden:** Neue Inseln heben die Grenze der Navigatoren. Vögel und Wolken zeigen verborgenes
@@ -263,10 +283,12 @@ Generationen aus.
 - **Siedeln:** Was im Kanu war, bestimmt, was auf neuem Land wächst. Bis Taro und Brotfrucht nachkommen, nähren Fisch, Riff
   und Wild die Siedler, und wer keine Arbeit hat, sammelt. Zu viele Untätige leeren das Wild; Arbeit, Tapu oder weniger
   Menschen schonen es. Ohne Brotfrucht kein Proviant, ohne Proviant keine Fahrt ins Unbekannte.
+- **Töpfe verbinden:** Wer Töpfe schickt, schickt seine Muster. Sie schmücken die Dörfer, machen Clans zu Verwandten,
+  deren Gegengaben reicher ausfallen, und verblassen, wenn die Handelsketten ruhen.
 - **Auch in der Abwesenheit** läuft alles weiter: Ernte, Geburt, Tod, Lernen, Sammeln, Fahrten und Chronik. Der Bericht
   „Während ihr fort wart“ erzählt es.
 - Ein langer Prüflauf über vierzig Inseljahre, mit Stürmen, Festen, Abwesenheit, Speichern und Laden, prüft dabei, dass
-  Bewohner, Figuren, Vorräte, Arbeiter, Wissen, Wild und mitgebrachte Pflanzen immer zueinander passen.
+  Bewohner, Figuren, Vorräte, Arbeiter, Wissen, Wild, mitgebrachte Pflanzen und Muster immer zueinander passen.
 
 ## Die große Fahrt
 

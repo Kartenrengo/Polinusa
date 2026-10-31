@@ -22,7 +22,7 @@ const QUESTS = [
     n:() => isl('heimat').pop, of:15, show:{build:'haus'}, unlock:['speicher', 'toepfer', 'pflanzer'], gift:{holz:4}},
   {id:'wald', t:'Der Wald wächst nach', d:'Baue einen Baumpflanzer am Wald.', why:'Gefällte Bäume treiben von selbst erst nach acht Minuten wieder aus. Der Pflanzer setzt sofort junge Bäume auf die Stümpfe und an den Waldrand. Aber bedenke: Wo Bäume stehen, kann nichts gebaut werden.',
     n:() => count('heimat', 'pflanzer'), of:1, show:{build:'pflanzer'}, unlock:[], gift:{}},
-  {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ton liegt am Bach. Die Töpferei formt ihn zu Töpfen und brennt sie mit Holz. Ab 20 Bewohnern braucht jede Familie Töpfe.',
+  {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ton liegt am Bach. Die Töpferei formt ihn zu Töpfen und brennt sie mit Holz. Ab 20 Bewohnern braucht jede Familie Töpfe. Die Töpfer stempeln dabei ein eigenes Muster in den Ton, das mit jedem Topf weiterwandert.',
     n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:['beil', 'riff', 'pfahl', 'steg'], gift:{}},
   {id:'riff', t:'Schätze vom Riff', d:'Baue einen Riffsammler am Strand.', why:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Ab 25 Bewohnern gehören Meeresfrüchte auf den Tisch.',
     n:() => count('heimat', 'riff'), of:1, show:{build:'riff'}, unlock:[], gift:{}},

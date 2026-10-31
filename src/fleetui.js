@@ -37,7 +37,7 @@ function shipMarkup(s){
   } else if (load || s.people) h += `<p class="sub">${aboard}</p>`;
   if (s.route != null) h += `<div class="rowx"><span></span><button class="btn" type="button" data-act="unassign">Aus der Kette nehmen</button></div>`;
   if (P && !P.settled && !P.clan) h += `<div class="rowx"><span class="sub">${s.people >= SETTLE.people ? (mana >= manaNeeded() ? 'Hier kann ein Dorf entstehen.' : `Es braucht Ansehen ${manaNeeded()}, jetzt ${Math.floor(mana)}.`) : `Für ein Dorf braucht es ${SETTLE.people} Siedler an Bord.`}</span><button class="btn primary" type="button" data-act="settle" ${s.people >= SETTLE.people && mana >= manaNeeded() ? '' : 'disabled'}>Dorf gründen</button></div>`;
-  if (P && P.clan) h += `<div class="rowx"><span class="sub">${load ? `Diese Gabe bringt später etwa ${giftGuess(P.clan, giftValue(P.clan, s.cargo) * returnRate((routes[routeIndex(s.last, P.id)] || {knots:0}).knots))} zurück.` : 'Lade in einem eigenen Hafen etwas ein, das sie schätzen.'}</span><button class="btn primary" type="button" data-act="gift" ${load ? '' : 'disabled'}>Gabe übergeben</button></div>`;
+  if (P && P.clan) h += `<div class="rowx"><span class="sub">${load ? `Diese Gabe bringt später etwa ${giftGuess(P.clan, giftWorth(P, s.cargo) * returnRate((routes[routeIndex(s.last, P.id)] || {knots:0}).knots))} zurück.` : 'Lade in einem eigenen Hafen etwas ein, das sie schätzen.'}</span><button class="btn primary" type="button" data-act="gift" ${load ? '' : 'disabled'}>Gabe übergeben</button></div>`;
   return h;
 }
 /* Life for new land: the canoe plants and a pair of pigs, each taking two places. Whatever grows on this island can go. */
@@ -80,7 +80,7 @@ function routeMarkup(ri){
   };
   if (A.settled) h += side(A, B, 'a');
   if (B.settled) h += side(B, A, 'b');
-  if (C) h += `<p class="sub">Sie antworten später mit ${C.makes.map(k => GN[k]).join(' und ')}. Was sie schätzen: ${C.wants.map(k => GN[k]).join(', ')}.</p>`;
+  if (C) h += `<p class="sub">Sie antworten später mit ${C.makes.map(k => GN[k]).join(' und ')}. Was sie schätzen: ${C.wants.map(k => GN[k]).join(', ')}. ${kin(A.clan ? A : B) ? 'Sie stempeln euer Muster: Eure Gaben zählen mehr.' : 'Töpfe in der Gabe bringen ihnen euer Muster, dann zählen eure Gaben mehr.'}</p>`;
   return h;
 }
 function openRoute(ri){ const r = routes[ri]; if (isl(r.a).settled && r.a !== active && r.b !== active) setActive(r.a); selectedId = null; invalidate(); openSheet('route', {r:ri}); }

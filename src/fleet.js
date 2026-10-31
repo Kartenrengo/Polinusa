@@ -255,6 +255,7 @@ function arriveShip(s){
     // a clan canoe hands over its return gift and goes home again out of sight
     const T = isl(s.to), C = isl(s.clan).clan;
     for (const [k, v] of Object.entries(s.cargo)) T.stock[k] = Math.min(storeCap(T), (T.stock[k] || 0) + v);
+    bringMotifs(isl(s.clan), T);   // the gift comes in their stamped pots
     ships.splice(ships.indexOf(s), 1); updateHUD(); save(); checkQuest(); sfx('shells');
     toast(`${s.guest ? 'Gäste' : 'Gegengabe'} vom ${C.name}: ${giftText(s.cargo)}.`, 4200); return;
   }
@@ -267,6 +268,7 @@ function arriveShip(s){
     routes.push({a:from.id, b:T.id, knots:T.clan ? 0 : 1, lastGift:tick, plan:{a:{}, b:{}}}); invalidate();
     if (T.clan){ const C = T.clan; toast(`Erster Besuch beim ${C.name}. Sie machen ${C.makes.map(k => GN[k]).join(' und ')} und schätzen ${C.wants.map(k => GN[k]).join(', ')}. Übergib eine Gabe.`, 6000); }
   }
+  if ((T.settled || T.clan) && from && from !== T && s.cargo.toepfe > 0) bringMotifs(from, T);   // where pots come, their patterns come
   if (T.settled){ s.last = T.id; s.hungry = false; landLife(T, s); }   // plants and pigs aboard take root in a village of ours
   if (s.route != null){ routeArrive(s); return; }
   if (T.clan) toast(`${s.name} liegt beim ${T.clan.name}.`);

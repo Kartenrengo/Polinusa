@@ -897,6 +897,9 @@ function drawLabels(c){
     label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : I.treasure ? `Schatzinsel: ${GN[I.treasure.k]}` : 'unbewohnt');
     // a treasure island shows what it gives next to its name
     if (I.treasure) put(c, I.labelAt.x, I.labelAt.y + 24 * k, k * .9, 1, 0, 'tr|' + I.treasure.k, `<use href="#ic-${I.treasure.k}" transform="translate(-10 -10)"/>`);
+    // the patterns stamped here, the island's own first: on the chart one sees how far each has travelled
+    const ms = I.settled || I.clan ? motifsOf(I).slice(0, 5) : [];
+    ms.forEach((m, i) => put(c, I.labelAt.x + (i - (ms.length - 1) / 2) * 18 * k, I.labelAt.y + (I.treasure ? 46 : 26) * k, k * .8, 1, 0, 'mo|' + m, MOTIF_ART[m]));
   }
 }
 /* What the navigators read (see navHints): birds that fly out from hidden land at dawn and home at dusk, and over it,

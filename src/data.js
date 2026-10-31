@@ -111,9 +111,9 @@ const FEAST_PAUSE = 45, FEAST_LEN = 12, MANA_FADE = 30;   // ticks between feast
 /* Gifts to other clans: what a good is worth, the return comes later and grows with trust (knots) */
 const VALUE = {nahrung:.2, fisch:.4, meeres:.5, wild:.4, holz:.3, proviant:1, toepfe:1, beile:1.5, klingen:2, matten:1, schnur:1, tapa:2, schweine:3, kava:2, schmuck:6, perlmutt:7, federn:10, tabua:12};
 const CLANS = {
-  feuer:{name:'Clan vom Feuerberg', on:'vulkan', makes:['klingen', 'schweine'], wants:['matten', 'schnur', 'schmuck'], pop:30},
-  riff:{name:'Clan vom Riff', on:'atoll', makes:['schmuck', 'matten'], wants:['toepfe', 'beile', 'klingen'], pop:22},
-  hain:{name:'Clan vom Kavahain', on:'hoch', makes:['kava', 'tapa'], wants:['matten', 'schmuck', 'klingen'], pop:26}
+  feuer:{name:'Clan vom Feuerberg', motif:'zahn', on:'vulkan', makes:['klingen', 'schweine'], wants:['matten', 'schnur', 'schmuck'], pop:30},
+  riff:{name:'Clan vom Riff', motif:'boegen', on:'atoll', makes:['schmuck', 'matten'], wants:['toepfe', 'beile', 'klingen'], pop:22},
+  hain:{name:'Clan vom Kavahain', motif:'kreis', on:'hoch', makes:['kava', 'tapa'], wants:['matten', 'schmuck', 'klingen'], pop:26}
 };
 const giftValue = (C, cargo) => Object.entries(cargo).reduce((s, [k, v]) => s + v * VALUE[k] * (C.wants.includes(k) ? 1.5 : C.makes.includes(k) ? .3 : 1), 0);
 const returnRate = knots => Math.min(1.2, .6 + .06 * knots);
@@ -151,3 +151,18 @@ const pay = (I, c, f = 1) => { for (const [k, v] of Object.entries(c)) I.stock[k
 const amount = (k, v) => `${v} ${v === 1 ? G1[k] : GN[k]}`;
 const costText = c => { const e = Object.entries(c); return e.length ? e.map(([k, v]) => amount(k, v)).join(' + ') : 'nichts'; };
 const emptyStock = () => Object.fromEntries(GOODS.map(k => [k, 0]));
+
+/* ---------- patterns on the pots. Lapita potters pressed rows of tiny teeth into the wet clay and filled the marks with
+   white lime. Each village with a pottery finds its own pattern; pots carry the patterns of the place they come from, and
+   where pots travel the patterns go too. A borrowed pattern that no pot has brought again for two years is forgotten. */
+const MOTIFS = {
+  gesicht:{n:'Gesicht', t:'Das Gesicht mit der langen Nase und den großen Augen, das Gesicht der Ahnen.'},
+  zahn:{n:'Zickzack', t:'Ein Zickzackband aus vielen kleinen Zahnstempeln.'},
+  kreis:{n:'Kreise', t:'Ringe in Ringen, wie Wellen um einen Stein.'},
+  maeander:{n:'Mäander', t:'Ein Band, das sich in Stufen hin und her windet.'},
+  boegen:{n:'Bögen', t:'Bögen übereinander wie Fischschuppen.'},
+  rauten:{n:'Rauten', t:'Eine Kette von Rauten, wie Flechtwerk.'},
+  spirale:{n:'Spirale', t:'Eine Spirale wie das junge Farnblatt.'},
+  leiter:{n:'Leiter', t:'Zwei Linien mit Sprossen dazwischen.'}
+};
+const MOTIF_YEARS = 2, KIN_GIFT = 1.2;   // a borrowed pattern lasts two years without new pots; a clan that stamps your pattern values your gifts more

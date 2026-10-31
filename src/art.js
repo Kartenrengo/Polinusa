@@ -304,6 +304,19 @@ const PIP = {
   free:`<circle cx=".1" cy="-4.75" r="1.3" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".5" stroke-linejoin="round"/>`,
   off:`<g opacity=".4"><circle cx=".1" cy="-4.75" r="1.3" fill="none" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="none" stroke="#2B1D14" stroke-width=".5"/></g><path d="M-2.3-.6L2.4-5.9" stroke="#A84A2C" stroke-width=".8" stroke-linecap="round"/>`
 };
+/* The patterns: a disc of red clay, the stamped rows of teeth filled with white lime */
+const MOTIF_DOT = 'fill="none" stroke="#F2E6CB" stroke-width="1.55" stroke-dasharray=".1 1.85" stroke-linecap="round" stroke-linejoin="round"';
+const MOTIF_ART = Object.fromEntries(Object.entries({
+  gesicht:'M-7.2-4.4Q0-8.4 7.2-4.4M0-4.6V3.8M-1.8 3.8H1.8M-5.6-1.6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M1.6-1.6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M-4.6 6.2Q0 4.6 4.6 6.2',
+  zahn:'M-7.6-5.4H7.6M-7.6 5.4H7.6M-7.4 2.6L-4.8-2.6L-2.2 2.6L.4-2.6L3 2.6L5.6-2.6L7.4 1',
+  kreis:'M-6.4 0a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0M-3.2 0a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0',
+  maeander:'M-7.4 4.4V-2.4H-3.6V2.4H.2V-4.4H4V2.4H7.4',
+  boegen:'M-7.4-.4Q-4.9-4.6-2.4-.4Q.1-4.6 2.6-.4Q5.1-4.6 7.6-.4M-5.6 4.6Q-3.1.4-.6 4.6Q1.9.4 4.4 4.6',
+  rauten:'M-8 0L-4.2-4.2L-.4 0L-4.2 4.2ZM.4 0L4.2-4.2L8 0L4.2 4.2Z',
+  spirale:'M0 0Q1.6-1.4 0-2.6Q-3-3.2-3.4 0Q-3.4 4 .6 4.4Q5 4.4 5.4 0Q5.4-6 0-6.4Q-6.6-6.4-7 .4',
+  leiter:'M-7.4-3.2H7.4M-7.4 3.2H7.4M-5-3.2V3.2M-1.7-3.2V3.2M1.7-3.2V3.2M5-3.2V3.2'
+}).map(([k, d]) => [k, `<circle r="9.2" fill="#B5562F" stroke="#2B1D14" stroke-width=".9"/><path d="${d}" ${MOTIF_DOT}/>`]));
+const motifIcon = (k, cls = '') => `<svg class="ic motif${cls ? ' ' + cls : ''}" viewBox="-10 -10 20 20" aria-hidden="true">${MOTIF_ART[k]}</svg>`;
 /* Loads: on the head in front of the figure, over the shoulder behind it */
 const BASKET = '<path d="M-2.5-10.3H2.5L2-12.1H-2Z" fill="#B08048" stroke="#2B1D14" stroke-width=".4" stroke-linejoin="round"/><path d="M-2.2-11.2H2.2" stroke="#7A5434" stroke-width=".35"/>';
 const LOADS = {

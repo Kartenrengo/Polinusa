@@ -10,6 +10,7 @@ function settle(T, S, o){
   T.discovered = true; T.settled = true; T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock}; T.people = (o.folk || []).slice(0, o.pop); syncPeople(T);
   // only what came in the canoe grows here; the wild is as the island kept it
   T.life = []; T.wild = wildOf(T); const fresh = landLife(T, {life:o.life || []}, true);
+  if (S) T.mot = Object.fromEntries(motifsOf(S).map(k => [k, tick]));   // and their patterns, in the pots they carry
   const r = rng(T.center.x | 0);
   if (!T.buildings.length){
     if (T.atoll) seedAtollPlants(T, r);
@@ -22,9 +23,10 @@ function settle(T, S, o){
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
   toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Ohne Setzlinge wächst hier nur, was schon da war. Bis ein Kanu Taro bringt, nähren Fisch, Riff und Wild die Leute.'}`, 5200);
 }
+const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 1);
 /* A gift is not paid for. The clan remembers it and answers later with what they make; trust (knots) makes the answer richer. */
 function receiveGift(T, cargo, from, r){
-  const C = T.clan, worth = giftValue(C, cargo);
+  const C = T.clan, worth = giftWorth(T, cargo);
   T.debt = (T.debt || 0) + worth * returnRate(r.knots);
   r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++;
   T.lastFrom = from; if (!(T.returnAt > tick)) T.returnAt = tick + 15 + Math.round(Math.random() * 10);
@@ -325,6 +327,8 @@ function wildTick(I, n = 1){
   let W = wildOf(I), got = I._wf || 0;
   for (let i = 0; i < n; i++){ const y = F * W / WILD_PER; got += y * keep; W = clamp(W - y / K + g * Math.max(W, .03) * (1 - W), 0, 1); }
   I.wild = W;
+  // a tapu the elders laid while you were away is lifted once the wild has come back
+  if (I.tapuAway && W > .7 && !lifeLog){ I.tapu = I.tapuAway = false; I.staff = null; note(`Auf ${I.name} hat sich das Wild erholt. Die Ältesten heben ihr Tapu auf.`); }
   const whole = Math.min(Math.floor(got), Math.max(0, storeCap(I) - (I.stock.wild || 0))); I._wf = got - Math.floor(got);
   if (whole > 0) I.stock.wild = (I.stock.wild || 0) + whole;
   WILD_AT.forEach((at, i) => { if (W < at && goneOf(I) < i + 1){ I.gone = i + 1; extinct(I, i + 1); } });
@@ -346,6 +350,42 @@ function forageSpot(I, w){
   if (Math.random() < .5){ for (let k = 0; k < 6; k++){ const t = I.trees[Math.floor(Math.random() * I.trees.length)]; if (t && t.st === 0 && landAt(I, t) === L) return {x:t.x + rnd(6), y:t.y + 7}; } }
   const v = L.poly[Math.floor(Math.random() * L.poly.length)], c = L._c || (L._c = L.poly.reduce((m, q) => ({x:m.x + q.x / L.poly.length, y:m.y + q.y / L.poly.length}), {x:0, y:0}));
   return {x:v.x + (c.x - v.x) * .1, y:v.y + (c.y - v.y) * .1};
+}
+
+/* ---------- patterns on the pots (see MOTIFS). An island's own pattern comes with its first pottery, a clan has its own;
+   the others it knows came with pots and are kept with the tick they last came. */
+const motifOf = I => I.clan ? I.clan.motif : I.motif || null;
+const motifsOf = I => { const o = motifOf(I), m = Object.keys(I.mot || {}).filter(k => k !== o); return o ? [o, ...m] : m; };
+const motifFrom = k => islands.find(J => (J.settled || J.clan) && motifOf(J) === k);
+const kin = T => { const m = T.mot || {}; return islands.some(I => I.settled && I.motif && m[I.motif] != null); };   // a clan stamping one of your patterns
+function newMotif(I){
+  const clans = new Set(Object.values(CLANS).map(C => C.motif)), ids = Object.keys(MOTIFS).filter(k => !clans.has(k)), used = new Set(islands.filter(J => J.settled).map(motifOf).filter(Boolean)), free = ids.filter(k => !used.has(k));   // the clans' patterns stay theirs
+  I.motif = I.id === 'heimat' && !used.has('gesicht') ? 'gesicht' : (free.length ? free : ids)[(I.center.x | 0) % (free.length || ids.length)];
+  if (I.mot) delete I.mot[I.motif];
+  mana += 2; invalidate();
+  if (lifeLog) lifeLog.mot.push(`${MOTIFS[I.motif].n}, das eigene Muster von ${I.name}`);
+  else toast(`Die Töpfer von ${I.name} stempeln ein eigenes Muster in den Ton: ${MOTIFS[I.motif].n}. Wohin ihre Töpfe kommen, dahin wandert es. Ansehen +2.`, 5200);
+}
+/* pots arrive: the patterns they carry are known here from now on, and the ones known already are fresh again */
+function bringMotifs(from, to){
+  if (!from || !to || from === to || !(to.settled || to.clan)) return [];
+  const m = to.mot || (to.mot = {}), got = [];
+  for (const k of motifsOf(from)){ if (k === motifOf(to)) continue; if (m[k] == null) got.push(k); m[k] = tick; }
+  if (!got.length) return got;
+  mana += got.length; stats.muster = (stats.muster || 0) + got.length; invalidate();
+  const txt = andList(got.map(k => MOTIFS[k].n));
+  if (lifeLog) lifeLog.mot.push(`${txt} nach ${to.name}`);
+  else toast(to.clan ? `Der ${to.clan.name} stempelt jetzt auch ${txt} in seine Töpfe. Wer euer Muster trägt, schätzt eure Gaben mehr. Ansehen +${got.length}.` : `Auf ${to.name} stempeln sie jetzt auch ${txt}, wie auf den Töpfen aus ${from.name}. Ansehen +${got.length}.`, 4800);
+  return got;
+}
+function motifTick(I){
+  if (I.settled && !I.motif && I.buildings.some(b => b.kind === 'toepfer' && !b.bt)) newMotif(I);
+  for (const [k, t] of Object.entries(I.mot || {})){
+    if (k === motifOf(I) || tick - t <= MOTIF_YEARS * YEAR) continue;
+    delete I.mot[k]; invalidate();
+    if (lifeLog) lifeLog.fade.push(`${MOTIFS[k].n} auf ${I.name}`);
+    else if (I.settled) note(`Auf ${I.name} ist das Muster ${MOTIFS[k].n} vergessen. Seit zwei Jahren kamen keine Töpfe damit.`);
+  }
 }
 
 /* a quiet message: into the list of the conch, without unrolling */
@@ -858,6 +898,7 @@ function econ(){
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
   for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
   if (tick % 20 === 0) rollAhead();
+  if (tick % 10 === 0) for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I);
   answerGifts(); stepYards(); feedCrews(); stepTreasure(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
@@ -1117,13 +1158,13 @@ function catchUp(ms){
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
   const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), tapu:new Set(), w0:Object.fromEntries(mine.map(I => [I.id, wildOf(I)])), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
   const mana0 = mana, knots = routes.map(r => r.knots);
-  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[]};
+  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[], mot:[], fade:[]};
   try {
     for (let i = 1; i <= n; i++){
       tick++;
       if (ships.length) stepShips(performance.now(), TICK);
       feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
-      if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); }
+      if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I); }
       if (i % 150 === 0){ chronikTick(); checkQuest(); }
     }
     chronikTick(); checkQuest();
@@ -1144,7 +1185,7 @@ function awayReport(R){
     if (I.pop !== before) lines.push(['pop', `${I.name}: ${I.pop} Menschen`, `vorher ${before}`]);
   }
   // the generations: who was born, who grew up, who went to the ancestors, who leads now
-  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
+  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[], mot:[], fade:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
   if (L.born || L.came) lines.push(['pop', [L.born && `${L.born} ${L.born === 1 ? 'Kind geboren' : 'Kinder geboren'}`, L.came && `${L.came} zugezogen`].filter(Boolean).join(', '), '']);
   if (L.grown) lines.push(['pop', `${L.grown} ${L.grown === 1 ? 'Kind ist' : 'Kinder sind'} erwachsen geworden`, '']);
   if (L.died.length) lines.push(['mana', `Zu den Ahnen gegangen: ${names(L.died)}`, '']);
@@ -1152,6 +1193,8 @@ function awayReport(R){
   if (L.nav && L.nav.length) lines.push(['einbaum', `Navigator geworden: ${names(L.nav.map(x => x.t))}`, '']);
   if (L.lost && L.lost.length) lines.push(['einbaum', `Mit ${names(L.lost)} ging Wissen der Navigatoren verloren`, '']);
   for (const t of L.gone || []) lines.push(['wild', `Ausgestorben auf ${t}`, '']);
+  if (L.mot && L.mot.length) lines.push(['toepfe', `Muster gewandert: ${names(L.mot)}`, '']);
+  if (L.fade && L.fade.length) lines.push(['toepfe', `Vergessen, weil keine Töpfe kamen: ${names(L.fade)}`, '']);
   const built = R.built.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {});
   if (R.built.length) lines.push(['beile', `Fertig gebaut: ${Object.entries(built).map(([n, c]) => c > 1 ? `${c}× ${n}` : n).join(', ')}`, '']);
   const made = Object.entries(R.made).sort((a, b) => b[1] - a[1]).slice(0, 5);
