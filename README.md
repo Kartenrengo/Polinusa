@@ -50,8 +50,8 @@ Die Dateien sind einfache Skripte mit gemeinsamem globalem Bereich. Sie werden i
 
 ## Welt
 
-Die Welt ist 4800 × 7200 groß und in Felder von 800 × 800 geteilt. Am Anfang gibt es nur die Heimat Panua und
-das Atoll Motu, beide in einer Lichtung im Nebel. Alles andere entsteht erst, wenn ein Kanu dorthin schaut:
+Die Welt ist 4800 × 7200 groß und in Felder von 800 × 800 geteilt. Am Anfang gibt es nur die hohen Inseln Panua und
+Talise und das Atoll Motu, alle in einer Lichtung im Nebel. Alles andere entsteht erst, wenn ein Kanu dorthin schaut:
 Dann wird das Feld aus Startwert und Feldnummer gewürfelt, vielleicht mit einer hohen Insel, einem Vulkan oder
 einem Atoll, weiter draußen manchmal mit einem fremden Clan. Es gibt keine Markierungen, wo Land liegt.
 Insgesamt entstehen etwa 30 Inseln. Hohe Inseln haben Hügel mit Schraffur, einen Wald aus einzelnen Bäumen, oft einen Bach,
@@ -61,21 +61,39 @@ Gras aus, vor den Mündungen ist das Wasser trüb, und manchmal liegt dort eine 
 Treibholz und Steine am Strand und Korallenköpfe in der Lagune. Über jeder bekannten Insel kreisen Fregattvögel. Weil das Würfeln nur vom Startwert abhängt, liegt nach dem Laden alles wieder
 an derselben Stelle. Gespeichert werden nur Startwert, gesehene Felder und was sich geändert hat, etwa 5 KB.
 
+## Die Ankunft
+
+Ein neues Spiel beginnt auf See. Euer Clan hat das alte Land im Westen verlassen: fünf Familien im Ahnenkanu, mit Holz,
+Nahrung, Taro, Brotfrucht, Papiermaulbeere, Kava und einem Paar Schweine. In der Lichtung im Nebel liegen zwei hohe
+Inseln, Panua und Talise, und das Atoll Motu.
+
+- **Wählen:** Das Fenster „Die Ankunft“ vergleicht die beiden hohen Inseln: welche größer ist, wie viele Bäume, Bach, Ton,
+  Basalt und wie nah Motu liegt. „Ansehen“ fliegt hin, ein Tipp auf die Karte zeigt die Insel auch. Ein Atoll ist kein
+  Anfang: kein Ton, kein Stein, kaum Holz.
+- **Landen:** „Hier landen“ schickt das Ahnenkanu los. Wo es anlegt, wird das Kanu an Land gezogen, aus seinen Planken
+  entsteht das Versammlungshaus, und das Dorf beginnt. Die andere hohe Insel bleibt frei für später.
+- Vor der Landung läuft keine Zeit, es wird nichts gebaut und nichts gespeichert. Die gewählte Insel ist von da an die
+  Heimat, alle Aufgaben nennen sie bei ihrem Namen. Beide Startinseln haben sicher Ton, Basalt und Wald, damit die
+  Aufgaben auf jeder lösbar sind.
+- Spielstände von vorher laden wie gewohnt: Dort ist Panua die Heimat.
+
 ## Anfang
 
-Wie bei Age of Empires steht am Anfang nur das Versammlungshaus auf Panua. Motu ist zu sehen, aber unbewohnt.
+Wie bei Age of Empires steht am Anfang nur das Versammlungshaus. Motu ist zu sehen, aber unbewohnt.
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
 Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
 
 1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. Fischgestell, 5. 15 Bewohner, 6. Baumpflanzer,
 7. Töpferei am Ton, 8. Riffsammler, 9. Kanusteg und Pfahlhaus, 10. Beilwerkstatt am Felsen, 11. Kanuhaus (dann Blumen,
 Muschelwege, Fackeln und Hibiskus), 12. Auslegerkanu bauen, 13. vier Siedler nach Motu fahren und ein Dorf gründen,
-14. Flechthütte und Seilerei auf Motu, 15. Handelskette: Matten und Schnur nach Panua, 16. 6 Proviant aus der Gärgrube
+14. Flechthütte und Seilerei auf Motu, 15. Handelskette: Matten und Schnur in die Heimat, 16. 6 Proviant aus der Gärgrube
 (dann Doppelkanu und Ahnenpfosten), 17. Doppelkanu bauen, 18. im Nebel neues Land finden, 19. ein Fest, 20. das Fest der
-Plejaden, 21. ein Häuptlingsdorf, 22. das Lapita-Netz: 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten.
+Plejaden, 21. ein Häuptlingsdorf, 22. das Lapita-Netz: 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten, 23. die Weite
+See, 24. eine Schatzinsel, 25. ein Dorf in der Ferne, 26. das Fest der Schätze, 27. andere Menschen: ein Volk einer
+anderen Kultur finden und ihm eine Gabe bringen.
 
-Ist das Netz geknüpft, zeigt eine Tafel den Rückblick: Dörfer, Menschen, Clans, Knoten, Kanus, Ansehen und entdeckte Inseln.
-Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen.
+Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick: Dörfer, Menschen, Clans, Knoten, Kanus, Ansehen,
+entdeckte Inseln und die Völker anderer Kultur. Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen.
 
 ## Essen
 
@@ -268,6 +286,25 @@ waren; wo der Kontakt abriss, wurden die Töpfe schlichter.
   sieht man, wie weit ein Muster gewandert ist. Töpferei, Übersicht und Clan zeigen sie mit Herkunft und wie lange sie
   noch halten. Die Chronik kennt „Ein eigenes Muster“, „Ein Muster wandert“ (auf vier Inseln) und „Verwandte im Ton“.
 
+## Andere Kulturen
+
+Am Rand der bekannten See leben Menschen, die nicht von euren Ahnen abstammen. Sie antworten auf Gaben wie ein Clan,
+haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan geben kann.
+
+- **Die Alten vom Großen Land** leben im Westen auf Tanobada, „großes Land“. Sie sind seit vierzigtausend Jahren da,
+  sprechen eine ganz andere Sprache und töpfern nicht. In ihren Bergen entstanden die ersten Gärten der Welt: Taro,
+  Bananen, Zuckerrohr. Sie machen Klingen aus Obsidian und Tapa und schätzen Töpfe, Muschelschmuck und Matten. Ihre
+  Gegengabe bringt **Bananen-Schösslinge**: Damit lässt sich der **Bananenhain** anlegen, der Nahrung gibt, das ganze
+  Jahr, auch in der mageren Zeit, ohne am Boden zu zehren.
+- **Die Seefahrer vom Nordmeer** leben im Norden auf Matagi, „Wind“. Sie kamen auf anderen Wegen über das Meer, stempeln
+  Punktkreise in rot bemalte Töpfe und machen Matten und Schnur. Mit ihrer ersten Gegengabe lehren sie eure Navigatoren
+  ihre **Sternwege**: Das Wissen der Navigatoren reicht eine Stufe weiter als sonst. Ihr Muster kommt mit ihren Töpfen.
+- Beide liegen diesseits der Weiten See, ein paar Tagesfahrten von der Heimat. Das Doppelkanu findet sie beim Erkunden.
+  Bei der ersten Begegnung öffnet sich ihr Fenster mit ihrer Geschichte.
+- Die letzte Aufgabe „Andere Menschen“ verlangt, ein solches Volk zu finden und ihm eine Gabe zu bringen. Die Chronik kennt
+  „Andere Menschen“, „Bananen vom Großen Land“ und „Sternwege vom Nordmeer“.
+- In Spielständen von vorher wohnen sie in einem Feld am Rand, das noch kein Kanu gesehen hat.
+
 ## Wie alles ineinandergreift
 
 - **Erkunden → Wissen → Erkunden:** Neue Inseln heben die Grenze der Navigatoren. Vögel und Wolken zeigen verborgenes
@@ -285,10 +322,14 @@ waren; wo der Kontakt abriss, wurden die Töpfe schlichter.
   Menschen schonen es. Ohne Brotfrucht kein Proviant, ohne Proviant keine Fahrt ins Unbekannte.
 - **Töpfe verbinden:** Wer Töpfe schickt, schickt seine Muster. Sie schmücken die Dörfer, machen Clans zu Verwandten,
   deren Gegengaben reicher ausfallen, und verblassen, wenn die Handelsketten ruhen.
+- **Vom Dorf zum Reich:** Vom Landeplatz aus wachsen Dörfer, Handelsketten und Freundschaften, bis an den Rand der
+  See, wo Menschen einer anderen Kultur Bananen und Sternwege geben, die wieder das Siedeln und Erkunden stärken.
 - **Auch in der Abwesenheit** läuft alles weiter: Ernte, Geburt, Tod, Lernen, Sammeln, Fahrten und Chronik. Der Bericht
   „Während ihr fort wart“ erzählt es.
 - Ein langer Prüflauf über vierzig Inseljahre, mit Stürmen, Festen, Abwesenheit, Speichern und Laden, prüft dabei, dass
-  Bewohner, Figuren, Vorräte, Arbeiter, Wissen, Wild, mitgebrachte Pflanzen und Muster immer zueinander passen.
+  Bewohner, Figuren, Vorräte, Arbeiter, Wissen, Wild, mitgebrachte Pflanzen und Muster immer zueinander passen, auf
+  mehreren Karten und mit beiden Startinseln. Ein Klick-Test öffnet jedes Fenster in jeder Spielphase und drückt jeden
+  Knopf darin, über tausendmal, ohne einen einzigen Fehler.
 
 ## Die große Fahrt
 

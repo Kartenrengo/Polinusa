@@ -31,7 +31,7 @@ function receiveGift(T, cargo, from, r){
   r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++;
   T.lastFrom = from; if (!(T.returnAt > tick)) T.returnAt = tick + 15 + Math.round(Math.random() * 10);
   mana += Math.min(4, Math.round(worth / 4)) + 1; invalidate();
-  toast(`Der ${C.name} nimmt eure Gabe an. Die Gegengabe kommt später. ${r.knots} Knoten Vertrauen.`, 4200);
+  toast(`${clanDer(C)} ${C.culture ? 'nehmen' : 'nimmt'} eure Gabe an. Die Gegengabe kommt später. ${r.knots} Knoten Vertrauen.`, 4200);
 }
 function answerGifts(){
   for (const T of islands){
@@ -39,16 +39,19 @@ function answerGifts(){
     const {cargo, left, load} = returnGoods(T.clan, T.debt);
     if (!load){ T.returnAt = 0; continue; }
     T.debt = Math.max(0, left); T.returnAt = T.debt >= 1 ? tick + 20 : 0;
-    clanShip(T, T.lastFrom, cargo, false);
+    // another people answers with what only they have: bananas from the Great Land, the star paths of the north
+    const C = T.clan, life = C.life && !lifeKnown(C.life) ? [C.life] : [];
+    if (C.teach === 'nav' && !stats.nordLehre){ stats.nordLehre = 1; loreCache = null; if (lifeLog) lifeLog.nav.push({id:'nord', t:`die Sternwege vom Nordmeer`}); else toast(`${C.name} lehren eure Navigatoren ihre Sternwege. Euer Wissen kann jetzt eine Stufe weiter reichen.`, 5200); }
+    clanShip(T, T.lastFrom, cargo, false, life);
   }
 }
 
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {sternhaus:'stars', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
+const WORK_FX = {sternhaus:'stars', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
-const JOB_LOAD = {taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
+const JOB_LOAD = {bananen:'frucht', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const landOfB = (I, b) => b._lk === b.x + b.y ? b._l : (b._lk = b.x + b.y, b._l = landOf(I, b));   // buildings stay put, so this is kept
 const lived = I => I.settled || (I.clan && I.discovered);
@@ -228,7 +231,7 @@ function lifeTick(I){
    1 the swells and the birds that fly out from land at dawn and home at dusk, 2 the clouds that stand over land, the
    lagoon showing green on their underside, 3 the star path: on the open sea provisions last longer and one sees further. */
 const NAV_N = ['', 'Wellen und Vögel', 'Wolken über Land', 'Sternenpfad'];
-const navCap = () => { const n = newLand(), far = islands.some(I => I.discovered && I.center.x > FAR_X); return n >= 7 || far ? 3 : n >= 3 ? 2 : 1; };
+const navCap = () => { const n = newLand(), far = islands.some(I => I.discovered && I.center.x > FAR_X); return Math.min(3, (n >= 7 || far ? 3 : n >= 3 ? 2 : 1) + (stats.nordLehre ? 1 : 0)); };   // the seafarers of the north teach one level more
 let loreCache = null;
 function navLore(){
   if (loreCache && loreCache.t === tick) return loreCache;
@@ -282,7 +285,8 @@ function rollAhead(){
 const voyageDay = () => Math.round(VOYAGE_DAY * (navLore().lvl >= 3 ? 1.4 : 1));
 /* ---------- the brought world. Taro, breadfruit, paper mulberry, kava and pigs live on an island only where people have
    brought them in a canoe; the home island and the clans have them all, and so do villages from older saves. */
-const lifeOf = I => I.life || (I.settled || I.clan ? LIFE_IDS : []);
+const lifeOf = I => I.life || (I.clan ? LIFE_IDS : I.settled ? LIFE_BASE : []);
+const lifeKnown = id => !LIFE[id].from || islands.some(J => J.settled && (J.life || LIFE_BASE).includes(id));   // bananas only once another people has given them
 const hasLife = (I, kind) => { const l = KINDS[kind].life; return !l || lifeOf(I).includes(l); };
 const lifeFits = (I, id) => LIFE[id].kinds.some(k => KINDS[k].on.includes(I.type));   // would it grow here at all
 const lifeMissing = (I, kind) => { const L = LIFE[KINDS[kind].life]; return `Auf ${I.name} gibt es ${L.no}. Bring ${L.s} im Kanu mit.`; };
@@ -359,7 +363,7 @@ const motifsOf = I => { const o = motifOf(I), m = Object.keys(I.mot || {}).filte
 const motifFrom = k => islands.find(J => (J.settled || J.clan) && motifOf(J) === k);
 const kin = T => { const m = T.mot || {}; return islands.some(I => I.settled && I.motif && m[I.motif] != null); };   // a clan stamping one of your patterns
 function newMotif(I){
-  const clans = new Set(Object.values(CLANS).map(C => C.motif)), ids = Object.keys(MOTIFS).filter(k => !clans.has(k)), used = new Set(islands.filter(J => J.settled).map(motifOf).filter(Boolean)), free = ids.filter(k => !used.has(k));   // the clans' patterns stay theirs
+  const clans = new Set([...Object.values(CLANS), ...Object.values(CULTURES)].map(C => C.motif).filter(Boolean)), ids = Object.keys(MOTIFS).filter(k => !clans.has(k)), used = new Set(islands.filter(J => J.settled).map(motifOf).filter(Boolean)), free = ids.filter(k => !used.has(k));   // the clans' patterns stay theirs
   I.motif = I.id === 'heimat' && !used.has('gesicht') ? 'gesicht' : (free.length ? free : ids)[(I.center.x | 0) % (free.length || ids.length)];
   if (I.mot) delete I.mot[I.motif];
   mana += 2; invalidate();
@@ -375,7 +379,7 @@ function bringMotifs(from, to){
   mana += got.length; stats.muster = (stats.muster || 0) + got.length; invalidate();
   const txt = andList(got.map(k => MOTIFS[k].n));
   if (lifeLog) lifeLog.mot.push(`${txt} nach ${to.name}`);
-  else toast(to.clan ? `Der ${to.clan.name} stempelt jetzt auch ${txt} in seine Töpfe. Wer euer Muster trägt, schätzt eure Gaben mehr. Ansehen +${got.length}.` : `Auf ${to.name} stempeln sie jetzt auch ${txt}, wie auf den Töpfen aus ${from.name}. Ansehen +${got.length}.`, 4800);
+  else toast(to.clan ? `${clanDer(to.clan)} ${to.clan.culture ? 'stempeln' : 'stempelt'} jetzt auch ${txt} in ${to.clan.culture ? 'ihre' : 'seine'} Töpfe. Wer euer Muster trägt, schätzt eure Gaben mehr. Ansehen +${got.length}.` : `Auf ${to.name} stempeln sie jetzt auch ${txt}, wie auf den Töpfen aus ${from.name}. Ansehen +${got.length}.`, 4800);
   return got;
 }
 function motifTick(I){
@@ -497,7 +501,7 @@ function syncCritters(){
       if (have.length > want[kind]){ const drop = new Set(have.slice(want[kind])); critters = critters.filter(a => !drop.has(a)); }
     }
   }
-  critters = critters.filter(a => isl(a.isl).buildings.includes(a.home));
+  critters = critters.filter(a => { const I = isl(a.isl); return !!I && I.buildings.includes(a.home); });
 }
 function stepCritters(dt){
   for (const a of critters){
@@ -834,6 +838,7 @@ function holdFeast(I, F){
 }
 let hearts = [], sunKey = '';   // a heart rises over a house when someone moves in
 function econ(){
+  if (landing){ lastEconAt = performance.now(); requestDraw(); return; }   // time begins when the clan has landed
   tick++; lastEconAt = performance.now();
   for (const I of islands){
     if (!I.settled) continue;
@@ -1002,11 +1007,12 @@ function hitBuilding(p){
 function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
+  if (landing){ landingTap(p); return; }
   if (mode === 'road'){ roadTap(p); return; }
   if (mode === 'unroad'){ roadCut(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   const sh = hitShip(p);
-  if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu vom ${C.name}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
+  if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu ${clanVom(C)}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
   if (sh){ if (sh === selShip){ closeSheet(); return; } closeSheet(); selectShip(sh); return; }
   if (mode === 'steer'){ steerTap(p); return; }
   // a tap on someone: who it is and what they do, and their workplace opens
@@ -1069,7 +1075,7 @@ $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbt
 $('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
 $('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
 $('idleBtn').addEventListener('click', showIdle);
-$('isleName').addEventListener('click', () => { openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
+$('isleName').addEventListener('click', () => { if (landing){ openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
 $('tradeBtn').addEventListener('click', () => openSheet('fleet'));
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
@@ -1080,6 +1086,33 @@ if (document.fonts) document.fonts.ready.then(() => invalidate());
 
 /* ---------- loop and start */
 function renderAll(){ invalidate(true); spawnWalkers(); renderBuildBar(); }
+/* ---------- the arrival: before there is a village, a tap on a start island shows what it offers, and the canoe sails
+   to the one chosen; on arrival the village is founded */
+const landingChoices = () => islands.filter(I => I.start && I.type === 'hoch');
+function landingTap(p){
+  const I = hitIsland(p) || (hitShip(p) ? null : islands.find(J => J.start && Math.hypot(J.center.x - p.x, J.center.y - p.y) < 160));
+  openSheet('landing', {id:I && I.start ? I.id : null});
+}
+function chooseHome(I){
+  const sh = ships.find(s => s.founder); if (!landing || !I || !landingChoices().includes(I)) return;
+  landing.target = I.id; closeSheet();
+  if (sh && sh.state !== 'sail' && sailTo(sh, {isl:I.id}, true)){ toast(`Das Ahnenkanu nimmt Kurs auf ${I.name}.`, 3000, false); flyTo(I.center.x, I.center.y, Math.max(cam.z, .9)); return; }
+  landHome(I);
+}
+function beginLanding(){
+  if (mode === 'place' || mode === 'move' || mode === 'road' || mode === 'unroad') endPlace();   // a building half placed in the old game goes with it
+  document.body.classList.add('landing'); closeSheet(); renderAll(); updateHUD();
+  const sh = ships.find(s => s.founder), b = boxOf(islands.filter(I => I.start));
+  if (sh){ b.x0 = Math.min(b.x0, sh.x - 30); b.x1 = Math.max(b.x1, sh.x + 30); }
+  fitBox(b, 1.2); openSheet('landing', {});
+}
+function landHome(I){
+  if (!foundHome(I)) return;
+  document.body.classList.remove('landing');
+  invalidate(true); renderAll(); updateHUD();
+  const Hm = isl('heimat'); flyTo(Hm.anchor.x, Hm.anchor.y, 1.6);
+  openSheet('intro', {first:true}); save(); checkQuest();
+}
 let last = performance.now(), lastDraw = 0;
 /* The game's own clock: a tick every two seconds, at double speed every second */
 let gameSpeed = 1, clockAt = 0, clockAcc = 0;
@@ -1155,6 +1188,7 @@ function awayMinute(I, R){
   I.hunger = 0; syncPeople(I); lifeTick(I); navTick(I, 30);
 }
 function catchUp(ms){
+  if (landing) return null;   // before the landing no time passes
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
   const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), tapu:new Set(), w0:Object.fromEntries(mine.map(I => [I.id, wildOf(I)])), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
   const mana0 = mana, knots = routes.map(r => r.knots);
@@ -1204,7 +1238,7 @@ function awayReport(R){
   const found = islands.filter(I => I.discovered).length - R.found; if (found > 0) lines.push(['einbaum', `${found} ${found === 1 ? 'neue Insel' : 'neue Inseln'} entdeckt`, '']);
   const canoes = own().length - R.ships; if (canoes > 0) lines.push(['einbaum', `${canoes} ${canoes === 1 ? 'neues Kanu' : 'neue Kanus'} vom Stapel gelaufen`, '']);
   const ch = CHRONIK.filter(M => chronik[M.id] != null).length - R.chronik; if (ch > 0) lines.push(['mana', `${ch} ${ch === 1 ? 'neuer Eintrag' : 'neue Einträge'} in der Chronik`, '']);
-  if (quest > R.quest) lines.push(['mana', `Geschafft: ${QUESTS.slice(R.quest, quest).map(Q => Q.t).join(', ')}`, '']);
+  if (quest > R.quest) lines.push(['mana', `Geschafft: ${QUESTS.slice(R.quest, quest).map(Q => qn(Q.t)).join(', ')}`, '']);
   return lines;
 }
 let hiddenAt = 0, hiddenTick = 0;
@@ -1219,7 +1253,7 @@ document.addEventListener('visibilitychange', () => {
   if (!hiddenAt) return;
   // back again: what the throttled clock did not manage while out of sight is made up now
   const el = Date.now() - hiddenAt, missing = Math.min(AWAY_MAX, el) - (tick - hiddenTick) * TICK; hiddenAt = 0;
-  if (el > 60000 && missing > 60000) welcomeBack(catchUp(missing));
+  if (el > 60000 && missing > 60000){ const R = catchUp(missing); if (R) welcomeBack(R); }
 });
 addEventListener('pagehide', () => save());
 function start(data){
@@ -1230,7 +1264,7 @@ function start(data){
   const away = ok && savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
   renderAll(); measure();
   // a new game opens close to the landing place, a saved one shows home and the first atoll
-  const b = ok ? boxOf([isl('heimat'), isl('tochter')]) : isl('heimat').box, bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+  const b = boxOf(ok ? [isl('heimat'), isl('tochter')] : islands.filter(I => I.start)), bw = b.x1 - b.x0, bh = b.y1 - b.y0;
   const z = clampZ(Math.min((vw - 50) / bw, (vh - topH - botH - 40) / bh, ok ? 1 : 1.4));
   Object.assign(cam, camFor((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z)); clampCam(); applyCam();
   // fonts, patterns and the first bitmaps load before the first frame, so nothing pops in
@@ -1238,7 +1272,7 @@ function start(data){
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
-    if (!ok){ openSheet('intro', {first:true}); save(); }
+    if (!ok) beginLanding();
     else if (away && away.ms >= 3 * 60000) welcomeBack(away);
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });

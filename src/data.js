@@ -47,6 +47,7 @@ const KINDS = {
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:20, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Kokosfasern für die Seilerei.', vb:'-13 -25 26 28'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:25, cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Trägt Brotfrucht, frisch zum Essen oder für die Gärgrube.', vb:'-10 -21 20 23'},
   pandanus:{n:'Pandanus', s:'Pandanus', on:['atoll'], bt:15, cost:{}, r:5, hy:9, beach:true, plant:true, info:'Die Blätter werden zu Matten geflochten.', vb:'-10 -21 20 23'},
+  bananen:{n:'Bananenhain', s:'Bananen', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:10, hy:8, prod:'nahrung', every:3, info:'Bananen kommen vom Großen Land, wo Menschen sie vor Jahrtausenden als Erste gepflanzt haben. Sie tragen das ganze Jahr, auch in der mageren Zeit, und zehren nicht am Boden wie Taro.', vb:'-13 -17 26 22'},
   kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], crew:1, soil:true, bt:8, cost:{holz:1}, r:10, hy:3, prod:'kava', every:12, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
   // things that only make the village beautiful
   hibiskus:{n:'Hibiskus', s:'Hibiskus', on:['hoch','atoll'], bt:8, cost:{}, r:5, hy:6, plant:true, beauty:1, info:'Rote Blüten für Haar und Kränze.', vb:'-9 -14 18 16'},
@@ -57,7 +58,7 @@ const KINDS = {
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:10, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Sie ruft das Dorf und gibt beim Tanz den Takt.', vb:'-13 -10 26 14'},
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:14, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Ein Platz aus festgestampfter Erde, mit Steinen eingefasst. Hier wird zur Trommel getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','taucher','toepfer','beil','flecht','schnur','gaergrube','werft','sternhaus','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
+const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','taucher','toepfer','beil','flecht','schnur','gaergrube','werft','sternhaus','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
 /* What grows and lives on an island only where people have brought it: the canoe plants and the pigs. Coconut palms and
    pandanus drift ashore by themselves, the forest is there. A new island has none of these; what is not in the canoe that
    founds the village is missing there until a canoe brings it. take: what leaves the store with it. */
@@ -66,9 +67,11 @@ const LIFE = {
   brot:{n:'Brotfrucht', no:'noch keine Brotfrucht', s:'Brotfrucht-Schösslinge', kinds:['baum'], text:'Wurzelschösslinge in feuchtem Moos. Ohne Brotfrucht keine Gärgrube und kein Proviant.'},
   maulbeer:{n:'Papiermaulbeere', no:'noch keine Papiermaulbeere', s:'Maulbeer-Stecklinge', kinds:['garten'], text:'Stecklinge des Baums, aus dessen Rinde Tapa wird. Er blüht hier kaum und vermehrt sich nur, wo Menschen ihn setzen.'},
   kava:{n:'Kava', no:'noch keine Kava', s:'Kava-Stecklinge', kinds:['kavagarten'], text:'Stängelstücke des Strauchs. Kava trägt keine Samen und reist nur in Kanus.'},
+  banane:{n:'Bananen', no:'noch keine Bananen', s:'Bananen-Schösslinge', kinds:['bananen'], from:'alte', text:'Schösslinge vom Großen Land, ein Geschenk der Alten. Bananen tragen das ganze Jahr.'},
   schwein:{n:'Schweine', no:'noch keine Schweine', s:'ein Paar Schweine', kinds:['pferch'], take:{schweine:2}, text:'Ein Zuchtpaar, an Bord mit Kokos gefüttert. Es kommt aus dem Lager.'}
 };
 const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in the canoe
+const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from);   // what the clan brought from the old land; the rest comes from other peoples
 for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
 const DECO = ['hibiskus', 'blumen', 'weg', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
@@ -115,6 +118,21 @@ const CLANS = {
   riff:{name:'Clan vom Riff', motif:'boegen', on:'atoll', makes:['schmuck', 'matten'], wants:['toepfe', 'beile', 'klingen'], pop:22},
   hain:{name:'Clan vom Kavahain', motif:'kreis', on:'hoch', makes:['kava', 'tapa'], wants:['matten', 'schmuck', 'klingen'], pop:26}
 };
+/* Other peoples, at the edges of the sea. They answer gifts like a clan, but they are not of your kind: another language,
+   other ways, and something to teach that no clan knows. */
+const CULTURES = {
+  alte:{name:'Die Alten vom Großen Land', dat:'den Alten vom Großen Land', isle:'Tanobada', kind:'hoch', size:184, pop:70, motif:null, makes:['klingen', 'tapa'], wants:['toepfe', 'schmuck', 'matten'], life:'banane',
+    text:'Tanobada heißt das Große Land. Sie leben hier seit vierzigtausend Jahren, viel länger als jeder Clan. Ihre Sprache ist ganz anders als eure, Töpfe machen sie nicht. In ihren Bergen legten sie die ersten Gärten der Welt an: Taro, Bananen, Zuckerrohr. Obsidian von ihrer Küste geht seit Urzeiten von Hand zu Hand.',
+    gift:'Ihre erste Gegengabe bringt Bananen-Schösslinge, die ihr sonst nirgends bekommt.'},
+  nord:{name:'Die Seefahrer vom Nordmeer', dat:'den Seefahrern vom Nordmeer', isle:'Matagi', kind:'vulkan', size:118, pop:45, motif:'punkte', makes:['matten', 'schnur'], wants:['toepfe', 'beile', 'tapa'], teach:'nav',
+    text:'Matagi heißt Wind. Sie kamen aus dem Nordwesten über das offene Meer, auf anderen Wegen als eure Ahnen. Auch sie stempeln Muster in Töpfe, die sie rot bemalen. Ihre Navigatoren kennen Sternwege, von denen ihr nichts wisst.',
+    gift:'Mit ihrer ersten Gegengabe lehren sie eure Navigatoren ihre Sternwege: Das Wissen kann eine Stufe weiter reichen als sonst.'}
+};
+/* how to speak of a clan or another people in a sentence */
+const clanDer = C => C.culture ? C.name : `Der ${C.name}`;
+const clanBeim = C => C.culture ? `bei ${C.dat}` : `beim ${C.name}`;
+const clanVom = C => C.culture ? `von ${C.dat}` : `vom ${C.name}`;
+const clanZum = C => C.culture ? `zu ${C.dat}` : `zum ${C.name}`;
 const giftValue = (C, cargo) => Object.entries(cargo).reduce((s, [k, v]) => s + v * VALUE[k] * (C.wants.includes(k) ? 1.5 : C.makes.includes(k) ? .3 : 1), 0);
 const returnRate = knots => Math.min(1.2, .6 + .06 * knots);
 /* What a clan sends back for a debt: their most valuable good first, as soon as the debt covers one, the rest in the cheaper one */
@@ -163,6 +181,7 @@ const MOTIFS = {
   boegen:{n:'Bögen', t:'Bögen übereinander wie Fischschuppen.'},
   rauten:{n:'Rauten', t:'Eine Kette von Rauten, wie Flechtwerk.'},
   spirale:{n:'Spirale', t:'Eine Spirale wie das junge Farnblatt.'},
-  leiter:{n:'Leiter', t:'Zwei Linien mit Sprossen dazwischen.'}
+  leiter:{n:'Leiter', t:'Zwei Linien mit Sprossen dazwischen.'},
+  punkte:{n:'Punktkreise', t:'Kleine Kreise aus Punkten, auf rot bemalten Töpfen. Das Muster der Seefahrer vom Nordmeer.'}
 };
 const MOTIF_YEARS = 2, KIN_GIFT = 1.2;   // a borrowed pattern lasts two years without new pots; a clan that stamps your pattern values your gifts more

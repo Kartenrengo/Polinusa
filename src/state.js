@@ -4,6 +4,8 @@
 // awayQuiet: no messages or sounds while missed time is made up; savedAt: when the game was last saved
 // cells: the sea already rolled; home0: home, Motu and the first clearing; worldV: which rules the sea was rolled with
 let awayQuiet = false, savedAt = 0, seed = 1, islands = [], routes = [], fogHoles = [], cells = new Set(), home0 = null, worldV = 2;
+// landing: while the clan is still at sea and chooses where to settle (never saved); homeSwap: Talise was chosen as home
+let landing = null, homeSwap = 0;
 let tick = 0, nextId = 1, active = 'heimat';
 let mode = 'idle', placing = null, selectedId = null, sheetKind = null, sheetData = null;
 let walkers = [], mana = 0;   // mana: the clan's standing, from feasts, gifts and a beautiful village
@@ -13,19 +15,39 @@ function islOfB(id){ return islands.find(I => I.buildings.some(b => b.id === id)
 function addB(I, kind, p, v = {}, born = 0){ const b = {id:nextId++, kind, x:fx(p.x), y:fx(p.y), born, v}; I.buildings.push(b); return b; }
 const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>> 0) || 1;
 
+/* A new game: the clan is still at sea in its voyaging canoe, off two high islands and an atoll. The village is founded
+   where the player chooses (foundHome). */
 function newGame(s = newSeed()){
-  seed = s; worldV = 2; nextPid = 1; home0 = makeWorld(seed, worldV);
+  seed = s; worldV = 3; homeSwap = 0; nextPid = 1; home0 = makeWorld(seed, worldV); resetCaches();
   islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
   stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0}; chronik = {}; nextEvent = 300; lastEvent = ''; eventNow = null;
   resetGrid(); for (const I of islands) markLand(I);
-  const Hm = isl('heimat'), T = isl('tochter'), r = rng(seed ^ 0x5eed);
-  Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:10, nahrung:10}});
-  Object.assign(T, {discovered:true, settled:false, pop:0, stock:{}});
-  seedStart(Hm, r); seedAtollPlants(T, r);
+  const T = isl('tochter'), r = rng(seed ^ 0x5eed);
+  for (const I of islands) Object.assign(I, {discovered:true, settled:false, pop:0, stock:{}});
+  seedAtollPlants(T, r);
   // the first settlers on Motu must find enough palms and pandanus for rope and mats near their landing place
   const hs = homeSpot(T); topUp(T, 'pandanus', 3, hs, r); topUp(T, 'palme', 4, hs, r);
   fogHoles = [home0.hole];
   const h = home0.hole; for (let cy = Math.floor((h.cy - h.ry) / CELL); cy <= Math.floor((h.cy + h.ry) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx) / CELL); cx <= Math.floor((h.cx + h.rx) / CELL); cx++) ensureCell(cx, cy, true);
+  // the voyaging canoe waits at the western edge of the clearing, where the clan came from
+  const sh = makeShip('dc', isl('heimat'), {name:'Ahnenkanu', founder:true, people:5, cargo:{holz:10, nahrung:10}, life:LIFE_BASE.slice(), port:null, last:null, state:'sea'});
+  sh.x = h.cx - h.rx * .78; sh.y = h.cy + h.ry * .1; sh.hx = 1; sh.hy = 0;
+  landing = {ship:sh.id};
+}
+/* caches that belong to one world, cleared whenever another is loaded or begun */
+function resetCaches(){ news.length = 0; unread = 0; newsBadge(); foldToast(); newKinds.clear(); loreCache = null; hintCache = null; windCache = null; lifeLog = null; markW = null; hearts = []; landing = null; walkers = []; critters = []; }   // the people and animals of the old world go with it; spawnWalkers brings the new ones
+/* The clan lands on the island it chose: that island becomes home. The canoe is drawn ashore, and what it carried is the
+   first store: five families, wood and food, and the plants and pigs of the old land. */
+function foundHome(I){
+  if (!landing || !I || !I.start || I.type !== 'hoch' || I.settled) return false;
+  if (I.id !== 'heimat'){ swapHome(islands, I); homeSwap = 1; }
+  const Hm = isl('heimat'), r = rng(seed ^ 0x5eed ^ 0x1a4d), sh = ships.find(s => s.founder);
+  if (sh) ships.splice(ships.indexOf(sh), 1);
+  selShip = null; if (mode === 'steer') mode = 'idle';
+  Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:10, nahrung:10}, life:LIFE_BASE.slice(), wild:1, gone:0});
+  seedStart(Hm, r);
+  landing = null; active = 'heimat';
+  return true;
 }
 /* Roll a cell of sea the first time it is seen. Fresh cells get their clan village; on load the village comes from the save. */
 function ensureCell(cx, cy, fresh){
@@ -73,8 +95,16 @@ function seedClan(I, r){
     seedAtollPlants(I, r);
     const h = homeSpot(I); for (let i = 0; i < 5; i++) put('haus', around(h, 30));
     put('schmuck', h); put('flecht', h); put('fisch', h); put('speicher', h);
+  } else if (I.clan.id === 'alte'){
+    // the old people of the Great Land: no meeting house of our kind, no pots; houses among gardens of taro and bananas
+    const an = I.anchor;
+    for (let i = 0; i < 8; i++) put('haus', around(an, 60));
+    for (let i = 0; i < 4; i++) put('taro', around(an, 95));
+    for (let i = 0; i < 4; i++) put('bananen', around(an, 100));
+    palmsAlong(I, r, 10);
   } else {
     const an = I.anchor; addB(I, 'halle', {x:an.x, y:an.y}, {}, age());
+    if (I.clan.id === 'nord') for (let i = 0; i < 2; i++) put('fisch', homeSpot(I));
     for (let i = 0; i < 6; i++) put('haus', around(an, 50));
     const ob = depsOf(I, 'obsidian')[0]; if (ob) put('klingen', ob);
     put('pferch', around(an, 70)); for (let i = 0; i < 3; i++) put('taro', around(an, 80));
@@ -93,7 +123,7 @@ function homeSpot(I){
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:3, wv:worldV, qn:QUESTS.length, at:Date.now(), np:nextPid, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
+  return JSON.stringify({v:3, wv:worldV, hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
@@ -108,7 +138,8 @@ function serialize(){
 function restore(raw){
   try {
     const s = JSON.parse(raw); if (!s || s.v !== 3 || !s.seed) return false;
-    seed = s.seed >>> 0; worldV = s.wv || 1; home0 = makeWorld(seed, worldV); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
+    seed = s.seed >>> 0; worldV = s.wv || 1; homeSwap = s.hs ? 1 : 0; home0 = makeWorld(seed, worldV, homeSwap); resetCaches(); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
+    home0.cultures = s.cu ? s.cu.filter(c => CULTURES[c[0]]).map(([k, cx, cy]) => ({k, cx, cy})) : placeCultures(home0.cultures, new Set(s.cells || []));
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
     savedAt = +s.at || 0; nextPid = s.np || 1; tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
@@ -144,9 +175,9 @@ function restore(raw){
 }
 /* Saves name the current task by id. Older saves counted tasks; this maps the old order onto the new list. */
 function questFromSave(s){
-  if (s.qid) return s.qid === 'done' ? (s.qn && s.qn >= QUESTS.length ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === 'weite'))) : Math.max(0, QUESTS.findIndex(Q => Q.id === s.qid));
+  if (s.qid) return s.qid === 'done' ? (s.qn ? Math.min(s.qn, QUESTS.length) : Math.max(0, QUESTS.findIndex(Q => Q.id === 'weite'))) : Math.max(0, QUESTS.findIndex(Q => Q.id === s.qid));
   if (s.q == null) return QUESTS.length;
   const old = ['dach', 'essen', 'wachsen', 'ton', 'beile', 'wasser', 'motu', 'segel', 'tausch', 'kanu', 'land', 'fest'];
   return Math.max(0, QUESTS.findIndex(Q => Q.id === old[Math.min(s.q | 0, old.length - 1)]));
 }
-function save(){ try { localStorage.setItem(SAVE_KEY, serialize()); } catch (e){} }
+function save(){ if (landing) return; try { localStorage.setItem(SAVE_KEY, serialize()); } catch (e){} }   // nothing to keep before the clan has landed

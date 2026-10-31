@@ -5,7 +5,7 @@
 const START_KINDS = ['haus', 'faeller'];
 // only what is finished counts; building sites and young plants do not
 const count = (id, kind) => isl(id).buildings.filter(b => b.kind === kind && !b.bt).length;
-const newLand = () => islands.filter(I => I.discovered && I.id !== 'heimat' && I.id !== 'tochter').length;
+const newLand = () => islands.filter(I => I.discovered && !I.start).length;   // the islands of the start waters do not count
 const stockOf = (id, k) => isl(id).stock[k] || 0;
 const fleetOf = kind => own().filter(s => s.kind === kind).length;
 /* n() counts progress towards of. show says where "Zeig es mir" leads: a build button, a building's sheet, a canoe, a trade chain or the calendar. */
@@ -63,15 +63,23 @@ const QUESTS = [
   {id:'fern', t:'Ein Dorf in der Ferne', d:'Gründe ein Dorf auf den Fernen Inseln.', why:'Ins Unbekannte darf nur Proviant mit, also erst erkunden, dann siedeln: Siedler, Holz, Nahrung und Proviant für die Überfahrt aufs Doppelkanu, dann die gefundene Insel antippen.',
     n:() => islands.some(I => I.settled && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:[], gift:{}},
   {id:'ahnen', t:'Das Fest der Schätze', d:'Feiere im Versammlungshaus das Fest der Schätze.', why:'Perlmutt, rote Federn, ein Walzahn und zwei Schweine: das größte Fest, das ein Clan geben kann. Die Ahnen sehen zu, und das Dorf wächst eine Weile doppelt so schnell.',
-    n:() => stats.schatzfest ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}}
+    n:() => stats.schatzfest ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
+  // at the edges of the sea: people who do not descend from your ancestors
+  {id:'kultur', t:'Andere Menschen', d:'Findet ein Volk einer anderen Kultur und bringt ihm eine Gabe.', why:'Im Westen liegt das Große Land, im Norden leben die Seefahrer vom Nordmeer: Menschen mit anderer Sprache und anderen Wegen. Erkundet mit dem Doppelkanu, fahrt hin und übergebt eine Gabe. Die Alten geben Bananen, die Seefahrer lehren Sternwege.',
+    n:() => !cultureIsles(true).length ? 2 : Math.min(1, cultureIsles().length) + (cultureIsles().some(I => routes.some(r => (r.a === I.id || r.b === I.id) && (r.knots >= 1 || I.debt > 0))) ? 1 : 0), of:2, show:{ship:'dc'}, unlock:[], gift:{}}
 ];
-const dOf = Q => typeof Q.d === 'function' ? Q.d() : Q.d;
+/* the islands of other peoples: those found, or (all) those this world has at all */
+const cultureIsles = all => all ? (home0 && home0.cultures || []) : islands.filter(I => I.clan && I.clan.culture && I.discovered);
+/* the tasks name the home island and the first atoll as they are called now: chosen at the landing, or renamed */
+const qn = t => t.replace(/\bPanua\b/g, isl('heimat').name).replace(/\bMotu\b/g, isl('tochter').name);
+const dOf = Q => qn(typeof Q.d === 'function' ? Q.d() : Q.d);
 const unlockName = k => (KINDS[k] || SHIPS[k]).n;
 const feastsOpen = () => quest >= QUESTS.findIndex(Q => Q.id === 'fest');
 let quest = 0;               // index of the current task; QUESTS.length means all are done
 const newKinds = new Set();  // unlocked but not yet tapped, they get a dot in the build bar
 
 function unlocked(kind){
+  if (KINDS[kind] && KINDS[kind].life && LIFE[KINDS[kind].life].from) return lifeKnown(KINDS[kind].life);   // bananas come with another people, not with a task
   if (quest >= QUESTS.length || START_KINDS.includes(kind)) return true;
   for (let i = 0; i < quest; i++) if (QUESTS[i].unlock.includes(kind)) return true;
   return false;
@@ -86,11 +94,11 @@ function checkQuest(){
     done = Q;
   }
   if (done){
-    const kinds = done.unlock.map(unlockName), parts = [`Geschafft: ${done.t}.`];
+    const kinds = done.unlock.map(unlockName), parts = [`Geschafft: ${qn(done.t)}.`];
     if (kinds.length) parts.push(`Neu zum Bauen: ${kinds.join(', ')}.`);
     if (Object.keys(done.gift).length) parts.push(`Dazu ${giftText(done.gift)}.`);
     if (quest >= QUESTS.length) parts.push('Jetzt steht dir alles offen.');
-    if (done.id === 'ahnen') setTimeout(() => openSheet('finale'), 2600);
+    if (quest >= QUESTS.length && cultureIsles(true).length) setTimeout(() => { if (quest >= QUESTS.length && !landing && !sheetKind) openSheet('finale'); }, 2600);   // the last task done: the story so far (unless another game began meanwhile)
     toast(parts.join(' '), 4600); renderBuildBar(); save();
     const el = $('quest'); el.classList.remove('done'); void el.offsetWidth; el.classList.add('done'); sfx('quest');
   }
@@ -101,17 +109,17 @@ function renderQuest(){
   el.hidden = !show; if (!show) return;
   const Q = QUESTS[quest], n = clamp(Q.n(), 0, Q.of);
   el.querySelector('.q-n').textContent = `Aufgabe ${quest + 1} von ${QUESTS.length}`;
-  el.querySelector('.q-t').textContent = Q.t;
+  el.querySelector('.q-t').textContent = qn(Q.t);
   el.querySelector('.q-d').textContent = dOf(Q);
   el.querySelector('.q-p').textContent = `${n} von ${Q.of}`;
   el.querySelector('.q-bar i').style.width = (n / Q.of * 100) + '%';
-  el.setAttribute('aria-label', `Aufgabe: ${Q.t}. ${dOf(Q)} ${n} von ${Q.of}.`);
+  el.setAttribute('aria-label', `Aufgabe: ${qn(Q.t)}. ${dOf(Q)} ${n} von ${Q.of}.`);
 }
 function questSheet(){
   const Q = QUESTS[quest]; if (!Q) return '';
   const n = clamp(Q.n(), 0, Q.of);
-  return head(Q.t, `Aufgabe ${quest + 1} von ${QUESTS.length}`) +
-    `<p><b>${dOf(Q)}</b> Bisher ${n} von ${Q.of}.</p><p class="sub">${Q.why}</p>` +
+  return head(qn(Q.t), `Aufgabe ${quest + 1} von ${QUESTS.length}`) +
+    `<p><b>${dOf(Q)}</b> Bisher ${n} von ${Q.of}.</p><p class="sub">${qn(Q.why)}</p>` +
     (Q.unlock.length ? `<p class="sub">Danach neu zum Bauen: ${Q.unlock.map(unlockName).join(', ')}.</p>` : '') +
     `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="close">Später</button><button class="btn primary" type="button" data-act="showq">Zeig es mir</button></span></div>`;
 }

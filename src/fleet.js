@@ -137,7 +137,7 @@ function exploreAt(x, y, r){
 function discover(I){
   I.discovered = true; syncWalkers(); save(); checkQuest();
   const kind = I.volcano ? 'ein Vulkan' : I.type === 'atoll' ? 'ein Atoll' : 'eine hohe Insel';
-  toast(I.clan ? `Land in Sicht: ${I.name}. Dort lebt der ${I.clan.name}.` : `Land in Sicht: ${I.name}, ${kind}.`, 4200);
+  toast(I.clan ? (I.clan.culture ? `Land in Sicht: ${I.name}. Dort leben Menschen einer anderen Kultur: ${I.clan.name}.` : `Land in Sicht: ${I.name}. Dort lebt der ${I.clan.name}.`) : `Land in Sicht: ${I.name}, ${kind}.`, 5200);
 }
 
 /* ---------- canoes */
@@ -152,7 +152,7 @@ function moorSpot(I, s){
 function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind === 'dc' ? .4 : .25) * W.str * dot, .6, 1.45); }
 function speedOf(s){
   const r = s.route != null ? routes[s.route] : null;
-  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1);
+  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1);
 }
 function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, life:[], people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
@@ -251,13 +251,15 @@ function stepShips(now, dt){
 }
 function arriveShip(s){
   const d = s.dest; s.path = []; s.dest = null;
+  if (s.founder){ s.state = 'sea'; if (landing && d && d.isl) landHome(isl(d.isl)); return; }   // the voyaging canoe lands, and the village begins
   if (!s.own){
     // a clan canoe hands over its return gift and goes home again out of sight
     const T = isl(s.to), C = isl(s.clan).clan;
     for (const [k, v] of Object.entries(s.cargo)) T.stock[k] = Math.min(storeCap(T), (T.stock[k] || 0) + v);
-    bringMotifs(isl(s.clan), T);   // the gift comes in their stamped pots
+    if (C.motif) bringMotifs(isl(s.clan), T);   // the gift comes in their stamped pots; a people without pots brings none
+    const fresh = T.settled ? landLife(T, s, true) : [];
     ships.splice(ships.indexOf(s), 1); updateHUD(); save(); checkQuest(); sfx('shells');
-    toast(`${s.guest ? 'Gäste' : 'Gegengabe'} vom ${C.name}: ${giftText(s.cargo)}.`, 4200); return;
+    toast(`${s.guest ? 'Gäste' : 'Gegengabe'} ${clanVom(C)}: ${giftText(s.cargo) || 'leere Hände'}.${fresh.length ? ` Dazu ${andList(fresh.map(id => LIFE[id].s))}: Auf ${T.name} lässt sich jetzt ${andList(LIFE[fresh[0]].kinds.map(k => KINDS[k].n))} anlegen.` : ''}`, 5200); return;
   }
   if (!d || !d.isl){ s.state = 'sea'; if (sheetKind === 'ship') renderSheet(); save(); return; }
   const T = isl(d.isl), from = s.last && isl(s.last);
@@ -266,12 +268,12 @@ function arriveShip(s){
   // a cord grows between where it came from and here, if here is ours or a clan
   if (from && from !== T && (T.settled || T.clan) && routeIndex(from.id, T.id) < 0){
     routes.push({a:from.id, b:T.id, knots:T.clan ? 0 : 1, lastGift:tick, plan:{a:{}, b:{}}}); invalidate();
-    if (T.clan){ const C = T.clan; toast(`Erster Besuch beim ${C.name}. Sie machen ${C.makes.map(k => GN[k]).join(' und ')} und schätzen ${C.wants.map(k => GN[k]).join(', ')}. Übergib eine Gabe.`, 6000); }
+    if (T.clan){ const C = T.clan; toast(`Erster Besuch ${clanBeim(C)}. Sie machen ${C.makes.map(k => GN[k]).join(' und ')} und schätzen ${C.wants.map(k => GN[k]).join(', ')}. Übergib eine Gabe.`, 6000); if (C.culture && !awayQuiet) openSheet('clan', {id:T.id}); }
   }
   if ((T.settled || T.clan) && from && from !== T && s.cargo.toepfe > 0) bringMotifs(from, T);   // where pots come, their patterns come
   if (T.settled){ s.last = T.id; s.hungry = false; landLife(T, s); }   // plants and pigs aboard take root in a village of ours
   if (s.route != null){ routeArrive(s); return; }
-  if (T.clan) toast(`${s.name} liegt beim ${T.clan.name}.`);
+  if (T.clan) toast(`${s.name} liegt ${clanBeim(T.clan)}.`);
   else if (!T.settled) toast(`${s.name} liegt vor ${T.name}. ${s.people >= SETTLE.people ? 'Tippe das Kanu an und gründe hier ein Dorf.' : `Mit ${SETTLE.people} Siedlern an Bord kann hier ein Dorf entstehen.`}`, 4200);
   else toast(`${s.name} ist in ${T.name}.`);
   if (sheetKind === 'ship') renderSheet(); save(); checkQuest();
@@ -357,14 +359,14 @@ function feedCrews(){
     if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; continue; }
     if (s.hungry) continue;
     s.hungry = true;
-    const home = islands.filter(I => I.settled).reduce((m, I) => Math.hypot(I.harbor.x - s.x, I.harbor.y - s.y) < Math.hypot(m.harbor.x - s.x, m.harbor.y - s.y) ? I : m);
+    const home = homeFor(s); if (!home) continue;
     if (s.route != null) unassign(s);
     sailTo(s, {isl:home.id}); toast(`${s.name} hat keinen Proviant mehr. Die Mannschaft kehrt hungrig nach ${home.name} zurück.`, 4200);
   }
 }
 /* A clan canoe: a return gift, or guests for the feast */
-function clanShip(T, toId, cargo, guest){
-  const s = {id:nextShip++, kind:'oc', own:false, clan:T.id, to:toId, guest:!!guest, cargo, people:0, path:[], pi:0, state:'moored', x:T.harbor.x, y:T.harbor.y, hx:1, hy:0, dist:0};
+function clanShip(T, toId, cargo, guest, life = []){
+  const s = {id:nextShip++, kind:'oc', own:false, clan:T.id, to:toId, guest:!!guest, cargo, life, people:0, path:[], pi:0, state:'moored', x:T.harbor.x, y:T.harbor.y, hx:1, hy:0, dist:0};
   ships.push(s); if (!sailTo(s, {isl:toId})) ships.splice(ships.indexOf(s), 1);
 }
 

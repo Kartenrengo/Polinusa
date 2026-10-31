@@ -22,27 +22,50 @@ const NAMES = {
 const NUMBER = ['', ' Rua', ' Tolu', ' Pati', ' Lima'];               // the second, third ... island of a name: zwei, drei, vier, fünf
 const radOf = (kind, size) => kind === 'atoll' ? size + 12 : size * 1.36 + 50;
 
-/* The start: Panua with its first atoll Motu next door */
-function makeWorld(seed, v = 2){
+/* The start: Panua with its first atoll Motu next door. From the third world on a second high island, Talise, lies in the
+   start waters too: the clan arrives by canoe and chooses where to land. The chosen one becomes the home island (hs = 1:
+   Talise was chosen, and the two swap their id, so everything that speaks of home means the island you chose). */
+function makeWorld(seed, v = 2, hs = 0){
   const r = rng(seed), spots = [];
   const hx = W0 * (.42 + r() * .1), hy = H * (.55 + r() * .1);
   spots.push({id:'heimat', name:'Panua', kind:'hoch', x:hx, y:hy, size:138 + r() * 16});
   const a = (-100 + r() * 70) * Math.PI / 180, d = 470 + r() * 70;
   spots.push({id:'tochter', name:'Motu', kind:'atoll', x:hx + Math.cos(a) * d, y:hy + Math.sin(a) * d, size:112 + r() * 16});
+  if (v >= 3){ const b = a + Math.PI + (r() - .5) * 1.4, e = 600 + r() * 60; spots.push({id:'wahl', name:'Talise', kind:'hoch', x:hx + Math.cos(b) * e, y:hy + Math.sin(b) * e, size:124 + r() * 14}); }
   for (const s of spots) s.rad = radOf(s.kind, s.size);
   const hole = startHoleFor(spots);
   const islands = spots.map((s, i) => {
-    const o = spots[1 - i], len = Math.hypot(o.x - s.x, o.y - s.y) || 1, dir = {x:(o.x - s.x) / len, y:(o.y - s.y) / len};
+    const o = spots[i === 0 ? 1 : 0], len = Math.hypot(o.x - s.x, o.y - s.y) || 1, dir = {x:(o.x - s.x) / len, y:(o.y - s.y) / len};
     const I = s.kind === 'atoll' ? genAtoll(s, dir, rng(seed ^ (i + 1) * 7919)) : genHigh(s, dir, rng(seed ^ (i + 1) * 7919), false, true);
-    Object.assign(I, {id:s.id, name:s.name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1});
+    Object.assign(I, {id:s.id, name:s.name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, start:true});
     return I;
   });
+  if (hs && islands[2]) swapHome(islands, islands[2]);
   // where the treasure islands lie: one in the Weite See (in older games out among the Ferne Inseln), two far out
   const tr = rng(seed ^ 0x7e3a), hcy = Math.floor(hy / CELL), row = d => clamp(hcy + Math.round((tr() - .5) * 2 * d), 0, H / CELL - 1);
   const treasure = v >= 2 ? [{k:'perlmutt', cx:4 + Math.floor(tr() * 2), cy:row(1)}, {k:'federn', cx:6 + Math.floor(tr() * 2), cy:row(2)}, {k:'tabua', cx:8, cy:row(3)}]
     : [{k:'perlmutt', cx:6, cy:row(2)}, {k:'federn', cx:7, cy:row(2)}, {k:'tabua', cx:8, cy:row(3)}];
   for (const I of islands) I.trees0 = (I.trees || []).length;
-  return {islands, hole, home:{x:hx, y:hy}, keep:spots, v, treasure};
+  // other peoples at the edges of the sea: the old people of the Great Land in the west, the seafarers of the north
+  const cr = rng(seed ^ 0xc017), hcx = Math.floor(hx / CELL);
+  const cultures = [{k:'alte', cx:0, cy:clamp(hcy + Math.round((cr() - .5) * 2), 1, H / CELL - 2)}, {k:'nord', cx:clamp(hcx + Math.round((cr() - .5) * 2), 1, Math.floor(WIDE_X / CELL) - 1), cy:0}];
+  return {islands, hole, home:{x:hx, y:hy}, keep:spots, v, treasure, cultures};
+}
+/* In a game from before the other peoples, their cell may already have been rolled as open sea or another island: then
+   they live in the nearest cell along the same edge that no canoe has seen yet, or not at all */
+function placeCultures(list, seen){
+  const out = [];
+  for (const c of list || []){
+    const alts = [0, 1, -1, 2, -2, 3, -3].map(d => c.k === 'alte' ? {cx:c.cx, cy:c.cy + d} : {cx:c.cx + d, cy:c.cy})
+      .filter(q => q.cx >= 0 && q.cy >= 0 && q.cy < H / CELL && q.cx * CELL < WIDE_X && !seen.has(q.cx + ',' + q.cy));
+    if (alts.length) out.push({k:c.k, ...alts[0]});
+  }
+  return out;
+}
+/* The chosen island becomes home: it takes the id of Panua and keeps its own name; Panua becomes the other start island */
+function swapHome(islands, I){
+  const H = islands.find(J => J.id === 'heimat'); if (!H || H === I) return;
+  [H.id, I.id] = [I.id, H.id];
 }
 /* One cell of open sea: maybe an island, maybe a clan on it. Near home islands are more likely. */
 function genCell(seed, cx, cy, start, used){
@@ -50,6 +73,8 @@ function genCell(seed, cx, cy, start, used){
   const hc = {x:Math.floor(start.home.x / CELL), y:Math.floor(start.home.y / CELL)}, dc = Math.max(Math.abs(cx - hc.x), Math.abs(cy - hc.y));
   const T = (start.treasure || []).find(t => t.cx === cx && t.cy === cy), far = cx * CELL >= FAR_X;
   if (T) return treasureIsle(seed, cx, cy, start, T, r);
+  const K = (start.cultures || []).find(t => t.cx === cx && t.cy === cy);
+  if (K) return cultureIsle(cx, cy, start, K, r);
   if (start.v >= 2 && cx * CELL >= WIDE_X && !far) return null;   // the Weite See: nothing but water
   if (r() > (far ? .68 : dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
   const roll = r(), kind = roll < .42 ? 'atoll' : roll < .66 ? 'vulkan' : 'hoch';
@@ -78,8 +103,16 @@ function treasureIsle(seed, cx, cy, start, T, r){
   const I = D.kind === 'atoll' ? genAtoll({x, y, size, kind:D.kind}, dir, r) : genHigh({x, y, size, kind:D.kind}, dir, r, false, false);
   return Object.assign(I, {id:`c${cx}_${cy}`, name:D.isle, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy], trees0:(I.trees || []).length, treasure:{k:T.k, left:6, max:8}});
 }
+/* Where another people lives: a large island, theirs for ages, with their village on it */
+function cultureIsle(cx, cy, start, K, r){
+  const D = CULTURES[K.k], size = D.size + r() * 10, rad = radOf(D.kind, size), m = rad + 50;
+  const x = cx * CELL + m + r() * Math.max(0, CELL - 2 * m), y = cy * CELL + m + r() * Math.max(0, CELL - 2 * m);
+  const len = Math.hypot(start.home.x - x, start.home.y - y) || 1, dir = {x:(start.home.x - x) / len, y:(start.home.y - y) / len};
+  const I = genHigh({x, y, size, kind:D.kind}, dir, r, D.kind === 'vulkan', false);
+  return Object.assign(I, {id:`c${cx}_${cy}`, name:D.isle, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy], trees0:(I.trees || []).length, clan:{id:K.k, ...D, culture:true}});
+}
 function startHoleFor(spots){
-  const [a, b] = spots, x0 = Math.min(a.x - a.rad, b.x - b.rad), x1 = Math.max(a.x + a.rad, b.x + b.rad), y0 = Math.min(a.y - a.rad, b.y - b.rad), y1 = Math.max(a.y + a.rad, b.y + b.rad);
+  const x0 = Math.min(...spots.map(s => s.x - s.rad)), x1 = Math.max(...spots.map(s => s.x + s.rad)), y0 = Math.min(...spots.map(s => s.y - s.rad)), y1 = Math.max(...spots.map(s => s.y + s.rad));
   return {cx:fx((x0 + x1) / 2), cy:fx((y0 + y1) / 2), rx:fx((x1 - x0) / 2 * 1.3 + 60), ry:fx((y1 - y0) / 2 * 1.12 + 60), seed:3};
 }
 

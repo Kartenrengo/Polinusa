@@ -255,3 +255,9 @@ button.isle-name{text-decoration:underline dotted rgba(62,36,22,.45);text-decora
 .folk .who{min-height:28px;padding:3px 9px 3px 8px;font-size:13.5px}
 .folk .who small{font:600 11.5px var(--font-ui);color:var(--muted);margin-left:3px}
 .folk .who.chief{background-image:var(--eturm)}
+/* the arrival: no village yet, so nothing to build and no stores to show */
+body.landing #bottom, body.landing #quest, body.landing .top-right, body.landing #storeBtn, body.landing #vitalBtn, body.landing #seasonBtn{display:none!important}
+.list li.pick{box-shadow:inset 0 0 0 999px rgba(217,164,65,.22)}
+/* an open sheet lies over the side buttons, so its close button is never hidden under them */
+#sheet{z-index:7}
+.landing-isle{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}

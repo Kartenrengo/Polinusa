@@ -10,7 +10,7 @@ function shipStatus(s){
   if (r) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}.`;
   if (s.state === 'sail') return s.dest && s.dest.isl ? `Unterwegs nach ${isl(s.dest.isl).name}.` : 'Unterwegs auf See.';
   if (s.state === 'sea') return 'Liegt auf offener See vor Anker.';
-  const P = isl(s.port); return P.clan ? `Liegt beim ${P.clan.name} auf ${P.name}.` : P.settled ? `Liegt im Hafen von ${P.name}.` : `Liegt vor ${P.name}, das noch unbewohnt ist.`;
+  const P = isl(s.port); return P.clan ? `Liegt ${clanBeim(P.clan)} auf ${P.name}.` : P.settled ? `Liegt im Hafen von ${P.name}.` : `Liegt vor ${P.name}, das noch unbewohnt ist.`;
 }
 /* The canoe sheet: what it carries, loading in a port of ours, and what it can do where it is */
 function shipMarkup(s){
@@ -67,7 +67,7 @@ function provisionNote(s, P){
 function routeMarkup(ri){
   const r = routes[ri], A = isl(r.a), B = isl(r.b), on = ships.filter(s => s.own && s.route === ri);
   const C = A.clan || B.clan, mineEnd = A.clan ? B : A;
-  let h = head(C ? `Schnur zum ${C.name}` : `Handelskette ${A.name} – ${B.name}`, `${r.knots} Knoten. Jede Fahrt knüpft einen dazu, dann geht es schneller.`);
+  let h = head(C ? `Schnur ${clanZum(C)}` : `Handelskette ${A.name} – ${B.name}`, `${r.knots} Knoten. Jede Fahrt knüpft einen dazu, dann geht es schneller.`);
   const all = routes.map((q, i) => [q, i]).filter(([q]) => q.a === active || q.b === active);
   if (all.length > 1) h += `<div class="chips" role="group" aria-label="Kette">${all.map(([q, i]) => `<button class="chip" type="button" data-act="route" data-r="${i}" aria-pressed="${i === ri}">${isl(q.a === active ? q.b : q.a).name}</button>`).join('')}</div>`;
   h += on.length ? `<ul class="list needs">${on.map(s => `<li>${shipIcon(s.kind)}<span class="nm">${s.name}<small>${shipStatus(s)}</small></span><button class="btn small" type="button" data-act="unassign" data-s="${s.id}">Abziehen</button></li>`).join('')}</ul>` : `<p class="sub">Noch fährt hier kein Kanu.</p>`;

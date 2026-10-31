@@ -28,6 +28,8 @@ function edgeURL(seed, fill, stroke = '#3E2416', sw = 1.6, round = false){
 /* ---------- top bar */
 let lastStock = {};
 function updateHUD(){
+  document.body.classList.toggle('landing', !!landing);
+  if (landing){ $('isleName').textContent = 'Auf See'; $('isleType').textContent = 'Euer Clan im Ahnenkanu'; showWind(); return; }
   const I = isl(active);
   $('isleName').textContent = I.name; $('isleType').textContent = (I.volcano ? 'Vulkan' : I.type === 'hoch' ? 'Hohe Insel' : 'Atoll') + ' · ' + LEVEL_NAMES[I.lvl || 1];
   $('manaBtn').hidden = mana <= 0 && !feastsOpen();
@@ -161,7 +163,7 @@ function startPlace(kind){
 function startSpot(I, K){
   const vc = villageCenter(I);
   const pick = list => list.reduce((m, q) => Math.hypot(q.x - vc.x, q.y - vc.y) < Math.hypot(m.x - vc.x, m.y - vc.y) ? q : m);
-  if (K.dep){ const d = pick(depsOf(I, K.dep)); return {x:d.x + (vc.x - d.x) * .15, y:d.y + (vc.y - d.y) * .15 + 14}; }
+  if (K.dep && depsOf(I, K.dep).length){ const d = pick(depsOf(I, K.dep)); return {x:d.x + (vc.x - d.x) * .15, y:d.y + (vc.y - d.y) * .15 + 14}; }
   // woodcutters and planters go to the edge of the forest closest to the village
   if ((K.trees || K.plants) && I.trees.some(t => t.st !== 1)){ const t = pick(I.trees.filter(q => q.st !== 1)), d = Math.hypot(vc.x - t.x, vc.y - t.y) || 1; return {x:t.x + (vc.x - t.x) / d * 22, y:t.y + (vc.y - t.y) / d * 22}; }
   // next to the plant that has the most of its kind around it, nearest to the village if several are equal
@@ -299,7 +301,7 @@ function needsMarkup(I){
     const W = wildOf(I), F = foragers(I), gone = goneOf(I);
     h += row('wild', `Wild: ${wildWord(W)}`, `${I.tapu ? 'Tapu: Niemand jagt oder sammelt. Es erholt sich langsam.' : F ? `${F} ohne Arbeit sammeln Eier, Krebse und Vögel, +${perMin(forageRate(I))} pro Minute.` : 'Wer keine Arbeit hat, sammelt im Wald und am Strand.'}${gone ? ` ${gone > 1 ? 'Zwei Arten sind' : 'Eine Art ist'} hier ausgestorben, für immer.` : W < .45 ? ' Wird weiter so viel gejagt, sterben Arten aus.' : ''}`, bar(W), `<button class="chip" type="button" data-act="tapu" aria-pressed="${!!I.tapu}">Tapu</button>`, W < .3 && !I.tapu ? 'need' : '');
     // what came in the canoes, and what is still missing here
-    const fit = LIFE_IDS.filter(id => lifeFits(I, id)), have = fit.filter(id => lifeOf(I).includes(id)), miss = fit.filter(id => !have.includes(id));
+    const fit = LIFE_IDS.filter(id => lifeFits(I, id) && lifeKnown(id)), have = fit.filter(id => lifeOf(I).includes(id)), miss = fit.filter(id => !have.includes(id));
     h += row('setzling', have.length ? `Mitgebracht: ${andList(have.map(id => LIFE[id].n))}` : 'Noch nichts mitgebracht', miss.length ? `Es fehlen ${andList(miss.map(id => LIFE[id].n))}. Ein Kanu bringt sie aus einem Dorf, wo sie wachsen: im Hafen „Beladen“, dann „Leben fürs neue Land“.` : 'Alles, was hier wachsen kann, ist da.', '', miss.length ? chip('low', `${miss.length} fehlen`) : chip('ok', 'alles da'), miss.length ? 'need' : '');
     h += `</ul>`;
   }
@@ -392,12 +394,31 @@ function manaMarkup(I){
 /* A clan: what they make and value, the trust on the cord and what they still owe */
 function clanMarkup(T){
   const C = T.clan, ri = routes.findIndex(r => r.a === T.id || r.b === T.id), r = routes[ri], icons = ks => ks.map(k => `<svg class="ic inline" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>${GN[k]}`).join(', ');
-  let h = head(C.name, `Auf ${T.name}, etwa ${C.pop} Menschen.`);
+  let h = head(C.name, `Auf ${T.name}, etwa ${C.pop} Menschen.${C.culture ? ' Eine andere Kultur.' : ''}`);
+  if (C.culture) h += `<p>${C.text}</p><p class="sub"><b>Was sie euch geben können:</b> ${C.gift}${C.teach === 'nav' && stats.nordLehre ? ' Das haben sie schon getan.' : C.life && lifeKnown(C.life) ? ' Das haben sie schon getan.' : ''}</p>`;
   h += `<p>Sie machen ${icons(C.makes)}.<br>Sie schätzen ${icons(C.wants)}.</p>`;
-  h += `<p class="sub">Bei diesem Clan gibt es keine Preise. Ihr schickt eine Gabe, und sie antworten später mit dem, was sie machen. Je mehr Knoten die Schnur hat, desto reicher fällt die Gegengabe aus. Muschelschmuck knüpft einen Knoten extra. Kommt lange nichts, löst sich ein Knoten.</p>`;
-  h += `<p class="sub">${motifIcon(C.motif, 'inline')}Ihr Muster: ${MOTIFS[C.motif].n}. ${kin(T) ? 'Sie stempeln auch euer Muster, ihr seid verwandt: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann werden sie euch verwandt, und eure Gaben zählen mehr.'}</p>`;
+  h += `<p class="sub">${C.culture ? 'Auch bei ihnen' : 'Bei diesem Clan'} gibt es keine Preise. Ihr schickt eine Gabe, und sie antworten später mit dem, was sie machen. Je mehr Knoten die Schnur hat, desto reicher fällt die Gegengabe aus. Muschelschmuck knüpft einen Knoten extra. Kommt lange nichts, löst sich ein Knoten.</p>`;
+  h += C.motif ? `<p class="sub">${motifIcon(C.motif, 'inline')}Ihr Muster: ${MOTIFS[C.motif].n}. ${kin(T) ? 'Sie stempeln auch euer Muster, ihr seid verwandt: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann werden sie euch verwandt, und eure Gaben zählen mehr.'}</p>` : `<p class="sub">Sie töpfern nicht. ${kin(T) ? 'Aber eure Töpfe mit eurem Muster schätzen sie: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann zählen eure Gaben mehr.'}</p>`;
   if (r) h += `<p>${r.knots} Knoten Vertrauen. ${T.debt >= 1 ? 'Eine Gegengabe ist unterwegs oder kommt bald.' : 'Gerade schulden sie euch nichts.'}</p>`;
   h += r ? `<div class="rowx"><span class="sub">Fahr mit einem beladenen Kanu hin oder setze eines in die Schnur.</span><button class="btn primary" type="button" data-act="gift">Schnur ansehen</button></div>` : `<p class="sub">Fahr mit einem Kanu hin, dann entsteht eine Schnur.</p>`;
+  return h;
+}
+/* The arrival: the start islands side by side, what each offers, and where the canoe lands */
+const polyArea = P => Math.abs(P.reduce((t, p, i) => { const q = P[(i + 1) % P.length]; return t + p.x * q.y - q.x * p.y; }, 0)) / 2;
+function landFacts(I){
+  const M = isl('tochter'), all = landingChoices(), area = J => polyArea(J.lands[0].poly), trees = J => (J.trees || []).length, dist = J => Math.hypot(M.center.x - J.center.x, M.center.y - J.center.y);
+  const most = f => all.every(J => J === I || f(I) > f(J)), least = f => all.every(J => J === I || f(I) < f(J));
+  return [most(area) ? 'Die größere Insel' : 'Die kleinere Insel', `${trees(I)} Bäume${most(trees) ? ', mehr Wald' : ''}`, I.river ? 'ein Bach' : '', depsOf(I, 'ton').length ? 'Ton für Töpfe' : 'kein Ton', depsOf(I, 'basalt').length ? 'Basalt für Beile' : 'kein Basalt',
+    least(dist) ? `${M.name} mit Pandanus und Kokos liegt nah` : `${M.name} liegt weiter weg`].filter(Boolean).join(', ') + '.';
+}
+function landingMarkup(){
+  const pick = sheetData && sheetData.id ? isl(sheetData.id) : null, list = landingChoices(), M = isl('tochter'), to = landing && landing.target ? isl(landing.target) : null;
+  let h = head('Die Ankunft', 'Vor dreitausend Jahren, östlich des alten Landes.');
+  if (to) return h + `<p>Das Ahnenkanu ist unterwegs nach ${to.name}. Sobald es anlegt, entsteht dort euer Dorf.</p>`;
+  if (pick && pick.type === 'atoll') h += `<p><b>${pick.name}</b> ist ein Atoll: Sand und Palmen, kein Ton, kein Stein, kaum Holz. Ein guter zweiter Ort, aber kein Anfang. Wählt eine hohe Insel.</p>`;
+  else h += `<p>Euer Clan hat das alte Land im Westen verlassen: fünf Familien im Ahnenkanu, mit Holz, Nahrung, Taro, Brotfrucht, Maulbeere, Kava und einem Paar Schweine. Vor euch liegen zwei hohe Inseln und das Atoll ${M.name}. Wo lasst ihr euch nieder?</p>`;
+  h += `<ul class="list needs">${list.map(I => `<li class="${pick === I ? 'pick' : ''}">${icon('insel')}<span class="nm">${I.name}<small>${landFacts(I)}</small></span><span class="chips"><button class="chip" type="button" data-act="lookat" data-i="${I.id}">Ansehen</button><button class="btn primary small" type="button" data-act="found" data-i="${I.id}">Hier landen</button></span></li>`).join('')}</ul>`;
+  h += `<p class="sub">Von dort aus wächst euer Reich: Dörfer auf vielen Inseln, Clans als Freunde, die große Fahrt nach Osten, und am Rand der See Menschen einer ganz anderen Kultur.</p>`;
   return h;
 }
 /* The end of the tasks: what the clan has built, and the sea stays open */
@@ -407,6 +428,7 @@ function finaleMarkup(){
   let h = head('Die große Fahrt ist vollbracht', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`);
   h += `<p>Vom ersten Versammlungshaus auf ${isl('heimat').name} aus ist ein Netz aus Dörfern und Freundschaften entstanden, bis über die Weite See zu den Fernen Inseln, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben.</p>`;
   h += `<ul class="list needs">${row('pop', 'Eigene Dörfer', mine.length)}${row('pop', 'Menschen', people)}${row('schnur', 'Befreundete Clans', friends.length)}${row('schnur', 'Knoten auf allen Schnüren', routes.reduce((t, r) => t + r.knots, 0))}${row('einbaum', 'Kanus', own().length)}${row('mana', 'Ansehen', Math.floor(mana))}${row('', 'Entdeckte Inseln', islands.filter(I => I.discovered).length)}</ul>`;
+  { const met = cultureIsles(); if (met.length) h += `<p>Am Rand der bekannten See habt ihr Menschen einer anderen Kultur getroffen: ${andList(met.map(I => I.clan.name))}.</p>`; }
   h += `<p class="sub">Das Meer bleibt offen. Es gibt noch Nebel zu lichten, Dörfer zu Häuptlingsdörfern zu machen und Feste zu feiern.</p>`;
   return h + `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Weiterspielen</button></div>`;
 }
@@ -463,8 +485,11 @@ function infoMarkup(I, b){
   return [crewMarkup(I, b) + bar + (line ? `<div class="stat">${line}</div>` : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
+/* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
+const sheetGone = () => !!sheetData && typeof sheetData.id === 'string' && !isl(sheetData.id);
 function renderSheet(){
   const body = $('sheetBody'); let h = '';
+  if (sheetGone()){ closeSheet(); return; }
   if (sheetKind === 'ship'){
     const sh = ships.find(q => q.id === sheetData.id); if (!sh){ closeSheet(); return; }
     h += shipMarkup(sh);
@@ -516,9 +541,11 @@ function renderSheet(){
   } else if (sheetKind === 'road'){
     const I = isl(sheetData.id), r = I && I.roads && I.roads[sheetData.r]; if (!r){ closeSheet(); return; }
     h += head('Weg', I.name) + `<p class="sub">Zerstoßene Muscheln und Korallensand. Darauf gehen die Leute schneller, und der Weg schmückt das Dorf.</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="delroad">Entfernen</button></span></div>`;
+  } else if (sheetKind === 'landing'){
+    h += landingMarkup();
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
-    h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
+    h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet. Aus seinen Planken entsteht das Versammlungshaus, mehr steht noch nicht.` : '');
     h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Die Inseln leben weiter, wenn das Spiel zu ist, bis zu acht Stunden. Wenn du wiederkommst, steht da, was geschehen ist. In der Zeit geht nichts verloren.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur mit Namen und Alter. Kinder wachsen in sechs Jahren heran und arbeiten dann, ab vierzig sind die Leute alt, und irgendwann gehen sie zu den Ahnen. Ein Jahr dauert zwölf Minuten. In der Übersicht zeigt „Alle Menschen“ jeden mit Namen.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Das Doppelkanu kann von selbst erkunden: antippen, dann „Erkunden lassen“. Es kehrt rechtzeitig um und holt Proviant.</li><li>Im Osten liegt die Weite See, dahinter die Fernen Inseln. Dort und auf Tifa liegen Schätze, die es sonst nirgends gibt.</li><li>Felder laugen aus. Lass sie brachliegen, Bäume daneben schonen den Boden. Fällt zu viel Wald, spült der Regen die Erde fort.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
@@ -548,6 +575,7 @@ function renderSheet(){
 }
 let lastSig = '';
 function sheetSig(){
+  if (sheetGone()) return 'gone';
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
   if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, prioOf(I).join(), tick % GROW_EVERY, [...presentAt(I).values()].join(':'), ...Object.values(sf.cats).map(c => c.used), ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
   if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1, kin(T)].join(); }
@@ -588,6 +616,8 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'feast'){ holdFeast(islOfB(b.id), FEASTS.find(F => F.id === btn.dataset.f)); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
+  if (sheetKind === 'landing' && act === 'lookat'){ const I = isl(btn.dataset.i); if (I){ sheetData = {id:I.id}; renderSheet(); flyTo(I.center.x, I.center.y, Math.max(cam.z, .9)); } return; }
+  if (sheetKind === 'landing' && act === 'found'){ chooseHome(isl(btn.dataset.i)); return; }
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
   if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); renderBuildBar(); toast('Der Weg ist weg.', 2000, false); return; }
   if (act === 'tapu' && sheetKind === 'needs'){ const I = isl(active); setTapu(I, !I.tapu); renderSheet(); return; }
@@ -606,7 +636,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'sound'){ setSound(!opts.sound); renderSheet(); return; }
     if (act === 'night'){ opts.night = !opts.night; saveOpts(); requestDraw(); renderSheet(); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
-    if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); closeSheet(); renderAll(); fitBox(isl('heimat').box, 1.4); save(); toast('Neues Spiel, neue Inseln.', 2600, false); return; }
+    if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); beginLanding(); toast('Neues Spiel, neue Inseln.', 2600, false); return; }
   }
 });
 const giftGuess = (C, worth) => { const g = returnGoods(C, worth); return g.load ? giftText(g.cargo) : 'eine kleine Gabe'; };
