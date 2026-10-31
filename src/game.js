@@ -412,7 +412,7 @@ function weddingCheck(T){
   const r = routes.find(q => q.a === T.id || q.b === T.id), I = weddingIsland(T);
   if (!r || !I) return {why:'Erst braucht es eine Schnur zu ihnen.'};
   if (r.knots < WED_KNOTS) return {why:`Erst braucht es ${WED_KNOTS} Knoten Vertrauen, jetzt sind es ${r.knots}.`};
-  const p = (I.people || []).filter(canWed).sort((a, b) => b.b - a.b)[0];   // the youngest grown-up who is free
+  const p = (I.people || []).filter(q => canWed(q) && q.id !== I.chief).sort((a, b) => b.b - a.b)[0];   // the youngest grown-up who is free, never the chief
   if (!p) return {why:`Auf ${I.name} ist gerade niemand frei, der heiraten könnte.`};
   if (I.pop >= popCap(I)) return {why:`Auf ${I.name} ist kein Platz für noch jemanden.`};
   if (!canPay(I, BRIDE_GIFTS)) return {why:`Für die Brautgaben fehlt ${lacking(I, BRIDE_GIFTS)} auf ${I.name}.`};

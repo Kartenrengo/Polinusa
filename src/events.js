@@ -50,7 +50,7 @@ const EVENTS = [
       {n:'Ablehnen', text:'Ihr braucht es selbst.', go:o => { o.r.knots = Math.max(0, o.r.knots - 1); mana = Math.max(0, mana - 1); invalidate(); return `Die Boten fahren enttäuscht heim. Ein Knoten löst sich.`; }}]},
   // a clan asks for a bride or a groom: by their custom the young one would move to them
   {id:'braut', t:'Brautwerbung',
-    when:() => pickOf(routes.filter(r => r.knots >= 2).map(r => { const T = clanOfRoute(r), I = T && weddingIsland(T), p = I && I.pop >= 12 && (I.people || []).filter(canWed).sort((a, b) => b.b - a.b)[0]; return p ? {T, I, p, r} : null; }).filter(Boolean)) || false,
+    when:() => pickOf(routes.filter(r => r.knots >= 2).map(r => { const T = clanOfRoute(r), I = T && weddingIsland(T), p = I && I.pop >= 12 && (I.people || []).filter(q => canWed(q) && q.id !== I.chief).sort((a, b) => b.b - a.b)[0]; return p ? {T, I, p, r} : null; }).filter(Boolean)) || false,
     place:o => o.I,
     text:o => `Boten ${clanVom(o.T.clan)} kommen nach ${o.I.name}, mit Matten und einem Schwein. Jemand aus ihrem ${o.T.clan.culture ? 'Volk' : 'Clan'} möchte ${o.p.n} heiraten, ${Math.floor(ageOf(o.p))} Jahre alt. Nach ihrem Brauch zöge ${o.p.n} zu ihnen nach ${o.T.name}.`,
     choices:[

@@ -54,6 +54,7 @@ function sfx(name){
   if (name === 'quest') [523, 659, 784].forEach((f, i) => wood(f, t + i * .12));
   else if (name === 'chronik') [392, 523, 659, 880].forEach((f, i) => wood(f, t + i * .14, .1));
   else if (name === 'knock'){ noise(t, .06, .12, 'bandpass', 900, 2); tone(320, t, .08, .15); }
+  else if (name === 'thunder'){ noise(t, .14, .12, 'highpass', 1400); noise(t + .05, 2.2, .22, 'lowpass', 160); }   // the crack, then the long rumble
   else if (name === 'splash'){ const f = noise(t, .5, .1, 'highpass', 2400); f.frequency.exponentialRampToValueAtTime(500, t + .5); }
   else if (name === 'shells') for (let i = 0; i < 7; i++) noise(t + i * .05 + Math.random() * .03, .03, .07, 'bandpass', 3200 + Math.random() * 1500, 6);
   else if (name === 'horn'){

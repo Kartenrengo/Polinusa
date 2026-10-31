@@ -52,7 +52,7 @@ function updateHUD(){
   $('vitalBtn').innerHTML = vitalLine(I);
   // what does not fit next to the hint is left out whole, never cut in half (the store sheet shows everything)
   for (const li of ul.children) li.hidden = false;
-  for (const li of ul.children) if (li.offsetLeft + li.offsetWidth > ul.clientWidth + 1) li.hidden = true;
+  { const edge = ul.getBoundingClientRect().right + 1; for (const li of ul.children) if (li.getBoundingClientRect().right > edge) li.hidden = true; }
   $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}`).join(', ') + '. Tippen zeigt alles.');
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
@@ -634,7 +634,7 @@ $('sheetBody').addEventListener('click', e => {
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (act === 'skipq'){ closeSheet(); skipTutorial(); return; }
-  if (sheetKind === 'landing' && act === 'intro'){ landing.skip = btn.dataset.v === 'off'; renderSheet(); return; }
+  if (sheetKind === 'landing' && act === 'intro' && landing){ landing.skip = btn.dataset.v === 'off'; renderSheet(); return; }
   if (sheetKind === 'landing' && act === 'lookat'){ const I = isl(btn.dataset.i); if (I){ sheetData = {id:I.id}; renderSheet(); flyTo(I.center.x, I.center.y, Math.max(cam.z, .9)); } return; }
   if (sheetKind === 'landing' && act === 'found'){ chooseHome(isl(btn.dataset.i)); return; }
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }

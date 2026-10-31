@@ -639,7 +639,7 @@ function drawStorm(now){
     }
     // lightning: now and then a bolt into the island and a flash over it all
     if (now > boltNext){ boltNext = now + 2600 + Math.random() * 4200; const bx = (Math.random() - .5) * .9, pts = []; let x = C.x + bx * R, y = C.y - R * .9; const ex = C.x + bx * R * .4, ey = C.y + (Math.random() - .3) * R * .3;
-      for (let j = 0; j <= 7; j++){ pts.push([x, y]); x += (ex - x) / (8 - j) + (Math.random() - .5) * 22; y += (ey - y) / (8 - j); } pts.push([ex, ey]); bolt = {t:now, pts}; if (k > .6) sfx('knock'); }
+      for (let j = 0; j <= 7; j++){ pts.push([x, y]); x += (ex - x) / (8 - j) + (Math.random() - .5) * 22; y += (ey - y) / (8 - j); } pts.push([ex, ey]); bolt = {t:now, pts}; if (k > .6) sfx('thunder'); }
     const age = bolt ? now - bolt.t : 1e9;
     if (age < 260 && k > .3){
       const a = 1 - age / 260;
