@@ -301,3 +301,14 @@ body.landing #bottom, body.landing #quest, body.landing .top-right, body.landing
 #bottom:not(.open) .tbtn{pointer-events:auto;height:50px;flex-direction:row;gap:6px;padding:0 12px 0 8px;width:auto;filter:drop-shadow(0 3px 0 rgba(43,29,20,.3))}
 #bottom:not(.open) .tbtn svg{width:34px;height:26px}
 #bottom.open .tbtn.build{background-image:var(--eturm)}
+/* the moon in the compass tag; the tag opens the calendar */
+#compass{pointer-events:auto;cursor:pointer}
+#compass .moon{display:flex;align-items:center;gap:2px;font:700 11.5px/1.1 var(--font-ui);font-style:normal;color:var(--ink);margin-top:1px}
+#compass .moon .ic{width:14px;height:14px}
+#compass .moon em{font-style:normal}
+#seasonBtn{display:none!important}
+/* speed and menu fold out under the side button */
+#sidectl:not(.open) .fold{display:none}
+#moreBtn{position:relative}
+#moreBtn[aria-expanded="true"]{background-image:var(--eturm)}
+#speedMark{position:absolute;right:-6px;bottom:-4px;font-size:10px;padding:1px 3px}

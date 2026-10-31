@@ -45,8 +45,14 @@ function foundHome(I){
   if (sh) ships.splice(ships.indexOf(sh), 1);
   selShip = null; if (mode === 'steer') mode = 'idle';
   Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:10, nahrung:10}, life:LIFE_BASE.slice(), wild:1, gone:0});
-  seedStart(Hm, r);
-  landing = null; active = 'heimat';
+  landing.found = 'heimat'; active = 'heimat';   // time still stands until the meeting house has its place (foundAt)
+  return true;
+}
+/* The meeting house goes where the clan chose (or, without a choice, onto the old clearing); then time begins */
+function foundAt(p){
+  const Hm = isl('heimat'); if (!landing || !landing.found || !Hm) return false;
+  seedStart(Hm, rng(seed ^ 0x5eed ^ 0x1a4d), p);
+  landing = null;
   return true;
 }
 /* Roll a cell of sea the first time it is seen. Fresh cells get their clan village; on load the village comes from the save. */
@@ -61,7 +67,8 @@ function ensureCell(cx, cy, fresh){
 }
 
 /* Like the first landing: only the meeting house on the plaza, palms on the beach, two wild breadfruit trees */
-function seedStart(I, r){
+function seedStart(I, r, at){
+  if (at) I.anchor = {x:fx(at.x), y:fx(at.y + 15)};   // the village grows around the meeting house
   const an = I.anchor;
   addB(I, 'halle', {x:an.x, y:an.y - 15}, {}, 0);
   // the two trees stand together, so a fermenting pit fits between them later

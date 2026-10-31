@@ -1048,7 +1048,7 @@ function hitBuilding(p){
 function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
-  if (landing){ landingTap(p); return; }
+  if (landing && !landing.found){ landingTap(p); return; }
   if (mode === 'road'){ roadTap(p); return; }
   if (mode === 'unroad'){ roadCut(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
@@ -1107,7 +1107,7 @@ mapC.addEventListener('keydown', e => {
   else return;
   e.preventDefault(); clampCam(); applyCam();
 });
-$('menuBtn').addEventListener('click', () => openSheet('menu', {}));
+$('menuBtn').addEventListener('click', () => { setSideOpen(false); openSheet('menu', {}); });
 $('popBtn').addEventListener('click', () => openSheet('needs'));
 $('vitalBtn').addEventListener('click', () => openSheet('needs'));
 $('storeBtn').addEventListener('click', () => openSheet('store'));
@@ -1116,9 +1116,12 @@ $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbt
 $('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
 $('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
 $('idleBtn').addEventListener('click', showIdle);
-$('isleName').addEventListener('click', () => { if (landing){ openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
+$('isleName').addEventListener('click', () => { if (landing){ if (!landing.found) openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
 $('tradeBtn').addEventListener('click', () => openSheet('fleet'));
+$('moreBtn').addEventListener('click', () => setSideOpen(!sideOpen));
+$('compass').addEventListener('click', () => openSheet('calendar'));
+$('compass').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSheet('calendar'); } });
 $('buildBtn').addEventListener('click', () => { closeSheet(); setBuildOpen(!buildOpen); });
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
 $('placeOk').addEventListener('click', confirmPlace);
@@ -1139,9 +1142,10 @@ function chooseHome(I){
   const sh = ships.find(s => s.founder); if (!landing || !I || !landingChoices().includes(I)) return;
   landing.target = I.id; closeSheet();
   if (sh && sh.state !== 'sail' && sailTo(sh, {isl:I.id}, true)){ toast(`Das Ahnenkanu nimmt Kurs auf ${I.name}.`, 3000, false); flyTo(I.center.x, I.center.y, Math.max(cam.z, .9)); return; }
-  landHome(I);
+  landHome(I, false);
 }
 function beginLanding(){
+  if (placing && placing.founding){ placing = null; mode = 'idle'; $('placeDone').hidden = false; $('place').hidden = true; $('bottom').hidden = false; }
   setBuildOpen(false);
   if (mode === 'place' || mode === 'move' || mode === 'road' || mode === 'unroad') endPlace();   // a building half placed in the old game goes with it
   document.body.classList.add('landing'); closeSheet(); renderAll(); updateHUD();
@@ -1149,9 +1153,24 @@ function beginLanding(){
   if (sh){ b.x0 = Math.min(b.x0, sh.x - 30); b.x1 = Math.max(b.x1, sh.x + 30); }
   fitBox(b, 1.2); openSheet('landing', {});
 }
-function landHome(I){
-  const skip = landing && landing.skip;
+/* The canoe lands: the clan chooses where the meeting house stands (auto: on the old clearing at once, as in tests and saves) */
+function landHome(I, auto = true){
   if (!foundHome(I)) return;
+  if (auto){ const skip = landing.skip; foundAt(null); finishLanding(skip); return; }
+  const Hm = isl('heimat'), K = KINDS.halle;
+  closeSheet(); mode = 'place'; placing = {kind:'halle', island:Hm.id, x:Hm.anchor.x, y:Hm.anchor.y - 15, v:{}, founding:true};
+  $('placeName').textContent = K.n; $('placeIc').setAttribute('viewBox', K.vb); $('placeIc').innerHTML = iconMarkup('halle');
+  $('placeInfo').textContent = `Wo soll es auf ${Hm.name} stehen? Um das Versammlungshaus wächst das Dorf. Tippe auf die Insel oder ziehe es hin.`;
+  $('placeOk').textContent = 'Hier bauen'; $('placeDone').hidden = true; $('bottom').hidden = true; $('place').hidden = false;
+  invalidate(true); updateHUD(); ghostRender(); measure(); flyTo(Hm.anchor.x, Hm.anchor.y, 1.5);
+}
+function confirmFounding(){
+  if (!placing || !placing.founding || !placing.ok) return;
+  const skip = landing && landing.skip, p = {x:placing.x, y:placing.y};
+  mode = 'idle'; placing = null; ghostRender(); $('placeDone').hidden = false; $('place').hidden = true; $('bottom').hidden = false;
+  if (foundAt(p)) finishLanding(skip);
+}
+function finishLanding(skip){
   if (skip) skipTutorial(true);   // chosen at the arrival: no introduction
   document.body.classList.remove('landing');
   invalidate(true); renderAll(); updateHUD();
@@ -1168,9 +1187,9 @@ function gameClock(){
 }
 function setSpeed(v){
   gameSpeed = v; const b = $('speedBtn'); b.setAttribute('aria-pressed', v > 1); b.setAttribute('aria-label', v > 1 ? 'Doppelte Geschwindigkeit, an' : 'Doppelte Geschwindigkeit');
-  toast(v > 1 ? 'Doppelte Geschwindigkeit.' : 'Normale Geschwindigkeit.', 1400, false);
+  toast(v > 1 ? 'Doppelte Geschwindigkeit.' : 'Normale Geschwindigkeit.', 1400, false); $('speedMark').hidden = sideOpen || v === 1;
 }
-$('speedBtn').addEventListener('click', () => setSpeed(gameSpeed > 1 ? 1 : 2));
+$('speedBtn').addEventListener('click', () => { setSpeed(gameSpeed > 1 ? 1 : 2); setSideOpen(false); });   // folded again; a mark shows double speed
 function frame(now){
   const dt = Math.min(64, now - last); last = now;
   stepCam(now); if (ships.length) stepShips(now, dt * gameSpeed); walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);

@@ -29,12 +29,13 @@ function edgeURL(seed, fill, stroke = '#3E2416', sw = 1.6, round = false){
 let lastStock = {};
 function updateHUD(){
   document.body.classList.toggle('landing', !!landing);
-  if (landing){ $('isleName').textContent = 'Auf See im Ahnenkanu'; showWind(); return; }
+  if (landing){ $('isleName').textContent = landing.found ? `Landung auf ${isl('heimat').name}` : 'Auf See im Ahnenkanu'; showWind(); $('moonUse').setAttribute('href', '#' + SEASON_ICON[seasonOf().id]); $('moonTxt').textContent = `${moonOf() + 1}. Mond`; return; }
   const I = isl(active);
   $('isleName').textContent = I.name; $('isleName').setAttribute('aria-label', `${I.name}, ${I.volcano ? 'Vulkan' : I.type === 'hoch' ? 'hohe Insel' : 'Atoll'}, ${LEVEL_NAMES[I.lvl || 1]}. Tippen benennt sie um.`);
   $('manaBtn').hidden = mana <= 0 && !feastsOpen();
   $('manaNum').textContent = Math.floor(mana);
   const S = seasonOf(); $('seasonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('seasonTxt').textContent = `${moonOf() + 1}. Mond`;
+  $('moonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('moonTxt').textContent = `${moonOf() + 1}. Mond`;
   $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + popCap(I);
   showWind();
@@ -57,7 +58,9 @@ function updateHUD(){
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
 /* Two menus: what the village needs, with paths at the end, and what only adorns it */
-let buildTab = 'bau', buildOpen = false;
+let buildTab = 'bau', buildOpen = false, sideOpen = false;
+/* speed and menu fold out from the side button, the conch with the messages always stays */
+function setSideOpen(on){ sideOpen = !!on; $('sidectl').classList.toggle('open', sideOpen); $('moreBtn').setAttribute('aria-expanded', sideOpen); $('speedMark').hidden = sideOpen || gameSpeed === 1; }
 /* The build bar is folded away until the build button is pressed, so the map shows more; tapping empty map folds it again */
 function setBuildOpen(on){
   buildOpen = !!on; $('bottom').classList.toggle('open', buildOpen);
@@ -249,13 +252,15 @@ function showPlaceBar(){
 }
 function endPlace(){
   if (placing && placing.road) layRoad();
-  const wasMove = mode === 'move', cut = mode === 'unroad'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false; $('placeOk').hidden = false;
+  if (placing && placing.founding) return;   // the meeting house must stand somewhere; there is no going back to sea
+  const wasMove = mode === 'move', cut = mode === 'unroad'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false; $('placeOk').hidden = false; $('placeDone').hidden = false;
   if (cut) renderBuildBar();
   $('place').hidden = true; $('bottom').hidden = false; measure();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', 'false');
   if (wasMove) invalidate();
 }
 function confirmPlace(){
+  if (placing && placing.founding){ confirmFounding(); return; }
   if (placing && placing.road){ if (layRoad()){ toast('Der Weg ist angelegt.', 2000, false); roadMsg(); } return; }
   if (!placing || !placing.ok) return;
   const I = isl(placing.island), K = KINDS[placing.kind];

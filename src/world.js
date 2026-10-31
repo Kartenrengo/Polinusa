@@ -170,7 +170,7 @@ function genHigh(s, hdir, r, volcano, home){
       if (!free(p, rad)) continue;
       if (t !== 'plaza' && Math.hypot(p.x - I.anchor.x, p.y - I.anchor.y) < rad + 60) continue;
       const q = {t, x:fx(p.x), y:fx(p.y), rot:t === 'garden' ? Math.round((r() - .5) * 30) : 0};
-      I.deco.push(q); I.blocked.push({x:q.x, y:q.y, r:rad}); return q;
+      I.deco.push(q); I.blocked.push({x:q.x, y:q.y, r:rad, t}); return q;
     }
     return null;
   };
@@ -400,7 +400,7 @@ function check(kind, I, x, y, ignoreId){
     if (treeAt(I, x, y, (K.r + TREE_R) * .8)) return 'Hier stehen Bäume. Ein Holzfäller kann sie fällen.';
     if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';
     if (inDelta(I, p, 1)) return 'Hier fließen die Arme des Bachs ins Meer';
-    for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
+    for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r && !(z.t === 'plaza' && kind === 'halle')) return 'Hier ist kein Platz';   // the clearing is meant for the meeting house
   }
   for (const b of I.buildings){ if (b.id === ignoreId) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + KINDS[b.kind].r) * .8) return 'Zu eng'; }
   return '';

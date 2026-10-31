@@ -931,17 +931,22 @@ function drawTop(c, now){
       put(c, x, y, 1, hx < 0 ? -1 : 1, (f - .5) * 1.1 * (hx < 0 ? -1 : 1), 'dolphin', '<use href="#dolphin"/>');
       if (f > .85) stroke(c, ellipse(x + hx * 3, y + 4, 3, 1), '#F4ECD8', .6, [.5, .8], 'round', .8);
     }
+    // the wake: a fading white trail where the canoe has just been
+    if (!far && !reduced && s.state === 'sail' && s.trail && s.trail.length > 2){ const tr = s.trail, n = tr.length;
+      for (let i = 1; i < n; i++){ const a = tr[i - 1], b = tr[i], f = i / n, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, w = (1 - f) * 5 + 1.5, px = -dy / d * w, py = dx / d * w;
+        const p = new Path2D(); p.moveTo(a.x + px, a.y + py); p.lineTo(b.x + px * .8, b.y + py * .8); p.moveTo(a.x - px, a.y - py); p.lineTo(b.x - px * .8, b.y - py * .8);
+        stroke(c, p, '#F4FBFA', 1.1, null, 'round', f * .55); } }
     c.save(); c.translate(s.x, s.y); c.scale(ks, ks);
     if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; sketch(c, 0, 1, 16 + 3 * t, 8 + 1.5 * t, s.id * 5, '#F4ECD8', 2.2, .95); }
     // the canoe's shadow on the water, the sail's longest
     const sh = far ? null : sunShadow();
-    if (sh && sh.alpha > 0){ c.save(); c.transform(1, 0, sh.c, sh.d, 0, 0); if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blitShadow(c, 'oc', '<use href="#oc"/>', sh.alpha * .55); } else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blitShadow(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>', sh.alpha * .55); } c.restore(); }
+    if (sh && sh.alpha > 0){ c.save(); c.transform(1, 0, sh.c, sh.d, 0, 0); if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blitShadow(c, 'oc', '<use href="#oc"/>', sh.alpha * .55); } else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1); blitShadow(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>', sh.alpha * .55); } c.restore(); }
     c.save(); if (!reduced && !far) c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .05 : .025));
     const crew = !far && cam.z > .45 && !s.race;   // close enough to see who is aboard
-    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>');
+    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>');
       // two paddlers in the hull of the outrigger canoe
       if (crew) for (let k = 0; k < 2; k++){ const px = k ? 4.6 : -4.4; seatedFig(c, crewLook(s, k), false, px, -.9, .82); if (s.state === 'sail') paddleStroke(c, px, -.9, .82, now, s.id + k * 1.7); } }
-    else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1);
+    else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1);
       if (!crew) blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>');
       else {
         // the double canoe: the hull, the people on the platform and the steersman at the stern, then the sail over them

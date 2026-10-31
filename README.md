@@ -70,8 +70,9 @@ Inseln, Panua und Talise, und das Atoll Motu.
 - **Wählen:** Das Fenster „Die Ankunft“ vergleicht die beiden hohen Inseln: welche größer ist, wie viele Bäume, Bach, Ton,
   Basalt und wie nah Motu liegt. „Ansehen“ fliegt hin, ein Tipp auf die Karte zeigt die Insel auch. Ein Atoll ist kein
   Anfang: kein Ton, kein Stein, kaum Holz.
-- **Landen:** „Hier landen“ schickt das Ahnenkanu los. Wo es anlegt, wird das Kanu an Land gezogen, aus seinen Planken
-  entsteht das Versammlungshaus, und das Dorf beginnt. Die andere hohe Insel bleibt frei für später.
+- **Landen:** „Hier landen“ schickt das Ahnenkanu los. Wo es anlegt, wird das Kanu an Land gezogen, und ihr wählt, wo aus
+  seinen Planken das Versammlungshaus entsteht: Es steht zuerst auf der alten Lichtung, ein Tipp oder Ziehen setzt es
+  woanders hin, „Hier bauen“ gründet das Dorf. Erst dann beginnt die Zeit. Die andere hohe Insel bleibt frei für später.
 - Vor der Landung läuft keine Zeit, es wird nichts gebaut und nichts gespeichert. Die gewählte Insel ist von da an die
   Heimat, alle Aufgaben nennen sie bei ihrem Namen. Beide Startinseln haben sicher Ton, Basalt und Wald, damit die
   Aufgaben auf jeder lösbar sind.
@@ -104,8 +105,9 @@ Alles ist nach Bedeutung geordnet und nimmt so wenig Platz wie möglich:
 - **Oben, die Insel:** In der ersten Zeile nur der Name (antippen benennt um), rechts Ansehen, Leute ohne Arbeit und
   Bewohner mit Platz. Darunter die Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, Häuser
   voll, oder wann der Nächste kommt. Was nicht in die Zeile passt, zeigt das Lager.
-- **Links, Zeit und Wetter:** Kompass und Wind sind ein Schild („Wind aus SO, frisch“), daneben der Mond.
-- **Rechts:** Nachrichten, doppelte Geschwindigkeit, Menü.
+- **Links, Zeit und Wetter:** Ein Schild mit Kompass, Wind („Wind aus SO, frisch“) und Mond; antippen öffnet den Kalender.
+- **Rechts:** die Muschel mit den Nachrichten und „⋯“, das doppelte Geschwindigkeit und Menü ausklappt. Läuft das Spiel
+  doppelt so schnell, zeigt „⋯“ ein kleines „2×“.
 - **Unten, handeln:** Die Aufgabe in einer Zeile mit Fortschritt (antippen erklärt sie). Die Bauleiste ist zugeklappt,
   nur „Bauen“ und „Flotte“ schweben über der Karte. „Bauen“ klappt sie auf (dann heißt der Knopf „Zu“), ein Tipp aufs
   leere Meer klappt sie wieder zu; „Zeig es mir“ öffnet sie von selbst. Die Reiter „Bauen“ und „Schmuck“ erscheinen erst,
@@ -689,6 +691,8 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
   ein Wal auf, bläst und zeigt beim Abtauchen die Fluke. Neben fahrenden Kanus springen Delfine.
 - **Wetter:** Wolkenschatten ziehen mit dem Nordwind über Meer und Inseln, in der Sturmzeit als Regenschauer. Ein
   Wirbelsturm ist voll animiert (siehe Ereignisse).
+- **Schiffsverkehr:** Kanus fahren langsam an und gleiten in den Hafen, drehen sich allmählich in die neue Richtung statt
+  umzuklappen, ziehen eine weiße Kielwelle hinter sich her, und Kanus auf demselben Weg halten je ihre eigene Spur.
 - **In den Kanus** sitzen dieselben Menschen wie an Land: Fischer, Fährleute und Paddler zeigen den Oberkörper über dem
   Rand, das Paddel taucht im Takt ein. Im Auslegerkanu paddeln zwei, auf dem Doppelkanu stehen die Leute auf der Plattform
   unter dem Segel, am Heck der Steuermann.

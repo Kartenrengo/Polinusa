@@ -119,6 +119,13 @@ function curvePath(a, pts){
   return sm.slice(1);
 }
 
+/* Canoes on the same water keep to their own lane, a little to the side, so they do not sail through each other */
+function laneOf(s, path){
+  const off = ((s.id % 3) - 1) * 9; if (!off || path.length < 3) return path;
+  const out = path.map((p, i) => { if (i === 0 || i === path.length - 1) return p; const a = path[i - 1], b = path[i + 1], d = Math.hypot(b.x - a.x, b.y - a.y) || 1; return {x:p.x - (b.y - a.y) / d * off, y:p.y + (b.x - a.x) / d * off}; });
+  for (let i = 1; i < out.length; i++) if (overLand(out[i - 1], out[i], 1.5)) return path;
+  return out;
+}
 /* ---------- fog and the unseen sea */
 const revealed = p => fogHoles.some(h => ((p.x - h.cx) / (h.rx * .92)) ** 2 + ((p.y - h.cy) / (h.ry * .92)) ** 2 < 1);
 function exploreAt(x, y, r){
@@ -164,7 +171,7 @@ function sailTo(s, dest, quiet){
   if (s.own && s.kind === 'oc' && goal.x > FAR_X){ if (!quiet) toast('Über die Weite See zu den Fernen Inseln fährt nur das Doppelkanu.', 3200, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
-  s.path = curvePath(s, path); s.pi = 0; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
+  s.path = laneOf(s, curvePath(s, path)); s.pi = 0; s.dist0 = s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
 const sight = s => SHIPS[s.kind].vision * (s.kind === 'dc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
@@ -238,20 +245,28 @@ function stepShips(now, dt){
     if (s.state === 'wait'){ s.wait -= dt; if (s.wait <= 0) routeDepart(s); continue; }
     if (s.auto && s.state !== 'sail'){ s.autoWait = (s.autoWait || 0) + dt; if (s.autoWait > 1500){ s.autoWait = 0; autoNext(s); } continue; }
     if (s.state !== 'sail') continue;
-    let step = speedOf(s) * dt / 1000;
+    // a canoe gathers way slowly and glides in to land; it turns gradually instead of flipping round
+    const end = s.path[s.path.length - 1], rem = end ? Math.hypot(end.x - s.x, end.y - s.y) : 0, ease = clamp(Math.min((s.dist - (s.dist0 || 0) + 12) / 60, (rem + 10) / 80), .3, 1);
+    let step = speedOf(s) * ease * dt / 1000; const x0 = s.x, y0 = s.y;
     while (step > 0 && s.pi < s.path.length){
       const t = s.path[s.pi], dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy);
-      if (d > .01){ s.hx = dx / d; s.hy = dy / d; }
       if (d <= step){ s.x = t.x; s.y = t.y; s.pi++; step -= d; s.dist += d; }
       else { s.x += dx / d * step; s.y += dy / d * step; s.dist += step; step = 0; }
     }
+    { const mx = s.x - x0, my = s.y - y0, m = Math.hypot(mx, my);
+      if (m > .001){ const k = clamp(dt / 500, 0, 1); let hx = (s.hx || 1) + (mx / m - (s.hx || 1)) * k, hy = (s.hy || 0) + (my / m - (s.hy || 0)) * k; const l = Math.hypot(hx, hy) || 1; s.hx = hx / l; s.hy = hy / l; }
+      // which way the hull is drawn changes only once it has clearly turned
+      if (s.hx < -.25) s.face = -1; else if (s.hx > .25) s.face = 1;
+      if (s.hy < -.25) s.up = true; else if (s.hy > .25) s.up = false;
+      // the wake: where it has just been
+      const tr = s.trail || (s.trail = []), lt = tr[tr.length - 1]; if (!lt || Math.hypot(s.x - lt.x, s.y - lt.y) > 5){ tr.push({x:s.x, y:s.y}); if (tr.length > 18) tr.shift(); } }
     if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (exploreAt(s.x, s.y, sight(s)) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
     if (s.pi >= s.path.length) arriveShip(s);
   }
 }
 function arriveShip(s){
   const d = s.dest; s.path = []; s.dest = null;
-  if (s.founder){ s.state = 'sea'; if (landing && d && d.isl) landHome(isl(d.isl)); return; }   // the voyaging canoe lands, and the village begins
+  if (s.founder){ s.state = 'sea'; if (landing && d && d.isl) landHome(isl(d.isl), false); return; }   // the village begins where the clan sets its meeting house   // the voyaging canoe lands, and the village begins
   if (!s.own){
     // a clan canoe hands over its return gift and goes home again out of sight
     const T = isl(s.to), C = isl(s.clan).clan;
