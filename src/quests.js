@@ -14,29 +14,29 @@ const QUESTS = [
     n:() => count('heimat', 'faeller'), of:1, show:{build:'faeller'}, unlock:[], gift:{holz:2}},
   {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Im Versammlungshaus ist nur Platz für wenige Familien. Jedes Haus gibt 4 Menschen ein Zuhause. An jeder Baustelle arbeiten 2 Leute. Erst holen sie das Holz aus dem Lager, dann bauen sie. Solange fehlen sie anderswo.',
     n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:['taro'], gift:{holz:3}},
-  {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Jeder Mensch isst. Taro und Brotfrucht sind die Grundnahrung. Solange sie im Lager liegt und Platz in den Häusern ist, ziehen neue Leute zu.',
+  {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Jeder Mensch isst. Taro, Brotfrucht und Fisch zählen alle als Nahrung. Solange Nahrung im Lager liegt und Platz in den Häusern ist, ziehen neue Leute zu.',
     n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:['baum', 'palme', 'fisch'], gift:{nahrung:4}},
   {id:'fang', t:'Fisch aus der Lagune', d:'Baue ein Fischgestell am Strand.', why:'Zu jeder Mahlzeit gehört etwas aus dem Meer, auf Fidschi sagt man dazu i coi. Ab 10 Bewohnern wollen die Familien Fisch zu Taro und Brotfrucht. Ohne Kanu kein Fischfang: Ist das Gestell fertig, schnitzt der Fischer zuerst seinen Einbaum.',
     n:() => count('heimat', 'fisch'), of:1, show:{build:'fisch'}, unlock:[], gift:{holz:2}},
-  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Neue Menschen kommen von allein, wenn Häuser frei sind und Grundnahrung und Fisch reichen. Tippe oben auf die Bewohnerzahl, dann siehst du, was fehlt. Je 10 Bewohner kann an einer Baustelle mehr gearbeitet werden.',
+  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Neue Menschen kommen von allein, wenn Häuser frei sind und die Nahrung reicht. Tippe oben auf die Bewohnerzahl, dann siehst du, was fehlt. Je 10 Bewohner kann an einer Baustelle mehr gearbeitet werden.',
     n:() => isl('heimat').pop, of:15, show:{build:'haus'}, unlock:['speicher', 'toepfer', 'pflanzer'], gift:{holz:4}},
   {id:'wald', t:'Der Wald wächst nach', d:'Baue einen Baumpflanzer am Wald.', why:'Gefällte Bäume treiben von selbst erst nach acht Minuten wieder aus. Der Pflanzer setzt sofort junge Bäume auf die Stümpfe und an den Waldrand. Aber bedenke: Wo Bäume stehen, kann nichts gebaut werden.',
     n:() => count('heimat', 'pflanzer'), of:1, show:{build:'pflanzer'}, unlock:[], gift:{}},
   {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ton liegt am Bach. Die Töpferei formt ihn zu Töpfen und brennt sie mit Holz. Ab 20 Bewohnern braucht jede Familie Töpfe.',
-    n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:['beil', 'riff', 'pfahl', 'steg', 'reuse'], gift:{}},
+    n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:['beil', 'riff', 'pfahl', 'steg'], gift:{}},
   {id:'riff', t:'Schätze vom Riff', d:'Baue einen Riffsammler am Strand.', why:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Ab 25 Bewohnern gehören Meeresfrüchte auf den Tisch.',
     n:() => count('heimat', 'riff'), of:1, show:{build:'riff'}, unlock:[], gift:{}},
-  {id:'lagune', t:'Leben auf dem Wasser', d:'Baue einen Kanusteg und ein Pfahlhaus.', why:'Pfahlhäuser stehen in der Lagune und brauchen kein Land, das Wald und Felder brauchen. Ein Einbaum vom Kanusteg bringt die Leute hin und her, sobald er geschnitzt ist. Jeder Steg reicht für 4 Pfahlhäuser oder Steinreusen.',
+  {id:'lagune', t:'Leben auf dem Wasser', d:'Baue einen Kanusteg und ein Pfahlhaus.', why:'Pfahlhäuser stehen in der Lagune und brauchen kein Land, das Wald und Felder brauchen. Ein Einbaum vom Kanusteg bringt die Leute hin und her, sobald er geschnitzt ist. Jeder Steg reicht für 4 Pfahlhäuser.',
     n:() => Math.min(1, count('heimat', 'steg')) + Math.min(1, isl('heimat').buildings.filter(b => b.kind === 'pfahl' && !b.bt && !unserved(isl('heimat'), b)).length), of:2, show:{build:'steg'}, unlock:[], gift:{holz:3}},
   {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Aus dem grauen Basalt entstehen Steinbeile. Ohne sie lässt sich kein Stamm für ein Kanu aushöhlen.',
     n:() => count('heimat', 'beil'), of:1, show:{build:'beil'}, unlock:['werft'], gift:{holz:4}},
   {id:'wasser', t:'Ans Wasser', d:'Baue ein Kanuhaus am Strand.', why:'Im Kanuhaus entstehen die Boote. Es muss direkt am Strand stehen.',
-    n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'weg', 'fackel'], gift:{holz:4, nahrung:4}},
+    n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'fackel'], gift:{holz:4, nahrung:4}},
   {id:'ausleger', t:'Ein Auslegerkanu', d:'Baue im Kanuhaus ein Auslegerkanu.', why:'Ein Kanu braucht seine Zeit: Drei Bauleute holen das Holz und bauen dann etwa zweieinhalb Minuten. Tippe das Kanuhaus an und sieh zu, wie aus dem Stamm ein Kanu wird. Solange kannst du das Dorf mit Blumen, Muschelwegen und Fackeln schmücken.',
     n:() => fleetOf('oc') || isl('tochter').settled ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
-  {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', why:'Tippe das Kanu im Hafen an. Lade 4 Siedler, Holz, Grundnahrung und Fisch ein. Dann tippe auf Motu, und das Kanu fährt hinüber. Auf dem Atoll wachsen Pandanus und Kokospalmen für Segel und Schnur.',
+  {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', why:'Tippe das Kanu im Hafen an. Lade 4 Siedler, Holz und Nahrung ein. Dann tippe auf Motu, und das Kanu fährt hinüber. Auf dem Atoll wachsen Pandanus und Kokospalmen für Segel und Schnur.',
     n:() => isl('tochter').settled ? 1 : 0, of:1, show:{ship:'oc'}, unlock:['pulaka', 'flecht', 'schnur', 'pandanus', 'halle'], gift:{}},
-  {id:'segel', t:'Segel und Schnur', d:'Baue auf Motu eine Flechthütte und eine Seilerei.', why:'Die Flechthütte braucht Pandanus in der Nähe, die Seilerei Kokospalmen. Beim Bauen siehst du, ob genug da sind. Holz kommt von Panua. Pulakagruben in der Mitte des Motus geben Grundnahrung, ein Fischgestell Fisch.',
+  {id:'segel', t:'Segel und Schnur', d:'Baue auf Motu eine Flechthütte und eine Seilerei.', why:'Die Flechthütte braucht Pandanus in der Nähe, die Seilerei Kokospalmen. Beim Bauen siehst du, ob genug da sind. Holz kommt von Panua. Pulakagruben in der Mitte des Motus und ein Fischgestell geben Nahrung.',
     n:() => Math.min(1, count('tochter', 'flecht')) + Math.min(1, count('tochter', 'schnur')), of:2, show:{island:'tochter', build:'flecht'}, unlock:[], gift:{holz:2}, giftTo:'tochter'},
   {id:'tausch', t:'Eine Handelskette', d:'Bring 3 Matten und 3 Schnüre nach Panua.', why:'Tippe auf die Schnur zwischen den Inseln. Setze ein Kanu in die Kette und stell ein, was es in jede Richtung mitnimmt. Dann fährt es von allein hin und her. Jede Fahrt knüpft einen Knoten.',
     n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube'], gift:{}},
@@ -121,6 +121,7 @@ function showQuest(){
   if (s.build) hintBuild(s.build);
 }
 function hintBuild(kind){
+  if (DECO.includes(kind) !== (buildTab === 'deco')){ buildTab = DECO.includes(kind) ? 'deco' : 'bau'; renderBuildBar(); }
   const b = $('buildList').querySelector(`[data-kind="${kind}"]`); if (!b) return;
   b.classList.remove('hint'); void b.offsetWidth; b.classList.add('hint');
   b.scrollIntoView({inline:'center', block:'nearest', behavior:reduced ? 'auto' : 'smooth'});

@@ -4,8 +4,8 @@
 const TICK = 2000, DAY = 3, AGE_FULL = 150, LOAD = 12, SAVE_KEY = 'polinusa-3';
 
 const GOODS = ['nahrung','fisch','meeres','holz','proviant','toepfe','beile','klingen','matten','schnur','tapa','schweine','kava','schmuck'];
-const GN = {nahrung:'Grundnahrung', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Töpfe', beile:'Steinbeile', klingen:'Klingen', matten:'Matten', schnur:'Schnur', tapa:'Tapa', schweine:'Schweine', kava:'Kava', schmuck:'Muschelschmuck'};
-const G1 = {nahrung:'Grundnahrung', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Topf', beile:'Steinbeil', klingen:'Klinge', matten:'Matte', schnur:'Schnur', tapa:'Tapa', schweine:'Schwein', kava:'Kava', schmuck:'Muschelring'};
+const GN = {essen:'Nahrung', nahrung:'Feldfrüchte', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Töpfe', beile:'Steinbeile', klingen:'Klingen', matten:'Matten', schnur:'Schnur', tapa:'Tapa', schweine:'Schweine', kava:'Kava', schmuck:'Muschelschmuck'};
+const G1 = {essen:'Nahrung', nahrung:'Feldfrucht', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Topf', beile:'Steinbeil', klingen:'Klinge', matten:'Matte', schnur:'Schnur', tapa:'Tapa', schweine:'Schwein', kava:'Kava', schmuck:'Muschelring'};
 
 /* Places on the map where raw material lies. Workshops that need one must stand close by. */
 const DEPOSITS = {
@@ -21,12 +21,11 @@ const KINDS = {
   faeller:{n:'Holzfäller', s:'Holz', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, prod:'holz', every:2, trees:{r:80}, boost:{k:'beile', per:20, slow:1.5}, roof:true, info:'Fällt Bäume in der Nähe und bringt das Holz ins Lager. Mit Steinbeilen geht es schneller, ein Beil hält für 20 Holz. Ein gefällter Baum wächst nur langsam nach.', vb:'-18 -17 36 21'},
   pflanzer:{n:'Baumpflanzer', s:'Pflanzer', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, every:4, plants:{r:70}, roof:true, info:'Setzt junge Bäume auf Baumstümpfe und an den Waldrand in der Nähe. Wo Bäume stehen, kann nichts gebaut werden.', vb:'-18 -17 36 21'},
   haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], bt:12, cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'Ein Zuhause für 4 Menschen, im Häuptlingsdorf für 6.', vb:'-17 -29 34 33'},
-  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist die wichtigste Grundnahrung der hohen Inseln.', vb:'-13 -11 26 22'},
-  pulaka:{n:'Pulakagrube', s:'Pulaka', on:['atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'nahrung', every:3, inland:9, info:'Eine tiefe Grube bis hinab zum Süßwasser im Sand. Darin wächst Sumpftaro, die Grundnahrung der Atolle. Braucht Platz in der Mitte eines Motus.', vb:'-12 -10 24 16'},
-  fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:1, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:3, canoe:30, boost:{k:'schnur', per:8, slow:2}, coast:true, info:'Fischer fahren mit Speer und Angel in die Lagune, hier trocknet der Fang. Mit Netzen aus Schnur fangen sie doppelt so viel, ein Netz hält für 8 Fische. Steht am Strand.', vb:'-12 -14 26 18'},
+  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist das wichtigste Essen der hohen Inseln.', vb:'-13 -11 26 22'},
+  pulaka:{n:'Pulakagrube', s:'Pulaka', on:['atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'nahrung', every:3, inland:9, info:'Eine tiefe Grube bis hinab zum Süßwasser im Sand. Darin wächst Sumpftaro, die das wichtigste Essen der Atolle. Braucht Platz in der Mitte eines Motus.', vb:'-12 -10 24 16'},
+  fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:2, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:1.2, trip:true, canoe:30, boost:{k:'schnur', per:8, slow:2}, coast:true, info:'Die Fischer paddeln im Einbaum hinaus, werfen Netze und Leinen mit Haken aus Muschel und hängen den Fang hier zum Trocknen auf. Mit Netzen aus Schnur fangen sie doppelt so viel, ein Netz hält für 8 Fische. Steht am Strand.', vb:'-12 -14 26 18'},
   riff:{n:'Riffsammler', s:'Riff', on:['hoch','atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:6, prod:'meeres', every:4, coast:true, roof:true, info:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Steht am Strand.', vb:'-17 -17 34 21'},
-  reuse:{n:'Steinreuse', s:'Reuse', on:['hoch','atoll'], bt:10, cost:{holz:1, beile:1}, r:13, hy:2, prod:'fisch', every:5, water:true, info:'Ein Pfeil aus aufgeschichteten Steinen in der Lagune. Mit der Flut schwimmen Fische hinein und finden nicht mehr heraus. Ein Einbaum vom Kanusteg holt sie.', vb:'-16 -9 32 18'},
-  steg:{n:'Kanusteg', s:'Steg', on:['hoch','atoll'], bt:8, cost:{holz:3}, r:9, hy:3, coast:true, serves:4, canoe:30, info:'Ein Steg mit Einbaum. Er bringt Leute zu bis zu 4 Pfahlhäusern, Reusen oder Arbeitsplätzen auf einem anderen Motu.', vb:'-6 -9 36 16'},
+  steg:{n:'Kanusteg', s:'Steg', on:['hoch','atoll'], bt:8, cost:{holz:3}, r:9, hy:3, coast:true, serves:4, canoe:30, info:'Ein Steg mit Einbaum. Er bringt Leute zu bis zu 4 Pfahlhäusern oder Arbeitsplätzen auf einem anderen Motu.', vb:'-6 -9 36 16'},
   toepfer:{n:'Töpferei', s:'Töpfe', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'toepfe', every:8, use:{holz:1}, dep:'ton', depR:60, roof:true, info:'Formt Töpfe aus Ton und brennt sie mit Holz. Muss nah am Ton stehen.', vb:'-16 -17 34 21'},
   beil:{n:'Beilwerkstatt', s:'Beile', on:['hoch'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'beile', every:8, dep:'basalt', depR:60, roof:true, info:'Schleift Steinbeile aus Basalt. Muss nah am Felsen stehen.', vb:'-18 -17 36 21'},
   klingen:{n:'Klingenschläger', s:'Klingen', on:['hoch'], crew:2, bt:14, cost:{holz:3}, r:11, hy:6, prod:'klingen', every:10, dep:'obsidian', depR:60, roof:true, info:'Schlägt scharfe Klingen aus Obsidian. Nur am Vulkan.', vb:'-18 -17 36 21'},
@@ -54,27 +53,27 @@ const KINDS = {
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:10, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Sie ruft das Dorf und gibt beim Tanz den Takt.', vb:'-13 -10 26 14'},
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:14, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Ein Platz aus festgestampfter Erde, mit Steinen eingefasst. Hier wird zur Trommel getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','reuse','toepfer','beil','flecht','schnur','gaergrube','werft','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','palme','baum','pandanus','hibiskus','blumen','weg','fackel','pfosten','trommel','tanzplatz'];
+const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','toepfer','beil','flecht','schnur','gaergrube','werft','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
+const DECO = ['hibiskus', 'blumen', 'weg', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
 const SHIPS = {
-  oc:{n:'Auslegerkanu', cost:{holz:4, beile:1}, bt:75, cap:12, people:4, speed:32, vision:150, fog:false, crew:2, crewN:'Paddler'},
-  dc:{n:'Doppelkanu', cost:{holz:6, beile:2, matten:3, schnur:3}, bt:150, cap:24, people:8, speed:40, vision:230, fog:true, crew:4, crewN:'Seefahrer'}
+  oc:{n:'Auslegerkanu', cost:{holz:4, beile:1}, bt:75, cap:12, people:4, speed:20, vision:150, fog:false, crew:2, crewN:'Paddler'},
+  dc:{n:'Doppelkanu', cost:{holz:6, beile:2, matten:3, schnur:3}, bt:150, cap:24, people:8, speed:25, vision:230, fog:true, crew:4, crewN:'Seefahrer'}
 };
 const SITE_CREW = 2, YARD_CREW = 3;   // people at each building site and at a canoe being built
 const STUMP_TICKS = 240, GROW_TICKS = 90;   // a stump sprouts again after eight minutes by itself, a young tree needs three to grow
 const CANOE = SHIPS.dc.cost;
 const SETTLE = {people:4, keep:4};   // a new village needs at least 4 settlers, and 4 must stay behind
-const VOYAGE_DAY = 3, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 provision every 3 ticks; each colony after the first two needs 8 more standing
+const VOYAGE_DAY = 5, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 provision every 5 ticks; each colony after the first two needs 8 more standing
 
-/* What people use up, per resident and minute. A meal is a staple and something from the sea with it, as in Fiji (kakana and i coi)
-   or Tonga (me'akai and kiki): staple from the start, fish from 10 people. A village (from 20) wants pots, from 25 seafood, from 30 mats;
-   a chief's village (level 3) also bark cloth, pigs and shell valuables. Pots come from high islands, mats from atolls. */
+/* What people use up, per resident and minute. Food is food: taro, breadfruit and pulaka from the fields, fish and seafood
+   all count, and people eat what there is most of. A village (from 20) wants pots, from 30 mats; a chief's village
+   (level 3) also bark cloth, pigs and shell valuables. Pots come from high islands, mats from atolls. */
+const FOODS = ['nahrung', 'fisch', 'meeres'];
 const NEEDS = [
-  {k:'nahrung', lvl:1, from:0, rate:1, hint:{hoch:'Lege Tarofelder an oder pflanze Brotfruchtbäume.', atoll:'Baue Pulakagruben in der Mitte eines Motus.'}},
-  {k:'fisch', lvl:1, from:10, rate:.3, hint:{hoch:'Baue ein Fischgestell am Strand oder eine Steinreuse in der Lagune. Schnur für Netze verdoppelt den Fang.', atoll:'Baue ein Fischgestell am Strand oder eine Steinreuse in der Lagune. Schnur für Netze verdoppelt den Fang.'}},
+  {k:'essen', lvl:1, from:0, rate:1.2, hint:{hoch:'Lege Tarofelder an, pflanze Brotfruchtbäume, baue Fischgestelle und Riffsammler am Strand.', atoll:'Baue Pulakagruben in der Mitte eines Motus, Fischgestelle und Riffsammler am Strand.'}},
   {k:'toepfe', lvl:2, from:20, rate:.07, hint:{hoch:'Baue eine Töpferei am Ton.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
-  {k:'meeres', lvl:2, from:25, rate:.15, hint:{hoch:'Baue einen Riffsammler am Strand.', atoll:'Baue einen Riffsammler am Strand.'}},
   {k:'matten', lvl:2, from:30, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Baue eine Flechthütte bei den Pandanus.'}},
   {k:'tapa', lvl:3, from:40, rate:.06, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln. Schick es mit einem Kanu her.'}},
   {k:'schweine', lvl:3, from:40, rate:.04, hint:{hoch:'Baue einen Schweinepferch.', atoll:'Schweine kommen von hohen Inseln. Schick sie mit einem Kanu her.'}},

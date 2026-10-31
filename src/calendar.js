@@ -16,7 +16,7 @@ const minutes = ticks => Math.max(1, Math.round(ticks * TICK / 60000));
 const SEASON_ICON = {plejaden:'ic-plejaden', sturm:'ic-sturm', passat:'ic-passat', mager:'ic-mager'};
 
 /* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night */
-const SEA_KINDS = new Set(['fisch', 'riff', 'reuse']);
+const SEA_KINDS = new Set(['fisch', 'riff']);
 function seasonalEvery(I, b, K){
   const dry = I.drought > tick && (b.kind === 'taro' || b.kind === 'pulaka' || b.kind === 'baum') ? 2 : 1;   // a drought halves what the fields give
   if (b.kind === 'baum'){ const m = seasonOf().baum; return m ? Math.round(K.every * dry / m) : 0; }

@@ -97,6 +97,7 @@ function serialize(){
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
       fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined,
+      wr:I._wg ? wearCode(I._wg) : I.wearSaved || undefined, rd:I.roads && I.roads.length ? I.roads.map(r => r.map(p => [Math.round(p.x), Math.round(p.y)])) : undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, pr:I.prio, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0])})),
     ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null}))});
 }
@@ -113,6 +114,7 @@ function restore(raw){
       if (I.clan && d.cl){ I.debt = d.cl.debt || 0; I.returnAt = d.cl.ra || 0; I.lastFrom = d.cl.lf || ''; }
       I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat, got]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {}), ...(boat ? {boat} : {}), ...(bt && got != null ? {got} : {})}));
       if (d.pr) I.prio = d.pr;
+      I.wearSaved = d.wr || null; I._wg = null; I._wp = null; I.roads = (d.rd || []).map(r => r.map(([x, y]) => ({x, y}))); I._rp = null;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
     for (const I of islands) if (I.clan && !I.buildings.length) seedClan(I, rng(seed ^ (I.center.x | 0)));
     routes = (s.routes || []).filter(r => isl(r.a) && isl(r.b)).map(r => ({a:r.a, b:r.b, knots:r.knots | 0, lastGift:r.lg || 0, plan:r.plan || {a:{}, b:{}}}));

@@ -31,7 +31,17 @@ function measure(){
 const zMin = () => clamp(Math.min(vw / (W * 1.05), vh / (H * .9)), .1, .4), zMax = 4.5;
 const clampZ = z => clamp(z, zMin(), zMax);
 function clampCam(){ cam.x = clamp(cam.x, 0, W); cam.y = clamp(cam.y, 0, H); }
-function applyCam(){ lod = cam.z < .55 ? 'far' : cam.z < 1.3 ? 'mid' : 'near'; lastCamMove = performance.now(); needDraw = true; }
+function applyCam(){ lod = cam.z < .55 ? 'far' : cam.z < 1.3 ? 'mid' : 'near'; lastCamMove = performance.now(); needDraw = true; followView(); }
+/* Close up, the island you look at is the one you build on: zoom in, build, zoom out, zoom in on the next */
+function followView(){
+  if (lod === 'far' || placing || !islands.length) return;
+  const p = {x:cam.x, y:cam.y + (topH - botH) / 2 / cam.z}; let best = null, bd = Infinity;
+  for (const I of islands){
+    const b = I.box; if (!I.settled || p.x < b.x0 - 30 || p.x > b.x1 + 30 || p.y < b.y0 - 30 || p.y > b.y1 + 30) continue;
+    const d = Math.hypot(p.x - I.center.x, p.y - I.center.y); if (d < bd){ bd = d; best = I; }
+  }
+  if (best && best.id !== active){ setActive(best.id); updateHUD(); }
+}
 function camXform(c){ const k = cam.z * DPR; c.setTransform(k, 0, 0, k, (vw / 2 - cam.x * cam.z) * DPR, (vh / 2 - cam.y * cam.z) * DPR); }
 function view(m = 0){ const w = vw / cam.z / 2, h = vh / cam.z / 2; return {x0:cam.x - w - m, y0:cam.y - h - m, x1:cam.x + w + m, y1:cam.y + h + m}; }
 const boxIn = (b, v) => b.x1 >= v.x0 && b.x0 <= v.x1 && b.y1 >= v.y0 && b.y0 <= v.y1;
@@ -100,12 +110,12 @@ function drawBuilding(c, b, I, alpha = 1){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, boat}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, boat, dry:b.kind === 'fisch' && !!I}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
+  const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
   if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
   drawStakes(c, b, K, f, alpha, I);
   if (f > .15) putRising(c, b.x, b.y, sc, t.m, t.rot, key, art, (f - .15) / .85, alpha);
@@ -244,23 +254,29 @@ function ribbon(pts, w){
   return P;
 }
 /* Worn footpaths from every house to the meeting house, and from each workplace to the nearest house */
-function drawPaths(c, I){
-  const key = I.buildings.map(b => b.bt ? 0 : b.x + b.y).join();
-  if (!I._fp || I._fp.key !== key){
-    const p = new Path2D(), on = I.buildings.filter(b => !b.bt && !KINDS[b.kind].water && !KINDS[b.kind].plant && !KINDS[b.kind].path && b.kind !== 'tanzplatz'), hall = on.find(b => b.kind === 'halle');
-    const houses = on.filter(b => b.kind === 'haus'), link = (a, b) => {
-      const L = landOf(I, a); if (L !== landOf(I, b) || L < 0) return;
-      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy); if (len < 14 || len > 170) return;
-      const bend = ((a.id * 7 + b.id) % 9 - 4) * .05 * len, cx = (a.x + b.x) / 2 - dy / len * bend, cy = (a.y + b.y) / 2 + 4 + dx / len * bend;
-      for (let i = 1; i < 6; i++){ const f = i / 6, u = 1 - f, q = {x:u * u * a.x + 2 * u * f * cx + f * f * b.x, y:u * u * (a.y + 4) + 2 * u * f * cy + f * f * (b.y + 4)}; if (landOf(I, q) !== L || (I.river && polyDist(q, I.river, false) < 3)) return; }
-      p.moveTo(a.x, a.y + 4); p.quadraticCurveTo(cx, cy, b.x, b.y + 4);
-    };
-    const nearest = (b, list) => list.filter(q => q !== b && landOf(I, q) === landOf(I, b)).reduce((m, q) => !m || Math.hypot(q.x - b.x, q.y - b.y) < Math.hypot(m.x - b.x, m.y - b.y) ? q : m, null);
-    for (const h of houses){ const t = hall && landOf(I, hall) === landOf(I, h) ? hall : nearest(h, houses); if (t) link(h, t); }
-    for (const b of on){ if (b.kind === 'haus' || b.kind === 'halle') continue; const t = nearest(b, houses.length ? houses : on); if (t) link(b, t); }
-    I._fp = {key, p};
+/* Footpaths: bare ground where people walk often (see stepWear), soft at the edges and lighter where most feet go */
+function drawWear(c, I){
+  const g = I._wg; if (!g) return;
+  if (!I._wp){
+    const P = [new Path2D(), new Path2D(), new Path2D()], R = [4.8, 3.6, 2.4];
+    for (let i = 0; i < g.lv.length; i++){
+      const l = g.lv[i]; if (!l) continue;
+      const h = Math.imul(i + 1, 2654435761) >>> 0, x = g.x0 + (i % g.w + .5) * WEAR_CELL + ((h & 15) / 15 - .5) * 2.6, y = g.y0 + (Math.floor(i / g.w) + .5) * WEAR_CELL + (((h >> 4) & 15) / 15 - .5) * 2.6;
+      if (!landAt(I, {x, y}) || (I.river && polyDist({x, y}, I.river, false) < 3)) continue;
+      for (let k = 0; k < l; k++){ const r = R[k] * (.82 + ((h >> (8 + k * 3)) & 7) / 22); P[k].moveTo(x + r, y); P[k].ellipse(x, y, r, r * .78, ((h >> 20) & 7) / 7, 0, TAU); }
+    }
+    I._wp = P;
   }
-  stroke(c, I._fp.p, '#B89A62', 3.6, null, 'round', .4); stroke(c, I._fp.p, '#D9C48C', 1.6, null, 'round', .5);
+  const [a, b, d] = I._wp;
+  c.fillStyle = '#9C7E4E'; c.globalAlpha = .2; c.fill(a); c.fillStyle = '#B89A62'; c.globalAlpha = .26; c.fill(b); c.fillStyle = '#D9C48E'; c.globalAlpha = .32; c.fill(d); c.globalAlpha = 1;
+}
+/* Laid paths: crushed shell and coral sand between darker edges, rounded through the points you set */
+const roadCurve = r => r.length > 2 ? spline([r[0], ...r, r[r.length - 1]], 6) : r;
+function drawRoads(c, I){
+  if (!I.roads || !I.roads.length) return;
+  if (!I._rp){ const p = new Path2D(); for (const r of I.roads){ if (r.length < 2) continue; const sm = roadCurve(r); p.moveTo(sm[0].x, sm[0].y); for (const q of sm) p.lineTo(q.x, q.y); } I._rp = p; }
+  stroke(c, I._rp, '#7E6440', 7.4, null, 'round', .38); stroke(c, I._rp, '#E6DABA', 5.4, null, 'round', .95);
+  stroke(c, I._rp, '#BFA67A', 1.3, [.1, 2.7], 'round', .75); stroke(c, I._rp, '#FFFBF0', 1.2, [.1, 3.9], 'round', .9);
 }
 /* The forest floor under the trees close up, one green mass far away. Cached until a tree changes. */
 function treePaths(I){
@@ -327,7 +343,7 @@ function seaRect(c, v, color, pat, from){
 function drawBase(c, v){
   seaRect(c, v, '#2F5F73', 'pSea', .3);   // waves fade out far away, where they would only flicker
   for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I, v);
-  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)) drawPaths(c, I);
+  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); drawRoads(c, I); }
   drawSel(c); drawCords(c); drawObjects(c, v);
 }
 
@@ -422,18 +438,25 @@ function drawLagoonLife(c, v, now){
     if ((I.center.x | 0) % 2 === 0){ const q = alongLoop(lp, -t * 2.6 + lp.len / 4); put(c, q.x + Math.sin(q.a) * 6, q.y - Math.cos(q.a) * 6, 1, 1, q.a + Math.PI, 'turtle', '<use href="#turtle"/>'); }
   }
 }
-/* Fishers paddle about off their drying racks and cast a net now and then; reef gatherers wade in the shallows */
+/* The catch hangs on the racks, as much as the fishers have brought in lately. On your islands the fishers themselves
+   paddle out (see drawPeople); the clans' fishers paddle about off their racks and their reef gatherers wade. */
+const RACK_FISH = [[-5, -3.8, 1], [-2, -3.8, 1], [1, -3.8, 1], [4, -3.8, 1], [5.5, .34, .7], [7.6, .34, .7], [9.7, .34, .7]];
+const rackFish = n => '<g fill="#9FB7C0" stroke="#2B1D14" stroke-width=".4">' + RACK_FISH.slice(0, n).map(([x, y, k]) => `<path d="M${x} ${y - 2.1 * k}V${y - 1.6 * k}" stroke-width=".3"/><ellipse cx="${x}" cy="${y}" rx="${.9 * k}" ry="${1.9 * k}"/><path d="M${x - .7 * k} ${y + 2.5 * k}L${x} ${y + 1.7 * k}L${x + .7 * k} ${y + 2.5 * k}Z"/>`).join('') + '</g>';
 function drawFishers(c, v, now){
   for (const I of islands){
-    if (!lived(I) || !boxIn(I.box, v) || I.rahui) continue;
-    // on your islands a canoe is out only while its fisher is, and the reef gatherers are the people themselves
-    const out = I.settled ? new Set(walkers.filter(w => w.sea && w.isl === I.id).map(w => w.job.b)) : null;
+    if (!lived(I) || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
-      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || b.boat > 0 || (out && (b.kind === 'riff' || !out.has(b))) || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if (b.kind === 'fisch'){
+        const n = I.settled ? b.hung || 0 : 4, t = xformOf(b.kind, b.v || {}); if (n) put(c, b.x, b.y, t.s, t.m, t.rot, 'rackfish|' + n, rackFish(n));
+        // the dugout lies on the beach while nobody is out in it
+        if (I.settled && !(b.boat > 0) && !walkers.some(w => w.boat && w.job && w.job.b === b)) put(c, b.x, b.y, t.s, t.m, t.rot, 'fishbeach', '<use href="#beached" transform="translate(-9 6) scale(.75)"/>');
+      }
+      if (I.settled || b.boat > 0 || I.rahui) continue;
       const w = waterNear(I, b), dx = w.x - b.x, dy = w.y - b.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, t = reduced ? 0 : now / 1000 + b.id * 3.1;
       if (b.kind === 'fisch'){
         let C = {x:w.x + ux * 12, y:w.y + uy * 12}; if (landAt(I, C)) C = w;
-        const a = t / 7, x = C.x + Math.cos(a) * 9, y = C.y + Math.sin(a) * 4, left = -Math.sin(a) < 0;
+        const a = t / 11, x = C.x + Math.cos(a) * 9, y = C.y + Math.sin(a) * 4, left = -Math.sin(a) < 0;
         put(c, x, y, 1, left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>');
         const n = ((now + b.id * 1300) % 9000) / 1400;
         if (!reduced && n < 1){ const nx = x + (left ? -6 : 6), r = 2 + n * 7; stroke(c, loopPath(nx, y + 1, r, r * .55, b.id, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
@@ -445,6 +468,18 @@ function drawFishers(c, v, now){
       }
     }
   }
+}
+/* Someone in a dugout: the canoe goes in a gentle curve rather than a straight line, rocks a little, and a fisher
+   casts the net now and then */
+function drawBoatFig(c, w, now){
+  if (w.sx == null){ w.sx = w.x; w.sy = w.y; }
+  const d = Math.hypot(w.tx - w.sx, w.ty - w.sy) || 1, f = clamp(1 - Math.hypot(w.tx - w.x, w.ty - w.y) / d, 0, 1), bend = (w.look.charCodeAt(1) % 2 ? 1 : -1) * Math.min(14, d * .16) * Math.sin(f * Math.PI);
+  const nx = -(w.ty - w.sy) / d, ny = (w.tx - w.sx) / d, x = w.x + nx * bend, y = w.y + ny * bend, rock = reduced ? 0 : Math.sin(now / 700 + w.phase) * .05;
+  put(c, x, y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3), 1, w.left ? -1 : 1, rock, 'einbaum', '<use href="#einbaum"/>');
+  if (!w.fishing || reduced) return;
+  const n = ((now - w.fishing) % 3600) / 1200; if (n > 1) return;
+  const ox = x + (w.left ? -6 : 6), r = 2 + n * 7;
+  stroke(c, loopPath(ox, y + 1, r, r * .55, w.x | 0, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7);
 }
 const WADE = ellipse(0, .3, 3, 1.3);
 const glint = (x, y, r) => { const p = new Path2D(); p.moveTo(x - r, y); p.lineTo(x + r, y); p.moveTo(x, y - r * .7); p.lineTo(x, y + r * .7); return p; };
@@ -555,19 +590,21 @@ function drawDugouts(c, v, now){
     lg.jetties.forEach((j, n) => {
       const A = waterNear(I, j), goals = served.slice(n * KINDS.steg.serves, (n + 1) * KINDS.steg.serves).map(b => waterNear(I, b)).filter(B => !overLand(A, B, 1));
       if (!goals.length){ put(c, A.x, A.y, 1, 1, 0, 'einbaum', '<use href="#einbaum"/>'); return; }
-      const legs = goals.map(B => ({B, d:Math.hypot(B.x - A.x, B.y - A.y)})), per = l => l.d / 18 * 2000 + 2600, cyc = legs.reduce((t, l) => t + per(l), 0);
+      // each crossing swings out in a bow, as far as the water allows
+      const legs = goals.map((B, i) => { const d = Math.hypot(B.x - A.x, B.y - A.y), nx = -(B.y - A.y) / (d || 1), ny = (B.x - A.x) / (d || 1); let k = Math.min(14, d * .2) * ((j.id + i) % 2 ? 1 : -1); if (landAt(I, {x:(A.x + B.x) / 2 + nx * k, y:(A.y + B.y) / 2 + ny * k})) k = 0; return {B, d, nx, ny, k}; });
+      const SPEED = 11, per = l => l.d / SPEED * 2000 + 2600, cyc = legs.reduce((t, l) => t + per(l), 0);
       let t = reduced ? 0 : (now + j.id * 977) % cyc, l = legs[0];
       for (const q of legs){ if (t < per(q)){ l = q; break; } t -= per(q); }
       // out, a pause there, back, a pause at the jetty
-      const go = l.d / 18 * 1000, f = t < go ? t / go : t < go + 1300 ? 1 : t < 2 * go + 1300 ? 1 - (t - go - 1300) / go : 0;
-      const x = A.x + (l.B.x - A.x) * f, y = A.y + (l.B.y - A.y) * f, left = (t < go + 1300) === (l.B.x < A.x);
-      put(c, x, y, 1, left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>');
+      const go = l.d / SPEED * 1000, f = t < go ? t / go : t < go + 1300 ? 1 : t < 2 * go + 1300 ? 1 - (t - go - 1300) / go : 0, bow = l.k * Math.sin(f * Math.PI);
+      const x = A.x + (l.B.x - A.x) * f + l.nx * bow, y = A.y + (l.B.y - A.y) * f + l.ny * bow, left = (t < go + 1300) === (l.B.x < A.x);
+      put(c, x, y, 1, left ? -1 : 1, reduced ? 0 : Math.sin(now / 760 + j.id) * .05, 'einbaum', '<use href="#einbaum"/>');
     });
   }
 }
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v, now){
-  const vis = [...walkers, ...critters].filter(w => !w.sea && ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
+  const vis = [...walkers, ...critters].filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
   // buildings standing in front of someone are drawn again over them, so people can walk behind a house
   for (const w of vis){
     const I = isl(w.isl);
@@ -584,21 +621,67 @@ function drawPeople(c, v, now){
     if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
     if (w.st != null){ drawTree(c, w); continue; }
     // across the lagoon they paddle a dugout
-    if (w.paddle && w.moving){ put(c, w.x, w.y, 1, w.left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>'); continue; }
+    if (w.boat || (w.paddle && !landAt(isl(w.isl), w))){ drawBoatFig(c, w, now); continue; }
     const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
     c.save(); c.translate(w.x, w.y + bob); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
     // someone sitting on a mat in front of a house; children are smaller
-    if (w.sit && !w.moving){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
+    if (w.sit && (!w.moving || w.busy)){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
     if (w.child) c.scale(.7, .7);
     if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
     blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
-    const tool = w.old ? 'stab' : !w.carry && w.job && w.job.tool;
-    if (tool) blit(c, 'tool|' + tool, TOOLS[tool]);
+    const tool = w.old ? 'stab' : !w.carry && w.job && w.job.tool, at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3;
+    // at work the adze and the digging stick swing
+    if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? Math.sin(now / 95 + w.phase) * .38 : 0; if (sw){ c.save(); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
+    if (at && w.fx) workFx(c, w, now);
     if (w.carry && !LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
     if (w.busy && w.job && w.job.type === 'wade'){ c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); }
     // who works at the selected place, or the one you tapped: a small mark over the head
     if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
     c.restore();
+  }
+}
+/* What each kind of work looks like, small and in front of the worker, who faces right here */
+const SWING = new Set(['dig', 'chop', 'build', 'carve']);
+function workFx(c, w, now){
+  const t = reduced ? .35 : now / 1000 + (w.x % 7), f = (t * 1.3) % 1;
+  const dot = (x, y, r, col, a = 1) => { c.globalAlpha = a; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.globalAlpha = 1; };
+  const line = (x0, y0, x1, y1, col, lw) => { c.strokeStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.setLineDash([]); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); };
+  const blob = (x, y, rx, ry, col, ink = '#2B1D14') => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); c.strokeStyle = ink; c.lineWidth = .35; c.stroke(); };
+  const arcFly = (x0, y0, dx, h, col, r = .5) => { if (f < .7){ const g = f / .7; dot(x0 + dx * g, y0 - Math.sin(g * Math.PI) * h, r, col, 1 - g * .5); } };
+  switch (w.fx){
+    case 'dig': arcFly(4, -.3, 4, 3, '#6B4A2E', .6); break;                            // a clod of earth hops off the digging stick
+    case 'chop': arcFly(5, -4, 4, 3, '#D9B27A'); arcFly(4.6, -3.4, 2.6, 4.4, '#C99A62', .4); break;   // chips fly from the trunk
+    case 'build': if (f < .35) dot(4 + f * 4, -.8 - f * 3, .5, '#B89A62', 1 - f * 2); break;      // dust where the adze strikes
+    case 'carve': if (f < .6){ c.strokeStyle = '#E0B97E'; c.lineWidth = .45; c.beginPath(); c.arc(4 + f * 4, -1.2 - f * 2.4, .7, 0, Math.PI * 1.4); c.stroke(); } break;   // curled shavings
+    case 'plant': arcFly(3.5, -.4, 2.4, 1.6, '#6B4A2E', .45); break;
+    case 'scoop': if (f < .5) dot(3 + f * 3, -1.6 - Math.sin(f * 2 * Math.PI) * 2, .45, '#F4ECD8'); break;
+    case 'hang': blob(3.6, -5 + Math.sin(t * 6) * .3, .6, 1.3, '#9FB7C0'); break;
+    case 'pot': {   // a pot grows coil by coil under the hands
+      blob(4.4, -1.1, 1.8, 1.3, '#B5774A'); line(2.9, -2.2, 5.9, -2.2, '#2B1D14', .45);
+      const a = t * 4; line(4.4 + Math.cos(a) * 1.5, -1.6 + Math.sin(a) * .4, 4.4 + Math.cos(a) * 1.5, -.6 + Math.sin(a) * .4, '#E3B08A', .5); break; }
+    case 'grind': {   // an adze blade rubbed on a slab of sandstone
+      blob(4.6, -.2, 2.6, .8, '#A7A49C'); const x = 4.6 + Math.sin(t * 7) * 1.1; blob(x, -.9, 1.1, .55, '#5C6066');
+      if (f < .4) dot(6.6 + f * 3, -.5 - f * 2, .35, '#C8C4BA', 1 - f * 2); break; }
+    case 'knap': {   // obsidian struck with a hammer stone, flakes spring off
+      c.fillStyle = '#1C1719'; c.beginPath(); c.moveTo(3.4, -.2); c.lineTo(4.3, -2); c.lineTo(5.4, -.3); c.closePath(); c.fill();
+      const g = (t * 1.8) % 1; if (g < .4){ dot(4.6 + g * 6, -1.6 - g * 4, .35, '#1C1719'); dot(4.4 + g * 4, -2 - g * 6, .25, '#F4ECD8'); } break; }
+    case 'weave': {   // a mat on the lap, the next strip goes over and under
+      c.fillStyle = '#DCC48C'; c.fillRect(2.4, -1.4, 5, 1.8); c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.strokeRect(2.4, -1.4, 5, 1.8);
+      for (let x = 3.2; x < 7.4; x += 1) line(x, -1.4, x, .4, '#BFA169', .3);
+      const x = 2.6 + ((t * .9) % 1) * 4.6; line(x, -1.6, x, .6, '#8C6440', .55); break; }
+    case 'cord': {   // coconut fibre rolled on the thigh into cord
+      const a = t * 5; blob(3.6, -2.4, 1, 1, '#B08048'); line(3.6, -2.4, 3.6 + Math.cos(a) * .9, -2.4 + Math.sin(a) * .9, '#6B4428', .35);
+      c.strokeStyle = '#8C6440'; c.lineWidth = .4; c.beginPath(); c.moveTo(4.4, -2); c.quadraticCurveTo(6.2, -1.6 + Math.sin(t * 3) * .6, 6.8, .2); c.stroke(); break; }
+    case 'beat': case 'pound': {   // bark beaten thin on a log, or kava root pounded with a stone
+      const up = Math.abs(Math.sin(t * 5.5)), tip = {x:4.8, y:-1.2 - up * 3.2};
+      c.fillStyle = '#8C5C36'; c.fillRect(3, -.9, 4, 1.1); if (w.fx === 'beat'){ c.fillStyle = '#E9DCC0'; c.fillRect(3.2, -1.2, 3.4, .5); }
+      line(1.6, -4.6, tip.x, tip.y, '#2B1D14', .7); blob(tip.x + .2, tip.y, w.fx === 'beat' ? 1 : .8, .55, w.fx === 'beat' ? '#7A5434' : '#8A8A86');
+      if (up < .2){ line(3.4, -2.6, 2.9, -3.3, '#2B1D14', .3); line(6.2, -2.6, 6.7, -3.3, '#2B1D14', .3); } break; }
+    case 'drill': {   // a shell ring bored with a bow drill and an obsidian point
+      blob(4.4, -.4, 1.4, .55, '#F3D9A0'); line(4.4, -.6, 4.4, -4, '#7A5434', .45);
+      const s = Math.sin(t * 9) * 1.4; line(2.4 + s, -3.1, 6.4 + s, -3.1, '#2B1D14', .4); break; }
+    case 'feed': { const g = (t * 1.1) % 1; if (g < .6){ const q = g / .6; dot(3.4 + q * 2.4, -4 + q * q * 4, .55, '#5E8A3A'); } break; }   // taro thrown to the pigs
+    case 'leaf': { const h = .5 + Math.abs(Math.sin(t * 2)) * .9; blob(4.4, -.5, 2.8, h, '#5E8A3A'); line(1.8, -.5, 7, -.5, '#B9D08A', .3); break; }   // banana leaves laid over the pit
   }
 }
 const MARK = new Path2D('M-2.3-18.2Q0-18.8 2.4-18.1L.2-14.6Q-.4-15.6-2.3-18.2Z');
@@ -670,6 +753,7 @@ function drawNeeds(c, v, now){
   }
 }
 function drawGhost(c){
+  if (placing.road){ drawRoadGhost(c); return; }
   const K = KINDS[placing.kind], r = K.r + 5, e = loopPath(placing.x, placing.y + 1, r, r * .45, 7, .06, 13), ok = placing.ok, I = isl(placing.island);
   // while placing, rings show where the deposit is and how far the workshop reaches for its plants
   // how far a workshop reaches: a ring of dots laid on the ground by hand
@@ -679,6 +763,13 @@ function drawGhost(c){
   c.fillStyle = ok ? 'rgba(62,122,58,.25)' : 'rgba(168,74,44,.25)'; c.fill(e);
   sketch(c, placing.x, placing.y + 1, r, r * .45, 7, ok ? '#3E7A3A' : '#A84A2C', 2.2);
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
+}
+/* While laying a path: the points so far, the way between them, and a ring round the last one (tap it to take it back) */
+function drawRoadGhost(c){
+  const pts = placing.pts; if (!pts.length) return;
+  if (pts.length > 1){ const p = new Path2D(), sm = roadCurve(pts); p.moveTo(sm[0].x, sm[0].y); for (const q of sm) p.lineTo(q.x, q.y); stroke(c, p, '#3E2416', 6.4, null, 'round', .35); stroke(c, p, '#F4ECD8', 4.4, [5, 3], 'round', .95); }
+  for (const q of pts){ c.fillStyle = '#F4ECD8'; c.fill(ellipse(q.x, q.y, 2.4, 2)); stroke(c, ellipse(q.x, q.y, 2.4, 2), '#3E2416', .9); }
+  const l = pts[pts.length - 1]; sketch(c, l.x, l.y, 7, 5, pts.length * 7, '#F4ECD8', 1.8);
 }
 function drawTop(c, now){
   const v = view(120), far = lod === 'far', ks = far ? clamp(.6 / cam.z, 1, 2.4) : 1;
@@ -701,7 +792,7 @@ function drawTop(c, now){
     }
     c.save(); c.translate(s.x, s.y); c.scale(ks, ks);
     if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; sketch(c, 0, 1, 16 + 3 * t, 8 + 1.5 * t, s.id * 5, '#F4ECD8', 2.2, .95); }
-    c.save();
+    c.save(); if (!reduced && !far) c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .05 : .025));
     if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
     else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
     c.restore();

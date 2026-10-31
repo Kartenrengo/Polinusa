@@ -40,6 +40,9 @@ function answerGifts(){
 
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
+/* How work looks at each place (drawn by workFx) and which of it is done sitting */
+const WORK_FX = {taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
+const SIT_FX = new Set(['pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
 const JOB_LOAD = {taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const landOfB = (I, b) => b._lk === b.x + b.y ? b._l : (b._lk = b.x + b.y, b._l = landOf(I, b));   // buildings stay put, so this is kept
@@ -57,10 +60,15 @@ function jobFor(I, b, i){
   if (b.kind === 'faeller'){ const t = b.cutAt && b.cutAt.st === 0 ? b.cutAt : treesNear(I, b.x, b.y, K.trees.r)[i]; return t ? job('chop', t.x + 4, t.y + 3, {load:'holz', tool:'toki'}) : job('wait', b.x + 5 * side, b.y + 6, {tool:'toki'}); }
   if (b.kind === 'pflanzer'){ const t = b.plantAt && b.plantAt.st === 2 ? b.plantAt : null; return job('plant', b.x, b.y + 4, {drop:t ? {x:t.x + 3, y:t.y + 2} : {x:b.x + 26, y:b.y + 8}, load:'setzling', tool:'ko'}); }
   if (b.kind === 'fisch') return job('fish', b.x + 3 * side, b.y + 4, {load:'fisch', tool:'speer'});
-  if (b.kind === 'riff'){ const w = waterNear(I, b); return job('wade', w.x + 3 * side, w.y, {load:'muschel'}); }
+  if (b.kind === 'riff'){ const w = wadeSpot(I, b); return job('wade', w.x + 2 * side, w.y, {load:'muschel'}); }
   return job('carry', b.x + side * 4 * i, b.y + 4, {load:JOB_LOAD[b.kind] || null, tool:catOf(b) === 'essen' ? 'ko' : null});
 }
 const yardSpot = b => ({x:b.x + 11, y:b.y + 12});
+/* Reef gatherers stay in the shallows, a few steps off the beach */
+function wadeSpot(I, b){
+  const w = waterNear(I, b), L = I.lands.reduce((m, q) => polyDist(w, q.poly) < polyDist(w, m.poly) ? q : m), s = nearestOn(L.poly, w), d = Math.hypot(w.x - s.x, w.y - s.y) || 1;
+  return {x:s.x + (w.x - s.x) / d * 5, y:s.y + (w.y - s.y) / d * 5};
+}
 const dugSpot = b => b.kind === 'steg' ? {x:b.x + 2, y:b.y + 7} : {x:b.x - 9, y:b.y + 7};
 /* A clan's village: its people carry from their workshops, about one figure for six people */
 function clanJobs(I){
@@ -86,7 +94,7 @@ const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) 
 const WORK_SHARE = .7, GROW_EVERY = 3;   // a new person moves in every third tick while there is room and nothing is missing
 const workers = I => Math.round(I.pop * WORK_SHARE);
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
-const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Grundnahrung'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
+const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Feldfrüchte'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
 const prioOf = I => I.prio && I.prio.length === PRIO.length ? I.prio : (I.prio = PRIO.map(q => q.id));
 const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' ? 'boot' : 'handwerk'; };
 const capOf = b => { const K = KINDS[b.kind], mc = b.v && b.v.mc; return mc == null ? K.crew || 0 : Math.min(K.crew || 0, mc); };
@@ -159,11 +167,11 @@ function spawnFig(I, homes, role, at){
   walkers.push(w); return w;
 }
 function setJob(I, w, j){
-  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, sea:false, paddle:false, wait:0});
+  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, boat:false, fishing:0, wait:0});
   if (initSync){ w.on = true; w.leg = 'work'; w.wait = Math.random() * 1500; return; }   // already at work
   w.on = false; w.leg = 'go'; goTo(I, w, j.x, j.y);
 }
-function freeFig(w){ Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, sea:false}); }
+function freeFig(w){ Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0}); }
 function syncWalkers(){
   for (const I of islands){
     const mine = walkers.filter(w => w.isl === I.id);
@@ -200,14 +208,14 @@ function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syn
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
   if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return 'hat gerade keine Arbeit';
-  const K = KINDS[j.b.kind], way = !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.sea ? 'auf See' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
+  const K = KINDS[j.b.kind], way = !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
 }
 function hitWalker(p){
   if (cam.z <= PEOPLE_Z) return null;
   let best = null, bd = Math.max(4, 12 / cam.z);
-  for (const w of walkers){ if (w.sea || !isl(w.isl).settled) continue; const d = Math.hypot(p.x - w.x, p.y - (w.y - 5)); if (d < bd){ bd = d; best = w; } }
+  for (const w of walkers){ if (!isl(w.isl).settled) continue; const d = Math.hypot(p.x - w.x, p.y - (w.y - 5)); if (d < bd){ bd = d; best = w; } }
   return best;
 }
 let markW = null, markUntil = 0;   // the person you tapped wears a small mark for a while
@@ -235,7 +243,7 @@ function stepCritters(dt){
     if (d < 1){
       const I = isl(a.isl), L = landOf(I, a.home); let p = null;
       // now and then a dog trots after someone
-      if (a.kind === 'dog' && Math.random() < .4){ const w = walkers.find(q => q.isl === a.isl && !q.sea && !q.paddle && Math.hypot(q.x - a.x, q.y - a.y) < 70); if (w) p = {x:w.x - 6, y:w.y + 2}; }
+      if (a.kind === 'dog' && Math.random() < .4){ const w = walkers.find(q => q.isl === a.isl && !q.boat && !q.paddle && Math.hypot(q.x - a.x, q.y - a.y) < 70); if (w) p = {x:w.x - 6, y:w.y + 2}; }
       for (let i = 0; !p && i < 6; i++){ const q = {x:a.home.x + (Math.random() - .5) * 2 * C.r, y:a.home.y + 7 + (Math.random() - .5) * C.r}; if (landOf(I, q) === L) p = q; }
       if (p && landOf(I, p) === L){ a.tx = p.x; a.ty = p.y; }
       a.wait = C.wait[0] + Math.random() * (C.wait[1] - C.wait[0]); continue;
@@ -243,16 +251,42 @@ function stepCritters(dt){
     const v = Math.min(d, dt * C.v); a.x += dx / d * v; a.y += dy / d * v; a.moving = true; a.left = dx < 0; a.phase += v * 1.6;
   }
 }
-/* Where to next; across the lagoon of an atoll they paddle a dugout */
+/* Where to next. Wherever the way leaves the land, across a lagoon or a bay, they paddle a dugout; a few steps into
+   the shallows at either end they wade. */
 function goTo(I, w, x, y, wait = 0){
-  w.tx = x; w.ty = y; w.wait = wait;
-  const a = landOf(I, w), b = landOf(I, {x, y}); w.paddle = !!I.atoll && a >= 0 && b >= 0 && a !== b;
+  w.tx = x; w.ty = y; w.wait = wait; w.sx = w.x; w.sy = w.y;
+  w.paddle = !w.boat && wetWay(I, w, {x, y});
+}
+function wetWay(I, a, b){
+  const d = Math.hypot(b.x - a.x, b.y - a.y); if (d < 24) return false;
+  for (let s = 10; s < d - 10; s += 6){ const f = s / d; if (!landAt(I, {x:a.x + (b.x - a.x) * f, y:a.y + (b.y - a.y) * f})) return true; }
+  return false;
+}
+/* Fishers: out past the shallows, where nothing but water lies between */
+function fishingSpot(I, L, b){
+  const a0 = Math.atan2(L.y - b.y, L.x - b.x);   // away from the beach
+  for (let i = 0; i < 10; i++){
+    const a = a0 + (Math.random() - .5) * 2.2, d = 22 + Math.random() * 34, p = {x:L.x + Math.cos(a) * d, y:L.y + Math.sin(a) * d * .8};
+    if ([.25, .5, .75, 1].every(f => !landAt(I, {x:L.x + (p.x - L.x) * f, y:L.y + (p.y - L.y) * f}))) return p;
+  }
+  return {x:L.x + rnd(8), y:L.y + rnd(5)};
+}
+/* The catch is hung on the rack: with nets twice as much, after the rāhui three times */
+function landCatch(I, b){
+  const K = KINDS[b.kind]; b.idle = workState(I, b); if (b.idle) return 0;
+  let n = (tooled(I, K) ? 4 : 2) * (I.rahuiDone === yearOf() && festivalTime() ? 3 : 1), got = 0;
+  while (got < n && (I.stock.fisch || 0) < storeCap(I)){
+    I.stock.fisch = (I.stock.fisch || 0) + 1; got++; stats.fisch++;
+    if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; I.stock[K.boost.k]--; }   // the net tears
+  }
+  b.hung = Math.min(7, (b.hung || 0) + got);
+  return got;
 }
 function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
-  w.dance = false; w.busy = null; w.hurry = I.feastEnd > tick; w.paddle = false;   // people hurry to a feast
-  if (I.feastEnd > tick && !w.sea){
+  w.dance = false; w.busy = null; w.fx = null; w.hurry = I.feastEnd > tick; w.paddle = false;   // people hurry to a feast
+  if (I.feastEnd > tick && !w.boat){
     const d = I.festYear === yearOf() && I.buildings.find(b => b.kind === 'tanzplatz' && !b.bt), h = I.buildings.find(b => b.kind === 'halle' && !b.bt);
     if (d || h){ if (w.job){ w.leg = 'go'; w.bout = false; } w.carry = null; w.sit = false; }
     if (d){ const a = Math.random() * TAU; goTo(I, w, d.x + Math.cos(a) * 15, d.y + Math.sin(a) * 6, 1800 + Math.random() * 1400); w.dance = d; return; }
@@ -274,7 +308,7 @@ function jobLeg(I, w, j){
     const W = workOf(I, j);
     if (w.leg === 'fetch'){ w.carry = 'holz'; w.leg = 'bring'; goTo(I, w, j.x + rnd(5), j.y + rnd(2), 300); return; }
     if (w.leg === 'bring'){ w.carry = null; w.leg = 'work'; w.bout = false; if (W){ W.o.got = Math.min(W.need, W.o.got + 1); invalidate(); } }
-    if (!w.bout && W){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.wait = 2200 + Math.random() * 1400; return; }
+    if (!w.bout && W){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = T === 'site' ? 'build' : 'carve'; w.wait = 2200 + Math.random() * 1400; return; }
     w.bout = false;
     if (W && W.need && W.o.got + woodOnWay(I, j) < W.need && W.o[W.f] <= woodFloor(W) + .01){
       const s = storeNear(I, w); if (s){ w.leg = 'fetch'; goTo(I, w, s.x, s.y); return; }
@@ -284,23 +318,48 @@ function jobLeg(I, w, j){
     goTo(I, w, cx + rnd(r), cy + rnd(r * .4), W ? 0 : 900);
     return;
   }
+  if (T === 'fish'){ fishLeg(I, w, j); return; }
   if (w.leg === 'work'){
     if (!w.bout){
       w.bout = true;
-      if (T === 'fish' && !I.rahui){ w.sea = true; w.wait = 6500 + Math.random() * 3500; return; }   // out in the dugout
-      w.busy = T === 'chop' || T === 'wade' ? {x:w.x, y:w.y} : null; w.sit = T === 'wait' && Math.random() < .5;
-      w.wait = T === 'chop' ? 2400 + Math.random() * 1200 : T === 'wade' ? 2600 + Math.random() * 2400 : T === 'plant' ? 500 : T === 'wait' ? 2500 + Math.random() * 3000 : 900 + Math.random() * 1600;
+      // each kind of work looks its own (see workFx): crafts are done sitting on a mat, facing the workplace
+      w.fx = T === 'chop' ? 'chop' : T === 'wade' ? 'scoop' : T === 'carry' ? WORK_FX[j.b.kind] || null : null;
+      w.busy = w.fx ? {x:w.x, y:w.y} : null; w.sit = T === 'wait' ? Math.random() < .5 : SIT_FX.has(w.fx); if (w.fx && T === 'carry') w.left = j.b.x < w.x - 1;
+      w.wait = T === 'chop' ? 2400 + Math.random() * 1200 : T === 'wade' ? 2600 + Math.random() * 2400 : T === 'plant' ? 500 : T === 'wait' ? 2500 + Math.random() * 3000 : w.fx ? 2800 + Math.random() * 2200 : 900 + Math.random() * 1600;
       return;
     }
-    w.bout = false; w.sea = false;
+    w.bout = false;
     if (T === 'wait'){ goTo(I, w, j.x + rnd(8), j.y + rnd(4)); return; }
     const s = j.drop || storeNear(I, w); if (!s){ w.wait = 1500; return; }
     w.carry = j.load; w.leg = 'store'; goTo(I, w, s.x + rnd(3), s.y);
     return;
   }
   // where the load goes: a planter kneels to set the sapling, then all go back
-  if (T === 'plant' && !w.bout){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.wait = 2200 + Math.random() * 1000; return; }
+  if (T === 'plant' && !w.bout){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = 'plant'; w.wait = 2200 + Math.random() * 1000; return; }
   w.bout = false; w.carry = null; w.leg = 'work'; goTo(I, w, j.x + rnd(4), j.y + Math.random() * 3, 300 + Math.random() * 500);
+}
+/* A fisher's round: from the rack down to the dugout, paddle out, cast the net a while, paddle back, hang the catch
+   on the rack, take some of the dried fish to the store, and back to the rack. Under a rāhui they mend nets ashore. */
+function fishLeg(I, w, j){
+  const b = j.b, L = waterNear(I, b);
+  switch (w.leg){
+    case 'work':
+      if (!w.bout){ w.bout = true; w.wait = 700 + Math.random() * 900; return; }
+      w.bout = false;
+      if (I.rahui || workState(I, b)){ w.sit = true; w.wait = 3000 + Math.random() * 2000; return; }
+      w.leg = 'launch'; goTo(I, w, L.x + rnd(3), L.y + rnd(2)); return;
+    case 'launch': { w.boat = true; w.paddle = false; w.leg = 'out'; const s = fishingSpot(I, L, b); goTo(I, w, s.x, s.y); return; }
+    case 'out': w.leg = 'fishing'; w.fishing = performance.now(); w.wait = 4200 + Math.random() * 2600; return;
+    case 'fishing': w.fishing = 0; w.leg = 'back'; goTo(I, w, L.x + rnd(3), L.y + rnd(2)); return;
+    case 'back': w.boat = false; w.leg = 'hang'; goTo(I, w, j.x, j.y - 1, 200); return;
+    case 'hang':
+      if (!w.bout){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = 'hang'; w.wait = 1300; w.caught = landCatch(I, b); return; }
+      // when the racks are full, the dried fish goes to the store; otherwise straight out again
+      w.bout = false; { const s = b.hung >= 5 && storeNear(I, w); if (!s){ w.leg = 'work'; w.bout = true; w.wait = 300; return; }
+        w.carry = 'fisch'; w.leg = 'store'; b.hung -= 3; goTo(I, w, s.x + rnd(3), s.y); }
+      return;
+    default: w.carry = null; w.leg = 'work'; goTo(I, w, j.x + rnd(4), j.y + Math.random() * 3, 300);
+  }
 }
 /* Builders who are at their site move the work on, a little with every moment they are there */
 function buildBit(w, dt){
@@ -309,6 +368,7 @@ function buildBit(w, dt){
   if (left > floor) W.o[W.f] = Math.max(floor, left - dt / TICK / W.crew);
 }
 function stepWalkers(dt){
+  const G = {};
   for (const w of walkers){
     w.moving = false;
     if (w.on && w.leg === 'work' && w.job && BUILD_JOBS.has(w.job.type) && !w.hurry) buildBit(w, dt);
@@ -321,10 +381,55 @@ function stepWalkers(dt){
     const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
     if (d < 1.5){ nextLeg(w); continue; }
     w.sit = false;
-    const v = Math.min(d, dt * (w.paddle ? .014 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    // feet wear the ground, children less as they run everywhere; on a laid path people walk faster
+    const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle ? -1 : wearAt(g, w.x, w.y);
+    const v = Math.min(d, dt * (w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    if (ci >= 0) g.v[ci] = Math.min(60, g.v[ci] + v * (w.child ? .05 : .14));
     w.moving = true; w.left = dx < 0; w.phase += v * .9;
   }
 }
+/* ---------- paths. Where people walk often the grass wears away and a path appears by itself, as in any village;
+   where nobody walks any more it grows over again. Paths of crushed shell and coral sand that you lay are quicker. */
+const WEAR_CELL = 6, WEAR_UP = [5, 15, 35], WEAR_VAL = [0, 8, 22, 42];
+function wearGrid(I){
+  if (I._wg) return I._wg;
+  const b = I.box, w = Math.ceil((b.x1 - b.x0) / WEAR_CELL) + 1, h = Math.ceil((b.y1 - b.y0) / WEAR_CELL) + 1;
+  const g = I._wg = {x0:b.x0, y0:b.y0, w, h, v:new Float32Array(w * h), lv:new Uint8Array(w * h), road:new Uint8Array(w * h)};
+  if (I.wearSaved){ let i = 0; const c = I.wearSaved; for (let k = 0; k + 1 < c.length; k += 2) for (let n = 0; n < c[k + 1] && i < g.v.length; n++, i++){ g.lv[i] = c[k]; g.v[i] = WEAR_VAL[c[k]]; } I.wearSaved = null; }
+  markRoads(I); return g;
+}
+const wearAt = (g, x, y) => { const cx = Math.floor((x - g.x0) / WEAR_CELL), cy = Math.floor((y - g.y0) / WEAR_CELL); return cx < 0 || cy < 0 || cx >= g.w || cy >= g.h ? -1 : cy * g.w + cx; };
+/* Every tick the paths fade a little; every few ticks the drawn ones follow, with some slack so they do not flicker */
+function stepWear(I){
+  const g = I._wg; if (!g) return;
+  for (let i = 0; i < g.v.length; i++) if (g.v[i]) g.v[i] = g.v[i] < .05 ? 0 : g.v[i] * .997;
+  if (tick % 5) return;
+  let changed = false;
+  for (let i = 0; i < g.v.length; i++){
+    const v = g.v[i]; let l = g.lv[i];
+    while (l < 3 && v >= WEAR_UP[l]) l++;
+    while (l > 0 && v < WEAR_UP[l - 1] * .75) l--;
+    if (l !== g.lv[i]){ g.lv[i] = l; changed = true; }
+  }
+  if (changed){ I._wp = null; invalidate(); }
+}
+/* saved as runs of the same wear */
+function wearCode(g){ const out = []; for (let i = 0; i < g.lv.length; i++){ const l = g.lv[i]; if (out.length && out[out.length - 2] === l) out[out.length - 1]++; else out.push(l, 1); } return out; }
+function markRoads(I){
+  const g = I._wg; if (!g) return; g.road.fill(0);
+  for (const r of I.roads || []) for (let k = 1; k < r.length; k++){
+    const a = r[k - 1], b = r[k], d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    for (let s = 0; s <= d; s += 2) for (const [ox, oy] of [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3]]){ const i = wearAt(g, a.x + (b.x - a.x) * s / d + ox, a.y + (b.y - a.y) * s / d + oy); if (i >= 0) g.road[i] = 1; }
+  }
+}
+const roadLen = I => (I.roads || []).reduce((t, r) => t + r.reduce((s, p, k) => k ? s + Math.hypot(p.x - r[k - 1].x, p.y - r[k - 1].y) : 0, 0), 0);
+function hitRoad(p){
+  if (lod === 'far') return null; const lim = Math.max(5, 12 / cam.z);
+  for (const I of islands) for (let ri = 0; ri < (I.roads || []).length; ri++){ const r = I.roads[ri]; for (let k = 1; k < r.length; k++) if (segDist(p, r[k - 1], r[k]) < lim) return {id:I.id, r:ri}; }
+  return null;
+}
+function roadsChanged(I){ I._rp = null; markRoads(I); invalidate(); save(); }
+
 /* People keep working while the map is not drawn: the steps are made up in small pieces */
 let walkAt = 0;
 function walkUntil(now){
@@ -367,14 +472,17 @@ function workUse(I, k){
   return u;
 }
 const needActive = (I, N) => N.lvl < 3 ? I.pop >= N.from : I.lvl === 3;
+/* Food is everything people eat; any other need is one good */
+const ofNeed = (k, f) => k === 'essen' ? FOODS.reduce((t, q) => t + f(q), 0) : f(k);
+const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
 function needsOf(I){
   const list = NEEDS.filter(N => needActive(I, N)).map(N => {
-    const use = I.pop * N.rate, work = workUse(I, N.k), make = makeRate(I, N.k), stock = I.stock[N.k] || 0, all = use + work;
+    const use = I.pop * N.rate, work = ofNeed(N.k, q => workUse(I, q)), make = ofNeed(N.k, q => makeRate(I, q)), stock = haveOf(I, N.k), all = use + work;
     const state = make >= all ? 'ok' : stock > 0 ? 'low' : 'out';
     return {N, k:N.k, use, work, make, stock, state, mins:make < all ? stock / (all - make) : Infinity};
   });
   const cap = houseCap(I), missing = list.filter(n => n.state === 'out');
-  return {list, cap, missing, full:I.pop >= cap, next:NEEDS.find(N => !needActive(I, N)), growing:I.pop < cap && !missing.length && (I.stock.nahrung || 0) > 0};
+  return {list, cap, missing, full:I.pop >= cap, next:NEEDS.find(N => !needActive(I, N)), growing:I.pop < cap && !missing.length && haveOf(I, 'essen') > 0};
 }
 /* Level: a village from 20 people; a chief's village with enough people, standing, pots and mats. It stays one while its needs hold. */
 function updateLevel(I, nd){
@@ -430,6 +538,7 @@ function econ(){
       // only those who have got there work; fewer workers than there is room for: the work goes slower
       const n = K.crew ? Math.min(sf.crew.get(b) || 0, on.get(b) || 0) : 1;
       if (K.crew && !n){ b.idle = workState(I, b) || {why:'way', text:'Die Leute sind auf dem Weg hierher.'}; continue; }
+      if (K.trip){ if (b.idle && b.idle.why !== 'full') b.idle = workState(I, b); if (tick % 20 === 0 && b.hung > 0) b.hung--; continue; }   // fishers bring the catch themselves
       const every = Math.round(seasonalEvery(I, b, K) * pace(I, K) * (K.crew ? K.crew / n : 1));
       if (!every || tick % every){ if (b.idle && b.idle.why === 'way') b.idle = null; continue; }
       b.idle = workState(I, b); if (b.idle) continue;
@@ -440,25 +549,29 @@ function econ(){
       if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }   // the net tears, the adze breaks
       add(K.prod, 1);
     }
-    growTrees(I);
+    growTrees(I); stepWear(I);
     // use up what people need; fractions carry over so small villages use little
     I.owe = I.owe || {};
     for (const N of NEEDS){
       if (!needActive(I, N)) continue;
       I.owe[N.k] = (I.owe[N.k] || 0) + I.pop * N.rate / PER_MIN;
-      const take = Math.floor(I.owe[N.k]); if (take > 0){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); I.owe[N.k] -= take; }
+      const take = Math.floor(I.owe[N.k]); if (take <= 0) continue; I.owe[N.k] -= take;
+      if (N.k !== 'essen'){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
+      // people eat what there is most of
+      for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
     }
     let nd = needsOf(I);
     updateLevel(I, nd); nd = needsOf(I);
     if (nd.growing && tick % GROW_EVERY === 0){ I.pop = Math.min(nd.cap, I.pop + (I.joyUntil > tick ? 2 : 1)); heartAt(I); }
     else if (I.pop > nd.cap) I.pop--;   // when houses shrink back, people move away one by one
     // without food people leave, slowly, but a few always stay
-    I.hunger = nd.missing.some(n => n.k === 'nahrung') ? (I.hunger || 0) + 1 : 0;
+    I.hunger = nd.missing.some(n => n.k === 'essen') ? (I.hunger || 0) + 1 : 0;
     if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; }
   }
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
+  for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
   answerGifts(); stepYards(); feedCrews(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
@@ -536,6 +649,7 @@ function hitBuilding(p){
 function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
+  if (mode === 'road'){ roadTap(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   const sh = hitShip(p);
   if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu vom ${C.name}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
@@ -545,11 +659,13 @@ function onTap(p){
   const w = hitWalker(p);
   if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${w.name} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
   const b = hitBuilding(p); if (b){ select(b); return; }
+  const rd = hitRoad(p); if (rd){ closeSheet(); openSheet('road', rd); return; }
   const ri = hitCord(p); if (ri >= 0){ openRoute(ri); return; }
   const I = hitIsland(p);
-  if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); return; }
-  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); return; }
-  if (I){ closeSheet(); setActive(I.id); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
+  // from further out a tap on an island takes you close to it, and you build there
+  if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
+  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
+  if (I){ closeSheet(); setActive(I.id); updateHUD(); if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); } return; }
   closeSheet();
 }
 const ptrs = new Map(); let ges = null;
@@ -595,7 +711,10 @@ $('popBtn').addEventListener('click', () => openSheet('needs'));
 $('vitalBtn').addEventListener('click', () => openSheet('needs'));
 $('storeBtn').addEventListener('click', () => openSheet('store'));
 $('manaBtn').addEventListener('click', () => openSheet('mana'));
-$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
+$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; if (b.dataset.road){ if (placing) endPlace(); startRoad(); return; } newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
+$('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
+$('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
+$('idleBtn').addEventListener('click', showIdle);
 $('tradeBtn').addEventListener('click', () => openSheet('fleet'));
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
 $('placeOk').addEventListener('click', confirmPlace);

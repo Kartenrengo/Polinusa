@@ -311,7 +311,7 @@ const treeAt = (I, x, y, rad) => I.trees && I.trees.find(t => t.st !== 1 && Math
 const treesNear = (I, x, y, rad) => (I.trees || []).filter(t => t.st === 0 && t.w > 0 && Math.hypot(t.x - x, (t.y - y) * 1.25) < rad);
 const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
 /* Beauty: what adorns an island, counted from finished decorations */
-const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0);
+const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0) + Math.min(8, Math.floor(roadLen(I) / 60));   // laid paths adorn the village too
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
 function inLagoon(I, p){
   if (landAt(I, p)) return false;

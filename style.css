@@ -224,3 +224,15 @@ details.more p{margin:2px 0}
 .newslist small{display:block;font:700 11.5px/1.2 var(--font-ui);letter-spacing:.04em;color:var(--muted);margin-bottom:1px}
 .newslist .empty{font:600 14px/1.4 var(--font-ui);color:var(--muted);margin:4px 0}
 @media (prefers-reduced-motion:reduce){#toast,.newslist{transition:none}}
+/* a kind of food under the food row */
+.list li.sub-row{min-height:32px;margin-left:22px;padding-block:2px;font-size:14px}
+.list li.sub-row .nm{font-size:14px;font-weight:700}
+.list li.sub-row .ic{width:17px;height:17px}
+/* the two menus of the build bar */
+.tabs{display:flex;gap:4px}
+.tab{position:relative;border:0;background:none;padding:3px 9px;margin:-3px 0;font:800 12px/1.3 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.tab[aria-pressed="true"]{color:var(--ink);background:var(--eturm) no-repeat 0 0/100% 100%}
+.tab.new::after{content:"";position:absolute;right:1px;top:0;width:7px;height:7px;background:var(--ochre);border-radius:62% 38% 55% 45%/48% 58% 42% 52%}
+/* the idle button next to the people count */
+.pop.idle{margin-right:2px}
+.pop.idle.zero{opacity:.45}

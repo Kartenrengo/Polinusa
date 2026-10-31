@@ -79,23 +79,30 @@ Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen
 
 ## Essen
 
-Eine Mahlzeit ist Grundnahrung und etwas aus dem Meer dazu, wie auf Fidschi (kakana und i coi) oder in Tonga
-(me'akai und kiki).
+Alles Essen zählt als **Nahrung**. Oben steht nur eine Zahl, in der Übersicht und im Lager darunter jede Sorte. Jeder
+Bewohner isst 1,2 pro Minute, und die Leute essen das, wovon am meisten da ist.
 
-| Ware | Woher | Gebraucht ab |
-| --- | --- | --- |
-| Grundnahrung | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro in der Mitte eines Motus (Atolle) | Anfang |
-| Fisch | Fischgestell am Strand, Steinreuse in der Lagune | 10 Bewohnern |
-| Meeresfrüchte | Riffsammler am Strand: Muscheln, Krebse, Seeigel, Tintenfisch | 25 Bewohnern |
+| Sorte | Woher |
+| --- | --- |
+| Feldfrüchte | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro in der Mitte eines Motus (Atolle) |
+| Fisch | Fischgestell am Strand: die Fischer paddeln hinaus und hängen den Fang auf |
+| Meeresfrüchte | Riffsammler am Strand: Muscheln, Krebse, Seeigel, Tintenfisch |
 
-Fehlt Grundnahrung, ziehen Leute fort. Fehlen Fisch oder Meeresfrüchte, wächst das Dorf nicht mehr. Das Kleine Fest braucht
-Fisch, das Große Meeresfrüchte, die ersten Früchte beim Fest der Plejaden Grundnahrung, Fisch und Schweine. Unter Rāhui
-ruhen Fischgestell, Reuse und Riffsammler, nach dem Fest fangen sie dreimal so viel. In der Palolo-Nacht gibt es
-Meeresfrüchte für alle.
+Fehlt Nahrung, ziehen Leute fort. Werkstätten und Feste brauchen bestimmte Sorten: Gärgrube und Schweinepferch
+Feldfrüchte, das Kleine Fest Fisch, das Große Meeresfrüchte, die ersten Früchte beim Fest der Plejaden Feldfrüchte, Fisch
+und Schweine. Unter Rāhui ruhen Fischgestell und Riffsammler, nach dem Fest fangen sie dreimal so viel. In der
+Palolo-Nacht gibt es Meeresfrüchte für alle.
+
+## Fischfang
+
+Steinreusen gibt es nicht mehr; das Fischgestell ist alles in einem. Zwei Fischer gehen zum Strand, schieben ihren Einbaum
+ins Wasser und paddeln in einem Bogen hinaus. Draußen werfen sie Netz und Leine mit Muschelhaken aus, dann paddeln sie
+zurück und hängen den Fang ans Gestell, wo man ihn trocknen sieht. Erst wenn die Gestelle voll sind, tragen sie getrockneten
+Fisch ins Lager. Ein Fang bringt 2 Fische, mit Netzen aus Schnur 4. Liegt niemand draußen, liegt der Einbaum am Strand.
 
 ## Die Lagune und der Einbaum
 
-Pfahlhäuser und Steinreusen stehen in der Lagune. Sie brauchen kein Land, das Wald und Felder belegen. Hin kommt man nur mit
+Pfahlhäuser stehen in der Lagune. Sie brauchen kein Land, das Wald und Felder belegen. Hin kommt man nur mit
 dem Einbaum vom Kanusteg. Ein Steg hat einen Einbaum, der bis zu 4 Plätze anfährt, die ältesten zuerst. Auf einem Atoll gilt
 das auch für Arbeitsplätze auf einem Motu, auf dem niemand wohnt. Ohne Einbaum zählt ein Pfahlhaus nicht als Wohnraum, und der
 Arbeitsplatz bleibt leer. Über ihm schwebt dann ein Einbaum in der Sprechblase. Die Einbäume paddeln sichtbar hin und her.
@@ -111,10 +118,19 @@ Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt
   bei der Arbeit, gelb auf dem Weg, leer für einen freien Platz, durchgestrichen, wo du den Platz geschlossen hast. Wer
   arbeitet, hält sein Werkzeug: Steinbeil für Bauleute, Holzfäller und Kanubauer, Grabstock für Feld und Pflanzer, Speer
   für Fischer. Alte gehen mit Stock und haben graues Haar, Kinder sind kleiner.
+- **Ohne Arbeit:** Neben der Bewohnerzahl oben steht, wie viele keine Arbeit haben. Antippen zeigt sie nacheinander auf
+  der Karte, mit Namen.
+- **Jede Arbeit sieht anders aus:** Wer am Arbeitsplatz ist, arbeitet sichtbar. Am Feld stößt der Grabstock in die Erde,
+  der Holzfäller schlägt Späne, die Bauleute hämmern mit dem Steinbeil, in der Töpferei wächst ein Topf unter den Händen,
+  in der Beilwerkstatt wird ein Beil auf Sandstein geschliffen, der Klingenschläger schlägt Splitter vom Obsidian, in der
+  Flechthütte wächst eine Matte auf dem Schoß, in der Seilerei wird Kokosfaser zu Schnur gerollt, in der Klopfhütte schlägt
+  der Klöppel Rinde dünn, im Kavagarten wird die Wurzel gestampft, in der Schmuckschleiferei läuft der Bogenbohrer, am Pferch
+  fliegt Taro zu den Schweinen, an der Gärgrube werden Bananenblätter ausgelegt, der Pflanzer kniet, die Riffsammler waten.
+  Handwerk geschieht im Sitzen auf einer Matte.
 - **Antippen:** Eine Figur antippen zeigt ihren Namen und was sie tut („Lupe · Bau Haus · holt Holz“) und öffnet ihren
   Arbeitsplatz. Ist ein Gebäude gewählt, tragen seine Leute eine kleine Marke über dem Kopf.
 - **Reihenfolge:** In der Übersicht (Bewohnerzahl oder die Zeile darunter antippen) legst du fest, welche Arbeit zuerst
-  Leute bekommt: Bauen, Grundnahrung, Fisch und Meer, Holz, Kanubau, Handwerk. Innerhalb jeder Gruppe zuerst das Älteste.
+  Leute bekommt: Bauen, Feldfrüchte, Fisch und Meer, Holz, Kanubau, Handwerk. Innerhalb jeder Gruppe zuerst das Älteste.
   Unter jeder Gruppe stehen ihre Arbeitsplätze mit denselben Figuren wie auf den Schildern.
 - **Bauleute:** Jede Baustelle braucht 2 Leute. Sie kommen aus der Arbeit, die weiter unten steht, und gehen sichtbar
   hinüber. Erst holen sie das Holz aus dem Lager, ein Stück pro Gang, dann bauen sie. **Gebaut wird nur, solange Bauleute an
@@ -136,11 +152,28 @@ Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt
   ist und nichts fehlt), die Arbeit nach Reihenfolge mit allen Arbeitsplätzen, für jedes Essen Lager, Erzeugung, Verbrauch
   und Reichweite, und den weiteren Bedarf.
 
+## Inseln wechseln
+
+Gebaut wird auf der Insel, die man nah vor sich hat. Wer heranzoomt, ist dort; die Leisten zeigen dann diese Insel. Von
+weiter weg bringt ein Tipp auf eine Insel die Karte nah heran. So geht es: heranzoomen, bauen, herauszoomen, die nächste
+Insel antippen.
+
+## Bauleiste und Wege
+
+- Die Bauleiste hat zwei Reiter: **Bauen** für alles, was das Dorf braucht, und **Schmuck** für Hibiskus, Blumen, Fackeln,
+  Ahnenpfosten, Trommel und Tanzplatz.
+- **Trampelpfade entstehen von selbst** dort, wo die Leute wirklich gehen: Die Füße treten das Gras weg, erst ein heller
+  Schimmer, dann ein deutlicher Pfad. Wo niemand mehr geht, wächst er langsam wieder zu.
+- **Wege anlegen:** Ganz am Ende der Leiste steht „Weg“. Auf der Insel Punkt für Punkt tippen, den letzten Punkt noch einmal
+  antippen nimmt ihn zurück, „Anlegen“ legt den Weg an, „Fertig“ beendet. Wege aus Muschelsand und Korallenkies kosten
+  nichts, die Leute gehen darauf schneller, und sie schmücken das Dorf (je 60 Schritte 1, höchstens 8). Einen Weg
+  antippen, dann lässt er sich entfernen.
+
 ## Kanus entstehen
 
 - **Erst das Kanu, dann das Wasser:** Ist ein Fischgestell gebaut, schnitzt der Fischer zuerst seinen Einbaum, etwa eine Minute.
   Man sieht den Stamm, das Aushöhlen mit Spänen und das fertige Kanu am Strand. Erst dann fährt er hinaus. Ebenso am Kanusteg:
-  Er bedient Pfahlhäuser und Reusen erst, wenn sein Einbaum fertig ist.
+  Er bedient Pfahlhäuser erst, wenn sein Einbaum fertig ist.
 - **Im Kanuhaus** entsteht ein Auslegerkanu in etwa zweieinhalb Minuten, ein Doppelkanu in etwa fünf, mit 3 Bauleuten,
   die vorher das Holz herbeitragen.
   Fünf Schritte sind zu sehen und werden gemeldet: Stamm auf Böcken, Aushöhlen mit Steinbeil und Glut, Bordplanken mit
@@ -161,13 +194,16 @@ Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der hal
 
 | Kanu | Kosten | Bauzeit | Trägt | Darf |
 | --- | --- | --- | --- | --- |
-| Auslegerkanu | 4 Holz, 1 Steinbeil | 30 s | 12 Waren, 4 Menschen | nur ins Bekannte |
-| Doppelkanu | 6 Holz, 2 Steinbeile, 3 Matten, 3 Schnur | 80 s | 24 Waren, 8 Menschen | auch in den Nebel |
+| Auslegerkanu | 4 Holz, 1 Steinbeil | etwa 3 min | 12 Waren, 4 Menschen | nur ins Bekannte |
+| Doppelkanu | 6 Holz, 2 Steinbeile, 3 Matten, 3 Schnur | etwa 6 min | 24 Waren, 8 Menschen | auch in den Nebel |
 
+- **Gemächlich und in Bögen:** Kanus fahren langsamer als früher und nie mit dem Lineal. Lange Strecken schwingen in Bögen
+  aus, mal links, mal rechts, und werden gerundet, solange kein Land im Weg ist. Auf der Dünung schaukeln sie. Auch die
+  Einbäume am Kanusteg fahren in einem Bogen.
 - **Steuern:** Kanu antippen, dann auf das Meer oder eine Insel tippen. Es sucht sich den Weg um das Land herum.
   Der restliche Weg ist gepunktet zu sehen. Unten öffnet sich die Tafel des Kanus, „Beladen“ klappt die Ladeliste auf.
 - **Nebel:** Wo ein Kanu fährt, lichtet sich der Nebel. Das Doppelkanu sieht weiter als das Auslegerkanu.
-- **Proviant:** Auf freier Fahrt isst die Mannschaft des Doppelkanus jeden Reisetag (6 Sekunden) 1 Proviant.
+- **Proviant:** Auf freier Fahrt isst die Mannschaft des Doppelkanus jeden Reisetag (10 Sekunden) 1 Proviant.
   Ohne Proviant fährt sie nicht ins Unbekannte, und geht er aus, kehrt sie langsam zur nächsten eigenen Insel zurück.
 - **Siedeln:** Mit 4 Siedlern an Bord vor einer leeren Insel „Dorf gründen“. Mitgebrachtes Holz und Essen kommt ins Lager.
 - **Wind und Jahreszeit:** Gegen den Nordwind geht es langsamer, in der Sturmzeit auch. In der Passatzeit schneller.
@@ -187,7 +223,7 @@ mit mehr Knoten geht es schneller. Bei einem Clan wird die Ladung zur Gabe. Steu
 
 ## Schmuck im Dorf
 
-Hibiskus, Blumenbeet, Muschelweg, Fackel, Ahnenpfosten (wie die Gesichter auf der Lapita-Keramik), Schlitztrommel und
+Eigener Reiter in der Bauleiste. Hibiskus, Blumenbeet, Fackel, Ahnenpfosten (wie die Gesichter auf der Lapita-Keramik), Schlitztrommel und
 Tanzplatz. Jedes Stück hat einen Schmuckwert. Alle halbe Minute bringt die Schönheit des Dorfes etwas Ansehen, so weit
 die Bewohner sie genießen können, höchstens 2 pro Minute und Insel. Ein Häuptlingsdorf braucht Schönheit 10. Beim Fest der Plejaden zählt sie mit.
 
@@ -205,13 +241,13 @@ Antippen öffnet den Kalender.
 | Magere Zeit | 10–12 | Brotfrucht trägt nicht, Proviant aus der Gärgrube hilft |
 
 - **Palolo:** Eine Woche nach Vollmond im ersten Mond steigt der Palolo-Wurm aus dem Riff. Drei Takte lang
-  schöpfen alle Inseln Meeresfrüchte, mit Fischgestellen, Reusen und Riffsammlern mehr.
-- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischgestell, Reuse oder Riffsammler ihr Riff sperren. Bis zum Fest
+  schöpfen alle Inseln Meeresfrüchte, mit Fischgestellen und Riffsammlern mehr.
+- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischgestell oder Riffsammler ihr Riff sperren. Bis zum Fest
   ruht der Fang, danach ist er dreimal so reich, und das Ansehen steigt um 3.
 
 ## Fest der Plejaden
 
-In der Zeit der Plejaden im Versammlungshaus. Die ersten Früchte (12 Grundnahrung, 6 Fisch, 2 Schweine) gehören den Ahnen, das bringt
+In der Zeit der Plejaden im Versammlungshaus. Die ersten Früchte (12 Feldfrüchte, 6 Fisch, 2 Schweine) gehören den Ahnen, das bringt
 Ansehen 10. Dazu kann man wählen:
 
 - Kava-Runde (3 Kava): +5, Gäste der Clans knüpfen einen Knoten mehr. Kava wächst im Kavagarten oder kommt vom Clan vom Kavahain.
@@ -223,7 +259,7 @@ bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Vierzehn Waren: Grundnahrung, Fisch, Meeresfrüchte, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa,
+Vierzehn Waren: Feldfrüchte, Fisch, Meeresfrüchte, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa,
 Schweine, Kava, Muschelschmuck.
 Ketten haben höchstens drei Glieder.
 
@@ -231,18 +267,17 @@ Ketten haben höchstens drei Glieder.
 | --- | --- | --- | --- | --- |
 | Holzfäller | hoch | Bäume in Reichweite, Steinbeile machen ihn schneller (1 Beil je 20 Holz) | 15 Holz, ohne Beile 10 | |
 | Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 7,5 junge Bäume | einen Holzfäller |
-| Tarofeld | hoch | | 15 Grundnahrung | 15 Menschen |
-| Brotfruchtbaum | hoch | | 5 Grundnahrung, je nach Jahreszeit | 5 Menschen |
-| Pulakagrube | Atoll, in der Mitte eines Motus | | 10 Grundnahrung | 10 Menschen |
-| Fischgestell | am Strand | Schnur für Netze verdoppelt den Fang (1 Schnur je 8 Fisch) | 10 Fisch, ohne Netze 5 | 33, ohne Netze 16 |
-| Steinreuse | in der Lagune | Einbaum, 1 Steinbeil beim Bau | 6 Fisch | 20 |
-| Riffsammler | am Strand | | 7,5 Meeresfrüchte | 50 |
-| Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Grundnahrung je Proviant | 7,5 Proviant | |
+| Tarofeld | hoch | | 15 Feldfrüchte | 12 Menschen |
+| Brotfruchtbaum | hoch | | 5 Feldfrüchte, je nach Jahreszeit | 4 Menschen |
+| Pulakagrube | Atoll, in der Mitte eines Motus | | 10 Feldfrüchte | 8 Menschen |
+| Fischgestell | am Strand | 2 Fischer, Schnur für Netze verdoppelt den Fang (1 Schnur je 8 Fisch) | etwa 25 Fisch, ohne Netze 12 | 20, ohne Netze 10 |
+| Riffsammler | am Strand | | 7,5 Meeresfrüchte | 6 |
+| Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Feldfrucht je Proviant | 7,5 Proviant | |
 | Töpferei | hoch | Ton in der Nähe, 1 Holz je Topf | 3,75 Töpfe | 53 |
 | Beilwerkstatt | hoch | Basaltfelsen in der Nähe | 3,75 Steinbeile | 5 Holzfäller |
 | Klingenschläger | Vulkan | Obsidian in der Nähe | 3 Klingen | 2 Schmuckschleifereien |
 | Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | 3 Tapa | 50 |
-| Schweinepferch | hoch | 2 Grundnahrung je Schwein | 1,9 Schweine | 47 |
+| Schweinepferch | hoch | 2 Feldfrüchte je Schwein | 1,9 Schweine | 47 |
 | Flechthütte | Atoll | 2 Pandanus daneben | 3,75 Matten | 62 |
 | Seilerei | Atoll | 3 Kokospalmen daneben | 5 Schnur | 4 Fischgestelle |
 | Schmuckschleiferei | Atoll, am Strand | 1 Klinge je Ring | 1,5 Muschelschmuck | 75 |
@@ -263,21 +298,21 @@ Netze der hohen Inseln, die hohen Inseln Beile und Holz.
 
 | Stufe | Ab | Braucht pro Bewohner und Minute |
 | --- | --- | --- |
-| Weiler | Anfang | Grundnahrung 1, ab 10 Bewohnern Fisch 0,3 |
-| Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 25 Bewohnern Meeresfrüchte 0,15, ab 30 Bewohnern Matten 0,06 |
-| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Töpfe, Matten und Meeresfrüchte reichen, Tapa, Schweine, Kava und Schmuck im Lager | dazu Tapa 0,06, Schweine 0,04, Kava 0,03, Muschelschmuck 0,02 |
+| Weiler | Anfang | Nahrung 1,2 (jede Sorte zählt) |
+| Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 30 Bewohnern Matten 0,06 |
+| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Nahrung, Töpfe und Matten reichen, Tapa, Schweine, Kava und Schmuck im Lager | dazu Tapa 0,06, Schweine 0,04, Kava 0,03, Muschelschmuck 0,02 |
 
 Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen geschnitzte Pfosten und Muschelschmuck.
 Fehlt dort 30 Takte lang etwas, wird es wieder ein Dorf, und die Leute ziehen nach und nach aus.
-Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Grundnahrung ziehen langsam Leute fort.
+Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Nahrung ziehen langsam Leute fort.
 
 - Die Bewohnerzahl oben öffnet die Tafel „Bedarf“. Der Punkt daneben: grün wächst, gelb Häuser voll, rot es fehlt etwas.
 - Fehlt etwas, schwebt das Zeichen der Ware über einigen Häusern. Zieht jemand ein, steigt ein Herz auf.
 
 ## Ansehen
 
-Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Grundnahrung, 4 Fisch und 2 Töpfe, +5;
-Großes Fest: 4 Schweine, 12 Grundnahrung, 4 Meeresfrüchte und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
+Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Feldfrüchte, 4 Fisch und 2 Töpfe, +5;
+Großes Fest: 4 Schweine, 12 Feldfrüchte, 4 Meeresfrüchte und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
 schönen Dorf. Es sinkt um etwa 1 pro Minute.
 Gebraucht wird es für jede weitere Siedlungsfahrt (8 mehr pro Siedlung nach den ersten beiden) und für ein Häuptlingsdorf.
 Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus.
@@ -306,7 +341,7 @@ drei Antworten, manche kosten Waren:
 | Bitte eines Clans | mit einer Schnur zu einem Clan | schicken, was sie brauchen (zwei Knoten, spätere Gegengabe) oder ablehnen (ein Knoten weniger) |
 | Hochzeit | ab 20 Bewohnern | ein Fest (das Dorf wächst eine Weile doppelt) oder im kleinen Kreis |
 | Fremder Navigator | nach der ersten Fahrt ins Unbekannte | bewirten: er zeigt den Weg zur nächsten unbekannten Insel |
-| Brotfruchternte | Zeit der Plejaden | alles ernten (Grundnahrung und Proviant) |
+| Brotfruchternte | Zeit der Plejaden | alles ernten (Feldfrüchte und Proviant) |
 
 Wer ein Ereignis schließt, ohne zu wählen, lässt es vorübergehen. Die **Chronik** im Menü hält zwanzig Meilensteine fest,
 vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle drei Clans, 30 Knoten, 150 Menschen,
@@ -349,9 +384,10 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
   zwischendurch picken, Hunde, die manchmal jemandem hinterhertraben, und mit einem Schweinepferch auch Schweine frei herum.
 - **Dorf:** Kinder rennen und spielen, Erwachsene setzen sich zwischendurch auf eine Matte vor die Häuser. Über manchen
   Häusern steigt Kochrauch auf. Neben den Häusern liegt Feuerholz, stehen Töpfe, trocknet eine Matte oder dampft ein Erdofen.
-  Trampelpfade führen von jedem Haus zum Versammlungshaus und von jeder Werkstatt zum nächsten Haus.
-- **Am Wasser:** Neben dem Fischgestell liegt ein Kanu am Strand, ein Fischer paddelt in der Lagune und wirft ab und zu
-  sein Netz. Riffsammler waten mit dem Korb im seichten Wasser. Beides ruht unter Rāhui.
+  Trampelpfade entstehen dort, wo die Leute laufen.
+- **Am Wasser:** Die Fischer paddeln hinaus, werfen ihr Netz und hängen den Fang ans Gestell. Riffsammler waten mit dem
+  Korb im seichten Wasser, nah am Strand. Wo ein Weg übers Wasser führt, über eine Lagune oder eine Bucht, paddeln die
+  Leute im Einbaum; niemand läuft übers Riff. Beides ruht unter Rāhui.
 - **Im Meer:** Fischschwärme und Schildkröten ziehen durch die Lagunen. Auf offener, schon gesehener See taucht ab und zu
   ein Wal auf, bläst und zeigt beim Abtauchen die Fluke. Neben fahrenden Kanus springen Delfine.
 - **Wetter:** Wolkenschatten ziehen mit dem Nordwind über Meer und Inseln, in der Sturmzeit als Regenschauer.

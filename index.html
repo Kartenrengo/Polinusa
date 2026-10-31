@@ -15,7 +15,7 @@
 <div class="top-inner">
 <div class="top-row">
 <div class="isle"><span id="isleName" class="isle-name">Panua</span><span id="isleType" class="cap">Hohe Insel</span></div>
-<span class="top-right"><button id="manaBtn" class="mana" type="button" hidden aria-label="Ansehen"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-mana"/></svg><b id="manaNum">0</b></button><button id="popBtn" class="pop" type="button" aria-label="Bewohner und Bedarf"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg><b id="popNum">0</b><span id="popCap">/0</span><i id="popDot" class="dot" aria-hidden="true"></i></button></span>
+<span class="top-right"><button id="manaBtn" class="mana" type="button" hidden aria-label="Ansehen"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-mana"/></svg><b id="manaNum">0</b></button><button id="idleBtn" class="pop idle" type="button" aria-label="Ohne Arbeit"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-idle"/></svg><b id="idleNum">0</b></button><button id="popBtn" class="pop" type="button" aria-label="Bewohner und Bedarf"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg><b id="popNum">0</b><span id="popCap">/0</span><i id="popDot" class="dot" aria-hidden="true"></i></button></span>
 </div>
 <button id="storeBtn" class="storebtn" type="button" aria-label="Lager"><span id="goods" class="goods"></span></button>
 <button id="vitalBtn" class="vital" type="button" aria-label="Übersicht: Arbeit, Essen und Zuzug"></button>
@@ -43,7 +43,7 @@
 <nav id="bottom" class="band" aria-label="Bauen">
 <div class="manulua"></div>
 <div class="bottom-inner">
-<div class="bottom-head"><span class="cap">Bauen</span><span id="buildWhere" class="where">auf Panua</span></div>
+<div class="bottom-head"><span class="tabs"><button id="tabBau" class="tab" type="button" aria-pressed="true">Bauen</button><button id="tabDeco" class="tab" type="button" aria-pressed="false" hidden>Schmuck</button></span><span id="buildWhere" class="where">auf Panua</span></div>
 <div class="bottom-row">
 <div id="buildList" class="build-list" role="toolbar" aria-label="Was bauen"></div>
 <svg class="hb" viewBox="0 0 10 50" aria-hidden="true"><path d="M5 2V48" stroke="#3E2416" stroke-width="1.2"/><path d="M1 5L5 8L9 5M1 11L5 14L9 11M1 17L5 20L9 17M1 23L5 26L9 23M1 29L5 32L9 29M1 35L5 38L9 35M1 41L5 44L9 41" fill="none" stroke="#3E2416" stroke-width="1.1" stroke-linejoin="round"/></svg>

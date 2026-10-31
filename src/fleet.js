@@ -99,6 +99,26 @@ function findPath(a, b){
   return out;
 }
 
+/* Nobody steers a canoe along a ruler: the course swings out in gentle bends, one leg to this side, the next to the
+   other, and is then rounded, as long as no land is in the way */
+function curvePath(a, pts){
+  const out = [{x:a.x, y:a.y}], ok = (p, q) => !overLand(p, q, 1.5);
+  let side = (Math.round(a.x * 7 + a.y) & 1) ? 1 : -1;
+  for (const q of pts){
+    const p = out[out.length - 1], d = Math.hypot(q.x - p.x, q.y - p.y);
+    if (d > 90){
+      const nx = -(q.y - p.y) / d, ny = (q.x - p.x) / d, bend = Math.min(38, d * .11) * side;
+      const m = [.33, .67].map(f => ({x:p.x + (q.x - p.x) * f + nx * bend, y:p.y + (q.y - p.y) * f + ny * bend}));
+      if (ok(p, m[0]) && ok(m[0], m[1]) && ok(m[1], q)) out.push(...m);
+      side = -side;
+    }
+    out.push({x:q.x, y:q.y});
+  }
+  const sm = spline([out[0], ...out, out[out.length - 1]], 5);
+  for (let i = 1; i < sm.length; i++) if (!ok(sm[i - 1], sm[i])) return out.slice(1);
+  return sm.slice(1);
+}
+
 /* ---------- fog and the unseen sea */
 const revealed = p => fogHoles.some(h => ((p.x - h.cx) / (h.rx * .92)) ** 2 + ((p.y - h.cy) / (h.ry * .92)) ** 2 < 1);
 function exploreAt(x, y, r){
@@ -139,7 +159,7 @@ function sailTo(s, dest){
   const goal = dest.isl ? moorSpot(isl(dest.isl), s) : {x:dest.x, y:dest.y};
   const path = findPath(s, goal);
   if (!path){ if (s.own) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
-  s.path = path; s.pi = 0; s.dest = dest; s.state = 'sail'; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
+  s.path = curvePath(s, path); s.pi = 0; s.dest = dest; s.state = 'sail'; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
 function stepShips(now, dt){

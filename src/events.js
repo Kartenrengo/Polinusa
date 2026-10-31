@@ -73,7 +73,7 @@ const EVENTS = [
     when:() => seasonOf().id === 'plejaden' && pickOf(villages().filter(I => I.buildings.filter(b => b.kind === 'baum' && !b.bt).length >= 3)),
     text:I => `Die Brotfruchtbäume auf ${I.name} tragen so reich wie lange nicht. Die Zweige biegen sich.`,
     choices:[
-      {n:'Alles ernten', text:'Frisch essen und in den Gärgruben einlagern.', go:I => { addTo(I, 'nahrung', 10); const pits = I.buildings.some(b => b.kind === 'gaergrube' && !b.bt); if (pits) addTo(I, 'proviant', 3); return `10 Grundnahrung${pits ? ' und 3 Proviant' : ''} für ${I.name}.`; }},
+      {n:'Alles ernten', text:'Frisch essen und in den Gärgruben einlagern.', go:I => { addTo(I, 'nahrung', 10); const pits = I.buildings.some(b => b.kind === 'gaergrube' && !b.bt); if (pits) addTo(I, 'proviant', 3); return `10 Brotfrüchte${pits ? ' und 3 Proviant' : ''} für ${I.name}.`; }},
       {n:'Den Vögeln lassen', text:'', go:() => 'Die Flughunde freuen sich.'}]}
 ];
 

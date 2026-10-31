@@ -35,28 +35,45 @@ function updateHUD(){
   const S = seasonOf(); $('seasonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('seasonTxt').textContent = `${moonOf() + 1}. Mond`;
   $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + houseCap(I);
+  const free = staffOf(I).free; $('idleNum').textContent = free; $('idleBtn').classList.toggle('zero', !free); $('idleBtn').setAttribute('aria-label', `${free} ohne Arbeit. Tippen zeigt sie nacheinander.`);
   // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
   const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
   $('popDot').className = 'dot ' + st;
   $('popBtn').setAttribute('aria-label', `${I.pop} Bewohner, Platz für ${nd.cap}. ${growText(I, nd)} Tippen zeigt den Bedarf.`);
-  // the goods row shows what matters here: food and wood, then whatever is stored, made or needed, at most seven
-  const shown = GOODS.filter(k => k === 'nahrung' || k === 'holz' || (I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)).slice(0, 7);
+  // the goods row shows what matters here: all food as one, wood, then whatever is stored, made or needed, at most seven
+  const shown = ['essen', 'holz', ...GOODS.filter(k => !FOODS.includes(k) && k !== 'holz' && ((I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)))].slice(0, 7);
   const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span></span>`).join(''); }
-  for (const li of ul.children){ const k = li.dataset.k, v = I.stock[k] || 0; li.querySelector('span').textContent = v; li.classList.toggle('zero', !v);
+  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v);
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
-  lastStock = {isl:active, ...I.stock};
+  lastStock = {isl:active, ...I.stock, essen:haveOf(I, 'essen')};
   $('vitalBtn').innerHTML = vitalLine(I);
-  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${I.stock[k] || 0}`).join(', ') + '. Tippen zeigt alles.');
-  for (const btn of $('buildList').children){ const k = btn.dataset.kind; btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
+  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}`).join(', ') + '. Tippen zeigt alles.');
+  for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
+/* Two menus: what the village needs, with paths at the end, and what only adorns it */
+let buildTab = 'bau';
 function renderBuildBar(){
   const I = isl(active);
   $('buildWhere').textContent = 'auf ' + I.name;
   const fleet = own().length > 0 || routes.length > 0;
   $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
-  $('buildList').innerHTML = ORDER.filter(k => KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length)).map(k => { const K = KINDS[k];
-    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
+  const can = k => KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length), deco = ORDER.filter(k => DECO.includes(k) && can(k));
+  if (!deco.length) buildTab = 'bau';
+  $('tabDeco').hidden = !deco.length; $('tabDeco').classList.toggle('new', deco.some(k => newKinds.has(k)));
+  $('tabBau').setAttribute('aria-pressed', buildTab === 'bau'); $('tabDeco').setAttribute('aria-pressed', buildTab === 'deco');
+  const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
+  $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
+    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('') +
+    (buildTab === 'bau' ? `<button type="button" class="bbtn" data-road="1" aria-pressed="false" aria-label="Weg anlegen, kostet nichts"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}</svg><span>Weg</span></button>` : '');
   updateHUD();
+}
+/* The idle button: one after the other, the people without work */
+let idleNo = 0;
+function showIdle(){
+  const I = isl(active), list = walkers.filter(w => w.isl === I.id && w.role === 'idle');
+  if (!list.length){ toast('Alle, die arbeiten können, haben Arbeit.', 2600, false); return; }
+  const n = idleNo++ % list.length, w = list[n]; markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 2.2));
+  toast(`${w.name} hat keine Arbeit, ${n + 1} von ${list.length}. Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
 }
 function villageCenter(I){
   const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) return I.anchor || I.center;
@@ -92,7 +109,7 @@ $('toast').addEventListener('click', () => { if (news.length && news[0].msg === 
 
 /* ---------- placing and moving */
 function ghostRender(){
-  if (!placing){ requestDraw(); return; }
+  if (!placing || placing.road){ requestDraw(); return; }
   const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
   if (placing.kind === 'steg' && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
   placing.ok = ok; placing.msg = msg;
@@ -137,6 +154,35 @@ function startSpot(I, K){
     const c = src.reduce((m, q) => score(q) > score(m) ? q : m); return {x:c.x + 12, y:c.y + 6}; } }
   return vc;
 }
+/* ---------- laying a path: tap points on the island one after another, tap the last one again to take it back */
+function startRoad(){
+  const I = isl(active); closeSheet(); selectedId = null; invalidate();
+  mode = 'road'; placing = {kind:'weg', road:true, island:I.id, pts:[]};
+  $('placeName').textContent = 'Weg'; $('placeIc').setAttribute('viewBox', KINDS.weg.vb); $('placeIc').innerHTML = iconMarkup('weg');
+  $('placeOk').textContent = 'Anlegen'; $('placeInfo').textContent = 'Kostet nichts. Auf Wegen gehen die Leute schneller, und sie schmücken das Dorf.';
+  $('bottom').hidden = true; $('place').hidden = false; roadMsg(); measure();
+  if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); }
+}
+function roadMsg(bad){
+  const pts = placing.pts, n = pts.length, len = pts.reduce((s, p, k) => k ? s + Math.hypot(p.x - pts[k - 1].x, p.y - pts[k - 1].y) : 0, 0), el = $('placeMsg');
+  el.textContent = bad || (n ? `${n} ${n === 1 ? 'Punkt' : 'Punkte'}, ${Math.round(len)} Schritte. Den letzten Punkt antippen nimmt ihn zurück.` : 'Tippe auf der Insel, wo der Weg beginnt, dann Punkt für Punkt weiter.');
+  el.classList.toggle('bad', !!bad); $('placeOk').disabled = n < 2; requestDraw();
+}
+function roadTap(p){
+  const I = isl(placing.island), pts = placing.pts, last = pts[pts.length - 1];
+  if (last && Math.hypot(p.x - last.x, p.y - last.y) < Math.max(6, 16 / cam.z)){ pts.pop(); roadMsg(); return; }
+  if (!landAt(I, p)){ roadMsg('Wege gehen nur über Land.'); return; }
+  if (last){
+    const d = Math.hypot(p.x - last.x, p.y - last.y);
+    if (d > 240){ roadMsg('So weit auf einmal geht es nicht. Setze einen Punkt dazwischen.'); return; }
+    for (let s = 3; s < d; s += 3) if (!landAt(I, {x:last.x + (p.x - last.x) * s / d, y:last.y + (p.y - last.y) * s / d})){ roadMsg('Dazwischen liegt Wasser.'); return; }
+  }
+  pts.push({x:fx(p.x), y:fx(p.y)}); roadMsg();
+}
+function layRoad(){
+  if (!placing || !placing.road || placing.pts.length < 2) return false;
+  const I = isl(placing.island); (I.roads = I.roads || []).push(placing.pts); placing.pts = []; roadsChanged(I); updateHUD(); return true;
+}
 function startMove(b){
   const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:b.v, moveId:b.id};
   showPlaceBar(); invalidate(); ghostRender(); if (lod === 'far') flyTo(b.x, b.y, 1.6);
@@ -148,16 +194,18 @@ function showPlaceBar(){
   const facts = [Object.keys(c).length ? `Kostet ${costText(c)}` : '', K.plant ? `wächst ${secs} s` : `${secs} s Bauzeit`, K.crew ? `${K.crew} Arbeiter` : ''].filter(Boolean).join(', ');
   $('placeInfo').textContent = mode === 'move' ? 'Ziehen oder woanders hintippen.' : `${facts[0].toUpperCase() + facts.slice(1)}. ${K.info}`;
   $('placeIc').setAttribute('viewBox', K.vb); $('placeIc').innerHTML = iconMarkup(placing.kind);
-  $('placeOk').textContent = mode === 'move' ? 'Hier hin' : 'Bauen';
+  $('placeOk').textContent = mode === 'move' ? 'Hier hin' : 'Bauen'; $('placeOk').disabled = false;
   $('bottom').hidden = true; $('place').hidden = false; measure();
 }
 function endPlace(){
-  const wasMove = mode === 'move'; mode = 'idle'; placing = null; ghostRender();
+  if (placing && placing.road) layRoad();
+  const wasMove = mode === 'move'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false;
   $('place').hidden = true; $('bottom').hidden = false; measure();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', 'false');
   if (wasMove) invalidate();
 }
 function confirmPlace(){
+  if (placing && placing.road){ if (layRoad()){ toast('Der Weg ist angelegt.', 2000, false); roadMsg(); } return; }
   if (!placing || !placing.ok) return;
   const I = isl(placing.island), K = KINDS[placing.kind];
   if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
@@ -211,17 +259,14 @@ function needsMarkup(I){
   });
   h += row('', `${sf.free} ohne Arbeit`, sf.free ? 'Sie helfen, sobald es etwas zu tun gibt.' : 'Alle haben zu tun.', '', sf.short ? chip('out', `${sf.short} leer`) : chip('ok', 'reicht'));
   h += `</ul><p class="sub">${pipH('on')} bei der Arbeit ${pipH('way')} auf dem Weg ${pipH('free')} frei ${pipH('off')} zu. Oben bekommt zuerst Leute. Wer baut, fehlt weiter unten.</p>`;
-  // food: what is there, what comes in and goes out, and how long it lasts
-  const food = ['nahrung', 'fisch', 'meeres'].filter(k => nd.list.some(n => n.k === k) || (I.stock[k] || 0) > 0);
-  h += `<p class="sec">Essen</p><ul class="list needs">`;
-  for (const k of food){
-    const n = nd.list.find(x => x.k === k), stock = I.stock[k] || 0, make = makeRate(I, k), use = n ? n.use + n.work : workUse(I, k), net = make - use;
-    const left = net < 0 ? stock / -net : Infinity, st = !n || net >= 0 ? chip('ok', 'reicht') : stock > 0 ? chip('low', left < 1 ? 'knapp' : `${Math.floor(left)} Min`) : chip('out', 'fehlt');
-    h += row(k, GN[k], `Im Lager ${stock}. Pro Minute +${perMin(make)} und −${perMin(use)}. ${net >= 0 ? 'Es wird mehr.' : stock ? `Reicht noch ${left < 1 ? 'weniger als eine Minute' : Math.floor(left) + ' Minuten'}.` : 'Es ist nichts mehr da.'}`, bar(use ? make / use : 1), st, n && n.state !== 'ok' ? 'need' : '');
-  }
+  // food: all of it together, what comes in and goes out and how long it lasts, then each kind of food
+  const fn = nd.list.find(x => x.k === 'essen'), net = fn.make - fn.use - fn.work, left = net < 0 ? fn.stock / -net : Infinity;
+  h += `<p class="sec">Nahrung</p><ul class="list needs">`;
+  h += row('essen', `Nahrung ${fn.stock}`, `Pro Minute +${perMin(fn.make)} und −${perMin(fn.use + fn.work)}. ${net >= 0 ? 'Es wird mehr.' : fn.stock ? `Reicht noch ${left < 1 ? 'weniger als eine Minute' : Math.floor(left) + ' Minuten'}.` : 'Es ist nichts mehr da.'}`, bar(fn.use + fn.work ? fn.make / (fn.use + fn.work) : 1), net >= 0 ? chip('ok', 'reicht') : fn.stock > 0 ? chip('low', left < 1 ? 'knapp' : `${Math.floor(left)} Min`) : chip('out', 'fehlt'), fn.state !== 'ok' ? 'need' : '');
+  for (const k of FOODS) h += row(k, GN[k], `+${perMin(makeRate(I, k))} pro Minute${workUse(I, k) ? `, −${perMin(workUse(I, k))} für Werkstätten` : ''}`, '', `<b class="qty">${I.stock[k] || 0}</b>`, 'sub-row');
   h += `</ul>`;
   // the other needs
-  const other = nd.list.filter(n => !food.includes(n.k));
+  const other = nd.list.filter(n => n.k !== 'essen');
   if (other.length){
     h += `<p class="sec">Weiterer Bedarf</p><ul class="list needs">`;
     for (const n of other){
@@ -233,9 +278,9 @@ function needsMarkup(I){
   const tips = nd.list.filter(n => n.state !== 'ok').map(n => n.N.hint[I.type]);
   if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
-  if (nd.list.some(n => n.k === 'nahrung' && n.state === 'out')) h += `<p class="sub">Ohne Grundnahrung ziehen nach und nach Leute fort.</p>`;
+  if (nd.list.some(n => n.k === 'essen' && n.state === 'out')) h += `<p class="sub">Ohne Nahrung ziehen nach und nach Leute fort.</p>`;
   if (nd.next && nd.next.lvl < 3) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
-  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Töpfe, Matten und Meeresfrüchte reichen und Tapa, Schweine, Kava und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
+  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Nahrung, Töpfe und Matten reichen und Tapa, Schweine, Kava und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
   return h;
 }
 const activeCount = I => I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).length;
@@ -249,20 +294,20 @@ function arrivalText(I, nd){
 /* The line under the goods: work, builders, how long the food lasts, the next arrival */
 function vitalLine(I){
   const nd = needsOf(I), sf = staffOf(I), ic = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>`, busy = sf.total - sf.free;
-  const food = ['nahrung', 'fisch', 'meeres'].map(k => { const n = nd.list.find(x => x.k === k); if (!n) return null; const net = n.make - n.use - n.work; return {k, left:net >= 0 ? Infinity : (I.stock[k] || 0) / -net}; }).filter(Boolean).sort((a, b) => a.left - b.left)[0];
+  const fn = nd.list.find(x => x.k === 'essen'), fnet = fn.make - fn.use - fn.work, food = {k:'essen', left:fnet >= 0 ? Infinity : fn.stock / -fnet};
   const parts = [`<span>${ic('beile')}${busy}/${sf.total}${sf.build ? ` · Bau ${sf.build}` : ''}</span>`];
-  if (food) parts.push(food.left === Infinity ? `<span>${ic('nahrung')}reicht</span>` : `<span class="warn">${ic(food.k)}${food.left < 1 ? 'knapp' : `${Math.floor(food.left)} Min`}</span>`);
+  parts.push(food.left === Infinity ? `<span>${ic('essen')}reicht</span>` : `<span class="warn">${ic(food.k)}${food.left < 1 ? 'knapp' : `${Math.floor(food.left)} Min`}</span>`);
   parts.push(nd.missing.length ? `<span class="warn">${ic('pop')}kein Zuzug</span>` : nd.full ? `<span>${ic('pop')}Häuser voll</span>` : `<span>${ic('pop')}+1 in ${(GROW_EVERY - tick % GROW_EVERY) * TICK / 1000} s</span>`);
   return parts.join('');
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
 function storeMarkup(I){
-  const nd = needsOf(I), rows = GOODS.map(k => {
-    const make = makeRate(I, k), need = nd.list.find(n => n.k === k), use = (need ? need.use : 0) + workUse(I, k), have = I.stock[k] || 0;
-    return {k, make, use, have};
-  }).filter(g => g.have || g.make || g.use);
+  const nd = needsOf(I), rows = ['essen', ...GOODS].map(k => {
+    const make = ofNeed(k, q => makeRate(I, q)), need = nd.list.find(n => n.k === k), use = (need ? need.use : 0) + ofNeed(k, q => workUse(I, q)), have = haveOf(I, k);
+    return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have, sub:FOODS.includes(k)};
+  }).filter(g => g.k === 'essen' || g.have || g.make || g.use);
   let h = head(`Lager auf ${I.name}`, `Platz für ${storeCap(I)} von jeder Ware. Mehr Platz gibt jeder Speicher.`);
-  h += `<ul class="list needs">${rows.map(g => `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span><b class="qty">${g.have}</b></li>`).join('')}</ul>`;
+  h += `<ul class="list needs">${rows.map(g => `<li class="${g.sub ? 'sub-row' : ''}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span><b class="qty">${g.have}</b></li>`).join('')}</ul>`;
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full');
   if (idle.length) h += `<p class="sub">Es stehen still: ${idle.map(b => `${KINDS[b.kind].n} (${b.idle.text.replace(/\.$/, '')})`).join(', ')}.</p>`;
   return h;
@@ -357,10 +402,13 @@ function renderSheet(){
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
+  } else if (sheetKind === 'road'){
+    const I = isl(sheetData.id), r = I && I.roads && I.roads[sheetData.r]; if (!r){ closeSheet(); return; }
+    h += head('Weg', I.name) + `<p class="sub">Zerstoßene Muscheln und Korallensand. Darauf gehen die Leute schneller, und der Weg schmückt das Dorf.</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="delroad">Entfernen</button></span></div>`;
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur. Tippe jemanden an, dann siehst du den Namen und was die Person tut.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Zu jeder Mahlzeit gehört Grundnahrung wie Taro und Brotfrucht und etwas aus dem Meer: Fisch, später Meeresfrüchte vom Riff.</li><li>Pfahlhäuser und Steinreusen in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur. Tippe jemanden an, dann siehst du den Namen und was die Person tut.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -428,6 +476,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'feast'){ holdFeast(islOfB(b.id), FEASTS.find(F => F.id === btn.dataset.f)); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
+  if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); toast('Der Weg ist weg.', 2000, false); return; }
   if (sheetKind === 'needs' && (act === 'pup' || act === 'pdown')){
     const I = isl(active), pr = prioOf(I), i = pr.indexOf(btn.dataset.c), j = i + (act === 'pup' ? -1 : 1);
     if (j >= 0 && j < pr.length){ [pr[i], pr[j]] = [pr[j], pr[i]]; I.staff = null; syncWalkers(); updateHUD(); save(); }
