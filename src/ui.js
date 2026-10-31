@@ -278,6 +278,8 @@ function needsMarkup(I){
   h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Die Menschen mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${I.ahnen.length} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li>`;
   h += row('pop', 'Zuzug', arrivalText(I, nd), '', nd.growing ? chip('ok', 'wächst') : chip(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll'), nd.growing ? '' : 'need');
   h += `</ul>`;
+  // the clan's navigators, wherever they live
+  { const L = navLore(); if (L.lvl || I.buildings.some(b => b.kind === 'sternhaus')) h += `<p class="sec">Navigatoren</p><ul class="list needs">` + row('einbaum', L.lvl ? `Stufe ${L.lvl}: ${NAV_N[L.lvl]}` : 'Noch kein Navigator', L.best ? `${L.best.p.n} auf ${L.best.I.name}, ${Math.floor(ageOf(L.best.p))} Jahre. Stirbt ${L.best.p.n} ohne Schüler, ist das Wissen fort.` : 'Im Haus der Navigatoren lernt jemand die Zeichen von Wellen, Vögeln und Sternen.', '', L.lvl ? chip('ok', `Stufe ${L.lvl}`) : chip('low', 'keiner')) + `</ul>`; }
   // the land: how much forest still holds the soil, and how many fields are worn out
   const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;
   if (I.type === 'hoch' || fields.length){
@@ -436,6 +438,9 @@ function infoMarkup(I, b){
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
   if (K.beauty && !b.bt) line += `<span>Schönheit +${K.beauty}</span>`;
+  if (b.kind === 'sternhaus') more.push('Stufe 1, Wellen und Vögel: Vögel, die auf Land leben, fliegen morgens hinaus zum Fischen und abends heim. Auf der Karte zeigen sie, wo im Nebel Land liegt. Stufe 2, Wolken über Land: Über einer Insel bleibt eine Wolke stehen, über einer Lagune schimmert sie grün. Stufe 3, Sternenpfad: Auf See reicht der Proviant länger, und das Doppelkanu sieht weiter.',
+    'Das Wissen lebt in den Menschen. Stirbt jemand, der es weiß, und niemand sonst hat es gelernt, ist es fort. Wer lernt, kommt eine Stufe weiter als der beste Lehrer der Insel; was der Lehrer schon weiß, geht doppelt so schnell. Wer mit Siedlern fortfährt, nimmt sein Wissen mit.',
+    'Wie weit man kommen kann, hängt davon ab, was der Clan auf See gesehen hat: Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben oder jenseits der Weiten See.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
   return [crewMarkup(I, b) + bar + (line ? `<div class="stat">${line}</div>` : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
@@ -458,6 +463,13 @@ function renderSheet(){
     const [main, more] = infoMarkup(I, b);
     h += head(K.n, I.name) + main;
     if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
+    if (b.kind === 'sternhaus' && !b.bt){
+      const L = navLore(), S = navPupil(I, b), lv = p => Math.floor(p.nv || 0);
+      h += `<div class="stat"><span>${icon('einbaum')}Wissen des Clans: ${L.lvl ? `Stufe ${L.lvl}, ${NAV_N[L.lvl]}` : 'noch keines'}</span>${L.best ? `<span>bei ${L.best.p.n} auf ${L.best.I.name}</span>` : ''}</div>`;
+      if (S){ const {p, master, goal, who} = S, now = p.nv || 0;
+        h += `<p class="sub">${p.n} lernt${master ? ` bei ${who.n} (Stufe ${master})` : ' allein, langsam'}: ${now >= goal ? `Stufe ${lv(p)}, mehr geht gerade nicht. ${navCap() <= lv(p) ? 'Erst neue Inseln auf See bringen neues Wissen.' : 'Erst muss ein anderer mehr wissen.'}` : `auf dem Weg zu Stufe ${lv(p) + 1}, ${NAV_N[lv(p) + 1]}.`}</p>${now < goal ? `<span class="mbar big"><i style="width:${Math.round((now - lv(p)) * 100)}%"></i></span>` : ''}`; }
+      else if (!crewAt(I, b)) h += '<p class="sub">Niemand sitzt bei den Steinen. Ohne Lehrer lernt keiner.</p>';
+    }
     if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${(I.ahnen || []).length} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;

@@ -167,9 +167,10 @@ function sailTo(s, dest, quiet){
   s.path = curvePath(s, path); s.pi = 0; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
+const sight = s => SHIPS[s.kind].vision * (s.kind === 'dc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
 /* ---------- the double canoe explores on its own: out to the edge of the known sea, turning home in time to take on
    new provisions, and out again, until you stop it or no provisions are left at home */
-const dayPx = () => SHIPS.dc.speed * .85 * VOYAGE_DAY * TICK / 1000;   // how far a double canoe gets in one day at sea
+const dayPx = () => SHIPS.dc.speed * .85 * voyageDay() * TICK / 1000;   // how far a double canoe gets in one day at sea
 const homeFor = s => { const own = islands.filter(I => I.settled); return own.reduce((m, I) => Math.hypot(I.harbor.x - s.x, I.harbor.y - s.y) < Math.hypot(m.harbor.x - s.x, m.harbor.y - s.y) ? I : m, own[0]); };
 function fogShare(p, r){ let n = revealed(p) ? 0 : 2; for (let k = 0; k < 12; k++){ const a = k / 12 * TAU; if (!revealed({x:p.x + Math.cos(a) * r, y:p.y + Math.sin(a) * r})) n++; } return n / 14; }
 function frontier(s, H){
@@ -182,7 +183,8 @@ function frontier(s, H){
     const f = fogShare(p, 120); if (f < .35) continue;
     const out = Math.hypot(p.x - s.x, p.y - s.y), back = Math.hypot(p.x - H.harbor.x, p.y - H.harbor.y);
     if ((out + back) * 1.3 + dayPx() * 2 > reach) continue;
-    cand.push({p, score:f * 100 - out * .04 + p.x / W * 12});
+    const hint = navHints().some(h => Math.hypot(h.I.center.x - p.x, h.I.center.y - p.y) < 320);   // birds or clouds point that way
+    cand.push({p, score:f * 100 - out * .04 + p.x / W * 12 + (hint ? 70 : 0)});
   }
   cand.sort((a, b) => b.score - a.score);
   for (const c of cand.slice(0, 4)) if (findPath(s, c.p)) return c.p;
@@ -242,7 +244,7 @@ function stepShips(now, dt){
       if (d <= step){ s.x = t.x; s.y = t.y; s.pi++; step -= d; s.dist += d; }
       else { s.x += dx / d * step; s.y += dy / d * step; s.dist += step; step = 0; }
     }
-    if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (exploreAt(s.x, s.y, SHIPS[s.kind].vision) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
+    if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (exploreAt(s.x, s.y, sight(s)) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
     if (s.pi >= s.path.length) arriveShip(s);
   }
 }
@@ -258,7 +260,7 @@ function arriveShip(s){
   if (!d || !d.isl){ s.state = 'sea'; if (sheetKind === 'ship') renderSheet(); save(); return; }
   const T = isl(d.isl), from = s.last && isl(s.last);
   s.state = 'moored'; s.port = T.id; const m = moorSpot(T, s); s.x = m.x; s.y = m.y;
-  exploreAt(s.x, s.y, SHIPS[s.kind].vision);
+  exploreAt(s.x, s.y, sight(s));
   // a cord grows between where it came from and here, if here is ours or a clan
   if (from && from !== T && (T.settled || T.clan) && routeIndex(from.id, T.id) < 0){
     routes.push({a:from.id, b:T.id, knots:T.clan ? 0 : 1, lastGift:tick, plan:{a:{}, b:{}}}); invalidate();
@@ -345,7 +347,7 @@ function stepYards(){
 }
 /* On a free voyage a double canoe eats provisions; without them the crew turns home, slowly. On a trade chain they eat in port. */
 function feedCrews(){
-  if (tick % VOYAGE_DAY) return;
+  if (tick % voyageDay()) return;
   for (const s of ships){
     if (!s.own || s.kind !== 'dc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
     if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; continue; }

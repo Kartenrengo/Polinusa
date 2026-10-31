@@ -192,6 +192,43 @@ Jeder Bewohner ist ein Mensch mit Namen, Geburt und Lebensspanne, und jede Figur
   gegangen ist und wer Häuptling wurde.
 - Ältere Spielstände bekommen beim Laden Menschen mit gemischtem Alter für ihre Bewohnerzahl.
 
+## Navigatoren
+
+Das Wissen der Seefahrer steckt in Menschen, nicht in Gebäuden. Es wird gelehrt, weitergegeben und kann verloren gehen.
+
+- **Haus der Navigatoren** (mit der Aufgabe „Das große Kanu“): ein Haus mit einem Kreis aus Steinen, an dem die Punkte des
+  Sternenkompasses gelernt werden, wie es Mau Piailug von Satawal noch lehrte. Ein Bewohner sitzt dort und lernt; das
+  kostet einen Arbeiter.
+- **Drei Stufen:** 1 *Wellen und Vögel*: Landvögel fliegen morgens zum Fischen hinaus und abends heim. Auf der Karte
+  zeigen sie, in welcher Richtung im Nebel Land liegt. 2 *Wolken über Land*: Über einer Insel bleibt eine Wolke stehen,
+  über einer Lagune ist ihre Unterseite grün. Man sieht sie weiter als die Vögel. 3 *Sternenpfad*: Auf See reicht der
+  Proviant 40 % länger, und das Doppelkanu sieht ein Viertel weiter.
+- **Lernen:** Der Schüler kommt eine Stufe weiter als der beste Lehrer seiner Insel. Was der Lehrer schon weiß, lernt er
+  in drei Jahren, Neues allein in sechs. Ist ein Schüler so weit, wie es geht, setzt sich der Nächste an die Steine, so
+  bekommt das Wissen einen zweiten Kopf.
+- **Was der Clan gesehen hat**, begrenzt das Wissen: Stufe 2 erst nach drei neuen Inseln, Stufe 3 nach sieben oder sobald
+  Land jenseits der Weiten See gefunden ist.
+- **Das Wissen stirbt mit den Menschen.** Geht der letzte, der eine Stufe kannte, zu den Ahnen, ist sie fort, und eine
+  Nachricht sagt es. Siedler nehmen ihr Wissen mit ins neue Dorf.
+- Die Übersicht zeigt das Wissen des Clans und wer es trägt; die Chronik hält den ersten Navigator und den Sternenpfad fest.
+
+## Wie alles ineinandergreift
+
+- **Erkunden → Wissen → Erkunden:** Neue Inseln heben die Grenze der Navigatoren. Vögel und Wolken zeigen verborgenes
+  Land, und „Erkunden lassen“ steuert bevorzugt dorthin. Der Sternenpfad spart Proviant für die große Fahrt nach Osten
+  und zu den Schatzinseln.
+- **Menschen tragen alles:** Jeder Arbeiter, Taucher, Bauer und Navigator ist ein Mensch mit Namen und Alter. Kinder
+  arbeiten erst mit sechs, Alte nicht mehr. Wer stirbt, nimmt sein Wissen mit, und seine Stelle bleibt leer, bis jemand
+  nachrückt.
+- **Ahnen:** Tote kommen ins Ahnenhaus und bringen Ansehen. Das Fest der Plejaden ehrt sie und wird mit vielen Ahnen
+  größer. Ansehen holt Siedler aufs Kanu, und Siedler gründen Dörfer, die das Netz knüpfen.
+- **Land und Meer:** Felder zehren am Boden, Wald schützt ihn, zu viel Rodung bringt Erosion, Stürme treffen kahle Inseln
+  härter. Fischer, Taucher und Felder füllen dieselbe Nahrung; Wind, Nacht und Rāhui bestimmen, wann aufs Meer gefahren wird.
+- **Auch in der Abwesenheit** läuft alles weiter: Ernte, Geburt, Tod, Lernen, Fahrten und Chronik. Der Bericht
+  „Während ihr fort wart“ erzählt es.
+- Ein langer Prüflauf über vierzig Inseljahre, mit Stürmen, Festen, Abwesenheit, Speichern und Laden, prüft dabei, dass
+  Bewohner, Figuren, Vorräte, Arbeiter und Wissen immer zueinander passen.
+
 ## Die große Fahrt
 
 Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jahren bis Fidschi, Tonga und Samoa fuhren.

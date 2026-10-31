@@ -729,6 +729,7 @@ function workFx(c, w, now){
       blob(4.4, -.4, 1.4, .55, '#F3D9A0'); line(4.4, -.6, 4.4, -4, '#7A5434', .45);
       const s = Math.sin(t * 9) * 1.4; line(2.4 + s, -3.1, 6.4 + s, -3.1, '#2B1D14', .4); break; }
     case 'feed': { const g = (t * 1.1) % 1; if (g < .6){ const q = g / .6; dot(3.4 + q * 2.4, -4 + q * q * 4, .55, '#5E8A3A'); } break; }   // taro thrown to the pigs
+    case 'stars': { const a = t * 1.2; c.strokeStyle = '#8E8A80'; c.lineWidth = .35; c.beginPath(); c.ellipse(5, -.4, 3, 1.3, 0, 0, TAU); c.stroke(); dot(5 + Math.cos(a) * 3, -.4 + Math.sin(a) * 1.3, .5, '#F4ECD8'); dot(5, -.4, .45, '#3A2E2A'); break; }   // a pebble walks the star compass
     case 'leaf': { const h = .5 + Math.abs(Math.sin(t * 2)) * .9; blob(4.4, -.5, 2.8, h, '#5E8A3A'); line(1.8, -.5, 7, -.5, '#B9D08A', .3); break; }   // banana leaves laid over the pit
   }
 }
@@ -890,12 +891,38 @@ function label(c, x, y, k, text, sub, font = NAME_FONT){
 function drawLabels(c){
   if (lod === 'near') return;
   const k = clamp(.95 / cam.z, .75, 2.6), v = view(200);
-  seaNames(c, k);
+  seaNames(c, k); drawNavHints(c, performance.now());
   for (const I of islands){
     if (!I.discovered || !ptIn(I.labelAt.x, I.labelAt.y, v)) continue;
     label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : I.treasure ? `Schatzinsel: ${GN[I.treasure.k]}` : 'unbewohnt');
     // a treasure island shows what it gives next to its name
     if (I.treasure) put(c, I.labelAt.x, I.labelAt.y + 24 * k, k * .9, 1, 0, 'tr|' + I.treasure.k, `<use href="#ic-${I.treasure.k}" transform="translate(-10 -10)"/>`);
+  }
+}
+/* What the navigators read (see navHints): birds that fly out from hidden land at dawn and home at dusk, and over it,
+   from the second level on, a cloud that stands still while the others drift, green underneath over a lagoon */
+function drawNavHints(c, now){
+  const H = navHints(); if (!H.length) return;
+  const v = view(300), p = dayPhase(), k = clamp(1.2 / cam.z, .8, 4.5);
+  for (const {I, near, cloud} of H){
+    if (!boxIn(I.box, v)) continue;
+    const dx = near.cx - I.center.x, dy = near.cy - I.center.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    if (cloud){
+      // a cloud that stands still over land while others pass: drawn as puffs with one outline, the underside grey, or green over a lagoon
+      const R = (I.atoll ? 1.15 : 1) * Math.max(1, .3 / cam.z), puffs = [[-44, 4, 30], [-14, -14, 40], [24, -8, 36], [50, 6, 26], [4, 10, 34]];
+      c.save(); c.translate(I.center.x, I.center.y - 40); c.scale(R, R); c.lineWidth = 2.4 / (cam.z * R); c.strokeStyle = 'rgba(30,20,16,.5)';
+      const shape = () => { c.beginPath(); for (const [x, y, r] of puffs){ c.moveTo(x + r, y * .6); c.ellipse(x, y * .6, r, r * .62, 0, 0, TAU); } };
+      shape(); c.stroke(); c.fillStyle = '#FBF8EF'; shape(); c.fill();
+      c.save(); shape(); c.clip(); const u = c.createLinearGradient(0, -4, 0, 30); u.addColorStop(0, I.atoll ? 'rgba(121,198,184,0)' : 'rgba(140,140,135,0)'); u.addColorStop(1, I.atoll ? 'rgba(121,198,184,.8)' : 'rgba(140,140,135,.45)'); c.fillStyle = u; c.fillRect(-90, -4, 180, 50); c.restore();
+      c.restore();
+    }
+    // at dawn the birds fly out towards the known sea, at dusk they come home; in between they fish far out
+    const out = p < .25 ? p / .25 : p < .45 ? 1 : p < .62 ? 1 - (p - .45) / .17 : 0; if (out <= 0) continue;
+    for (let i = 0; i < 4; i++){
+      const f = ((now / 9000 + i * .23 + I.center.x * .01) % 1) * .35, dist = 90 + (out * .8 + f) * Math.min(d, 520), side = (i - 1.5) * 12;
+      const x = I.center.x + ux * dist - uy * side, y = I.center.y + uy * dist + ux * side;
+      c.save(); c.translate(x, y); c.scale(k, k); stroke(c, Math.sin(now / 200 + i * 2) > -.2 ? BIRD1 : BIRD2, '#1E1410', 1.2, null, 'round', .9); c.restore();
+    }
   }
 }
 /* The open sea has names too: written faintly on the chart, even where the fog still lies */

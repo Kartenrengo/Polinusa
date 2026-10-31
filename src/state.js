@@ -99,10 +99,10 @@ function serialize(){
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
       fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rd:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || ''} : undefined,
-      ppl:I.people ? I.people.map(p => [p.id, p.n, p.b, p.l, p.a]) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
+      ppl:I.people ? I.people.map(p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1000 : 0]) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
       nm:I.custom ? I.name : undefined, ts:I.treasure ? I.treasure.left : undefined, wr:I._wg ? wearCode(I._wg) : I.wearSaved || undefined, rd:I.roads && I.roads.length ? I.roads.map(r => r.map(p => [Math.round(p.x), Math.round(p.y)])) : undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, pr:I.prio, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0, b.soil != null ? Math.round(b.soil * 100) / 100 : null, b.fallow ? 1 : 0])})),
-    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined, fk:s.folk && s.folk.length ? s.folk.map(p => [p.id, p.n, p.b, p.l, p.a]) : undefined}))});
+    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined, fk:s.folk && s.folk.length ? s.folk.map(p => [p.id, p.n, p.b, p.l, p.a, p.nv || 0]) : undefined}))});
 }
 function restore(raw){
   try {
@@ -118,7 +118,7 @@ function restore(raw){
       I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat, got, soil, fal]) => ({id, kind, x, y, born, v:v || {}, ...(bt ? {bt} : {}), ...(boat ? {boat} : {}), ...(bt && got != null ? {got} : {}), ...(soil != null ? {soil} : {}), ...(fal ? {fallow:true} : {})}));
       if (d.pr) I.prio = d.pr;
       if (d.nm){ I.name0 = I.name; I.name = d.nm; I.custom = true; }
-      I.people = d.ppl ? d.ppl.map(([id, n, b, l, a]) => ({id, n, b, l, a})) : null; I.ahnen = d.anc || []; I.chief = d.chf || 0; I.chiefs = d.chl || [];
+      I.people = d.ppl ? d.ppl.map(([id, n, b, l, a, nv]) => ({id, n, b, l, a, ...(nv ? {nv} : {})})) : null; I.ahnen = d.anc || []; I.chief = d.chf || 0; I.chiefs = d.chl || [];
       if (I.treasure && d.ts != null) I.treasure.left = d.ts;
       I.wearSaved = d.wr || null; I._wg = null; I._wp = null; I.roads = (d.rd || []).map(r => r.map(([x, y]) => ({x, y}))); I._rp = null;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
@@ -128,7 +128,7 @@ function restore(raw){
     ships = []; selShip = null;
     for (const o of s.ships || []){
       if (o.port && !isl(o.port)) o.port = null;
-      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, auto:!!o.au, folk:(o.fk || []).map(([id, n, b, l, a]) => ({id, n, b, l, a}))};
+      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, auto:!!o.au, folk:(o.fk || []).map(([id, n, b, l, a, nv]) => ({id, n, b, l, a, ...(nv ? {nv} : {})}))};
       ships.push(sh);
       if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
       if (sh.route != null && !routes[sh.route]) sh.route = null;

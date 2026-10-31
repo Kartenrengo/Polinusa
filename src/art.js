@@ -213,6 +213,8 @@ function artOf(kind, o = {}){
     case 'taro': return `<use href="#tp"/>` + fieldState(o);
     // on the map the catch on the racks is drawn over them (see drawFishers), the dugout lies on the beach while nobody is out
     case 'fisch': return (o.boat ? `<g transform="translate(-9 7)">${yardArt('ein', o.boat - 1)}</g>` : o.dry ? '' : `<use href="#beached" transform="translate(-9 6) scale(.75)"/>`) + `<use href="#${o.dry ? 'rack0' : 'rack'}"/><use href="#${o.dry ? 'rack0' : 'rack'}" transform="translate(9 3) scale(.7)"/>`;
+    // the star compass of stones beside the house, as navigators of the Carolines taught it
+    case 'sternhaus': return hut + `<g transform="translate(13 2)"><ellipse rx="6.4" ry="3" fill="#C9B48A" opacity=".55"/>${[...Array(12)].map((_, i) => { const a = i / 12 * TAU; return `<ellipse cx="${(Math.cos(a) * 5.6).toFixed(1)}" cy="${(Math.sin(a) * 2.6).toFixed(1)}" rx=".75" ry=".5" fill="${i % 3 ? '#8E8A80' : '#F4ECD8'}" stroke="#2B1D14" stroke-width=".3"/>`; }).join('')}<ellipse rx="1" ry=".6" fill="#3A2E2A" stroke="#2B1D14" stroke-width=".3"/></g>`;
     case 'ahnenhaus': return `<path d="M-11 0V-9M11 0V-9" stroke="#3B2618" stroke-width="1.6"/><path d="M-11-2.6h22" stroke="#3B2618" stroke-width="1"/>` +
       `<path d="M-12.6-9H12.6L13.4-11.6H-13.4Z" fill="#6B4A2E" stroke="#2B1D14" stroke-width=".7"/><path d="M-9.6-11.6V-19H9.6V-11.6Z" fill="#8C6440" stroke="#2B1D14" stroke-width=".7"/>` +
       `<g fill="#EFE6D2" stroke="#2B1D14" stroke-width=".4">${[-6, -2, 2, 6].map(x => `<path d="M${x - 1.5}-12.6Q${x - 1.7}-15.4 ${x}-15.6Q${x + 1.7}-15.4 ${x + 1.5}-12.6Z"/>`).join('')}</g>` +

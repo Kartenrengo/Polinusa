@@ -147,6 +147,9 @@ const CHRONIK = [
   {id:'weite', t:'Über die Weite See', d:'Land jenseits der Weiten See gefunden.', test:() => islands.some(I => I.discovered && I.center.x > FAR_X), mana:6},
   {id:'brache', t:'Der Boden ruht', d:'Ein Feld brachliegen lassen.', test:() => (stats.brache || 0) >= 1, mana:2},
   {id:'taucher', t:'Mit offenen Augen', d:'100 Tauchgänge ohne Atemgerät.', test:() => (stats.tauch || 0) >= 100, mana:3},
+  {id:'navigator', t:'Der erste Navigator', d:'Jemand liest Wellen und Vögel.', test:() => navLore().lvl >= 1, mana:2},
+  {id:'sterne', t:'Der Sternenpfad', d:'Ein Navigator kennt den Sternenpfad.', test:() => navLore().lvl >= 3, mana:5},
+  {id:'ahnen10', t:'Zehn Ahnen', d:'Zehn Ahnen auf einer Insel.', test:() => villages().some(I => (I.ahnen || []).length >= 10), mana:3},
   {id:'jahre', t:'Fünf Jahre', d:'Fünf Jahre auf den Inseln.', test:() => yearOf() >= 5, mana:5}
 ];
 function chronikTick(){

@@ -41,8 +41,8 @@ function answerGifts(){
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
-const SIT_FX = new Set(['pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
+const WORK_FX = {sternhaus:'stars', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
+const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
 const JOB_LOAD = {taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const landOfB = (I, b) => b._lk === b.x + b.y ? b._l : (b._lk = b.x + b.y, b._l = landOf(I, b));   // buildings stay put, so this is kept
@@ -62,6 +62,7 @@ function jobFor(I, b, i){
   if (b.kind === 'fisch') return job('fish', b.x + 3 * side, b.y + 4, {load:'fisch', tool:'speer'});
   if (b.kind === 'taucher') return job('dive', b.x + 3 * side, b.y + 5, {load:'muschel'});
   if (b.kind === 'riff'){ const w = wadeSpot(I, b); return job('wade', w.x + 2 * side, w.y, {load:'muschel'}); }
+  if (b.kind === 'sternhaus') return job('learn', b.x + 11, b.y + 5, {});
   return job('carry', b.x + side * 4 * i, b.y + 4, {load:JOB_LOAD[b.kind] || null, tool:catOf(b) === 'essen' ? 'ko' : null});
 }
 const yardSpot = b => ({x:b.x + 11, y:b.y + 12});
@@ -97,7 +98,7 @@ const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.p
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
 const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Feldfrüchte'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
 const prioOf = I => I.prio && I.prio.length === PRIO.length ? I.prio : (I.prio = PRIO.map(q => q.id));
-const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' ? 'boot' : 'handwerk'; };
+const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
 const capOf = b => { const K = KINDS[b.kind], mc = b.v && b.v.mc; return mc == null ? K.crew || 0 : Math.min(K.crew || 0, mc); };
 function staff(I){
   let free = workers(I); const crew = new Map(), sites = [], boats = [], staffed = new Set(), cats = {}; let yard = 0;
@@ -109,6 +110,7 @@ function staff(I){
     if (cat === 'boot'){
       if (yardB) yard = give(yardB, YARD_CREW, cat);
       for (const b of I.buildings) if (b.kind === 'steg' && b.boat > 0 && !b.bt && give(b, 1, cat)) boats.push(b);
+      for (const b of I.buildings) if (b.kind === 'sternhaus' && !b.bt && give(b, capOf(b), cat)) staffed.add(b);
       continue;
     }
     for (const b of I.buildings.filter(q => KINDS[q.kind].crew && !q.bt && catOf(q) === cat)){
@@ -197,7 +199,9 @@ function lifeTick(I){
     if (!p.a && ageOf(p) >= CHILD_Y){ p.a = 1; changed = true; if (lifeLog) lifeLog.grown++; else if (I.id === active) note(`${p.n} ist erwachsen und kann jetzt arbeiten.`); }
     if (tick - p.b < p.l || I.pop <= 2) continue;
     // a death: the name goes to the ancestors; with an ancestor house the dead add to the clan's standing
-    I.people.splice(I.people.indexOf(p), 1); I.pop--; changed = true;
+    const lore0 = (p.nv || 0) >= 1 ? navLore().lvl : 0;
+    I.people.splice(I.people.indexOf(p), 1); I.pop--; changed = true; loreCache = null;
+    if (lore0 && navLore().lvl < lore0){ const msg = `Mit ${p.n} ist Wissen der Navigatoren verloren: ${NAV_N[lore0]}. Ein Schüler im Haus der Navigatoren muss es neu lernen.`; if (lifeLog) lifeLog.lost.push(p.n); else toast(msg, 5200); }
     const chief = I.chief === p.id, house = I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt);
     (I.ahnen = I.ahnen || []).push([p.n, p.b, tick, chief ? 1 : 0]); if (I.ahnen.length > 80) I.ahnen.shift();
     if (house) mana += chief ? 3 : 1;
@@ -212,6 +216,65 @@ function lifeTick(I){
   }
   if (changed){ I.staff = null; if (!lifeLog) syncWalkers(); }
 }
+/* ---------- navigators. Their knowledge lives in people (p.nv, a level and its fraction) and dies with them. In the house of
+   the navigators one learns from the best other navigator of the island: up to one level beyond the master, fast where
+   the master already knows it, slowly where it is new. How far anyone can get depends on what the clan has seen at sea:
+   level 2 after three new islands, level 3 after seven or once land beyond the Weite See is found. The levels:
+   1 the swells and the birds that fly out from land at dawn and home at dusk, 2 the clouds that stand over land, the
+   lagoon showing green on their underside, 3 the star path: on the open sea provisions last longer and one sees further. */
+const NAV_N = ['', 'Wellen und Vögel', 'Wolken über Land', 'Sternenpfad'];
+const navCap = () => { const n = newLand(), far = islands.some(I => I.discovered && I.center.x > FAR_X); return n >= 7 || far ? 3 : n >= 3 ? 2 : 1; };
+let loreCache = null;
+function navLore(){
+  if (loreCache && loreCache.t === tick) return loreCache;
+  let best = null, lvl = 0;
+  for (const I of islands) if (I.settled && I.people) for (const p of I.people){ const l = Math.floor(p.nv || 0); if (l > lvl){ lvl = l; best = {p, I}; } }
+  return loreCache = {t:tick, lvl, best};
+}
+/* who learns in the house: the one sent to the stones, or the one who learnt last, or the grown-up who knows most and can
+   still go further. Whoever has reached what the best teacher can give makes room, so the knowledge passes to a second head. */
+function navPupil(I, H){
+  const P = I.people || [], top = q => P.reduce((m, r) => r === q ? m : Math.max(m, Math.floor(r.nv || 0)), 0), goal = q => Math.min(navCap(), top(q) + 1);
+  const alive = id => P.find(p => p.id === id && isAdult(p)), can = q => q && (q.nv || 0) < goal(q), at = walkers.find(w => w.isl === I.id && w.job && w.job.b === H);
+  const p = [at && alive(at.pid), alive(H.pupil)].find(can) || P.filter(q => isAdult(q) && can(q)).sort((a, b) => (b.nv || 0) - (a.nv || 0) || b.b - a.b)[0] || alive(H.pupil) || null;
+  return p ? {p, master:top(p), goal:goal(p), who:P.filter(q => q !== p).sort((a, b) => (b.nv || 0) - (a.nv || 0))[0]} : null;
+}
+function navTick(I, n = 1){
+  const H = I.buildings.find(b => b.kind === 'sternhaus' && !b.bt); if (!H || !I.people || !crewAt(I, H)) return;
+  const L = navPupil(I, H); if (!L) return;
+  const {p, master, goal} = L, now = p.nv || 0; H.pupil = p.id;
+  if (now >= goal) return;
+  const lvl0 = Math.floor(now), lore0 = navLore().lvl;
+  p.nv = Math.min(goal, now + n / ((master > lvl0 ? 3 : 6) * YEAR));
+  if (Math.floor(p.nv) > lvl0){
+    loreCache = null;
+    if (lifeLog){ const t = `${p.n} (${NAV_N[Math.floor(p.nv)]})`, e = lifeLog.nav.find(x => x.id === p.id); if (e) e.t = t; else lifeLog.nav.push({id:p.id, t}); }   // each one once, with the level reached
+    else toast(`${p.n} ist jetzt Navigator: ${NAV_N[Math.floor(p.nv)]}.${navLore().lvl > lore0 ? ' ' + navGain(navLore().lvl) : ''}`, 4600);
+  }
+}
+const navGain = l => l === 1 ? 'Draußen zeigen jetzt Vögel, wo im Nebel Land liegt: morgens fliegen sie hinaus, abends heim.' : l === 2 ? 'Jetzt sieht man auch die Wolken, die über fernem Land stehen.' : 'Auf dem Sternenpfad reicht der Proviant länger, und das Doppelkanu sieht weiter.';
+/* hidden land the navigators can read from birds and clouds: not yet seen, but within reach of the known sea. Land birds
+   fish a day's flight out, a standing cloud is seen from further. */
+const navRange = L => L >= 2 ? 1150 : 800;
+let hintCache = null;
+function navHints(){
+  const L = navLore().lvl; if (!L) return [];
+  if (hintCache && hintCache.t > tick - 10 && hintCache.l === L) return hintCache.list;
+  const range = navRange(L), list = [];
+  for (const I of islands){
+    if (I.discovered) continue;
+    let d = Infinity; for (const h of fogHoles) d = Math.min(d, Math.hypot(I.center.x - h.cx, I.center.y - h.cy) - Math.max(h.rx, h.ry));
+    if (d < range) list.push({I, near:fogHoles.reduce((m, h) => Math.hypot(I.center.x - h.cx, I.center.y - h.cy) < Math.hypot(I.center.x - m.cx, I.center.y - m.cy) ? h : m, fogHoles[0]), cloud:L >= 2});
+  }
+  return (hintCache = {t:tick, l:L, list}).list;
+}
+/* the sea next to the known one is rolled in advance, so the birds have somewhere to fly from */
+function rollAhead(){
+  const L = navLore().lvl; if (!L) return;
+  const r = navRange(L);
+  for (const h of fogHoles) for (let cy = Math.floor((h.cy - h.ry - r) / CELL); cy <= Math.floor((h.cy + h.ry + r) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx - r) / CELL); cx <= Math.floor((h.cx + h.rx + r) / CELL); cx++) ensureCell(cx, cy, true);
+}
+const voyageDay = () => Math.round(VOYAGE_DAY * (navLore().lvl >= 3 ? 1.4 : 1));
 /* a quiet message: into the list of the conch, without unrolling */
 function note(msg){ news.unshift({msg, at:Date.now()}); if (news.length > 40) news.length = 40; if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
 
@@ -258,7 +321,7 @@ function syncWalkers(){
     for (let i = 0; i < idle; i++){ const w = loose.shift() || spawnFig(I, homes, 'idle'); if (w.role !== 'idle') freeFig(w); keep.add(w); }
     const fit = (list, n, role) => { list.slice(0, n).forEach(w => keep.add(w)); for (let i = list.length; i < n; i++) keep.add(spawnFig(I, homes, role)); };
     fit(mine.filter(w => w.child), kids, 'kid'); fit(mine.filter(w => w.old), old, 'old');
-    if (keep.size !== mine.length) walkers = walkers.filter(w => w.isl !== I.id || keep.has(w));
+    if (mine.some(w => !keep.has(w))) walkers = walkers.filter(w => w.isl !== I.id || keep.has(w));   // the dead and those who left go, even when others came at the same time
   }
   syncCritters();
 }
@@ -287,7 +350,7 @@ function syncFolk(I, homes, mine){
     const w = loose.splice(bi, 1)[0]; if (initSync){ w.x = w.tx = j.x + rnd(6); w.y = w.ty = j.y + rnd(3); } setJob(I, w, j);
   }
   for (const w of loose) if (w.role !== 'idle') freeFig(w);
-  if (keep.size !== mine.length) walkers = walkers.filter(w => w.isl !== I.id || keep.has(w));
+  if (mine.some(w => !keep.has(w))) walkers = walkers.filter(w => w.isl !== I.id || keep.has(w));   // the dead and those who left go, even when others came at the same time
 }
 function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syncWalkers(); } finally { initSync = false; } }
 /* Who someone is and what they do, for a tap on a figure */
@@ -412,13 +475,13 @@ function jobLeg(I, w, j){
     if (!w.bout){
       w.bout = true;
       // each kind of work looks its own (see workFx): crafts are done sitting on a mat, facing the workplace
-      w.fx = T === 'chop' ? 'chop' : T === 'wade' ? 'scoop' : T === 'carry' ? WORK_FX[j.b.kind] || null : null;
+      w.fx = T === 'chop' ? 'chop' : T === 'wade' ? 'scoop' : T === 'carry' || T === 'learn' ? WORK_FX[j.b.kind] || null : null;
       w.busy = w.fx ? {x:w.x, y:w.y} : null; w.sit = T === 'wait' ? Math.random() < .5 : SIT_FX.has(w.fx); if (w.fx && T === 'carry') w.left = j.b.x < w.x - 1;
       w.wait = T === 'chop' ? 2400 + Math.random() * 1200 : T === 'wade' ? 2600 + Math.random() * 2400 : T === 'plant' ? 500 : T === 'wait' ? 2500 + Math.random() * 3000 : w.fx ? 2800 + Math.random() * 2200 : 900 + Math.random() * 1600;
       return;
     }
     w.bout = false;
-    if (T === 'wait'){ goTo(I, w, j.x + rnd(8), j.y + rnd(4)); return; }
+    if (T === 'wait' || T === 'learn'){ goTo(I, w, j.x + rnd(T === 'learn' ? 3 : 8), j.y + rnd(T === 'learn' ? 2 : 4)); return; }
     const s = j.drop || storeNear(I, w); if (!s){ w.wait = 1500; return; }
     w.carry = j.load; w.leg = 'store'; goTo(I, w, s.x + rnd(3), s.y);
     return;
@@ -655,7 +718,7 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
-    syncPeople(I); lifeTick(I);
+    syncPeople(I); lifeTick(I); navTick(I);
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){
@@ -714,6 +777,7 @@ function econ(){
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
   for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
+  if (tick % 20 === 0) rollAhead();
   answerGifts(); stepYards(); feedCrews(); stepTreasure(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
@@ -963,19 +1027,19 @@ function awayMinute(I, R){
   }
   let nd = needsOf(I); updateLevel(I, nd); nd = needsOf(I);
   if (nd.growing) I.pop = Math.min(nd.cap, I.pop + Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1));
-  I.hunger = 0; syncPeople(I); lifeTick(I);
+  I.hunger = 0; syncPeople(I); lifeTick(I); navTick(I, 30);
 }
 function catchUp(ms){
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
   const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
   const mana0 = mana, knots = routes.map(r => r.knots);
-  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[]};
+  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[]};
   try {
     for (let i = 1; i <= n; i++){
       tick++;
       if (ships.length) stepShips(performance.now(), TICK);
       feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
-      if (i % 30 === 0) for (const I of islands) if (I.settled) awayMinute(I, R);
+      if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); }
       if (i % 150 === 0){ chronikTick(); checkQuest(); }
     }
     chronikTick(); checkQuest();
@@ -996,11 +1060,13 @@ function awayReport(R){
     if (I.pop !== before) lines.push(['pop', `${I.name}: ${I.pop} Menschen`, `vorher ${before}`]);
   }
   // the generations: who was born, who grew up, who went to the ancestors, who leads now
-  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
+  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
   if (L.born || L.came) lines.push(['pop', [L.born && `${L.born} ${L.born === 1 ? 'Kind geboren' : 'Kinder geboren'}`, L.came && `${L.came} zugezogen`].filter(Boolean).join(', '), '']);
   if (L.grown) lines.push(['pop', `${L.grown} ${L.grown === 1 ? 'Kind ist' : 'Kinder sind'} erwachsen geworden`, '']);
   if (L.died.length) lines.push(['mana', `Zu den Ahnen gegangen: ${names(L.died)}`, '']);
   if (L.chiefs.length) lines.push(['mana', `Häuptling geworden: ${names(L.chiefs)}`, '']);
+  if (L.nav && L.nav.length) lines.push(['einbaum', `Navigator geworden: ${names(L.nav.map(x => x.t))}`, '']);
+  if (L.lost && L.lost.length) lines.push(['einbaum', `Mit ${names(L.lost)} ging Wissen der Navigatoren verloren`, '']);
   const built = R.built.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {});
   if (R.built.length) lines.push(['beile', `Fertig gebaut: ${Object.entries(built).map(([n, c]) => c > 1 ? `${c}× ${n}` : n).join(', ')}`, '']);
   const made = Object.entries(R.made).sort((a, b) => b[1] - a[1]).slice(0, 5);

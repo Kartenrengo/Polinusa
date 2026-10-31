@@ -42,7 +42,7 @@ function shipMarkup(s){
 }
 /* Provisions, plainly: where they come from, how long they last, and whether the canoe is ready for the unknown */
 function provisionNote(s, P){
-  const pv = s.cargo.proviant || 0, other = s.people || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0), secs = VOYAGE_DAY * TICK / 1000;
+  const pv = s.cargo.proviant || 0, other = s.people || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0), secs = voyageDay() * TICK / 1000;
   const ready = pv > 0 && !other ? '<span class="state ok">bereit zum Erkunden</span>' : pv > 0 ? '<span class="state low">nur Proviant mitnehmen</span>' : '<span class="state out">kein Proviant</span>';
   const pits = P && P.settled ? P.buildings.some(b => b.kind === 'gaergrube' && !b.bt) : true;
   return `<div class="stat">${ready}${pv ? `<span>${icon('proviant')}${pv}, reicht etwa ${secsText(pv * secs)} auf See</span>` : ''}</div>` +
@@ -109,7 +109,7 @@ function festivalMarkup(I){
   const parts = festivalParts(I), chosen = sheetData.fest || (sheetData.fest = parts.filter(p => p.ok).map(p => p.P.id));
   h += `<ul class="list needs">${parts.map(p => `<li class="${p.ok ? (chosen.includes(p.P.id) ? 'okk' : '') : 'need'}"><span class="nm">${p.P.n}<small>${p.ok ? p.P.text : p.why}</small></span>${p.ok ? `<button class="chip" type="button" data-act="part" data-p="${p.P.id}" aria-pressed="${chosen.includes(p.P.id)}">+${p.gain}</button>` : ''}</li>`).join('')}</ul>`;
   const guests = guestsFor();
-  h += `<p class="sub">Schönheit des Dorfes: +${Math.min(8, Math.floor(beautyOf(I) / 3))}.${guests.length ? ` Als Gäste kommen ${guests.map(T => T.clan.name).join(', ')}, mit Gaben.` : ' Clans mit mindestens 2 Knoten kommen als Gäste.'}</p>`;
+  h += `<p class="sub">Schönheit des Dorfes: +${Math.min(8, Math.floor(beautyOf(I) / 3))}.${ancestorsHonour(I) ? ` Die Ahnen: +${ancestorsHonour(I)}.` : ''}${guests.length ? ` Als Gäste kommen ${guests.map(T => T.clan.name).join(', ')}, mit Gaben.` : ' Clans mit mindestens 2 Knoten kommen als Gäste.'}</p>`;
   h += `<div class="rowx"><span>Ansehen +${festivalGain(I, chosen)}</span><button class="btn primary" type="button" data-act="festival">Fest feiern</button></div>`;
   return h;
 }
