@@ -76,6 +76,8 @@ Inseln, Panua und Talise, und das Atoll Motu.
   Heimat, alle Aufgaben nennen sie bei ihrem Namen. Beide Startinseln haben sicher Ton, Basalt und Wald, damit die
   Aufgaben auf jeder lösbar sind.
 - Spielstände von vorher laden wie gewohnt: Dort ist Panua die Heimat.
+- **Ohne Einführung:** Im Ankunftsfenster „Ohne“ wählen, dann sind gleich alle Gebäude frei, und keine Aufgaben stehen über
+  der Bauleiste. In einem laufenden Spiel geht das im Menü oder im Aufgabenfenster mit „Ohne Einführung“.
 
 ## Anfang
 
@@ -568,6 +570,11 @@ Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen
 Fehlt dort 30 Takte lang etwas, wird es wieder ein Dorf, und die Leute ziehen nach und nach aus.
 Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Nahrung ziehen langsam Leute fort.
 
+**Jede Insel trägt nur so viele Menschen, wie ihr Land ernährt.** Hohe Inseln je nach Fläche etwa 60 bis 160, Atolle 30
+bis 100, weil die Lagune viele auf wenig Land satt macht. Mehr Häuser helfen dann nicht mehr; oben steht „Insel voll“, die
+Übersicht nennt die Zahl. Wer weiter wachsen will, schickt Siedler im Kanu los und gründet anderswo ein Dorf, so wie es im
+Pazifik immer war. Ein kleines Atoll kann darum kein Häuptlingsdorf werden.
+
 - Die Bewohnerzahl oben öffnet die Tafel „Bedarf“. Der Punkt daneben: grün wächst, gelb Häuser voll, rot es fehlt etwas.
 - Fehlt etwas, schwebt das Zeichen der Ware über einigen Häusern. Zieht jemand ein, steigt ein Herz auf.
 
@@ -588,6 +595,24 @@ Erreicht ein Kanu einen Clan, entsteht eine Schnur. Waren an einen Clan sind Gab
 eine Handelskette. Sie antworten später mit einem eigenen Kanu voller Waren. Wie reich die Gegengabe ausfällt,
 hängt von den Knoten auf der Schnur ab. Muschelschmuck knüpft einen Knoten extra, ohne Gaben löst sich alle drei Minuten einer.
 So funktionierten Wertgegenstände im Pazifik: als Gaben, die Beziehungen stiften, nicht als Geld.
+
+## Hochzeiten zwischen den Völkern
+
+Heiraten verbanden die Inselvölker: Feine Matten, Tapa und Schweine gingen als Brautgaben hin und her, und wer heiratete,
+zog in das Dorf des anderen. Gleiche Muster weit verstreut zeigen solche Wege, und das Erbgut der Polynesier erzählt
+bis heute, dass Lapita-Leute auch in die alten Völker des Großen Landes eingeheiratet haben.
+
+- **Hochzeit stiften:** Im Fenster eines Clans oder Volkes unter „Heiraten“. Es braucht eine Schnur mit 3 Knoten, einen
+  freien jungen Erwachsenen (16 bis 34 Jahre) im eigenen Dorf an der Schnur, Platz im Dorf und als Brautgaben 2 Matten und
+  ein Schwein. Der neue Partner zieht zu euch, mit eigenem Namen, und das Dorf feiert drei Tage. Ansehen +4, zwei Knoten mehr.
+- **Brautwerbung:** Manchmal kommen Boten eines befreundeten Clans: Jemand von ihnen möchte einen der Euren heiraten,
+  der nach ihrem Brauch zu ihnen zieht. Stimmt ihr zu, bleiben ihre Brautgaben bei euch, und ihr werdet verwandt;
+  lehnt ihr ab, löst sich ein Knoten.
+- **Verwandt sein:** Solange ein Ehepaar lebt (wer fortzog, zählt 40 Jahre), löst sich die Schnur nicht mehr, Gaben zählen
+  pro Ehe ein Zehntel mehr (höchstens zwei), und die Verwandten kommen als Gäste zum Fest der Plejaden. Wer aus einem
+  Töpfervolk einheiratet, stempelt weiter das Muster seiner Heimat: Es verblasst im Dorf nicht.
+- Das Fenster des Clans zeigt die Paare und wer zu ihnen gezogen ist, „Alle Menschen“ zeigt die Verheirateten. Die Chronik
+  kennt „Ein Bund durch Heirat“ und „Verwandte in der Fremde“ (mit einem Volk anderer Kultur).
 
 ## Ereignisse und Chronik
 

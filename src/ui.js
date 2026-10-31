@@ -36,7 +36,7 @@ function updateHUD(){
   $('manaNum').textContent = Math.floor(mana);
   const S = seasonOf(); $('seasonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('seasonTxt').textContent = `${moonOf() + 1}. Mond`;
   $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
-  $('popNum').textContent = I.pop; $('popCap').textContent = '/' + houseCap(I);
+  $('popNum').textContent = I.pop; $('popCap').textContent = '/' + popCap(I);
   showWind();
   const free = staffOf(I).free; $('idleNum').textContent = free; $('idleBtn').classList.toggle('zero', !free); $('idleBtn').setAttribute('aria-label', `${free} ohne Arbeit. Tippen zeigt sie nacheinander.`);
   // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
@@ -270,6 +270,7 @@ function endSteer(){ if (mode === 'steer'){ mode = 'idle'; selShip = null; reque
 const perMin = v => v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
 function growText(I, nd){
   if (nd.missing.length) return `Das Dorf wächst nicht, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
+  if (nd.atMax) return `Die Insel ist voll: Mehr als ${islandMax(I)} Menschen trägt sie nicht.`;
   if (nd.full) return 'Alle Häuser sind voll.';
   return 'Das Dorf wächst.';
 }
@@ -288,7 +289,7 @@ function needsMarkup(I){
   // people and who comes next
   h += `<p class="sec">Bewohner</p><ul class="list needs">`;
   const P = I.people || [], kids = P.filter(p => stageOf(p) === 'kid').length, rest = kids + P.filter(p => stageOf(p) === 'old').length;
-  h += row('pop', `${I.pop} Bewohner`, `${sf.total - sf.free} arbeiten, ${sf.free} ohne Arbeit, ${kids} Kinder, ${rest - kids} Alte${I.inside ? `, ${I.inside} davon zu Hause` : ''}. Platz für ${nd.cap}.`, bar(I.pop / Math.max(1, nd.cap)), nd.full ? chip('low', 'voll') : chip('ok', `${nd.cap - I.pop} frei`));
+  h += row('pop', `${I.pop} Bewohner`, `${sf.total - sf.free} arbeiten, ${sf.free} ohne Arbeit, ${kids} Kinder, ${rest - kids} Alte${I.inside ? `, ${I.inside} davon zu Hause` : ''}. Platz für ${nd.cap}, die Insel trägt höchstens ${islandMax(I)}.`, bar(I.pop / Math.max(1, nd.cap)), nd.full ? chip('low', 'voll') : chip('ok', `${nd.cap - I.pop} frei`));
   h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Die Menschen mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${I.ahnen.length} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li>`;
   h += row('pop', 'Zuzug', arrivalText(I, nd), '', nd.growing ? chip('ok', 'wächst') : chip(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll'), nd.growing ? '' : 'need');
   h += `</ul>`;
@@ -347,7 +348,8 @@ function needsMarkup(I){
   const lifeFor = {essen:'taro', schweine:'schwein', kava:'kava', tapa:'maulbeer'};
   const tips = nd.list.filter(n => n.state !== 'ok').map(n => { const id = lifeFor[n.k];
     return id && lifeFits(I, id) && !lifeOf(I).includes(id) ? (n.k === 'essen' ? `Auf ${I.name} gibt es ${LIFE.taro.no}. Bis ein Kanu Setzlinge bringt, nähren Fischgestell, Riffsammler und das Wild.` : `${GN[n.k]}: Auf ${I.name} gibt es ${LIFE[id].no}. Bring ${LIFE[id].s} im Kanu mit, oder schick ${GN[n.k]} her.`) : n.N.hint[I.type]; });
-  if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
+  if (nd.atMax) tips.push(`${I.name} trägt höchstens ${islandMax(I)} Menschen. Wer mehr will, schickt Siedler im Kanu los und gründet anderswo ein Dorf.`);
+  else if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
   if (nd.list.some(n => n.k === 'essen' && n.state === 'out')) h += `<p class="sub">Ohne Nahrung ziehen nach und nach Leute fort.</p>`;
   if (nd.next && nd.next.lvl < 3) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
@@ -358,6 +360,7 @@ const activeCount = I => I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).l
 /* When the next person moves in, and why nobody does */
 function arrivalText(I, nd){
   if (nd.missing.length) return `Niemand zieht zu, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
+  if (nd.atMax) return `Die Insel ist voll: ${islandMax(I)} Menschen trägt sie, mehr nicht, auch mit mehr Häusern. Siedler können anderswo ein Dorf gründen.`;
   if (nd.full) return 'Die Häuser sind voll. Jedes neue Haus bringt 4 Menschen.';
   const per = GROW_EVERY * TICK / 1000 / (I.joyUntil > tick ? 2 : 1), next = (GROW_EVERY - tick % GROW_EVERY) * TICK / 1000, room = nd.cap - I.pop;
   return `Alle ${String(per).replace('.', ',')} Sekunden kommt jemand dazu, der Nächste in ${next} Sekunden. Noch ${room} ${room === 1 ? 'Platz' : 'Plätze'} frei, voll in etwa ${Math.ceil(room * per)} Sekunden.`;
@@ -369,6 +372,7 @@ function vitalLine(I){
   const fn = nd.list.find(x => x.k === 'essen'), fnet = fn.make - fn.use - fn.work, left = fnet >= 0 ? Infinity : fn.stock / -fnet;
   if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
   if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
+  if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
   return `<span>${ic('pop')}+1 in ${(GROW_EVERY - tick % GROW_EVERY) * TICK / 1000} s</span>`;
 }
@@ -404,6 +408,12 @@ function clanMarkup(T){
   h += `<p>Sie machen ${icons(C.makes)}.<br>Sie schätzen ${icons(C.wants)}.</p>`;
   h += `<p class="sub">${C.culture ? 'Auch bei ihnen' : 'Bei diesem Clan'} gibt es keine Preise. Ihr schickt eine Gabe, und sie antworten später mit dem, was sie machen. Je mehr Knoten die Schnur hat, desto reicher fällt die Gegengabe aus. Muschelschmuck knüpft einen Knoten extra. Kommt lange nichts, löst sich ein Knoten.</p>`;
   h += C.motif ? `<p class="sub">${motifIcon(C.motif, 'inline')}Ihr Muster: ${MOTIFS[C.motif].n}. ${kin(T) ? 'Sie stempeln auch euer Muster, ihr seid verwandt: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann werden sie euch verwandt, und eure Gaben zählen mehr.'}</p>` : `<p class="sub">Sie töpfern nicht. ${kin(T) ? 'Aber eure Töpfe mit eurem Muster schätzen sie: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann zählen eure Gaben mehr.'}</p>`;
+  // marriage: who is married to them, who went to live with them, and a wedding to arrange
+  { const wed = islands.filter(I => I.settled).flatMap(I => (I.people || []).filter(p => p.w === T.id && !p.f).map(p => [p, I])), out = inlawsOf(T), c = weddingCheck(T);
+    h += `<p class="sec">Heiraten</p>`;
+    if (wed.length || out.length) h += `<ul class="list needs">${wed.map(([p, I]) => `<li>${icon('pop')}<span class="nm">${p.n} und ${p.sp || 'Partner'}<small>leben auf ${I.name}</small></span></li>`).join('')}${out.map(x => `<li>${icon('pop')}<span class="nm">${x.n}<small>aus ${x.from}, lebt jetzt ${clanBeim(C)}</small></span></li>`).join('')}</ul>`;
+    h += `<p class="sub">${wed.length || out.length ? 'Ihr seid verwandt: Die Schnur löst sich nicht, eure Gaben zählen mehr, und sie kommen als Gäste zum Fest der Plejaden.' : 'Eine Hochzeit bindet zwei Völker: Die Schnur löst sich nicht mehr, Gaben zählen mehr, und die Verwandten kommen zum Fest.'}</p>`;
+    h += `<div class="rowx"><span class="sub">${c.ok ? `${c.p.n} aus ${c.I.name}, ${Math.floor(ageOf(c.p))} Jahre, könnte heiraten. Brautgaben: ${costText(BRIDE_GIFTS)}. Der neue Partner zieht zu euch.` : c.why}</span><button class="btn primary" type="button" data-act="wed" ${c.ok ? '' : 'disabled'}>Hochzeit</button></div>`; }
   if (r) h += `<p>${r.knots} Knoten Vertrauen. ${T.debt >= 1 ? 'Eine Gegengabe ist unterwegs oder kommt bald.' : 'Gerade schulden sie euch nichts.'}</p>`;
   h += r ? `<div class="rowx"><span class="sub">Fahr mit einem beladenen Kanu hin oder setze eines in die Schnur.</span><button class="btn primary" type="button" data-act="gift">Schnur ansehen</button></div>` : `<p class="sub">Fahr mit einem Kanu hin, dann entsteht eine Schnur.</p>`;
   return h;
@@ -423,6 +433,7 @@ function landingMarkup(){
   if (pick && pick.type === 'atoll') h += `<p><b>${pick.name}</b> ist ein Atoll: Sand und Palmen, kein Ton, kein Stein, kaum Holz. Ein guter zweiter Ort, aber kein Anfang. Wählt eine hohe Insel.</p>`;
   else h += `<p>Euer Clan hat das alte Land im Westen verlassen: fünf Familien im Ahnenkanu, mit Holz, Nahrung, Taro, Brotfrucht, Maulbeere, Kava und einem Paar Schweine. Vor euch liegen zwei hohe Inseln und das Atoll ${M.name}. Wo lasst ihr euch nieder?</p>`;
   h += `<ul class="list needs">${list.map(I => `<li class="${pick === I ? 'pick' : ''}">${icon('insel')}<span class="nm">${I.name}<small>${landFacts(I)}</small></span><span class="chips"><button class="chip" type="button" data-act="lookat" data-i="${I.id}">Ansehen</button><button class="btn primary small" type="button" data-act="found" data-i="${I.id}">Hier landen</button></span></li>`).join('')}</ul>`;
+  h += `<div class="rowx"><span class="sub">Aufgaben führen Schritt für Schritt ins Spiel.</span><span class="chips" role="group" aria-label="Einführung"><button class="chip" type="button" data-act="intro" data-v="on" aria-pressed="${!landing.skip}">Mit Einführung</button><button class="chip" type="button" data-act="intro" data-v="off" aria-pressed="${!!landing.skip}">Ohne</button></span></div>`;
   h += `<p class="sub">Von dort aus wächst euer Reich: Dörfer auf vielen Inseln, Clans als Freunde, die große Fahrt nach Osten, und am Rand der See Menschen einer ganz anderen Kultur.</p>`;
   return h;
 }
@@ -537,6 +548,7 @@ function renderSheet(){
     h += head(`Die Menschen von ${I.name}`, `${P.length} leben hier${(I.ahnen || []).length ? `, ${I.ahnen.length} sind bei den Ahnen` : ''}. Die Zahl ist das Alter in Jahren; ein Jahr dauert zwölf Minuten.`);
     if (I.chiefs && I.chiefs.length) h += `<p class="sub"><b>Häuptlinge:</b> ${I.chiefs.join(' · ')}</p>`;
     h += group('Erwachsene', by('adult')) + group('Kinder', by('kid')) + group('Alte', by('old'));
+    { const W = P.filter(p => p.w && isl(p.w)); if (W.length) h += `<p class="sec">Verheiratet mit anderen Völkern · ${W.length}</p><p class="sub">${W.map(p => `${p.n} und ${p.sp || 'Partner'}${p.f ? ` (${p.n} kam ${clanVom(isl(p.f).clan)})` : ` (${clanVom(isl(p.w).clan)})`}`).join(' · ')}</p>`; }
     const A = (I.ahnen || []).slice().reverse();
     if (A.length) h += `<p class="sec">Ahnen · ${A.length}</p><div class="folk">${A.map(([n, b, d, c]) => `<span class="who off">${c ? 'Häuptling ' : ''}${n}<small>${Math.floor((d - b) / YEAR)}</small></span>`).join('')}</div>` + (I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt) ? '' : `<p class="sub">Mit einem Ahnenhaus bringt jeder, der stirbt, dem Clan Ansehen.</p>`);
   } else if (sheetKind === 'rename'){
@@ -573,7 +585,7 @@ function renderSheet(){
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : ''}</span></div>` +
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig();
@@ -583,7 +595,7 @@ function sheetSig(){
   if (sheetGone()) return 'gone';
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
   if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, prioOf(I).join(), tick % GROW_EVERY, [...presentAt(I).values()].join(':'), ...Object.values(sf.cats).map(c => c.used), ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
-  if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1, kin(T)].join(); }
+  if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1, kin(T), bondsWith(T), !!weddingCheck(T).ok].join(); }
   if (sheetKind === 'calendar') return [moonOf(), isl(active).rahui, Math.floor(untilFestival() / 30)].join();
   if (sheetKind === 'fleet') return own().map(s => [s.state, s.port, s.route, s.hungry].join(':')).join() + routes.map(r => r.knots).join();
   if (sheetKind === 'ship'){
@@ -621,6 +633,8 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'feast'){ holdFeast(islOfB(b.id), FEASTS.find(F => F.id === btn.dataset.f)); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
+  if (act === 'skipq'){ closeSheet(); skipTutorial(); return; }
+  if (sheetKind === 'landing' && act === 'intro'){ landing.skip = btn.dataset.v === 'off'; renderSheet(); return; }
   if (sheetKind === 'landing' && act === 'lookat'){ const I = isl(btn.dataset.i); if (I){ sheetData = {id:I.id}; renderSheet(); flyTo(I.center.x, I.center.y, Math.max(cam.z, .9)); } return; }
   if (sheetKind === 'landing' && act === 'found'){ chooseHome(isl(btn.dataset.i)); return; }
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
@@ -633,6 +647,7 @@ $('sheetBody').addEventListener('click', e => {
     renderSheet(); return;
   }
   if (sheetKind === 'mana' && act === 'feast'){ holdFeast(isl(active), FEASTS.find(F => F.id === btn.dataset.f)); return; }
+  if (sheetKind === 'clan' && act === 'wed'){ wedClan(isl(sheetData.id)); renderSheet(); return; }
   if (sheetKind === 'clan' && act === 'gift'){ const ri = routes.findIndex(r => r.a === sheetData.id || r.b === sheetData.id); if (ri >= 0) openRoute(ri); return; }
   if (sheetKind === 'menu'){
     if (act === 'help'){ openSheet('intro'); return; }

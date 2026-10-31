@@ -25,7 +25,7 @@ const EVENTS = [
     when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:6}))),
     text:I => `Ein fremdes Kanu treibt mit erschöpften Menschen auf den Strand von ${I.name}. Sie haben ihr Ziel auf dem Meer verfehlt.`,
     choices:[
-      {n:'Aufnehmen', cost:{nahrung:6}, text:'Sie bekommen Essen und dürfen bleiben.', go:I => { const room = Math.max(0, houseCap(I) - I.pop), n = Math.min(4, room); I.pop += n; mana += 1; return n ? `${n} Menschen bleiben auf ${I.name}.` : `Sie bleiben gern, aber es ist kein Platz in den Häusern. Sie ziehen dankbar weiter. Ansehen +1.`; }},
+      {n:'Aufnehmen', cost:{nahrung:6}, text:'Sie bekommen Essen und dürfen bleiben.', go:I => { const room = Math.max(0, popCap(I) - I.pop), n = Math.min(4, room); I.pop += n; mana += 1; return n ? `${n} Menschen bleiben auf ${I.name}.` : `Sie bleiben gern, aber es ist kein Platz in den Häusern. Sie ziehen dankbar weiter. Ansehen +1.`; }},
       {n:'Mit Proviant weiterschicken', cost:{proviant:2}, text:'Ein Geschenk für die Reise.', go:() => { mana += 4; return 'Sie fahren weiter und erzählen überall von eurer Großzügigkeit. Ansehen +4.'; }},
       {n:'Nichts geben', text:'Die Vorräte sind knapp.', go:() => { mana = Math.max(0, mana - 2); return 'Sie fahren hungrig weiter. Ansehen −2.'; }}]},
   {id:'thunfisch', t:'Ein Thunfischschwarm',
@@ -48,6 +48,21 @@ const EVENTS = [
     choices:[
       {n:'Gern schicken', ask:true, text:'Eine Gabe in schwerer Zeit vergisst man nicht.', go:o => { o.r.knots = Math.min(12, o.r.knots + 2); o.C.debt = (o.C.debt || 0) + 3 * VALUE[o.k] * returnRate(o.r.knots); o.C.lastFrom = o.I.id; if (!(o.C.returnAt > tick)) o.C.returnAt = tick + 20; mana += 3; stats.gaben++; invalidate(); return `${clanDer(o.C.clan)} ${o.C.clan.culture ? 'danken' : 'dankt'} euch. Zwei Knoten mehr, Ansehen +3, und eine Gegengabe wird kommen.`; }},
       {n:'Ablehnen', text:'Ihr braucht es selbst.', go:o => { o.r.knots = Math.max(0, o.r.knots - 1); mana = Math.max(0, mana - 1); invalidate(); return `Die Boten fahren enttäuscht heim. Ein Knoten löst sich.`; }}]},
+  // a clan asks for a bride or a groom: by their custom the young one would move to them
+  {id:'braut', t:'Brautwerbung',
+    when:() => pickOf(routes.filter(r => r.knots >= 2).map(r => { const T = clanOfRoute(r), I = T && weddingIsland(T), p = I && I.pop >= 12 && (I.people || []).filter(canWed).sort((a, b) => b.b - a.b)[0]; return p ? {T, I, p, r} : null; }).filter(Boolean)) || false,
+    place:o => o.I,
+    text:o => `Boten ${clanVom(o.T.clan)} kommen nach ${o.I.name}, mit Matten und einem Schwein. Jemand aus ihrem ${o.T.clan.culture ? 'Volk' : 'Clan'} möchte ${o.p.n} heiraten, ${Math.floor(ageOf(o.p))} Jahre alt. Nach ihrem Brauch zöge ${o.p.n} zu ihnen nach ${o.T.name}.`,
+    choices:[
+      {n:'Zustimmen', text:'Die Hochzeit wird gefeiert, ihre Brautgaben bleiben hier, und ihr werdet verwandt.', go:o => {
+        const P = o.I.people || [], i = P.indexOf(o.p); if (i < 0) return 'Die Hochzeit fällt aus, die Boten fahren heim.';
+        P.splice(i, 1); o.I.pop = Math.max(1, o.I.pop - 1); o.I.staff = null;
+        (o.T.inlaws = o.T.inlaws || []).push({n:o.p.n, from:o.I.name, at:tick});
+        for (const [k, v] of Object.entries(BRIDE_GIFTS)) o.I.stock[k] = Math.min(storeCap(o.I), (o.I.stock[k] || 0) + v);
+        o.r.knots = Math.min(12, o.r.knots + 2); o.r.lastGift = tick; mana += 3; stats.heirat = (stats.heirat || 0) + 1; if (o.T.clan.culture) stats.fremdheirat = (stats.fremdheirat || 0) + 1;
+        o.I.feastEnd = tick + 6; syncWalkers(); invalidate();
+        return `${o.p.n} heiratet ${clanBeim(o.T.clan)} ein und zieht nach ${o.T.name}. Ihre Brautgaben bleiben auf ${o.I.name}, zwei Knoten mehr, Ansehen +3. Jetzt seid ihr verwandt.`; }},
+      {n:'Ablehnen', text:'Man bleibt Nachbarn, mehr nicht.', go:o => { o.r.knots = Math.max(0, o.r.knots - 1); invalidate(); return 'Die Boten fahren enttäuscht heim. Ein Knoten löst sich.'; }}]},
   {id:'hochzeit', t:'Eine Hochzeit',
     when:() => pickOf(villages().filter(I => I.pop >= 20)),
     text:I => `Zwei Familien auf ${I.name} wollen ihre Kinder verheiraten. Matten und Schweine werden als Brautgaben getauscht.`,
@@ -153,6 +168,8 @@ const CHRONIK = [
   {id:'kultur', t:'Andere Menschen', d:'Ein Volk einer anderen Kultur gefunden.', test:() => cultureIsles().length >= 1, mana:4},
   {id:'bananen', t:'Bananen vom Großen Land', d:'Bananen wachsen in einem eigenen Dorf.', test:() => lifeKnown('banane'), mana:2},
   {id:'sternwege', t:'Sternwege vom Nordmeer', d:'Die Seefahrer vom Nordmeer haben eure Navigatoren gelehrt.', test:() => !!stats.nordLehre, mana:2},
+  {id:'heirat', t:'Ein Bund durch Heirat', d:'Eine Hochzeit mit einem anderen Clan.', test:() => (stats.heirat || 0) >= 1, mana:2},
+  {id:'fremdheirat', t:'Verwandte in der Fremde', d:'Eine Hochzeit mit Menschen einer anderen Kultur.', test:() => (stats.fremdheirat || 0) >= 1, mana:3},
   {id:'muster', t:'Ein eigenes Muster', d:'Die Töpfer stempeln ein eigenes Muster in den Ton.', test:() => islands.some(I => I.settled && I.motif), mana:1},
   {id:'musterweit', t:'Ein Muster wandert', d:'Ein Muster ist auf vier Inseln bekannt.', test:() => Object.keys(MOTIFS).some(k => islands.filter(I => (I.settled || I.clan) && motifsOf(I).includes(k)).length >= 4), mana:3},
   {id:'verwandt', t:'Verwandte im Ton', d:'Ein Clan stempelt euer Muster in seine Töpfe.', test:() => islands.some(I => I.clan && kin(I)), mana:2},

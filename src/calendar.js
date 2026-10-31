@@ -85,7 +85,7 @@ function festivalState(I){
   if (!canPay(I, FESTIVAL.offering)) return `Für die ersten Früchte fehlt ${lacking(I, FESTIVAL.offering)}.`;
   return '';
 }
-const guestsFor = () => islands.filter(T => T.clan && T.discovered && routes.some(r => (r.a === T.id || r.b === T.id) && r.knots >= 2));
+const guestsFor = () => islands.filter(T => T.clan && T.discovered && routes.some(r => (r.a === T.id || r.b === T.id) && (r.knots >= 2 || bondsWith(T) > 0)));   // friends, and in-laws always
 function festivalGain(I, chosen){
   const parts = festivalParts(I).filter(p => p.ok && chosen.includes(p.P.id));
   return FESTIVAL.mana + parts.reduce((s, p) => s + p.gain, 0) + Math.min(8, Math.floor(beautyOf(I) / 3)) + guestsFor().length * 2 + ancestorsHonour(I);

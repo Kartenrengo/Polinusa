@@ -121,7 +121,15 @@ function questSheet(){
   return head(qn(Q.t), `Aufgabe ${quest + 1} von ${QUESTS.length}`) +
     `<p><b>${dOf(Q)}</b> Bisher ${n} von ${Q.of}.</p><p class="sub">${qn(Q.why)}</p>` +
     (Q.unlock.length ? `<p class="sub">Danach neu zum Bauen: ${Q.unlock.map(unlockName).join(', ')}.</p>` : '') +
-    `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="close">Später</button><button class="btn primary" type="button" data-act="showq">Zeig es mir</button></span></div>`;
+    `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="close">Später</button><button class="btn primary" type="button" data-act="showq">Zeig es mir</button></span></div>` +
+    `<div class="rowx"><span class="sub">Kennst du das Spiel schon? Ohne Einführung ist gleich alles frei.</span><button class="btn" type="button" data-act="skipq">Ohne Einführung</button></div>`;
+}
+/* Without the introduction: every building free at once, no task card; the chronicle and everything else stay */
+function skipTutorial(quiet){
+  if (quest >= QUESTS.length) return;
+  quest = QUESTS.length; stats.ohneEinfuehrung = 1; newKinds.clear();
+  renderBuildBar(); renderQuest(); measure(); save();
+  if (!quiet) toast('Ohne Einführung: Alle Gebäude sind frei, die Aufgaben stehen nicht mehr über der Bauleiste.', 4200);
 }
 /* "Zeig es mir": go to the right island and point at the button or building that does the job */
 function showQuest(){

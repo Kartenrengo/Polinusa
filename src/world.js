@@ -356,6 +356,11 @@ function genAtoll(s, hdir, r){
 }
 
 /* ---------- island rules */
+/* How many people an island carries at most: so much land feeds so many; on an atoll the lagoon feeds many on little land.
+   When an island is full the young ones sail on and found villages elsewhere, as it always was in the Pacific. */
+const landArea = I => I._area ?? (I._area = I.lands.reduce((t, L) => t + Math.abs(L.poly.reduce((s, p, i) => { const q = L.poly[(i + 1) % L.poly.length]; return s + p.x * q.y - q.x * p.y; }, 0)) / 2, 0));
+const islandMax = I => clamp(Math.round(landArea(I) / (I.type === 'atoll' ? 150 : 600) / 5) * 5, 30, 160);
+const popCap = I => Math.min(houseCap(I), islandMax(I));
 const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher' && !b.bt).length;
 /* In a chief's village every house and stilt house holds 6 instead of 4 */
 /* A stilt house only counts when a dugout reaches it */

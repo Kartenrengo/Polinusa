@@ -23,7 +23,7 @@ function settle(T, S, o){
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
   toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Ohne Setzlinge wächst hier nur, was schon da war. Bis ein Kanu Taro bringt, nähren Fisch, Riff und Wild die Leute.'}`, 5200);
 }
-const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 1);
+const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 1) * (1 + .1 * Math.min(2, bondsWith(T)));   // shared patterns and marriages make gifts count for more
 /* A gift is not paid for. The clan remembers it and answers later with what they make; trust (knots) makes the answer richer. */
 function receiveGift(T, cargo, from, r){
   const C = T.clan, worth = giftWorth(T, cargo);
@@ -196,7 +196,7 @@ function syncPeople(I){
   if (!I.settled) return;
   if (!I.people) I.people = seedPeople(I, I.pop);
   while (I.people.length < I.pop) I.people.push(newcomer(I));
-  while (I.people.length > I.pop){ const ad = I.people.filter(p => stageOf(p) === 'adult'), list = ad.length ? ad : I.people; const p = list[Math.floor(Math.random() * list.length)]; I.people.splice(I.people.indexOf(p), 1); }
+  while (I.people.length > I.pop){ const ad = I.people.filter(p => stageOf(p) === 'adult'), free = ad.filter(p => !p.w), list = free.length ? free : ad.length ? ad : I.people; const p = list[Math.floor(Math.random() * list.length)]; I.people.splice(I.people.indexOf(p), 1); }   // the married stay with their family
 }
 const isAdult = p => stageOf(p) === 'adult';
 /* Growing up, growing old, dying, and the chief */
@@ -384,6 +384,8 @@ function bringMotifs(from, to){
 }
 function motifTick(I){
   if (I.settled && !I.motif && I.buildings.some(b => b.kind === 'toepfer' && !b.bt)) newMotif(I);
+  // whoever married in from a clan that makes pots keeps stamping the pattern of home
+  for (const p of I.people || []){ const T = p.f && isl(p.f), k = T && T.clan && T.clan.motif; if (k && k !== motifOf(I)){ if (!(I.mot || (I.mot = {}))[k]) bringMotifs(T, I); I.mot[k] = tick; } }
   for (const [k, t] of Object.entries(I.mot || {})){
     if (k === motifOf(I) || tick - t <= MOTIF_YEARS * YEAR) continue;
     delete I.mot[k]; invalidate();
@@ -392,6 +394,43 @@ function motifTick(I){
   }
 }
 
+/* ---------- marriage between peoples. A wedding binds two clans: bride gifts of fine mats and a pig go across, the partner
+   moves to the other village, and as long as the couple lives the cord does not slacken, gifts count for more, the in-laws
+   come to the feast as guests, and a potter who married in keeps stamping the pattern of home. So the Lapita villages
+   stayed bound to each other, and so, as the genes still tell, they married into the old peoples of the Great Land. */
+const BRIDE_GIFTS = {matten:2, schweine:1}, WED_KNOTS = 3, KIN_YEARS = 40;
+const FOREIGN_NAMES = {alte:['Kaimo', 'Waiyu', 'Biromo', 'Siwan', 'Tamugu', 'Ilaga', 'Owari', 'Nupa'], nord:['Malo', 'Sapi', 'Rilo', 'Fena', 'Lahi', 'Kiri', 'Toma', 'Ulai']};
+const inlawsOf = T => (T.inlaws || []).filter(x => tick - x.at < KIN_YEARS * YEAR);   // yours who went to live with them
+const bondsWith = T => islands.reduce((n, I) => n + (I.settled && I.people ? I.people.filter(p => p.w === T.id && !p.f).length : 0), 0) + inlawsOf(T).length;
+const canWed = p => isAdult(p) && !p.w && ageOf(p) >= 16 && ageOf(p) <= 34;
+const clanOfRoute = r => isl(r.a).clan ? isl(r.a) : isl(r.b).clan ? isl(r.b) : null;
+function weddingIsland(T){
+  const ends = routes.filter(r => r.a === T.id || r.b === T.id).map(r => isl(r.a === T.id ? r.b : r.a)).filter(I => I && I.settled);
+  return ends.find(I => I.id === active) || ends[0] || null;
+}
+function weddingCheck(T){
+  const r = routes.find(q => q.a === T.id || q.b === T.id), I = weddingIsland(T);
+  if (!r || !I) return {why:'Erst braucht es eine Schnur zu ihnen.'};
+  if (r.knots < WED_KNOTS) return {why:`Erst braucht es ${WED_KNOTS} Knoten Vertrauen, jetzt sind es ${r.knots}.`};
+  const p = (I.people || []).filter(canWed).sort((a, b) => b.b - a.b)[0];   // the youngest grown-up who is free
+  if (!p) return {why:`Auf ${I.name} ist gerade niemand frei, der heiraten könnte.`};
+  if (I.pop >= popCap(I)) return {why:`Auf ${I.name} ist kein Platz für noch jemanden.`};
+  if (!canPay(I, BRIDE_GIFTS)) return {why:`Für die Brautgaben fehlt ${lacking(I, BRIDE_GIFTS)} auf ${I.name}.`};
+  return {ok:true, I, p, r};
+}
+function wedClan(T){
+  const c = weddingCheck(T); if (!c.ok) return false;
+  const {I, p, r} = c, C = T.clan, pool = FOREIGN_NAMES[C.id] || PEOPLE_NAMES.concat(MORE_NAMES), name = pool[Math.floor(Math.random() * pool.length)];
+  pay(I, BRIDE_GIFTS);
+  const q = person(I, 18 + Math.random() * 8, name); Object.assign(q, {w:T.id, f:T.id, sp:p.n}); Object.assign(p, {w:T.id, sp:q.n});
+  I.people.push(q); I.pop++; I.staff = null;
+  r.knots = Math.min(12, r.knots + 2); r.lastGift = tick; mana += 4; stats.heirat = (stats.heirat || 0) + 1; if (C.culture) stats.fremdheirat = (stats.fremdheirat || 0) + 1;
+  if (C.motif) bringMotifs(T, I);   // the pots of the new family's home come along
+  I.feastEnd = tick + 6; for (let i = 0; i < 6; i++) heartAt(I);   // the whole village gathers to dance
+  syncWalkers(); invalidate(); save();
+  toast(`Hochzeit auf ${I.name}: ${p.n} heiratet ${q.n} ${clanVom(C)}. Matten und ein Schwein gehen als Brautgaben hinüber, drei Tage wird getanzt, und ${q.n} zieht nach ${I.name}. Jetzt seid ihr verwandt: Die Schnur löst sich nicht mehr, und eure Gaben zählen mehr. Ansehen +4.`, 6800);
+  return true;
+}
 /* a quiet message: into the list of the conch, without unrolling */
 function note(msg){ news.unshift({msg, at:Date.now()}); if (news.length > 40) news.length = 40; if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
 
@@ -806,8 +845,8 @@ function needsOf(I){
     const state = make >= all ? 'ok' : stock > 0 ? 'low' : 'out';
     return {N, k:N.k, use, work, make, stock, state, mins:make < all ? stock / (all - make) : Infinity};
   });
-  const cap = houseCap(I), missing = list.filter(n => n.state === 'out');
-  return {list, cap, missing, full:I.pop >= cap, next:NEEDS.find(N => !needActive(I, N)), growing:I.pop < cap && !missing.length && haveOf(I, 'essen') > 0};
+  const cap = popCap(I), missing = list.filter(n => n.state === 'out');
+  return {list, cap, missing, full:I.pop >= cap, atMax:I.pop >= islandMax(I), next:NEEDS.find(N => !needActive(I, N)), growing:I.pop < cap && !missing.length && haveOf(I, 'essen') > 0};
 }
 /* Level: a village from 20 people; a chief's village with enough people, standing, pots and mats. It stays one while its needs hold. */
 function updateLevel(I, nd){
@@ -908,7 +947,7 @@ function econ(){
   if (tick % 10 === 0) for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I);
   answerGifts(); stepYards(); feedCrews(); stepTreasure(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
-  for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
+  for (const r of routes){ const T = clanOfRoute(r); if (T && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.lastGift = tick; if (!bondsWith(T)){ r.knots--; invalidate(); } } }   // kin by marriage: the cord holds
   if (tick % 8 === 0) invalidate();   // roofs age
   { const k = sunShadow().key; if (k !== sunKey){ sunKey = k; invalidate(); } }   // the shadows follow the sun
   syncWalkers(); if (performance.now() - walkAt > 400) walkUntil(performance.now());   // the map is not drawn, so the people walk on from here
@@ -1109,7 +1148,9 @@ function beginLanding(){
   fitBox(b, 1.2); openSheet('landing', {});
 }
 function landHome(I){
+  const skip = landing && landing.skip;
   if (!foundHome(I)) return;
+  if (skip) skipTutorial(true);   // chosen at the arrival: no introduction
   document.body.classList.remove('landing');
   invalidate(true); renderAll(); updateHUD();
   const Hm = isl('heimat'); flyTo(Hm.anchor.x, Hm.anchor.y, 1.6);
