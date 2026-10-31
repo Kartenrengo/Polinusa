@@ -186,8 +186,9 @@ function compassArt(){
     else h += stoneAt(x, y, 1 + r() * .6, 931 + i, i % 4 ? '#8E8A80' : '#A39C8E');
   }
   // the streamer: from the peg in the middle downwind, three feathers on a cord
-  h += '<path d="M28 28Q30 34 27.4 40Q25.4 44.6 28.4 48" fill="none" stroke="#5A3A26" stroke-width="1.1" stroke-linecap="round"/>';
+  h += '<g class="vane"><g class="flutter"><path d="M28 28Q30 34 27.4 40Q25.4 44.6 28.4 48" fill="none" stroke="#5A3A26" stroke-width="1.1" stroke-linecap="round"/>';
   for (const [x, y, a, c] of [[28.8, 35, 20, '#A84A2C'], [26.6, 41, -15, '#F4ECD8'], [28.2, 46.6, 12, '#2B1D14']]) h += `<g transform="translate(${x} ${y}) rotate(${a})"><path d="M0-3.6Q2.2-1.2 0 3.6Q-2.2-1.2 0-3.6Z" fill="${c}" stroke="#2B1D14" stroke-width=".5"/><path d="M0-3.2V3.2" stroke="#8C6440" stroke-width=".35"/></g>`;
+  h += '</g></g>';
   h += `<path d="${wob(2.6, 2.6, 941, .12, 8, 28, 28)}" fill="#6B4A2E" stroke="#2B1D14" stroke-width=".7"/>`;
   return h;
 }

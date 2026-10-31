@@ -146,10 +146,11 @@ function moorSpot(I, s){
   const k = (n % 2 ? -1 : 1) * Math.ceil(n / 2) * 13;
   return {x:h.x - dy / l * k + dx / l * 6, y:h.y + dx / l * k + dy / l * 6};
 }
-function windFactor(hy){ return hy < -.35 ? .65 : hy > .35 ? 1.2 : 1; }   // the wind blows from the north
+/* With the wind a canoe runs fast, against it slowly; the double canoe's big sail feels it more */
+function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind === 'dc' ? .4 : .25) * W.str * dot, .6, 1.45); }
 function speedOf(s){
   const r = s.route != null ? routes[s.route] : null;
-  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s.hy || 0) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1);
+  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1);
 }
 function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
@@ -260,12 +261,15 @@ const YARD_STEPS = {
   dc:[['Die Stämme', 'Zwei große Stämme liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden beide Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken werden mit Kokosschnur angenäht.'], ['Zweiter Rumpf', 'Querbäume verbinden die Rümpfe, darauf kommt eine Plattform.'], ['Mast und Segel', 'Der Mast wird gesetzt, das Segel aus Pandanusmatten genäht.']]
 };
 const yardStage = y => Math.min(4, Math.floor((1 - y.left / SHIPS[y.kind].bt) * 5));
+/* Six steps to show: first the wood is fetched, then the five steps of building */
+const YARD_WOOD = ['Holz holen', 'Die Bauleute tragen Stämme und Holz aus dem Lager herbei.'];
+const yardStep = y => !(y.got > 0) || y.left >= SHIPS[y.kind].bt - .01 ? 0 : 1 + yardStage(y);
 function stepYards(){
   for (const I of islands){
     // the builders at the canoe house move the work on (see buildBit); here each new step is shown
     if (!I.settled || !I.yard) continue;
     const st = yardStage(I.yard);
-    if (I.yard.left > .001){ if (st !== I.yard.st){ const first = I.yard.st == null; I.yard.st = st; invalidate(); if (!first && I.id === active){ const [n, t] = YARD_STEPS[I.yard.kind][st]; toast(`Kanuhaus: ${n}. ${t}`, 3200); sfx('knock'); } } continue; }
+    if (I.yard.left > .001){ if (st !== I.yard.st){ const first = I.yard.st == null; I.yard.st = st; invalidate(); if (!first && I.id === active){ const [n] = YARD_STEPS[I.yard.kind][st]; toast(`Kanuhaus, Schritt ${st + 2}/6: ${n}.`, 2600); sfx('knock'); } } continue; }
     const kind = I.yard.kind; I.yard = null; sfx('splash'); invalidate();
     const s = makeShip(kind, I); s.name = `${SHIPS[kind].n} ${own().filter(o => o.kind === kind).length}`;
     toast(`${s.name} ist fertig. Tippe es im Hafen an, um es zu beladen und zu steuern.`, 4200); checkQuest(); save();
@@ -300,7 +304,9 @@ function steerTap(p){
   if (I){ if (s.route != null) unassign(s); if (sailTo(s, {isl:I.id})) toast(`${s.name} fährt nach ${I.name}.`, 2600, false); renderSheet(); save(); return; }
   const open = revealed(p);
   if (!open && !SHIPS[s.kind].fog){ toast('Ins Unbekannte fährt nur das Doppelkanu.', 2600, false); return; }
-  if (!open && !(s.cargo.proviant > 0)){ toast('Ohne Proviant an Bord fährt die Mannschaft nicht ins Unbekannte. Lade Proviant ein.', 3600, false); return; }
+  if (!open && !(s.cargo.proviant > 0)){ toast('Ohne Proviant an Bord fährt die Mannschaft nicht ins Unbekannte. Proviant kommt aus der Gärgrube.', 3600, false); return; }
+  // into the unknown goes only the crew with provisions: settlers and goods follow once land is found
+  if (!open && (s.people || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0))){ toast('Ins Unbekannte nimmt man nur Proviant mit. Lade Siedler und andere Waren erst aus.', 3600, false); return; }
   if (s.route != null) unassign(s);
   if (sailTo(s, {x:p.x, y:p.y})) toast(open ? `${s.name} fährt los.` : `${s.name} fährt ins Unbekannte.`, 2600, false);
   renderSheet(); save();

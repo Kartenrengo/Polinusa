@@ -16,13 +16,14 @@ function shipMarkup(s){
   const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = cargoLoad(s);
   let h = head(s.name, shipStatus(s));
   h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind === 'dc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
-  h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? ' Ins Unbekannte nur mit Proviant an Bord, 1 pro Reisetag.' : ' Ins Unbekannte fährt es nicht.'}</p>`;
+  h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</p>`;
+  if (S.fog) h += provisionNote(s, P);
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', load ? giftText(s.cargo) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
   if (P && P.settled && s.route == null && !sheetData.load) h += `<div class="rowx"><span class="sub">${aboard}</span><button class="btn primary" type="button" data-act="load">Beladen</button></div>`;
   else if (P && P.settled && s.route == null){
-    const goods = GOODS.filter(k => (P.stock[k] || 0) > 0 || s.cargo[k]);
+    const goods = GOODS.filter(k => (P.stock[k] || 0) > 0 || s.cargo[k] || (S.fog && k === 'proviant')).sort((a, b) => S.fog ? (b === 'proviant') - (a === 'proviant') : 0);   // provisions first on the double canoe
     h += `<ul class="list needs">`;
     h += `<li>${icon('pop')}<span class="nm">Siedler<small>Auf ${P.name}: ${P.pop}</small></span>${stepper('pp', 'pop', s.people, s.people > 0, s.people < S.people && P.pop > SETTLE.keep, 'Siedler')}</li>`;
     h += goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${P.stock[k] || 0}</small></span>${stepper('cg', k, s.cargo[k] || 0, (s.cargo[k] || 0) > 0, load < S.cap && (P.stock[k] || 0) > 0, GN[k])}</li>`).join('');
@@ -34,6 +35,14 @@ function shipMarkup(s){
   if (P && !P.settled && !P.clan) h += `<div class="rowx"><span class="sub">${s.people >= SETTLE.people ? (mana >= manaNeeded() ? 'Hier kann ein Dorf entstehen.' : `Es braucht Ansehen ${manaNeeded()}, jetzt ${Math.floor(mana)}.`) : `Für ein Dorf braucht es ${SETTLE.people} Siedler an Bord.`}</span><button class="btn primary" type="button" data-act="settle" ${s.people >= SETTLE.people && mana >= manaNeeded() ? '' : 'disabled'}>Dorf gründen</button></div>`;
   if (P && P.clan) h += `<div class="rowx"><span class="sub">${load ? `Diese Gabe bringt später etwa ${giftGuess(P.clan, giftValue(P.clan, s.cargo) * returnRate((routes[routeIndex(s.last, P.id)] || {knots:0}).knots))} zurück.` : 'Lade in einem eigenen Hafen etwas ein, das sie schätzen.'}</span><button class="btn primary" type="button" data-act="gift" ${load ? '' : 'disabled'}>Gabe übergeben</button></div>`;
   return h;
+}
+/* Provisions, plainly: where they come from, how long they last, and whether the canoe is ready for the unknown */
+function provisionNote(s, P){
+  const pv = s.cargo.proviant || 0, other = s.people || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0), secs = VOYAGE_DAY * TICK / 1000;
+  const ready = pv > 0 && !other ? '<span class="state ok">bereit zum Erkunden</span>' : pv > 0 ? '<span class="state low">nur Proviant mitnehmen</span>' : '<span class="state out">kein Proviant</span>';
+  const pits = P && P.settled ? P.buildings.some(b => b.kind === 'gaergrube' && !b.bt) : true;
+  return `<div class="stat">${ready}${pv ? `<span>${icon('proviant')}${pv}, reicht etwa ${secsText(pv * secs)} auf See</span>` : ''}</div>` +
+    `<p class="sub"><b>Proviant</b> kommt aus der Gärgrube, gegorene Brotfrucht, die monatelang hält. Ins Unbekannte fährt man nur damit, ohne Siedler und Waren; alle ${secs} s isst die Mannschaft 1.${pits ? '' : ' Hier gibt es noch keine Gärgrube (sie braucht 2 Brotfruchtbäume daneben).'}</p>`;
 }
 /* A trade chain: canoes on it, and what each end sends to the other */
 function routeMarkup(ri){
@@ -68,23 +77,22 @@ function fleetMarkup(){
 function steerShip(s){ closeSheet(); selectShip(s); flyTo(s.x, s.y, Math.max(cam.z, 1)); }
 
 /* The canoe house: one canoe at a time, it takes a while */
+/* The canoe house in one glance: which of the six steps, how far, and the wood; the choice of canoes when it is free */
 function yardMarkup(I){
   if (I.yard){
-    // the canoe: who builds it is shown above; here how far it is, the wood that is there, and the steps
-    const S = SHIPS[I.yard.kind], f = 1 - I.yard.left / S.bt, w = staffOf(I).yard, here = presentAt(I).get(I.buildings.find(b => b.kind === 'werft')) || 0, st = yardStage(I.yard), secs = here ? I.yard.left * YARD_CREW / here * TICK / 1000 : 0;
-    const state = !w ? '<span class="state out">ruht, keine Leute</span>' : !here ? '<span class="state low">Bauleute kommen</span>' : (I.yard.got || 0) < S.cost.holz && I.yard.left <= S.bt * (1 - (I.yard.got || 0) / S.cost.holz) + .01 ? '<span class="state low">Holz wird geholt</span>' : '<span class="state ok">wird gebaut</span>';
-    let h = `<p class="sec">${S.n}</p><span class="mbar big"><i style="width:${f * 100}%"></i></span><div class="stat">${state}<span>${icon('holz')}${I.yard.got || 0}/${S.cost.holz}</span><span>${Math.round(f * 100)} %</span>${here ? `<span>noch ${secsText(secs)}</span>` : ''}</div>`;
-    h += `<ul class="list needs">${YARD_STEPS[I.yard.kind].map(([n, t], i) => `<li class="${i < st ? 'okk' : ''}"><span class="nm">${i < st ? '✓ ' : i === st ? '▸ ' : ''}${n}${i === st ? `<small>${t}</small>` : ''}</span></li>`).join('')}</ul>`;
-    return h;
+    const S = SHIPS[I.yard.kind], f = 1 - I.yard.left / S.bt, w = staffOf(I).yard, here = presentAt(I).get(I.buildings.find(b => b.kind === 'werft')) || 0, k = yardStep(I.yard), [n, t] = k ? YARD_STEPS[I.yard.kind][k - 1] : YARD_WOOD, secs = here ? I.yard.left * YARD_CREW / here * TICK / 1000 : 0;
+    const state = !w ? '<span class="state out">ruht, keine Leute</span>' : !here ? '<span class="state low">Bauleute kommen</span>' : '';
+    return `<div class="stat"><b>${S.n} · Schritt ${k + 1}/6 · ${n}</b>${state}</div><span class="mbar big"><i style="width:${f * 100}%"></i></span>` +
+      `<div class="stat"><span class="sub">${t}</span><span>${icon('holz')}${I.yard.got || 0}/${S.cost.holz}</span>${here ? `<span>noch ${secsText(secs)}</span>` : ''}</div>`;
   }
-  return Object.entries(SHIPS).filter(([k]) => k === 'oc' || unlocked('dc')).map(([k, S]) => `<div class="rowx"><span><b>${S.n}</b><br><span class="sub">${costText(S.cost)}, etwa ${String(Math.round(S.bt * TICK / 60000 * 2) / 2).replace('.', ',')} Minuten mit ${YARD_CREW} Bauleuten. ${k === 'oc' ? `Trägt ${S.cap} Waren und ${S.people} Menschen, bleibt im Bekannten.` : `Trägt ${S.cap} Waren und ${S.people} Menschen, fährt ins Unbekannte.`}</span></span><button class="btn${canPay(I, S.cost) ? ' primary' : ''}" type="button" data-act="yard" data-k="${k}" ${canPay(I, S.cost) ? '' : 'disabled'}>Bauen</button></div>`).join('') +
-    `<p class="sub">Kanus im Hafen: ${shipAt(I.id).map(s => s.name).join(', ') || 'keine'}.</p>`;
+  return Object.entries(SHIPS).filter(([k]) => k === 'oc' || unlocked('dc')).map(([k, S]) => `<div class="rowx"><span><b>${S.n}</b><br><span class="sub">${costText(S.cost)} · etwa ${String(Math.round(S.bt * TICK / 60000 * 2) / 2).replace('.', ',')} min · ${S.cap} Waren, ${S.people} Menschen${k === 'dc' ? ' · fährt ins Unbekannte' : ''}</span></span><button class="btn${canPay(I, S.cost) ? ' primary' : ''}" type="button" data-act="yard" data-k="${k}" ${canPay(I, S.cost) ? '' : 'disabled'}>Bauen</button></div>`).join('') +
+    `<p class="sub">Im Hafen: ${shipAt(I.id).map(s => s.name).join(', ') || 'kein Kanu'}.</p>`;
 }
 /* The calendar: the seasons, the palolo night, the rāhui and the next feast */
 function calendarMarkup(){
   const S = seasonOf(), I = isl(active);
   let h = head(`${S.n}, ${moonOf() + 1}. Mond`, S.text);
-  h += `<ul class="list needs">${SEASONS.map(Q => `<li class="${Q === S ? 'okk' : ''}">${icon(Q.id)}<span class="nm">${Q.n}<small>${Q.to - Q.from} Monde${Q.baum !== 1 ? `, Brotfrucht ${Q.baum ? 'reichlich' : 'keine'}` : ''}${Q.sea !== 1 ? `, Kanus ${Q.sea < 1 ? 'langsamer' : 'schneller'}` : ''}</small></span></li>`).join('')}</ul>`;
+  h += `<ul class="list needs">${SEASONS.map(Q => `<li class="${Q === S ? 'okk' : ''}">${icon(Q.id)}<span class="nm">${Q.n}<small>${Q.to - Q.from} Monde${Q.baum !== 1 ? `, Brotfrucht ${Q.baum ? 'reichlich' : 'keine'}` : ''}${`, Wind ${WINDS[Q.id].n}`}</small></span></li>`).join('')}</ul>`;
   h += `<p class="sub">${festivalTime() ? 'Jetzt ist Festzeit. Feiert das Fest der ersten Früchte im Versammlungshaus.' : `Das Fest der Plejaden beginnt in etwa ${minutes(untilFestival())} Minuten.`} Eine Woche nach Vollmond im ersten Mond steigt der Palolo aus dem Riff.</p>`;
   if (S.id === 'mager' && I.buildings.some(b => SEA_KINDS.has(b.kind))) h += I.rahui ? `<p class="sub">Auf ${I.name} gilt Rāhui. Fischfang und Riff ruhen bis zum Fest.</p>` : `<div class="rowx"><span class="sub">Rāhui auf ${I.name}: Fischfang und Riff bis zum Fest sperren, dann dreifacher Fang und Ansehen +3.</span><button class="btn" type="button" data-act="rahui">Rāhui ausrufen</button></div>`;
   return h;

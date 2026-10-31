@@ -32,7 +32,7 @@ const KINDS = {
   flecht:{n:'Flechthütte', s:'Matten', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'matten', every:8, near:{kind:'pandanus', n:2, r:60}, roof:true, info:'Flicht Matten aus Pandanusblättern, für Segel und zum Schlafen. Braucht 2 Pandanus in der Nähe.', vb:'-17 -17 34 21'},
   schnur:{n:'Seilerei', s:'Schnur', on:['atoll'], crew:1, bt:12, cost:{holz:1}, r:10, hy:6, prod:'schnur', every:6, near:{kind:'palme', n:3, r:60}, roof:true, info:'Dreht Schnur aus Kokosfasern. Braucht 3 Kokospalmen in der Nähe.', vb:'-14 -17 30 21'},
   schmuck:{n:'Schmuckschleiferei', s:'Schmuck', on:['atoll'], crew:2, bt:14, cost:{holz:2}, r:11, hy:6, prod:'schmuck', every:20, use:{klingen:1}, coast:true, roof:true, info:'Schleift Armringe aus Conus-Muscheln vom Riff. Zum Bohren braucht sie Klingen. Steht am Strand.', vb:'-17 -17 36 21'},
-  gaergrube:{n:'Gärgrube', s:'Grube', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:9, hy:2, prod:'proviant', every:4, use:{nahrung:1}, near:{kind:'baum', n:2, r:70}, info:'Brotfrucht gärt hier unter Blättern und hält monatelang. Proviant für weite Fahrten. Braucht 2 Brotfruchtbäume in der Nähe.', vb:'-12 -9 25 14'},
+  gaergrube:{n:'Gärgrube', s:'Grube', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:9, hy:2, prod:'proviant', every:4, use:{nahrung:1}, near:{kind:'baum', n:2, r:70}, info:'Hier entsteht Proviant: Brotfrucht gärt in der Grube unter Bananenblättern und hält monatelang, 1 Feldfrucht je Proviant. Nur Proviant nimmt man ins Unbekannte mit. Braucht 2 Brotfruchtbäume in der Nähe.', vb:'-12 -9 25 14'},
   garten:{n:'Maulbeergarten', s:'Maulbeer', on:['hoch'], bt:6, cost:{holz:1}, r:10, hy:2, info:'Aus der Rinde des Papiermaulbeerbaums entsteht Tapa. Die Klopfhütte muss daneben stehen.', vb:'-12 -10 24 17'},
   klopf:{n:'Klopfhütte', s:'Tapa', on:['hoch'], crew:2, bt:12, cost:{holz:2}, r:11, hy:6, prod:'tapa', every:10, near:{kind:'garten', n:1, r:60}, roof:true, info:'Klopft Rinde zu Tapa, dem Stoff für Kleidung. Braucht einen Maulbeergarten in der Nähe.', vb:'-17 -17 36 21'},
   pferch:{n:'Schweinepferch', s:'Schweine', on:['hoch'], crew:1, bt:12, cost:{holz:3}, r:12, hy:4, prod:'schweine', every:16, use:{nahrung:2}, info:'Schweine fressen Taro und Kokos. Sie sind das Festessen.', vb:'-14 -12 28 18'},
@@ -111,8 +111,8 @@ function returnGoods(C, worth){
 const MOON = 30, YEAR = 12 * MOON, YEAR_START = 5 * MOON;   // ticks per moon; a new game begins in the trade wind season
 const SEASONS = [
   {id:'plejaden', n:'Zeit der Plejaden', from:0, to:2, baum:1.5, sea:1, text:'Die Plejaden stehen nach Sonnenuntergang am Himmel. Das neue Jahr beginnt mit dem Fest der ersten Früchte. Es herrscht Frieden.'},
-  {id:'sturm', n:'Sturmzeit', from:2, to:5, baum:1, sea:.7, text:'Regen und Wirbelstürme. Kanus kommen auf See nur langsam voran.'},
-  {id:'passat', n:'Passatzeit', from:5, to:9, baum:1, sea:1.15, text:'Beständiger Passatwind. Gute Zeit für weite Fahrten.'},
+  {id:'sturm', n:'Sturmzeit', from:2, to:5, baum:1, sea:.85, text:'Regen, Böen aus Nordwest und Wirbelstürme. Auf See kommen die Kanus nur mühsam voran.'},
+  {id:'passat', n:'Passatzeit', from:5, to:9, baum:1, sea:1, text:'Beständiger Passat aus Südost. Mit dem Wind fahren die Kanus schnell, gegen ihn langsam. Gute Zeit für weite Fahrten.'},
   {id:'mager', n:'Magere Zeit', from:9, to:12, baum:0, sea:1, text:'Die Brotfruchtbäume tragen nicht. Jetzt hilft der Proviant aus den Gärgruben. Wer jetzt ein Riff mit Rāhui sperrt, hat zum Fest reichen Fang.'}
 ];
 const PALOLO = {moon:0, from:20, to:23};   // a week after full moon in the first moon the palolo worm rises from the reef, for three ticks

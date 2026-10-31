@@ -40,7 +40,7 @@ const QUESTS = [
     n:() => Math.min(1, count('tochter', 'flecht')) + Math.min(1, count('tochter', 'schnur')), of:2, show:{island:'tochter', build:'flecht'}, unlock:[], gift:{holz:2}, giftTo:'tochter'},
   {id:'tausch', t:'Eine Handelskette', d:'Bring 3 Matten und 3 Schnüre nach Panua.', why:'Tippe auf die Schnur zwischen den Inseln. Setze ein Kanu in die Kette und stell ein, was es in jede Richtung mitnimmt. Dann fährt es von allein hin und her. Jede Fahrt knüpft einen Knoten.',
     n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube'], gift:{}},
-  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'In der Gärgrube hält Brotfrucht monatelang. Auf freier Fahrt isst die Mannschaft eines Doppelkanus jeden Reisetag 1 Proviant.',
+  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube: Brotfrucht gärt unter Bananenblättern und hält monatelang. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit, die Mannschaft isst jeden Reisetag 1.',
     n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:['dc', 'pfosten'], gift:{}},
   {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu trägt genug Menschen, Pflanzen und Tiere über das offene Meer. Der Bau dauert etwa fünf Minuten, in fünf Schritten bis zum Mattensegel. Richte in der Zeit die Handelskette ein oder schmücke das Dorf.',
     n:() => fleetOf('dc') || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},

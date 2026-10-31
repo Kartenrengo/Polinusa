@@ -166,8 +166,9 @@ Insel antippen.
   Schimmer, dann ein deutlicher Pfad. Wo niemand mehr geht, wächst er langsam wieder zu.
 - **Wege anlegen:** Ganz am Ende der Leiste steht „Weg“. Auf der Insel Punkt für Punkt tippen, den letzten Punkt noch einmal
   antippen nimmt ihn zurück, „Anlegen“ legt den Weg an, „Fertig“ beendet. Wege aus Muschelsand und Korallenkies kosten
-  nichts, die Leute gehen darauf schneller, und sie schmücken das Dorf (je 60 Schritte 1, höchstens 8). Einen Weg
-  antippen, dann lässt er sich entfernen.
+  nichts, die Leute gehen darauf schneller, und sie schmücken das Dorf (je 60 Schritte 1, höchstens 8).
+- **Wege entfernen:** Daneben steht „Weg weg“. Jeder Tipp auf ein Stück Weg nimmt das Stück zwischen zwei Punkten fort.
+  Einen Weg sonst antippen, dann lässt er sich ganz entfernen.
 
 ## Kanus entstehen
 
@@ -176,9 +177,9 @@ Insel antippen.
   Er bedient Pfahlhäuser erst, wenn sein Einbaum fertig ist.
 - **Im Kanuhaus** entsteht ein Auslegerkanu in etwa zweieinhalb Minuten, ein Doppelkanu in etwa fünf, mit 3 Bauleuten,
   die vorher das Holz herbeitragen.
-  Fünf Schritte sind zu sehen und werden gemeldet: Stamm auf Böcken, Aushöhlen mit Steinbeil und Glut, Bordplanken mit
-  Kokosschnur angenäht, Ausleger oder zweiter Rumpf mit Plattform, Paddel oder Mast und Mattensegel. Die Tafel des
-  Kanuhauses zeigt, welcher Schritt dran ist.
+  Sechs Schritte: Holz holen, Stamm auf Böcken, Aushöhlen mit Steinbeil und Glut, Bordplanken mit Kokosschnur angenäht,
+  Ausleger oder zweiter Rumpf mit Plattform, Paddel oder Mast und Mattensegel. Die Tafel des Kanuhauses zeigt sie in einer
+  Zeile („Schritt 3/6 · Aushöhlen“) mit Balken, Holz und Restzeit; auf der Karte steht der Schritt neben den Bauleuten.
 
 ## Holz und Wald
 
@@ -203,10 +204,18 @@ Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der hal
 - **Steuern:** Kanu antippen, dann auf das Meer oder eine Insel tippen. Es sucht sich den Weg um das Land herum.
   Der restliche Weg ist gepunktet zu sehen. Unten öffnet sich die Tafel des Kanus, „Beladen“ klappt die Ladeliste auf.
 - **Nebel:** Wo ein Kanu fährt, lichtet sich der Nebel. Das Doppelkanu sieht weiter als das Auslegerkanu.
-- **Proviant:** Auf freier Fahrt isst die Mannschaft des Doppelkanus jeden Reisetag (10 Sekunden) 1 Proviant.
-  Ohne Proviant fährt sie nicht ins Unbekannte, und geht er aus, kehrt sie langsam zur nächsten eigenen Insel zurück.
+- **Proviant** entsteht in der Gärgrube: Brotfrucht gärt unter Bananenblättern und hält monatelang, 1 Feldfrucht je
+  Proviant, mit 2 Brotfruchtbäumen daneben. **Ins Unbekannte nimmt das Doppelkanu nur Proviant mit**, keine Siedler und
+  keine anderen Waren; die folgen, wenn Land gefunden ist. Die Mannschaft isst jeden Reisetag (10 Sekunden) 1 Proviant.
+  Die Tafel des Kanus sagt, ob es bereit zum Erkunden ist und wie lange der Proviant reicht. Geht er aus, kehrt die
+  Mannschaft langsam zur nächsten eigenen Insel zurück.
 - **Siedeln:** Mit 4 Siedlern an Bord vor einer leeren Insel „Dorf gründen“. Mitgebrachtes Holz und Essen kommt ins Lager.
-- **Wind und Jahreszeit:** Gegen den Nordwind geht es langsamer, in der Sturmzeit auch. In der Passatzeit schneller.
+- **Wind:** Er folgt dem Jahr wie im Südwestpazifik: zur Zeit der Plejaden leicht aus Ost, in der Sturmzeit böig aus
+  Nordwest, in der Passatzeit beständig aus Südost, in der mageren Zeit mäßig aus Ostsüdost. Innerhalb einer Zeit dreht
+  und frischt er langsam, von einer Zeit zur nächsten geht er sacht über. Mit dem Wind fahren Kanus schneller, gegen ihn
+  langsamer, das Doppelkanu mit seinem großen Segel stärker als das Auslegerkanu. Die Wolken ziehen mit ihm, der Regen
+  fällt schräg. Am Kompass dreht sich das Federband in seine Richtung und flattert, je stärker er weht; darunter steht,
+  woher er kommt. In der Sturmzeit ist die See zudem rau.
 - **Flotte:** Der Knopf rechts in der Bauleiste listet alle Kanus und Handelsketten.
 - **Wer und was an Bord ist:** Über jedem Kanu steht eine kleine Tafel mit Zahlen: die Besatzung (Paddler oder Seefahrer,
   blau mit Paddel), Siedler (rot), dann jede Ware. Kanus der Clans haben eine gelbe Tafel mit Boten oder Festgästen.
@@ -349,6 +358,11 @@ vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle
 
 ## Tag, Nacht und Klang
 
+- **Schatten:** Jedes Haus, jeder Baum, jede Figur, jedes Tier und jedes Kanu wirft seinen eigenen Umriss als Schatten.
+  Die Sonne geht im Osten auf, steht mittags hoch im Norden (die Inseln liegen südlich des Äquators) und geht im Westen
+  unter: morgens fallen lange Schatten nach Westen, mittags kurze nach Süden, abends lange nach Osten, nachts keine.
+  Flaches wie Felder und Wege wirft keinen. Ohne Tag und Nacht steht die Sonne am späten Nachmittag. Dazu ziehen
+  Wolkenschatten mit dem Wind übers Land.
 - Ein Tag dauert sechs Minuten. Am Abend wird das Licht warm, die Nacht ist tiefblau. Fackeln, das Feuer vor dem
   Versammlungshaus, Türen, Töpferöfen und Vulkane leuchten.
 - Brandung läuft am Riff entlang und schwillt an, auf den Lagunen glitzert die Sonne. In der mageren Zeit wird das Gras
@@ -371,8 +385,11 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
   gezogen, Reichweiten Punkte auf dem Boden, das Ziel eines Kanus ein eingeritztes Kreuz. Baustellen zeigen eine gespannte
   Schnur zwischen Pflöcken statt eines Balkens.
 - Die Oberfläche hat handgeschnittene Ränder wie Rindenbaststoff. Rechts hängen nur zwei Tapa-Flicken an einer Schnur,
-  jeder schief aufgenäht: die Muschel für Nachrichten und das Menü. Gezoomt wird mit zwei Fingern oder dem Mausrad,
-  Knöpfe dafür gibt es nicht.
+  jeder schief aufgenäht: die Muschel für Nachrichten, doppelte Geschwindigkeit und das Menü. Gezoomt wird mit zwei
+  Fingern oder dem Mausrad, Knöpfe dafür gibt es nicht.
+- **Doppelte Geschwindigkeit:** Der Flicken mit den zwei Spitzen lässt alles doppelt so schnell gehen: Wirtschaft, Leute,
+  Kanus. Er wird gelb, solange er an ist.
+- **Inseln umbenennen:** Den Namen der Insel oben antippen.
 - **Nachrichten** rollen wie ein Streifen Rindenbaststoff aus der Muschel aus und rollen sich wieder ein. Was in der Welt
   geschieht, wird aufbewahrt; eine Zahl an der Muschel sagt, wie viele neu sind. Die Muschel antippen klappt die letzten
   40 Nachrichten auf, mit der Zeit seit jeder. Kurze Antworten auf ein Antippen („Zu wenig Holz“) werden nur gezeigt. Der Kompass ist ein Ring aus Steinen und Kaurimuscheln, ein dunkler Stein zeigt, woher der Wind

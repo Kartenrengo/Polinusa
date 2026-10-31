@@ -15,6 +15,21 @@ const untilFestival = () => festivalTime() ? 0 : YEAR - yearTick();
 const minutes = ticks => Math.max(1, Math.round(ticks * TICK / 60000));
 const SEASON_ICON = {plejaden:'ic-plejaden', sturm:'ic-sturm', passat:'ic-passat', mager:'ic-mager'};
 
+/* The wind follows the year as in the southwest Pacific: in the time of the Pleiades light and from the east, in the
+   storm season gusty from the northwest, in the trade-wind season steady from the southeast, in the lean season from
+   east-southeast. Within a season it veers and freshens a little, slowly, and one season's wind blends into the next. */
+const WINDS = {plejaden:{from:90, str:.45, veer:35, n:'leicht aus Ost'}, sturm:{from:315, str:.85, veer:60, n:'böig aus Nordwest'}, passat:{from:130, str:.75, veer:14, n:'beständig aus Südost'}, mager:{from:105, str:.55, veer:25, n:'mäßig aus Ostsüdost'}};
+const WIND_DIR = ['Nord', 'Nordost', 'Ost', 'Südost', 'Süd', 'Südwest', 'West', 'Nordwest'], WIND_AB = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
+function windAt(t){
+  let vx = 0, vy = 0, str = 0;
+  for (const d of [0, 10, 20, 30]){ const W = WINDS[seasonOf(Math.max(0, t - d)).id], a = W.from * Math.PI / 180; vx += Math.sin(a); vy -= Math.cos(a); str += W.str; }
+  const W = WINDS[seasonOf(t).id], from = Math.atan2(vx, -vy) * 180 / Math.PI + W.veer * (Math.sin(t / 37 + 1.3) * .6 + Math.sin(t / 13.7) * .4);
+  const s = clamp(str / 4 * (1 + .22 * Math.sin(t / 23 + 2) + .1 * Math.sin(t / 7.3)), .1, 1), f = (from % 360 + 360) % 360, a = f * Math.PI / 180;
+  return {from:f, str:s, tx:-Math.sin(a), ty:Math.cos(a), dir:WIND_DIR[Math.round(f / 45) % 8], ab:WIND_AB[Math.round(f / 45) % 8], word:s < .35 ? 'schwach' : s < .6 ? 'mäßig' : s < .82 ? 'frisch' : 'stark'};
+}
+let windCache = null;
+const wind = () => windCache && windCache.t === tick ? windCache.w : (windCache = {t:tick, w:windAt(tick)}).w;
+
 /* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night */
 const SEA_KINDS = new Set(['fisch', 'riff']);
 function seasonalEvery(I, b, K){

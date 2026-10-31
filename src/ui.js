@@ -35,6 +35,7 @@ function updateHUD(){
   const S = seasonOf(); $('seasonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('seasonTxt').textContent = `${moonOf() + 1}. Mond`;
   $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + houseCap(I);
+  showWind();
   const free = staffOf(I).free; $('idleNum').textContent = free; $('idleBtn').classList.toggle('zero', !free); $('idleBtn').setAttribute('aria-label', `${free} ohne Arbeit. Tippen zeigt sie nacheinander.`);
   // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
   const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
@@ -64,8 +65,23 @@ function renderBuildBar(){
   const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
   $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
     return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('') +
-    (buildTab === 'bau' ? `<button type="button" class="bbtn" data-road="1" aria-pressed="false" aria-label="Weg anlegen, kostet nichts"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}</svg><span>Weg</span></button>` : '');
+    (buildTab === 'bau' ? `<button type="button" class="bbtn" data-road="1" aria-pressed="false" aria-label="Weg anlegen, kostet nichts"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}</svg><span>Weg</span></button>` +
+      (I.roads && I.roads.length ? `<button type="button" class="bbtn" data-road="cut" aria-pressed="false" aria-label="Wege entfernen"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}<path d="M-6-4.5L6 4.5M6-4.5L-6 4.5" stroke="#A84A2C" stroke-width="2.2" stroke-linecap="round"/></svg><span>Weg weg</span></button>` : '') : '');
   updateHUD();
+}
+function renameIsland(I, v){
+  v = v.replace(/\s+/g, ' ').trim().slice(0, 18); if (!v){ toast('Ohne Namen geht es nicht.', 2000, false); return; }
+  if (!I.name0) I.name0 = I.name; I.name = v; I.custom = v !== I.name0;
+  closeSheet(); invalidate(true); updateHUD(); renderBuildBar(); save(); toast(`Die Insel heißt jetzt ${v}.`, 2400);
+}
+/* The compass: the streamer points where the wind blows, turns slowly the short way round, and flutters as hard as it blows */
+let vaneAt = null;
+function showWind(){
+  const W = wind(), v = document.querySelector('#compass .vane'), C = $('compass'); if (!v) return;
+  vaneAt = vaneAt == null ? W.from : vaneAt + ((W.from - vaneAt + 540) % 360 - 180);
+  v.style.transform = `rotate(${vaneAt.toFixed(1)}deg)`;
+  C.style.setProperty('--amp', (3 + W.str * 11).toFixed(1) + 'deg'); C.style.setProperty('--gust', (1.7 - W.str * 1.3).toFixed(2) + 's');
+  C.querySelector('span').textContent = 'aus ' + W.ab; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
 /* The idle button: one after the other, the people without work */
 let idleNo = 0;
@@ -109,7 +125,7 @@ $('toast').addEventListener('click', () => { if (news.length && news[0].msg === 
 
 /* ---------- placing and moving */
 function ghostRender(){
-  if (!placing || placing.road){ requestDraw(); return; }
+  if (!placing || placing.road || placing.unroad){ requestDraw(); return; }
   const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
   if (placing.kind === 'steg' && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
   placing.ok = ok; placing.msg = msg;
@@ -163,6 +179,24 @@ function startRoad(){
   $('bottom').hidden = true; $('place').hidden = false; roadMsg(); measure();
   if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); }
 }
+/* Taking paths away: each tap removes the piece of path between two of its points */
+function startUnroad(){
+  const I = isl(active); closeSheet(); selectedId = null;
+  mode = 'unroad'; placing = {kind:'weg', unroad:true, island:I.id};
+  $('placeName').textContent = 'Wege entfernen'; $('placeIc').setAttribute('viewBox', KINDS.weg.vb); $('placeIc').innerHTML = iconMarkup('weg');
+  $('placeInfo').textContent = 'Tippe auf ein Stück Weg, dann ist es weg. Das Gras wächst wieder darüber.';
+  $('placeMsg').textContent = ''; $('placeMsg').classList.remove('bad'); $('placeOk').hidden = true;
+  $('bottom').hidden = true; $('place').hidden = false; measure(); requestDraw();
+  if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); }
+}
+function roadCut(p){
+  const hit = hitRoad(p), el = $('placeMsg');
+  if (!hit || hit.id !== placing.island){ el.textContent = 'Hier liegt kein Weg.'; el.classList.add('bad'); return; }
+  const I = isl(hit.id), r = I.roads[hit.r], a = r.slice(0, hit.k), b = r.slice(hit.k);
+  I.roads.splice(hit.r, 1, ...[a, b].filter(q => q.length > 1)); roadsChanged(I);
+  el.textContent = 'Ein Stück Weg ist weg.'; el.classList.remove('bad');
+  if (!I.roads.length) endPlace();
+}
 function roadMsg(bad){
   const pts = placing.pts, n = pts.length, len = pts.reduce((s, p, k) => k ? s + Math.hypot(p.x - pts[k - 1].x, p.y - pts[k - 1].y) : 0, 0), el = $('placeMsg');
   el.textContent = bad || (n ? `${n} ${n === 1 ? 'Punkt' : 'Punkte'}, ${Math.round(len)} Schritte. Den letzten Punkt antippen nimmt ihn zurück.` : 'Tippe auf der Insel, wo der Weg beginnt, dann Punkt für Punkt weiter.');
@@ -181,7 +215,7 @@ function roadTap(p){
 }
 function layRoad(){
   if (!placing || !placing.road || placing.pts.length < 2) return false;
-  const I = isl(placing.island); (I.roads = I.roads || []).push(placing.pts); placing.pts = []; roadsChanged(I); updateHUD(); return true;
+  const I = isl(placing.island); (I.roads = I.roads || []).push(placing.pts); placing.pts = []; roadsChanged(I); updateHUD(); renderBuildBar(); return true;
 }
 function startMove(b){
   const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:b.v, moveId:b.id};
@@ -199,7 +233,8 @@ function showPlaceBar(){
 }
 function endPlace(){
   if (placing && placing.road) layRoad();
-  const wasMove = mode === 'move'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false;
+  const wasMove = mode === 'move', cut = mode === 'unroad'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false; $('placeOk').hidden = false;
+  if (cut) renderBuildBar();
   $('place').hidden = true; $('bottom').hidden = false; measure();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', 'false');
   if (wasMove) invalidate();
@@ -379,7 +414,7 @@ function infoMarkup(I, b){
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
   if (K.beauty && !b.bt) line += `<span>Schönheit +${K.beauty}</span>`;
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
-  return crewMarkup(I, b) + bar + (line ? `<div class="stat">${line}</div>` : '') + why + `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`;
+  return [crewMarkup(I, b) + bar + (line ? `<div class="stat">${line}</div>` : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 function renderSheet(){
@@ -397,11 +432,17 @@ function renderSheet(){
   } else if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b){ closeSheet(); return; }
     const K = KINDS[b.kind], I = islOfB(b.id);
-    h += head(K.n, I.name) + infoMarkup(I, b);
+    const [main, more] = infoMarkup(I, b);
+    h += head(K.n, I.name) + main;
     if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
+    h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
+  } else if (sheetKind === 'rename'){
+    // an island can get the name its people give it
+    const I = isl(sheetData.id);
+    h += head('Insel benennen', I.custom ? `Früher ${I.name0}.` : 'So nennen die Leute sie bisher.') + `<div class="rowx"><input id="nameIn" class="name-in" type="text" maxlength="18" autocomplete="off" value="${esc(I.name)}" aria-label="Name der Insel"><button class="btn primary" type="button" data-act="rename">Benennen</button></div>`;
   } else if (sheetKind === 'road'){
     const I = isl(sheetData.id), r = I && I.roads && I.roads[sheetData.r]; if (!r){ closeSheet(); return; }
     h += head('Weg', I.name) + `<p class="sub">Zerstoßene Muscheln und Korallensand. Darauf gehen die Leute schneller, und der Weg schmückt das Dorf.</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="delroad">Entfernen</button></span></div>`;
@@ -476,7 +517,8 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'feast'){ holdFeast(islOfB(b.id), FEASTS.find(F => F.id === btn.dataset.f)); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
-  if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); toast('Der Weg ist weg.', 2000, false); return; }
+  if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
+  if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); renderBuildBar(); toast('Der Weg ist weg.', 2000, false); return; }
   if (sheetKind === 'needs' && (act === 'pup' || act === 'pdown')){
     const I = isl(active), pr = prioOf(I), i = pr.indexOf(btn.dataset.c), j = i + (act === 'pup' ? -1 : 1);
     if (j >= 0 && j < pr.length){ [pr[i], pr[j]] = [pr[j], pr[i]]; I.staff = null; syncWalkers(); updateHUD(); save(); }

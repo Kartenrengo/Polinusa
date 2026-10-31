@@ -425,7 +425,7 @@ function markRoads(I){
 const roadLen = I => (I.roads || []).reduce((t, r) => t + r.reduce((s, p, k) => k ? s + Math.hypot(p.x - r[k - 1].x, p.y - r[k - 1].y) : 0, 0), 0);
 function hitRoad(p){
   if (lod === 'far') return null; const lim = Math.max(5, 12 / cam.z);
-  for (const I of islands) for (let ri = 0; ri < (I.roads || []).length; ri++){ const r = I.roads[ri]; for (let k = 1; k < r.length; k++) if (segDist(p, r[k - 1], r[k]) < lim) return {id:I.id, r:ri}; }
+  for (const I of islands) for (let ri = 0; ri < (I.roads || []).length; ri++){ const r = I.roads[ri]; for (let k = 1; k < r.length; k++) if (segDist(p, r[k - 1], r[k]) < lim) return {id:I.id, r:ri, k}; }
   return null;
 }
 function roadsChanged(I){ I._rp = null; markRoads(I); invalidate(); save(); }
@@ -433,7 +433,7 @@ function roadsChanged(I){ I._rp = null; markRoads(I); invalidate(); save(); }
 /* People keep working while the map is not drawn: the steps are made up in small pieces */
 let walkAt = 0;
 function walkUntil(now){
-  let gap = walkAt ? Math.min(3000, now - walkAt) : 0; walkAt = now;
+  let gap = walkAt ? Math.min(3000, now - walkAt) * gameSpeed : 0; walkAt = now;
   while (gap > 0){ const s = Math.min(50, gap); stepWalkers(s); gap -= s; }
 }
 
@@ -512,7 +512,7 @@ function holdFeast(I, F){
   updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
   toast(`${F.n} auf ${I.name}. Ansehen +${F.mana}.`, 3600);
 }
-let hearts = [];   // a heart rises over a house when someone moves in
+let hearts = [], sunKey = '';   // a heart rises over a house when someone moves in
 function econ(){
   tick++; lastEconAt = performance.now();
   for (const I of islands){
@@ -576,6 +576,7 @@ function econ(){
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
   if (tick % 8 === 0) invalidate();   // roofs age
+  { const k = sunShadow().key; if (k !== sunKey){ sunKey = k; invalidate(); } }   // the shadows follow the sun
   syncWalkers(); if (performance.now() - walkAt > 400) walkUntil(performance.now());   // the map is not drawn, so the people walk on from here
   requestDraw(); updateHUD(); if (placing) ghostRender(); checkQuest();
   if (sheetKind && sheetSig() !== lastSig) renderSheet();
@@ -650,6 +651,7 @@ function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < ro
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
   if (mode === 'road'){ roadTap(p); return; }
+  if (mode === 'unroad'){ roadCut(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   const sh = hitShip(p);
   if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu vom ${C.name}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
@@ -711,10 +713,12 @@ $('popBtn').addEventListener('click', () => openSheet('needs'));
 $('vitalBtn').addEventListener('click', () => openSheet('needs'));
 $('storeBtn').addEventListener('click', () => openSheet('store'));
 $('manaBtn').addEventListener('click', () => openSheet('mana'));
-$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; if (b.dataset.road){ if (placing) endPlace(); startRoad(); return; } newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
+$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; if (b.dataset.road){ if (placing) endPlace(); if (b.dataset.road === 'cut') startUnroad(); else startRoad(); return; } newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
 $('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
 $('idleBtn').addEventListener('click', showIdle);
+$('isleName').addEventListener('click', () => { openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
+$('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
 $('tradeBtn').addEventListener('click', () => openSheet('fleet'));
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
 $('placeOk').addEventListener('click', confirmPlace);
@@ -725,9 +729,21 @@ if (document.fonts) document.fonts.ready.then(() => invalidate());
 /* ---------- loop and start */
 function renderAll(){ invalidate(true); spawnWalkers(); renderBuildBar(); }
 let last = performance.now(), lastDraw = 0;
+/* The game's own clock: a tick every two seconds, at double speed every second */
+let gameSpeed = 1, clockAt = 0, clockAcc = 0;
+function gameClock(){
+  const now = performance.now(); clockAcc += Math.min(10000, now - (clockAt || now)) * gameSpeed; clockAt = now;
+  let n = 0; while (clockAcc >= TICK && n < 4){ clockAcc -= TICK; econ(); n++; }
+  if (n === 4) clockAcc = Math.min(clockAcc, TICK);
+}
+function setSpeed(v){
+  gameSpeed = v; const b = $('speedBtn'); b.setAttribute('aria-pressed', v > 1); b.setAttribute('aria-label', v > 1 ? 'Doppelte Geschwindigkeit, an' : 'Doppelte Geschwindigkeit');
+  toast(v > 1 ? 'Doppelte Geschwindigkeit.' : 'Normale Geschwindigkeit.', 1400, false);
+}
+$('speedBtn').addEventListener('click', () => setSpeed(gameSpeed > 1 ? 1 : 2));
 function frame(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); if (ships.length) stepShips(now, dt); walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt); audioTick(now);
+  stepCam(now); if (ships.length) stepShips(now, dt * gameSpeed); walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
   if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
@@ -746,7 +762,7 @@ function start(data){
   const fonts = document.fonts ? Promise.all([document.fonts.load(NAME_FONT), document.fonts.load(SUB_FONT)]).catch(() => {}) : null;
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
-    invalidate(true); requestAnimationFrame(frame); setInterval(econ, TICK);
+    invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
     if (!ok){ openSheet('intro', {first:true}); save(); }
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });

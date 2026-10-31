@@ -34,6 +34,10 @@ body{height:100%;margin:0;overflow:hidden;background:var(--cloth);color:var(--in
 @keyframes up{0%{color:var(--ochre);transform:translateY(-2px)}100%{color:var(--ink);transform:none}}
 .ic{width:20px;height:20px;flex:none;display:block}
 #compass{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:84px;z-index:4;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+#compass .vane{transform-origin:28px 28px;transition:transform 2.6s ease-in-out}
+#compass .flutter{transform-origin:28px 28px;animation:flutter var(--gust,1s) ease-in-out infinite alternate}
+@keyframes flutter{from{transform:rotate(calc(var(--amp,6deg) * -1))}to{transform:rotate(var(--amp,6deg))}}
+@media (prefers-reduced-motion:reduce){#compass .flutter{animation:none}#compass .vane{transition:none}}
 #compass span{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;line-height:1;color:var(--cream);background:var(--ink);padding:2px 6px;border-radius:3px}
 #sidectl{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:84px;z-index:6;display:flex;flex-direction:column;gap:8px}
 .round{width:44px;height:44px;border-radius:50%;border:2px solid var(--brown);background:var(--cloth-hi);color:var(--ink);font:800 24px/1 var(--font-ui);display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 2px 0 rgba(43,29,20,.35)}
@@ -236,3 +240,12 @@ details.more p{margin:2px 0}
 /* the idle button next to the people count */
 .pop.idle{margin-right:2px}
 .pop.idle.zero{opacity:.45}
+/* double speed: the patch turns yellow while it runs fast */
+#sidectl .round:nth-child(3){background-image:var(--e3);transform:rotate(-2deg)}
+.round.speed[aria-pressed="true"]{background-image:var(--eturm)}
+.round.speed[aria-pressed="true"] path{fill:#A84A2C}
+/* the island's name can be tapped to rename it */
+button.isle-name{border:0;background:none;padding:0;margin:0;color:inherit;cursor:pointer;text-align:left}
+button.isle-name{text-decoration:underline dotted rgba(62,36,22,.45);text-decoration-thickness:2px;text-underline-offset:4px}
+.name-in{flex:1;min-width:0;height:44px;padding:0 12px;font:700 18px var(--font-name);color:var(--ink);border:0;background:var(--ecream) no-repeat 0 0/100% 100%}
+.name-in:focus{outline:3px dotted var(--ochre);outline-offset:2px}

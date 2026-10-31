@@ -86,7 +86,7 @@ function trimSprites(){
   if (spritePx <= SPRITE_BUDGET) return;
   const all = []; for (const e of sprites.values()) for (const lv of e.lv.values()) if (lv.ready) all.push([e, lv]);
   all.sort((a, b) => a[1].used - b[1].used);
-  for (const [e, lv] of all){ if (spritePx <= SPRITE_BUDGET * .7 || lv.used >= frameNo - 1) break; e.lv.delete(lv.L); spritePx -= lv.px; }
+  for (const [e, lv] of all){ if (spritePx <= SPRITE_BUDGET * .7 || lv.used >= frameNo - 1) break; e.lv.delete(lv.L); spritePx -= lv.px * (lv.sh ? 2 : 1); }
 }
 const pendingSprites = () => { const p = []; for (const e of sprites.values()) for (const lv of e.lv.values()) if (!lv.ready) p.push(lv.wait); return p; };
 /* Draws art at the current transform. The size step follows the real on-screen scale. */
@@ -106,7 +106,30 @@ function blit(c, key, art, alpha = 1){
   c.globalAlpha = g;
 }
 function put(c, x, y, s, m, rot, key, art, alpha){ c.save(); c.translate(x, y); if (rot) c.rotate(rot); c.scale(s * m, s); blit(c, key, art, alpha); c.restore(); }
-function drawBuilding(c, b, I, alpha = 1){
+/* ---------- shadows. The sun rises in the east, stands high in the north at noon (we are south of the equator) and sets
+   in the west; the shadows fall the other way, long in the morning and evening, short at noon, none at night. Each thing
+   casts its own outline, laid down on the ground: the same bitmap, filled dark and slanted. */
+function sunShadow(){
+  let k = .72, day = 1;   // without day and night: a late afternoon sun
+  if (opts.night){ const p = dayPhase(); k = Math.round(clamp(p / .63, 0, 1) * 12) / 12; day = p < .63 ? Math.round(Math.min(1, Math.sin(Math.PI * k) * 3 + .15) * 4) / 4 : 0; }
+  const a = Math.PI * k, L = .4 + (1 - Math.sin(a)) * 1.2;
+  return {key:k + '|' + day, c:Math.cos(a) * L * .9, d:-(.2 + .3 * Math.sin(a) * L), alpha:.3 * day};
+}
+function blitShadow(c, key, art, alpha){
+  const e = spriteOf(key, art), t = c.getTransform(), need = Math.hypot(t.a, t.b), L = LEVELS.find(l => l >= need) || LEVELS[LEVELS.length - 1];
+  let lv = e.lv.get(L); if (!lv){ lv = rasterize(e, L); e.lv.set(L, lv); }
+  lv.used = frameNo; if (!lv.ready) return;
+  if (!lv.sh){ const s = document.createElement('canvas'); s.width = lv.c.width; s.height = lv.c.height; const x = s.getContext('2d'); x.drawImage(lv.c, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#1A120C'; x.fillRect(0, 0, s.width, s.height); lv.sh = s; spritePx += lv.px; }
+  const g = c.globalAlpha; c.globalAlpha = g * alpha;
+  // only what stands above the ground casts a shadow; what lies in front (a fire pit, a mat) does not
+  c.save(); c.beginPath(); c.rect(e.box.x, e.box.y, e.box.w, Math.max(0, 1 - e.box.y)); c.clip();
+  c.drawImage(lv.sh, e.box.x, e.box.y, e.box.w, e.box.h); c.restore();
+  c.globalAlpha = g;
+}
+function putShadow(c, x, y, s, m, rot, key, art, sh){
+  c.save(); c.translate(x, y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (rot) c.rotate(rot); c.scale(s * m, s); blitShadow(c, key, art, sh.alpha); c.restore();
+}
+function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
@@ -116,6 +139,7 @@ function drawBuilding(c, b, I, alpha = 1){
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
   const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
+  if (sh){ if (!site && K.hy > 3) putShadow(c, b.x, b.y, sc, t.m, t.rot, key, art, sh); return; }   // flat things like fields and paths cast none
   if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
   drawStakes(c, b, K, f, alpha, I);
   if (f > .15) putRising(c, b.x, b.y, sc, t.m, t.rot, key, art, (f - .15) / .85, alpha);
@@ -288,12 +312,12 @@ function treePaths(I){
   return I._tp = {under, canopy};
 }
 const TREE_ART = ['wt0', 'wt1', 'wt2'];
-function drawTree(c, t){
-  const m = t.m ? -1 : 1;
-  if (t.st === 1){ put(c, t.x, t.y, t.s, m, 0, 'stump', '<use href="#stump"/>'); return; }
+function drawTree(c, t, sh){
+  const m = t.m ? -1 : 1, P = sh ? (x, y, s, mm, r, k, a) => putShadow(c, x, y, s, mm, r, k, a, sh) : (x, y, s, mm, r, k, a) => put(c, x, y, s, mm, r, k, a);
+  if (t.st === 1){ if (!sh) put(c, t.x, t.y, t.s, m, 0, 'stump', '<use href="#stump"/>'); return; }
   const f = t.st === 2 ? 1 - t.g / GROW_TICKS : 1;
-  if (f < .3){ put(c, t.x, t.y, .8 + f * 1.4, m, 0, 'sapling', '<use href="#sapling"/>'); return; }
-  const k = TREE_ART[t.v]; put(c, t.x, t.y, t.s * (.45 + .55 * f), m, 0, k, `<use href="#${k}"/>`);
+  if (f < .3){ P(t.x, t.y, .8 + f * 1.4, m, 0, 'sapling', '<use href="#sapling"/>'); return; }
+  const k = TREE_ART[t.v]; P(t.x, t.y, t.s * (.45 + .55 * f), m, 0, k, `<use href="#${k}"/>`);
 }
 function routeCurve(r){
   if (!r._cv){
@@ -330,6 +354,8 @@ function drawObjects(c, area){
     for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) all.push([t, null]);
   }
   all.sort((a, b) => a[0].y - b[0].y);
+  // first every shadow on the ground, then the things themselves, so no shadow lies over a roof
+  const sh = sunShadow(); if (sh.alpha > 0) for (const [b, I] of all){ if (I){ if (b.id !== movingId) drawBuilding(c, b, I, 1, sh); } else drawTree(c, b, sh); }
   for (const [b, I] of all) if (I) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); else drawTree(c, b);
 }
 function drawSel(c){
@@ -487,7 +513,7 @@ const glint = (x, y, r) => { const p = new Path2D(); p.moveTo(x - r, y); p.lineT
    and fires, torches and doorways shine. It can be switched off in the menu. */
 const DAY_TICKS = 180;
 let lastEconAt = 0;
-function dayPhase(){ const f = lastEconAt ? clamp((performance.now() - lastEconAt) / TICK, 0, 1) : 0; return ((tick + f + 30) % DAY_TICKS) / DAY_TICKS; }
+function dayPhase(){ const f = lastEconAt ? clamp((performance.now() - lastEconAt) * gameSpeed / TICK, 0, 1) : 0; return ((tick + f + 30) % DAY_TICKS) / DAY_TICKS; }
 const smooth01 = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 function nightLevel(){
   if (!opts.night) return 0;
@@ -549,8 +575,11 @@ function drawWhales(c, v, now){
 }
 /* Cloud shadows drift over sea and land with the north wind; in the storm season they are rain showers */
 const CLOUD_T = 1100, PUFFS = [[0, 0, 1], [.55, -.18, .7], [-.6, .08, .62]];
+let cloudX = 0, cloudY = 0, cloudAt = 0;
 function drawWeather(c, v, now){
-  const rain = seasonOf().id === 'sturm', t = now / 1000, ox = t * 4, oy = t * 7, far = lod === 'far';   // far away one soft puff per cloud is enough
+  // the clouds drift with the wind, faster when it blows hard; far away one soft puff per cloud is enough
+  const W = wind(), dt = Math.min(100, now - (cloudAt || now)); cloudAt = now; cloudX += W.tx * (4 + 10 * W.str) * dt / 1000; cloudY += W.ty * (4 + 10 * W.str) * dt / 1000;
+  const rain = seasonOf().id === 'sturm', t = now / 1000, ox = (cloudX % CLOUD_T + CLOUD_T) % CLOUD_T, oy = (cloudY % CLOUD_T + CLOUD_T) % CLOUD_T, far = lod === 'far';
   for (let ty = Math.floor((v.y0 - 200) / CLOUD_T); ty <= Math.floor((v.y1 + 200) / CLOUD_T); ty++) for (let tx = Math.floor((v.x0 - 200) / CLOUD_T); tx <= Math.floor((v.x1 + 200) / CLOUD_T); tx++){
     for (let k = 0; k < 3; k++){
       const h = Math.abs(Math.sin(tx * 12.9898 + ty * 78.233 + k * 37.719) * 43758.5453), r1 = h % 1, r2 = (h * 7.13) % 1, r3 = (h * 3.71) % 1;
@@ -565,7 +594,7 @@ function drawWeather(c, v, now){
       if (rain && r3 > .35 && !far){
         // streaks of rain, slanting with the wind
         const p = new Path2D(), fall = (t * 60) % 14;
-        for (let i = 0; i < 26; i++){ const a = (i * 2.399) % TAU, d = Math.sqrt((i + .5) / 26) * R * .8, sx = x + Math.cos(a) * d * 1.3, sy = y + Math.sin(a) * d * .6 + ((fall + i * 5) % 14) - 7; p.moveTo(sx, sy); p.lineTo(sx + 1.6, sy + 6); }
+        for (let i = 0; i < 26; i++){ const a = (i * 2.399) % TAU, d = Math.sqrt((i + .5) / 26) * R * .8, sx = x + Math.cos(a) * d * 1.3, sy = y + Math.sin(a) * d * .6 + ((fall + i * 5) % 14) - 7; p.moveTo(sx, sy); p.lineTo(sx + W.tx * 4, sy + 6); }
         stroke(c, p, '#EAF2F4', .8, null, 'round', .55);
       }
     }
@@ -616,6 +645,14 @@ function drawPeople(c, v, now){
   }
   for (const b of near.keys()) items.push([b.y, b]);
   items.sort((a, b) => a[0] - b[0]);
+  const sh = sunShadow();
+  if (sh.alpha > 0) for (const w of vis){
+    if (w.boat || (w.paddle && !landAt(isl(w.isl), w))) continue;
+    c.save(); c.translate(w.x, w.y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (w.left) c.scale(-1, 1);
+    if (w.home) blitShadow(c, 'cr|' + w.kind, `<use href="#${w.kind}"/>`, sh.alpha);
+    else { if (w.child) c.scale(.7, .7); if (w.sit && (!w.moving || w.busy)) c.scale(1, .78); blitShadow(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old), sh.alpha); }
+    c.restore();
+  }
   for (const [, w] of items){
     if (w.home){ drawCritter(c, w); continue; }
     if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
@@ -706,10 +743,12 @@ function drawWork(c, v){
       if ((lod !== 'near' && b.id !== selectedId) || !ptIn(b.x, b.y, v)) continue;
       if (!sf){ sf = staffOf(I); on = presentAt(I); }
       const sl = slotsOf(I, b, sf, on); if (!sl) continue;
-      const K = KINDS[b.kind], w = sl.length * 5 + 3, top = b.bt ? K.hy * Math.max(.35, 1 - b.bt / K.bt) : K.hy * ((b.v && b.v.scale) || 1);
+      const K = KINDS[b.kind], step = b.kind === 'werft' && I.yard ? `${yardStep(I.yard) + 1}/6` : '', w = sl.length * 5 + 3 + (step ? 12 : 0), top = b.bt ? K.hy * Math.max(.35, 1 - b.bt / K.bt) : K.hy * ((b.v && b.v.scale) || 1);
       c.save(); c.translate(b.x, b.y - top - 4); c.scale(s, s);
       const p = tagPath(-w / 2, -7.4, w, 8.4, b.id); c.globalAlpha = .92; c.fillStyle = '#F4ECD8'; c.fill(p); c.globalAlpha = 1; stroke(c, p, '#3E2416', .6, null, 'round');
       sl.forEach((k, i) => { c.save(); c.translate(-w / 2 + 4 + i * 5, -.9); blit(c, 'pip|' + k, PIP[k]); c.restore(); });
+      // the canoe house also shows which of its six steps it is at
+      if (step){ c.font = '800 5.4px "Alegreya Sans", sans-serif'; c.fillStyle = '#2B1D14'; c.textAlign = 'right'; c.textBaseline = 'middle'; c.fillText(step, w / 2 - 1.6, -3.1); }
       c.restore();
     }
   }
@@ -754,6 +793,7 @@ function drawNeeds(c, v, now){
 }
 function drawGhost(c){
   if (placing.road){ drawRoadGhost(c); return; }
+  if (placing.unroad){ const I = isl(placing.island); if (I.roads) for (const r of I.roads){ const p = new Path2D(), sm = roadCurve(r); p.moveTo(sm[0].x, sm[0].y); for (const q of sm) p.lineTo(q.x, q.y); stroke(c, p, '#A84A2C', 2.4, [4, 3], 'round', .9); for (const q of r){ c.fillStyle = '#A84A2C'; c.fill(ellipse(q.x, q.y, 1.8, 1.5)); } } return; }
   const K = KINDS[placing.kind], r = K.r + 5, e = loopPath(placing.x, placing.y + 1, r, r * .45, 7, .06, 13), ok = placing.ok, I = isl(placing.island);
   // while placing, rings show where the deposit is and how far the workshop reaches for its plants
   // how far a workshop reaches: a ring of dots laid on the ground by hand
@@ -792,6 +832,9 @@ function drawTop(c, now){
     }
     c.save(); c.translate(s.x, s.y); c.scale(ks, ks);
     if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; sketch(c, 0, 1, 16 + 3 * t, 8 + 1.5 * t, s.id * 5, '#F4ECD8', 2.2, .95); }
+    // the canoe's shadow on the water, the sail's longest
+    const sh = far ? null : sunShadow();
+    if (sh && sh.alpha > 0){ c.save(); c.transform(1, 0, sh.c, sh.d, 0, 0); if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blitShadow(c, 'oc', '<use href="#oc"/>', sh.alpha * .55); } else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blitShadow(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>', sh.alpha * .55); } c.restore(); }
     c.save(); if (!reduced && !far) c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .05 : .025));
     if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
     else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
