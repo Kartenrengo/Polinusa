@@ -765,6 +765,7 @@ function walkUntil(now){
 const NEAR_PL = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten', wald:'Bäume'};
 function workState(I, b){
   const K = KINDS[b.kind];
+  if (SEA_KINDS.has(b.kind) && cycloneOver(I)) return {why:'storm', text:'Sturm: Niemand fährt hinaus, die Kanus liegen an Land.'};
   if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Ein Kanusteg bringt die Leute hin, jeder Steg für bis zu 4 Plätze.'};
   if (K.crew && I.settled && !crewAt(I, b)){
     const sf = staffOf(I), pr = prioOf(I), building = sf.build > 0 && pr.indexOf('bau') < pr.indexOf(catOf(b));
@@ -903,6 +904,7 @@ function econ(){
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
   for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
   if (tick % 20 === 0) rollAhead();
+  cycloneTick();
   if (tick % 10 === 0) for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I);
   answerGifts(); stepYards(); feedCrews(); stepTreasure(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time

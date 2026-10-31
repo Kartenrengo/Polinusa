@@ -35,7 +35,7 @@ function newGame(s = newSeed()){
   landing = {ship:sh.id};
 }
 /* caches that belong to one world, cleared whenever another is loaded or begun */
-function resetCaches(){ news.length = 0; unread = 0; newsBadge(); foldToast(); newKinds.clear(); loreCache = null; hintCache = null; windCache = null; lifeLog = null; markW = null; hearts = []; landing = null; walkers = []; critters = []; }   // the people and animals of the old world go with it; spawnWalkers brings the new ones
+function resetCaches(){ news.length = 0; unread = 0; newsBadge(); foldToast(); newKinds.clear(); cyclone = null; loreCache = null; hintCache = null; windCache = null; lifeLog = null; markW = null; hearts = []; landing = null; walkers = []; critters = []; }   // the people and animals of the old world go with it; spawnWalkers brings the new ones
 /* The clan lands on the island it chose: that island becomes home. The canoe is drawn ashore, and what it carried is the
    first store: five families, wood and food, and the plants and pigs of the old land. */
 function foundHome(I){

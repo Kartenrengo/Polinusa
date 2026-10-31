@@ -95,6 +95,18 @@ anderen Kultur finden und ihm eine Gabe bringen.
 Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick: Dörfer, Menschen, Clans, Knoten, Kanus, Ansehen,
 entdeckte Inseln und die Völker anderer Kultur. Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen.
 
+## Die Oberfläche
+
+Alles ist nach Bedeutung geordnet und nimmt so wenig Platz wie möglich:
+
+- **Oben, die Insel:** In der ersten Zeile nur der Name (antippen benennt um), rechts Ansehen, Leute ohne Arbeit und
+  Bewohner mit Platz. Darunter die Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, Häuser
+  voll, oder wann der Nächste kommt. Was nicht in die Zeile passt, zeigt das Lager.
+- **Links, Zeit und Wetter:** Kompass mit Wind und der Mond nebeneinander.
+- **Rechts:** Nachrichten, doppelte Geschwindigkeit, Menü.
+- **Unten, handeln:** Die Aufgabe in einer Zeile mit Fortschritt (antippen erklärt sie), darunter die Bauleiste. Die Reiter
+  „Bauen“ und „Schmuck“ erscheinen erst, wenn es Schmuck gibt.
+
 ## Essen
 
 Alles Essen zählt als **Nahrung**. Oben steht nur eine Zahl, in der Übersicht und im Lager darunter jede Sorte. Jeder
@@ -388,6 +400,10 @@ Tuamotu. Der **Tauchplatz** kommt mit der Aufgabe „Leben auf dem Wasser“ und
 - **Wirbelstürme** kommen in der Sturmzeit öfter als alles andere. Wer nicht vorsorgt, verliert Dächer, eine Werkstatt
   und ein bis zwei Häuser (bis sie neu gebaut sind, ziehen Leute fort), Bäume fallen, die Felder werden ausgewaschen,
   und an kahlen Hängen rutscht Erde auf ein Feld.
+- **Man sieht ihn kommen:** Mit der Warnung verdunkelt sich der Himmel über der Insel, Regen peitscht schräg im Wind,
+  Böen und abgerissene Blätter jagen vorbei, Blitze zucken, auf dem Wasser fliegt Gischt von den Wellenkämmen, die Brandung
+  schlägt hoch ans Riff, und die Palmen biegen sich und schlagen hin und her. Er tobt, solange die Leute beraten, und noch
+  eine Weile danach. In der Zeit weht der Wind mit voller Kraft, und Fischer, Taucher und Riffsammler bleiben an Land.
 
 ## Inseln wechseln
 
@@ -644,7 +660,11 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
   Leute im Einbaum; niemand läuft übers Riff. Beides ruht unter Rāhui.
 - **Im Meer:** Fischschwärme und Schildkröten ziehen durch die Lagunen. Auf offener, schon gesehener See taucht ab und zu
   ein Wal auf, bläst und zeigt beim Abtauchen die Fluke. Neben fahrenden Kanus springen Delfine.
-- **Wetter:** Wolkenschatten ziehen mit dem Nordwind über Meer und Inseln, in der Sturmzeit als Regenschauer.
+- **Wetter:** Wolkenschatten ziehen mit dem Nordwind über Meer und Inseln, in der Sturmzeit als Regenschauer. Ein
+  Wirbelsturm ist voll animiert (siehe Ereignisse).
+- **In den Kanus** sitzen dieselben Menschen wie an Land: Fischer, Fährleute und Paddler zeigen den Oberkörper über dem
+  Rand, das Paddel taucht im Takt ein. Im Auslegerkanu paddeln zwei, auf dem Doppelkanu stehen die Leute auf der Plattform
+  unter dem Segel, am Heck der Steuermann.
 
 Diese Kleinigkeiten laufen mit wenigen Bildern pro Sekunde, wenn sonst nichts animiert ist, und gar nicht, wenn das Gerät
 weniger Bewegung wünscht.

@@ -24,7 +24,7 @@ function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t = topH + 8; $('compass').style.top = t + 'px'; $('seasonBtn').style.top = (t + $('compass').offsetHeight + 8) + 'px'; $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  const t = topH + 8; $('compass').style.top = t + 'px'; $('seasonBtn').style.top = (t + 12) + 'px';   // time and weather side by side $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -352,7 +352,8 @@ function drawObjects(c, area){
   const v = grow(area, 60), all = [], movingId = mode === 'move' && placing ? placing.moveId : 0;
   for (const I of islands){
     if (!seen(I) || !boxIn(I.box, v)) continue;
-    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v)) all.push([b, I]);
+    const sway = cycloneOver(I);   // in a cyclone the palms bend and are drawn moving (drawStormPalms)
+    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v) && !(sway && (b.kind === 'palme' || b.kind === 'pandanus'))) all.push([b, I]);
     for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) all.push([t, null]);
   }
   all.sort((a, b) => a[0].y - b[0].y);
@@ -426,10 +427,11 @@ function drawAnim(c, now){
   if (lod !== 'far' && !reduced) for (const I of islands){
     // surf runs along the reef and swells now and then
     if (!seen(I) || !boxIn(I.box, v)) continue;
-    const p = islandPaths(I), sw = .5 + .5 * Math.sin(now / 1900 + I.center.x);
-    stroke(c, p.ring, '#F4EEDC', 7, null, null, .05 + .09 * sw);
+    const p = islandPaths(I), sk = cycloneOver(I) ? cycloneLevel() : 0, sw = .5 + .5 * Math.sin(now / (1900 - 1300 * sk) + I.center.x);
+    stroke(c, p.ring, '#F4EEDC', 7 + 9 * sk, null, null, .05 + .09 * sw + .3 * sk);   // in a storm the breakers pound the reef
     c.lineDashOffset = -(now / 240) % 3.7; stroke(c, p.ring, '#F4EEDC', 2.2, [.1, 3.6], 'round', .5); c.lineDashOffset = 0;
   }
+  if (cyclone && lod !== 'far') drawStormSea(c, v, now);
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
   drawWhales(c, v, now);
   if (cam.z > PEOPLE_Z) drawPeople(c, v, now);
@@ -486,8 +488,8 @@ function drawFishers(c, v, now){
       if (b.kind === 'fisch'){
         let C = {x:w.x + ux * 12, y:w.y + uy * 12}; if (landAt(I, C)) C = w;
         const a = t / 11, x = C.x + Math.cos(a) * 9, y = C.y + Math.sin(a) * 4, left = -Math.sin(a) < 0;
-        put(c, x, y, 1, left ? -1 : 1, 0, 'einbaum', '<use href="#einbaum"/>');
         const n = ((now + b.id * 1300) % 9000) / 1400;
+        drawDugout(c, x, y, left, 0, figureLook(b.id * 17 + 3), false, now, b.id, n >= 1);
         if (!reduced && n < 1){ const nx = x + (left ? -6 : 6), r = 2 + n * 7; stroke(c, loopPath(nx, y + 1, r, r * .55, b.id, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
       } else if (cam.z > PEOPLE_Z){
         const sway = Math.sin(t / 3) * 5, x = w.x + ux * 7 - uy * sway, y = w.y + uy * 7 + ux * sway;
@@ -500,6 +502,26 @@ function drawFishers(c, v, now){
 }
 /* Someone in a dugout: the canoe goes in a gentle curve rather than a straight line, rocks a little, and a fisher
    casts the net now and then */
+/* ---------- people in canoes are the same people as on land: sitting, the upper body above the gunwale, the hull over
+   their legs, and a paddle that dips with the stroke */
+function seatedFig(c, look, old, x, y, s = 1){
+  c.save(); c.beginPath(); c.rect(x - 7 * s, y - 16 * s, 14 * s, 15.2 * s); c.clip();   // only what rises above the gunwale
+  c.translate(x, y + 3.1 * s); c.scale(s * .92, s * .92); blit(c, 'fig|' + look + (old ? 'o' : ''), () => figureArt(look, old)); c.restore();
+}
+function paddleStroke(c, x, y, s, now, ph){
+  const a = reduced ? 0 : Math.sin(now / 340 + ph), bx = x + (3.4 + a * 1.7) * s, by = y + (1.5 - Math.max(0, -a) * .5) * s;
+  const p = new Path2D(); p.moveTo(x + 1.1 * s, y - 4.6 * s); p.lineTo(bx, by);
+  stroke(c, p, '#2B1D14', .8 * s, null, 'round'); stroke(c, p, '#9C7246', .36 * s, null, 'round');
+  c.fillStyle = '#9C7246'; const bl = ellipse(bx, by + .2 * s, .55 * s, 1.15 * s); c.fill(bl); stroke(c, bl, '#2B1D14', .3 * s);
+  if (!reduced && a > .55) stroke(c, ellipse(bx - .6 * s, by + 1.2 * s, 1.4 * s, .45 * s), '#F4FBFA', .4 * s, [.4, .7], 'round', .85);   // the water swirls behind the blade
+}
+function drawDugout(c, x, y, left, rock, look, old, now, ph, paddling){
+  c.save(); c.translate(x, y); if (left) c.scale(-1, 1); if (rock) c.rotate(rock);
+  seatedFig(c, look, old, -.6, -.2);
+  blit(c, 'einbaumH', '<use href="#einbaumH"/>');
+  if (paddling) paddleStroke(c, -.6, -.2, 1, now, ph);
+  c.restore();
+}
 function drawBoatFig(c, w, now){
   if (w.sx == null){ w.sx = w.x; w.sy = w.y; }
   const d = Math.hypot(w.tx - w.sx, w.ty - w.sy) || 1, f = clamp(1 - Math.hypot(w.tx - w.x, w.ty - w.y) / d, 0, 1), bend = (w.look.charCodeAt(1) % 2 ? 1 : -1) * Math.min(14, d * .16) * Math.sin(f * Math.PI);
@@ -512,7 +534,7 @@ function drawBoatFig(c, w, now){
     if (!reduced) for (let k = 0; k < 3; k++){ const f = ((now - w.under) / 1400 + k / 3) % 1; c.globalAlpha = 1 - f; stroke(c, ellipse(sx + Math.sin(f * 6 + k) * .8, y + 4 - f * 4, .55 + f * .4, .55 + f * .4), '#F4FBFA', .4); c.globalAlpha = 1; }
     return;
   }
-  put(c, x, y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3), 1, w.left ? -1 : 1, rock, 'einbaum', '<use href="#einbaum"/>');
+  drawDugout(c, x, y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3), w.left, rock, w.look, w.old, now, w.phase || 0, !w.fishing);
   if (!w.fishing || reduced) return;
   const n = ((now - w.fishing) % 3600) / 1200; if (n > 1) return;
   const ox = x + (w.left ? -6 : 6), r = 2 + n * 7;
@@ -562,6 +584,71 @@ function drawNight(now){
   camXform(ctx); ctx.globalCompositeOperation = 'lighter';
   for (const L of lights){ const r = L.r * .55, g = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, r); g.addColorStop(0, `rgba(${L.c},${.32 * f})`); g.addColorStop(1, `rgba(${L.c},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(L.x, L.y, r, 0, TAU); ctx.fill(); }
   ctx.globalCompositeOperation = 'source-over';
+}
+/* ---------- a cyclone. Over the island the sky darkens, rain lashes slantwise in the wind, gusts and torn leaves race
+   past and lightning flashes; on the water spray flies off the wave tops, the breakers pound the reef, the palms bend. */
+const hsh = (i, k) => { const h = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return h - Math.floor(h); };
+const stormSpot = () => { const I = cyclone && isl(cyclone.isl); return I ? {I, x:I.center.x, y:I.center.y, R:Math.max(I.box.x1 - I.box.x0, I.box.y1 - I.box.y0) * .5 + 420} : null; };
+let bolt = null, boltNext = 0;
+function drawStormSea(c, v, now){
+  const k = cycloneLevel(), S = stormSpot(); if (k <= .01 || !S || !boxIn(S.I.box, grow(v, 400))) return;
+  const W = wind(), t = now / 1000;
+  // white tops on the waves, running with the wind
+  if (!reduced) for (let i = 0; i < 70; i++){
+    const a = hsh(i, 1) * TAU, d = Math.sqrt(hsh(i, 2)) * S.R, f = (t * .5 + hsh(i, 3)) % 1, x = S.x + Math.cos(a) * d + W.tx * f * 40, y = S.y + Math.sin(a) * d * .8 + W.ty * f * 40;
+    if (!ptIn(x, y, v) || onIsland(S.I, {x, y})) continue;
+    const p = new Path2D(); p.moveTo(x - 5, y); p.quadraticCurveTo(x, y - 3.2, x + 5, y + .4);
+    stroke(c, p, '#F4FBFA', 1.4, null, 'round', k * .8 * Math.sin(f * Math.PI));
+  }
+  // the palms bend with the wind and whip back and forth
+  const lean = clamp(W.tx, -1, 1) * .2 * k, list = S.I.buildings.filter(b => (b.kind === 'palme' || b.kind === 'pandanus') && ptIn(b.x, b.y, v)).sort((a, b) => a.y - b.y);
+  for (const b of list){ const sw = reduced ? 0 : Math.sin(now / 240 + b.id * 1.7) * .08 * k + Math.sin(now / 610 + b.id) * .04 * k;
+    c.save(); c.translate(b.x, b.y); c.rotate(lean + sw); c.translate(-b.x, -b.y); drawBuilding(c, b, S.I); c.restore(); }
+}
+function drawStorm(now){
+  const k = cycloneLevel(), S = stormSpot(); if (k <= .01 || !S) return;
+  const W = wind(), z = cam.z, C = {x:vw / 2 + (S.x - cam.x) * z, y:vh / 2 + (S.y - cam.y) * z}, R = S.R * z;
+  if (C.x + R < 0 || C.x - R > vw || C.y + R < 0 || C.y - R > vh) return;
+  const c = ctx; c.save(); c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = c.createRadialGradient(C.x, C.y, R * .15, C.x, C.y, R); g.addColorStop(0, `rgba(16,24,32,${.55 * k})`); g.addColorStop(1, 'rgba(16,24,32,0)');
+  c.fillStyle = g; c.fillRect(0, 0, vw, vh);
+  const inside = (x, y) => { const d = Math.hypot(x - C.x, y - C.y) / R; return d < 1 ? 1 - d * d : 0; };
+  if (!reduced){
+    const t = now / 1000, L = 12 + 8 * Math.min(1, z), Wd = vw + 80, Hd = vh + 80;
+    // rain, slanting with the wind
+    c.beginPath();
+    for (let i = 0, n = Math.round(340 * k); i < n; i++){
+      const sp = 420 + hsh(i, 3) * 260, x = (((hsh(i, 1) * Wd + t * sp * W.tx * .8) % Wd) + Wd) % Wd - 40, y = ((hsh(i, 2) * Hd + t * sp) % Hd) - 40, a = inside(x, y);
+      if (a > .05){ c.moveTo(x, y); c.lineTo(x + W.tx * L * .8, y + L); }
+    }
+    c.strokeStyle = '#DCE8EC'; c.lineWidth = 1; c.lineCap = 'round'; c.globalAlpha = .6 * k; c.stroke();
+    // gusts: long pale wavy lines racing with the wind
+    c.beginPath();
+    for (let i = 0; i < 12; i++){
+      const f = (t * (.3 + hsh(i, 5) * .25) + hsh(i, 6)) % 1, side = (hsh(i, 7) - .5) * 1.6 * R, len = 50 + hsh(i, 8) * 70;
+      const x0 = C.x + W.tx * (f * 2 - 1) * R - W.ty * side, y0 = C.y + W.ty * (f * 2 - 1) * R + W.tx * side; if (inside(x0, y0) < .1) continue;
+      const nx = -W.ty * 5, ny = W.tx * 5; c.moveTo(x0, y0); c.bezierCurveTo(x0 + W.tx * len * .33 + nx, y0 + W.ty * len * .33 + ny, x0 + W.tx * len * .66 - nx, y0 + W.ty * len * .66 - ny, x0 + W.tx * len, y0 + W.ty * len);
+    }
+    c.strokeStyle = '#EEF4F2'; c.lineWidth = 2; c.globalAlpha = .6 * k; c.stroke();
+    // torn leaves tumbling past
+    c.globalAlpha = k; c.lineWidth = .6; c.strokeStyle = '#2B1D14';
+    for (let i = 0; i < 14; i++){
+      const f = (t * (.22 + hsh(i, 9) * .2) + hsh(i, 10)) % 1, side = (hsh(i, 11) - .5) * 1.4 * R, x = C.x + W.tx * (f * 2 - 1) * R - W.ty * side, y = C.y + W.ty * (f * 2 - 1) * R + W.tx * side + Math.sin(t * 3 + i) * 6;
+      if (inside(x, y) < .1) continue;
+      c.save(); c.translate(x, y); c.rotate(t * (3 + hsh(i, 12) * 4) + i); c.fillStyle = i % 3 ? '#5E8A3A' : '#B9A456'; c.beginPath(); c.ellipse(0, 0, 3.4, 1.3, 0, 0, TAU); c.fill(); c.stroke(); c.restore();
+    }
+    // lightning: now and then a bolt into the island and a flash over it all
+    if (now > boltNext){ boltNext = now + 2600 + Math.random() * 4200; const bx = (Math.random() - .5) * .9, pts = []; let x = C.x + bx * R, y = C.y - R * .9; const ex = C.x + bx * R * .4, ey = C.y + (Math.random() - .3) * R * .3;
+      for (let j = 0; j <= 7; j++){ pts.push([x, y]); x += (ex - x) / (8 - j) + (Math.random() - .5) * 22; y += (ey - y) / (8 - j); } pts.push([ex, ey]); bolt = {t:now, pts}; if (k > .6) sfx('knock'); }
+    const age = bolt ? now - bolt.t : 1e9;
+    if (age < 260 && k > .3){
+      const a = 1 - age / 260;
+      c.globalAlpha = .3 * a * k; c.fillStyle = '#F4FBFF'; c.fillRect(0, 0, vw, vh);
+      c.globalAlpha = a; c.beginPath(); bolt.pts.forEach(([x, y], j) => j ? c.lineTo(x, y) : c.moveTo(x, y));
+      c.strokeStyle = 'rgba(200,225,255,.6)'; c.lineWidth = 6; c.lineJoin = 'round'; c.stroke(); c.strokeStyle = '#FFFFFF'; c.lineWidth = 2; c.stroke();
+    }
+  }
+  c.restore();
 }
 /* Now and then a whale surfaces in the open sea that the canoes have seen: its back, a spout, then the fluke as it dives */
 let whale = null, nextWhale = 0;
@@ -629,7 +716,8 @@ function drawDugouts(c, v, now){
     const lg = lagoonOf(I), served = [...lg.served];
     lg.jetties.forEach((j, n) => {
       const A = waterNear(I, j), goals = served.slice(n * KINDS.steg.serves, (n + 1) * KINDS.steg.serves).map(b => waterNear(I, b)).filter(B => !overLand(A, B, 1));
-      if (!goals.length){ put(c, A.x, A.y, 1, 1, 0, 'einbaum', '<use href="#einbaum"/>'); return; }
+      const ferry = figureLook(j.id * 13 + 7);   // the ferryman of this jetty
+      if (!goals.length){ drawDugout(c, A.x, A.y, false, 0, ferry, false, now, j.id, false); return; }
       // each crossing swings out in a bow, as far as the water allows
       const legs = goals.map((B, i) => { const d = Math.hypot(B.x - A.x, B.y - A.y), nx = -(B.y - A.y) / (d || 1), ny = (B.x - A.x) / (d || 1); let k = Math.min(14, d * .2) * ((j.id + i) % 2 ? 1 : -1); if (landAt(I, {x:(A.x + B.x) / 2 + nx * k, y:(A.y + B.y) / 2 + ny * k})) k = 0; return {B, d, nx, ny, k}; });
       const SPEED = 11, per = l => l.d / SPEED * 2000 + 2600, cyc = legs.reduce((t, l) => t + per(l), 0);
@@ -638,7 +726,7 @@ function drawDugouts(c, v, now){
       // out, a pause there, back, a pause at the jetty
       const go = l.d / SPEED * 1000, f = t < go ? t / go : t < go + 1300 ? 1 : t < 2 * go + 1300 ? 1 - (t - go - 1300) / go : 0, bow = l.k * Math.sin(f * Math.PI);
       const x = A.x + (l.B.x - A.x) * f + l.nx * bow, y = A.y + (l.B.y - A.y) * f + l.ny * bow, left = (t < go + 1300) === (l.B.x < A.x);
-      put(c, x, y, 1, left ? -1 : 1, reduced ? 0 : Math.sin(now / 760 + j.id) * .05, 'einbaum', '<use href="#einbaum"/>');
+      drawDugout(c, x, y, left, reduced ? 0 : Math.sin(now / 760 + j.id) * .05, ferry, false, now, j.id, f > 0 && f < 1);
     });
   }
 }
@@ -777,7 +865,7 @@ const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
 const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
-  w.why === 'wind' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+  w.why === 'wind' || w.why === 'storm' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
   for (const I of islands){
@@ -849,13 +937,26 @@ function drawTop(c, now){
     const sh = far ? null : sunShadow();
     if (sh && sh.alpha > 0){ c.save(); c.transform(1, 0, sh.c, sh.d, 0, 0); if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blitShadow(c, 'oc', '<use href="#oc"/>', sh.alpha * .55); } else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blitShadow(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>', sh.alpha * .55); } c.restore(); }
     c.save(); if (!reduced && !far) c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .05 : .025));
-    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); }
-    else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1); blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>'); }
+    const crew = !far && cam.z > .45 && !s.race;   // close enough to see who is aboard
+    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if (s.hx < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>');
+      // two paddlers in the hull of the outrigger canoe
+      if (crew) for (let k = 0; k < 2; k++){ const px = k ? 4.6 : -4.4; seatedFig(c, crewLook(s, k), false, px, -.9, .82); if (s.state === 'sail') paddleStroke(c, px, -.9, .82, now, s.id + k * 1.7); } }
+    else { const up = s.hy < 0; if (up ? s.hx < 0 : s.hx > 0) c.scale(-1, 1);
+      if (!crew) blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>');
+      else {
+        // the double canoe: the hull, the people on the platform and the steersman at the stern, then the sail over them
+        blit(c, up ? 'dcB' : 'dcInB', up ? '<use href="#dcBase"/>' : '<use href="#dcInBase"/>');
+        const a = (up ? -24 : 156) * Math.PI / 180, co = Math.cos(a), si = Math.sin(a), at = (px, py) => ({x:px * co - py * si, y:px * si + py * co});
+        const spots = [[-12.6, -1.4], [-5.4, -1.2], [2.6, -1.4], [-1.4, .4], [5.2, .6]].slice(0, Math.min(5, 3 + Math.ceil((s.people || 0) / 3))).map(([px, py]) => at(px, py)).sort((p, q) => p.y - q.y);
+        spots.forEach((p, k) => { c.save(); c.translate(p.x, p.y + 1.2); c.scale(.78, .78); blit(c, 'fig|' + crewLook(s, k), () => figureArt(crewLook(s, k))); c.restore(); });
+        blit(c, up ? 'dcS' : 'dcInS', up ? '<use href="#sail" transform="translate(2.5 -3) scale(1.05)"/>' : '<use href="#sail" transform="translate(-2.5 -3) scale(-1.05 1.05)"/>');
+      } }
     c.restore();
     if (!far) shipPanel(c, s);
     c.restore();
   }
 }
+const crewLook = (s, k) => figureLook((s.own ? s.id : 900 + s.id) * 53 + k * 11);   // the same faces aboard each canoe
 /* Over every canoe: who is aboard (crew, settlers or guests) and what it carries, with numbers */
 const SHIP_FONT = '800 9px "Alegreya Sans", "Trebuchet MS", sans-serif';
 function shipPanel(c, s){
@@ -967,8 +1068,8 @@ function draw(now){
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2F5F73'; ctx.fillRect(0, 0, mapC.width, mapC.height); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
-  camXform(ctx); drawTop(ctx, now); drawNight(now); camXform(ctx); drawLabels(ctx);
+  camXform(ctx); drawTop(ctx, now); drawNight(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => !!selShip || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => !!cyclone || !!selShip || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));

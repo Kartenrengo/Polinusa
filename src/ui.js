@@ -29,9 +29,9 @@ function edgeURL(seed, fill, stroke = '#3E2416', sw = 1.6, round = false){
 let lastStock = {};
 function updateHUD(){
   document.body.classList.toggle('landing', !!landing);
-  if (landing){ $('isleName').textContent = 'Auf See'; $('isleType').textContent = 'Euer Clan im Ahnenkanu'; showWind(); return; }
+  if (landing){ $('isleName').textContent = 'Auf See im Ahnenkanu'; showWind(); return; }
   const I = isl(active);
-  $('isleName').textContent = I.name; $('isleType').textContent = (I.volcano ? 'Vulkan' : I.type === 'hoch' ? 'Hohe Insel' : 'Atoll') + ' · ' + LEVEL_NAMES[I.lvl || 1];
+  $('isleName').textContent = I.name; $('isleName').setAttribute('aria-label', `${I.name}, ${I.volcano ? 'Vulkan' : I.type === 'hoch' ? 'hohe Insel' : 'Atoll'}, ${LEVEL_NAMES[I.lvl || 1]}. Tippen benennt sie um.`);
   $('manaBtn').hidden = mana <= 0 && !feastsOpen();
   $('manaNum').textContent = Math.floor(mana);
   const S = seasonOf(); $('seasonUse').setAttribute('href', '#' + SEASON_ICON[S.id]); $('seasonTxt').textContent = `${moonOf() + 1}. Mond`;
@@ -50,6 +50,9 @@ function updateHUD(){
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
   lastStock = {isl:active, ...I.stock, essen:haveOf(I, 'essen')};
   $('vitalBtn').innerHTML = vitalLine(I);
+  // what does not fit next to the hint is left out whole, never cut in half (the store sheet shows everything)
+  for (const li of ul.children) li.hidden = false;
+  for (const li of ul.children) if (li.offsetLeft + li.offsetWidth > ul.clientWidth + 1) li.hidden = true;
   $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}`).join(', ') + '. Tippen zeigt alles.');
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
@@ -57,12 +60,13 @@ function updateHUD(){
 let buildTab = 'bau';
 function renderBuildBar(){
   const I = isl(active);
-  $('buildWhere').textContent = 'auf ' + I.name;
+  $('buildWhere').textContent = '';   // the island's name stands at the top already
   const fleet = own().length > 0 || routes.length > 0;
   $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
   const can = k => KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length), deco = ORDER.filter(k => DECO.includes(k) && can(k));
   if (!deco.length) buildTab = 'bau';
   $('tabDeco').hidden = !deco.length; $('tabDeco').classList.toggle('new', deco.some(k => newKinds.has(k)));
+  document.querySelector('.bottom-head').hidden = !deco.length;   // the tabs only when there is a choice
   $('tabBau').setAttribute('aria-pressed', buildTab === 'bau'); $('tabDeco').setAttribute('aria-pressed', buildTab === 'deco');
   const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
   $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
@@ -359,13 +363,14 @@ function arrivalText(I, nd){
   return `Alle ${String(per).replace('.', ',')} Sekunden kommt jemand dazu, der Nächste in ${next} Sekunden. Noch ${room} ${room === 1 ? 'Platz' : 'Plätze'} frei, voll in etwa ${Math.ceil(room * per)} Sekunden.`;
 }
 /* The line under the goods: work, builders, how long the food lasts, the next arrival */
+/* One hint in the head band, the one that matters most now: food running out, nobody moving in, full houses, or growth */
 function vitalLine(I){
-  const nd = needsOf(I), sf = staffOf(I), ic = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>`, busy = sf.total - sf.free;
-  const fn = nd.list.find(x => x.k === 'essen'), fnet = fn.make - fn.use - fn.work, food = {k:'essen', left:fnet >= 0 ? Infinity : fn.stock / -fnet};
-  const parts = [`<span>${ic('beile')}${busy}/${sf.total}${sf.build ? ` · Bau ${sf.build}` : ''}</span>`];
-  parts.push(food.left === Infinity ? `<span>${ic('essen')}reicht</span>` : `<span class="warn">${ic(food.k)}${food.left < 1 ? 'knapp' : `${Math.floor(food.left)} Min`}</span>`);
-  parts.push(nd.missing.length ? `<span class="warn">${ic('pop')}kein Zuzug</span>` : nd.full ? `<span>${ic('pop')}Häuser voll</span>` : `<span>${ic('pop')}+1 in ${(GROW_EVERY - tick % GROW_EVERY) * TICK / 1000} s</span>`);
-  return parts.join('');
+  const nd = needsOf(I), ic = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>`;
+  const fn = nd.list.find(x => x.k === 'essen'), fnet = fn.make - fn.use - fn.work, left = fnet >= 0 ? Infinity : fn.stock / -fnet;
+  if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
+  if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
+  if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
+  return `<span>${ic('pop')}+1 in ${(GROW_EVERY - tick % GROW_EVERY) * TICK / 1000} s</span>`;
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
 function storeMarkup(I){
@@ -434,7 +439,7 @@ function finaleMarkup(){
 }
 /* ---------- a building: who works there, one line on how it goes, the rest folded away */
 const pipH = k => `<svg class="pip" viewBox="-2.7 -6.5 5.4 7" aria-hidden="true">${PIP[k]}</svg>`;
-const SHORT = {crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Einbaum entsteht', space:'kein Platz'};
+const SHORT = {storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Einbaum entsteht', space:'kein Platz'};
 const shortWhy = w => w.why === 'use' ? `kein ${G1[w.k]}` : w.why === 'near' ? `zu wenig ${NEAR_PL[w.kind]}` : SHORT[w.why] || 'steht still';
 const secsText = s => s < 90 ? `${Math.max(1, Math.ceil(s))} s` : `${Math.round(s / 60)} min`;
 function crewMarkup(I, b){

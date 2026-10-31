@@ -19,8 +19,8 @@ const EVENTS = [
     when:() => seasonOf().id === 'sturm' && pickOf(villages().filter(I => I.buildings.some(b => KINDS[b.kind].crew && !b.bt))),
     text:I => `Die Alten sehen den Himmel über ${I.name} gelb werden, die Vögel fliegen landeinwärts. Ein Wirbelsturm kommt.`,
     choices:[
-      {n:'Dächer festbinden', cost:{schnur:2, holz:4}, text:'Alle binden die Dächer mit Schnur fest und ziehen die Kanus an Land.', go:I => { stats.stuerme++; return `Der Sturm tobt eine Nacht lang über ${I.name}. Alles hält.`; }},
-      {n:'Abwarten', text:'Hoffen, dass er vorbeizieht.', go:I => stormHits(I)}]},
+      {n:'Dächer festbinden', cost:{schnur:2, holz:4}, text:'Alle binden die Dächer mit Schnur fest und ziehen die Kanus an Land.', go:I => { stats.stuerme++; cycloneStart(I, 10); return `Der Sturm tobt eine Nacht lang über ${I.name}. Alles hält.`; }},
+      {n:'Abwarten', text:'Hoffen, dass er vorbeizieht.', go:I => { cycloneStart(I, 10); return stormHits(I); }}]},
   {id:'treibgut', t:'Schiffbrüchige',
     when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:6}))),
     text:I => `Ein fremdes Kanu treibt mit erschöpften Menschen auf den Strand von ${I.name}. Sie haben ihr Ziel auf dem Meer verfehlt.`,
@@ -75,6 +75,26 @@ const EVENTS = [
 /* Pick and show an event when the time has come and nothing else is open */
 /* What a cyclone does to a village that did not prepare: roofs torn, a workshop and one or two houses wrecked (people
    must go until they are rebuilt), trees down, the fields washed out; where the forest is gone a slope slides onto a field */
+/* ---------- a cyclone over an island, from the warning until it has passed: the map shows it (drawStorm), the wind blows
+   at full strength, and nobody goes out on the water. Only while you watch; while you are away it passes unseen. */
+let cyclone = null;
+function cycloneStart(I, ticks){
+  if (awayQuiet || !I) return;
+  const was = cyclone && cyclone.isl === I.id;
+  cyclone = {isl:I.id, start:was ? cyclone.start : tick, end:Math.max(was ? cyclone.end : 0, tick + ticks)};
+  if (!was){ invalidate(true); I.staff = null; }
+}
+const cycloneOver = I => !!cyclone && cyclone.isl === I.id;
+function cycloneLevel(){
+  if (!cyclone) return 0;
+  const t = tick + (lastEconAt ? clamp((performance.now() - lastEconAt) * gameSpeed / TICK, 0, 1) : 0);
+  return clamp((t - cyclone.start) / 2.5, 0, 1) * clamp((cyclone.end - t) / 3, 0, 1);
+}
+function cycloneTick(){
+  if (!cyclone) return;
+  if (eventNow && eventNow.E.id === 'sturm') cyclone.end = Math.max(cyclone.end, tick + 4);   // it rages while the people decide
+  if (tick >= cyclone.end || !isl(cyclone.isl)){ cyclone = null; invalidate(true); }
+}
 function stormHits(I){
   stats.stuerme++;
   const pick = (list, n) => list.sort(() => Math.random() - .5).slice(0, n);
@@ -98,6 +118,7 @@ function eventTick(){
   // in the storm season a cyclone comes more often than anything else
   const storm = ok.find(([E]) => E.id === 'sturm'), [E, o] = storm && Math.random() < .55 ? storm : pickOf(ok); lastEvent = E.id; eventNow = {E, o}; stats.ereignisse++;
   const I = E.place ? E.place(o) : o; setActive(I.id);
+  if (E.id === 'sturm') cycloneStart(I, 8);   // the sky darkens as the warning comes
   sfx('horn'); openSheet('event', {});
 }
 function eventMarkup(){

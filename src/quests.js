@@ -108,7 +108,7 @@ function renderQuest(){
   const el = $('quest'), show = quest < QUESTS.length && !sheetKind && mode !== 'place' && mode !== 'move';
   el.hidden = !show; if (!show) return;
   const Q = QUESTS[quest], n = clamp(Q.n(), 0, Q.of);
-  el.querySelector('.q-n').textContent = `Aufgabe ${quest + 1} von ${QUESTS.length}`;
+  el.querySelector('.q-n').textContent = `${quest + 1}/${QUESTS.length}`;
   el.querySelector('.q-t').textContent = qn(Q.t);
   el.querySelector('.q-d').textContent = dOf(Q);
   el.querySelector('.q-p').textContent = `${n} von ${Q.of}`;

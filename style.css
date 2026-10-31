@@ -261,3 +261,28 @@ body.landing #bottom, body.landing #quest, body.landing .top-right, body.landing
 /* an open sheet lies over the side buttons, so its close button is never hidden under them */
 #sheet{z-index:7}
 .landing-isle{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}
+/* ---------- compact layout. Top: the island and its people, then its stores and the one hint that matters now. Left: wind
+   and moon side by side. Right: messages, speed, menu. Bottom: the task in one line, then building. */
+.top-inner{gap:3px;padding-block:6px 5px}
+.top-row{align-items:center}
+.isle-name{font-size:21px}
+.top-row.two{gap:10px}
+.top-row.two .storebtn{flex:1;min-width:0;width:auto;overflow:hidden}
+.top-row.two .goods{flex-wrap:nowrap;column-gap:9px;overflow:hidden}
+.top-row.two .vital{flex:none;width:auto;padding:0;flex-wrap:nowrap}
+.top-row.two .vital span{font-size:12.5px}
+#compass{gap:1px}
+#compass svg{width:46px;height:46px}
+#compass span{font-size:10px;padding:2px 6px}
+.season{left:calc(62px + env(safe-area-inset-left,0px))}
+/* the task: number, title and progress on one line; tapping shows what to do */
+.quest{grid-template-columns:auto 1fr auto;grid-template-areas:"n t p" "bar bar bar";align-items:baseline;column-gap:8px;row-gap:4px;padding:6px 12px 7px}
+.quest .q-n{grid-area:n;letter-spacing:.04em}
+.quest .q-t{grid-area:t;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quest .q-d{display:none}
+.quest .q-foot{display:contents}
+.quest .q-bar{grid-area:bar;height:5px}
+.quest .q-p{grid-area:p}
+.bottom-head{padding:0 4px 3px}
+.bottom-inner{padding-block:5px 8px}
+.where{display:none}
