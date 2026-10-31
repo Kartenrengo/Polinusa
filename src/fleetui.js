@@ -6,6 +6,7 @@ const shipIcon = kind => kind === 'oc' ? '<svg class="ic ship" viewBox="-13 -10 
 const stepper = (act, k, n, canMinus, canPlus, label) => `<span class="step"><button type="button" data-act="${act}-" data-k="${k}" aria-label="${label} weniger" ${canMinus ? '' : 'disabled'}>−</button><output aria-live="polite">${n}</output><button type="button" data-act="${act}+" data-k="${k}" aria-label="${label} mehr" ${canPlus ? '' : 'disabled'}>+</button></span>`;
 function shipStatus(s){
   const r = s.route != null ? routes[s.route] : null;
+  if (s.auto) return s.state === 'sail' && s.dest && s.dest.isl ? `Erkundet von selbst, holt Proviant auf ${isl(s.dest.isl).name}.` : 'Erkundet von selbst.';
   if (r) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}.`;
   if (s.state === 'sail') return s.dest && s.dest.isl ? `Unterwegs nach ${isl(s.dest.isl).name}.` : 'Unterwegs auf See.';
   if (s.state === 'sea') return 'Liegt auf offener See vor Anker.';
@@ -17,7 +18,10 @@ function shipMarkup(s){
   let h = head(s.name, shipStatus(s));
   h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind === 'dc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
   h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</p>`;
+  if (S.fog && s.route == null) h += `<div class="rowx"><span class="sub">${s.auto ? 'Es fährt an den Rand des Bekannten, kehrt rechtzeitig um, holt im nächsten eigenen Hafen Proviant und fährt wieder los.' : 'Von selbst erkunden: an den Rand des Bekannten und rechtzeitig zurück, mit Proviant aus dem eigenen Lager.'}</span><button class="btn${s.auto ? '' : ' primary'}" type="button" data-act="auto">${s.auto ? 'Anhalten' : 'Erkunden lassen'}</button></div>`;
   if (S.fog) h += provisionNote(s, P);
+  // a treasure island: what the crew can gather here
+  if (P && P.treasure){ const T = P.treasure; h += `<div class="stat">${icon(T.k)}<span>${GN[T.k]}: ${T.left} bereit</span><span class="sub">${s.auto ? '' : 'Solange das Kanu hier liegt, sammelt die Mannschaft.'}</span></div>`; }
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', load ? giftText(s.cargo) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
@@ -114,6 +118,7 @@ function fleetAct(act, btn){
   if (sheetKind === 'ship'){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return false;
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
+    if (act === 'auto'){ setAuto(s, !s.auto); return true; }
     if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ s.people++; P.pop--; }
     else if (act === 'pp-' && P && s.people > 0){ s.people--; P.pop++; }
     else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && cargoLoad(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }

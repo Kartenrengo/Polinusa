@@ -133,12 +133,12 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, boat, dry:b.kind === 'fisch' && !!I}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, boat, dry:b.kind === 'fisch' && !!I, soil:K.soil ? (b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
+  const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
   if (sh){ if (!site && K.hy > 3) putShadow(c, b.x, b.y, sc, t.m, t.rot, key, art, sh); return; }   // flat things like fields and paths cast none
   if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
   drawStakes(c, b, K, f, alpha, I);
@@ -235,6 +235,8 @@ function drawIsland(c, I, area){
   fillWith(c, p.harbor, '#2F5F73', 'pSea');
   if (p.patches){ c.fillStyle = '#4E9C9A'; c.fill(p.patches); stroke(c, p.patches, '#F3F8EE', .6, null, null, .7); }
   // silt clouds the water off each mouth and fades out into the lagoon
+  const ero = I.settled ? I._ero || 0 : 0, mouths = I.delta ? I.delta.exits : I.river && I.river.length ? [I.river[I.river.length - 1]] : [];
+  if (ero) for (const q of mouths){ const R = 34 + ero * 26, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, `rgba(140,104,58,${.45 + ero * .15})`); g.addColorStop(.6, 'rgba(140,104,58,.22)'); g.addColorStop(1, 'rgba(140,104,58,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, R, 0, TAU); c.fill(); }
   if (I.delta) for (const q of I.delta.exits){ const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, 20); g.addColorStop(0, 'rgba(201,214,170,.75)'); g.addColorStop(1, 'rgba(201,214,170,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, 20, 0, TAU); c.fill(); }
   p.lands.forEach((L, i) => {
     stroke(c, L, '#F1F6EC', 4.4, null, null, .4);   // surf along the beach
@@ -765,7 +767,7 @@ const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
 const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
-  w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+  w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
   for (const I of islands){
@@ -775,6 +777,7 @@ function drawNeeds(c, v, now){
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
       put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
     }
+    for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - 14, s, 1, 0, 'need|soil', needBubble('soil'));
     for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - KINDS[b.kind].hy - 14, s, 1, 0, 'need|einbaum', needBubble('einbaum'));
     const miss = needsOf(I).missing; if (!miss.length) continue;
     for (const b of I.buildings){
@@ -878,9 +881,22 @@ function label(c, x, y, k, text, sub, font = NAME_FONT){
 function drawLabels(c){
   if (lod === 'near') return;
   const k = clamp(.95 / cam.z, .75, 2.6), v = view(200);
+  seaNames(c, k);
   for (const I of islands){
-    if (I.discovered && ptIn(I.labelAt.x, I.labelAt.y, v)) label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : 'unbewohnt');
+    if (!I.discovered || !ptIn(I.labelAt.x, I.labelAt.y, v)) continue;
+    label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}` : I.treasure ? `Schatzinsel: ${GN[I.treasure.k]}` : 'unbewohnt');
+    // a treasure island shows what it gives next to its name
+    if (I.treasure) put(c, I.labelAt.x, I.labelAt.y + 24 * k, k * .9, 1, 0, 'tr|' + I.treasure.k, `<use href="#ic-${I.treasure.k}" transform="translate(-10 -10)"/>`);
   }
+}
+/* The open sea has names too: written faintly on the chart, even where the fog still lies */
+function seaNames(c, k){
+  const y = home0.home.y + 40, names = [[FAR_X + (W - FAR_X) / 2, 'Die Fernen Inseln']];
+  if (home0.v >= 2) names.unshift([(WIDE_X + FAR_X) / 2, 'Die Weite See']);
+  const fs = 17 / cam.z;   // the same size on screen at any zoom
+  c.save(); c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `italic 700 ${fs.toFixed(1)}px Alegreya, Georgia, serif`;
+  for (const [x, t] of names){ c.globalAlpha = .6; c.fillStyle = '#F4ECD8'; c.fillText(t, x, y); c.globalAlpha = .35; c.fillText('·  ·  ·', x, y + fs * 1.1); }
+  c.restore();
 }
 
 /* ---------- layers and one frame */

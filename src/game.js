@@ -112,7 +112,7 @@ function staff(I){
     }
     for (const b of I.buildings.filter(q => KINDS[q.kind].crew && !q.bt && catOf(q) === cat)){
       if (b.boat > 0){ if (give(b, 1, cat)) boats.push(b); continue; }   // first the fisher carves his dugout
-      if (unserved(I, b)) continue;
+      if (unserved(I, b) || b.fallow) continue;
       if (give(b, capOf(b), cat)) staffed.add(b);
     }
   }
@@ -459,7 +459,7 @@ const tooled = (I, K) => !K.boost || (I.stock[K.boost.k] || 0) > 0;
 const pace = (I, K) => tooled(I, K) ? 1 : K.boost.slow;
 function makeRate(I, k){
   let m = 0;
-  for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !b.bt && !(b.boat > 0) && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every / pace(I, K) * (K.crew ? crewAt(I, b) / K.crew : 1); }
+  for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !b.bt && !(b.boat > 0) && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? crewAt(I, b) / K.crew : 1); }
   return m;
 }
 function workUse(I, k){
@@ -506,7 +506,7 @@ function feastState(I, F){
 }
 function holdFeast(I, F){
   const no = feastState(I, F); if (no){ toast(no, 2600, false); return; }
-  pay(I, F.cost); mana += F.mana; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN;
+  pay(I, F.cost); mana += F.mana; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN; if (F.joy) I.joyUntil = tick + F.joy; if (F.id === 'schatz') stats.schatzfest = (stats.schatzfest || 0) + 1;
   for (const w of walkers) if (w.isl === I.id){ nextLeg(w); w.wait = 0; }
   for (let i = 0; i < 6; i++) heartAt(I);
   updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
@@ -535,17 +535,21 @@ function econ(){
     for (const b of I.buildings){
       const K = KINDS[b.kind]; if (!(K.prod || K.plants) || b.bt) continue;
       if (b.boat > 0){ b.idle = {why:'carving', text:'Erst wird der Einbaum geschnitzt, dann geht es aufs Wasser.'}; continue; }
+      // a field lying fallow rests: its soil comes back, and it is tilled again once it has
+      if (b.fallow){ b.soil = Math.min(1, (b.soil ?? 1) + .012); b.idle = {why:'fallow', text:'Das Feld liegt brach. Der Boden erholt sich.'};
+        if (b.soil >= .98){ b.fallow = false; b.idle = null; I.staff = null; invalidate(); if (I.id === active) toast(`Ein ${K.n} ist ausgeruht und wird wieder bestellt.`, 2600); } continue; }
       // only those who have got there work; fewer workers than there is room for: the work goes slower
       const n = K.crew ? Math.min(sf.crew.get(b) || 0, on.get(b) || 0) : 1;
       if (K.crew && !n){ b.idle = workState(I, b) || {why:'way', text:'Die Leute sind auf dem Weg hierher.'}; continue; }
       if (K.trip){ if (b.idle && b.idle.why !== 'full') b.idle = workState(I, b); if (tick % 20 === 0 && b.hung > 0) b.hung--; continue; }   // fishers bring the catch themselves
-      const every = Math.round(seasonalEvery(I, b, K) * pace(I, K) * (K.crew ? K.crew / n : 1));
+      const every = Math.round(seasonalEvery(I, b, K) * pace(I, K) * (K.crew ? K.crew / n : 1) * (K.soil ? soilPace(b) : 1) * (b.kind === 'riff' ? [1, 1.35, 1.8][erosionOf(I)] : 1));
       if (!every || tick % every){ if (b.idle && b.idle.why === 'way') b.idle = null; continue; }
       b.idle = workState(I, b); if (b.idle) continue;
       if (K.plants){ if (!plantTree(I, b)) b.idle = {why:'space', text:'In der Nähe ist kein Platz mehr für junge Bäume.'}; continue; }
       if (K.use) pay(I, K.use);
       if (K.trees) fellTree(I, b);
       if (K.prod === 'fisch') stats.fisch++;
+      if (K.soil) drainSoil(I, b);
       if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }   // the net tears, the adze breaks
       add(K.prod, 1);
     }
@@ -572,7 +576,7 @@ function econ(){
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
   for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
-  answerGifts(); stepYards(); feedCrews(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
+  answerGifts(); stepYards(); feedCrews(); stepTreasure(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const c = isl(r.a).clan || isl(r.b).clan; if (c && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.knots--; r.lastGift = tick; invalidate(); } }
   if (tick % 8 === 0) invalidate();   // roofs age
@@ -582,6 +586,31 @@ function econ(){
   if (sheetKind && sheetSig() !== lastSig) renderSheet();
   if (tick % 3 === 0) save();
 }
+/* ---------- the land wears out. Every harvest takes from a field's soil and the work goes slower; trees standing close by
+   (breadfruit, coconut, the forest edge) shelter it, so it tires half as fast, as in the old tree gardens. A field left fallow
+   recovers in two minutes or so. Where too much forest is cut, the rain washes the earth into the sea: fields tire faster
+   and silt chokes the reef. */
+const soilPace = b => 1 / clamp((b.soil ?? 1) + .3, .45, 1);
+function sheltered(I, b){
+  if (b._agro && b._agro.t > tick - 20) return b._agro.v;
+  const n = I.trees.filter(t => t.st === 0 && Math.hypot(t.x - b.x, t.y - b.y) < 55).length + I.buildings.filter(q => (q.kind === 'baum' || q.kind === 'palme') && !q.bt && Math.hypot(q.x - b.x, q.y - b.y) < 55).length;
+  return (b._agro = {t:tick, v:n >= 2}).v;
+}
+function drainSoil(I, b){
+  const before = b.soil ?? 1; b.soil = Math.max(.12, before - .005 * [1, 1.6, 2.6][erosionOf(I)] * (sheltered(I, b) ? .5 : 1));
+  if ((before >= .45) !== (b.soil >= .45)) invalidate();   // the field turns pale
+}
+const forestShare = I => I.type === 'hoch' && I.trees0 >= 25 ? I.trees.filter(t => t.st === 0).length / I.trees0 : 1;
+function erosionOf(I){
+  if (I._eroT === tick) return I._ero || 0;
+  const f = forestShare(I), e = f < .25 ? 2 : f < .45 ? 1 : 0; I._eroT = tick;
+  if (e !== (I._ero || 0)){
+    if (e > (I._ero || 0) && I.settled) toast(`Auf ${I.name} ist zu viel Wald gefallen. Der Regen spült Erde ins Meer: Felder laugen schneller aus, das Riff verschlammt. Pflanzt Bäume.`, 5200);
+    I._ero = e; invalidate();
+  }
+  return e;
+}
+
 /* ---------- trees: each holds a little wood. Felled, it leaves a stump that sprouts again only after a long while;
    a planter sets saplings on stumps and free ground at once. */
 function fellTree(I, b){

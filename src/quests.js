@@ -53,8 +53,17 @@ const QUESTS = [
     n:() => islands.some(I => I.festYear != null) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
   {id:'chief', t:'Ein Häuptlingsdorf', d:'Mach ein Dorf zum Häuptlingsdorf.', why:`Dafür braucht es ${CHIEF.pop} Bewohner, Ansehen ${CHIEF.mana}, Schönheit ${CHIEF.beauty}, genug Töpfe, Matten und Meeresfrüchte und dazu Tapa, Schweine, Kava und Muschelschmuck im Lager. Dann wohnen 6 Menschen in jedem Haus.`,
     n:() => islands.some(I => I.settled && I.lvl === 3) ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{}},
-  {id:'netz', t:'Das Lapita-Netz', d:'Verbinde 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten.', why:'So breitete sich die Lapita-Kultur aus: Dörfer auf vielen Inseln, verbunden durch Fahrten, Gaben und Feste. Wer das Netz knüpft, hat das Spiel geschafft. Danach geht es weiter, so lange du willst.',
-    n:() => Math.min(4, islands.filter(I => I.settled).length) + Math.min(2, routes.filter(r => (isl(r.a).clan || isl(r.b).clan) && r.knots >= 4).length), of:6, show:{fleet:true}, unlock:[], gift:{}}
+  {id:'netz', t:'Das Lapita-Netz', d:'Verbinde 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten.', why:'So breitete sich die Lapita-Kultur aus: Dörfer auf vielen Inseln, verbunden durch Fahrten, Gaben und Feste. Ist das Netz geknüpft, ruft die Ferne: Im Osten, jenseits der Weiten See, liegen neue Inseln.',
+    n:() => Math.min(4, islands.filter(I => I.settled).length) + Math.min(2, routes.filter(r => (isl(r.a).clan || isl(r.b).clan) && r.knots >= 4).length), of:6, show:{fleet:true}, unlock:[], gift:{}},
+  // the great voyage: across the Weite See to the Ferne Inseln, their treasures, and the greatest feast
+  {id:'weite', t:'Die Weite See', d:'Finde mit dem Doppelkanu Land jenseits der Weiten See im Osten.', why:'Östlich der Heimat liegen Tage offener See. So fuhren die Lapita vor dreitausend Jahren bis Fidschi, Tonga und Samoa. Nur das Doppelkanu schafft es, mit reichlich Proviant: hinüber etwa 12. Mitten in der Weiten See liegt Tifa mit seinen Perlmuscheln, ein Halt auf halbem Weg. „Erkunden lassen“ schickt das Kanu von selbst los, so weit der Proviant hin und zurück reicht; über die ganze Weite See steuerst du es selbst.',
+    n:() => islands.some(I => I.discovered && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:[], gift:{proviant:6}},
+  {id:'schatz', t:'Schätze der Ferne', d:'Bring Perlmutt, rote Federn und einen Walzahn in ein eigenes Dorf.', why:'Die Schatzinseln Tifa, Kula und Tabua geben, was es nirgends sonst gibt. Leg mit einem Kanu dort an, dann sammelt die Mannschaft, ein wenig nach dem anderen; die Insel bringt es langsam wieder hervor. Schätze sind die besten Gaben für einen Clan.',
+    n:() => TREASURE_GOODS.filter(k => islands.some(I => I.settled && (I.stock[k] || 0) > 0)).length, of:3, show:{fleet:true}, unlock:[], gift:{}},
+  {id:'fern', t:'Ein Dorf in der Ferne', d:'Gründe ein Dorf auf den Fernen Inseln.', why:'Ins Unbekannte darf nur Proviant mit, also erst erkunden, dann siedeln: Siedler, Holz, Nahrung und Proviant für die Überfahrt aufs Doppelkanu, dann die gefundene Insel antippen.',
+    n:() => islands.some(I => I.settled && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:[], gift:{}},
+  {id:'ahnen', t:'Das Fest der Schätze', d:'Feiere im Versammlungshaus das Fest der Schätze.', why:'Perlmutt, rote Federn, ein Walzahn und zwei Schweine: das größte Fest, das ein Clan geben kann. Die Ahnen sehen zu, und das Dorf wächst eine Weile doppelt so schnell.',
+    n:() => stats.schatzfest ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}}
 ];
 const dOf = Q => typeof Q.d === 'function' ? Q.d() : Q.d;
 const unlockName = k => (KINDS[k] || SHIPS[k]).n;
@@ -81,7 +90,7 @@ function checkQuest(){
     if (kinds.length) parts.push(`Neu zum Bauen: ${kinds.join(', ')}.`);
     if (Object.keys(done.gift).length) parts.push(`Dazu ${giftText(done.gift)}.`);
     if (quest >= QUESTS.length) parts.push('Jetzt steht dir alles offen.');
-    if (done.id === 'netz') setTimeout(() => openSheet('finale'), 2600);
+    if (done.id === 'ahnen') setTimeout(() => openSheet('finale'), 2600);
     toast(parts.join(' '), 4600); renderBuildBar(); save();
     const el = $('quest'); el.classList.remove('done'); void el.offsetWidth; el.classList.add('done'); sfx('quest');
   }

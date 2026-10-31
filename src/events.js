@@ -20,12 +20,7 @@ const EVENTS = [
     text:I => `Die Alten sehen den Himmel über ${I.name} gelb werden, die Vögel fliegen landeinwärts. Ein Wirbelsturm kommt.`,
     choices:[
       {n:'Dächer festbinden', cost:{schnur:2, holz:4}, text:'Alle binden die Dächer mit Schnur fest und ziehen die Kanus an Land.', go:I => { stats.stuerme++; return `Der Sturm tobt eine Nacht lang über ${I.name}. Alles hält.`; }},
-      {n:'Abwarten', text:'Hoffen, dass er vorbeizieht.', go:I => {
-        stats.stuerme++;
-        const roofs = I.buildings.filter(b => KINDS[b.kind].roof && !b.bt).sort(() => Math.random() - .5).slice(0, 3); for (const b of roofs) b.born = tick - AGE_FULL;
-        const hit = pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
-        invalidate(); syncWalkers();
-        return `Der Sturm hat Dächer zerzaust${hit ? ` und die ${KINDS[hit.kind].n} beschädigt. Sie muss wieder aufgebaut werden` : ''}.`; }}]},
+      {n:'Abwarten', text:'Hoffen, dass er vorbeizieht.', go:I => stormHits(I)}]},
   {id:'treibgut', t:'Schiffbrüchige',
     when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:6}))),
     text:I => `Ein fremdes Kanu treibt mit erschöpften Menschen auf den Strand von ${I.name}. Sie haben ihr Ziel auf dem Meer verfehlt.`,
@@ -78,13 +73,30 @@ const EVENTS = [
 ];
 
 /* Pick and show an event when the time has come and nothing else is open */
+/* What a cyclone does to a village that did not prepare: roofs torn, a workshop and one or two houses wrecked (people
+   must go until they are rebuilt), trees down, the fields washed out; where the forest is gone a slope slides onto a field */
+function stormHits(I){
+  stats.stuerme++;
+  const pick = (list, n) => list.sort(() => Math.random() - .5).slice(0, n);
+  for (const b of pick(I.buildings.filter(b => KINDS[b.kind].roof && !b.bt), 3)) b.born = tick - AGE_FULL;
+  const hit = pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
+  const homes = pick(I.buildings.filter(b => (b.kind === 'haus' || b.kind === 'pfahl') && !b.bt), 1 + (Math.random() < .5 ? 1 : 0)); for (const b of homes) b.bt = Math.ceil(KINDS[b.kind].bt / 2);
+  const down = pick(I.trees.filter(t => t.st === 0), Math.round(I.trees.filter(t => t.st === 0).length * .08)); for (const t of down){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; }
+  if (down.length) treesChanged(I);
+  for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt) b.soil = Math.max(.12, (b.soil ?? 1) - .15);
+  const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; }
+  invalidate(true); syncWalkers();
+  const parts = [hit && KINDS[hit.kind].n, homes.length && (homes.length > 1 ? `${homes.length} Häuser` : '1 Haus')].filter(Boolean), n = down.length;
+  return `Der Sturm hat Dächer zerzaust.${parts.length ? ` Zerstört: ${parts.join(', ')}. Das muss neu gebaut werden.` : ''} ${n} ${n === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden, die Felder sind ausgewaschen.${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
+}
 function eventTick(){
   if (eventNow || tick < nextEvent || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;
   if (sheetKind || placing){ nextEvent = tick + 5; return; }
   const ok = EVENTS.filter(E => E.id !== lastEvent).map(E => [E, E.when()]).filter(([, o]) => o);
   nextEvent = tick + 150 + Math.floor(Math.random() * 90);
   if (!ok.length) return;
-  const [E, o] = pickOf(ok); lastEvent = E.id; eventNow = {E, o}; stats.ereignisse++;
+  // in the storm season a cyclone comes more often than anything else
+  const storm = ok.find(([E]) => E.id === 'sturm'), [E, o] = storm && Math.random() < .55 ? storm : pickOf(ok); lastEvent = E.id; eventNow = {E, o}; stats.ereignisse++;
   const I = E.place ? E.place(o) : o; setActive(I.id);
   sfx('horn'); openSheet('event', {});
 }
@@ -131,6 +143,9 @@ const CHRONIK = [
   {id:'clans', t:'Alle drei Clans', d:'Schnüre zum Feuerberg, zum Riff und zum Kavahain.', test:() => new Set(routes.map(r => (isl(r.a).clan || isl(r.b).clan || {}).id).filter(Boolean)).size >= 3, mana:5},
   {id:'knoten', t:'Ein dichtes Netz', d:'30 Knoten auf allen Schnüren zusammen.', test:() => routes.reduce((t, r) => t + r.knots, 0) >= 30, mana:5},
   {id:'volk', t:'Ein Volk', d:'150 Menschen in allen Dörfern.', test:() => allPop() >= 150, mana:6},
+  {id:'schatzinsel', t:'Eine Schatzinsel', d:'Eine der Schatzinseln gefunden.', test:() => islands.some(I => I.treasure && I.discovered), mana:3},
+  {id:'weite', t:'Über die Weite See', d:'Land jenseits der Weiten See gefunden.', test:() => islands.some(I => I.discovered && I.center.x > FAR_X), mana:6},
+  {id:'brache', t:'Der Boden ruht', d:'Ein Feld brachliegen lassen.', test:() => (stats.brache || 0) >= 1, mana:2},
   {id:'jahre', t:'Fünf Jahre', d:'Fünf Jahre auf den Inseln.', test:() => yearOf() >= 5, mana:5}
 ];
 function chronikTick(){

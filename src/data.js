@@ -3,9 +3,10 @@
 
 const TICK = 2000, DAY = 3, AGE_FULL = 150, LOAD = 12, SAVE_KEY = 'polinusa-3';
 
-const GOODS = ['nahrung','fisch','meeres','holz','proviant','toepfe','beile','klingen','matten','schnur','tapa','schweine','kava','schmuck'];
-const GN = {essen:'Nahrung', nahrung:'Feldfrüchte', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Töpfe', beile:'Steinbeile', klingen:'Klingen', matten:'Matten', schnur:'Schnur', tapa:'Tapa', schweine:'Schweine', kava:'Kava', schmuck:'Muschelschmuck'};
-const G1 = {essen:'Nahrung', nahrung:'Feldfrucht', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Topf', beile:'Steinbeil', klingen:'Klinge', matten:'Matte', schnur:'Schnur', tapa:'Tapa', schweine:'Schwein', kava:'Kava', schmuck:'Muschelring'};
+const GOODS = ['nahrung','fisch','meeres','holz','proviant','toepfe','beile','klingen','matten','schnur','tapa','schweine','kava','schmuck','perlmutt','federn','tabua'];
+const TREASURE_GOODS = ['perlmutt', 'federn', 'tabua'];   // found only on the treasure islands
+const GN = {essen:'Nahrung', nahrung:'Feldfrüchte', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Töpfe', beile:'Steinbeile', klingen:'Klingen', matten:'Matten', schnur:'Schnur', tapa:'Tapa', schweine:'Schweine', kava:'Kava', schmuck:'Muschelschmuck', perlmutt:'Perlmutt', federn:'Rote Federn', tabua:'Walzähne'};
+const G1 = {essen:'Nahrung', nahrung:'Feldfrucht', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Topf', beile:'Steinbeil', klingen:'Klinge', matten:'Matte', schnur:'Schnur', tapa:'Tapa', schweine:'Schwein', kava:'Kava', schmuck:'Muschelring', perlmutt:'Perlmutt', federn:'rote Feder', tabua:'Walzahn'};
 
 /* Places on the map where raw material lies. Workshops that need one must stand close by. */
 const DEPOSITS = {
@@ -21,8 +22,8 @@ const KINDS = {
   faeller:{n:'Holzfäller', s:'Holz', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, prod:'holz', every:2, trees:{r:80}, boost:{k:'beile', per:20, slow:1.5}, roof:true, info:'Fällt Bäume in der Nähe und bringt das Holz ins Lager. Mit Steinbeilen geht es schneller, ein Beil hält für 20 Holz. Ein gefällter Baum wächst nur langsam nach.', vb:'-18 -17 36 21'},
   pflanzer:{n:'Baumpflanzer', s:'Pflanzer', on:['hoch'], crew:1, bt:8, cost:{holz:2}, r:11, hy:6, every:4, plants:{r:70}, roof:true, info:'Setzt junge Bäume auf Baumstümpfe und an den Waldrand in der Nähe. Wo Bäume stehen, kann nichts gebaut werden.', vb:'-18 -17 36 21'},
   haus:{n:'Haus', s:'Haus', on:['hoch','atoll'], bt:12, cost:{hoch:{holz:2}, atoll:{holz:1, toepfe:1}}, r:10, hy:12, cap:4, roof:true, info:'Ein Zuhause für 4 Menschen, im Häuptlingsdorf für 6.', vb:'-17 -29 34 33'},
-  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist das wichtigste Essen der hohen Inseln.', vb:'-13 -11 26 22'},
-  pulaka:{n:'Pulakagrube', s:'Pulaka', on:['atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'nahrung', every:3, inland:9, info:'Eine tiefe Grube bis hinab zum Süßwasser im Sand. Darin wächst Sumpftaro, die das wichtigste Essen der Atolle. Braucht Platz in der Mitte eines Motus.', vb:'-12 -10 24 16'},
+  taro:{n:'Tarofeld', s:'Taro', on:['hoch'], crew:1, soil:true, bt:6, cost:{holz:1}, r:10, hy:0, prod:'nahrung', every:2, info:'Taro ist das wichtigste Essen der hohen Inseln.', vb:'-13 -11 26 22'},
+  pulaka:{n:'Pulakagrube', s:'Pulaka', on:['atoll'], crew:1, soil:true, bt:8, cost:{holz:1}, r:10, hy:3, prod:'nahrung', every:3, inland:9, info:'Eine tiefe Grube bis hinab zum Süßwasser im Sand. Darin wächst Sumpftaro, die das wichtigste Essen der Atolle. Braucht Platz in der Mitte eines Motus.', vb:'-12 -10 24 16'},
   fisch:{n:'Fischgestell', s:'Fisch', on:['hoch','atoll'], crew:2, bt:6, cost:{holz:1}, r:8, hy:4, prod:'fisch', every:1.2, trip:true, canoe:30, boost:{k:'schnur', per:8, slow:2}, coast:true, info:'Die Fischer paddeln im Einbaum hinaus, werfen Netze und Leinen mit Haken aus Muschel und hängen den Fang hier zum Trocknen auf. Mit Netzen aus Schnur fangen sie doppelt so viel, ein Netz hält für 8 Fische. Steht am Strand.', vb:'-12 -14 26 18'},
   riff:{n:'Riffsammler', s:'Riff', on:['hoch','atoll'], crew:1, bt:8, cost:{holz:1}, r:10, hy:6, prod:'meeres', every:4, coast:true, roof:true, info:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Steht am Strand.', vb:'-17 -17 34 21'},
   steg:{n:'Kanusteg', s:'Steg', on:['hoch','atoll'], bt:8, cost:{holz:3}, r:9, hy:3, coast:true, serves:4, canoe:30, info:'Ein Steg mit Einbaum. Er bringt Leute zu bis zu 4 Pfahlhäusern oder Arbeitsplätzen auf einem anderen Motu.', vb:'-6 -9 36 16'},
@@ -43,7 +44,7 @@ const KINDS = {
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:20, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Kokosfasern für die Seilerei.', vb:'-13 -25 26 28'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:25, cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Trägt Brotfrucht, frisch zum Essen oder für die Gärgrube.', vb:'-10 -21 20 23'},
   pandanus:{n:'Pandanus', s:'Pandanus', on:['atoll'], bt:15, cost:{}, r:5, hy:9, beach:true, plant:true, info:'Die Blätter werden zu Matten geflochten.', vb:'-10 -21 20 23'},
-  kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], crew:1, bt:8, cost:{holz:1}, r:10, hy:3, prod:'kava', every:12, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
+  kavagarten:{n:'Kavagarten', s:'Kava', on:['hoch'], crew:1, soil:true, bt:8, cost:{holz:1}, r:10, hy:3, prod:'kava', every:12, info:'Aus der Wurzel des Kavastrauchs entsteht das Getränk der Zeremonien. Kava kam aus dem Norden Vanuatus.', vb:'-12 -12 24 19'},
   // things that only make the village beautiful
   hibiskus:{n:'Hibiskus', s:'Hibiskus', on:['hoch','atoll'], bt:8, cost:{}, r:5, hy:6, plant:true, beauty:1, info:'Rote Blüten für Haar und Kränze.', vb:'-9 -14 18 16'},
   blumen:{n:'Blumenbeet', s:'Blumen', on:['hoch','atoll'], bt:5, cost:{holz:1}, r:7, hy:3, beauty:2, info:'Duftende Tiare und Hibiskus, eingefasst mit Holz.', vb:'-11 -9 22 14'},
@@ -86,12 +87,14 @@ const CHIEF = {pop:40, mana:20, beauty:10, cap:6};   // what it takes to become 
 /* Standing (mana) comes from feasts and gifts and fades slowly */
 const FEASTS = [
   {id:'klein', n:'Kleines Fest', cost:{nahrung:10, fisch:4, toepfe:2}, mana:5},
-  {id:'gross', n:'Großes Fest', cost:{schweine:4, nahrung:12, meeres:4, tapa:2}, mana:15}
+  {id:'gross', n:'Großes Fest', cost:{schweine:4, nahrung:12, meeres:4, tapa:2}, mana:15},
+  // with the treasures of the far islands: the greatest feast, the village grows twice as fast for a while
+  {id:'schatz', n:'Fest der Schätze', cost:{perlmutt:2, federn:2, tabua:1, schweine:2}, mana:30, joy:40}
 ];
 const FEAST_PAUSE = 45, FEAST_LEN = 12, MANA_FADE = 30;   // ticks between feasts on one island, how long it lasts, ticks per point lost
 
 /* Gifts to other clans: what a good is worth, the return comes later and grows with trust (knots) */
-const VALUE = {nahrung:.2, fisch:.4, meeres:.5, holz:.3, proviant:1, toepfe:1, beile:1.5, klingen:2, matten:1, schnur:1, tapa:2, schweine:3, kava:2, schmuck:6};
+const VALUE = {nahrung:.2, fisch:.4, meeres:.5, holz:.3, proviant:1, toepfe:1, beile:1.5, klingen:2, matten:1, schnur:1, tapa:2, schweine:3, kava:2, schmuck:6, perlmutt:7, federn:10, tabua:12};
 const CLANS = {
   feuer:{name:'Clan vom Feuerberg', on:'vulkan', makes:['klingen', 'schweine'], wants:['matten', 'schnur', 'schmuck'], pop:30},
   riff:{name:'Clan vom Riff', on:'atoll', makes:['schmuck', 'matten'], wants:['toepfe', 'beile', 'klingen'], pop:22},

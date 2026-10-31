@@ -152,6 +152,42 @@ Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt
   ist und nichts fehlt), die Arbeit nach Reihenfolge mit allen Arbeitsplätzen, für jedes Essen Lager, Erzeugung, Verbrauch
   und Reichweite, und den weiteren Bedarf.
 
+## Die große Fahrt
+
+Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jahren bis Fidschi, Tonga und Samoa fuhren.
+
+- **Die Weite See:** Östlich der Heimat liegt offenes Meer ohne Land, auf der Seekarte beschriftet. Mitten darin liegt
+  nur **Tifa**, ein Atoll mit Perlmuscheln, ein Halt auf halbem Weg. Dahinter beginnen die **Fernen Inseln**, dichter
+  besiedelt mit Inseln und Clans. Hinüber fährt nur das Doppelkanu; das Auslegerkanu bleibt diesseits.
+- **Schatzinseln:** Tifa (Perlmutt), Kula (rote Federn, im Wald leben rote Papageien) und Tabua (Walzähne, in der Bucht
+  stranden Pottwale). Liegt ein Kanu dort vor Anker, sammelt die Mannschaft, ein Stück alle paar Sekunden; die Insel
+  bringt es langsam wieder hervor. Ein eigenes Dorf dort sammelt auch. Schätze sind die wertvollsten Gaben für Clans
+  und gehören auf das **Fest der Schätze** (2 Perlmutt, 2 rote Federn, 1 Walzahn, 2 Schweine): Ansehen +30, und das Dorf
+  wächst eine Weile doppelt so schnell. Auf der Karte stehen sie mit ihrem Schatz unter dem Namen.
+- **Neue Aufgaben:** Die Weite See überqueren, alle drei Schätze heimbringen, ein Dorf in der Ferne gründen, das Fest der
+  Schätze feiern. Danach kommt der Rückblick. Ältere Spielstände, die schon fertig waren, machen hier weiter.
+- **Von selbst erkunden:** In der Tafel des Doppelkanus „Erkunden lassen“. Es fährt an den Rand des Bekannten, wohin es
+  mit dem Proviant hin und zurück kommt, eher nach Osten. Wird der Proviant knapp, kehrt es zum nächsten eigenen Hafen
+  zurück, lädt alles aus, nimmt bis zu 24 Proviant an Bord und fährt wieder los, bis du es anhältst oder das Lager leer
+  ist. Steuert man es selbst, hört es auf. Über die ganze Weite See steuerst du selbst: Erkunden geht nur mit Proviant,
+  erst danach folgen Siedler und Waren.
+- **Vor Anker essen** die Seefahrer an Land; Proviant brauchen sie nur auf See.
+- Ältere Spielstände behalten ihr Meer; bei ihnen liegen alle drei Schatzinseln bei den Fernen Inseln.
+
+## Der Boden und der Wald
+
+- **Felder laugen aus:** Jede Ernte auf Tarofeld, Pulakagrube und Kavagarten zehrt am Boden. Unter 45 % wird das Feld
+  blass und rissig, die Arbeit geht langsamer, unter 35 % zeigt eine Blase den müden Boden. Stehen Bäume daneben
+  (Brotfrucht, Kokos, Waldrand), laugt es nur halb so schnell aus, wie in den alten Baumgärten.
+- **Brache:** Im Feld „Brachliegen lassen“. Dann wächst Gras darüber, die Arbeiter werden frei, und in gut zwei Minuten
+  ist der Boden ausgeruht; danach wird es von selbst wieder bestellt.
+- **Erosion:** Steht auf einer hohen Insel weniger als 45 % des ursprünglichen Waldes, spült der Regen die Erde ins Meer:
+  Vor den Flussmündungen wird das Wasser braun, Felder laugen 1,6-mal so schnell aus, Riffsammler arbeiten langsamer.
+  Unter 25 % ist es schlimmer. Die Übersicht zeigt unter „Land“ den Wald und die müden Felder.
+- **Wirbelstürme** kommen in der Sturmzeit öfter als alles andere. Wer nicht vorsorgt, verliert Dächer, eine Werkstatt
+  und ein bis zwei Häuser (bis sie neu gebaut sind, ziehen Leute fort), Bäume fallen, die Felder werden ausgewaschen,
+  und an kahlen Hängen rutscht Erde auf ein Feld.
+
 ## Inseln wechseln
 
 Gebaut wird auf der Insel, die man nah vor sich hat. Wer heranzoomt, ist dort; die Leisten zeigen dann diese Insel. Von

@@ -276,6 +276,15 @@ function needsMarkup(I){
   h += row('pop', `${I.pop} Bewohner`, `${sf.total - sf.free} arbeiten, ${sf.free} ohne Arbeit, ${kids} Kinder, ${rest - kids} Alte${I.inside ? `, ${I.inside} davon zu Hause` : ''}. Platz für ${nd.cap}.`, bar(I.pop / Math.max(1, nd.cap)), nd.full ? chip('low', 'voll') : chip('ok', `${nd.cap - I.pop} frei`));
   h += row('pop', 'Zuzug', arrivalText(I, nd), '', nd.growing ? chip('ok', 'wächst') : chip(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll'), nd.growing ? '' : 'need');
   h += `</ul>`;
+  // the land: how much forest still holds the soil, and how many fields are worn out
+  const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;
+  if (I.type === 'hoch' || fields.length){
+    h += `<p class="sec">Land</p><ul class="list needs">`;
+    if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
+      h += row('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus, das Riff leidet. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', bar(f / .6), e ? chip(e > 1 ? 'out' : 'low', 'Erosion') : chip('ok', 'hält'), e ? 'need' : ''); }
+    if (fields.length) h += row('soil', `${fields.length} Felder`, `${tired ? `${tired} ausgelaugt` : 'Der Boden trägt'}${resting ? `, ${resting} brach` : ''}. Ausgelaugte Felder brachliegen lassen.`, '', tired ? chip('low', 'müde') : chip('ok', 'gut'), tired ? 'need' : '');
+    h += `</ul>`;
+  }
   // work in the order of the priorities, which can be changed
   h += `<p class="sec">Arbeit nach Reihenfolge</p><ul class="list needs">`;
   // every workplace with its marks, the same as over the buildings, grouped by kind
@@ -349,7 +358,9 @@ function storeMarkup(I){
 }
 /* Standing sheet: what mana is for, and the feasts this island can hold */
 function feastMarkup(I){
-  return FEASTS.map(F => { const no = feastState(I, F); return `<div class="rowx"><span><b>${F.n}</b> <span class="sub">${costText(F.cost)}, Ansehen +${F.mana}</span>${no ? `<br><span class="sub">${no}</span>` : ''}</span><button class="btn${no ? '' : ' primary'}" type="button" data-act="feast" data-f="${F.id}" ${no ? 'disabled' : ''}>Feiern</button></div>`; }).join('');
+  // the feast of treasures only once a treasure has been seen
+  const known = islands.some(J => J.treasure && J.discovered) || islands.some(J => J.settled && TREASURE_GOODS.some(k => (J.stock[k] || 0) > 0));
+  return FEASTS.filter(F => F.id !== 'schatz' || known).map(F => { const no = feastState(I, F); return `<div class="rowx"><span><b>${F.n}</b> <span class="sub">${costText(F.cost)}, Ansehen +${F.mana}</span>${no ? `<br><span class="sub">${no}</span>` : ''}</span><button class="btn${no ? '' : ' primary'}" type="button" data-act="feast" data-f="${F.id}" ${no ? 'disabled' : ''}>Feiern</button></div>`; }).join('');
 }
 function manaMarkup(I){
   let h = head(`Ansehen ${Math.floor(mana)}`, 'Das Ansehen des Clans. Es wächst mit Festen und Gaben und sinkt langsam, etwa 1 pro Minute.');
@@ -371,8 +382,8 @@ function clanMarkup(T){
 function finaleMarkup(){
   const mine = islands.filter(I => I.settled), people = mine.reduce((t, I) => t + I.pop, 0), friends = routes.filter(r => isl(r.a).clan || isl(r.b).clan);
   const row = (k, label, v) => `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">${k ? `<use href="#ic-${k}"/>` : ''}</svg><span class="nm">${label}</span><b class="qty">${v}</b></li>`;
-  let h = head('Das Lapita-Netz ist geknüpft', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`);
-  h += `<p>Vom ersten Versammlungshaus auf Panua aus ist ein Netz aus Dörfern und Freundschaften entstanden, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben.</p>`;
+  let h = head('Die große Fahrt ist vollbracht', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`);
+  h += `<p>Vom ersten Versammlungshaus auf ${isl('heimat').name} aus ist ein Netz aus Dörfern und Freundschaften entstanden, bis über die Weite See zu den Fernen Inseln, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben.</p>`;
   h += `<ul class="list needs">${row('pop', 'Eigene Dörfer', mine.length)}${row('pop', 'Menschen', people)}${row('schnur', 'Befreundete Clans', friends.length)}${row('schnur', 'Knoten auf allen Schnüren', routes.reduce((t, r) => t + r.knots, 0))}${row('einbaum', 'Kanus', own().length)}${row('mana', 'Ansehen', Math.floor(mana))}${row('', 'Entdeckte Inseln', islands.filter(I => I.discovered).length)}</ul>`;
   h += `<p class="sub">Das Meer bleibt offen. Es gibt noch Nebel zu lichten, Dörfer zu Häuptlingsdörfern zu machen und Feste zu feiern.</p>`;
   return h + `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Weiterspielen</button></div>`;
@@ -406,9 +417,12 @@ function infoMarkup(I, b){
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
     more.unshift(b.kind === 'steg' ? 'Erst wenn der Einbaum fertig ist, fährt er zu den Pfahlhäusern.' : 'Erst wenn der Einbaum fertig ist, fahren die Fischer hinaus.');
   } else if (K.prod || K.plants){
-    const w = b.idle || workState(I, b), rate = PER_MIN / K.every / pace(I, K), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
+    const w = b.idle || workState(I, b), rate = PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
     line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(K.prod)}${perMin(rate)} pro Minute</span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
+    // the soil of a field: how much is left, and letting it rest
+    if (K.soil){ line += `<span>${icon('soil')}Boden ${Math.round((b.soil ?? 1) * 100)} %${sheltered(I, b) ? ', Bäume schützen ihn' : ''}</span>`;
+      why += `<div class="rowx"><span class="sub">${b.fallow ? 'Liegt brach und wird von selbst wieder bestellt, sobald der Boden ausgeruht ist.' : 'Jede Ernte zehrt am Boden, dann geht die Arbeit langsamer. Brach erholt er sich in gut zwei Minuten; Bäume daneben schonen ihn.'}</span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }
     if (w && w.why !== 'way') why = `<p class="sub why">${w.text}</p>`;
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
@@ -449,7 +463,7 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? 'Euer Doppelkanu ist auf Panua gelandet. Noch steht nur das Versammlungshaus.' : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur. Tippe jemanden an, dann siehst du den Namen und was die Person tut.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
+    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur. Tippe jemanden an, dann siehst du den Namen und was die Person tut.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Das Doppelkanu kann von selbst erkunden: antippen, dann „Erkunden lassen“. Es kehrt rechtzeitig um und holt Proviant.</li><li>Im Osten liegt die Weite See, dahinter die Fernen Inseln. Dort und auf Tifa liegen Schätze, die es sonst nirgends gibt.</li><li>Felder laugen aus. Lass sie brachliegen, Bäume daneben schonen den Boden. Fällt zu viel Wald, spült der Regen die Erde fort.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -486,7 +500,7 @@ function sheetSig(){
   if (sheetKind === 'ship'){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return 'gone';
     const P = s.port ? isl(s.port) : null;
-    return [s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
+    return [s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
   }
   if (sheetKind === 'route'){
     const r = routes[sheetData.r]; if (!r) return 'gone';
@@ -498,7 +512,7 @@ function sheetSig(){
   const yard = b.kind === 'werft' ? [I.yard && I.yard.left, shipAt(I.id).length, ...Object.values(SHIPS).map(S => canPay(I, S.cost))].join() : '';
   const hall = b.kind === 'halle' ? [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost)), festivalState(I), festivalParts(I).map(p => p.ok).join(), guestsFor().length].join() : '';
   const here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).map(w => w.name + w.on + w.leg).join('');
-  return ['a' + age, b.bt, b.boat, b.got, here, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
+  return ['a' + age, b.bt, b.boat, b.got, here, Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
 }
 $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.more') && sheetData) sheetData.more = e.target.open; }, true);
 $('sheetBody').addEventListener('click', e => {
@@ -510,6 +524,7 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b) return;
     if (act === 'move'){ startMove(b); return; }
+    if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'mc-' || act === 'mc+'){ const K = KINDS[b.kind], I = islOfB(b.id), n = clamp(capOf(b) + (act === 'mc+' ? 1 : -1), 0, K.crew); b.v = {...b.v, mc:n}; if (n === K.crew) delete b.v.mc; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
     if (act === 'nokill'){ sheetData.confirm = false; renderSheet(); return; }

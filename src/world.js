@@ -4,7 +4,15 @@
    always with the same result for the same seed. Before that the game itself does not know what lies there.
    Only the seed and the cells already seen are saved. */
 
-const W = 4800, H = 7200, CELL = 800;
+const W = 7200, H = 7200, CELL = 800, W0 = 4800;   // W0: the home waters, where the start lies
+/* East of the home waters lies the Weite See, days of open sea, and beyond it the Ferne Inseln, as the Lapita sailed on
+   to Fiji, Tonga and Samoa. Out there, and one alone in the Weite See, lie the treasure islands. */
+const WIDE_X = 3200, FAR_X = 4800, H_SEA = H;
+const TREASURES = {
+  perlmutt:{n:'Perlmutt', isle:'Tifa', kind:'atoll', where:'In der Lagune von Tifa wachsen Perlmuscheln. Aus ihrem Perlmutt entstehen Haken, Köder und Schmuck.'},
+  federn:{n:'Rote Federn', isle:'Kula', kind:'hoch', where:'Im Wald von Kula leben rote Papageien. Ihre Federn sind das Kostbarste, was ein Häuptling tragen kann.'},
+  tabua:{n:'Walzähne', isle:'Tabua', kind:'hoch', where:'In der Bucht von Tabua stranden Pottwale. Ein Walzahn besiegelt Bündnisse und Hochzeiten.'}
+};
 /* Island names are Proto-Oceanic words */
 const NAMES = {
   hoch: ['Patu', 'Kuro', 'Langi', 'Talise', 'Wai', 'Ulu', 'Mata'],   // Stein, Topf, Himmel, Mandelbaum, Süßwasser, Kopf, Auge
@@ -15,9 +23,9 @@ const NUMBER = ['', ' Rua', ' Tolu', ' Pati', ' Lima'];               // the sec
 const radOf = (kind, size) => kind === 'atoll' ? size + 12 : size * 1.36 + 50;
 
 /* The start: Panua with its first atoll Motu next door */
-function makeWorld(seed){
+function makeWorld(seed, v = 2){
   const r = rng(seed), spots = [];
-  const hx = W * (.42 + r() * .1), hy = H * (.55 + r() * .1);
+  const hx = W0 * (.42 + r() * .1), hy = H * (.55 + r() * .1);
   spots.push({id:'heimat', name:'Panua', kind:'hoch', x:hx, y:hy, size:138 + r() * 16});
   const a = (-100 + r() * 70) * Math.PI / 180, d = 470 + r() * 70;
   spots.push({id:'tochter', name:'Motu', kind:'atoll', x:hx + Math.cos(a) * d, y:hy + Math.sin(a) * d, size:112 + r() * 16});
@@ -29,13 +37,21 @@ function makeWorld(seed){
     Object.assign(I, {id:s.id, name:s.name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1});
     return I;
   });
-  return {islands, hole, home:{x:hx, y:hy}, keep:spots};
+  // where the treasure islands lie: one in the Weite See (in older games out among the Ferne Inseln), two far out
+  const tr = rng(seed ^ 0x7e3a), hcy = Math.floor(hy / CELL), row = d => clamp(hcy + Math.round((tr() - .5) * 2 * d), 0, H / CELL - 1);
+  const treasure = v >= 2 ? [{k:'perlmutt', cx:4 + Math.floor(tr() * 2), cy:row(1)}, {k:'federn', cx:6 + Math.floor(tr() * 2), cy:row(2)}, {k:'tabua', cx:8, cy:row(3)}]
+    : [{k:'perlmutt', cx:6, cy:row(2)}, {k:'federn', cx:7, cy:row(2)}, {k:'tabua', cx:8, cy:row(3)}];
+  for (const I of islands) I.trees0 = (I.trees || []).length;
+  return {islands, hole, home:{x:hx, y:hy}, keep:spots, v, treasure};
 }
 /* One cell of open sea: maybe an island, maybe a clan on it. Near home islands are more likely. */
 function genCell(seed, cx, cy, start, used){
   const r = rng((seed ^ Math.imul(cx + 101, 73856093) ^ Math.imul(cy + 211, 19349663)) >>> 0);
   const hc = {x:Math.floor(start.home.x / CELL), y:Math.floor(start.home.y / CELL)}, dc = Math.max(Math.abs(cx - hc.x), Math.abs(cy - hc.y));
-  if (r() > (dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
+  const T = (start.treasure || []).find(t => t.cx === cx && t.cy === cy), far = cx * CELL >= FAR_X;
+  if (T) return treasureIsle(seed, cx, cy, start, T, r);
+  if (start.v >= 2 && cx * CELL >= WIDE_X && !far) return null;   // the Weite See: nothing but water
+  if (r() > (far ? .68 : dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
   const roll = r(), kind = roll < .42 ? 'atoll' : roll < .66 ? 'vulkan' : 'hoch';
   const size = kind === 'atoll' ? 92 + r() * 36 : kind === 'vulkan' ? 104 + r() * 22 : 108 + r() * 32, rad = radOf(kind, size), m = rad + 50;
   const x = cx * CELL + m + r() * (CELL - 2 * m), y = cy * CELL + m + r() * (CELL - 2 * m);
@@ -51,8 +67,16 @@ function genCell(seed, cx, cy, start, used){
   // a clan, further out: on a volcano with obsidian, on an atoll, or in a kava grove on a high island
   const clanRoll = r();
   if (dc >= 2 && clanRoll < .3){ const t = kind === 'vulkan' ? 'feuer' : kind === 'atoll' ? 'riff' : 'hain'; if (t !== 'feuer' || I.deco.some(d => d.t === 'obsidian')) I.clan = {id:t, ...CLANS[t]}; }
-  Object.assign(I, {id:`c${cx}_${cy}`, name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy]});
+  Object.assign(I, {id:`c${cx}_${cy}`, name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy], trees0:(I.trees || []).length});
   return I;
+}
+/* A treasure island: smaller, without a clan, with what is found nowhere else; it gives a few at a time and grows back */
+function treasureIsle(seed, cx, cy, start, T, r){
+  const D = TREASURES[T.k], size = D.kind === 'atoll' ? 96 + r() * 16 : 104 + r() * 16, rad = radOf(D.kind, size), m = rad + 50;
+  const x = cx * CELL + m + r() * (CELL - 2 * m), y = cy * CELL + m + r() * (CELL - 2 * m);
+  const len = Math.hypot(start.home.x - x, start.home.y - y) || 1, dir = {x:(start.home.x - x) / len, y:(start.home.y - y) / len};
+  const I = D.kind === 'atoll' ? genAtoll({x, y, size, kind:D.kind}, dir, r) : genHigh({x, y, size, kind:D.kind}, dir, r, false, false);
+  return Object.assign(I, {id:`c${cx}_${cy}`, name:D.isle, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy], trees0:(I.trees || []).length, treasure:{k:T.k, left:6, max:8}});
 }
 function startHoleFor(spots){
   const [a, b] = spots, x0 = Math.min(a.x - a.rad, b.x - b.rad), x1 = Math.max(a.x + a.rad, b.x + b.rad), y0 = Math.min(a.y - a.rad, b.y - b.rad), y1 = Math.max(a.y + a.rad, b.y + b.rad);

@@ -122,7 +122,8 @@ function curvePath(a, pts){
 /* ---------- fog and the unseen sea */
 const revealed = p => fogHoles.some(h => ((p.x - h.cx) / (h.rx * .92)) ** 2 + ((p.y - h.cy) / (h.ry * .92)) ** 2 < 1);
 function exploreAt(x, y, r){
-  for (let cy = Math.floor((y - r) / CELL); cy <= Math.floor((y + r) / CELL); cy++) for (let cx = Math.floor((x - r) / CELL); cx <= Math.floor((x + r) / CELL); cx++) ensureCell(cx, cy, true);
+  let fresh = 0;
+  for (let cy = Math.floor((y - r) / CELL); cy <= Math.floor((y + r) / CELL); cy++) for (let cx = Math.floor((x - r) / CELL); cx <= Math.floor((x + r) / CELL); cx++) if (ensureCell(cx, cy, true)) fresh++;
   // a new clearing only where the old ones do not already reach, so their number stays small
   if (!fogHoles.some(h => Math.hypot(h.cx - x, h.cy - y) < Math.min(h.rx, r) * .7)) fogHoles.push({cx:Math.round(x), cy:Math.round(y), rx:r, ry:Math.round(r * .85), seed:(x * 7 + y) & 1023});
   for (const I of islands){
@@ -131,6 +132,7 @@ function exploreAt(x, y, r){
     if (Math.hypot(nx - x, ny - y) < r * .9) discover(I);
   }
   invalidate(true);
+  return fresh;
 }
 function discover(I){
   I.discovered = true; syncWalkers(); save(); checkQuest();
@@ -156,18 +158,82 @@ function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
   const m = moorSpot(I, s); s.x = m.x; s.y = m.y; ships.push(s); return s;
 }
-function sailTo(s, dest){
+function sailTo(s, dest, quiet){
   const goal = dest.isl ? moorSpot(isl(dest.isl), s) : {x:dest.x, y:dest.y};
+  // past the Weite See only the double canoe goes; an outrigger is not made for days of open sea
+  if (s.own && s.kind === 'oc' && goal.x > FAR_X){ if (!quiet) toast('Über die Weite See zu den Fernen Inseln fährt nur das Doppelkanu.', 3200, false); return false; }
   const path = findPath(s, goal);
-  if (!path){ if (s.own) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
-  s.path = curvePath(s, path); s.pi = 0; s.dest = dest; s.state = 'sail'; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
+  if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
+  s.path = curvePath(s, path); s.pi = 0; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
+}
+/* ---------- the double canoe explores on its own: out to the edge of the known sea, turning home in time to take on
+   new provisions, and out again, until you stop it or no provisions are left at home */
+const dayPx = () => SHIPS.dc.speed * .85 * VOYAGE_DAY * TICK / 1000;   // how far a double canoe gets in one day at sea
+const homeFor = s => { const own = islands.filter(I => I.settled); return own.reduce((m, I) => Math.hypot(I.harbor.x - s.x, I.harbor.y - s.y) < Math.hypot(m.harbor.x - s.x, m.harbor.y - s.y) ? I : m, own[0]); };
+function fogShare(p, r){ let n = revealed(p) ? 0 : 2; for (let k = 0; k < 12; k++){ const a = k / 12 * TAU; if (!revealed({x:p.x + Math.cos(a) * r, y:p.y + Math.sin(a) * r})) n++; } return n / 14; }
+function frontier(s, H){
+  // places in the fog nearby that can be reached and left again with the provisions on board, much unknown sea first,
+  // a little drawn to the east, where the Weite See leads to the Ferne Inseln
+  const reach = (s.cargo.proviant || 0) * dayPx(), cand = [];
+  for (const R of [220, 340, 480, 640, 820]) for (let k = 0; k < 28; k++){
+    const a = k / 28 * TAU + R, p = {x:s.x + Math.cos(a) * R, y:s.y + Math.sin(a) * R * .9};
+    if (p.x < 60 || p.y < 60 || p.x > W - 60 || p.y > H_SEA - 60 || islands.some(I => onIsland(I, p))) continue;
+    const f = fogShare(p, 120); if (f < .35) continue;
+    const out = Math.hypot(p.x - s.x, p.y - s.y), back = Math.hypot(p.x - H.harbor.x, p.y - H.harbor.y);
+    if ((out + back) * 1.3 + dayPx() * 2 > reach) continue;
+    cand.push({p, score:f * 100 - out * .04 + p.x / W * 12});
+  }
+  cand.sort((a, b) => b.score - a.score);
+  for (const c of cand.slice(0, 4)) if (findPath(s, c.p)) return c.p;
+  return null;
+}
+const AUTO_LOAD = 24;
+function autoNext(s){
+  const H = homeFor(s); if (!H){ s.auto = false; return; }
+  const P = s.state === 'moored' && s.port ? isl(s.port) : null;
+  if (P && P.settled){
+    // at home: everything but provisions goes ashore, provisions come aboard
+    for (const k of GOODS) if (k !== 'proviant' && s.cargo[k]){ P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + s.cargo[k]); delete s.cargo[k]; }
+    if (s.people){ P.pop += s.people; s.people = 0; }
+    const take = Math.min(AUTO_LOAD - (s.cargo.proviant || 0), P.stock.proviant || 0); if (take > 0){ s.cargo.proviant = (s.cargo.proviant || 0) + take; P.stock.proviant -= take; }
+  }
+  const t = frontier(s, H);
+  if (t){ sailTo(s, {x:t.x, y:t.y}, true); return; }
+  if (P && P.settled){
+    s.auto = false;
+    toast((s.cargo.proviant || 0) < 6 ? `${s.name}: Auf ${P.name} fehlt Proviant. Das Erkunden ruht, bis die Gärgruben genug haben.` : `${s.name}: So weit der Proviant reicht, ist alles erkundet.`, 4200);
+    if (sheetKind === 'ship') renderSheet(); return;
+  }
+  sailTo(s, {isl:H.id}, true);   // the provisions will not do for more: home first
+}
+function setAuto(s, on){
+  if (on && s.kind !== 'dc') return;
+  s.auto = on; s.autoWait = 0;
+  if (on){ if (s.route != null) unassign(s); toast(`${s.name} erkundet jetzt von selbst.`, 2600, false); if (s.state !== 'sail') autoNext(s); }
+  if (sheetKind === 'ship') renderSheet(); save();
+}
+/* ---------- treasure: while a canoe lies at a treasure island its crew gathers, a little at a time, and the island
+   grows it back slowly; a village of your own there gathers too */
+function stepTreasure(){
+  for (const I of islands){
+    const T = I.treasure; if (!T) continue;
+    if (tick % 40 === 0 && T.left < T.max) T.left++;
+    if (tick % 3) continue;
+    if (I.settled && tick % 30 === 0 && T.left > 0){ T.left--; I.stock[T.k] = Math.min(storeCap(I), (I.stock[T.k] || 0) + 1); }
+    for (const s of ships) if (s.own && !s.auto && s.state === 'moored' && s.port === I.id && T.left > 0 && cargoLoad(s) < SHIPS[s.kind].cap){
+      T.left--; s.cargo[T.k] = (s.cargo[T.k] || 0) + 1;
+      if (!s.gathered){ s.gathered = true; toast(`Die Mannschaft der ${s.name} sammelt ${GN[T.k]} auf ${I.name}.`, 3200); }
+      if (sheetKind === 'ship') renderSheet();
+    }
+  }
 }
 function stepShips(now, dt){
   for (let i = ships.length - 1; i >= 0; i--){
     const s = ships[i];
     if (s.race){ stepRace(s, now); continue; }
     if (s.state === 'wait'){ s.wait -= dt; if (s.wait <= 0) routeDepart(s); continue; }
+    if (s.auto && s.state !== 'sail'){ s.autoWait = (s.autoWait || 0) + dt; if (s.autoWait > 1500){ s.autoWait = 0; autoNext(s); } continue; }
     if (s.state !== 'sail') continue;
     let step = speedOf(s) * dt / 1000;
     while (step > 0 && s.pi < s.path.length){
@@ -176,7 +242,7 @@ function stepShips(now, dt){
       if (d <= step){ s.x = t.x; s.y = t.y; s.pi++; step -= d; s.dist += d; }
       else { s.x += dx / d * step; s.y += dy / d * step; s.dist += step; step = 0; }
     }
-    if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; exploreAt(s.x, s.y, SHIPS[s.kind].vision); } }
+    if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (exploreAt(s.x, s.y, SHIPS[s.kind].vision) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
     if (s.pi >= s.path.length) arriveShip(s);
   }
 }
@@ -226,7 +292,9 @@ function settleFrom(s){
 
 /* ---------- trade chains: a canoe on a chain unloads, loads what the chain says, waits a moment and sails on */
 function assignRoute(s, ri){
-  const r = routes[ri]; s.route = ri; s.tripFrom = null;
+  const r = routes[ri];
+  if (s.kind === 'oc' && [r.a, r.b].some(id => isl(id).center.x > FAR_X)){ toast('Über die Weite See fährt nur das Doppelkanu.', 3000, false); return; }
+  s.auto = false; s.route = ri; s.tripFrom = null;
   if (s.port === r.a || s.port === r.b) routeArrive(s); else sailTo(s, {isl:r.a});
   save();
 }
@@ -279,7 +347,7 @@ function stepYards(){
 function feedCrews(){
   if (tick % VOYAGE_DAY) return;
   for (const s of ships){
-    if (!s.own || s.kind !== 'dc' || s.route != null || s.state === 'moored' && (isl(s.port).settled || isl(s.port).clan)) continue;
+    if (!s.own || s.kind !== 'dc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
     if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; continue; }
     if (s.hungry) continue;
     s.hungry = true;
@@ -299,6 +367,7 @@ function selectShip(s){ selShip = s; mode = 'steer'; openSheet('ship', {id:s.id}
 function hitShip(p){ const lim = Math.max(12, 18 / cam.z); let best = null, bd = lim; for (const s of ships){ if (!s.own && !revealed(s)) continue; const d = Math.hypot(p.x - s.x, p.y - (s.y - 6)); if (d < bd){ bd = d; best = s; } } return best; }
 function steerTap(p){
   const s = selShip; if (!s) return;
+  if (s.auto){ s.auto = false; toast(`${s.name} erkundet nicht mehr von selbst.`, 2200, false); }
   const I = islands.find(J => J.discovered && onIsland(J, p));
   if (s.race) return;
   if (I){ if (s.route != null) unassign(s); if (sailTo(s, {isl:I.id})) toast(`${s.name} fährt nach ${I.name}.`, 2600, false); renderSheet(); save(); return; }
