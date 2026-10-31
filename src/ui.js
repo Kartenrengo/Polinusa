@@ -57,7 +57,14 @@ function updateHUD(){
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
 /* Two menus: what the village needs, with paths at the end, and what only adorns it */
-let buildTab = 'bau';
+let buildTab = 'bau', buildOpen = false;
+/* The build bar is folded away until the build button is pressed, so the map shows more; tapping empty map folds it again */
+function setBuildOpen(on){
+  buildOpen = !!on; $('bottom').classList.toggle('open', buildOpen);
+  const b = $('buildBtn'); b.setAttribute('aria-expanded', buildOpen); b.querySelector('span').textContent = buildOpen ? 'Zu' : 'Bauen';
+  b.setAttribute('aria-label', buildOpen ? 'Bauleiste schließen' : 'Bauen: Bauleiste öffnen');
+  measure();
+}
 function renderBuildBar(){
   const I = isl(active);
   $('buildWhere').textContent = '';   // the island's name stands at the top already
@@ -67,6 +74,7 @@ function renderBuildBar(){
   if (!deco.length) buildTab = 'bau';
   $('tabDeco').hidden = !deco.length; $('tabDeco').classList.toggle('new', deco.some(k => newKinds.has(k)));
   document.querySelector('.bottom-head').hidden = !deco.length;   // the tabs only when there is a choice
+  { const s = $('buildBtn').querySelector('svg'); if (!s.innerHTML) s.innerHTML = iconMarkup('haus'); }
   $('tabBau').setAttribute('aria-pressed', buildTab === 'bau'); $('tabDeco').setAttribute('aria-pressed', buildTab === 'deco');
   const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
   $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
@@ -87,7 +95,7 @@ function showWind(){
   vaneAt = vaneAt == null ? W.from : vaneAt + ((W.from - vaneAt + 540) % 360 - 180);
   v.style.transform = `rotate(${vaneAt.toFixed(1)}deg)`;
   C.style.setProperty('--amp', (3 + W.str * 11).toFixed(1) + 'deg'); C.style.setProperty('--gust', (1.7 - W.str * 1.3).toFixed(2) + 's');
-  C.querySelector('span').textContent = 'aus ' + W.ab; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
+  C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
 /* The idle button: one after the other, the people without work */
 let idleNo = 0;

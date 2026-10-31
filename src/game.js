@@ -1067,7 +1067,7 @@ function onTap(p){
   if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I){ closeSheet(); setActive(I.id); updateHUD(); if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); } return; }
-  closeSheet();
+  closeSheet(); if (buildOpen) setBuildOpen(false);   // a tap on empty sea folds the build bar away
 }
 const ptrs = new Map(); let ges = null;
 mapC.addEventListener('pointerdown', e => {
@@ -1119,6 +1119,7 @@ $('idleBtn').addEventListener('click', showIdle);
 $('isleName').addEventListener('click', () => { if (landing){ openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
 $('tradeBtn').addEventListener('click', () => openSheet('fleet'));
+$('buildBtn').addEventListener('click', () => { closeSheet(); setBuildOpen(!buildOpen); });
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
 $('placeOk').addEventListener('click', confirmPlace);
 $('placeDone').addEventListener('click', endPlace);
@@ -1141,6 +1142,7 @@ function chooseHome(I){
   landHome(I);
 }
 function beginLanding(){
+  setBuildOpen(false);
   if (mode === 'place' || mode === 'move' || mode === 'road' || mode === 'unroad') endPlace();   // a building half placed in the old game goes with it
   document.body.classList.add('landing'); closeSheet(); renderAll(); updateHUD();
   const sh = ships.find(s => s.founder), b = boxOf(islands.filter(I => I.start));

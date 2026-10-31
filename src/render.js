@@ -24,7 +24,7 @@ function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t = topH + 8; $('compass').style.top = t + 'px'; $('seasonBtn').style.top = (t + 12) + 'px';   // time and weather side by side $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  const t = topH + 8; $('compass').style.top = t + 'px'; { const c = $('compass').getBoundingClientRect(); $('seasonBtn').style.top = (t + Math.max(0, (c.height - 24) / 2)) + 'px'; $('seasonBtn').style.left = (c.right + 8) + 'px'; }   // time and weather side by side $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }

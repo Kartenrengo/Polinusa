@@ -146,6 +146,7 @@ function showQuest(){
   if (s.build) hintBuild(s.build);
 }
 function hintBuild(kind){
+  setBuildOpen(true);
   if (DECO.includes(kind) !== (buildTab === 'deco')){ buildTab = DECO.includes(kind) ? 'deco' : 'bau'; renderBuildBar(); }
   const b = $('buildList').querySelector(`[data-kind="${kind}"]`); if (!b) return;
   b.classList.remove('hint'); void b.offsetWidth; b.classList.add('hint');

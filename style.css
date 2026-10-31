@@ -286,3 +286,18 @@ body.landing #bottom, body.landing #quest, body.landing .top-right, body.landing
 .bottom-head{padding:0 4px 3px}
 .bottom-inner{padding-block:5px 8px}
 .where{display:none}
+/* compass and wind as one tag: the compass, and beside it where the wind comes from and how hard it blows */
+#compass{flex-direction:row;gap:5px;padding:3px 10px 3px 3px;background:var(--e1) no-repeat 0 0/100% 100%;filter:drop-shadow(0 2px 0 rgba(43,29,20,.28))}
+#compass svg{width:40px;height:40px}
+#compass span{display:flex;flex-direction:column;gap:1px;background:none!important;background-image:none!important;padding:0!important;color:var(--ink);text-transform:none;letter-spacing:0}
+#compass span b{font:800 13px/1.1 var(--font-ui)}
+#compass span small{font:700 11.5px/1.1 var(--font-ui);color:var(--muted)}
+/* the build bar folded: only the build and fleet buttons, the map shows more */
+#bottom .tbtn.build svg{width:40px;height:30px}
+#bottom:not(.open) #buildList,#bottom:not(.open) .hb,#bottom:not(.open) .bottom-head{display:none!important}
+#bottom:not(.open) .bottom-row{justify-content:space-between}
+#bottom:not(.open){background:none!important;pointer-events:none}
+#bottom:not(.open) .manulua{display:none}
+#bottom:not(.open) .tbtn{pointer-events:auto;height:50px;flex-direction:row;gap:6px;padding:0 12px 0 8px;width:auto;filter:drop-shadow(0 3px 0 rgba(43,29,20,.3))}
+#bottom:not(.open) .tbtn svg{width:34px;height:26px}
+#bottom.open .tbtn.build{background-image:var(--eturm)}

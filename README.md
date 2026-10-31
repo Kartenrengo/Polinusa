@@ -104,10 +104,12 @@ Alles ist nach Bedeutung geordnet und nimmt so wenig Platz wie möglich:
 - **Oben, die Insel:** In der ersten Zeile nur der Name (antippen benennt um), rechts Ansehen, Leute ohne Arbeit und
   Bewohner mit Platz. Darunter die Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, Häuser
   voll, oder wann der Nächste kommt. Was nicht in die Zeile passt, zeigt das Lager.
-- **Links, Zeit und Wetter:** Kompass mit Wind und der Mond nebeneinander.
+- **Links, Zeit und Wetter:** Kompass und Wind sind ein Schild („Wind aus SO, frisch“), daneben der Mond.
 - **Rechts:** Nachrichten, doppelte Geschwindigkeit, Menü.
-- **Unten, handeln:** Die Aufgabe in einer Zeile mit Fortschritt (antippen erklärt sie), darunter die Bauleiste. Die Reiter
-  „Bauen“ und „Schmuck“ erscheinen erst, wenn es Schmuck gibt.
+- **Unten, handeln:** Die Aufgabe in einer Zeile mit Fortschritt (antippen erklärt sie). Die Bauleiste ist zugeklappt,
+  nur „Bauen“ und „Flotte“ schweben über der Karte. „Bauen“ klappt sie auf (dann heißt der Knopf „Zu“), ein Tipp aufs
+  leere Meer klappt sie wieder zu; „Zeig es mir“ öffnet sie von selbst. Die Reiter „Bauen“ und „Schmuck“ erscheinen erst,
+  wenn es Schmuck gibt.
 
 ## Essen
 
