@@ -420,6 +420,13 @@ function infoMarkup(I, b){
     const w = b.idle || workState(I, b), rate = PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
     line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(K.prod)}${perMin(rate)} pro Minute</span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
+    // divers: whether the water allows diving, and how divers really worked
+    if (K.dive){ const bl = diveBlock(I); line += `<span>${icon(bl ? 'sturm' : 'passat')}${bl ? 'kein Tauchwetter' : 'ruhiges, klares Wasser'}</span>`;
+      more.push('So tauchen die Leute im Pazifik seit Jahrtausenden: ohne Brille, mit offenen Augen im Salzwasser. Ein Stein an einer Schnur zieht schnell hinab, der Partner im Kanu hält die Schnur und wacht. Ein Tauchgang dauert ein bis zwei Minuten, dann wird an der Oberfläche Atem geholt. Allein ruht man länger.',
+        'Zerkaute Kokosnuss, aufs Wasser gespuckt, glättet die Oberfläche, dann sieht man den Grund.',
+        'Nach einigen Tauchgängen ruhen sie an Land. Wer zu oft zu tief taucht, bekommt Taravana, die Taucherkrankheit der Perltaucher der Tuamotu: Schwindel bis zur Lähmung.',
+        'Bei starkem Wind ist das Wasser trüb, nachts dunkel, unter Rāhui ruht das Riff: Dann tauchen sie nicht.',
+        I.treasure && I.treasure.k === 'perlmutt' ? 'Vor Tifa liegen die Perlmuscheln tief. Hier bleiben sie länger unten und brauchen mehr Pause, bringen aber Perlmutt.' : I.atoll ? 'Wo es keinen Stein gibt, schleifen sie aus der dicken Schale der Riesenmuschel Beile.' : 'Sie bringen Riesenmuscheln, Kraken und Seegurken.'); }
     // the soil of a field: how much is left, and letting it rest
     if (K.soil){ line += `<span>${icon('soil')}Boden ${Math.round((b.soil ?? 1) * 100)} %${sheltered(I, b) ? ', Bäume schützen ihn' : ''}</span>`;
       why += `<div class="rowx"><span class="sub">${b.fallow ? 'Liegt brach und wird von selbst wieder bestellt, sobald der Boden ausgeruht ist.' : 'Jede Ernte zehrt am Boden, dann geht die Arbeit langsamer. Brach erholt er sich in gut zwei Minuten; Bäume daneben schonen ihn.'}</span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }

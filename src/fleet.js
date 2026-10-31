@@ -223,7 +223,7 @@ function stepTreasure(){
     if (I.settled && tick % 30 === 0 && T.left > 0){ T.left--; I.stock[T.k] = Math.min(storeCap(I), (I.stock[T.k] || 0) + 1); }
     for (const s of ships) if (s.own && !s.auto && s.state === 'moored' && s.port === I.id && T.left > 0 && cargoLoad(s) < SHIPS[s.kind].cap){
       T.left--; s.cargo[T.k] = (s.cargo[T.k] || 0) + 1;
-      if (!s.gathered){ s.gathered = true; toast(`Die Mannschaft der ${s.name} sammelt ${GN[T.k]} auf ${I.name}.`, 3200); }
+      if (!s.gathered){ s.gathered = true; toast(T.k === 'perlmutt' ? `Die Mannschaft der ${s.name} taucht vor ${I.name} nach Perlmuscheln.` : `Die Mannschaft der ${s.name} sammelt ${GN[T.k]} auf ${I.name}.`, 3200); }
       if (sheetKind === 'ship') renderSheet();
     }
   }

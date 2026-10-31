@@ -474,7 +474,8 @@ function drawFishers(c, v, now){
   for (const I of islands){
     if (!lived(I) || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
-      if ((b.kind !== 'fisch' && b.kind !== 'riff') || b.bt || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if ((b.kind !== 'fisch' && b.kind !== 'riff' && b.kind !== 'taucher') || b.bt || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if (b.kind === 'taucher'){ if (I.settled && !(b.boat > 0) && !walkers.some(w => w.boat && w.job && w.job.b === b)){ const t = xformOf(b.kind, b.v || {}); put(c, b.x, b.y, t.s, t.m, t.rot, 'fishbeach', '<use href="#beached" transform="translate(-9 6) scale(.75)"/>'); } continue; }
       if (b.kind === 'fisch'){
         const n = I.settled ? b.hung || 0 : 4, t = xformOf(b.kind, b.v || {}); if (n) put(c, b.x, b.y, t.s, t.m, t.rot, 'rackfish|' + n, rackFish(n));
         // the dugout lies on the beach while nobody is out in it
@@ -503,6 +504,14 @@ function drawBoatFig(c, w, now){
   if (w.sx == null){ w.sx = w.x; w.sy = w.y; }
   const d = Math.hypot(w.tx - w.sx, w.ty - w.sy) || 1, f = clamp(1 - Math.hypot(w.tx - w.x, w.ty - w.y) / d, 0, 1), bend = (w.look.charCodeAt(1) % 2 ? 1 : -1) * Math.min(14, d * .16) * Math.sin(f * Math.PI);
   const nx = -(w.ty - w.sy) / d, ny = (w.tx - w.sx) / d, x = w.x + nx * bend, y = w.y + ny * bend, rock = reduced ? 0 : Math.sin(now / 700 + w.phase) * .05;
+  // a diver is down: the canoe floats empty, the cord with the stone runs into the water, bubbles rise
+  if (w.under){
+    put(c, x, y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3), 1, w.left ? -1 : 1, rock, 'einbaumE', '<use href="#einbaumE"/>');
+    const sx = x + (w.left ? -5 : 5), cord = new Path2D(); cord.moveTo(sx, y - .4); cord.quadraticCurveTo(sx + (w.left ? -2 : 2), y + 2, sx + (w.left ? -1.5 : 1.5), y + 4.5);
+    stroke(c, cord, '#E9DCC0', .45, null, 'round', .9); stroke(c, ellipse(sx + (w.left ? -1.5 : 1.5), y + 4.6, 1.3, .55), '#F4ECD8', .5, null, null, .5);
+    if (!reduced) for (let k = 0; k < 3; k++){ const f = ((now - w.under) / 1400 + k / 3) % 1; c.globalAlpha = 1 - f; stroke(c, ellipse(sx + Math.sin(f * 6 + k) * .8, y + 4 - f * 4, .55 + f * .4, .55 + f * .4), '#F4FBFA', .4); c.globalAlpha = 1; }
+    return;
+  }
   put(c, x, y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3), 1, w.left ? -1 : 1, rock, 'einbaum', '<use href="#einbaum"/>');
   if (!w.fishing || reduced) return;
   const n = ((now - w.fishing) % 3600) / 1200; if (n > 1) return;
@@ -767,13 +776,13 @@ const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
 const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
-  w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+  w.why === 'wind' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[w.kind] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[w.kind]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8);
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
-      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
+      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
       put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
     }

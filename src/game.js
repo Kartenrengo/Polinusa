@@ -60,6 +60,7 @@ function jobFor(I, b, i){
   if (b.kind === 'faeller'){ const t = b.cutAt && b.cutAt.st === 0 ? b.cutAt : treesNear(I, b.x, b.y, K.trees.r)[i]; return t ? job('chop', t.x + 4, t.y + 3, {load:'holz', tool:'toki'}) : job('wait', b.x + 5 * side, b.y + 6, {tool:'toki'}); }
   if (b.kind === 'pflanzer'){ const t = b.plantAt && b.plantAt.st === 2 ? b.plantAt : null; return job('plant', b.x, b.y + 4, {drop:t ? {x:t.x + 3, y:t.y + 2} : {x:b.x + 26, y:b.y + 8}, load:'setzling', tool:'ko'}); }
   if (b.kind === 'fisch') return job('fish', b.x + 3 * side, b.y + 4, {load:'fisch', tool:'speer'});
+  if (b.kind === 'taucher') return job('dive', b.x + 3 * side, b.y + 5, {load:'muschel'});
   if (b.kind === 'riff'){ const w = wadeSpot(I, b); return job('wade', w.x + 2 * side, w.y, {load:'muschel'}); }
   return job('carry', b.x + side * 4 * i, b.y + 4, {load:JOB_LOAD[b.kind] || null, tool:catOf(b) === 'essen' ? 'ko' : null});
 }
@@ -167,11 +168,11 @@ function spawnFig(I, homes, role, at){
   walkers.push(w); return w;
 }
 function setJob(I, w, j){
-  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, boat:false, fishing:0, wait:0});
+  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, boat:false, fishing:0, under:0, catch:[], wait:0});
   if (initSync){ w.on = true; w.leg = 'work'; w.wait = Math.random() * 1500; return; }   // already at work
   w.on = false; w.leg = 'go'; goTo(I, w, j.x, j.y);
 }
-function freeFig(w){ Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0}); }
+function freeFig(w){ Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0, under:0, catch:[]}); }
 function syncWalkers(){
   for (const I of islands){
     const mine = walkers.filter(w => w.isl === I.id);
@@ -208,7 +209,7 @@ function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syn
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
   if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return 'hat gerade keine Arbeit';
-  const K = KINDS[j.b.kind], way = !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
+  const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
 }
@@ -319,6 +320,7 @@ function jobLeg(I, w, j){
     return;
   }
   if (T === 'fish'){ fishLeg(I, w, j); return; }
+  if (T === 'dive'){ diveLeg(I, w, j); return; }
   if (w.leg === 'work'){
     if (!w.bout){
       w.bout = true;
@@ -359,6 +361,54 @@ function fishLeg(I, w, j){
         w.carry = 'fisch'; w.leg = 'store'; b.hung -= 3; goTo(I, w, s.x + rnd(3), s.y); }
       return;
     default: w.carry = null; w.leg = 'work'; goTo(I, w, j.x + rnd(4), j.y + Math.random() * 3, 300);
+  }
+}
+/* ---------- divers, as islanders have dived for thousands of years. Two go out together in a dugout: one dives, the
+   other keeps watch in the canoe and holds the cord; a stone on the cord takes the diver down fast. No goggles, eyes open in
+   the salt water, a dive of a minute or two, then breath at the surface. Many deep dives without rest bring taravana, the
+   sickness known from the pearl divers of the Tuamotu, so after a few dives they rest ashore. In strong wind the water is
+   rough and murky, at night dark, under a rāhui the reef rests. In the lagoon they bring giant clams, octopus and sea
+   cucumbers; on an atoll, where there is no stone, the thick shell of a giant clam is ground into an adze; off Tifa the
+   pearl shell lies deep. */
+function diveBlock(I){
+  if (I.rahui) return {why:'rahui', text:'Rāhui: Das Riff ruht bis zum Fest.'};
+  const W = wind(); if (W.str > .8) return {why:'wind', text:`Zu viel Wind aus ${W.dir}: Das Wasser ist aufgewühlt und trüb. Die Taucher bleiben an Land.`};
+  if (opts.night && nightLevel() > .3) return {why:'night', text:'Es ist dunkel. Unter Wasser sieht man nichts, die Taucher warten auf den Tag.'};
+  return null;
+}
+function diveSpot(I, b){ if (b._ds && b._ds.k === b.x + b.y) return b._ds; const p = fishingSpot(I, waterNear(I, b), b); return b._ds = {x:p.x, y:p.y, k:b.x + b.y}; }
+function diveLeg(I, w, j){
+  const b = j.b, L = waterNear(I, b), deep = !!(I.treasure && I.treasure.k === 'perlmutt'), partner = walkers.find(q => q !== w && q.job && q.job.b === b);
+  switch (w.leg){
+    case 'work':   // ashore: breath comes back slowly; out again only when rested and the water allows
+      w.strain = Math.max(0, (w.strain || 0) - 1);
+      if (!w.bout){ w.bout = true; w.sit = true; w.wait = 900 + Math.random() * 900; return; }
+      w.bout = false;
+      if ((w.strain || 0) > 2 || diveBlock(I) || workState(I, b)){ w.sit = true; w.wait = 2500; return; }
+      w.leg = 'launch'; goTo(I, w, L.x + rnd(3), L.y + rnd(2)); return;
+    case 'launch': { w.boat = true; w.paddle = false; w.leg = 'out'; w.dives = 0; w.catch = []; const s = diveSpot(I, b), side = j.key.endsWith('#1') ? -1 : 1; goTo(I, w, s.x + side * 6, s.y + side * 2); return; }
+    case 'out': w.leg = 'spot'; w.wait = 400; return;
+    case 'spot':
+      if (w.under){
+        // up again: breath, and what the hands found; the clearer the water, the better the luck
+        w.under = 0; w.dives++; w.strain = (w.strain || 0) + (deep ? 2 : 1); stats.tauch = (stats.tauch || 0) + 1;
+        if (Math.random() < .55 + .3 * (1 - wind().str * .6)){ const k = deep && I.treasure.left > 0 && Math.random() < .5 ? (I.treasure.left--, 'perlmutt') : I.atoll && Math.random() < .14 ? 'beile' : 'meeres'; w.catch.push(k); if (k === 'meeres') w.catch.push(k); }   // a giant clam is a meal for two
+        w.wait = (partner && partner.on && partner.leg === 'spot' ? 3000 : 6000) + Math.random() * 1500;   // alone nobody keeps watch: a longer rest
+        return;
+      }
+      if (w.dives >= 5 || (w.strain || 0) >= 7 || diveBlock(I)){ w.leg = 'back'; goTo(I, w, L.x + rnd(3), L.y + rnd(2)); return; }
+      if (partner && partner.under){ w.wait = 700; return; }   // the other is down: keep watch and hold the cord
+      w.under = performance.now(); w.wait = (deep ? 5200 : 3800) + Math.random() * 1600; return;   // down with the stone
+    case 'back': w.boat = false; w.leg = 'land'; goTo(I, w, j.x, j.y - 1, 200); return;
+    case 'land': {
+      const got = {};
+      for (const k of w.catch || []) if ((I.stock[k] || 0) < storeCap(I)){ I.stock[k] = (I.stock[k] || 0) + 1; got[k] = (got[k] || 0) + 1; }
+      w.catch = [];
+      if (I.id === active && (got.perlmutt || got.beile)) toast(got.perlmutt ? `Die Taucher von ${I.name} bringen ${got.perlmutt} Perlmutt aus der Tiefe.` : 'Aus der dicken Schale einer Riesenmuschel ist ein Beil geschliffen.', 2800);
+      const s = Object.keys(got).length && storeNear(I, w); if (!s){ w.leg = 'work'; w.bout = false; w.wait = 300; return; }
+      w.carry = 'muschel'; w.leg = 'store'; goTo(I, w, s.x + rnd(3), s.y); return;
+    }
+    default: w.carry = null; w.leg = 'work'; w.bout = false; goTo(I, w, j.x + rnd(4), j.y + Math.random() * 3, 300);
   }
 }
 /* Builders who are at their site move the work on, a little with every moment they are there */
@@ -541,7 +591,7 @@ function econ(){
       // only those who have got there work; fewer workers than there is room for: the work goes slower
       const n = K.crew ? Math.min(sf.crew.get(b) || 0, on.get(b) || 0) : 1;
       if (K.crew && !n){ b.idle = workState(I, b) || {why:'way', text:'Die Leute sind auf dem Weg hierher.'}; continue; }
-      if (K.trip){ if (b.idle && b.idle.why !== 'full') b.idle = workState(I, b); if (tick % 20 === 0 && b.hung > 0) b.hung--; continue; }   // fishers bring the catch themselves
+      if (K.trip){ if (K.dive) b.idle = workState(I, b) || diveBlock(I); else if (b.idle && b.idle.why !== 'full') b.idle = workState(I, b); if (tick % 20 === 0 && b.hung > 0) b.hung--; continue; }   // fishers bring the catch themselves
       const every = Math.round(seasonalEvery(I, b, K) * pace(I, K) * (K.crew ? K.crew / n : 1) * (K.soil ? soilPace(b) : 1) * (b.kind === 'riff' ? [1, 1.35, 1.8][erosionOf(I)] : 1));
       if (!every || tick % every){ if (b.idle && b.idle.why === 'way') b.idle = null; continue; }
       b.idle = workState(I, b); if (b.idle) continue;

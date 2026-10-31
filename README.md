@@ -174,6 +174,28 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
 - **Vor Anker essen** die Seefahrer an Land; Proviant brauchen sie nur auf See.
 - Ältere Spielstände behalten ihr Meer; bei ihnen liegen alle drei Schatzinseln bei den Fernen Inseln.
 
+## Taucher
+
+Nach dem Vorbild der Freitaucher im Pazifik, die seit Jahrtausenden ohne Atemgerät tauchen, bis zu den Perltauchern der
+Tuamotu. Der **Tauchplatz** kommt mit der Aufgabe „Leben auf dem Wasser“ und steht am Strand.
+
+- **Zu zweit:** Zwei Taucher paddeln im Einbaum hinaus. Einer taucht, der andere wacht im Kanu und hält die Schnur, dann
+  tauschen sie; nie sind beide zugleich unten. Wer allein ist, ruht länger, weil niemand wacht.
+- **Mit Stein und Schnur:** Ein Stein an einer Schnur zieht den Taucher schnell hinab. Man sieht das leere Kanu, die
+  Schnur ins Wasser und aufsteigende Luftblasen. Ohne Brille, mit offenen Augen; ein Tauchgang dauert ein bis zwei
+  Minuten (im Spiel ein paar Sekunden), dann wird an der Oberfläche Atem geholt.
+- **Taravana:** Nach höchstens fünf Tauchgängen, vor Tifa schon früher, rudern sie zurück und ruhen an Land, bis der Atem
+  wieder da ist. Wer zu oft zu tief taucht, bekommt Taravana, die Taucherkrankheit der Tuamotu.
+- **Wetter:** Bei starkem Wind ist das Wasser aufgewühlt und trüb, nachts dunkel, unter Rāhui ruht das Riff. Dann
+  bleiben sie an Land, eine Blase zeigt warum. Je klarer das Wasser, desto öfter finden sie etwas.
+- **Was sie bringen:** Riesenmuscheln, Kraken und Seegurken als Meeresfrüchte (eine Riesenmuschel reicht für zwei). Auf
+  Atollen, wo es keinen Stein gibt, schleifen sie aus der dicken Schale der Riesenmuschel ab und zu ein Beil, wie es auf
+  den Atollen Mikronesiens und Polynesiens üblich war. Vor Tifa holen sie Perlmutt aus der Tiefe. Liegt ein Kanu vor
+  Tifa, taucht auch seine Mannschaft nach Perlmuscheln.
+- Die Tafel zeigt, ob gerade Tauchwetter ist; unter „Mehr dazu“ steht, wie Taucher wirklich arbeiteten, auch der alte
+  Brauch, zerkaute Kokosnuss aufs Wasser zu spucken, damit die Oberfläche glatt wird und man den Grund sieht.
+- Chronik: „Mit offenen Augen“ nach 100 Tauchgängen.
+
 ## Der Boden und der Wald
 
 - **Felder laugen aus:** Jede Ernte auf Tarofeld, Pulakagrube und Kavagarten zehrt am Boden. Unter 45 % wird das Feld

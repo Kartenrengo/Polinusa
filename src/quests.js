@@ -27,7 +27,7 @@ const QUESTS = [
   {id:'riff', t:'Schätze vom Riff', d:'Baue einen Riffsammler am Strand.', why:'Bei Ebbe sammeln sie am Riff Muscheln, Krebse, Seeigel und Tintenfisch. Ab 25 Bewohnern gehören Meeresfrüchte auf den Tisch.',
     n:() => count('heimat', 'riff'), of:1, show:{build:'riff'}, unlock:[], gift:{}},
   {id:'lagune', t:'Leben auf dem Wasser', d:'Baue einen Kanusteg und ein Pfahlhaus.', why:'Pfahlhäuser stehen in der Lagune und brauchen kein Land, das Wald und Felder brauchen. Ein Einbaum vom Kanusteg bringt die Leute hin und her, sobald er geschnitzt ist. Jeder Steg reicht für 4 Pfahlhäuser.',
-    n:() => Math.min(1, count('heimat', 'steg')) + Math.min(1, isl('heimat').buildings.filter(b => b.kind === 'pfahl' && !b.bt && !unserved(isl('heimat'), b)).length), of:2, show:{build:'steg'}, unlock:[], gift:{holz:3}},
+    n:() => Math.min(1, count('heimat', 'steg')) + Math.min(1, isl('heimat').buildings.filter(b => b.kind === 'pfahl' && !b.bt && !unserved(isl('heimat'), b)).length), of:2, show:{build:'steg'}, unlock:['taucher'], gift:{holz:3}},
   {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Aus dem grauen Basalt entstehen Steinbeile. Ohne sie lässt sich kein Stamm für ein Kanu aushöhlen.',
     n:() => count('heimat', 'beil'), of:1, show:{build:'beil'}, unlock:['werft'], gift:{holz:4}},
   {id:'wasser', t:'Ans Wasser', d:'Baue ein Kanuhaus am Strand.', why:'Im Kanuhaus entstehen die Boote. Es muss direkt am Strand stehen.',
