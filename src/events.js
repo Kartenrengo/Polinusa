@@ -168,6 +168,7 @@ const CHRONIK = [
   {id:'kultur', t:'Andere Menschen', d:'Ein Volk einer anderen Kultur gefunden.', test:() => cultureIsles().length >= 1, mana:4},
   {id:'bananen', t:'Bananen vom Großen Land', d:'Bananen wachsen in einem eigenen Dorf.', test:() => lifeKnown('banane'), mana:2},
   {id:'sternwege', t:'Sternwege vom Nordmeer', d:'Die Seefahrer vom Nordmeer haben eure Navigatoren gelehrt.', test:() => !!stats.nordLehre, mana:2},
+  {id:'koruru', t:'Meister im Kōruru', d:'Alle vier Runden des Knochenspiels gewonnen.', test:() => (stats.koruru || 0) >= 1, mana:1},
   {id:'heirat', t:'Ein Bund durch Heirat', d:'Eine Hochzeit mit einem anderen Clan.', test:() => (stats.heirat || 0) >= 1, mana:2},
   {id:'fremdheirat', t:'Verwandte in der Fremde', d:'Eine Hochzeit mit Menschen einer anderen Kultur.', test:() => (stats.fremdheirat || 0) >= 1, mana:3},
   {id:'muster', t:'Ein eigenes Muster', d:'Die Töpfer stempeln ein eigenes Muster in den Ton.', test:() => islands.some(I => I.settled && I.motif), mana:1},

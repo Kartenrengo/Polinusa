@@ -312,3 +312,5 @@ body.landing #bottom, body.landing #quest, body.landing .top-right, body.landing
 #moreBtn{position:relative}
 #moreBtn[aria-expanded="true"]{background-image:var(--eturm)}
 #speedMark{position:absolute;right:-6px;bottom:-4px;font-size:10px;padding:1px 3px}
+/* Kōruru: the mat with the bones */
+canvas.kor{display:block;width:100%;max-width:340px;aspect-ratio:340/230;margin:0 auto;touch-action:none;cursor:pointer}

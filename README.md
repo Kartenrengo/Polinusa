@@ -323,6 +323,21 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
   „Andere Menschen“, „Bananen vom Großen Land“ und „Sternwege vom Nordmeer“.
 - In Spielständen von vorher wohnen sie in einem Feld am Rand, das noch kein Kanu gesehen hat.
 
+## Kōruru, das Knochenspiel
+
+Spiele mit fünf kleinen Knochen oder Steinen gab es im ganzen Pazifik; die Māori in Aotearoa nannten es Kōruru. Die
+Knöchelchen werden aus der Hand wie Würfel auf die Matte gekippt, dann wird eines hochgeworfen, und bevor es fällt,
+muss dieselbe Hand Knochen vom Boden aufheben und es wieder fangen.
+
+- **Spielen:** im Versammlungshaus „Kōruru spielen“ oder im Menü „Kōruru“.
+- **So geht es:** „Hochwerfen“, dann die richtige Zahl Knochen auf der Matte antippen, dann den fallenden Knochen antippen.
+  Fangen geht erst, wenn er wieder zur Hand herunterkommt; ein roter Ring zeigt es. Runde 1 einer nach dem anderen, Runde 2
+  zwei auf einmal, dann drei, dann vier, und jede Runde fliegt der Knochen kürzer.
+- **Fehler:** zu früh gegriffen, zu viele auf einmal, zu wenig aufgehoben oder fallen gelassen. Nach drei Fehlern ist das
+  Spiel verloren; nach jedem Fehler werden die Knochen neu geworfen.
+- **Gewinnen:** Wer alle vier Runden schafft, bringt dem Dorf Ansehen +2 und eine Weile doppelt so viel Zuzug, einmal je
+  Mond. Die Chronik kennt „Meister im Kōruru“.
+
 ## Wie alles ineinandergreift
 
 - **Erkunden → Wissen → Erkunden:** Neue Inseln heben die Grenze der Navigatoren. Vögel und Wolken zeigen verborgenes
