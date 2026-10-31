@@ -3,10 +3,10 @@
 
 const TICK = 2000, DAY = 3, AGE_FULL = 150, LOAD = 12, SAVE_KEY = 'polinusa-3';
 
-const GOODS = ['nahrung','fisch','meeres','holz','proviant','toepfe','beile','klingen','matten','schnur','tapa','schweine','kava','schmuck','perlmutt','federn','tabua'];
+const GOODS = ['nahrung','fisch','meeres','wild','holz','proviant','toepfe','beile','klingen','matten','schnur','tapa','schweine','kava','schmuck','perlmutt','federn','tabua'];
 const TREASURE_GOODS = ['perlmutt', 'federn', 'tabua'];   // found only on the treasure islands
-const GN = {essen:'Nahrung', nahrung:'Feldfrüchte', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Töpfe', beile:'Steinbeile', klingen:'Klingen', matten:'Matten', schnur:'Schnur', tapa:'Tapa', schweine:'Schweine', kava:'Kava', schmuck:'Muschelschmuck', perlmutt:'Perlmutt', federn:'Rote Federn', tabua:'Walzähne'};
-const G1 = {essen:'Nahrung', nahrung:'Feldfrucht', fisch:'Fisch', meeres:'Meeresfrüchte', holz:'Holz', proviant:'Proviant', toepfe:'Topf', beile:'Steinbeil', klingen:'Klinge', matten:'Matte', schnur:'Schnur', tapa:'Tapa', schweine:'Schwein', kava:'Kava', schmuck:'Muschelring', perlmutt:'Perlmutt', federn:'rote Feder', tabua:'Walzahn'};
+const GN = {essen:'Nahrung', nahrung:'Feldfrüchte', fisch:'Fisch', meeres:'Meeresfrüchte', wild:'Wildbeute', holz:'Holz', proviant:'Proviant', toepfe:'Töpfe', beile:'Steinbeile', klingen:'Klingen', matten:'Matten', schnur:'Schnur', tapa:'Tapa', schweine:'Schweine', kava:'Kava', schmuck:'Muschelschmuck', perlmutt:'Perlmutt', federn:'Rote Federn', tabua:'Walzähne'};
+const G1 = {essen:'Nahrung', nahrung:'Feldfrucht', fisch:'Fisch', meeres:'Meeresfrüchte', wild:'Wildbeute', holz:'Holz', proviant:'Proviant', toepfe:'Topf', beile:'Steinbeil', klingen:'Klinge', matten:'Matte', schnur:'Schnur', tapa:'Tapa', schweine:'Schwein', kava:'Kava', schmuck:'Muschelring', perlmutt:'Perlmutt', federn:'rote Feder', tabua:'Walzahn'};
 
 /* Places on the map where raw material lies. Workshops that need one must stand close by. */
 const DEPOSITS = {
@@ -58,6 +58,18 @@ const KINDS = {
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:14, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Ein Platz aus festgestampfter Erde, mit Steinen eingefasst. Hier wird zur Trommel getanzt.', vb:'-21 -12 42 22'}
 };
 const ORDER = ['haus','faeller','taro','pulaka','fisch','riff','taucher','toepfer','beil','flecht','schnur','gaergrube','werft','sternhaus','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','kavagarten','klingen','schmuck','halle','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
+/* What grows and lives on an island only where people have brought it: the canoe plants and the pigs. Coconut palms and
+   pandanus drift ashore by themselves, the forest is there. A new island has none of these; what is not in the canoe that
+   founds the village is missing there until a canoe brings it. take: what leaves the store with it. */
+const LIFE = {
+  taro:{n:'Taro', no:'noch keinen Taro', s:'Taro-Setzlinge', kinds:['taro', 'pulaka'], text:'Die Spitzen der Knollen mit dem Blattansatz, in nasse Blätter gewickelt. Auf Atollen wächst daraus Sumpftaro in der Pulakagrube.'},
+  brot:{n:'Brotfrucht', no:'noch keine Brotfrucht', s:'Brotfrucht-Schösslinge', kinds:['baum'], text:'Wurzelschösslinge in feuchtem Moos. Ohne Brotfrucht keine Gärgrube und kein Proviant.'},
+  maulbeer:{n:'Papiermaulbeere', no:'noch keine Papiermaulbeere', s:'Maulbeer-Stecklinge', kinds:['garten'], text:'Stecklinge des Baums, aus dessen Rinde Tapa wird. Er blüht hier kaum und vermehrt sich nur, wo Menschen ihn setzen.'},
+  kava:{n:'Kava', no:'noch keine Kava', s:'Kava-Stecklinge', kinds:['kavagarten'], text:'Stängelstücke des Strauchs. Kava trägt keine Samen und reist nur in Kanus.'},
+  schwein:{n:'Schweine', no:'noch keine Schweine', s:'ein Paar Schweine', kinds:['pferch'], take:{schweine:2}, text:'Ein Zuchtpaar, an Bord mit Kokos gefüttert. Es kommt aus dem Lager.'}
+};
+const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in the canoe
+for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
 const DECO = ['hibiskus', 'blumen', 'weg', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
@@ -74,7 +86,7 @@ const VOYAGE_DAY = 5, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 pro
 /* What people use up, per resident and minute. Food is food: taro, breadfruit and pulaka from the fields, fish and seafood
    all count, and people eat what there is most of. A village (from 20) wants pots, from 30 mats; a chief's village
    (level 3) also bark cloth, pigs and shell valuables. Pots come from high islands, mats from atolls. */
-const FOODS = ['nahrung', 'fisch', 'meeres'];
+const FOODS = ['nahrung', 'fisch', 'meeres', 'wild'];
 const NEEDS = [
   {k:'essen', lvl:1, from:0, rate:1.2, hint:{hoch:'Lege Tarofelder an, pflanze Brotfruchtbäume, baue Fischgestelle und Riffsammler am Strand.', atoll:'Baue Pulakagruben in der Mitte eines Motus, Fischgestelle und Riffsammler am Strand.'}},
   {k:'toepfe', lvl:2, from:20, rate:.07, hint:{hoch:'Baue eine Töpferei am Ton.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
@@ -97,7 +109,7 @@ const FEASTS = [
 const FEAST_PAUSE = 45, FEAST_LEN = 12, MANA_FADE = 30;   // ticks between feasts on one island, how long it lasts, ticks per point lost
 
 /* Gifts to other clans: what a good is worth, the return comes later and grows with trust (knots) */
-const VALUE = {nahrung:.2, fisch:.4, meeres:.5, holz:.3, proviant:1, toepfe:1, beile:1.5, klingen:2, matten:1, schnur:1, tapa:2, schweine:3, kava:2, schmuck:6, perlmutt:7, federn:10, tabua:12};
+const VALUE = {nahrung:.2, fisch:.4, meeres:.5, wild:.4, holz:.3, proviant:1, toepfe:1, beile:1.5, klingen:2, matten:1, schnur:1, tapa:2, schweine:3, kava:2, schmuck:6, perlmutt:7, federn:10, tabua:12};
 const CLANS = {
   feuer:{name:'Clan vom Feuerberg', on:'vulkan', makes:['klingen', 'schweine'], wants:['matten', 'schnur', 'schmuck'], pop:30},
   riff:{name:'Clan vom Riff', on:'atoll', makes:['schmuck', 'matten'], wants:['toepfe', 'beile', 'klingen'], pop:22},

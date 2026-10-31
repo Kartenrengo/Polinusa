@@ -155,7 +155,7 @@ function speedOf(s){
   return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1);
 }
 function makeShip(kind, I, o = {}){
-  const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
+  const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, life:[], people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
   const m = moorSpot(I, s); s.x = m.x; s.y = m.y; ships.push(s); return s;
 }
 function sailTo(s, dest, quiet){
@@ -198,6 +198,7 @@ function autoNext(s){
     // at home: everything but provisions goes ashore, provisions come aboard
     for (const k of GOODS) if (k !== 'proviant' && s.cargo[k]){ P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + s.cargo[k]); delete s.cargo[k]; }
     if (s.people){ syncPeople(P); P.people.push(...(s.folk || [])); s.folk = []; P.pop += s.people; s.people = 0; }
+    landLife(P, s);
     const take = Math.min(AUTO_LOAD - (s.cargo.proviant || 0), P.stock.proviant || 0); if (take > 0){ s.cargo.proviant = (s.cargo.proviant || 0) + take; P.stock.proviant -= take; }
   }
   const t = frontier(s, H);
@@ -223,7 +224,7 @@ function stepTreasure(){
     if (tick % 40 === 0 && T.left < T.max) T.left++;
     if (tick % 3) continue;
     if (I.settled && tick % 30 === 0 && T.left > 0){ T.left--; I.stock[T.k] = Math.min(storeCap(I), (I.stock[T.k] || 0) + 1); }
-    for (const s of ships) if (s.own && !s.auto && s.state === 'moored' && s.port === I.id && T.left > 0 && cargoLoad(s) < SHIPS[s.kind].cap){
+    for (const s of ships) if (s.own && !s.auto && s.state === 'moored' && s.port === I.id && T.left > 0 && roomUsed(s) < SHIPS[s.kind].cap){
       T.left--; s.cargo[T.k] = (s.cargo[T.k] || 0) + 1;
       if (!s.gathered){ s.gathered = true; toast(T.k === 'perlmutt' ? `Die Mannschaft der ${s.name} taucht vor ${I.name} nach Perlmuscheln.` : `Die Mannschaft der ${s.name} sammelt ${GN[T.k]} auf ${I.name}.`, 3200); }
       if (sheetKind === 'ship') renderSheet();
@@ -266,7 +267,7 @@ function arriveShip(s){
     routes.push({a:from.id, b:T.id, knots:T.clan ? 0 : 1, lastGift:tick, plan:{a:{}, b:{}}}); invalidate();
     if (T.clan){ const C = T.clan; toast(`Erster Besuch beim ${C.name}. Sie machen ${C.makes.map(k => GN[k]).join(' und ')} und schätzen ${C.wants.map(k => GN[k]).join(', ')}. Übergib eine Gabe.`, 6000); }
   }
-  if (T.settled){ s.last = T.id; s.hungry = false; }
+  if (T.settled){ s.last = T.id; s.hungry = false; landLife(T, s); }   // plants and pigs aboard take root in a village of ours
   if (s.route != null){ routeArrive(s); return; }
   if (T.clan) toast(`${s.name} liegt beim ${T.clan.name}.`);
   else if (!T.settled) toast(`${s.name} liegt vor ${T.name}. ${s.people >= SETTLE.people ? 'Tippe das Kanu an und gründe hier ein Dorf.' : `Mit ${SETTLE.people} Siedlern an Bord kann hier ein Dorf entstehen.`}`, 4200);
@@ -274,10 +275,11 @@ function arriveShip(s){
   if (sheetKind === 'ship') renderSheet(); save(); checkQuest();
 }
 const cargoLoad = s => Object.values(s.cargo).reduce((a, b) => a + b, 0);
+const roomUsed = s => cargoLoad(s) + (s.life ? s.life.length : 0) * LIFE_LOAD;   // goods, and two places for each plant or pair of pigs
 function unloadAll(s){
   const I = isl(s.port); if (!I || !I.settled) return;
   for (const [k, v] of Object.entries(s.cargo)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + v);
-  syncPeople(I); I.people.push(...(s.folk || [])); s.folk = []; I.pop += s.people; s.cargo = {}; s.people = 0; updateHUD(); syncWalkers(); save();
+  syncPeople(I); I.people.push(...(s.folk || [])); s.folk = []; I.pop += s.people; s.cargo = {}; s.people = 0; landLife(I, s); updateHUD(); syncWalkers(); save();
 }
 function giveGift(s){
   const T = isl(s.port), ri = routeIndex(s.last, T.id); if (!T.clan || ri < 0 || !cargoLoad(s)) return;
@@ -289,7 +291,7 @@ function settleFrom(s){
   if (s.people < SETTLE.people){ toast(`Es braucht ${SETTLE.people} Siedler an Bord.`, 2600, false); return; }
   if (mana < manaNeeded()){ toast(`Für eine weitere Siedlung braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200, false); return; }
   const from = isl(s.last);
-  settle(T, from, {pop:s.people, stock:s.cargo, folk:s.folk}); s.people = 0; s.folk = []; s.cargo = {}; s.last = T.id;
+  settle(T, from, {pop:s.people, stock:s.cargo, folk:s.folk, life:s.life}); s.people = 0; s.folk = []; s.cargo = {}; s.life = []; s.last = T.id;
 }
 
 /* ---------- trade chains: a canoe on a chain unloads, loads what the chain says, waits a moment and sails on */
@@ -307,7 +309,7 @@ function routeArrive(s){
   if (here.clan){ if (cargoLoad(s)) receiveGift(here, s.cargo, s.tripFrom || s.last, r); s.cargo = {}; }
   else { for (const [k, v] of Object.entries(s.cargo)) here.stock[k] = Math.min(storeCap(here), (here.stock[k] || 0) + v); s.cargo = {}; }
   if (here.settled){
-    const plan = r.plan[here.id === r.a ? 'a' : 'b'] || {}; let room = SHIPS[s.kind].cap;
+    const plan = r.plan[here.id === r.a ? 'a' : 'b'] || {}; let room = SHIPS[s.kind].cap - roomUsed(s);
     for (const [k, v] of Object.entries(plan)){ const q = Math.min(v, here.stock[k] || 0, room); if (q > 0){ s.cargo[k] = q; here.stock[k] -= q; room -= q; } }
   }
   s.state = 'wait'; s.wait = 1500; s.tripFrom = here.id;
@@ -377,7 +379,7 @@ function steerTap(p){
   if (!open && !SHIPS[s.kind].fog){ toast('Ins Unbekannte fährt nur das Doppelkanu.', 2600, false); return; }
   if (!open && !(s.cargo.proviant > 0)){ toast('Ohne Proviant an Bord fährt die Mannschaft nicht ins Unbekannte. Proviant kommt aus der Gärgrube.', 3600, false); return; }
   // into the unknown goes only the crew with provisions: settlers and goods follow once land is found
-  if (!open && (s.people || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0))){ toast('Ins Unbekannte nimmt man nur Proviant mit. Lade Siedler und andere Waren erst aus.', 3600, false); return; }
+  if (!open && (s.people || (s.life && s.life.length) || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0))){ toast('Ins Unbekannte nimmt man nur Proviant mit. Lade Siedler, Setzlinge, Tiere und andere Waren erst aus.', 3600, false); return; }
   if (s.route != null) unassign(s);
   if (sailTo(s, {x:p.x, y:p.y})) toast(open ? `${s.name} fährt los.` : `${s.name} fährt ins Unbekannte.`, 2600, false);
   renderSheet(); save();

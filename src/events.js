@@ -128,6 +128,8 @@ const CHRONIK = [
   {id:'dorf', t:'Ein Dorf', d:'Eine Siedlung mit 20 Menschen.', test:() => villages().some(I => I.lvl >= 2), mana:2},
   {id:'motu', t:'Zwei Dörfer', d:'Ein zweites Dorf gegründet.', test:() => villages().length >= 2, mana:2},
   {id:'land', t:'Hinter dem Horizont', d:'Eine Insel im Nebel gefunden.', test:() => newLand() >= 1, mana:2},
+  {id:'mitgebracht', t:'Die mitgebrachte Welt', d:'Pflanzen oder Tiere im Kanu auf neues Land gebracht.', test:() => (stats.brought || 0) >= 1, mana:2},
+  {id:'ausgestorben', t:'Für immer fort', d:'Auf einer Insel ist eine Tierart ausgestorben.', test:() => islands.some(I => I.settled && I.id !== 'heimat' && goneOf(I) > 0), mana:0},
   {id:'clan', t:'Fremde Nachbarn', d:'Einen Clan getroffen.', test:() => routes.some(r => isl(r.a).clan || isl(r.b).clan), mana:2},
   {id:'gabe', t:'Gabe und Gegengabe', d:'Einem Clan eine Gabe gebracht.', test:() => stats.gaben >= 1, mana:2},
   {id:'plejaden', t:'Unter den Plejaden', d:'Das Fest der ersten Früchte gefeiert.', test:() => islands.some(I => I.festYear != null), mana:3},
@@ -156,7 +158,7 @@ function chronikTick(){
   for (const M of CHRONIK){
     if (chronik[M.id] != null || !M.test()) continue;
     chronik[M.id] = yearOf() + 1; mana += M.mana; sfx('chronik');
-    toast(`Chronik: ${M.t}. ${M.d} Ansehen +${M.mana}.`, 4600); save(); return;   // one at a time, so each one is noticed
+    toast(`Chronik: ${M.t}. ${M.d}${M.mana ? ` Ansehen +${M.mana}.` : ''}`, 4600); save(); return;   // one at a time, so each one is noticed
   }
 }
 function chronikMarkup(){

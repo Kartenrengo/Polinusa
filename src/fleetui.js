@@ -14,7 +14,7 @@ function shipStatus(s){
 }
 /* The canoe sheet: what it carries, loading in a port of ours, and what it can do where it is */
 function shipMarkup(s){
-  const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = cargoLoad(s);
+  const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = roomUsed(s), life = s.life || [];
   let h = head(s.name, shipStatus(s));
   h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind === 'dc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
   h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</p>`;
@@ -23,7 +23,7 @@ function shipMarkup(s){
   // a treasure island: what the crew can gather here
   if (P && P.treasure){ const T = P.treasure; h += `<div class="stat">${icon(T.k)}<span>${GN[T.k]}: ${T.left} bereit</span><span class="sub">${s.auto ? '' : 'Solange das Kanu hier liegt, sammelt die Mannschaft.'}</span></div>`; }
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
-  const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', load ? giftText(s.cargo) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
+  const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', cargoLoad(s) ? giftText(s.cargo) : '', life.length ? andList(life.map(id => LIFE[id].s)) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
   if (P && P.settled && s.route == null && !sheetData.load) h += `<div class="rowx"><span class="sub">${aboard}</span><button class="btn primary" type="button" data-act="load">Beladen</button></div>`;
   else if (P && P.settled && s.route == null){
@@ -31,7 +31,7 @@ function shipMarkup(s){
     h += `<ul class="list needs">`;
     h += `<li>${icon('pop')}<span class="nm">Siedler<small>Auf ${P.name}: ${P.pop}</small></span>${stepper('pp', 'pop', s.people, s.people > 0, s.people < S.people && P.pop > SETTLE.keep, 'Siedler')}</li>`;
     h += goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${P.stock[k] || 0}</small></span>${stepper('cg', k, s.cargo[k] || 0, (s.cargo[k] || 0) > 0, load < S.cap && (P.stock[k] || 0) > 0, GN[k])}</li>`).join('');
-    h += `</ul>${s.people ? `<p class="sub">Siedler an Bord. Nimm auch Holz und Nahrung mit, damit sie am neuen Ort gleich bauen und essen können.</p>` : ''}<div class="rowx"><span class="sub">Ladung ${load} von ${S.cap}, Siedler ${s.people} von ${S.people}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
+    h += `</ul>` + lifeMarkup(s, P, load) + `${s.people ? `<p class="sub">Siedler an Bord. Nimm auch Holz und Nahrung mit, damit sie am neuen Ort gleich bauen und essen können.</p>` : ''}<div class="rowx"><span class="sub">Ladung ${load} von ${S.cap}, Siedler ${s.people} von ${S.people}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
     const here = routes.map((r, i) => [r, i]).filter(([r]) => r.a === P.id || r.b === P.id);
     if (here.length) h += `<div class="rowx"><span class="sub">In eine Handelskette einsetzen:</span><span class="chips">${here.map(([r, i]) => `<button class="chip" type="button" data-act="assign" data-r="${i}">${isl(r.a === P.id ? r.b : r.a).name}</button>`).join('')}</span></div>`;
   } else if (load || s.people) h += `<p class="sub">${aboard}</p>`;
@@ -40,9 +40,24 @@ function shipMarkup(s){
   if (P && P.clan) h += `<div class="rowx"><span class="sub">${load ? `Diese Gabe bringt später etwa ${giftGuess(P.clan, giftValue(P.clan, s.cargo) * returnRate((routes[routeIndex(s.last, P.id)] || {knots:0}).knots))} zurück.` : 'Lade in einem eigenen Hafen etwas ein, das sie schätzen.'}</span><button class="btn primary" type="button" data-act="gift" ${load ? '' : 'disabled'}>Gabe übergeben</button></div>`;
   return h;
 }
+/* Life for new land: the canoe plants and a pair of pigs, each taking two places. Whatever grows on this island can go. */
+function lifeMarkup(s, P, load){
+  const S = SHIPS[s.kind], life = s.life || [], have = lifeOf(P);
+  const chips = LIFE_IDS.filter(id => have.includes(id) || life.includes(id)).map(id => {
+    const on = life.includes(id), L = LIFE[id], short = !on && (load + LIFE_LOAD > S.cap || Object.entries(L.take || {}).some(([g, v]) => (P.stock[g] || 0) < v));
+    return `<button class="chip" type="button" data-act="life" data-k="${id}" aria-pressed="${on}" ${short ? 'disabled' : ''} title="${L.text}">${L.n}</button>`; }).join('');
+  if (!chips) return '';
+  return `<p class="sec">Leben fürs neue Land</p><div class="chips">${chips}</div><p class="sub">Was auf einer neuen Insel nicht im Kanu war, wächst dort nicht. Jedes nimmt 2 Plätze; die Schweine sind ein Paar aus dem Lager. In einem eigenen Dorf schlägt es gleich Wurzeln.</p>`;
+}
+function toggleLife(s, P, id){
+  const life = s.life || (s.life = []), L = LIFE[id], i = life.indexOf(id);
+  if (i >= 0){ life.splice(i, 1); for (const [g, v] of Object.entries(L.take || {})) P.stock[g] = Math.min(storeCap(P), (P.stock[g] || 0) + v); return; }
+  if (!lifeOf(P).includes(id) || roomUsed(s) + LIFE_LOAD > SHIPS[s.kind].cap || !canPay(P, L.take || {})) return;
+  pay(P, L.take || {}); life.push(id);
+}
 /* Provisions, plainly: where they come from, how long they last, and whether the canoe is ready for the unknown */
 function provisionNote(s, P){
-  const pv = s.cargo.proviant || 0, other = s.people || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0), secs = voyageDay() * TICK / 1000;
+  const pv = s.cargo.proviant || 0, other = s.people || (s.life && s.life.length) || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0), secs = voyageDay() * TICK / 1000;
   const ready = pv > 0 && !other ? '<span class="state ok">bereit zum Erkunden</span>' : pv > 0 ? '<span class="state low">nur Proviant mitnehmen</span>' : '<span class="state out">kein Proviant</span>';
   const pits = P && P.settled ? P.buildings.some(b => b.kind === 'gaergrube' && !b.bt) : true;
   return `<div class="stat">${ready}${pv ? `<span>${icon('proviant')}${pv}, reicht etwa ${secsText(pv * secs)} auf See</span>` : ''}</div>` +
@@ -121,7 +136,8 @@ function fleetAct(act, btn){
     if (act === 'auto'){ setAuto(s, !s.auto); return true; }
     if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ syncPeople(P); const ad = P.people.filter(isAdult), q = (ad.length ? ad : P.people).sort((a, b) => b.b - a.b)[0]; if (q){ P.people.splice(P.people.indexOf(q), 1); (s.folk = s.folk || []).push(q); } s.people++; P.pop--; P.staff = null; syncWalkers(); }
     else if (act === 'pp-' && P && s.people > 0){ const q = (s.folk || []).pop(); if (q){ syncPeople(P); P.people.push(q); } s.people--; P.pop++; P.staff = null; syncWalkers(); }
-    else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && cargoLoad(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }
+    else if (act === 'life' && P && P.settled) toggleLife(s, P, k);
+    else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && roomUsed(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }
     else if (act === 'cg-' && P && s.cargo[k] > 0){ s.cargo[k]--; if (!s.cargo[k]) delete s.cargo[k]; P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + 1); }
     else if (act === 'unload') unloadAll(s);
     else if (act === 'load' || act === 'fold'){ sheetData.load = act === 'load'; renderSheet(); measure(); return true; }

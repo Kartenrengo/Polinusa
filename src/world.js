@@ -350,6 +350,7 @@ function onIsland(I, p){
 function check(kind, I, x, y, ignoreId){
   const K = KINDS[kind], p = {x, y};
   if (!K.on.includes(I.type)) return 'Geht auf dieser Insel nicht';
+  if (!hasLife(I, kind)) return lifeMissing(I, kind);
   if (K.water){ if (!inLagoon(I, p)) return `${K.n} steht in der Lagune`; }
   else {
     const L = landAt(I, p); if (!L) return 'Nur auf Land';

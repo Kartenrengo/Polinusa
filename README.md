@@ -84,9 +84,10 @@ Bewohner isst 1,2 pro Minute, und die Leute essen das, wovon am meisten da ist.
 
 | Sorte | Woher |
 | --- | --- |
-| Feldfrüchte | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro in der Mitte eines Motus (Atolle) |
+| Feldfrüchte | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro in der Mitte eines Motus (Atolle); auf neuem Land erst, wenn ein Kanu Setzlinge gebracht hat |
 | Fisch | Fischgestell am Strand: die Fischer paddeln hinaus und hängen den Fang auf |
 | Meeresfrüchte | Riffsammler am Strand: Muscheln, Krebse, Seeigel, Tintenfisch |
+| Wildbeute | Wer keine Arbeit hat, sammelt Eier, Vögel und Krebse; viel auf neuem Land, wenig auf bejagtem (siehe Wild) |
 
 Fehlt Nahrung, ziehen Leute fort. Werkstätten und Feste brauchen bestimmte Sorten: Gärgrube und Schweinepferch
 Feldfrüchte, das Kleine Fest Fisch, das Große Meeresfrüchte, die ersten Früchte beim Fest der Plejaden Feldfrüchte, Fisch
@@ -212,6 +213,41 @@ Das Wissen der Seefahrer steckt in Menschen, nicht in Gebäuden. Es wird gelehrt
   Nachricht sagt es. Siedler nehmen ihr Wissen mit ins neue Dorf.
 - Die Übersicht zeigt das Wissen des Clans und wer es trägt; die Chronik hält den ersten Navigator und den Sternenpfad fest.
 
+## Die mitgebrachte Welt
+
+Auf neuem Land wächst nur, was schon da war: Wald, Kokospalmen und auf Atollen Pandanus. Alles andere brachten die Lapita
+im Kanu mit, als „transportierte Landschaft“: Setzlinge, Schösslinge und Tiere.
+
+- **Was mitreist:** Taro (auf Atollen als Sumpftaro für die Pulakagrube), Brotfrucht, Papiermaulbeere für Tapa, Kava und
+  ein Paar Schweine. Panua und die Clans haben alles, ebenso Dörfer aus älteren Spielständen.
+- **Laden:** Im Hafen „Beladen“, dann unter „Leben fürs neue Land“ antippen. Jedes nimmt 2 Plätze im Kanu; die Schweine
+  kommen als Paar aus dem Lager. So wird jede Fahrt eine Entscheidung: Setzlinge, Holz, Nahrung oder Siedler.
+- **Ankommen:** Beim Gründen eines Dorfes wächst, was an Bord war; gebrachte Brotfrucht wird gleich als junge Bäume
+  gesetzt. Kommt ein Kanu später an ein eigenes Dorf, schlägt dort Wurzeln, was neu ist. Was dort nicht wachsen kann
+  (Schweine auf einem Atoll), geht ins Lager.
+- **Was fehlt:** Gebäude, deren Pflanze oder Tier fehlt, sind in der Bauleiste blass und sagen, was man bringen muss. Ohne
+  Brotfrucht gibt es keine Gärgrube und damit keinen Proviant. Die Übersicht zeigt unter „Land“, was mitgebracht ist und
+  was noch fehlt.
+- Ins Unbekannte fährt man weiter nur mit Proviant: Setzlinge und Tiere fahren erst mit, wenn das Land gefunden ist.
+
+## Wild
+
+Unberührte Inseln sind voller Leben: Seevögel und ihre Eier, Großfußhühner, Schildkröten, Flughunde, Landkrabben. Die
+ersten Siedler lebten zum guten Teil davon, und auf Tonga und Fidschi starben viele Arten innerhalb weniger
+Generationen aus.
+
+- **Sammeln:** Wer keine Arbeit hat, geht in den Wald und an den Strand und bringt „Wildbeute“ ins Lager. Sie zählt als
+  Nahrung. Auf neuem Land ist das viel, auf dem längst bejagten Panua wenig.
+- **Weniger werden:** Jeder, der sammelt, nimmt etwas weg. Wild wächst langsam nach, auf bewohnten Inseln langsamer,
+  weil mit den Kanus Ratten kamen, die Eier fressen. Drei oder vier Sammler trägt eine Insel auf Dauer; mehr leeren sie.
+- **Aussterben:** Fällt das Wild unter ein Drittel, stirbt die erste Art aus (Großfußhühner auf hohen Inseln, die
+  Seevogelkolonien auf Atollen), unter ein Achtel die zweite (Riesenleguane und große Tauben, die Eier legenden
+  Schildkröten). Das ist für immer: Die Insel gibt danach weniger. Die Chronik hält es fest.
+- **Tapu:** In der Übersicht unter „Land“ legt „Tapu“ einen Bann auf das Wild. Dann sammelt niemand, und es erholt sich
+  langsam; was ausgestorben ist, kommt nicht zurück. Seid ihr fort, legen die Ältesten selbst ein Tapu, bevor die
+  nächste Art stirbt, und heben es auf, wenn das Wild sich erholt hat.
+- **Sichtbar:** Über jeder Insel kreisen so viele Vögel, wie es Wild gibt; über leergejagtem Land nur einer.
+
 ## Wie alles ineinandergreift
 
 - **Erkunden → Wissen → Erkunden:** Neue Inseln heben die Grenze der Navigatoren. Vögel und Wolken zeigen verborgenes
@@ -224,10 +260,13 @@ Das Wissen der Seefahrer steckt in Menschen, nicht in Gebäuden. Es wird gelehrt
   größer. Ansehen holt Siedler aufs Kanu, und Siedler gründen Dörfer, die das Netz knüpfen.
 - **Land und Meer:** Felder zehren am Boden, Wald schützt ihn, zu viel Rodung bringt Erosion, Stürme treffen kahle Inseln
   härter. Fischer, Taucher und Felder füllen dieselbe Nahrung; Wind, Nacht und Rāhui bestimmen, wann aufs Meer gefahren wird.
-- **Auch in der Abwesenheit** läuft alles weiter: Ernte, Geburt, Tod, Lernen, Fahrten und Chronik. Der Bericht
+- **Siedeln:** Was im Kanu war, bestimmt, was auf neuem Land wächst. Bis Taro und Brotfrucht nachkommen, nähren Fisch, Riff
+  und Wild die Siedler, und wer keine Arbeit hat, sammelt. Zu viele Untätige leeren das Wild; Arbeit, Tapu oder weniger
+  Menschen schonen es. Ohne Brotfrucht kein Proviant, ohne Proviant keine Fahrt ins Unbekannte.
+- **Auch in der Abwesenheit** läuft alles weiter: Ernte, Geburt, Tod, Lernen, Sammeln, Fahrten und Chronik. Der Bericht
   „Während ihr fort wart“ erzählt es.
 - Ein langer Prüflauf über vierzig Inseljahre, mit Stürmen, Festen, Abwesenheit, Speichern und Laden, prüft dabei, dass
-  Bewohner, Figuren, Vorräte, Arbeiter und Wissen immer zueinander passen.
+  Bewohner, Figuren, Vorräte, Arbeiter, Wissen, Wild und mitgebrachte Pflanzen immer zueinander passen.
 
 ## Die große Fahrt
 

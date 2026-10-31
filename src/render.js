@@ -408,12 +408,12 @@ function drawAnim(c, now){
     c.save(); c.translate(h.x, h.y + 24);
     c.scale(fl, fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore();
   }
-  // a pair of frigate birds circles over each known island
+  // birds circle over each known island: many over untouched land, one or two where the wild has been hunted out
   if (!reduced && lod !== 'far') for (const I of islands){
     if (!I.discovered || !boxIn(I.box, v)) continue;
-    const w = (I.box.x1 - I.box.x0) * .4, h = (I.box.y1 - I.box.y0) * .32;
-    for (let k = 0; k < 2; k++){
-      const a = now / (9000 + k * 4000) * (k ? -1 : 1) + k * 2.4 + I.center.x, x = I.center.x + Math.cos(a) * w, y = I.center.y + Math.sin(a) * h - 24;
+    const w = (I.box.x1 - I.box.x0) * .4, h = (I.box.y1 - I.box.y0) * .32, n = 1 + Math.round(wildOf(I) * wildKeep(I) * 6);
+    for (let k = 0; k < n; k++){
+      const a = now / (9000 + k * 2300) * (k % 2 ? -1 : 1) + k * 2.4 + I.center.x, rr = k < 2 ? 1 : .45 + (k * 7 % 5) / 8, x = I.center.x + Math.cos(a) * w * rr, y = I.center.y + Math.sin(a) * h * rr - 24 - (k % 3) * 6;
       c.save(); c.translate(x, y); stroke(c, Math.sin(now / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, '#2B1D14', 1.3, null, 'round', .85); c.restore();
     }
   }

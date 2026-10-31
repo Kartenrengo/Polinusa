@@ -64,7 +64,7 @@ function renderBuildBar(){
   $('tabBau').setAttribute('aria-pressed', buildTab === 'bau'); $('tabDeco').setAttribute('aria-pressed', buildTab === 'deco');
   const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
   $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
-    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, kostet ${costText(costOf(k, I))}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('') +
+    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}${hasLife(I, k) ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${hasLife(I, k) ? `kostet ${costText(costOf(k, I))}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('') +
     (buildTab === 'bau' ? `<button type="button" class="bbtn" data-road="1" aria-pressed="false" aria-label="Weg anlegen, kostet nichts"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}</svg><span>Weg</span></button>` +
       (I.roads && I.roads.length ? `<button type="button" class="bbtn" data-road="cut" aria-pressed="false" aria-label="Wege entfernen"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}<path d="M-6-4.5L6 4.5M6-4.5L-6 4.5" stroke="#A84A2C" stroke-width="2.2" stroke-linecap="round"/></svg><span>Weg weg</span></button>` : '') : '');
   updateHUD();
@@ -89,7 +89,7 @@ function showIdle(){
   const I = isl(active), list = walkers.filter(w => w.isl === I.id && w.role === 'idle');
   if (!list.length){ toast('Alle, die arbeiten können, haben Arbeit.', 2600, false); return; }
   const n = idleNo++ % list.length, w = list[n]; markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 2.2));
-  toast(`${whoIs(w)} hat keine Arbeit, ${n + 1} von ${list.length}. Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
+  toast(`${whoIs(w)} hat keine Arbeit, ${n + 1} von ${list.length}. ${foragers(I) ? 'Solange sammelt sie oder er Wild. ' : ''}Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
 }
 function villageCenter(I){
   const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) return I.anchor || I.center;
@@ -147,6 +147,7 @@ function ghostRender(){
 function startPlace(kind){
   const I = isl(active), K = KINDS[kind];
   if (K.max && I.buildings.filter(b => b.kind === kind).length >= K.max){ toast(`Nur ein ${K.n} pro Insel.`, 2600, false); return; }
+  if (!hasLife(I, kind)){ toast(lifeMissing(I, kind), 4200, false); return; }
   const c = costOf(kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`, 2600, false); return; }
   closeSheet(); selectedId = null; invalidate();
   mode = 'place'; placing = {kind, island:I.id, x:I.center.x, y:I.center.y, v:variant(kind)};
@@ -282,11 +283,17 @@ function needsMarkup(I){
   { const L = navLore(); if (L.lvl || I.buildings.some(b => b.kind === 'sternhaus')) h += `<p class="sec">Navigatoren</p><ul class="list needs">` + row('einbaum', L.lvl ? `Stufe ${L.lvl}: ${NAV_N[L.lvl]}` : 'Noch kein Navigator', L.best ? `${L.best.p.n} auf ${L.best.I.name}, ${Math.floor(ageOf(L.best.p))} Jahre. Stirbt ${L.best.p.n} ohne Schüler, ist das Wissen fort.` : 'Im Haus der Navigatoren lernt jemand die Zeichen von Wellen, Vögeln und Sternen.', '', L.lvl ? chip('ok', `Stufe ${L.lvl}`) : chip('low', 'keiner')) + `</ul>`; }
   // the land: how much forest still holds the soil, and how many fields are worn out
   const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;
-  if (I.type === 'hoch' || fields.length){
+  {
     h += `<p class="sec">Land</p><ul class="list needs">`;
     if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
       h += row('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus, das Riff leidet. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', bar(f / .6), e ? chip(e > 1 ? 'out' : 'low', 'Erosion') : chip('ok', 'hält'), e ? 'need' : ''); }
     if (fields.length) h += row('soil', `${fields.length} Felder`, `${tired ? `${tired} ausgelaugt` : 'Der Boden trägt'}${resting ? `, ${resting} brach` : ''}. Ausgelaugte Felder brachliegen lassen.`, '', tired ? chip('low', 'müde') : chip('ok', 'gut'), tired ? 'need' : '');
+    // the wild, and the tapu that spares it
+    const W = wildOf(I), F = foragers(I), gone = goneOf(I);
+    h += row('wild', `Wild: ${wildWord(W)}`, `${I.tapu ? 'Tapu: Niemand jagt oder sammelt. Es erholt sich langsam.' : F ? `${F} ohne Arbeit sammeln Eier, Krebse und Vögel, +${perMin(forageRate(I))} pro Minute.` : 'Wer keine Arbeit hat, sammelt im Wald und am Strand.'}${gone ? ` ${gone > 1 ? 'Zwei Arten sind' : 'Eine Art ist'} hier ausgestorben, für immer.` : W < .45 ? ' Wird weiter so viel gejagt, sterben Arten aus.' : ''}`, bar(W), `<button class="chip" type="button" data-act="tapu" aria-pressed="${!!I.tapu}">Tapu</button>`, W < .3 && !I.tapu ? 'need' : '');
+    // what came in the canoes, and what is still missing here
+    const fit = LIFE_IDS.filter(id => lifeFits(I, id)), have = fit.filter(id => lifeOf(I).includes(id)), miss = fit.filter(id => !have.includes(id));
+    h += row('setzling', have.length ? `Mitgebracht: ${andList(have.map(id => LIFE[id].n))}` : 'Noch nichts mitgebracht', miss.length ? `Es fehlen ${andList(miss.map(id => LIFE[id].n))}. Ein Kanu bringt sie aus einem Dorf, wo sie wachsen: im Hafen „Beladen“, dann „Leben fürs neue Land“.` : 'Alles, was hier wachsen kann, ist da.', '', miss.length ? chip('low', `${miss.length} fehlen`) : chip('ok', 'alles da'), miss.length ? 'need' : '');
     h += `</ul>`;
   }
   // work in the order of the priorities, which can be changed
@@ -323,7 +330,9 @@ function needsMarkup(I){
     }
     h += `</ul>`;
   }
-  const tips = nd.list.filter(n => n.state !== 'ok').map(n => n.N.hint[I.type]);
+  const lifeFor = {essen:'taro', schweine:'schwein', kava:'kava', tapa:'maulbeer'};
+  const tips = nd.list.filter(n => n.state !== 'ok').map(n => { const id = lifeFor[n.k];
+    return id && lifeFits(I, id) && !lifeOf(I).includes(id) ? (n.k === 'essen' ? `Auf ${I.name} gibt es ${LIFE.taro.no}. Bis ein Kanu Setzlinge bringt, nähren Fischgestell, Riffsammler und das Wild.` : `${GN[n.k]}: Auf ${I.name} gibt es ${LIFE[id].no}. Bring ${LIFE[id].s} im Kanu mit, oder schick ${GN[n.k]} her.`) : n.N.hint[I.type]; });
   if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
   if (nd.list.some(n => n.k === 'essen' && n.state === 'out')) h += `<p class="sub">Ohne Nahrung ziehen nach und nach Leute fort.</p>`;
@@ -530,14 +539,14 @@ function renderSheet(){
 let lastSig = '';
 function sheetSig(){
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
-  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, prioOf(I).join(), tick % GROW_EVERY, [...presentAt(I).values()].join(':'), ...Object.values(sf.cats).map(c => c.used), ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : '')].join(); }
+  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, prioOf(I).join(), tick % GROW_EVERY, [...presentAt(I).values()].join(':'), ...Object.values(sf.cats).map(c => c.used), ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+')].join(); }
   if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1].join(); }
   if (sheetKind === 'calendar') return [moonOf(), isl(active).rahui, Math.floor(untilFestival() / 30)].join();
   if (sheetKind === 'fleet') return own().map(s => [s.state, s.port, s.route, s.hungry].join(':')).join() + routes.map(r => r.knots).join();
   if (sheetKind === 'ship'){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return 'gone';
     const P = s.port ? isl(s.port) : null;
-    return [s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
+    return [s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), (s.life || []).join('+'), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
   }
   if (sheetKind === 'route'){
     const r = routes[sheetData.r]; if (!r) return 'gone';
@@ -571,6 +580,7 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
   if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); renderBuildBar(); toast('Der Weg ist weg.', 2000, false); return; }
+  if (act === 'tapu' && sheetKind === 'needs'){ const I = isl(active); setTapu(I, !I.tapu); renderSheet(); return; }
   if (act === 'folk'){ openSheet('folk', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : active}); return; }
   if (sheetKind === 'needs' && (act === 'pup' || act === 'pdown')){
     const I = isl(active), pr = prioOf(I), i = pr.indexOf(btn.dataset.c), j = i + (act === 'pup' ? -1 : 1);

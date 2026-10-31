@@ -56,6 +56,7 @@ button:focus-visible{outline:3px dotted var(--ochre);outline-offset:2px}
 .bbtn{flex:none;width:58px;height:62px;border:2.5px dotted var(--brown);border-radius:8px;background:var(--cloth-hi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px 0 4px;cursor:pointer;color:var(--ink);font:700 11.5px/1 var(--font-ui)}
 .bbtn svg{width:42px;height:38px;display:block}
 .bbtn.poor{opacity:.45}
+.bbtn.lack{opacity:.42;border-style:dashed}.bbtn.lack svg{filter:grayscale(.9)}
 .bbtn[aria-pressed="true"]{border-color:var(--ochre);background:var(--turmeric)}
 .hb{flex:none;width:10px;height:50px}
 .tbtn{flex:none;width:64px;height:62px;border:2.5px solid var(--brown);border-radius:8px;background:var(--cloth-hi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--ink);font:800 12px/1 var(--font-ui)}

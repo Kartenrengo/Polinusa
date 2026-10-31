@@ -8,16 +8,19 @@ const manaNeeded = () => Math.max(0, islands.filter(I => I.settled).length - 2) 
 /* Settlers land: the island gets its first house and a cord to where they came from */
 function settle(T, S, o){
   T.discovered = true; T.settled = true; T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock}; T.people = (o.folk || []).slice(0, o.pop); syncPeople(T);
+  // only what came in the canoe grows here; the wild is as the island kept it
+  T.life = []; T.wild = wildOf(T); const fresh = landLife(T, {life:o.life || []}, true);
   const r = rng(T.center.x | 0);
   if (!T.buildings.length){
     if (T.atoll) seedAtollPlants(T, r);
     else { palmsAlong(T, r, 16);
-      for (let i = 0; i < 4; i++){ const a = r() * TAU, p = {x:T.center.x + Math.cos(a) * 64, y:T.center.y + Math.sin(a) * 46}; if (!check('baum', T, p.x, p.y)) addB(T, 'baum', p, {scale:fx(.9 + r() * .15)}, tick - 60); } }
+      // the breadfruit shoots from the canoe are set out first and grow up by themselves
+      for (let i = 0; i < 3; i++){ const a = r() * TAU, p = {x:T.center.x + Math.cos(a) * 64, y:T.center.y + Math.sin(a) * 46}; if (!check('baum', T, p.x, p.y)) addB(T, 'baum', p, {scale:fx(.9 + r() * .15)}, tick).bt = KINDS.baum.bt; } }
   }
   const hs = findSpot(T, 'haus', homeSpot(T)); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
   if (S && routeIndex(S.id, T.id) < 0) routes.push({a:S.id, b:T.id, knots:1, lastGift:tick, plan:{a:{}, b:{}}});
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
-  toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''}`, 4200);
+  toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Ohne Setzlinge wächst hier nur, was schon da war. Bis ein Kanu Taro bringt, nähren Fisch, Riff und Wild die Leute.'}`, 5200);
 }
 /* A gift is not paid for. The clan remembers it and answers later with what they make; trust (knots) makes the answer richer. */
 function receiveGift(T, cargo, from, r){
@@ -275,6 +278,76 @@ function rollAhead(){
   for (const h of fogHoles) for (let cy = Math.floor((h.cy - h.ry - r) / CELL); cy <= Math.floor((h.cy + h.ry + r) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx - r) / CELL); cx <= Math.floor((h.cx + h.rx + r) / CELL); cx++) ensureCell(cx, cy, true);
 }
 const voyageDay = () => Math.round(VOYAGE_DAY * (navLore().lvl >= 3 ? 1.4 : 1));
+/* ---------- the brought world. Taro, breadfruit, paper mulberry, kava and pigs live on an island only where people have
+   brought them in a canoe; the home island and the clans have them all, and so do villages from older saves. */
+const lifeOf = I => I.life || (I.settled || I.clan ? LIFE_IDS : []);
+const hasLife = (I, kind) => { const l = KINDS[kind].life; return !l || lifeOf(I).includes(l); };
+const lifeFits = (I, id) => LIFE[id].kinds.some(k => KINDS[k].on.includes(I.type));   // would it grow here at all
+const lifeMissing = (I, kind) => { const L = LIFE[KINDS[kind].life]; return `Auf ${I.name} gibt es ${L.no}. Bring ${L.s} im Kanu mit.`; };
+const andList = a => a.length > 1 ? `${a.slice(0, -1).join(', ')} und ${a[a.length - 1]}` : a[0] || '';
+/* A canoe lands what it carries alive: what is new to the island takes root there, pigs that are not needed for breeding go
+   into the store, plants the island has already go back into its gardens. Returns what is new. */
+function landLife(I, s, quiet){
+  if (!s.life || !s.life.length) return [];
+  const L = I.life || (I.life = lifeOf(I).slice()), fresh = [];
+  for (const id of s.life){
+    if (!L.includes(id) && lifeFits(I, id)){ L.push(id); fresh.push(id); continue; }
+    for (const [g, v] of Object.entries(LIFE[id].take || {})) I.stock[g] = Math.min(storeCap(I), (I.stock[g] || 0) + v);
+  }
+  s.life = [];
+  if (fresh.length){
+    stats.brought = (stats.brought || 0) + fresh.length;
+    const can = fresh.flatMap(id => LIFE[id].kinds.filter(k => KINDS[k].on.includes(I.type) && unlocked(k)).map(k => KINDS[k].n));
+    if (!quiet) toast(`Neu auf ${I.name}: ${andList(fresh.map(id => LIFE[id].n))}.${can.length ? ` Jetzt lässt sich ${andList(can)} anlegen.` : ''}`, 4600);
+    if (I.id === active) renderBuildBar();
+  }
+  return fresh;
+}
+
+/* ---------- wild food: birds and their eggs, megapodes, turtles, fruit bats and land crabs on an island no one has hunted
+   yet. Grown-ups without work gather it, much at first and less as it grows scarce. It comes back slowly, slower still
+   where the rats that came in the canoes eat the eggs. Hunted below a third, the first kinds die out for good, as they did
+   on Tonga and Fiji within a few generations of the first settlers; below an eighth the next. A tapu spares the rest. */
+const WILD_G = .002, WILD_AT = [.3, .12], WILD_PER = 12;   // regrowth, where kinds die out, ticks per food a gatherer needs in untouched wild
+const wildK = I => I.type === 'atoll' ? 420 : 560;   // how much the wild of an island holds, in food: three or four gatherers it bears for good
+const wildOf = I => I.wild ?? (I.id === 'heimat' || I.clan ? .25 : 1);
+const goneOf = I => I.gone ?? (I.id === 'heimat' ? 1 : 0);   // on the home island the first kinds went long ago
+const wildKeep = I => 1 - .3 * goneOf(I);
+const foragers = I => !I.settled || I.tapu || wildOf(I) < .03 || (I.stock.wild || 0) >= storeCap(I) ? 0 : staffOf(I).free;
+const forageRate = I => foragers(I) * wildOf(I) * wildKeep(I) / WILD_PER * PER_MIN;   // food per minute
+const wildWord = W => W > .7 ? 'reich' : W > .45 ? 'weniger' : W > .25 ? 'knapp' : W > .1 ? 'fast leer' : 'leer';
+const EXTINCT = {
+  hoch:['Die Großfußhühner, die ihre Eier in warmer Erde vergruben, sind ausgestorben.', 'Die Riesenleguane und die großen Tauben sind fort, für immer.'],
+  atoll:['Die Seevögel brüten hier nicht mehr in Kolonien.', 'Die Meeresschildkröten kommen nicht mehr zum Eierlegen an den Strand.']
+};
+function wildTick(I, n = 1){
+  const F = foragers(I), K = wildK(I), g = WILD_G * (I.settled ? .6 : 1), keep = wildKeep(I);
+  let W = wildOf(I), got = I._wf || 0;
+  for (let i = 0; i < n; i++){ const y = F * W / WILD_PER; got += y * keep; W = clamp(W - y / K + g * Math.max(W, .03) * (1 - W), 0, 1); }
+  I.wild = W;
+  const whole = Math.min(Math.floor(got), Math.max(0, storeCap(I) - (I.stock.wild || 0))); I._wf = got - Math.floor(got);
+  if (whole > 0) I.stock.wild = (I.stock.wild || 0) + whole;
+  WILD_AT.forEach((at, i) => { if (W < at && goneOf(I) < i + 1){ I.gone = i + 1; extinct(I, i + 1); } });
+  return whole;
+}
+function extinct(I, lvl){
+  const t = EXTINCT[I.type === 'atoll' ? 'atoll' : 'hoch'][lvl - 1];
+  if (lifeLog) lifeLog.gone.push(`${I.name}: ${t}`);
+  else toast(`${I.name}: ${t}${lvl === 1 ? ' Was zu viel gejagt wird, fehlt den Enkeln. Ein Tapu auf das Wild schont den Rest.' : ''}`, 6000);
+  invalidate();
+}
+function setTapu(I, on){
+  I.tapu = on; I.tapuAway = false; I.staff = null; save();
+  toast(on ? `Tapu auf das Wild von ${I.name}: Niemand jagt und sammelt. Langsam kommen Vögel und Schildkröten zurück, nur was ausgestorben ist, nicht.` : `Das Tapu auf ${I.name} ist aufgehoben. Wer keine Arbeit hat, sammelt wieder.`, 4600);
+}
+/* where someone without work goes gathering: into the forest to the nests, or along the shore for eggs and crabs */
+function forageSpot(I, w){
+  const L = I.lands[landOf(I, w)]; if (!L) return null;
+  if (Math.random() < .5){ for (let k = 0; k < 6; k++){ const t = I.trees[Math.floor(Math.random() * I.trees.length)]; if (t && t.st === 0 && landAt(I, t) === L) return {x:t.x + rnd(6), y:t.y + 7}; } }
+  const v = L.poly[Math.floor(Math.random() * L.poly.length)], c = L._c || (L._c = L.poly.reduce((m, q) => ({x:m.x + q.x / L.poly.length, y:m.y + q.y / L.poly.length}), {x:0, y:0}));
+  return {x:v.x + (c.x - v.x) * .1, y:v.y + (c.y - v.y) * .1};
+}
+
 /* a quiet message: into the list of the conch, without unrolling */
 function note(msg){ news.unshift({msg, at:Date.now()}); if (news.length > 40) news.length = 40; if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
 
@@ -288,11 +361,11 @@ function spawnFig(I, homes, role, at, p){
   walkers.push(w); return w;
 }
 function setJob(I, w, j){
-  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, boat:false, fishing:0, under:0, catch:[], wait:0});
+  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, boat:false, fishing:0, under:0, catch:[], wait:0, forage:0});
   if (initSync){ w.on = true; w.leg = 'work'; w.wait = Math.random() * 1500; return; }   // already at work
   w.on = false; w.leg = 'go'; goTo(I, w, j.x, j.y);
 }
-function freeFig(w){ Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0, under:0, catch:[]}); }
+function freeFig(w){ Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0, under:0, catch:[], forage:0}); }
 function syncWalkers(){
   for (const I of islands){
     const mine = walkers.filter(w => w.isl === I.id);
@@ -358,7 +431,7 @@ const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.peopl
 const whoIs = w => { const p = personOf(w), I = isl(w.isl); return p ? `${I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
-  if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return 'hat gerade keine Arbeit';
+  if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
   const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
@@ -444,6 +517,13 @@ function nextLeg(w){
     if (h){ goTo(I, w, h.x + (Math.random() - .5) * 40, h.y + 14 + Math.random() * 16, 700 + Math.random() * 1400); return; }
   }
   if (w.job){ jobLeg(I, w, w.job); return; }
+  // without work, grown-ups gather what the wild gives: out to the nests and the shore, bent down a while, the basket to the store
+  if (w.role === 'idle' && !w.boat){
+    if (w.forage === 1){ w.forage = 2; w.busy = {x:w.x, y:w.y}; w.fx = 'plant'; w.sit = true; w.wait = 2600 + Math.random() * 2400; return; }
+    if (w.forage === 2){ w.forage = 3; w.sit = false; w.carry = 'eier'; const st = storeNear(I, w); if (st){ goTo(I, w, st.x + rnd(6), st.y + 5); return; } }
+    if (w.forage === 3){ w.forage = 0; w.carry = null; }
+    if (foragers(I) && Math.random() < .55){ const p = forageSpot(I, w); if (p){ w.forage = 1; w.sit = false; goTo(I, w, p.x, p.y, 300); return; } }
+  } else if (w.forage){ w.forage = 0; if (w.carry === 'eier') w.carry = null; }
   const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && (!w.old || KINDS[b.kind].roof) && landOfB(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
   if (t) goTo(I, w, t.x + rnd(w.old ? 8 : 11), t.y + 4 + Math.random() * 8);
   // grown-ups who stroll sometimes sit down on a mat for a while, the old more often; children are off again quickly
@@ -658,7 +738,7 @@ const PER_MIN = 60000 / TICK;
 const tooled = (I, K) => !K.boost || (I.stock[K.boost.k] || 0) > 0;
 const pace = (I, K) => tooled(I, K) ? 1 : K.boost.slow;
 function makeRate(I, k){
-  let m = 0;
+  let m = k === 'wild' ? forageRate(I) : 0;
   for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !b.bt && !(b.boat > 0) && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? crewAt(I, b) / K.crew : 1); }
   return m;
 }
@@ -754,7 +834,7 @@ function econ(){
       if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }   // the net tears, the adze breaks
       add(K.prod, 1);
     }
-    growTrees(I); stepWear(I);
+    growTrees(I); stepWear(I); wildTick(I);
     // use up what people need; fractions carry over so small villages use little
     I.owe = I.owe || {};
     for (const N of NEEDS){
@@ -1017,6 +1097,10 @@ function awayMinute(I, R){
   let grew = false;
   for (const t of I.trees){ if (t.st === 0) continue; t.g -= 30; if (t.g > 0) continue; grew = true; if (t.st === 1){ t.st = 2; t.g += GROW_TICKS; } else { t.st = 0; t.w = TREE_WOOD; } }
   if (grew) treesChanged(I);
+  const wg = wildTick(I, 30); if (wg) R.made.wild = (R.made.wild || 0) + wg;   // those without work gather on
+  // as with the fields, the elders look after the wild themselves: a tapu when it grows scarce, lifted when it has come back
+  if (!I.tapu && goneOf(I) < 2 && wildOf(I) < Math.min(.35, Math.max((R.w0[I.id] ?? 1) - .05, WILD_AT[goneOf(I)] + .03))){ I.tapu = I.tapuAway = true; I.staff = null; R.tapu.add(I.name); }
+  else if (I.tapuAway && wildOf(I) > .7){ I.tapu = I.tapuAway = false; I.staff = null; }
   // what people use; when something runs out nobody leaves, the village only stops growing
   I.owe = I.owe || {};
   for (const N of NEEDS){
@@ -1031,9 +1115,9 @@ function awayMinute(I, R){
 }
 function catchUp(ms){
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
-  const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
+  const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), tapu:new Set(), w0:Object.fromEntries(mine.map(I => [I.id, wildOf(I)])), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
   const mana0 = mana, knots = routes.map(r => r.knots);
-  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[]};
+  awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[]};
   try {
     for (let i = 1; i <= n; i++){
       tick++;
@@ -1060,17 +1144,19 @@ function awayReport(R){
     if (I.pop !== before) lines.push(['pop', `${I.name}: ${I.pop} Menschen`, `vorher ${before}`]);
   }
   // the generations: who was born, who grew up, who went to the ancestors, who leads now
-  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
+  const L = R.life || {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[]}, names = list => list.length > 3 ? `${list.slice(0, 3).join(', ')} und ${list.length - 3} weitere` : list.join(' und ');
   if (L.born || L.came) lines.push(['pop', [L.born && `${L.born} ${L.born === 1 ? 'Kind geboren' : 'Kinder geboren'}`, L.came && `${L.came} zugezogen`].filter(Boolean).join(', '), '']);
   if (L.grown) lines.push(['pop', `${L.grown} ${L.grown === 1 ? 'Kind ist' : 'Kinder sind'} erwachsen geworden`, '']);
   if (L.died.length) lines.push(['mana', `Zu den Ahnen gegangen: ${names(L.died)}`, '']);
   if (L.chiefs.length) lines.push(['mana', `Häuptling geworden: ${names(L.chiefs)}`, '']);
   if (L.nav && L.nav.length) lines.push(['einbaum', `Navigator geworden: ${names(L.nav.map(x => x.t))}`, '']);
   if (L.lost && L.lost.length) lines.push(['einbaum', `Mit ${names(L.lost)} ging Wissen der Navigatoren verloren`, '']);
+  for (const t of L.gone || []) lines.push(['wild', `Ausgestorben auf ${t}`, '']);
   const built = R.built.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {});
   if (R.built.length) lines.push(['beile', `Fertig gebaut: ${Object.entries(built).map(([n, c]) => c > 1 ? `${c}× ${n}` : n).join(', ')}`, '']);
   const made = Object.entries(R.made).sort((a, b) => b[1] - a[1]).slice(0, 5);
   if (made.length) lines.push(['essen', `Erzeugt: ${made.map(([k, v]) => `${v} ${GN[k]}`).join(', ')}`, '']);
+  if (R.tapu && R.tapu.size) lines.push(['wild', `Auf ${andList([...R.tapu])} haben die Ältesten ein Tapu auf das Wild gelegt, damit es sich erholt`, '']);
   const fal = R.fallow.size; if (fal) lines.push(['soil', `${fal === 1 ? 'Ein ausgelaugtes Feld haben' : `${fal} ausgelaugte Felder haben`} die Leute brachliegen lassen`, '']);
   const found = islands.filter(I => I.discovered).length - R.found; if (found > 0) lines.push(['einbaum', `${found} ${found === 1 ? 'neue Insel' : 'neue Inseln'} entdeckt`, '']);
   const canoes = own().length - R.ships; if (canoes > 0) lines.push(['einbaum', `${canoes} ${canoes === 1 ? 'neues Kanu' : 'neue Kanus'} vom Stapel gelaufen`, '']);
