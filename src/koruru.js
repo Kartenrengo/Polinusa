@@ -72,7 +72,7 @@ const koruruThrown = f => ({x:170 + Math.sin(f * Math.PI) * 6, y:212 - Math.sin(
 function koruruMarkup(){
   if (!kor) koruruNew();
   return head('Kōruru', 'Fünf Knöchelchen, ein Spiel aus dem ganzen Pazifik') +
-    `<p class="sub">Wirf den Knochen in deiner Hand hoch. Solange er fliegt, tippe die richtige Zahl Knochen auf der Matte an, dann fange ihn, wenn er wieder in die Hand fällt: Der Ring zeigt, wann. Runde 1 einer nach dem anderen, Runde 2 zwei auf einmal, dann drei, dann vier. Drei Fehler, und das Spiel ist aus.</p>` +
+    `<p class="sub">Hochwerfen, dann die richtige Zahl Knochen antippen und fangen, wenn der Ring es zeigt. Runde 1 je einen, dann zwei, drei, vier. Drei Fehler beenden das Spiel.</p>` +
     `<canvas id="korC" class="kor" width="340" height="230" aria-label="Die Matte mit den Knochen"></canvas>` +
     `<div class="rowx"><span class="sub" id="korMsg" role="status"></span></div>` +
     `<div class="rowx"><span class="sub" id="korState"></span><span class="chips"><button class="btn" type="button" data-act="knew">Neues Spiel</button><button class="btn primary" type="button" data-act="kthrow" id="korThrow">Hochwerfen</button></span></div>`;

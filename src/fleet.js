@@ -134,12 +134,18 @@ function exploreAt(x, y, r){
   // a new clearing only where the old ones do not already reach, so their number stays small
   if (!fogHoles.some(h => Math.hypot(h.cx - x, h.cy - y) < Math.min(h.rx, r) * .7)) fogHoles.push({cx:Math.round(x), cy:Math.round(y), rx:r, ry:Math.round(r * .85), seed:(x * 7 + y) & 1023});
   for (const I of islands){
-    if (I.discovered) continue;
     const b = I.box, nx = clamp(x, b.x0, b.x1), ny = clamp(y, b.y0, b.y1);
-    if (Math.hypot(nx - x, ny - y) < r * .9) discover(I);
+    if (Math.hypot(nx - x, ny - y) >= r * .9) continue;
+    if (!I.discovered) discover(I);
+    revealIsland(I);   // an island once in sight lies open as a whole, reef and lagoon too
   }
   invalidate(true);
   return fresh;
+}
+function revealIsland(I){
+  const b = I.box, cx = Math.round((b.x0 + b.x1) / 2), cy = Math.round((b.y0 + b.y1) / 2), rx = Math.round((b.x1 - b.x0) / 2 * 1.2 + 40), ry = Math.round((b.y1 - b.y0) / 2 * 1.2 + 40);
+  if (fogHoles.some(h => Math.abs(h.cx - cx) < 6 && Math.abs(h.cy - cy) < 6 && h.rx >= rx - 2)) return;
+  fogHoles.push({cx, cy, rx, ry, seed:(cx * 7 + cy) & 1023}); invalidate(true);
 }
 function discover(I){
   I.discovered = true; syncWalkers(); save(); checkQuest();

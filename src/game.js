@@ -21,7 +21,7 @@ function settle(T, S, o){
   const hs = findSpot(T, 'haus', homeSpot(T)); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
   if (S && routeIndex(S.id, T.id) < 0) routes.push({a:S.id, b:T.id, knots:1, lastGift:tick, plan:{a:{}, b:{}}});
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
-  toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Ohne Setzlinge wächst hier nur, was schon da war. Bis ein Kanu Taro bringt, nähren Fisch, Riff und Wild die Leute.'}`, 5200);
+  toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Noch ohne Setzlinge: Fisch, Riff und Wild nähren die Leute.'}`, 5200);
 }
 const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 1) * (1 + .1 * Math.min(2, bondsWith(T)));   // shared patterns and marriages make gifts count for more
 /* A gift is not paid for. The clan remembers it and answers later with what they make; trust (knots) makes the answer richer. */
@@ -41,7 +41,7 @@ function answerGifts(){
     T.debt = Math.max(0, left); T.returnAt = T.debt >= 1 ? tick + 20 : 0;
     // another people answers with what only they have: bananas from the Great Land, the star paths of the north
     const C = T.clan, life = C.life && !lifeKnown(C.life) ? [C.life] : [];
-    if (C.teach === 'nav' && !stats.nordLehre){ stats.nordLehre = 1; loreCache = null; if (lifeLog) lifeLog.nav.push({id:'nord', t:`die Sternwege vom Nordmeer`}); else toast(`${C.name} lehren eure Navigatoren ihre Sternwege. Euer Wissen kann jetzt eine Stufe weiter reichen.`, 5200); }
+    if (C.teach === 'nav' && !stats.nordLehre){ stats.nordLehre = 1; loreCache = null; if (lifeLog) lifeLog.nav.push({id:'nord', t:`die Sternwege vom Nordmeer`}); else toast(`${C.name} lehren eure Navigatoren ihre Sternwege. Euer Wissen reicht eine Stufe weiter.`, 5200); }
     clanShip(T, T.lastFrom, cargo, false, life);
   }
 }
@@ -49,9 +49,9 @@ function answerGifts(){
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {sternhaus:'stars', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
+const WORK_FX = {sternhaus:'stars', kletterer:'leaf', oelhuette:'pound', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
-const JOB_LOAD = {bananen:'frucht', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
+const JOB_LOAD = {bananen:'frucht', kletterer:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const landOfB = (I, b) => b._lk === b.x + b.y ? b._l : (b._lk = b.x + b.y, b._l = landOf(I, b));   // buildings stay put, so this is kept
 const lived = I => I.settled || (I.clan && I.discovered);
@@ -106,7 +106,7 @@ const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.p
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
 const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Feldfrüchte'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
 const prioOf = I => I.prio && I.prio.length === PRIO.length ? I.prio : (I.prio = PRIO.map(q => q.id));
-const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
+const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' || K.prod === 'kokos' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
 const capOf = b => { const K = KINDS[b.kind], mc = b.v && b.v.mc; return mc == null ? K.crew || 0 : Math.min(K.crew || 0, mc); };
 function staff(I){
   let free = workers(I); const crew = new Map(), sites = [], boats = [], staffed = new Set(), cats = {}; let yard = 0;
@@ -346,7 +346,7 @@ function extinct(I, lvl){
 }
 function setTapu(I, on){
   I.tapu = on; I.tapuAway = false; I.staff = null; save();
-  toast(on ? `Tapu auf das Wild von ${I.name}: Niemand jagt und sammelt. Langsam kommen Vögel und Schildkröten zurück, nur was ausgestorben ist, nicht.` : `Das Tapu auf ${I.name} ist aufgehoben. Wer keine Arbeit hat, sammelt wieder.`, 4600);
+  toast(on ? `Tapu auf das Wild von ${I.name}: Niemand jagt, das Wild erholt sich.` : `Das Tapu auf ${I.name} ist aufgehoben. Wer keine Arbeit hat, sammelt wieder.`, 4600);
 }
 /* where someone without work goes gathering: into the forest to the nests, or along the shore for eggs and crabs */
 function forageSpot(I, w){
@@ -379,7 +379,7 @@ function bringMotifs(from, to){
   mana += got.length; stats.muster = (stats.muster || 0) + got.length; invalidate();
   const txt = andList(got.map(k => MOTIFS[k].n));
   if (lifeLog) lifeLog.mot.push(`${txt} nach ${to.name}`);
-  else toast(to.clan ? `${clanDer(to.clan)} ${to.clan.culture ? 'stempeln' : 'stempelt'} jetzt auch ${txt} in ${to.clan.culture ? 'ihre' : 'seine'} Töpfe. Wer euer Muster trägt, schätzt eure Gaben mehr. Ansehen +${got.length}.` : `Auf ${to.name} stempeln sie jetzt auch ${txt}, wie auf den Töpfen aus ${from.name}. Ansehen +${got.length}.`, 4800);
+  else toast(to.clan ? `${clanDer(to.clan)} ${to.clan.culture ? 'stempeln' : 'stempelt'} jetzt auch ${txt} in ${to.clan.culture ? 'ihre' : 'seine'} Töpfe und schätzt eure Gaben mehr. Ansehen +${got.length}.` : `Auf ${to.name} stempeln sie jetzt auch ${txt}, wie auf den Töpfen aus ${from.name}. Ansehen +${got.length}.`, 4800);
   return got;
 }
 function motifTick(I){
@@ -428,7 +428,7 @@ function wedClan(T){
   if (C.motif) bringMotifs(T, I);   // the pots of the new family's home come along
   I.feastEnd = tick + 6; for (let i = 0; i < 6; i++) heartAt(I);   // the whole village gathers to dance
   syncWalkers(); invalidate(); save();
-  toast(`Hochzeit auf ${I.name}: ${p.n} heiratet ${q.n} ${clanVom(C)}. Matten und ein Schwein gehen als Brautgaben hinüber, drei Tage wird getanzt, und ${q.n} zieht nach ${I.name}. Jetzt seid ihr verwandt: Die Schnur löst sich nicht mehr, und eure Gaben zählen mehr. Ansehen +4.`, 6800);
+  toast(`Hochzeit auf ${I.name}: ${p.n} heiratet ${q.n} ${clanVom(C)}. ${q.n} zieht nach ${I.name}. Jetzt seid ihr verwandt. Ansehen +4.`, 6800);
   return true;
 }
 /* a quiet message: into the list of the conch, without unrolling */
@@ -813,7 +813,7 @@ function workState(I, b){
   if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
   if (K.prod && (I.stock[K.prod] || 0) >= storeCap(I)) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
-  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => (I.stock[q] || 0) < K.use[q]); return {why:'use', k, text:`Es fehlt ${GN[k]}.`}; }
+  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => (I.stock[q] || 0) < K.use[q]); return {why:'use', k, text:`Kein Vorrat an ${GN[k]}.`}; }
   return null;
 }
 /* ---------- needs: what each island uses, makes and lacks, per minute */
@@ -1338,6 +1338,7 @@ function start(data){
     invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
     if (!ok) beginLanding();
     else if (away && away.ms >= 3 * 60000) welcomeBack(away);
+    else if (oilGift) toast('Neu: Große Dörfer wollen Kokosöl. Baut Palmenkletterer und Ölhütte. Ein erster Vorrat liegt im Lager.', 6000);
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });
 }

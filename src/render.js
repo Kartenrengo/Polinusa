@@ -24,7 +24,8 @@ function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t = topH + 8; $('compass').style.top = t + 'px'; { const c = $('compass').getBoundingClientRect(); $('seasonBtn').style.top = (t + Math.max(0, (c.height - 24) / 2)) + 'px'; $('seasonBtn').style.left = (c.right + 8) + 'px'; }   // time and weather side by side $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  const t = topH + 8; $('compass').style.top = t + 'px';
+  $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -61,7 +62,7 @@ function stepCam(now){
 }
 
 /* ---------- sprites: SVG art → bitmap, one per size step, least recently used ones are dropped */
-const sprites = new Map(), LEVELS = [.25, .5, 1, 2, 4, 8], SPRITE_BUDGET = 6e6;
+const sprites = new Map(), LEVELS = [.25, .5, 1, 2, 4, 8], SPRITE_BUDGET = 9e6;
 let spritePx = 0, measureSvg = null;
 function artBox(art){
   if (!measureSvg){ measureSvg = document.createElementNS(NS, 'svg'); measureSvg.setAttribute('width', '1'); measureSvg.setAttribute('height', '1'); measureSvg.setAttribute('aria-hidden', 'true'); measureSvg.style.cssText = 'position:absolute;left:-10px;top:-10px;overflow:hidden;pointer-events:none'; document.body.appendChild(measureSvg); }
@@ -85,9 +86,16 @@ function rasterize(e, L){
 function trimSprites(){
   if (spritePx <= SPRITE_BUDGET) return;
   const all = []; for (const e of sprites.values()) for (const lv of e.lv.values()) if (lv.ready) all.push([e, lv]);
-  all.sort((a, b) => a[1].used - b[1].used);
-  for (const [e, lv] of all){ if (spritePx <= SPRITE_BUDGET * .7 || lv.used >= frameNo - 1) break; e.lv.delete(lv.L); spritePx -= lv.px * (lv.sh ? 2 : 1); }
+  // only what has not been drawn for a while goes, the biggest first, and every picture keeps at least one size ready,
+  // so nothing ever vanishes from the map for a frame (that was the flicker in big villages)
+  all.sort((a, b) => a[1].used - b[1].used || b[1].px - a[1].px);
+  for (const [e, lv] of all){
+    if (spritePx <= SPRITE_BUDGET * .7 || lv.used >= frameNo - 240) break;
+    if ([...e.lv.values()].filter(o => o.ready).length < 2) continue;
+    e.lv.delete(lv.L); spritePx -= lv.px * (lv.sh ? 2 : 1);
+  }
 }
+const hasReady = e => { for (const o of e.lv.values()) if (o.ready) return true; return false; };
 const pendingSprites = () => { const p = []; for (const e of sprites.values()) for (const lv of e.lv.values()) if (!lv.ready) p.push(lv.wait); return p; };
 /* Draws art at the current transform. The size step follows the real on-screen scale. */
 function spriteOf(key, art){
@@ -118,7 +126,8 @@ function sunShadow(){
 function blitShadow(c, key, art, alpha){
   const e = spriteOf(key, art), t = c.getTransform(), need = Math.hypot(t.a, t.b), L = LEVELS.find(l => l >= need) || LEVELS[LEVELS.length - 1];
   let lv = e.lv.get(L); if (!lv){ lv = rasterize(e, L); e.lv.set(L, lv); }
-  lv.used = frameNo; if (!lv.ready) return;
+  lv.used = frameNo;
+  if (!lv.ready){ lv = null; for (const o of e.lv.values()) if (o.ready && (!lv || Math.abs(Math.log(o.L / L)) < Math.abs(Math.log(lv.L / L)))) lv = o; if (!lv) return; lv.used = frameNo; }   // a shadow of another size rather than none
   if (!lv.sh){ const s = document.createElement('canvas'); s.width = lv.c.width; s.height = lv.c.height; const x = s.getContext('2d'); x.drawImage(lv.c, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#1A120C'; x.fillRect(0, 0, s.width, s.height); lv.sh = s; spritePx += lv.px; }
   const g = c.globalAlpha; c.globalAlpha = g * alpha;
   // only what stands above the ground casts a shadow; what lies in front (a fire pit, a mat) does not
@@ -138,7 +147,11 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  const key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}`, art = () => artOf(b.kind, o), sc = t.s * (chief ? 1.12 : 1) * grown;
+  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}`, art = () => artOf(b.kind, o);
+  const sc = t.s * (chief ? 1.12 : 1) * grown;
+  // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
+  if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
+  else if (b._sk && b._sk !== key && sprites.has(b._sk)){ if (!sh) put(c, b.x, b.y, sc, t.m, t.rot, key, art, 0); const old = sprites.get(b._sk); key = b._sk; art = old.art; }
   if (sh){ if (!site && K.hy > 3) putShadow(c, b.x, b.y, sc, t.m, t.rot, key, art, sh); return; }   // flat things like fields and paths cast none
   if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
   drawStakes(c, b, K, f, alpha, I);

@@ -443,11 +443,10 @@ function landingMarkup(){
   const pick = sheetData && sheetData.id ? isl(sheetData.id) : null, list = landingChoices(), M = isl('tochter'), to = landing && landing.target ? isl(landing.target) : null;
   let h = head('Die Ankunft', 'Vor dreitausend Jahren, östlich des alten Landes.');
   if (to) return h + `<p>Das Ahnenkanu ist unterwegs nach ${to.name}. Sobald es anlegt, entsteht dort euer Dorf.</p>`;
-  if (pick && pick.type === 'atoll') h += `<p><b>${pick.name}</b> ist ein Atoll: Sand und Palmen, kein Ton, kein Stein, kaum Holz. Ein guter zweiter Ort, aber kein Anfang. Wählt eine hohe Insel.</p>`;
-  else h += `<p>Euer Clan hat das alte Land im Westen verlassen: fünf Familien im Ahnenkanu, mit Holz, Nahrung, Taro, Brotfrucht, Maulbeere, Kava und einem Paar Schweine. Vor euch liegen zwei hohe Inseln und das Atoll ${M.name}. Wo lasst ihr euch nieder?</p>`;
+  if (pick && pick.type === 'atoll') h += `<p><b>${pick.name}</b> ist ein Atoll: kein Ton, kein Stein, kaum Holz. Wählt eine hohe Insel.</p>`;
+  else h += `<p>Fünf Familien im Ahnenkanu, mit Setzlingen und zwei Schweinen. Vor euch: zwei hohe Inseln und das Atoll ${M.name}. Wo landet ihr?</p>`;
   h += `<ul class="list needs">${list.map(I => `<li class="${pick === I ? 'pick' : ''}">${icon('insel')}<span class="nm">${I.name}<small>${landFacts(I)}</small></span><span class="chips"><button class="chip" type="button" data-act="lookat" data-i="${I.id}">Ansehen</button><button class="btn primary small" type="button" data-act="found" data-i="${I.id}">Hier landen</button></span></li>`).join('')}</ul>`;
   h += `<div class="rowx"><span class="sub">Aufgaben führen Schritt für Schritt ins Spiel.</span><span class="chips" role="group" aria-label="Einführung"><button class="chip" type="button" data-act="intro" data-v="on" aria-pressed="${!landing.skip}">Mit Einführung</button><button class="chip" type="button" data-act="intro" data-v="off" aria-pressed="${!!landing.skip}">Ohne</button></span></div>`;
-  h += `<p class="sub">Von dort aus wächst euer Reich: Dörfer auf vielen Inseln, Clans als Freunde, die große Fahrt nach Osten, und am Rand der See Menschen einer ganz anderen Kultur.</p>`;
   return h;
 }
 /* The end of the tasks: what the clan has built, and the sea stays open */
@@ -483,7 +482,7 @@ function infoMarkup(I, b){
     const doing = !crewAt(I, b) ? st('out', 'wartet auf Bauleute') : !here.length ? st('low', 'Bauleute kommen') : here.some(w => w.leg === 'work') && b.bt > woodFloor(W) + .01 ? st('ok', 'wird gebaut') : st('low', 'Holz wird geholt');
     line = `${doing}<span>${icon('holz')}${W.o.got}/${W.need}</span><span>${Math.round(f * 100)} %</span>`;
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
-    if (!crewAt(I, b)) more.unshift(`Gleichzeitig wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} gebaut, je 10 Bewohner an einer mehr. Steht Bauen in der Übersicht weiter vorn, kommen eher Leute.`);
+    if (!crewAt(I, b)) more.unshift(`Es wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} zugleich gebaut, je 10 Bewohner eine mehr.`);
   } else if (b.boat > 0){
     const f = 1 - b.boat / K.canoe;
     line = `${crewAt(I, b) ? st('ok', 'Einbaum wird geschnitzt') : st('out', 'niemand schnitzt')}<span>${Math.round(f * 100)} %</span>`;
@@ -495,21 +494,18 @@ function infoMarkup(I, b){
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
     // divers: whether the water allows diving, and how divers really worked
     if (K.dive){ const bl = diveBlock(I); line += `<span>${icon(bl ? 'sturm' : 'passat')}${bl ? 'kein Tauchwetter' : 'ruhiges, klares Wasser'}</span>`;
-      more.push('So tauchen die Leute im Pazifik seit Jahrtausenden: ohne Brille, mit offenen Augen im Salzwasser. Ein Stein an einer Schnur zieht schnell hinab, der Partner im Kanu hält die Schnur und wacht. Ein Tauchgang dauert ein bis zwei Minuten, dann wird an der Oberfläche Atem geholt. Allein ruht man länger.',
-        'Zerkaute Kokosnuss, aufs Wasser gespuckt, glättet die Oberfläche, dann sieht man den Grund.',
-        'Nach einigen Tauchgängen ruhen sie an Land. Wer zu oft zu tief taucht, bekommt Taravana, die Taucherkrankheit der Perltaucher der Tuamotu: Schwindel bis zur Lähmung.',
-        'Bei starkem Wind ist das Wasser trüb, nachts dunkel, unter Rāhui ruht das Riff: Dann tauchen sie nicht.',
-        I.treasure && I.treasure.k === 'perlmutt' ? 'Vor Tifa liegen die Perlmuscheln tief. Hier bleiben sie länger unten und brauchen mehr Pause, bringen aber Perlmutt.' : I.atoll ? 'Wo es keinen Stein gibt, schleifen sie aus der dicken Schale der Riesenmuschel Beile.' : 'Sie bringen Riesenmuscheln, Kraken und Seegurken.'); }
+      more.push('Sie tauchen ohne Brille, ein Stein zieht sie hinab, der Partner im Kanu wacht. Nach einigen Gängen ruhen sie an Land, sonst droht Taravana.',
+        'Bei Sturm, nachts und unter Rāhui tauchen sie nicht.',
+        I.treasure && I.treasure.k === 'perlmutt' ? 'Vor Tifa liegen die Perlmuscheln tief: mehr Pause, aber Perlmutt.' : I.atoll ? 'Aus Riesenmuschelschalen schleifen sie hier Beile.' : 'Sie bringen Riesenmuscheln, Kraken und Seegurken.'); }
     // the soil of a field: how much is left, and letting it rest
     if (K.soil){ line += `<span>${icon('soil')}Boden ${Math.round((b.soil ?? 1) * 100)} %${sheltered(I, b) ? ', Bäume schützen ihn' : ''}</span>`;
-      why += `<div class="rowx"><span class="sub">${b.fallow ? 'Liegt brach und wird von selbst wieder bestellt, sobald der Boden ausgeruht ist.' : 'Jede Ernte zehrt am Boden, dann geht die Arbeit langsamer. Brach erholt er sich in gut zwei Minuten; Bäume daneben schonen ihn.'}</span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }
+      why += `<div class="rowx"><span class="sub">${b.fallow ? 'Liegt brach, bis der Boden ausgeruht ist.' : 'Jede Ernte zehrt am Boden. Brach erholt er sich in gut zwei Minuten.'}</span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }
     if (w && w.why !== 'way') why = `<p class="sub why">${w.text}</p>`;
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
   if (K.beauty && !b.bt) line += `<span>Schönheit +${K.beauty}</span>`;
-  if (b.kind === 'sternhaus') more.push('Stufe 1, Wellen und Vögel: Vögel, die auf Land leben, fliegen morgens hinaus zum Fischen und abends heim. Auf der Karte zeigen sie, wo im Nebel Land liegt. Stufe 2, Wolken über Land: Über einer Insel bleibt eine Wolke stehen, über einer Lagune schimmert sie grün. Stufe 3, Sternenpfad: Auf See reicht der Proviant länger, und das Doppelkanu sieht weiter.',
-    'Das Wissen lebt in den Menschen. Stirbt jemand, der es weiß, und niemand sonst hat es gelernt, ist es fort. Wer lernt, kommt eine Stufe weiter als der beste Lehrer der Insel; was der Lehrer schon weiß, geht doppelt so schnell. Wer mit Siedlern fortfährt, nimmt sein Wissen mit.',
-    'Wie weit man kommen kann, hängt davon ab, was der Clan auf See gesehen hat: Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben oder jenseits der Weiten See.');
+  if (b.kind === 'sternhaus') more.push('Stufe 1: Vögel zeigen, wo im Nebel Land liegt. Stufe 2: Wolken stehen über Inseln. Stufe 3: Der Proviant reicht länger, das Doppelkanu sieht weiter.',
+    'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
   return [crewMarkup(I, b) + bar + (line ? `<div class="stat">${line}</div>` : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
@@ -571,15 +567,15 @@ function renderSheet(){
     h += head('Insel benennen', I.custom ? `Früher ${I.name0}.` : 'So nennen die Leute sie bisher.') + `<div class="rowx"><input id="nameIn" class="name-in" type="text" maxlength="18" autocomplete="off" value="${esc(I.name)}" aria-label="Name der Insel"><button class="btn primary" type="button" data-act="rename">Benennen</button></div>`;
   } else if (sheetKind === 'road'){
     const I = isl(sheetData.id), r = I && I.roads && I.roads[sheetData.r]; if (!r){ closeSheet(); return; }
-    h += head('Weg', I.name) + `<p class="sub">Zerstoßene Muscheln und Korallensand. Darauf gehen die Leute schneller, und der Weg schmückt das Dorf.</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="delroad">Entfernen</button></span></div>`;
+    h += head('Weg', I.name) + `<p class="sub">Muscheln und Korallensand. Die Leute gehen hier schneller.</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="delroad">Entfernen</button></span></div>`;
   } else if (sheetKind === 'koruru'){
     h += koruruMarkup();
   } else if (sheetKind === 'landing'){
     h += landingMarkup();
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
-    h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet. Aus seinen Planken entsteht das Versammlungshaus, mehr steht noch nicht.` : '');
-    h += `<ul class="help"><li>Über der Bauleiste steht immer die nächste Aufgabe. Tippe darauf, dann zeigt dir das Spiel, wo es weitergeht.</li><li>Tippe oben auf die Bewohnerzahl oder die Zeile darunter. Die Übersicht zeigt Bewohner, Zuzug, Arbeit, Essen und was fehlt. Dort legst du fest, welche Arbeit zuerst Leute bekommt.</li><li>Tippe auf die Warenleiste, dann siehst du das ganze Lager mit allem, was pro Minute dazukommt und weggeht.</li><li>Ziehen schiebt die Karte. Zwei Finger oder das Mausrad zoomen.</li><li>Die Inseln leben weiter, wenn das Spiel zu ist, bis zu acht Stunden. Wenn du wiederkommst, steht da, was geschehen ist. In der Zeit geht nichts verloren.</li><li>Nachrichten rollen rechts oben aus der Muschel aus und wieder ein. Tippe die Muschel an, dann siehst du die letzten.</li><li>Zum Bauen unten etwas wählen, auf Land tippen, dann Bauen.</li><li>Alles braucht Holz und Zeit. Holz kommt vom Holzfäller, der die Bäume in seiner Nähe fällt. Gefällte Bäume wachsen nur langsam nach, ein Baumpflanzer hilft.</li><li>Jeder Bewohner ist eine Figur mit Namen und Alter. Kinder wachsen in sechs Jahren heran und arbeiten dann, ab vierzig sind die Leute alt, und irgendwann gehen sie zu den Ahnen. Ein Jahr dauert zwölf Minuten. In der Übersicht zeigt „Alle Menschen“ jeden mit Namen.</li><li>Über jedem Arbeitsplatz zeigen kleine Figuren, wer dort arbeitet: dunkel bei der Arbeit, gelb auf dem Weg, leer ist ein freier Platz.</li><li>An jeder Baustelle arbeiten 2 Leute. Sie holen erst das Holz aus dem Lager, dann bauen sie. Ohne sie steht die Baustelle still.</li><li>Alles Essen zählt als Nahrung: Taro, Brotfrucht und Pulaka von den Feldern, Fisch und Meeresfrüchte vom Riff. Die Leute essen, wovon am meisten da ist.</li><li>Pfahlhäuser in der Lagune erreicht man nur mit dem Einbaum vom Kanusteg.</li><li>Ab und zu geschieht etwas. Dann ertönt ein Muschelhorn, und du entscheidest. Im Menü stehen die Chronik und die Schalter für Klang und für Tag und Nacht.</li><li>Tippe ein Kanu an, dann tippe auf das Meer oder eine Insel, und es fährt dorthin. Was im Nebel liegt, weiß niemand.</li><li>Tippe auf die Schnur zwischen zwei Inseln, dann kannst du Kanus in diese Handelskette setzen.</li><li>Das Doppelkanu kann von selbst erkunden: antippen, dann „Erkunden lassen“. Es kehrt rechtzeitig um und holt Proviant.</li><li>Im Osten liegt die Weite See, dahinter die Fernen Inseln. Dort und auf Tifa liegen Schätze, die es sonst nirgends gibt.</li><li>Felder laugen aus. Lass sie brachliegen, Bäume daneben schonen den Boden. Fällt zu viel Wald, spült der Regen die Erde fort.</li><li>Oben rechts steht der Mond. Im ersten Mond, wenn die Plejaden aufgehen, wird das Fest der ersten Früchte gefeiert.</li></ul>`;
+    h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet.` : '');
+    h += `<ul class="help"><li>Oben steht die nächste Aufgabe. Tippe darauf, dann zeigt das Spiel den Weg.</li><li>Tippe oben auf die Bewohnerzahl: Dort steht, was fehlt und wer wo arbeitet.</li><li>Tippe auf die Waren: Das ganze Lager, mit Zu- und Abgang pro Minute.</li><li>Bauen: Baumenü öffnen, etwas wählen, auf Land tippen, Bauen.</li><li>Alles braucht Holz und Leute. An jeder Baustelle arbeiten 2.</li><li>Alles Essen zählt als Nahrung: Feldfrüchte, Fisch, Meeresfrüchte, Kokos.</li><li>Ein Jahr dauert zwölf Minuten. Kinder arbeiten ab sechs, irgendwann gehen alle zu den Ahnen.</li><li>Kanu antippen, dann Meer oder Insel antippen. Die Schnur zwischen Inseln ist eine Handelskette.</li><li>Felder laugen aus. Lass sie brachliegen und schone den Wald.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li><li>Die Inseln leben bis zu acht Stunden weiter, wenn das Spiel zu ist.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();

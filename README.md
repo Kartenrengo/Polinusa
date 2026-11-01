@@ -39,7 +39,9 @@ Die Dateien sind einfache Skripte mit gemeinsamem globalem Bereich. Sie werden i
 ## Sparsam zeichnen
 
 - Jedes Bild ist ein SVG-Baustein. Er wird einmal pro Größenstufe in ein Bitmap gemalt und danach nur kopiert.
-  Selten genutzte Bitmaps fallen aus dem Speicher, wenn mehr als etwa 24 MB belegt sind.
+  Selten genutzte Bitmaps fallen aus dem Speicher, wenn mehr als etwa 36 MB belegt sind. Nur was seit Sekunden nicht
+  mehr gezeichnet wurde, und jedes Bild behält mindestens eine Größe. Ändert sich das Aussehen eines Gebäudes, bleibt
+  das alte Bild stehen, bis das neue fertig gemalt ist. So blinkt nichts.
 - Meer, Inseln und Häuser liegen in einer Grundebene, der Nebel in einer zweiten. Beide sind etwas größer als
   der Bildschirm und werden beim Schieben nur verschoben. Neu gemalt wird erst am Rand, nach einer Änderung
   im Dorf oder wenn ein Zoom zur Ruhe kommt.
@@ -112,6 +114,9 @@ Alles ist nach Bedeutung geordnet und nimmt so wenig Platz wie möglich:
   nur „Bauen“ und „Flotte“ schweben über der Karte. „Bauen“ klappt sie auf (dann heißt der Knopf „Zu“), ein Tipp aufs
   leere Meer klappt sie wieder zu; „Zeig es mir“ öffnet sie von selbst. Die Reiter „Bauen“ und „Schmuck“ erscheinen erst,
   wenn es Schmuck gibt.
+- **Kurze Texte:** Aufgaben, Gebäude, Hilfe und Meldungen erklären sich in ein, zwei Sätzen. Mehr steht unter „Mehr
+  dazu“ auf der Tafel eines Gebäudes.
+- **Nachrichten:** Die Liste rollt rechts aus der Muschel, auf festem Grund und nie tiefer als bis über die Bauleiste.
 
 ## Essen
 
@@ -477,7 +482,8 @@ Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der hal
   Einbäume am Kanusteg fahren in einem Bogen.
 - **Steuern:** Kanu antippen, dann auf das Meer oder eine Insel tippen. Es sucht sich den Weg um das Land herum.
   Der restliche Weg ist gepunktet zu sehen. Unten öffnet sich die Tafel des Kanus, „Beladen“ klappt die Ladeliste auf.
-- **Nebel:** Wo ein Kanu fährt, lichtet sich der Nebel. Das Doppelkanu sieht weiter als das Auslegerkanu.
+- **Nebel:** Wo ein Kanu fährt, lichtet sich der Nebel. Das Doppelkanu sieht weiter als das Auslegerkanu. Kommt eine
+  Insel in Sicht, liegt sie sofort ganz frei, nicht nur das Stück am Kanu.
 - **Proviant** entsteht in der Gärgrube: Brotfrucht gärt unter Bananenblättern und hält monatelang, 1 Feldfrucht je
   Proviant, mit 2 Brotfruchtbäumen daneben. **Ins Unbekannte nimmt das Doppelkanu nur Proviant mit**, keine Siedler und
   keine anderen Waren; die folgen, wenn Land gefunden ist. Die Mannschaft isst jeden Reisetag (10 Sekunden) 1 Proviant.
@@ -535,6 +541,7 @@ Ansehen 10. Dazu kann man wählen:
 
 - Kava-Runde (3 Kava): +5, Gäste der Clans knüpfen einen Knoten mehr. Kava wächst im Kavagarten oder kommt vom Clan vom Kavahain.
 - Tanz zur Schlitztrommel: +4, braucht Schlitztrommel und Tanzplatz. Die Leute tanzen dann im Kreis auf dem Tanzplatz.
+- Salbung mit Kokosöl (2 Öl): +3.
 - Kanurennen in der Lagune: +2 je Kanu im Hafen, höchstens vier. Die Kanus fahren um das Riff.
 
 Die Schönheit des Dorfes bringt bis zu 8 mehr. Clans mit mindestens 2 Knoten kommen als Gäste mit Gaben, und ihre Schnur
@@ -542,8 +549,8 @@ bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Vierzehn Waren: Feldfrüchte, Fisch, Meeresfrüchte, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur, Tapa,
-Schweine, Kava, Muschelschmuck.
+Sechzehn Waren: Feldfrüchte, Fisch, Meeresfrüchte, Kokosnüsse, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur,
+Tapa, Kokosöl, Schweine, Kava, Muschelschmuck.
 Ketten haben höchstens drei Glieder.
 
 | Gebäude | Insel | Braucht | Macht pro Minute | reicht für etwa |
@@ -563,6 +570,8 @@ Ketten haben höchstens drei Glieder.
 | Schweinepferch | hoch | 2 Feldfrüchte je Schwein | 1,9 Schweine | 47 |
 | Flechthütte | Atoll | 2 Pandanus daneben | 3,75 Matten | 62 |
 | Seilerei | Atoll | 3 Kokospalmen daneben | 5 Schnur | 4 Fischgestelle |
+| Palmenkletterer | überall | 3 Kokospalmen daneben | 10 Kokosnüsse (zählen als Nahrung) | 8 Menschen |
+| Ölhütte | überall | 2 Kokosnüsse je Öl | 3,75 Kokosöl | 94 |
 | Schmuckschleiferei | Atoll, am Strand | 1 Klinge je Ring | 1,5 Muschelschmuck | 75 |
 | Kavagarten | hoch | | 2,5 Kava | 83 |
 
@@ -577,12 +586,20 @@ Netze der hohen Inseln, die hohen Inseln Beile und Holz.
 - **Lager:** Die Warenleiste oben zeigt bis zu sieben wichtige Waren. Antippen öffnet das Lager mit allem, was pro Minute
   dazukommt und weggeht.
 
+## Kokospalmen: Nüsse und Öl
+
+Die Kokospalme war die wichtigste Pflanze der Atolle. Der Palmenkletterer holt die Nüsse; sie zählen als Nahrung. Die
+Ölhütte reibt das Fleisch und lässt das Öl austreten, 2 Nüsse je Öl. Öl pflegt Haut und Haar, ab 50 Bewohnern wollen die
+Familien es. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der Clan vom Feuerberg und der Clan vom
+Kavahain schätzen es als Gabe. Der Kletterer kommt nach dem Fischgestell, die Ölhütte mit der Handelskette. Alte
+Spielstände mit Dörfern ab 50 Bewohnern bekommen beim Laden einmalig 20 Öl.
+
 ## Bedarf und Stufen
 
 | Stufe | Ab | Braucht pro Bewohner und Minute |
 | --- | --- | --- |
 | Weiler | Anfang | Nahrung 1,2 (jede Sorte zählt) |
-| Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 30 Bewohnern Matten 0,06 |
+| Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 30 Bewohnern Matten 0,06, ab 50 Kokosöl 0,04 |
 | Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Nahrung, Töpfe und Matten reichen, Tapa, Schweine, Kava und Schmuck im Lager | dazu Tapa 0,06, Schweine 0,04, Kava 0,03, Muschelschmuck 0,02 |
 
 Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen geschnitzte Pfosten und Muschelschmuck.

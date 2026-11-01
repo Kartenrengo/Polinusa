@@ -146,6 +146,7 @@ function serialize(){
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, pr:I.prio, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0, b.soil != null ? Math.round(b.soil * 100) / 100 : null, b.fallow ? 1 : 0])})),
     ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined, lv:s.life && s.life.length ? s.life : undefined, fk:s.folk && s.folk.length ? s.folk.map(packP) : undefined}))});
 }
+let oilGift = false;   // an older save got its first coconut oil while loading
 function restore(raw){
   try {
     const s = JSON.parse(raw); if (!s || s.v !== 3 || !s.seed) return false;
@@ -156,6 +157,7 @@ function restore(raw){
     quest = questFromSave(s);
     stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
+      if (I.settled && d.st && d.st.oel == null && I.pop >= NEEDS.find(N => N.k === 'oel').from){ I.stock.oel = 20; oilGift = true; }   // saves from before coconut oil: a first supply
       I.drought = d.dr || 0; I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rx ?? (typeof d.rd === 'number' ? d.rd : undefined); I.joyUntil = d.jy || 0; I.yard = d.yd || null;
       // what lives on the island, and its wild; villages from older saves have everything, their wild already hunted
       I.life = d.lf || null; I.wild = d.wl ?? (I.settled && I.id !== 'heimat' ? .35 : undefined); I.gone = d.wg; I.tapu = !!d.tp; I.tapuAway = !!d.ta; I.motif = d.mo || null; I.mot = d.mk || {};
