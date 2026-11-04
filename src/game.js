@@ -49,9 +49,9 @@ function answerGifts(){
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {deckerin:'weave', harzer:'leaf', quelle:'dig', brunnen:'dig', sternhaus:'stars', kletterer:'leaf', oelhuette:'pound', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
+const WORK_FX = {umu:'leaf', kalkbrenner:'pound', kurkumagarten:'dig', huehnerhof:'feed', weberin:'weave', malerin:'beat', duftoel:'pound', deckerin:'weave', harzer:'leaf', quelle:'dig', brunnen:'dig', sternhaus:'stars', kletterer:'leaf', oelhuette:'pound', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
-const JOB_LOAD = {pansammler:'frucht', deckerin:'matte', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', kletterer:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
+const JOB_LOAD = {umu:'paket', kalkbrenner:'stein', kurkumagarten:'taro', huehnerhof:'eier', weberin:'matte', malerin:'tapa', duftoel:'schale', pansammler:'frucht', deckerin:'matte', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', kletterer:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const landOfB = (I, b) => b._lk === b.x + b.y ? b._l : (b._lk = b.x + b.y, b._l = landOf(I, b));   // buildings stay put, so this is kept
 const lived = I => I.settled || (I.clan && I.discovered);
@@ -104,7 +104,7 @@ const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) 
 const WORK_SHARE = .7, GROW_EVERY = 3;   // a new person moves in every third tick while there is room and nothing is missing
 const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.pop * WORK_SHARE);
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
-const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' || K.prod === 'kokos' || K.prod === 'wasser' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
+const catOf = b => { const K = KINDS[b.kind]; return ['nahrung', 'kokos', 'wasser', 'speisen', 'eier'].includes(K.prod) ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
 const capOf = b => KINDS[b.kind].crew || 0;
 /* staff() is in homes.js: work goes by family */
 const staffKey = I => [tick, I.pop, I.people ? I.people.filter(isAdult).length : '', I.buildings.length, I.buildings.filter(b => b.bt).length, I.buildings.filter(b => b.boat > 0).length, !!I.yard, I.handWork ? 1 : 0, famsOf(I).map(f => f.id + ':' + f.job + ':' + f.home).join()].join();
@@ -791,8 +791,21 @@ function workState(I, b){
   if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
   if (K.prod && (I.stock[prodOf(b)] || 0) >= storeCap(I)) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
+  if (K.feed === .6 && groupHave(I, 'futter') <= 0) return {why:'use', k:'reste', text:'Die Hühner haben kein Futter: Reste, Kokos oder Feldfrüchte.'};
   if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => groupHave(I, q) < K.use[q]); return {why:'use', k:groupNext(I, k), text:`Kein Vorrat an ${GN[k]}.`}; }
   return null;
+}
+/* ---------- animals eat all the time: pigs and hens take from the feed (scraps first, then coconut and taro). Without
+   feed the hens stop laying and, after a while, a pig is lost. */
+const feedNeed = I => ((I.stock.schweine || 0) * KINDS.pferch.feed + I.buildings.filter(b => b.kind === 'huehnerhof' && !b.bt).length * KINDS.huehnerhof.feed) / PER_MIN;
+function feedAnimals(I, ticks){
+  const want = feedNeed(I) * ticks; if (!want) return;
+  I.oweFeed = (I.oweFeed || 0) + want; const take = Math.floor(I.oweFeed);
+  if (take > 0){ pay(I, {futter:Math.min(take, groupHave(I, 'futter'))}); I.oweFeed -= take; }
+  // with nothing to eat, every half minute one pig is lost
+  if (groupHave(I, 'futter') > 0){ I.starve = 0; return; }
+  I.starve = (I.starve || 0) + ticks;
+  while (I.starve >= 30 && (I.stock.schweine || 0) > 0){ I.starve -= 30; I.stock.schweine--; if (!awayQuiet && I.id === active) note(`Auf ${I.name} ist ein Schwein eingegangen. Es fehlt Futter.`); }
 }
 /* ---------- needs: what each island uses, makes and lacks, per minute */
 const PER_MIN = 60000 / TICK;
@@ -808,12 +821,12 @@ function makeRate(I, k){
   let m = k === 'wild' ? forageRate(I) : 0;
   for (const b of I.buildings){ const K = KINDS[b.kind]; if (!K.prod || b.bt || b.boat > 0 || (b.idle && b.idle.why !== 'full')) continue;
     const f = prodOf(b) === k ? 1 : (byOf(b) || {})[k] || 0; if (!f) continue;
-    m += f * PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? crewAt(I, b) / K.crew : 1); }
+    m += f * (prodOf(b) === k ? K.out || 1 : 1) * PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? crewAt(I, b) / K.crew : 1); }
   return m;
 }
 /* one piece made: the good, and the bits that fall off, which add up until a whole one is there */
 function makePiece(I, b, add){
-  add(prodOf(b), 1); const by = byOf(b); if (!by) return;
+  add(prodOf(b), KINDS[b.kind].out || 1); const by = byOf(b); if (!by) return;
   b._by = b._by || {}; for (const [k, v] of Object.entries(by)){ b._by[k] = (b._by[k] || 0) + v; const n = Math.floor(b._by[k] + 1e-9); if (n){ b._by[k] -= n; add(k, n); } }
 }
 function workUse(I, k){
@@ -922,6 +935,7 @@ function econ(){
       // people eat what there is most of
       for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
     }
+    feedAnimals(I, 1);
     let nd = needsOf(I);
     updateLevel(I, nd); nd = needsOf(I);
     // the village grows house by house, where the needs of the family there are met
@@ -1242,6 +1256,7 @@ function awayMinute(I, R){
     for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
   }
   let nd = needsOf(I); updateLevel(I, nd); nd = needsOf(I);
+  feedAnimals(I, 30);
   // a minute away: the village grows house by house as at home, the houses rise or fall
   for (let n = Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1); n > 0; n--){ const b = growTarget(I, needsOf(I).list); if (!b) break; I._growTo = b.id; I.pop++; syncPeople(I); I._growTo = 0; }
   for (let k = 0; k < 3; k++) tierTick(I, needsOf(I).list, true);
@@ -1251,7 +1266,7 @@ function catchUp(ms){
   if (landing) return null;   // before the landing no time passes
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
   const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), tapu:new Set(), w0:Object.fromEntries(mine.map(I => [I.id, wildOf(I)])), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
-  const mana0 = mana, knots = routes.map(r => r.knots);
+  const mana0 = mana, knots = routes.map(r => r.knots); R.st0 = Object.fromEntries(mine.map(I => [I.id, {...I.stock}]));
   awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[], mot:[], fade:[]};
   try {
     for (let i = 1; i <= n; i++){
@@ -1291,8 +1306,13 @@ function awayReport(R){
   if (L.fade && L.fade.length) lines.push(['toepfe', `Vergessen, weil keine Töpfe kamen: ${names(L.fade)}`, '']);
   const built = R.built.reduce((m, n) => (m[n] = (m[n] || 0) + 1, m), {});
   if (R.built.length) lines.push(['beile', `Fertig gebaut: ${Object.entries(built).map(([n, c]) => c > 1 ? `${c}× ${n}` : n).join(', ')}`, '']);
-  const made = Object.entries(R.made).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  if (made.length) lines.push(['essen', `Erzeugt: ${made.map(([k, v]) => `${v} ${GN[k]}`).join(', ')}`, '']);
+  // the stores: what there was and what there is now, the biggest changes first; what was made was also used up
+  for (const I of mine){
+    const s0 = (R.st0 || {})[I.id]; if (!s0) continue;
+    const ch = GOODS.map(k => [k, s0[k] || 0, I.stock[k] || 0]).filter(([, a, b]) => a !== b).sort((x, y) => Math.abs(y[2] - y[1]) - Math.abs(x[2] - x[1]));
+    I._back = {at:tick, d:Object.fromEntries(ch.map(([k, a, b]) => [k, [a, b]]))};
+    if (ch.length) lines.push(['essen', `Lager ${I.name}: ${ch.slice(0, 5).map(([k, a, b]) => `${GN[k]} ${a} → ${b}${b >= storeCap(I) ? ' (voll)' : ''}`).join(', ')}`, '']);
+  }
   if (R.tapu && R.tapu.size) lines.push(['wild', `Auf ${andList([...R.tapu])} haben die Ältesten ein Tapu auf das Wild gelegt, damit es sich erholt`, '']);
   const fal = R.fallow.size; if (fal) lines.push(['soil', `${fal === 1 ? 'Ein ausgelaugtes Feld haben' : `${fal} ausgelaugte Felder haben`} die Leute brachliegen lassen`, '']);
   const found = islands.filter(I => I.discovered).length - R.found; if (found > 0) lines.push(['einbaum', `${found} ${found === 1 ? 'neue Insel' : 'neue Inseln'} entdeckt`, '']);

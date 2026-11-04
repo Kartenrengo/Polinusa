@@ -406,3 +406,4 @@ button.who{border:0;cursor:pointer}
 .need-chip.out{border-color:var(--ochre);background:#F6E3C4;color:var(--ochre)}
 button.link{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--ink);text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}
 .list li .chip{min-height:28px;padding:0 9px;font-size:12px}
+.list li small.back{font:700 11px var(--font-ui);color:var(--muted);white-space:nowrap}

@@ -215,14 +215,16 @@ Familie arbeitet.
 Die Inseln leben weiter, wenn das Spiel geschlossen ist oder im Hintergrund liegt, bis zu acht Stunden.
 
 - **Was weiterläuft:** Baustellen werden fertig, Einbäume geschnitzt, das Kanuhaus baut weiter, Felder, Werkstätten,
-  Fischer und Taucher erzeugen, so weit Platz im Lager und Material da ist, Bäume wachsen nach, Menschen ziehen zu, solange
-  Häuser frei sind und nichts fehlt. Die Jahreszeiten gehen weiter. Kanus fahren ihre Kurse, Handelsketten handeln,
+  Fischer und Taucher erzeugen, so weit Platz im Lager und Material da ist, Bäume wachsen nach, Menschen ziehen zu, Haus für Haus
+  wie sonst auch, und Häuser steigen auf oder fallen zurück. Die Tiere fressen weiter. Die Jahreszeiten gehen weiter. Kanus fahren ihre Kurse, Handelsketten handeln,
   ein Doppelkanu, das von selbst erkundet, erkundet weiter. Clans schicken ihre Gegengaben.
 - **Was nicht passiert:** Niemand zieht hungrig fort, kein Wirbelsturm und kein anderes Ereignis kommt, keine Schnur
   verliert Knoten, das Ansehen schwindet nicht (Chronik-Einträge bringen trotzdem ihr Ansehen). Ausgelaugte Felder lassen
   die Leute selbst brachliegen.
 - **Der Bericht:** Beim Zurückkommen öffnet sich „Während ihr fort wart“: wie lange, wie viele Jahre auf den Inseln, wer
-  zugezogen ist, was fertig gebaut und erzeugt wurde, welche Felder ruhen, welche Inseln entdeckt und welche Kanus vom
+  zugezogen ist, was fertig gebaut wurde, und für jedes Dorf das Lager vorher und nachher (etwa „Holz 12 → 20 (voll)“),
+  die größten Änderungen zuerst, statt riesiger Summen von allem, was zwischendurch entstand und verbraucht wurde. Im Lager
+  steht danach noch eine Weile neben jeder Ware, was vorher da war; welche Felder ruhen, welche Inseln entdeckt und welche Kanus vom
   Stapel gelaufen sind, neue Chronik-Einträge und geschaffte Aufgaben. Dasselbe steht in den Nachrichten der Muschel.
 - Das gilt beim Öffnen eines gespeicherten Spiels und beim Zurückkehren in einen Tab, der im Hintergrund lag. Gespeichert
   wird auch beim Schließen, damit die Zeit stimmt. Acht Stunden rechnet das Spiel in einer Viertelsekunde nach: das Dorf
@@ -633,6 +635,29 @@ oder einmal fällen.
   Abfälle.
 - Das Ahnenkanu bringt 10 Holz, 10 Nahrung, 8 Wasser, 6 Dachdeckung und 5 Schnur. Quelle, Brunnen, Regenfang, Kletterer,
   Dachflechterin und Seilerei gibt es vom ersten Tag an, den Harzsammler mit den Steinbeilen.
+
+## Veredelung, Erdofen und Tiere
+
+Aus den Rohstoffen werden die Dinge, die Familien der Tufunga und später der Häuptling wollen.
+
+| Ort | Braucht | Macht |
+| --- | --- | --- |
+| Erdofen (umu) | 2 rohe Speisen (Feldfrüchte, Fisch, Meeresfrüchte, Wild), Brennstoff, Blätter; Kochsteine machen ihn doppelt so schnell (1 Stein je 12) | 3 Gekochtes und Reste |
+| Kalkbrenner, am Strand | Brennstoff | Korallenkalk; die Töpferei füllt damit die Muster weiß und arbeitet schneller |
+| Kurkumagarten | Kurkuma, mitgebracht im Ahnenkanu | Kurkuma |
+| Hühnerhof | Hühner, mitgebracht; Futter | Eier (Nahrung) |
+| Tapamalerin | Tapa und Kurkuma | Bemalte Tapa |
+| Feinweberin | 2 Matten | Feine Matten, die Ehrenmatten für Hochzeit und Tod |
+| Duftölhütte | Kokosöl, Blumen oder Hibiskus in der Nähe | Duftöl |
+| Schmuckschleiferei | Klinge, 2 Muschelschalen oder Eberhauer | Muschelschmuck |
+
+- **Nebenprodukte:** Taro- und Pulakafelder geben Blätter, Bananen noch mehr. Die Beilwerkstatt gibt Kochsteine aus Basalt,
+  der Riffsammler Korallenbrocken als Kochsteine und Muschelschalen. Der Schweinepferch gibt Eberhauer.
+- **Gekochtes** zählt als Nahrung und ist ein Bedürfnis der Familien der Tufunga (0,3 pro Kopf und Minute).
+- **Tiere fressen:** Jedes Schwein frisst laufend (0,25 pro Minute), jeder Hühnerhof 0,6, aus dem Futter: erst Reste, dann
+  Kokosnüsse, dann Feldfrüchte. Ohne Futter legen die Hühner nicht, und jede halbe Minute geht ein Schwein ein.
+- Der Erdofen und der Kalkbrenner kommen mit der Töpferei, Kurkuma und Hühner mit dem Tarofeld, Malerin, Weberin und
+  Duftöl mit dem ersten neuen Land. Die Clans schätzen die feinen Dinge als Gabe.
 
 ## Bedarf und Stufen
 

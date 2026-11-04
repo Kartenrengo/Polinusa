@@ -8,9 +8,9 @@
 const HOME_KINDS = new Set(['haus', 'pfahl']);
 const TIERS = {
   1:{n:'Familie', cap:4, needs:['dach', 'essen', 'wasser']},
-  2:{n:'Familie der Tufunga', cap:6, needs:['dach', 'essen', 'wasser', 'toepfe', 'matten', 'oel'], cost:{holz:1, matten:1}}
+  2:{n:'Familie der Tufunga', cap:6, needs:['dach', 'essen', 'wasser', 'toepfe', 'matten', 'oel', 'speisen'], cost:{holz:1, matten:1}}
 };
-const TIER2_GOODS = ['toepfe', 'matten', 'oel'];
+const TIER2_GOODS = ['toepfe', 'matten', 'oel', 'speisen'];
 const START_POP = 17;   // five families: each a woman and a man, children, two elders
 let nextFam = 1;
 const famsOf = I => I.fams || (I.fams = []);
@@ -115,7 +115,7 @@ function tierTick(I, list, force = false){
   const b = homesOf(I).filter(q => tierOf(q) === 1 && famOfHome(I, q) && membersOf(I, famOfHome(I, q)).length >= 3).sort((a, q) => a.born - q.born)[0];
   if (!b) return;
   pay(I, TIERS[2].cost); b.t = 2; b.miss = 0; invalidate(); I.staff = null; stats.tufunga = (stats.tufunga || 0) + 1;
-  const f = famOfHome(I, b); if (!awayQuiet && I.id === active) toast(`${famName(f)} baut ihr Haus aus: eine Familie der Tufunga, mit Platz für ${TIERS[2].cap}. Sie will Töpfe, Matten und Kokosöl.`, 4200);
+  const f = famOfHome(I, b); if (!awayQuiet && I.id === active) toast(`${famName(f)} baut ihr Haus aus: eine Familie der Tufunga, mit Platz für ${TIERS[2].cap}. Sie will ${andList(TIER2_GOODS.map(k => GN[k]))}.`, 4200);
 }
 /* A family without a roof waits by the meeting house; when no house is being built for a long while, one of them leaves */
 function rooflessTick(I){

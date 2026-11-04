@@ -357,8 +357,8 @@ function storeMarkup(I){
     const make = ofNeed(k, q => makeRate(I, q)), need = nd.list.find(n => n.k === k), use = (need ? need.use : 0) + ofNeed(k, q => workUse(I, q)), have = haveOf(I, k);
     return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have, sub:FOODS.includes(k)};
   }).filter(g => g.k === 'essen' || g.have || g.make || g.use);
-  let h = head(`Lager auf ${I.name}`, `Platz für ${storeCap(I)} von jeder Ware. Mehr Platz gibt jeder Speicher.`);
-  h += `<ul class="list needs">${rows.map(g => `<li class="${g.sub ? 'sub-row' : ''}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span><b class="qty">${g.have}</b>${g.k === 'essen' ? '' : `<button class="chip" type="button" data-act="ware" data-k="${g.k}" aria-label="Wer macht ${GN[g.k]}?">Wer?</button>`}</li>`).join('')}</ul>`;
+  let h = head(`Lager auf ${I.name}`, `Platz für ${storeCap(I)} von jeder Ware. Mehr Platz gibt jeder Speicher.${I._back && tick - I._back.at < 150 ? ' Links steht, was vor deiner Rückkehr da war.' : ''}`);
+  h += `<ul class="list needs">${rows.map(g => `<li class="${g.sub ? 'sub-row' : ''}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span>${I._back && tick - I._back.at < 150 && I._back.d[g.k] ? `<small class="back">${I._back.d[g.k][0]} →</small>` : ''}<b class="qty">${g.have}</b>${g.k === 'essen' ? '' : `<button class="chip" type="button" data-act="ware" data-k="${g.k}" aria-label="Wer macht ${GN[g.k]}?">Wer?</button>`}</li>`).join('')}</ul>`;
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full');
   if (idle.length) h += `<p class="sub">Es stehen still: ${idle.map(b => `${KINDS[b.kind].n} (${b.idle.text.replace(/\.$/, '')})`).join(', ')}.</p>`;
   return h;
