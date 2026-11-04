@@ -180,12 +180,13 @@ function startPlace(kind){
   const I = isl(active), K = KINDS[kind];
   if (K.max && I.buildings.filter(b => b.kind === kind).length >= K.max){ toast(`Nur ein ${K.n} pro Insel.`, 2600, false); return; }
   if (!hasLife(I, kind)){ toast(lifeMissing(I, kind), 4200, false); return; }
+  if (K.spring && !I.river){ toast('Auf dieser Insel fließt kein Bach. Baue einen Regenfang.', 3200, false); return; }
   const c = costOf(kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`, 2600, false); return; }
   closeSheet(); selectedId = null; invalidate();
   mode = 'place'; placing = {kind, island:I.id, x:I.center.x, y:I.center.y, v:variant(kind)};
   showPlaceBar();
   // close up the new building starts where you look, otherwise next to the village
-  const vc = visCenter(), wc = toWorld(vc.sx, vc.sy), near = lod === 'near' && onIsland(I, wc), base = near && !K.dep && !K.near && !K.trees && !K.plants ? wc : startSpot(I, K);
+  const vc = visCenter(), wc = toWorld(vc.sx, vc.sy), near = lod === 'near' && onIsland(I, wc), base = near && !K.dep && !K.near && !K.trees && !K.plants && !K.spring ? wc : startSpot(I, K);
   if (!near) flyTo(base.x, base.y, Math.max(cam.z, 1.6));
   const p = findSpot(I, kind, base) || base; placing.x = p.x; placing.y = p.y; ghostRender();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', b.dataset.kind === kind ? 'true' : 'false');
@@ -193,13 +194,15 @@ function startPlace(kind){
 function startSpot(I, K){
   const vc = villageCenter(I);
   const pick = list => list.reduce((m, q) => Math.hypot(q.x - vc.x, q.y - vc.y) < Math.hypot(m.x - vc.x, m.y - vc.y) ? q : m);
+  // a spring by the stream, where it comes closest to the village
+  if (K.spring && I.river){ const q = pick(I.river.slice(1, -1)); for (const d of [12, 16, 20, -12, -16, -20]){ const p = {x:q.x + d, y:q.y + d * .3}; if (!check('quelle', I, p.x, p.y)) return p; } return {x:q.x + 14, y:q.y}; }
   if (K.dep && depsOf(I, K.dep).length){ const d = pick(depsOf(I, K.dep)); return {x:d.x + (vc.x - d.x) * .15, y:d.y + (vc.y - d.y) * .15 + 14}; }
   // woodcutters and planters go to the edge of the forest closest to the village
   if ((K.trees || K.plants) && I.trees.some(t => t.st !== 1)){ const t = pick(I.trees.filter(q => q.st !== 1)), d = Math.hypot(vc.x - t.x, vc.y - t.y) || 1; return {x:t.x + (vc.x - t.x) / d * 22, y:t.y + (vc.y - t.y) / d * 22}; }
   // next to the plant that has the most of its kind around it, nearest to the village if several are equal
   // on an atoll, workplaces go on the islet where people live if the plants there are enough; others need a dugout
   const home = new Set(I.buildings.filter(b => b.kind === 'haus' && !b.bt).map(b => landOf(I, b)));
-  if (K.near){ let src = I.buildings.filter(b => b.kind === K.near.kind); const local = src.filter(b => home.has(landOf(I, b)) && nearCount(I, K.near.kind, b.x, b.y, K.near.r * .7) >= K.near.n); if (local.length) src = local; if (src.length){
+  if (K.near){ const kinds = [].concat(K.near.kind); let src = I.buildings.filter(b => kinds.includes(b.kind)); const local = src.filter(b => home.has(landOf(I, b)) && nearCount(I, K.near.kind, b.x, b.y, K.near.r * .7) >= K.near.n); if (local.length) src = local; if (src.length){
     const score = q => nearCount(I, K.near.kind, q.x, q.y, K.near.r * .7) * 1000 - Math.hypot(q.x - vc.x, q.y - vc.y);
     const c = src.reduce((m, q) => score(q) > score(m) ? q : m); return {x:c.x + 12, y:c.y + 6}; } }
   return vc;
@@ -454,8 +457,11 @@ function infoMarkup(I, b){
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
     more.unshift(b.kind === 'steg' ? 'Erst wenn der Einbaum fertig ist, fährt er zu den Pfahlhäusern.' : 'Erst wenn der Einbaum fertig ist, fahren die Fischer hinaus.');
   } else if (K.prod || K.plants){
-    const w = b.idle || workState(I, b), rate = PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
-    line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(K.prod)}${perMin(rate)} pro Minute</span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
+    const w = b.idle || workState(I, b), rate = PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(groupNext(I, k))}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
+    const by = byOf(b) ? Object.entries(byOf(b)).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') : '';
+    line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(prodOf(b))}${perMin(rate)}${by}<small>/min</small></span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
+    // a climber picks ripe nuts for food, fibre and shells, or green ones for water
+    if (K.green) why += `<div class="rowx"><span class="sub">${isGreen(b) ? 'Grüne Nüsse: nur Wasser.' : 'Reife Nüsse: Nahrung, Fasern, Schalen.'}</span><span class="chips"><button class="chip" type="button" data-act="green" data-v="0" aria-pressed="${!isGreen(b)}">Reif</button><button class="chip" type="button" data-act="green" data-v="1" aria-pressed="${isGreen(b)}">Grün</button></span></div>`;
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
     // divers: whether the water allows diving, and how divers really worked
     if (K.dive){ const bl = diveBlock(I); line += `<span>${icon(bl ? 'sturm' : 'passat')}${bl ? 'kein Tauchwetter' : 'ruhiges, klares Wasser'}</span>`;
@@ -509,7 +515,7 @@ function renderSheet(){
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
+    else h += `<div class="rowx"><span class="chips">${FELL_WOOD[b.kind] && !b.bt ? `<button class="btn" type="button" data-act="fell">Fällen: ${FELL_WOOD[b.kind]} Holz</button>` : ''}<button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
   } else if (sheetKind === 'away'){
     // while you were away: one row for each thing that happened
     const {R, lines, years} = sheetData;
@@ -601,6 +607,8 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b) return;
     if (act === 'move'){ startMove(b); return; }
+    if (act === 'green'){ const I = islOfB(b.id); b.v = {...(b.v || {}), green:btn.dataset.v === '1'}; b._by = null; b.idle = null; I.staff = null; updateHUD(); renderSheet(); save(); return; }
+    if (act === 'fell'){ const I = islOfB(b.id), n = FELL_WOOD[b.kind] || 0; I.stock.holz = Math.min(storeCap(I), (I.stock.holz || 0) + n); stats.gefaellt = (stats.gefaellt || 0) + 1; I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} gefällt: ${n} Holz. Was sie trug, ist fort.`, 2800, false); return; }
     if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'mc-' || act === 'mc+'){ const K = KINDS[b.kind], I = islOfB(b.id), n = clamp(capOf(b) + (act === 'mc+' ? 1 : -1), 0, K.crew); b.v = {...b.v, mc:n}; if (n === K.crew) delete b.v.mc; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }

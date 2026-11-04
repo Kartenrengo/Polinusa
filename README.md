@@ -7,6 +7,8 @@ Ein Clan fährt los, findet leere Inseln, siedelt dort und treibt Handel über d
 
 `index.html` im Browser öffnen. Es gibt keinen Build-Schritt, das Spiel läuft auch direkt von der Festplatte.
 Der Spielstand liegt im `localStorage` des Browsers.
+Mit dem Umbau zu Haushalten und Rohstoffen beginnt das Spiel neu: Ein Spielstand aus der Zeit davor wird nicht
+übernommen, das Spiel sagt es beim Start.
 
 Eine einzelne Datei zum Weitergeben erzeugt:
 
@@ -330,18 +332,8 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
 
 ## Kōruru, das Knochenspiel
 
-Spiele mit fünf kleinen Knochen oder Steinen gab es im ganzen Pazifik; die Māori in Aotearoa nannten es Kōruru. Die
-Knöchelchen werden aus der Hand wie Würfel auf die Matte gekippt, dann wird eines hochgeworfen, und bevor es fällt,
-muss dieselbe Hand Knochen vom Boden aufheben und es wieder fangen.
-
-- **Spielen:** im Versammlungshaus „Kōruru spielen“ oder im Menü „Kōruru“.
-- **So geht es:** „Hochwerfen“, dann die richtige Zahl Knochen auf der Matte antippen, dann den fallenden Knochen antippen.
-  Fangen geht erst, wenn er wieder zur Hand herunterkommt; ein roter Ring zeigt es. Runde 1 einer nach dem anderen, Runde 2
-  zwei auf einmal, dann drei, dann vier, und jede Runde fliegt der Knochen kürzer.
-- **Fehler:** zu früh gegriffen, zu viele auf einmal, zu wenig aufgehoben oder fallen gelassen. Nach drei Fehlern ist das
-  Spiel verloren; nach jedem Fehler werden die Knochen neu geworfen.
-- **Gewinnen:** Wer alle vier Runden schafft, bringt dem Dorf Ansehen +2 und eine Weile doppelt so viel Zuzug, einmal je
-  Mond. Die Chronik kennt „Meister im Kōruru“.
+Das Geschicklichkeitsspiel ist entfernt. Matte und Knochen bleiben: Sie kommen als täglicher Kōruru-Wurf zurück, ein kurzes
+Glücksspiel einmal am Tag (siehe Nächste Schritte).
 
 ## Wie alles ineinandergreift
 
@@ -441,13 +433,17 @@ Insel antippen.
 
 - Die Bauleiste hat zwei Reiter: **Bauen** für alles, was das Dorf braucht, und **Schmuck** für Hibiskus, Blumen, Fackeln,
   Ahnenpfosten, Trommel und Tanzplatz.
-- **Trampelpfade entstehen von selbst** dort, wo die Leute wirklich gehen: Die Füße treten das Gras weg, erst ein heller
-  Schimmer, dann ein deutlicher Pfad. Wo niemand mehr geht, wächst er langsam wieder zu.
-- **Wege anlegen:** Ganz am Ende der Leiste steht „Weg“. Auf der Insel Punkt für Punkt tippen, den letzten Punkt noch einmal
-  antippen nimmt ihn zurück, „Anlegen“ legt den Weg an, „Fertig“ beendet. Wege aus Muschelsand und Korallenkies kosten
-  nichts, die Leute gehen darauf schneller, und sie schmücken das Dorf (je 60 Schritte 1, höchstens 8).
-- **Wege entfernen:** Daneben steht „Weg weg“. Jeder Tipp auf ein Stück Weg nimmt das Stück zwischen zwei Punkten fort.
-  Einen Weg sonst antippen, dann lässt er sich ganz entfernen.
+- **Wege legt niemand von Hand an.** Trampelpfade entstehen dort, wo die Leute wirklich gehen: erst ein heller Schimmer,
+  dann ein deutlicher Pfad. Wird ein Pfad lange Zeit viel begangen (etwa sieben Minuten), streuen die Leute zerstoßene
+  Muscheln und Korallensand darauf: ein heller Muschelweg mit weißen Schalenstückchen. Darauf geht man schneller, und er
+  schmückt das Dorf (je 25 Stücke 1, höchstens 8). Wo lange niemand mehr geht, wächst auch ein Muschelweg wieder zu.
+
+## Flotte
+
+„Flotte“ ist gebaut wie „Bauen“: Der Knopf klappt unten eine Leiste auf, darin jedes Kanu (antippen steuert es, ein
+farbiger Punkt sagt grün: in einer Kette, gelb: unterwegs, rot: ohne Proviant), jede Handelskette und „Liste“ für alles
+auf einen Blick. Beim Beladen und in den Handelsketten zieht man Schieberegler statt Plus und Minus zu tippen; die Zahl
+daneben ist, was wirklich an Bord ging.
 
 ## Kanus entstehen
 
@@ -549,8 +545,9 @@ bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Sechzehn Waren: Feldfrüchte, Fisch, Meeresfrüchte, Kokosnüsse, Holz, Proviant, Töpfe, Steinbeile, Klingen, Matten, Schnur,
-Tapa, Kokosöl, Schweine, Kava, Muschelschmuck.
+Waren: Feldfrüchte, Fisch, Meeresfrüchte, Wildbeute, Kokosnüsse, Wasser, Holz, Dachdeckung, Schnur (Sennit), Kokosfasern,
+Kokosschalen, Brotfruchtharz, Muschelschalen, Proviant, Töpfe, Steinbeile, Klingen, Matten, Tapa, Kokosöl, Schweine, Kava,
+Muschelschmuck und die Schätze Perlmutt, rote Federn und Walzähne.
 Ketten haben höchstens drei Glieder.
 
 | Gebäude | Insel | Braucht | Macht pro Minute | reicht für etwa |
@@ -563,16 +560,22 @@ Ketten haben höchstens drei Glieder.
 | Fischgestell | am Strand | 2 Fischer, Schnur für Netze verdoppelt den Fang (1 Schnur je 8 Fisch) | etwa 25 Fisch, ohne Netze 12 | 20, ohne Netze 10 |
 | Riffsammler | am Strand | | 7,5 Meeresfrüchte | 6 |
 | Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Feldfrucht je Proviant | 7,5 Proviant | |
-| Töpferei | hoch | Ton in der Nähe, 1 Holz je Topf | 3,75 Töpfe | 53 |
+| Töpferei | hoch | Ton in der Nähe, 1 Brennstoff je Topf (Kokosschalen, sonst Holz) | 3,75 Töpfe | 53 |
 | Beilwerkstatt | hoch | Basaltfelsen in der Nähe | 3,75 Steinbeile | 5 Holzfäller |
 | Klingenschläger | Vulkan | Obsidian in der Nähe | 3 Klingen | 2 Schmuckschleifereien |
 | Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | 3 Tapa | 50 |
 | Schweinepferch | hoch | 2 Feldfrüchte je Schwein | 1,9 Schweine | 47 |
 | Flechthütte | Atoll | 2 Pandanus daneben | 3,75 Matten | 62 |
-| Seilerei | Atoll | 3 Kokospalmen daneben | 5 Schnur | 4 Fischgestelle |
-| Palmenkletterer | überall | 3 Kokospalmen daneben | 10 Kokosnüsse (zählen als Nahrung) | 8 Menschen |
+| Seilerei | überall | 1 Kokosfaser je Schnur | 6 Schnur | Häuser, Kanus und 4 Fischgestelle |
+| Palmenkletterer | überall | 3 Kokospalmen daneben | 10 Kokosnüsse, 10 Fasern, 10 Schalen; grün 10 Wasser | 8 Menschen |
+| Dachflechterin | überall | 2 Palmen oder Pandanus daneben | 7,5 Dachdeckung | |
+| Quelle | hohe Insel mit Bach | am Bach | 15 Wasser | 30 Menschen |
+| Brunnen | Atoll, Mitte eines Motus | | 15 Wasser | 30 Menschen |
+| Regenfang | überall | | 6 Wasser, Sturmzeit 10, magere Zeit 2,5 | 12 Menschen |
+| Harzsammler | hoch | 2 Brotfruchtbäume daneben | 3,75 Harz | |
+| Pandanussammlerin | Atoll | 2 Pandanus daneben | 7,5 Feldfrüchte | 6 Menschen |
 | Ölhütte | überall | 2 Kokosnüsse je Öl | 3,75 Kokosöl | 94 |
-| Schmuckschleiferei | Atoll, am Strand | 1 Klinge je Ring | 1,5 Muschelschmuck | 75 |
+| Schmuckschleiferei | Atoll, am Strand | 1 Klinge und 2 Muschelschalen je Ring | 1,5 Muschelschmuck | 75 |
 | Kavagarten | hoch | | 2,5 Kava | 83 |
 
 Jede Werkstatt reicht für ein Dorf von etwa 50 bis 80 Menschen. Wer weiter wächst, braucht eine zweite, also mehr
@@ -586,19 +589,42 @@ Netze der hohen Inseln, die hohen Inseln Beile und Holz.
 - **Lager:** Die Warenleiste oben zeigt bis zu sieben wichtige Waren. Antippen öffnet das Lager mit allem, was pro Minute
   dazukommt und weggeht.
 
-## Kokospalmen: Nüsse und Öl
+## Rohstoffe: wenig Quellen, viele Nutzungen
 
-Die Kokospalme war die wichtigste Pflanze der Atolle. Der Palmenkletterer holt die Nüsse; sie zählen als Nahrung. Die
-Ölhütte reibt das Fleisch und lässt das Öl austreten, 2 Nüsse je Öl. Öl pflegt Haut und Haar, ab 50 Bewohnern wollen die
-Familien es. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der Clan vom Feuerberg und der Clan vom
-Kavahain schätzen es als Gabe. Der Kletterer kommt nach dem Fischgestell, die Ölhütte mit der Handelskette. Alte
-Spielstände mit Dörfern ab 50 Bewohnern bekommen beim Laden einmalig 20 Öl.
+Auf den Inseln gibt es nur wenige Quellen, aber jede gibt mehreres her, wie damals. Oft muss man wählen: laufend ernten
+oder einmal fällen.
+
+| Quelle | Wer nutzt sie | Was entsteht |
+| --- | --- | --- |
+| Kokospalme | Palmenkletterer | reife Nüsse: Kokosnüsse (Nahrung), dazu Kokosfasern und Kokosschalen; grüne Nüsse (umschaltbar): Wasser |
+| Kokospalme, Pandanus | Dachflechterin | Dachdeckung aus Palmwedeln und Pandanusblättern |
+| Kokosfasern | Seilerei | Sennit, die Schnur für Häuser, Kanus und Netze |
+| Kokosschalen | Töpferei | Brennstoff: erst die Schalen, dann Holz |
+| Kokosnüsse | Ölhütte | Kokosöl, 2 Nüsse je Öl |
+| Pandanus | Flechthütte, Pandanussammlerin | Matten und Segel; Früchte als Nahrung (Atoll) |
+| Brotfruchtbaum | Gärgrube, Harzsammler | Proviant; Milchsaft, mit dem Kanus abgedichtet werden |
+| Bach | Quelle | Wasser, nur auf Inseln mit Bach, am Bach |
+| Süßwasser im Sand | Brunnen | Wasser, nur auf Atollen, in der Mitte eines Motus |
+| Regen | Regenfang | Wasser überall, viel in der Sturmzeit, wenig in der mageren Zeit |
+| Riff | Riffsammler | Meeresfrüchte und Muschelschalen für die Schmuckschleiferei |
+
+- **Fällen:** Eine Kokospalme (2 Holz) oder ein Brotfruchtbaum (3 Holz) lässt sich auf seiner Tafel fällen. Danach ist
+  weg, was er trug.
+- **Bauen wie damals:** Häuser werden ohne Nägel gebaut. Sie brauchen Holz, Dachdeckung und Sennit, ebenso Pfahlhäuser,
+  Versammlungs- und Kanuhaus; Speicher und Ahnenhaus Holz und Dachdeckung. Kanus brauchen dazu Brotfruchtharz.
+- **Wasser** ist ein Grundbedürfnis: jeder Mensch braucht 0,5 pro Minute. Fehlt es, wächst das Dorf nicht.
+- **Kokosöl** wollen die Familien ab 50 Bewohnern. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der
+  Clan vom Feuerberg und der Clan vom Kavahain schätzen es als Gabe.
+- **Warengruppen:** Eine Werkstatt kann eine Gruppe verlangen, etwa Brennstoff. Dann nimmt sie, was da ist, zuerst die
+  Abfälle.
+- Das Ahnenkanu bringt 10 Holz, 10 Nahrung, 8 Wasser, 6 Dachdeckung und 5 Schnur. Quelle, Brunnen, Regenfang, Kletterer,
+  Dachflechterin und Seilerei gibt es vom ersten Tag an, den Harzsammler mit den Steinbeilen.
 
 ## Bedarf und Stufen
 
 | Stufe | Ab | Braucht pro Bewohner und Minute |
 | --- | --- | --- |
-| Weiler | Anfang | Nahrung 1,2 (jede Sorte zählt) |
+| Weiler | Anfang | Nahrung 1,2 (jede Sorte zählt), Wasser 0,5 |
 | Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 30 Bewohnern Matten 0,06, ab 50 Kokosöl 0,04 |
 | Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Nahrung, Töpfe und Matten reichen, Tapa, Schweine, Kava und Schmuck im Lager | dazu Tapa 0,06, Schweine 0,04, Kava 0,03, Muschelschmuck 0,02 |
 

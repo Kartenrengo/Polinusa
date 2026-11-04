@@ -21,7 +21,7 @@ function settle(T, S, o){
   const hs = findSpot(T, 'haus', homeSpot(T)); if (hs) addB(T, 'haus', hs, variant('haus'), tick);
   if (S && routeIndex(S.id, T.id) < 0) routes.push({a:S.id, b:T.id, knots:1, lastGift:tick, plan:{a:{}, b:{}}});
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
-  toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Noch ohne Setzlinge: Fisch, Riff und Wild nähren die Leute.'}`, 5200);
+  toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Noch ohne Setzlinge: Fisch, Riff und Wild nähren die Leute.'}${(T.stock.wasser || 0) < 4 ? ' Zuerst Wasser: Regenfang' + (T.atoll ? ' oder Brunnen.' : T.river ? ' oder Quelle.' : '.') : ''}`, 5200);
 }
 const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 1) * (1 + .1 * Math.min(2, bondsWith(T)));   // shared patterns and marriages make gifts count for more
 /* A gift is not paid for. The clan remembers it and answers later with what they make; trust (knots) makes the answer richer. */
@@ -49,9 +49,9 @@ function answerGifts(){
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {sternhaus:'stars', kletterer:'leaf', oelhuette:'pound', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
+const WORK_FX = {deckerin:'weave', harzer:'leaf', quelle:'dig', brunnen:'dig', sternhaus:'stars', kletterer:'leaf', oelhuette:'pound', bananen:'leaf', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf'};
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound']);
-const JOB_LOAD = {bananen:'frucht', kletterer:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
+const JOB_LOAD = {pansammler:'frucht', deckerin:'matte', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', kletterer:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', riff:'muschel', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
 const landOfB = (I, b) => b._lk === b.x + b.y ? b._l : (b._lk = b.x + b.y, b._l = landOf(I, b));   // buildings stay put, so this is kept
 const lived = I => I.settled || (I.clan && I.discovered);
@@ -106,7 +106,7 @@ const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.p
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
 const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Feldfrüchte'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
 const prioOf = I => I.prio && I.prio.length === PRIO.length ? I.prio : (I.prio = PRIO.map(q => q.id));
-const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' || K.prod === 'kokos' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
+const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' || K.prod === 'kokos' || K.prod === 'wasser' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
 const capOf = b => { const K = KINDS[b.kind], mc = b.v && b.v.mc; return mc == null ? K.crew || 0 : Math.min(K.crew || 0, mc); };
 function staff(I){
   let free = workers(I); const crew = new Map(), sites = [], boats = [], staffed = new Set(), cats = {}; let yard = 0;
@@ -793,7 +793,8 @@ function walkUntil(now){
 }
 
 /* ---------- work: a workshop runs only with its deposit, its plants nearby and its input goods */
-const NEAR_PL = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten', wald:'Bäume'};
+const NEAR_PL_ONE = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtbäume', garten:'Maulbeergärten', wald:'Bäume'};
+const NEAR_PL = new Proxy(NEAR_PL_ONE, {get:(t, k) => String(k).includes(',') ? String(k).split(',').map(q => t[q]).join(' oder ') : t[k]});
 function workState(I, b){
   const K = KINDS[b.kind];
   if (SEA_KINDS.has(b.kind) && cycloneOver(I)) return {why:'storm', text:'Sturm: Niemand fährt hinaus, die Kanus liegen an Land.'};
@@ -804,8 +805,8 @@ function workState(I, b){
   }
   if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
-  if (K.prod && (I.stock[K.prod] || 0) >= storeCap(I)) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
-  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => (I.stock[q] || 0) < K.use[q]); return {why:'use', k, text:`Kein Vorrat an ${GN[k]}.`}; }
+  if (K.prod && (I.stock[prodOf(b)] || 0) >= storeCap(I)) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
+  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => groupHave(I, q) < K.use[q]); return {why:'use', k:groupNext(I, k), text:`Kein Vorrat an ${GN[k]}.`}; }
   return null;
 }
 /* ---------- needs: what each island uses, makes and lacks, per minute */
@@ -813,16 +814,28 @@ const PER_MIN = 60000 / TICK;
 /* A tool that wears out: with it the work goes at full speed, without it slower */
 const tooled = (I, K) => !K.boost || (I.stock[K.boost.k] || 0) > 0;
 const pace = (I, K) => tooled(I, K) ? 1 : K.boost.slow;
+/* What a workplace makes: its good, and what falls off besides (fibre and shells from a ripe nut). A climber can pick the
+   nuts green instead: then they give water and nothing else. */
+const isGreen = b => !!(KINDS[b.kind].green && b.v && b.v.green);
+const prodOf = b => isGreen(b) ? KINDS[b.kind].green : KINDS[b.kind].prod;
+const byOf = b => isGreen(b) ? null : KINDS[b.kind].by || null;
 function makeRate(I, k){
   let m = k === 'wild' ? forageRate(I) : 0;
-  for (const b of I.buildings){ const K = KINDS[b.kind]; if (K.prod === k && !b.bt && !(b.boat > 0) && !(b.idle && b.idle.why !== 'full')) m += PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? crewAt(I, b) / K.crew : 1); }
+  for (const b of I.buildings){ const K = KINDS[b.kind]; if (!K.prod || b.bt || b.boat > 0 || (b.idle && b.idle.why !== 'full')) continue;
+    const f = prodOf(b) === k ? 1 : (byOf(b) || {})[k] || 0; if (!f) continue;
+    m += f * PER_MIN / K.every / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? crewAt(I, b) / K.crew : 1); }
   return m;
+}
+/* one piece made: the good, and the bits that fall off, which add up until a whole one is there */
+function makePiece(I, b, add){
+  add(prodOf(b), 1); const by = byOf(b); if (!by) return;
+  b._by = b._by || {}; for (const [k, v] of Object.entries(by)){ b._by[k] = (b._by[k] || 0) + v; const n = Math.floor(b._by[k] + 1e-9); if (n){ b._by[k] -= n; add(k, n); } }
 }
 function workUse(I, k){
   let u = 0;
   for (const b of I.buildings){
     const K = KINDS[b.kind]; if (b.bt || (b.idle && b.idle.why !== 'full')) continue;
-    if (K.use && K.use[k]) u += PER_MIN / K.every * K.use[k];
+    if (K.use) for (const [q, v] of Object.entries(K.use)) if (q === k || groupNext(I, q) === k && GROUPS[q]) u += PER_MIN / K.every * v;
     if (K.boost && K.boost.k === k && tooled(I, K)) u += PER_MIN / K.every / K.boost.per;
   }
   return u;
@@ -906,10 +919,10 @@ function econ(){
       if (K.plants){ if (!plantTree(I, b)) b.idle = {why:'space', text:'In der Nähe ist kein Platz mehr für junge Bäume.'}; continue; }
       if (K.use) pay(I, K.use);
       if (K.trees) fellTree(I, b);
-      if (K.prod === 'fisch') stats.fisch++;
+      if (prodOf(b) === 'fisch') stats.fisch++;
       if (K.soil) drainSoil(I, b);
       if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }   // the net tears, the adze breaks
-      add(K.prod, 1);
+      makePiece(I, b, add);
     }
     growTrees(I); stepWear(I); wildTick(I);
     // use up what people need; fractions carry over so small villages use little
@@ -1215,12 +1228,12 @@ function awayMinute(I, R){
     b._away = (b._away || 0) + 30 / ev / pace(I, K) / (K.soil ? soilPace(b) : 1) * (K.crew ? n / K.crew : 1);
     let whole = Math.floor(b._away); b._away -= whole;
     if (K.plants){ while (whole-- > 0 && plantTree(I, b)); continue; }
-    for (; whole > 0 && (st[K.prod] || 0) < cap; whole--){
+    for (; whole > 0 && (st[prodOf(b)] || 0) < cap; whole--){
       if (K.use){ if (!canPay(I, K.use)) break; pay(I, K.use); }
       if (K.trees){ if (!treesNear(I, b.x, b.y, K.trees.r).length) break; fellTree(I, b); }
       if (K.soil) drainSoil(I, b);
       if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }
-      st[K.prod] = (st[K.prod] || 0) + 1; R.made[K.prod] = (R.made[K.prod] || 0) + 1; if (K.prod === 'fisch') stats.fisch++;
+      makePiece(I, b, (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); R.made[k] = (R.made[k] || 0) + n; }); if (prodOf(b) === 'fisch') stats.fisch++;
     }
     if (K.soil && (b.soil ?? 1) < .3){ b.fallow = true; I.staff = null; R.fallow.add(b); }   // the people rest a worn-out field themselves
   }

@@ -30,7 +30,7 @@ function newGame(s = newSeed()){
   fogHoles = [home0.hole];
   const h = home0.hole; for (let cy = Math.floor((h.cy - h.ry) / CELL); cy <= Math.floor((h.cy + h.ry) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx) / CELL); cx <= Math.floor((h.cx + h.rx) / CELL); cx++) ensureCell(cx, cy, true);
   // the voyaging canoe waits at the western edge of the clearing, where the clan came from
-  const sh = makeShip('dc', isl('heimat'), {name:'Ahnenkanu', founder:true, people:5, cargo:{holz:10, nahrung:10}, life:LIFE_BASE.slice(), port:null, last:null, state:'sea'});
+  const sh = makeShip('dc', isl('heimat'), {name:'Ahnenkanu', founder:true, people:5, cargo:{holz:10, nahrung:10, wasser:8, dach:6, schnur:5}, life:LIFE_BASE.slice(), port:null, last:null, state:'sea'});
   sh.x = h.cx - h.rx * .78; sh.y = h.cy + h.ry * .1; sh.hx = 1; sh.hy = 0;
   landing = {ship:sh.id};
 }
@@ -44,7 +44,7 @@ function foundHome(I){
   const Hm = isl('heimat'), r = rng(seed ^ 0x5eed ^ 0x1a4d), sh = ships.find(s => s.founder);
   if (sh) ships.splice(ships.indexOf(sh), 1);
   selShip = null; if (mode === 'steer') mode = 'idle';
-  Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:10, nahrung:10}, life:LIFE_BASE.slice(), wild:1, gone:0});
+  Object.assign(Hm, {discovered:true, settled:true, pop:5, stock:{...emptyStock(), holz:10, nahrung:10, wasser:8, dach:6, schnur:5}, life:LIFE_BASE.slice(), wild:1, gone:0});
   landing.found = 'heimat'; active = 'heimat';   // time still stands until the meeting house has its place (foundAt)
   return true;
 }

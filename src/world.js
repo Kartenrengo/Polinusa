@@ -371,7 +371,7 @@ const depNear = (I, dep, x, y, r) => depsOf(I, dep).find(d => Math.hypot(d.x - x
 /* Trees standing or growing block the ground; a stump does not, building on it clears it */
 const treeAt = (I, x, y, rad) => I.trees && I.trees.find(t => t.st !== 1 && Math.hypot(t.x - x, t.y - y) < rad);
 const treesNear = (I, x, y, rad) => (I.trees || []).filter(t => t.st === 0 && t.w > 0 && Math.hypot(t.x - x, (t.y - y) * 1.25) < rad);
-const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
+const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => (Array.isArray(kind) ? kind.includes(b.kind) : b.kind === kind) && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
 /* Beauty: what adorns an island, counted from finished decorations */
 const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0) + Math.min(8, Math.floor(roadCells(I) / 25)) + Math.min(3, Object.keys(I.mot || {}).length);   // laid paths adorn the village too, and pots with patterns from elsewhere
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
@@ -396,6 +396,7 @@ function check(kind, I, x, y, ignoreId){
     if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
     if (K.coast && dEdge > 18) return `${K.n} gehört an den Strand`;
     if (K.inland && dEdge < K.inland) return `${K.n} braucht Platz in der Mitte des Landes`;
+    if (K.spring && !(I.river && polyDist(p, I.river, false) < 28)) return I.river ? 'Eine Quelle gehört an den Bach' : 'Auf dieser Insel fließt kein Bach. Baue einen Regenfang.';
     if (K.dep && !depNear(I, K.dep, x, y, K.depR)) return `Hier ist kein ${DEPOSITS[K.dep].n} in der Nähe. ${DEPOSITS[K.dep].where}`;
     if (treeAt(I, x, y, (K.r + TREE_R) * .8)) return 'Hier stehen Bäume. Ein Holzfäller kann sie fällen.';
     if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';
