@@ -92,7 +92,7 @@ function festivalGain(I, chosen){
   return FESTIVAL.mana + parts.reduce((s, p) => s + p.gain, 0) + Math.min(8, Math.floor(beautyOf(I) / 3)) + guestsFor().length * 2 + ancestorsHonour(I);
 }
 /* with an ancestor house, the first fruits honour the ancestors too: one more standing for every five of them, up to six */
-function ancestorsHonour(I){ return I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt) ? Math.min(6, Math.floor((I.ahnen || []).length / 5)) : 0;
+function ancestorsHonour(I){ return I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt) ? Math.min(6, Math.floor(ancCount(I) / 5)) : 0;
 }
 function holdFestival(I, chosen){
   const no = festivalState(I); if (no){ toast(no, 2600, false); return; }

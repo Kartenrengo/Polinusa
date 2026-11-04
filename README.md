@@ -659,25 +659,40 @@ Aus den Rohstoffen werden die Dinge, die Familien der Tufunga und später der H�
 - Der Erdofen und der Kalkbrenner kommen mit der Töpferei, Kurkuma und Hühner mit dem Tarofeld, Malerin, Weberin und
   Duftöl mit dem ersten neuen Land. Die Clans schätzen die feinen Dinge als Gabe.
 
-## Bedarf und Stufen
+## Dörfer, Stufen und die Häuptlingsfamilie
 
-| Stufe | Ab | Braucht pro Bewohner und Minute |
+Lapita-Siedlungen waren meist kleine Weiler aus wenigen Häusern, oft auf Pfählen an der Lagune; später hatten Dörfer in
+Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen:
+
+| Stufe | Ab | Wer braucht was (pro Kopf und Minute) |
 | --- | --- | --- |
-| Weiler | Anfang | Nahrung 1,2 (jede Sorte zählt), Wasser 0,5 |
-| Dorf | 20 Bewohner | dazu Töpfe 0,07, ab 30 Bewohnern Matten 0,06, ab 50 Kokosöl 0,04 |
-| Häuptlingsdorf | 40 Bewohner, Ansehen 20, Schönheit 10, Nahrung, Töpfe und Matten reichen, Tapa, Schweine, Kava und Schmuck im Lager | dazu Tapa 0,06, Schweine 0,04, Kava 0,03, Muschelschmuck 0,02 |
+| Weiler | Anfang | alle: Dach, Nahrung 1,2 (jede Sorte zählt), Wasser 0,5 |
+| Dorf | 30 Bewohner | Familien der Tufunga dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04, Gekochtes 0,3 |
+| Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
-Im Häuptlingsdorf wohnen 6 statt 4 Menschen in jedem Haus. Die Häuser bekommen geschnitzte Pfosten und Muschelschmuck.
-Fehlt dort 30 Takte lang etwas, wird es wieder ein Dorf, und die Leute ziehen nach und nach aus.
-Ein Dorf wächst, solange Platz in den Häusern ist und nichts fehlt. Ohne Nahrung ziehen langsam Leute fort.
+- **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (6 Holz, 4 Dachdeckung, 3 Schnur, 1 feine Matte), eines je
+  Insel, nur auf hohen Inseln, mit dem ersten Fest. Die Familie, deren älteste Frau die älteste unter den Familien der
+  Tufunga ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
+  Die Schwester des Häuptlings stand im Rang über ihm (fahu), die Tamahā war die Ranghöchste im Land.
+- **Weg zum Häuptlingsdorf**, als Liste in der Übersicht, jeder Schritt mit Haken: eine große hohe Insel, die mindestens
+  80 Menschen trägt; das Häuptlingshaus; die Häuptlingsfamilie hat alles; 50 Bewohner; Ansehen 20; Schönheit 10.
+- Im Häuptlingsdorf wohnen in jedem Haus 6 Menschen. Fehlt der Häuptlingsfamilie 30 Takte lang etwas, wird es wieder ein
+  Dorf.
 
 **Jede Insel trägt nur so viele Menschen, wie ihr Land ernährt.** Hohe Inseln je nach Fläche etwa 60 bis 160, Atolle 30
-bis 100, weil die Lagune viele auf wenig Land satt macht. Mehr Häuser helfen dann nicht mehr; oben steht „Insel voll“, die
-Übersicht nennt die Zahl. Wer weiter wachsen will, schickt Siedler im Kanu los und gründet anderswo ein Dorf, so wie es im
-Pazifik immer war. Ein kleines Atoll kann darum kein Häuptlingsdorf werden.
+bis 100. Ist die Insel voll, sagt das Spiel es einmal: Schickt Familien im Kanu aus und gründet ein neues Dorf. **Siedler
+gehen als Familien:** Beim Beladen kommt erst der Rest der Familie an Bord, die schon einsteigt, dann eine Familie ohne
+Arbeitsplatz, Erwachsene zuerst. Die Häuptlingsfamilie bleibt. Auf der neuen Insel bilden sie wieder ihre Familien.
 
-- Die Bewohnerzahl oben öffnet die Tafel „Bedarf“. Der Punkt daneben: grün wächst, gelb Häuser voll, rot es fehlt etwas.
-- Fehlt etwas, schwebt das Zeichen der Ware über einigen Häusern. Zieht jemand ein, steigt ein Herz auf.
+## Das Leben im Dorf
+
+- **Der Tag:** Mittags sitzen die Leute ohne Arbeit beim Erdofen, abends im Versammlungshaus beim Kava, die Alten erzählen
+  von den Ahnen, nachts gehen alle nach Hause. Kinder spielen auf dem Platz.
+- **Wer was arbeitet:** In jeder Familie gehen zuerst die Frauen zu Tapa, Matten, Dachdeckung, Töpfen, Hühnern und ans Riff,
+  zuerst die Männer zum Fischen auf See, zum Tauchen, Fällen, Klettern, Beilschleifen, zu den Schweinen und zum Erdofen.
+- **Ahnen:** Die Liste nennt die letzten 20 mit Namen, alle älteren werden gezählt („und 140 Ahnen der alten Zeit“). Die
+  Namen aller Häuptlinge bleiben.
+- **Weniger Gedränge:** Höchstens 60 Figuren je Insel sind unterwegs; in einem großen Dorf bleiben die anderen im Haus.
 
 ## Ansehen
 

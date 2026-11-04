@@ -141,7 +141,8 @@ function presentAt(I){
 /* ---------- people as figures. On your islands every resident is one: each worker stands for one place at one workplace;
    when work moves, the same person walks over. The rest of the grown-ups have no work and stroll about, children play,
    the old sit in front of the houses. Only in a very big village do some stay at home. */
-const MAX_FIG = 80;
+const MAX_FIG = 60, ANC_NAMED = 20;
+const ancCount = I => I.ahnenN || (I.ahnen || []).length;
 const PEOPLE_NAMES = ['Tama', 'Hina', 'Manu', 'Lupe', 'Fetu', 'Lagi', 'Vai', 'Niu', 'Ula', 'Talo', 'Moana', 'Nalu', 'Pua', 'Toa', 'Ata', 'Ao', 'Kula', 'Mahina', 'Tane', 'Ika', 'Fala', 'Tui', 'Sina', 'Lani', 'Kai', 'Ola', 'Rua', 'Tasi', 'Koa', 'Lea', 'Hoku', 'Malu', 'Fai', 'Rehu', 'Tiare', 'Nohea', 'Siva'];
 let nameNo = 0, initSync = false;
 /* ---------- the people themselves. Every resident of your villages is a person with a name, a birth and a span of life.
@@ -196,15 +197,17 @@ function lifeTick(I){
     I.people.splice(I.people.indexOf(p), 1); I.pop--; changed = true; loreCache = null;
     if (lore0 && navLore().lvl < lore0){ const msg = `Mit ${p.n} ist Wissen der Navigatoren verloren: ${NAV_N[lore0]}. Ein Schüler im Haus der Navigatoren muss es neu lernen.`; if (lifeLog) lifeLog.lost.push(p.n); else toast(msg, 5200); }
     const chief = I.chief === p.id, house = I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt);
-    (I.ahnen = I.ahnen || []).push([p.n, p.b, tick, chief ? 1 : 0]); if (I.ahnen.length > 80) I.ahnen.shift();
+    (I.ahnen = I.ahnen || []).push([p.n, p.b, tick, chief ? 1 : 0]); I.ahnenN = (I.ahnenN || I.ahnen.length - 1) + 1; if (I.ahnen.length > ANC_NAMED) I.ahnen.shift();   // the last ones by name, the rest counted
     if (house) mana += chief ? 3 : 1;
     if (chief) I.chief = 0;
     if (lifeLog) lifeLog.died.push(p.n);
     else toast(`${chief ? 'Häuptling ' : ''}${p.n} ist mit ${Math.floor(ageOf(p))} Jahren gestorben. ${house ? 'Im Ahnenhaus wacht der Schädel nun über das Dorf.' : `${I.name} bestattet ${p.n} bei den Ahnen.`}`, 4200);
   }
   // in a chief's village the eldest who is not a child leads
+  // the matriarch and the chief: the eldest woman and the eldest man of the chief's family
+  { const f = chiefFam(I), m = f && eldest(I, f, 'f'); I.mat = m ? m.id : 0; }
   if (I.lvl === 3 && !I.people.some(p => p.id === I.chief)){
-    const c = I.people.filter(p => stageOf(p) !== 'kid').sort((a, b) => a.b - b.b)[0];
+    const f = chiefFam(I), c = f && (eldest(I, f, 'm') || eldest(I, f, 'f'));
     if (c){ I.chief = c.id; (I.chiefs = I.chiefs || []).push(c.n); if (lifeLog) lifeLog.chiefs.push(c.n); else toast(`${c.n} ist jetzt Häuptling von ${I.name}.`, 3600); changed = true; }
   }
   if (changed){ I.staff = null; if (!lifeLog) syncWalkers(); }
@@ -496,7 +499,7 @@ function syncFolk(I, homes, mine){
 function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syncWalkers(); } finally { initSync = false; } }
 /* Who someone is and what they do, for a tap on a figure */
 const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.people.find(p => p.id === w.pid) : null; };
-const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
+const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.mat === p.id ? 'Matriarchin ' : I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
   if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
@@ -574,6 +577,17 @@ function landCatch(I, b){
   b.hung = Math.min(7, (b.hung || 0) + got);
   return got;
 }
+/* The day in the village: at midday people gather by the earth oven, in the evening the grown-ups sit in the meeting house
+   for kava while the old tell the stories of the ancestors, at night everyone goes home. Children play on the plaza. */
+function villageLife(I, w){
+  const ph = dayPhase(), near = (b, r, k) => { const a = Math.random() * TAU; goTo(I, w, b.x + Math.cos(a) * r, b.y + 6 + Math.sin(a) * r * k); };
+  const p = personOf(w), f = p && famOf(I, p.h), home = f && f.home && findB(f.home), hall = I.buildings.find(b => b.kind === 'halle' && !b.bt);
+  if (opts.night && ph > .66){ if (home){ goTo(I, w, home.x + rnd(6), home.y + 6); w.sit = true; w.wait = 6000 + Math.random() * 6000; return true; } return false; }
+  if (ph > .5 && hall && !w.child && Math.random() < .7){ near(hall, w.old ? 9 : 16, .5); w.sit = true; w.wait = 5000 + Math.random() * 5000; return true; }
+  if (ph > .25 && ph < .4 && !w.child && Math.random() < .6){ const u = I.buildings.filter(b => b.kind === 'umu' && !b.bt); if (u.length){ near(u[Math.floor(Math.random() * u.length)], 10, .5); w.sit = true; w.wait = 4000 + Math.random() * 3000; return true; } }
+  if (w.child && hall && Math.random() < .5){ near(hall, 22, .45); w.wait = 300 + Math.random() * 600; return true; }
+  return false;
+}
 function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
@@ -592,6 +606,7 @@ function nextLeg(w){
     if (w.forage === 3){ w.forage = 0; w.carry = null; }
     if (foragers(I) && Math.random() < .55){ const p = forageSpot(I, w); if (p){ w.forage = 1; w.sit = false; goTo(I, w, p.x, p.y, 300); return; } }
   } else if (w.forage){ w.forage = 0; if (w.carry === 'eier') w.carry = null; }
+  if (I.settled && villageLife(I, w)) return;
   const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && (!w.old || KINDS[b.kind].roof) && landOfB(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
   if (t) goTo(I, w, t.x + rnd(w.old ? 8 : 11), t.y + 4 + Math.random() * 8);
   // grown-ups who stroll sometimes sit down on a mat for a while, the old more often; children are off again quickly
@@ -839,8 +854,8 @@ function workUse(I, k){
   return u;
 }
 /* basic needs hold for everyone, the second step's for the families of the tufunga, the chief's for a chief's village */
-const needActive = (I, N) => N.lvl === 1 ? true : N.lvl === 2 ? tier2Pop(I) > 0 : I.lvl === 3;
-const needPop = (I, N) => N.lvl === 2 ? tier2Pop(I) : I.pop;
+const needActive = (I, N) => N.lvl === 1 ? true : N.lvl === 2 ? tier2Pop(I) > 0 : tier3Pop(I) > 0;
+const needPop = (I, N) => N.lvl === 2 ? tier2Pop(I) : N.lvl === 3 ? tier3Pop(I) : I.pop;
 /* Food is everything people eat; any other need is one good */
 const ofNeed = (k, f) => k === 'essen' ? FOODS.reduce((t, q) => t + f(q), 0) : f(k);
 const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
@@ -853,19 +868,33 @@ function needsOf(I){
   const cap = popCap(I), missing = list.filter(n => n.state === 'out'), roomy = homesOf(I).some(b => !famOfHome(I, b) || membersOf(I, famOfHome(I, b)).length < homeCap(I, b));
   return {list, cap, missing, full:!roomy, atMax:I.pop >= islandMax(I), roofless:roofless(I), next:NEEDS.find(N => !needActive(I, N)), growing:!!growTarget(I, list)};
 }
-/* Level: a village from 20 people; a chief's village with enough people, standing, pots and mats. It stays one while its needs hold. */
+/* Levels: a hamlet, a village from thirty, and a chief's village. That needs a big high island, the chief's house with
+   its family, everything that family wants, people, standing and beauty. It stays one while the chief's family lacks nothing. */
+function chiefSteps(I, nd){
+  const f = chiefFam(I), lack = f ? famNeeds(I, f, nd.list).filter(n => n.state === 'out').map(n => n.k === 'dach' ? 'Dach' : GN[n.k]) : [];
+  return [
+    {t:`Eine große hohe Insel, die ${CHIEF.isle} Menschen trägt`, ok:I.type === 'hoch' && islandMax(I) >= CHIEF.isle, now:`${islandMax(I)}`},
+    {t:'Ein Häuptlingshaus', ok:I.buildings.some(b => b.kind === 'fale' && !b.bt), now:I.buildings.some(b => b.kind === 'fale' && !b.bt) ? 'steht' : I.buildings.some(b => b.kind === 'fale') ? 'im Bau' : 'fehlt'},
+    {t:'Die Häuptlingsfamilie hat alles', ok:!!f && !lack.length, now:f ? (lack.length ? `es fehlt ${andList(lack)}` : 'ja') : 'noch keine'},
+    {t:`${CHIEF.pop} Bewohner`, ok:I.pop >= CHIEF.pop, now:`${I.pop}`},
+    {t:`Ansehen ${CHIEF.mana}`, ok:mana >= CHIEF.mana, now:`${Math.floor(mana)}`},
+    {t:`Schönheit ${CHIEF.beauty}`, ok:beautyOf(I) >= CHIEF.beauty, now:`${beautyOf(I)}`}
+  ];
+}
 function updateLevel(I, nd){
-  const lowOut = nd.missing.some(n => n.N.lvl < 3);
+  const f = chiefFam(I), lack = f ? famNeeds(I, f, nd.list).some(n => n.state === 'out') : true;
   if (I.lvl === 3){
-    I.chiefMiss = nd.missing.length ? (I.chiefMiss || 0) + 1 : 0;
-    if (I.chiefMiss >= 30){ I.lvl = 2; I.chiefMiss = 0; I.chiefBan = tick + 60; invalidate(); toast(`${I.name} ist kein Häuptlingsdorf mehr. Es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`, 4200); }
+    I.chiefMiss = lack ? (I.chiefMiss || 0) + 1 : 0;
+    if (I.chiefMiss >= 30 || !f){ I.lvl = I.pop >= VILLAGE_POP ? 2 : 1; I.chiefMiss = 0; I.chiefBan = tick + 60; invalidate(); toast(`${I.name} ist kein Häuptlingsdorf mehr. Der Häuptlingsfamilie fehlt etwas.`, 4200); }
     return;
   }
-  // to rise, the chief's goods must already be in store, and after a fall the village needs two minutes
-  if (I.pop >= CHIEF.pop && mana >= CHIEF.mana && beautyOf(I) >= CHIEF.beauty && !lowOut && chiefGoods(I) && tick >= (I.chiefBan || 0)){ I.lvl = 3; invalidate(); toast(`${I.name} ist jetzt ein Häuptlingsdorf. In jedem Haus wohnen nun ${CHIEF.cap} Menschen.`, 4600); return; }
-  I.lvl = I.pop >= 20 ? 2 : 1;
+  if (tick >= (I.chiefBan || 0) && chiefSteps(I, nd).every(s => s.ok)){
+    I.lvl = 3; invalidate(); const m = eldest(I, f, 'f'), c = eldest(I, f, 'm');
+    toast(`${I.name} ist jetzt ein Häuptlingsdorf.${m ? ` ${m.n} führt die Häuptlingsfamilie${c ? `, ihr Bruder ${c.n} ist Häuptling` : ''}.` : ''} In jedem Haus wohnen nun ${CHIEF.cap} Menschen.`, 5200); return;
+  }
+  I.lvl = I.pop >= VILLAGE_POP ? 2 : 1;
 }
-const chiefGoods = I => NEEDS.filter(N => N.lvl === 3).every(N => (I.stock[N.k] || 0) > 0);
+const chiefGoods = I => CHIEF_GOODS.every(k => (I.stock[k] || 0) > 0);
 /* ---------- feasts: food, pots, pigs and bark cloth for standing */
 function feastState(I, F){
   if (!I.buildings.some(b => b.kind === 'halle')) return 'Feste feiert man im Versammlungshaus.';
@@ -941,6 +970,7 @@ function econ(){
     // the village grows house by house, where the needs of the family there are met
     if (tick % GROW_EVERY === 0) for (let n = I.joyUntil > tick ? 2 : 1; n > 0; n--){ const b = growTarget(I, nd.list); if (!b) break; I._growTo = b.id; I.pop++; syncPeople(I); I._growTo = 0; heartAt(I, b); }
     tierTick(I, nd.list); rooflessTick(I);
+    if (nd.atMax && !I.fullSaid && I.id === active && !awayQuiet){ I.fullSaid = true; toast(`${I.name} ist voll: Mehr als ${islandMax(I)} Menschen trägt die Insel nicht. Schickt Familien im Kanu aus und gründet ein neues Dorf.`, 6000); } else if (!nd.atMax) I.fullSaid = false;
     // without food or water people leave, slowly, but a few always stay
     I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : 0;
     if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; syncPeople(I); }

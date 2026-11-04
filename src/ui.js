@@ -325,8 +325,9 @@ function needsMarkup(I){
   else if (nd.full) tips.push('Baue Häuser, dann ziehen mehr Menschen zu.');
   if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
   if (nd.list.some(n => n.k === 'essen' && n.state === 'out')) h += `<p class="sub">Ohne Nahrung ziehen nach und nach Leute fort.</p>`;
-  if (nd.next && nd.next.lvl < 3) h += `<p class="sub">Ab ${nd.next.from} Bewohnern brauchen die Familien auch ${GN[nd.next.k]}.</p>`;
-  if (I.lvl < 3) h += `<p class="sub"><b>Häuptlingsdorf:</b> ab ${CHIEF.pop} Bewohnern, Ansehen ${CHIEF.mana} (jetzt ${Math.floor(mana)}) und Schönheit ${CHIEF.beauty} (jetzt ${beautyOf(I)}), wenn Nahrung, Töpfe und Matten reichen und Tapa, Schweine, Kava und Muschelschmuck im Lager sind. Dann wohnen ${CHIEF.cap} Menschen in jedem Haus, und sie brauchen diese Waren laufend.</p>`;
+  // the way to a chief's village, step by step
+  h += `<p class="sec">${I.lvl === 3 ? 'Häuptlingsdorf' : 'Weg zum Häuptlingsdorf'}</p><ul class="list needs">${chiefSteps(I, nd).map(s => `<li class="${s.ok ? 'okk' : ''}"><span class="state ${s.ok ? 'ok' : 'out'}">${s.ok ? '✓' : '–'}</span><span class="nm">${s.t}<small>${s.now}</small></span></li>`).join('')}</ul>`;
+  { const f = chiefFam(I); if (f){ const m = I.people.find(p => p.id === I.mat), c = I.people.find(p => p.id === I.chief); h += `<p class="sub">${famName(f)} lebt im Häuptlingshaus.${m ? ` Matriarchin ist ${m.n}.` : ''}${c && I.lvl === 3 ? ` Häuptling ist ${c.n}.` : ''} Sie braucht dazu ${andList(CHIEF_GOODS.map(k => GN[k]))}.</p>`; } }
   return h;
 }
 const activeCount = I => I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).length;
@@ -534,7 +535,7 @@ function renderSheet(){
       else if (!crewAt(I, b)) h += '<p class="sub">Niemand sitzt bei den Steinen. Ohne Lehrer lernt keiner.</p>';
     }
     if (b.kind === 'toepfer' && !b.bt) h += `<p class="sec">Muster</p>${motifRows(I) || '<p class="sub">Sobald die ersten Töpfe gebrannt sind, findet das Dorf sein Muster.</p>'}<p class="sub">${motifHelp(I)}</p>`;
-    if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${(I.ahnen || []).length} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
+    if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${ancCount(I)} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
@@ -553,13 +554,13 @@ function renderSheet(){
   } else if (sheetKind === 'folk'){
     // everyone by name: the chief and the line of chiefs, grown-ups, children, the old, and the ancestors
     const I = isl(sheetData.id), P = (I.people || []).slice().sort((a, b) => a.b - b.b), by = st => P.filter(p => stageOf(p) === st);
-    const chip = p => `<span class="who${I.chief === p.id ? ' chief' : ''}">${p.n}<small>${Math.floor(ageOf(p))}</small></span>`, group = (t, list) => list.length ? `<p class="sec">${t} · ${list.length}</p><div class="folk">${list.map(chip).join('')}</div>` : '';
-    h += head(`Die Menschen von ${I.name}`, `${P.length} leben hier${(I.ahnen || []).length ? `, ${I.ahnen.length} sind bei den Ahnen` : ''}. Die Zahl ist das Alter in Jahren; ein Jahr dauert zwölf Minuten.`);
+    const chip = p => `<span class="who${I.chief === p.id || I.mat === p.id ? ' chief' : ''}">${I.mat === p.id ? 'Matriarchin ' : ''}${p.n}<small>${Math.floor(ageOf(p))}</small></span>`, group = (t, list) => list.length ? `<p class="sec">${t} · ${list.length}</p><div class="folk">${list.map(chip).join('')}</div>` : '';
+    h += head(`Die Menschen von ${I.name}`, `${P.length} leben hier${ancCount(I) ? `, ${ancCount(I)} sind bei den Ahnen` : ''}. Die Zahl ist das Alter in Jahren; ein Jahr dauert zwölf Minuten.`);
     if (I.chiefs && I.chiefs.length) h += `<p class="sub"><b>Häuptlinge:</b> ${I.chiefs.join(' · ')}</p>`;
     h += group('Erwachsene', by('adult')) + group('Kinder', by('kid')) + group('Alte', by('old'));
     { const W = P.filter(p => p.w && isl(p.w)); if (W.length) h += `<p class="sec">Verheiratet mit anderen Völkern · ${W.length}</p><p class="sub">${W.map(p => `${p.n} und ${p.sp || 'Partner'}${p.f ? ` (${p.n} kam ${clanVom(isl(p.f).clan)})` : ` (${clanVom(isl(p.w).clan)})`}`).join(' · ')}</p>`; }
     const A = (I.ahnen || []).slice().reverse();
-    if (A.length) h += `<p class="sec">Ahnen · ${A.length}</p><div class="folk">${A.map(([n, b, d, c]) => `<span class="who off">${c ? 'Häuptling ' : ''}${n}<small>${Math.floor((d - b) / YEAR)}</small></span>`).join('')}</div>` + (I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt) ? '' : `<p class="sub">Mit einem Ahnenhaus bringt jeder, der stirbt, dem Clan Ansehen.</p>`);
+    if (A.length) h += `<p class="sec">Ahnen · ${ancCount(I)}</p><div class="folk">${A.map(([n, b, d, c]) => `<span class="who off">${c ? 'Häuptling ' : ''}${n}<small>${Math.floor((d - b) / YEAR)}</small></span>`).join('')}</div>${ancCount(I) > A.length ? `<p class="sub">und ${ancCount(I) - A.length} Ahnen der alten Zeit. Die Namen der Häuptlinge bleiben alle.</p>` : ''}` + (I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt) ? '' : `<p class="sub">Mit einem Ahnenhaus bringt jeder, der stirbt, dem Clan Ansehen.</p>`);
   } else if (sheetKind === 'rename'){
     // an island can get the name its people give it
     const I = isl(sheetData.id);

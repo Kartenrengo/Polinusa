@@ -141,7 +141,7 @@ function serialize(){
       fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rx:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       lf:I.life || undefined, wl:I.wild != null ? Math.round(I.wild * 1000) / 1000 : undefined, wg:I.gone || undefined, tp:I.tapu || undefined, ta:I.tapuAway || undefined, mo:I.motif || undefined, mk:I.mot && Object.keys(I.mot).length ? I.mot : undefined,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || '', il:I.inlaws && I.inlaws.length ? I.inlaws.map(x => [x.n, x.from, x.at]) : undefined} : undefined,
-      ppl:I.people ? I.people.map(packP) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
+      ppl:I.people ? I.people.map(packP) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, an:I.ahnenN || undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
       nm:I.custom ? I.name : undefined, ts:I.treasure ? I.treasure.left : undefined, wr:I._wg ? wearCode(I._wg) : I.wearSaved || undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, fm:I.fams && I.fams.length ? I.fams.map(f => [f.id, f.n, f.home || 0, f.job || 0]) : undefined, hw:I.handWork ? 1 : undefined, rl:I.rl || undefined, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0, b.soil != null ? Math.round(b.soil * 100) / 100 : null, b.fallow ? 1 : 0, b.t || 0])})),
     ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined, lv:s.life && s.life.length ? s.life : undefined, fk:s.folk && s.folk.length ? s.folk.map(packP) : undefined}))});
@@ -162,7 +162,7 @@ function restore(raw){
       I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat, got, soil, fal, t]) => ({id, kind, x, y, born, v:v || {}, ...(t ? {t} : {}), ...(bt ? {bt} : {}), ...(boat ? {boat} : {}), ...(bt && got != null ? {got} : {}), ...(soil != null ? {soil} : {}), ...(fal ? {fallow:true} : {})}));
       I.fams = (d.fm || []).map(([id, n, home, job]) => ({id, n, home, job})); I.handWork = !!d.hw; I.rl = d.rl || 0;
       if (d.nm){ I.name0 = I.name; I.name = d.nm; I.custom = true; }
-      I.people = d.ppl ? d.ppl.map(unpackP) : null; I.ahnen = d.anc || []; I.chief = d.chf || 0; I.chiefs = d.chl || [];
+      I.people = d.ppl ? d.ppl.map(unpackP) : null; I.ahnen = d.anc || []; I.ahnenN = d.an || 0; I.chief = d.chf || 0; I.chiefs = d.chl || [];
       if (I.treasure && d.ts != null) I.treasure.left = d.ts;
       I.wearSaved = d.wr || null; I._wg = null; I._wp = null;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }

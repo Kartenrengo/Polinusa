@@ -5,10 +5,11 @@
    the second step: the house of a tufunga, a master of a craft, with room for six. Work goes by family too, much as in
    Manor Lords: a family works at one place, the others build and carry. Families are named after the woman who founded
    them; Lapita households most likely lived where the women's families lived. */
-const HOME_KINDS = new Set(['haus', 'pfahl']);
+const HOME_KINDS = new Set(['haus', 'pfahl', 'fale']);
 const TIERS = {
   1:{n:'Familie', cap:4, needs:['dach', 'essen', 'wasser']},
-  2:{n:'Familie der Tufunga', cap:6, needs:['dach', 'essen', 'wasser', 'toepfe', 'matten', 'oel', 'speisen'], cost:{holz:1, matten:1}}
+  2:{n:'Familie der Tufunga', cap:6, needs:['dach', 'essen', 'wasser', 'toepfe', 'matten', 'oel', 'speisen'], cost:{holz:1, matten:1}},
+  3:{n:'Häuptlingsfamilie', cap:8, needs:['dach', 'essen', 'wasser', 'toepfe', 'matten', 'oel', 'speisen', 'tapa', 'schweine', 'kava', 'schmuck', 'feinmatten', 'bemtapa', 'duftoel']}
 };
 const TIER2_GOODS = ['toepfe', 'matten', 'oel', 'speisen'];
 const START_POP = 17;   // five families: each a woman and a man, children, two elders
@@ -18,13 +19,18 @@ const famOf = (I, id) => famsOf(I).find(f => f.id === id) || null;
 const membersOf = (I, f) => (I.people || []).filter(p => p.h === f.id);
 const homeOk = (I, b) => !!b && !b.bt && HOME_KINDS.has(b.kind) && !(b.kind === 'pfahl' && unserved(I, b));
 const homesOf = I => I.buildings.filter(b => homeOk(I, b));
-const tierOf = b => b && b.t === 2 ? 2 : 1;
+const tierOf = b => b && b.kind === 'fale' ? 3 : b && b.t === 2 ? 2 : 1;
+const CHIEF_GOODS = TIERS[3].needs.filter(k => !TIERS[2].needs.includes(k));
 const homeCap = (I, b) => Math.max(TIERS[tierOf(b)].cap, I.lvl === 3 ? CHIEF.cap : 0);
 const famOfHome = (I, b) => famsOf(I).find(f => f.home === b.id) || null;
 const famName = f => `Familie ${f.n}`;
 const famTier = (I, f) => f.home ? tierOf(findB(f.home)) : 1;
 const roofless = I => (I.people || []).filter(p => { const f = famOf(I, p.h); return !f || !f.home; }).length;
-const tier2Pop = I => famsOf(I).reduce((t, f) => t + (famTier(I, f) === 2 ? membersOf(I, f).length : 0), 0);
+const tier2Pop = I => famsOf(I).reduce((t, f) => t + (famTier(I, f) >= 2 ? membersOf(I, f).length : 0), 0);
+const tier3Pop = I => famsOf(I).reduce((t, f) => t + (famTier(I, f) === 3 ? membersOf(I, f).length : 0), 0);
+const chiefFam = I => famsOf(I).find(f => famTier(I, f) === 3) || null;
+/* the matriarch: the eldest woman of the chief's family; the chief: its eldest man, her brother or son */
+const eldest = (I, f, s) => membersOf(I, f).filter(p => p.s === s && stageOf(p) !== 'kid').sort((a, b) => a.b - b.b)[0] || null;
 function newFam(I, name, home = 0){
   // two families of one name on an island are told apart as the elder and the younger
   const used = new Set(famsOf(I).map(f => f.n)); let n = name; if (used.has(n)) n = [name + ' die Jüngere', name + ' von der Küste', name + ' vom Hang'].find(q => !used.has(q)) || name + ' ' + nextFam;
@@ -76,8 +82,14 @@ function syncFamilies(I){
     const go = m.filter(p => stageOf(p) !== 'kid').sort((a, b) => b.b - a.b).slice(0, m.length - cap);
     if (!go.length) continue; const nf = newFam(I, go[0].n); for (const p of go) p.h = nf.id;
   }
+  // the chief's house: the family whose eldest woman is the eldest of the families of the tufunga moves in
+  const fale = homes.find(b => b.kind === 'fale');
+  if (fale && !taken.has(fale.id)){
+    const by = f => { const w = eldest(I, f, 'f'); return w ? w.b : Infinity; }, f = I.fams.filter(q => q.home && tierOf(byId.get(q.home)) === 2).sort((a, b) => by(a) - by(b))[0] || I.fams.slice().sort((a, b) => by(a) - by(b))[0];
+    if (f){ if (f.home) taken.delete(f.home); f.home = fale.id; taken.add(fale.id); }
+  }
   // the roofless move into empty houses, the biggest family first
-  const empty = homes.filter(b => !taken.has(b.id));
+  const empty = homes.filter(b => !taken.has(b.id) && b.kind !== 'fale');
   for (const f of I.fams.filter(q => !q.home).sort((a, b) => membersOf(I, b).length - membersOf(I, a).length)){
     const b = empty.find(q => homeCap(I, q) >= Math.min(membersOf(I, f).length, 4)) || empty[0]; if (!b) break;
     f.home = b.id; taken.add(b.id); empty.splice(empty.indexOf(b), 1);
@@ -91,7 +103,7 @@ function growTarget(I, list){
   if (out.has('essen') || out.has('wasser') || haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0) return null;
   const okFor = t => TIERS[t].needs.every(k => k === 'dach' || !out.has(k));
   const homes = homesOf(I);
-  const empty = homes.find(b => !famOfHome(I, b)); if (empty) return empty;
+  const empty = homes.find(b => !famOfHome(I, b) && b.kind !== 'fale'); if (empty) return empty;
   let best = null, room = 0;
   for (const b of homes){ const f = famOfHome(I, b), r = homeCap(I, b) - membersOf(I, f).length; if (r > room && okFor(tierOf(b))){ best = b; room = r; } }
   return best;
@@ -128,6 +140,11 @@ function rooflessTick(I){
    the rest of them build and carry. Without the hand of the player the families are sent where they are needed most:
    water and food first, then the sea, wood, crafts and canoes. */
 const PLACE_RANK = {essen:0, meer:1, holz:2, handwerk:3, boot:4};
+/* Who of a family goes first to a place, as the old accounts tell: women beat bark cloth, plait mats and thatch, make
+   the pots and tend the hens; men fish out at sea, dive, fell trees, climb the palms, grind adzes and keep the pigs. */
+const WOMEN_WORK = new Set(['flecht', 'deckerin', 'klopf', 'malerin', 'weberin', 'duftoel', 'toepfer', 'pansammler', 'kurkumagarten', 'huehnerhof', 'riff', 'oelhuette']);
+const MEN_WORK = new Set(['fisch', 'taucher', 'faeller', 'beil', 'klingen', 'kletterer', 'pferch', 'harzer', 'kalkbrenner', 'umu', 'pflanzer']);
+const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null; return w ? ad.slice().sort((p, q) => (q.s === w) - (p.s === w)) : ad; };
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
 const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow);
 const autoWork = I => !I.handWork;
@@ -160,8 +177,8 @@ function staff(I){
   for (const f of famsOf(I)){
     const ad = famAdults(I, f), b = f.job && pmap.get(f.job);
     if (!b){ pool.push(...ad); continue; }
-    const want = b.boat > 0 ? 1 : KINDS[b.kind].crew, use = ad.slice(0, want);
-    crew.set(b, use.length); crewP.set(b, use.map(p => p.id)); pool.push(...ad.slice(want));
+    const want = b.boat > 0 ? 1 : KINDS[b.kind].crew, ord = workOrder(b, ad), use = ord.slice(0, want);
+    crew.set(b, use.length); crewP.set(b, use.map(p => p.id)); pool.push(...ord.slice(want));
     if (b.boat > 0) boats.push(b); else staffed.add(b);
   }
   // building sites and the canoe house take those without a place, the oldest site first

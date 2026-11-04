@@ -130,6 +130,15 @@ function festivalMarkup(I){
   h += `<div class="rowx"><span>Ansehen +${festivalGain(I, chosen)}</span><button class="btn primary" type="button" data-act="festival">Fest feiern</button></div>`;
   return h;
 }
+/* Settlers go as families: first the rest of the family already aboard, then a family without work, grown-ups first;
+   the chief's family stays */
+function nextSettler(P, s){
+  const last = (s.folk || []).slice(-1)[0], cf = chiefFam(P), busy = new Set(famsOf(P).filter(f => f.job).map(f => f.id));
+  const pool = P.people.filter(p => !(cf && p.h === cf.id));
+  const same = last && pool.filter(p => p.h === last.h);
+  const list = same && same.length ? same : pool.filter(p => !busy.has(p.h)).length ? pool.filter(p => !busy.has(p.h)) : pool;
+  return list.slice().sort((a, b) => (stageOf(a) === 'adult' ? 0 : 1) - (stageOf(b) === 'adult' ? 0 : 1) || a.h - b.h || b.b - a.b)[0] || null;
+}
 /* What a slider stands for right now */
 function slideValue(act, k){
   if (sheetKind === 'ship'){ const s = ships.find(q => q.id === sheetData.id); if (!s) return 0; return act === 'pp' ? s.people : s.cargo[k] || 0; }
@@ -150,7 +159,7 @@ function fleetAct(act, btn, quiet = false){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return false;
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
     if (act === 'auto'){ setAuto(s, !s.auto); return true; }
-    if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ syncPeople(P); const ad = P.people.filter(isAdult), q = (ad.length ? ad : P.people).sort((a, b) => b.b - a.b)[0]; if (q){ P.people.splice(P.people.indexOf(q), 1); (s.folk = s.folk || []).push(q); } s.people++; P.pop--; P.staff = null; syncWalkers(); }
+    if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ syncPeople(P); const q = nextSettler(P, s); if (q){ P.people.splice(P.people.indexOf(q), 1); (s.folk = s.folk || []).push(q); } s.people++; P.pop--; P.staff = null; syncWalkers(); }
     else if (act === 'pp-' && P && s.people > 0){ const q = (s.folk || []).pop(); if (q){ syncPeople(P); P.people.push(q); } s.people--; P.pop++; P.staff = null; syncWalkers(); }
     else if (act === 'life' && P && P.settled) toggleLife(s, P, k);
     else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && roomUsed(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }

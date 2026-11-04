@@ -239,6 +239,8 @@ function artOf(kind, o = {}){
     case 'pfahl': return `<use href="#hp" fill="${roof}"/>`;
     case 'speicher': return `<use href="#hs" fill="${roof}"/>`;
     // the meeting house grows with the village: tapa banners for a village, a garland of shells for a chief's village
+    // the chief's house on a platform of stones, with bark cloth banners and carved posts
+    case 'fale': return `<path d="M-19 2.4Q0 7.4 19 2.4L17 -1.6Q0 2.4-17-1.6Z" fill="#8E8A80" stroke="#2B1D14" stroke-width=".6"/>${[-14, -8, -2, 4, 10, 15].map((x, i) => stoneAt(x, 2.6 + Math.abs(x) * -.05, 1.3, 451 + i * 2)).join('')}<g transform="translate(0 -2) scale(.9)"><use href="#hm" fill="${roof}"/></g>` + HALL_BANNERS + `<g transform="translate(-17 2) scale(.45)"><use href="#pfosten"/></g><g transform="translate(17 2) scale(.45)"><use href="#pfosten"/></g>`;
     case 'halle': return `<use href="#firepit" transform="translate(0 24)"/><use href="#hm" fill="${roof}" transform="scale(.85)"/>` + (o.lvl >= 2 ? HALL_BANNERS : '') + (o.lvl >= 3 ? HALL_SHELLS : '');
     case 'werft': return `<use href="#hk" fill="${roof}"/>` + (o.canoe ? `<g transform="translate(11 12)">${yardArt(o.canoe.slice(0, 2), +o.canoe[2])}</g>` : '');
     case 'taro': return `<use href="#tp"/>` + fieldState(o);

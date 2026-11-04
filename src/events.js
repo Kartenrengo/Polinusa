@@ -195,7 +195,7 @@ const CHRONIK = [
   {id:'taucher', t:'Mit offenen Augen', d:'100 Tauchgänge ohne Atemgerät.', test:() => (stats.tauch || 0) >= 100, mana:3},
   {id:'navigator', t:'Der erste Navigator', d:'Jemand liest Wellen und Vögel.', test:() => navLore().lvl >= 1, mana:2},
   {id:'sterne', t:'Der Sternenpfad', d:'Ein Navigator kennt den Sternenpfad.', test:() => navLore().lvl >= 3, mana:5},
-  {id:'ahnen10', t:'Zehn Ahnen', d:'Zehn Ahnen auf einer Insel.', test:() => villages().some(I => (I.ahnen || []).length >= 10), mana:3},
+  {id:'ahnen10', t:'Zehn Ahnen', d:'Zehn Ahnen auf einer Insel.', test:() => villages().some(I => ancCount(I) >= 10), mana:3},
   {id:'jahre', t:'Fünf Jahre', d:'Fünf Jahre auf den Inseln.', test:() => yearOf() >= 5, mana:5}
 ];
 function chronikTick(){

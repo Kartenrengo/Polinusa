@@ -60,6 +60,7 @@ const KINDS = {
   pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], bt:14, cost:{holz:3, dach:1, schnur:1}, r:11, hy:18, cap:4, water:true, roof:true, info:'Ein Zuhause in der Lagune. Ein Einbaum vom Kanusteg bringt die Leute an Land.', vb:'-17 -34 34 37'},
   speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:10, cost:{holz:2, dach:1}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
   ahnenhaus:{n:'Ahnenhaus', s:'Ahnen', on:['hoch','atoll'], bt:16, cost:{holz:3, dach:2}, r:9, hy:15, max:1, roof:true, beauty:2, info:'Hier ruhen die Schädel der Ahnen, wie bei den Lapita in Teouma. Jeder Tote bringt dem Clan Ansehen.', vb:'-14 -32 28 35'},
+  fale:{n:'Häuptlingshaus', s:'Häuptling', on:['hoch'], bt:26, cost:{holz:6, dach:4, schnur:3, feinmatten:1}, r:15, hy:20, max:1, cap:8, roof:true, beauty:2, info:'Das große Haus der Häuptlingsfamilie, auf einem Steinsockel. Hier lebt die Matriarchin: Wie in Tonga steht die Schwester des Häuptlings im Rang über ihm. Ihre Familie braucht das Feinste.', vb:'-21 -34 42 37'},
   halle:{n:'Versammlungshaus', s:'Dorfhaus', on:['hoch'], bt:30, cost:{holz:6, dach:3, schnur:2}, r:19, hy:16, max:1, roof:true, info:'Das Herz des Dorfes. Hier werden Feste gefeiert. Familien ohne Haus schlafen hier unter Matten.', vb:'-21 -34 42 37'},
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:20, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Nüsse, Fasern, Schalen und Wedel. Ein Palmenkletterer erntet sie; gefällt gibt sie einmal Holz.', vb:'-13 -25 26 28'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:25, cost:{}, r:7, hy:9, prod:'nahrung', every:6, plant:true, info:'Trägt Brotfrucht für Essen und Gärgrube, sein Milchsaft dichtet Kanus; gefällt gibt er Holz für Kanus.', vb:'-10 -21 20 23'},
@@ -74,7 +75,7 @@ const KINDS = {
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:10, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Ruft das Dorf und gibt den Takt.', vb:'-13 -10 26 14'},
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:14, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Festgestampfte Erde, mit Steinen eingefasst. Hier wird getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','faeller','taro','pulaka','pansammler','quelle','brunnen','regen','fisch','riff','kletterer','deckerin','schnur','taucher','toepfer','beil','flecht','oelhuette','gaergrube','harzer','umu','kalkbrenner','kurkumagarten','huehnerhof','weberin','malerin','duftoel','werft','sternhaus','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
+const ORDER = ['haus','faeller','taro','pulaka','pansammler','quelle','brunnen','regen','fisch','riff','kletterer','deckerin','schnur','taucher','toepfer','beil','flecht','oelhuette','gaergrube','harzer','umu','kalkbrenner','kurkumagarten','huehnerhof','weberin','malerin','duftoel','werft','sternhaus','pfahl','steg','speicher','pflanzer','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','fale','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz'];
 /* What grows and lives on an island only where people have brought it: the canoe plants and the pigs. Coconut palms and
    pandanus drift ashore by themselves, the forest is there. A new island has none of these; what is not in the canoe that
    founds the village is missing there until a canoe brings it. take: what leaves the store with it. */
@@ -116,13 +117,17 @@ const NEEDS = [
   {k:'matten', lvl:2, from:30, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Baue eine Flechthütte bei den Pandanus.'}},
   {k:'oel', lvl:2, from:50, rate:.04, hint:{hoch:'Baue einen Palmenkletterer und eine Ölhütte.', atoll:'Baue einen Palmenkletterer und eine Ölhütte.'}},
   {k:'speisen', lvl:2, from:0, rate:.3, hint:{hoch:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.', atoll:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.'}},
-  {k:'tapa', lvl:3, from:40, rate:.06, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln. Schick es mit einem Kanu her.'}},
-  {k:'schweine', lvl:3, from:40, rate:.04, hint:{hoch:'Baue einen Schweinepferch.', atoll:'Schweine kommen von hohen Inseln. Schick sie mit einem Kanu her.'}},
-  {k:'kava', lvl:3, from:40, rate:.03, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Kavahain.', atoll:'Kava wächst auf hohen Inseln. Schick sie mit einem Kanu her.'}},
-  {k:'schmuck', lvl:3, from:40, rate:.02, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt als Gegengabe von einem Clan vom Riff.', atoll:'Baue eine Schmuckschleiferei am Strand. Sie braucht Klingen.'}}
+  {k:'tapa', lvl:3, from:0, rate:.3, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln.'}},
+  {k:'schweine', lvl:3, from:0, rate:.2, hint:{hoch:'Baue einen Schweinepferch und gib den Tieren Futter.', atoll:'Schweine kommen von hohen Inseln.'}},
+  {k:'kava', lvl:3, from:0, rate:.2, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Kavahain.', atoll:'Kava wächst auf hohen Inseln.'}},
+  {k:'schmuck', lvl:3, from:0, rate:.1, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt von einem Clan.', atoll:'Baue eine Schmuckschleiferei am Strand.'}},
+  {k:'feinmatten', lvl:3, from:0, rate:.1, hint:{hoch:'Baue eine Feinweberin. Sie braucht Matten.', atoll:'Baue eine Feinweberin. Sie braucht Matten.'}},
+  {k:'bemtapa', lvl:3, from:0, rate:.15, hint:{hoch:'Baue eine Tapamalerin. Sie braucht Tapa und Kurkuma.', atoll:'Bemalte Tapa kommt von hohen Inseln.'}},
+  {k:'duftoel', lvl:3, from:0, rate:.15, hint:{hoch:'Baue eine Duftölhütte bei Blumen.', atoll:'Baue eine Duftölhütte bei Blumen.'}}
 ];
 const LEVEL_NAMES = ['', 'Weiler', 'Dorf', 'Häuptlingsdorf'];
-const CHIEF = {pop:40, mana:20, beauty:10, cap:6};   // what it takes to become a chief's village, and the room per house there
+const VILLAGE_POP = 30;   // a hamlet up to about thirty, then a village
+const CHIEF = {pop:50, mana:20, beauty:10, cap:6, isle:80};   // a chief's village: people, standing, beauty, room per house there, and an island that carries at least 80   // what it takes to become a chief's village, and the room per house there
 
 /* Standing (mana) comes from feasts and gifts and fades slowly */
 const FEASTS = [
