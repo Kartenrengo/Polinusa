@@ -34,6 +34,7 @@ Sie landet in `dist/polinusa.html`.
 | `src/fleet.js` | Kanus: Wege um Land herum, Nebel lichten, Handelsketten, Kanuhaus, Proviant |
 | `src/calendar.js` | Zwölf Monde, Jahreszeiten, Palolo, Rāhui, Fest der Plejaden |
 | `src/fleetui.js` | Tafeln für Kanu, Flotte, Handelskette, Kanuhaus, Kalender und Fest |
+| `src/homes.js` | Familien, Häuser und ihre Stufen, Zuzug, Arbeit nach Familien |
 | `src/game.js` | Wirtschaft, Baustellen, Menschen, Eingabe, Hauptschleife |
 
 Die Dateien sind einfache Skripte mit gemeinsamem globalem Bereich. Sie werden in dieser Reihenfolge geladen.
@@ -152,18 +153,48 @@ das auch für Arbeitsplätze auf einem Motu, auf dem niemand wohnt. Ohne Einbaum
 Arbeitsplatz bleibt leer. Über ihm schwebt dann ein Einbaum in der Sprechblase. Die Einbäume paddeln sichtbar hin und her.
 Der Steg zeigt beim Bauen von selbst zum Wasser.
 
-## Arbeit, Bauleute und die Übersicht
+## Haushalte und Familien
 
-Vorbild sind Manor Lords und Foundation. Etwa sieben von zehn Bewohnern können arbeiten, Kinder und Alte nicht. Jede
-Arbeitskraft wird einer Aufgabe zugeteilt, und **jeder Bewohner ist auf der Karte eine Figur**: 16 Bewohner sind 16 Figuren.
-Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt dann, wie viele.
+Wie bei Anno zählt jedes Haus für sich: Wer hat, was er braucht, holt Leute nach.
 
-- **Wer wo arbeitet:** Über jedem Arbeitsplatz hängt nah herangezoomt ein kleines Schild mit einer Figur je Platz: dunkel
-  bei der Arbeit, gelb auf dem Weg, leer für einen freien Platz, durchgestrichen, wo du den Platz geschlossen hast. Wer
-  arbeitet, hält sein Werkzeug: Steinbeil für Bauleute, Holzfäller und Kanubauer, Grabstock für Feld und Pflanzer, Speer
-  für Fischer. Alte gehen mit Stock und haben graues Haar, Kinder sind kleiner.
-- **Ohne Arbeit:** Neben der Bewohnerzahl oben steht, wie viele keine Arbeit haben. Antippen zeigt sie nacheinander auf
-  der Karte, mit Namen.
+- **Familien:** Jeder Mensch gehört zu einer Familie. Eine Familie trägt den Namen der Frau, die sie gegründet hat; die
+  frühen Lapita lebten wohl dort, wo die Familie der Frau lebte. Die Ankunft bringt fünf Familien, 17 Menschen: je eine
+  Frau und ein Mann, Kinder, dazu zwei Alte.
+- **Dach:** Ein Haus ist das Zuhause einer Familie. Wer keines hat, schläft unter Matten beim Versammlungshaus; über dem
+  Versammlungshaus schwebt dann ein Hauszeichen, oben steht „5 ohne Dach“. Ist ein Haus fertig, zieht die größte Familie
+  ohne Dach ein. Wird lange kein Haus gebaut, zieht einer von ihnen fort.
+- **Grundbedürfnisse:** Dach, Nahrung und Wasser. Ein Haus antippen zeigt seine Familie mit Namen und Alter und ihre
+  Bedürfnisse als kleine Zeichen: grün erfüllt, gelb knapp, rot fehlt. Über einem Haus schwebt, was seiner Familie fehlt.
+- **Zuzug:** Alle 6 Sekunden wächst das Dorf um einen Menschen, und zwar dort, wo es passt: Ein leeres Haus zieht eine neue
+  Familie an, sonst wächst die Familie mit dem meisten Platz, deren Bedürfnisse erfüllt sind. Fehlt Nahrung oder Wasser,
+  wächst niemand, und nach einer Weile ziehen Leute fort.
+- **Zu voll:** Wird ein Haus zu eng, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in das nächste leere
+  Haus.
+- **Zweite Stufe, Familie der Tufunga:** Tufunga heißen in Tonga und Samoa die Meister eines Handwerks. Liegen Töpfe,
+  Matten und Kokosöl im Lager und hat eine Familie, was sie braucht, baut sie ihr Haus aus (1 Holz, 1 Matte): eine Tapa an
+  der Tür, zwei geschnitzte Pfosten, Platz für 6. Dafür braucht sie fortan auch Töpfe, Matten und Kokosöl; fehlt eines
+  eine halbe Minute lang, lebt sie wieder einfach.
+
+## Arbeit nach Familien
+
+Vorbild ist Manor Lords: Eine Familie arbeitet an einem Ort. Ihre Erwachsenen arbeiten dort, so viele der Ort Plätze hat;
+die übrigen und alle Familien ohne Arbeitsplatz bauen, tragen und sammeln. Etwa sieben von zehn Menschen können arbeiten,
+Kinder und Alte nicht. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht genau zu dem Ort, an dem ihre
+Familie arbeitet.
+
+- **Automatisch:** Ohne dein Zutun gehen die Familien dorthin, wo sie gebraucht werden: erst Wasser und Essen, dann Meer,
+  Holz, Handwerk und Kanus. Wird gebaut, bleibt eine Familie frei für die Baustellen. Fehlt Wasser oder Essen, wechselt eine
+  Familie vom Handwerk dorthin.
+- **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, welche Familie dort arbeitet, und ihre Leute mit Namen. Mit „+“
+  schickst du die größte freie Familie hin, mit „−“ ziehst du sie ab. Dann wird die Insel von Hand verteilt; in der
+  Übersicht schaltet „Automatisch“ zurück.
+- **Übersicht:** Bewohner und Familien, wer ohne Dach ist, der Zuzug, und unter „Familien und Arbeit“ jede Familie mit Haus,
+  Stufe, was ihr fehlt und wo sie arbeitet, dazu die Arbeitsplätze ohne Familie.
+- **Wer macht was:** Im Lager steht neben jeder Ware „Wer?“. Das zeigt jeden Ort, der sie macht oder braucht, mit Familie
+  und Namen. **Ein Tipp auf einen Namen fliegt zur Person** auf der Karte und sagt, wer sie ist und was sie tut.
+- **Bauleute:** Jede Baustelle braucht 2 Leute. Sie kommen aus den Familien ohne Arbeitsplatz und gehen sichtbar hinüber.
+  Erst holen sie das Holz aus dem Lager, ein Stück pro Gang, dann bauen sie. Gebaut wird nur, solange Bauleute an der
+  Baustelle sind, und nur so weit, wie Holz da ist.
 - **Jede Arbeit sieht anders aus:** Wer am Arbeitsplatz ist, arbeitet sichtbar. Am Feld stößt der Grabstock in die Erde,
   der Holzfäller schlägt Späne, die Bauleute hämmern mit dem Steinbeil, in der Töpferei wächst ein Topf unter den Händen,
   in der Beilwerkstatt wird ein Beil auf Sandstein geschliffen, der Klingenschläger schlägt Splitter vom Obsidian, in der
@@ -171,30 +202,13 @@ Erst ab 80 Menschen auf einer Insel bleiben einige zu Hause, die Übersicht sagt
   der Klöppel Rinde dünn, im Kavagarten wird die Wurzel gestampft, in der Schmuckschleiferei läuft der Bogenbohrer, am Pferch
   fliegt Taro zu den Schweinen, an der Gärgrube werden Bananenblätter ausgelegt, der Pflanzer kniet, die Riffsammler waten.
   Handwerk geschieht im Sitzen auf einer Matte.
-- **Antippen:** Eine Figur antippen zeigt ihren Namen und was sie tut („Lupe · Bau Haus · holt Holz“) und öffnet ihren
-  Arbeitsplatz. Ist ein Gebäude gewählt, tragen seine Leute eine kleine Marke über dem Kopf.
-- **Reihenfolge:** In der Übersicht (Bewohnerzahl oder die Zeile darunter antippen) legst du fest, welche Arbeit zuerst
-  Leute bekommt: Bauen, Feldfrüchte, Fisch und Meer, Holz, Kanubau, Handwerk. Innerhalb jeder Gruppe zuerst das Älteste.
-  Unter jeder Gruppe stehen ihre Arbeitsplätze mit denselben Figuren wie auf den Schildern.
-- **Bauleute:** Jede Baustelle braucht 2 Leute. Sie kommen aus der Arbeit, die weiter unten steht, und gehen sichtbar
-  hinüber. Erst holen sie das Holz aus dem Lager, ein Stück pro Gang, dann bauen sie. **Gebaut wird nur, solange Bauleute an
-  der Baustelle sind, und nur so weit, wie Holz da ist.** Ein Speicher in der Nähe spart Wege. Ist die Baustelle fertig,
-  kehren sie zurück.
 - **Baustellen:** Erst markieren Pflöcke und eine Schnur den Platz. Daneben liegt das Holz, das schon gebracht wurde. Dann
   wächst das Gebäude vom Boden nach oben, und der Holzstapel wird kleiner. Ein Haus dauert etwa 40 bis 50 Sekunden mit den
   Wegen, das Versammlungshaus gut zwei Minuten.
 - **Wer da ist, arbeitet:** Eine Werkstatt oder ein Feld erzeugt erst, wenn die Leute angekommen sind. Fischer paddeln im
   Einbaum hinaus und kommen mit dem Fang zurück, Riffsammler waten im flachen Wasser. Auf einem Atoll paddeln die Leute
   im Einbaum über die Lagune zu ihrem Motu.
-- **Weniger Arbeiter:** In jedem Gebäude lässt sich die Zahl der Arbeiter begrenzen, bis auf null. Mit halber Besetzung geht
-  die Arbeit halb so schnell.
 - **Die Arbeit läuft weiter,** auch wenn die Karte nicht gezeichnet wird: Die Schritte der Leute werden dann nachgeholt.
-- **Gebäude-Tafeln** sind kurz: oben die Leute mit Namen, eine Zeile mit Zustand und Ertrag, alles Weitere unter „Mehr dazu“.
-- **Die Zeile oben** zeigt immer: wie viele arbeiten und wie viele bauen, wie lange das knappste Essen noch reicht, und wann
-  der Nächste zuzieht.
-- **Die Übersicht** zeigt Bewohner (arbeiten, ohne Arbeit, Kinder, Alte), den Zuzug (alle 6 Sekunden jemand, solange Platz
-  ist und nichts fehlt), die Arbeit nach Reihenfolge mit allen Arbeitsplätzen, für jedes Essen Lager, Erzeugung, Verbrauch
-  und Reichweite, und den weiteren Bedarf.
 
 ## Während ihr fort wart
 

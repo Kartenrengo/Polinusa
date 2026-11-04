@@ -104,34 +104,10 @@ const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) 
 const WORK_SHARE = .7, GROW_EVERY = 3;   // a new person moves in every third tick while there is room and nothing is missing
 const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.pop * WORK_SHARE);
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
-const PRIO = [{id:'bau', n:'Bauen'}, {id:'essen', n:'Feldfrüchte'}, {id:'meer', n:'Fisch und Meer'}, {id:'holz', n:'Holz'}, {id:'boot', n:'Kanubau'}, {id:'handwerk', n:'Handwerk'}];
-const prioOf = I => I.prio && I.prio.length === PRIO.length ? I.prio : (I.prio = PRIO.map(q => q.id));
 const catOf = b => { const K = KINDS[b.kind]; return K.prod === 'nahrung' || K.prod === 'kokos' || K.prod === 'wasser' ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };
-const capOf = b => { const K = KINDS[b.kind], mc = b.v && b.v.mc; return mc == null ? K.crew || 0 : Math.min(K.crew || 0, mc); };
-function staff(I){
-  let free = workers(I); const crew = new Map(), sites = [], boats = [], staffed = new Set(), cats = {}; let yard = 0;
-  const give = (b, want, cat) => { const n = Math.max(0, Math.min(want, free)); cats[cat] = cats[cat] || {used:0, want:0}; cats[cat].want += want; if (n){ crew.set(b, (crew.get(b) || 0) + n); free -= n; cats[cat].used += n; } return n; };
-  const siteList = I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).slice(0, builders(I));
-  const yardB = I.yard && I.buildings.find(b => b.kind === 'werft' && !b.bt);
-  for (const cat of prioOf(I)){
-    if (cat === 'bau'){ for (const b of siteList) if (give(b, SITE_CREW, cat)) sites.push(b); continue; }
-    if (cat === 'boot'){
-      if (yardB) yard = give(yardB, YARD_CREW, cat);
-      for (const b of I.buildings) if (b.kind === 'steg' && b.boat > 0 && !b.bt && give(b, 1, cat)) boats.push(b);
-      for (const b of I.buildings) if (b.kind === 'sternhaus' && !b.bt && give(b, capOf(b), cat)) staffed.add(b);
-      continue;
-    }
-    for (const b of I.buildings.filter(q => KINDS[q.kind].crew && !q.bt && catOf(q) === cat)){
-      if (b.boat > 0){ if (give(b, 1, cat)) boats.push(b); continue; }   // first the fisher carves his dugout
-      if (unserved(I, b) || b.fallow) continue;
-      if (give(b, capOf(b), cat)) staffed.add(b);
-    }
-  }
-  const build = sites.reduce((t, b) => t + crew.get(b), 0) + yard + boats.length;
-  const short = I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !(b.boat > 0) && (crew.get(b) || 0) < capOf(b) && !unserved(I, b)).length;
-  return I.staff = {key:staffKey(I), crew, sites, yard, boats, staffed, cats, free, total:workers(I), build, short};
-}
-const staffKey = I => [tick, I.pop, I.people ? I.people.filter(isAdult).length : '', I.buildings.length, I.buildings.filter(b => b.bt).length, I.buildings.filter(b => b.boat > 0).length, !!I.yard, prioOf(I).join(), I.buildings.reduce((t, b) => t + ((b.v && b.v.mc) != null ? b.v.mc + 1 : 0), 0)].join();
+const capOf = b => KINDS[b.kind].crew || 0;
+/* staff() is in homes.js: work goes by family */
+const staffKey = I => [tick, I.pop, I.people ? I.people.filter(isAdult).length : '', I.buildings.length, I.buildings.filter(b => b.bt).length, I.buildings.filter(b => b.boat > 0).length, !!I.yard, I.handWork ? 1 : 0, famsOf(I).map(f => f.id + ':' + f.job + ':' + f.home).join()].join();
 const staffOf = I => I.staff && I.staff.key === staffKey(I) ? I.staff : staff(I);
 const activeSites = I => staffOf(I).sites;
 const crewAt = (I, b) => staffOf(I).crew.get(b) || 0;
@@ -178,15 +154,16 @@ let nameNo = 0, initSync = false;
 const CHILD_Y = 6, OLD_Y = 40, MORE_NAMES = ['Ngaru', 'Hau', 'Marama', 'Ahi', 'Ua', 'Masina', 'Matagi', 'Sau', 'Tala', 'Hiva', 'Kahu', 'Atea', 'Fetu', 'Moe', 'Rongo', 'Tavake', 'Ngaio', 'Peka', 'Uru', 'Vailea', 'Toki', 'Lino', 'Tiki', 'Ono', 'Fiti'];
 const ageOf = p => (tick - p.b) / YEAR, stageOf = p => { const a = ageOf(p); return a < CHILD_Y ? 'kid' : a < OLD_Y ? 'adult' : 'old'; };
 let nextPid = 1, lifeLog = null;   // lifeLog: while missed time is made up, births and deaths are counted here
-function person(I, age, name){
+function person(I, age, name, sex){
   const pool = PEOPLE_NAMES.concat(MORE_NAMES);
-  return {id:nextPid++, n:name || pool[Math.floor(Math.random() * pool.length)], b:tick - Math.round(age * YEAR), l:Math.round((44 + Math.random() * 14) * YEAR), a:age >= CHILD_Y ? 1 : 0};
+  return {id:nextPid++, n:name || pool[Math.floor(Math.random() * pool.length)], b:tick - Math.round(age * YEAR), l:Math.round((44 + Math.random() * 14) * YEAR), a:age >= CHILD_Y ? 1 : 0, s:sex || (Math.random() < .5 ? 'f' : 'm'), h:0};
 }
 /* a village's first people: mostly grown-ups, some children, a few old ones */
-function seedPeople(I, n){ const P = []; for (let i = 0; i < n; i++){ const k = i % 7; P.push(person(I, k === 4 ? 1 + Math.random() * 6 : k === 6 ? 40 + Math.random() * 6 : 14 + Math.random() * 24)); } return P; }
+function seedPeople(I, n){ if (I.settled) return seedFamilies(I, n); const P = []; for (let i = 0; i < n; i++){ const k = i % 7; P.push(person(I, k === 4 ? 1 + Math.random() * 6 : k === 6 ? 40 + Math.random() * 6 : 14 + Math.random() * 24)); } return P; }
 /* someone new: in a village with families mostly born, otherwise moved in; a child often gets an ancestor's name */
 function newcomer(I){
-  const adults = I.people.filter(p => stageOf(p) === 'adult').length, baby = adults >= 2 && I.people.length >= 10 && Math.random() < .35;
+  const g = I._growTo && findB(I._growTo), f = g && famOfHome(I, g), parents = f ? famAdults(I, f).length : 0;
+  const baby = parents >= 2 && Math.random() < .6;   // a family with parents mostly grows by its children; an empty house draws grown-ups
   const anc = I.ahnen || [], name = baby && anc.length && Math.random() < .4 ? anc[Math.floor(Math.random() * anc.length)][0] : null;
   if (baby){ if (lifeLog) lifeLog.born++; } else if (lifeLog) lifeLog.came++;
   return person(I, baby ? 0 : 14 + Math.random() * 20, name);
@@ -195,8 +172,16 @@ function newcomer(I){
 function syncPeople(I){
   if (!I.settled) return;
   if (!I.people) I.people = seedPeople(I, I.pop);
-  while (I.people.length < I.pop) I.people.push(newcomer(I));
-  while (I.people.length > I.pop){ const ad = I.people.filter(p => stageOf(p) === 'adult'), free = ad.filter(p => !p.w), list = free.length ? free : ad.length ? ad : I.people; const p = list[Math.floor(Math.random() * list.length)]; I.people.splice(I.people.indexOf(p), 1); }   // the married stay with their family
+  while (I.people.length < I.pop){ const p = newcomer(I); placePerson(I, p); I.people.push(p); }
+  while (I.people.length > I.pop){
+    // those without a roof go first, then a grown-up of the biggest family; the married stay with their family
+    const roof = new Set(famsOf(I).filter(f => f.home).map(f => f.id)), ad = I.people.filter(p => stageOf(p) === 'adult' && !p.w);
+    const out = I.people.filter(p => !roof.has(p.h)), size = p => I.people.filter(q => q.h === p.h).length;
+    const list = out.length && (I._leaveRoofless || !ad.length) ? out : ad.length ? ad.sort((a, b) => size(b) - size(a)).slice(0, 3) : I.people;
+    const p = list[Math.floor(Math.random() * list.length)]; I.people.splice(I.people.indexOf(p), 1);
+  }
+  I._leaveRoofless = false;
+  syncFamilies(I);
 }
 const isAdult = p => stageOf(p) === 'adult';
 /* Growing up, growing old, dying, and the chief */
@@ -484,7 +469,7 @@ function syncWalkers(){
 /* Your villages: one figure for each person, workers at their places, the rest about the village */
 function syncFolk(I, homes, mine){
   syncPeople(I);
-  const sf = staffOf(I), slots = []; for (const [b, n] of sf.crew) for (let i = 0; i < n; i++) slots.push(jobFor(I, b, i));
+  const sf = staffOf(I);
   // a very big village: some stay in their houses, the old first, then children, then those without work
   const stage = new Map(I.people.map(p => [p.id, stageOf(p)])), order = I.people.slice().sort((a, b) => ({adult:0, kid:1, old:2})[stage.get(a.id)] - ({adult:0, kid:1, old:2})[stage.get(b.id)]);
   const shown = new Set(order.slice(0, MAX_FIG).map(p => p.id)); I.inside = I.people.length - shown.size;
@@ -497,21 +482,21 @@ function syncFolk(I, homes, mine){
     if (st !== 'adult'){ if (w.job || w.role !== st) freeFig(w); w.role = st; w.child = st === 'kid'; w.old = st === 'old'; }
     else { w.child = w.old = false; if (w.role === 'kid' || w.role === 'old') freeFig(w); }
   }
-  const adults = [...keep].filter(w => !w.child && !w.old), want = new Map(slots.map(j => [j.key, j])), loose = [];
-  for (const w of adults){ const j = w.job && want.get(w.job.key); if (j){ w.job = j; want.delete(j.key); } else loose.push(w); }
-  for (const j of want.values()){
-    if (!loose.length) break;
-    let bi = 0, bd = Infinity;
-    loose.forEach((w, i) => { const d = (w.job && w.job.b === j.b ? 0 : 1e6) + Math.hypot(w.x - j.x, w.y - j.y); if (d < bd){ bd = d; bi = i; } });
-    const w = loose.splice(bi, 1)[0]; if (initSync){ w.x = w.tx = j.x + rnd(6); w.y = w.ty = j.y + rnd(3); } setJob(I, w, j);
+  // each place is worked by the people of the family sent there: the figure of each person walks to their own place
+  const adults = [...keep].filter(w => !w.child && !w.old), pidJob = new Map();
+  for (const [b, ids] of sf.crewP || []) ids.forEach((id, i) => pidJob.set(id, jobFor(I, b, i)));
+  for (const w of adults){
+    const j = pidJob.get(w.pid);
+    if (!j){ if (w.job || w.role !== 'idle') freeFig(w); continue; }
+    if (w.job && w.job.key === j.key){ w.job = j; continue; }
+    if (initSync){ w.x = w.tx = j.x + rnd(6); w.y = w.ty = j.y + rnd(3); } setJob(I, w, j);
   }
-  for (const w of loose) if (w.role !== 'idle') freeFig(w);
   if (mine.some(w => !keep.has(w))) walkers = walkers.filter(w => w.isl !== I.id || keep.has(w));   // the dead and those who left go, even when others came at the same time
 }
 function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syncWalkers(); } finally { initSync = false; } }
 /* Who someone is and what they do, for a tap on a figure */
 const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.people.find(p => p.id === w.pid) : null; };
-const whoIs = w => { const p = personOf(w), I = isl(w.isl); return p ? `${I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre` : w.name; };
+const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
   if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
@@ -800,8 +785,8 @@ function workState(I, b){
   if (SEA_KINDS.has(b.kind) && cycloneOver(I)) return {why:'storm', text:'Sturm: Niemand fährt hinaus, die Kanus liegen an Land.'};
   if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Ein Kanusteg bringt die Leute hin, jeder Steg für bis zu 4 Plätze.'};
   if (K.crew && I.settled && !crewAt(I, b)){
-    const sf = staffOf(I), pr = prioOf(I), building = sf.build > 0 && pr.indexOf('bau') < pr.indexOf(catOf(b));
-    return {why:'crew', text:capOf(b) === 0 ? 'Du hast die Arbeit hier angehalten.' : building ? 'Die Leute bauen gerade. Danach kommen sie zurück.' : 'Es fehlen Leute. Andere Arbeit geht vor, oder das Dorf muss wachsen.'};
+    const f = famsOf(I).find(q => q.job === b.id);
+    return {why:'crew', text:f ? `${famName(f)} hat gerade keine Erwachsenen frei.` : autoWork(I) ? 'Keine Familie ist frei. Das Dorf muss wachsen, oder andere Arbeit ruht.' : 'Keine Familie arbeitet hier. Tippe auf +.'};
   }
   if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
@@ -840,18 +825,20 @@ function workUse(I, k){
   }
   return u;
 }
-const needActive = (I, N) => N.lvl < 3 ? I.pop >= N.from : I.lvl === 3;
+/* basic needs hold for everyone, the second step's for the families of the tufunga, the chief's for a chief's village */
+const needActive = (I, N) => N.lvl === 1 ? true : N.lvl === 2 ? tier2Pop(I) > 0 : I.lvl === 3;
+const needPop = (I, N) => N.lvl === 2 ? tier2Pop(I) : I.pop;
 /* Food is everything people eat; any other need is one good */
 const ofNeed = (k, f) => k === 'essen' ? FOODS.reduce((t, q) => t + f(q), 0) : f(k);
 const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
 function needsOf(I){
   const list = NEEDS.filter(N => needActive(I, N)).map(N => {
-    const use = I.pop * N.rate, work = ofNeed(N.k, q => workUse(I, q)), make = ofNeed(N.k, q => makeRate(I, q)), stock = haveOf(I, N.k), all = use + work;
+    const use = needPop(I, N) * N.rate, work = ofNeed(N.k, q => workUse(I, q)), make = ofNeed(N.k, q => makeRate(I, q)), stock = haveOf(I, N.k), all = use + work;
     const state = make >= all ? 'ok' : stock > 0 ? 'low' : 'out';
     return {N, k:N.k, use, work, make, stock, state, mins:make < all ? stock / (all - make) : Infinity};
   });
-  const cap = popCap(I), missing = list.filter(n => n.state === 'out');
-  return {list, cap, missing, full:I.pop >= cap, atMax:I.pop >= islandMax(I), next:NEEDS.find(N => !needActive(I, N)), growing:I.pop < cap && !missing.length && haveOf(I, 'essen') > 0};
+  const cap = popCap(I), missing = list.filter(n => n.state === 'out'), roomy = homesOf(I).some(b => !famOfHome(I, b) || membersOf(I, famOfHome(I, b)).length < homeCap(I, b));
+  return {list, cap, missing, full:!roomy, atMax:I.pop >= islandMax(I), roofless:roofless(I), next:NEEDS.find(N => !needActive(I, N)), growing:!!growTarget(I, list)};
 }
 /* Level: a village from 20 people; a chief's village with enough people, standing, pots and mats. It stays one while its needs hold. */
 function updateLevel(I, nd){
@@ -929,7 +916,7 @@ function econ(){
     I.owe = I.owe || {};
     for (const N of NEEDS){
       if (!needActive(I, N)) continue;
-      I.owe[N.k] = (I.owe[N.k] || 0) + I.pop * N.rate / PER_MIN;
+      I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate / PER_MIN;
       const take = Math.floor(I.owe[N.k]); if (take <= 0) continue; I.owe[N.k] -= take;
       if (N.k !== 'essen'){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
       // people eat what there is most of
@@ -937,11 +924,12 @@ function econ(){
     }
     let nd = needsOf(I);
     updateLevel(I, nd); nd = needsOf(I);
-    if (nd.growing && tick % GROW_EVERY === 0){ I.pop = Math.min(nd.cap, I.pop + (I.joyUntil > tick ? 2 : 1)); heartAt(I); }
-    else if (I.pop > nd.cap) I.pop--;   // when houses shrink back, people move away one by one
-    // without food people leave, slowly, but a few always stay
-    I.hunger = nd.missing.some(n => n.k === 'essen') ? (I.hunger || 0) + 1 : 0;
-    if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; }
+    // the village grows house by house, where the needs of the family there are met
+    if (tick % GROW_EVERY === 0) for (let n = I.joyUntil > tick ? 2 : 1; n > 0; n--){ const b = growTarget(I, nd.list); if (!b) break; I._growTo = b.id; I.pop++; syncPeople(I); I._growTo = 0; heartAt(I, b); }
+    tierTick(I, nd.list); rooflessTick(I);
+    // without food or water people leave, slowly, but a few always stay
+    I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : 0;
+    if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; syncPeople(I); }
   }
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
@@ -1037,10 +1025,10 @@ function done(I, b){
   if (!K.plant && !K.path && I.id === active){ toast(`${K.n} ist fertig.`, 1600); sfx('knock'); }
   syncWalkers(); checkQuest();
 }
-function heartAt(I){
+function heartAt(I, at){
   if (lod === 'far' || !boxIn(I.box, view(60))) return;
   const hs = I.buildings.filter(b => b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle'); if (!hs.length) return;
-  const b = hs[Math.floor(Math.random() * hs.length)];
+  const b = at || hs[Math.floor(Math.random() * hs.length)];
   hearts.push({x:b.x + (Math.random() - .5) * 8, y:b.y - KINDS[b.kind].hy - 10, t0:performance.now() + Math.random() * 600});
 }
 
@@ -1249,12 +1237,14 @@ function awayMinute(I, R){
   I.owe = I.owe || {};
   for (const N of NEEDS){
     if (!needActive(I, N)) continue;
-    I.owe[N.k] = (I.owe[N.k] || 0) + I.pop * N.rate; const take = Math.floor(I.owe[N.k]); I.owe[N.k] -= take;
+    I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate; const take = Math.floor(I.owe[N.k]); I.owe[N.k] -= take;
     if (N.k !== 'essen'){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
     for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
   }
   let nd = needsOf(I); updateLevel(I, nd); nd = needsOf(I);
-  if (nd.growing) I.pop = Math.min(nd.cap, I.pop + Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1));
+  // a minute away: the village grows house by house as at home, the houses rise or fall
+  for (let n = Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1); n > 0; n--){ const b = growTarget(I, needsOf(I).list); if (!b) break; I._growTo = b.id; I.pop++; syncPeople(I); I._growTo = 0; }
+  for (let k = 0; k < 3; k++) tierTick(I, needsOf(I).list, true);
   I.hunger = 0; syncPeople(I); lifeTick(I); navTick(I, 30);
 }
 function catchUp(ms){

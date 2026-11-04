@@ -12,7 +12,9 @@ const fleetOf = kind => own().filter(s => s.kind === kind).length;
 const QUESTS = [
   {id:'holz', t:'Holz schlagen', d:'Baue einen Holzfäller am Waldrand.', why:'Alles wird aus Holz gebaut. Jeder Baum gibt 3 Holz. Der Stumpf treibt erst spät wieder aus.',
     n:() => count('heimat', 'faeller'), of:1, show:{build:'faeller'}, unlock:[], gift:{holz:2}},
-  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Jedes Haus gibt 4 Menschen ein Zuhause. An jeder Baustelle arbeiten 2 Leute.',
+  {id:'wasser', t:'Wasser holen', d:'Baue eine Quelle am Bach oder einen Regenfang.', why:'Jeder Mensch braucht Wasser. Ohne Wasser wächst niemand zu, und bald ziehen Leute fort.',
+    n:() => count('heimat', 'quelle') + count('heimat', 'regen') + count('heimat', 'brunnen'), of:1, get show(){ return {build:isl('heimat') && isl('heimat').river ? 'quelle' : 'regen'}; }, unlock:[], gift:{wasser:6}},
+  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Jedes Haus ist das Zuhause einer Familie. Wer kein Dach hat, schläft beim Versammlungshaus. An jeder Baustelle arbeiten 2 Leute.',
     n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:['taro'], gift:{holz:3}},
   {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Taro, Brotfrucht, Fisch und Kokos zählen alle als Nahrung. Mit Nahrung und freien Häusern ziehen Leute zu.',
     n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:['baum', 'palme', 'fisch'], gift:{nahrung:4}},

@@ -250,9 +250,10 @@ function closeSheet(){ endSteer(); if (!sheetKind) return; if (sheetKind === 'ev
 function endSteer(){ if (mode === 'steer'){ mode = 'idle'; selShip = null; requestDraw(); } }
 const perMin = v => v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
 function growText(I, nd){
+  if (nd.roofless) return `${nd.roofless} ${nd.roofless === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach. Baut Häuser.`;
   if (nd.missing.length) return `Das Dorf wächst nicht, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
   if (nd.atMax) return `Die Insel ist voll: Mehr als ${islandMax(I)} Menschen trägt sie nicht.`;
-  if (nd.full) return 'Alle Häuser sind voll.';
+  if (nd.full) return 'Alle Häuser sind voll. Ein neues Haus zieht eine Familie an.';
   return 'Das Dorf wächst.';
 }
 /* The patterns an island knows: its own first, then the borrowed ones and how long they last without new pots */
@@ -270,7 +271,7 @@ function needsMarkup(I){
   // people and who comes next
   h += `<p class="sec">Bewohner</p><ul class="list needs">`;
   const P = I.people || [], kids = P.filter(p => stageOf(p) === 'kid').length, rest = kids + P.filter(p => stageOf(p) === 'old').length;
-  h += row('pop', `${I.pop} Bewohner`, `${sf.total - sf.free} arbeiten, ${sf.free} ohne Arbeit, ${kids} Kinder, ${rest - kids} Alte${I.inside ? `, ${I.inside} davon zu Hause` : ''}. Platz für ${nd.cap}, die Insel trägt höchstens ${islandMax(I)}.`, bar(I.pop / Math.max(1, nd.cap)), nd.full ? chip('low', 'voll') : chip('ok', `${nd.cap - I.pop} frei`));
+  h += row('pop', `${I.pop} Bewohner, ${famsOf(I).length} Familien`, `${sf.total - sf.free} arbeiten, ${sf.free} frei, ${kids} Kinder, ${rest - kids} Alte${nd.roofless ? `, ${nd.roofless} ohne Dach` : ''}. Häuser für ${nd.cap}, die Insel trägt höchstens ${islandMax(I)}.`, bar(I.pop / Math.max(1, nd.cap)), nd.roofless ? chip('out', `${nd.roofless} ohne Dach`) : nd.full ? chip('low', 'voll') : chip('ok', `${Math.max(0, nd.cap - I.pop)} frei`));
   h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Die Menschen mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${I.ahnen.length} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li>`;
   h += row('pop', 'Zuzug', arrivalText(I, nd), '', nd.growing ? chip('ok', 'wächst') : chip(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll'), nd.growing ? '' : 'need');
   h += `</ul>`;
@@ -292,24 +293,15 @@ function needsMarkup(I){
     h += `</ul>`;
   }
   if (motifsOf(I).length || I.buildings.some(b => b.kind === 'toepfer')) h += `<p class="sec">Muster auf den Töpfen</p>${motifRows(I)}<p class="sub">${motifHelp(I)}</p>`;
-  // work in the order of the priorities, which can be changed
-  h += `<p class="sec">Arbeit nach Reihenfolge</p><ul class="list needs">`;
-  // every workplace with its marks, the same as over the buildings, grouped by kind
-  const on = presentAt(I), places = {};
-  for (const b of I.buildings){
-    const sl = slotsOf(I, b, sf, on); if (!sl) continue;
-    const cat = b.bt ? 'bau' : b.kind === 'werft' ? 'boot' : catOf(b), g = (places[cat] = places[cat] || {});
-    const name = b.bt ? KINDS[b.kind].n : b.kind === 'werft' ? 'Kanu' : b.boat > 0 ? 'Einbaum' : KINDS[b.kind].s;
-    (g[name] = g[name] || []).push(...sl);
+  // the families: where they live, what they lack, where they work; the work goes by itself or by hand
+  h += `<p class="sec">Familien und Arbeit</p><div class="rowx"><span class="sub">${autoWork(I) ? 'Die Familien gehen von selbst dorthin, wo sie gebraucht werden: Wasser und Essen zuerst.' : 'Du verteilst die Familien: auf der Tafel eines Arbeitsplatzes mit + und −.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
+  for (const f of famsOf(I).slice().sort((a, b) => (!a.home) - (!b.home) || a.id - b.id)){
+    const m = membersOf(I, f), fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out');
+    h += `<li class="${lack.length ? 'need' : ''}">${ic(f.home ? 'haus' : 'pop')}<span class="nm">${famName(f)}<small>${m.length} Menschen, ${famAdults(I, f).length} Erwachsene · ${f.home ? TIERS[famTier(I, f)].n : 'ohne Dach'} · ${famWork(I, f)}</small></span>${lack.length ? `<span class="state out">${lack.map(n => n.k === 'dach' ? 'Dach' : GN[n.k]).join(', ')}</span>` : ''}<button class="chip" type="button" data-act="fam" data-f="${f.id}">Ansehen</button></li>`;
   }
-  const marks = cat => Object.entries(places[cat] || {}).map(([n, sl]) => `<span class="wp">${n} ${sl.sort((a, b) => 'on way free off'.indexOf(a) - 'on way free off'.indexOf(b)).map(pipH).join('')}</span>`).join('');
-  prioOf(I).forEach((id, i, pr) => {
-    const P = PRIO.find(q => q.id === id), c = sf.cats[id] || {used:0, want:0}, short = c.used < c.want;
-    const what = c.want ? `${c.used} von ${c.want}` : id === 'bau' ? 'nichts im Bau' : 'nichts zu tun';
-    h += `<li class="${short ? 'need' : ''}"><b class="qty">${i + 1}.</b><span class="nm">${P.n}<small>${what}</small>${places[id] ? `<span class="wps">${marks(id)}</span>` : ''}</span><span class="chips"><button class="chip" type="button" data-act="pup" data-c="${id}" aria-label="${P.n} vor" ${i ? '' : 'disabled'}>▲</button><button class="chip" type="button" data-act="pdown" data-c="${id}" aria-label="${P.n} zurück" ${i < pr.length - 1 ? '' : 'disabled'}>▼</button></span></li>`;
-  });
-  h += row('', `${sf.free} ohne Arbeit`, sf.free ? 'Sie helfen, sobald es etwas zu tun gibt.' : 'Alle haben zu tun.', '', sf.short ? chip('out', `${sf.short} leer`) : chip('ok', 'reicht'));
-  h += `</ul><p class="sub">${pipH('on')} bei der Arbeit ${pipH('way')} auf dem Weg ${pipH('free')} frei ${pipH('off')} zu. Oben bekommt zuerst Leute. Wer baut, fehlt weiter unten.</p>`;
+  const open = placesOf(I).filter(b => !famsOf(I).some(f => f.job === b.id));
+  if (open.length) h += row('', `${open.length} ${open.length === 1 ? 'Arbeitsplatz' : 'Arbeitsplätze'} ohne Familie`, andList([...new Set(open.map(b => KINDS[b.kind].n))]), '', chip('out', 'leer'), 'need');
+  h += `</ul>`;
   // food: all of it together, what comes in and goes out and how long it lasts, then each kind of food
   const fn = nd.list.find(x => x.k === 'essen'), net = fn.make - fn.use - fn.work, left = net < 0 ? fn.stock / -net : Infinity;
   h += `<p class="sec">Nahrung</p><ul class="list needs">`;
@@ -342,9 +334,10 @@ const activeCount = I => I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).l
 function arrivalText(I, nd){
   if (nd.missing.length) return `Niemand zieht zu, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
   if (nd.atMax) return `Die Insel ist voll: ${islandMax(I)} Menschen trägt sie, mehr nicht, auch mit mehr Häusern. Siedler können anderswo ein Dorf gründen.`;
-  if (nd.full) return 'Die Häuser sind voll. Jedes neue Haus bringt 4 Menschen.';
-  const per = GROW_EVERY * TICK / 1000 / (I.joyUntil > tick ? 2 : 1), next = (GROW_EVERY - tick % GROW_EVERY) * TICK / 1000, room = nd.cap - I.pop;
-  return `Alle ${String(per).replace('.', ',')} Sekunden kommt jemand dazu, der Nächste in ${next} Sekunden. Noch ${room} ${room === 1 ? 'Platz' : 'Plätze'} frei, voll in etwa ${Math.ceil(room * per)} Sekunden.`;
+  if (nd.roofless && !nd.growing) return `${nd.roofless} ohne Dach warten auf ein Haus. Erst dann ziehen neue Familien zu.`;
+  if (nd.full) return 'Die Häuser sind voll. Ein leeres Haus zieht eine neue Familie an.';
+  const per = GROW_EVERY * TICK / 1000 / (I.joyUntil > tick ? 2 : 1), next = (GROW_EVERY - tick % GROW_EVERY) * TICK / 1000, g = growTarget(I, nd.list), f = g && famOfHome(I, g);
+  return `Alle ${String(per).replace('.', ',')} Sekunden kommt jemand dazu, der Nächste in ${next} Sekunden${f ? ` zu ${famName(f)}` : ' in ein leeres Haus'}.`;
 }
 /* The line under the goods: work, builders, how long the food lasts, the next arrival */
 /* One hint in the head band, the one that matters most now: food running out, nobody moving in, full houses, or growth */
@@ -352,6 +345,7 @@ function vitalLine(I){
   const nd = needsOf(I), ic = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>`;
   const fn = nd.list.find(x => x.k === 'essen'), fnet = fn.make - fn.use - fn.work, left = fnet >= 0 ? Infinity : fn.stock / -fnet;
   if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
+  if (nd.roofless) return `<span class="warn">${ic('haus')}${nd.roofless} ohne Dach</span>`;
   if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
   if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
@@ -364,7 +358,7 @@ function storeMarkup(I){
     return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have, sub:FOODS.includes(k)};
   }).filter(g => g.k === 'essen' || g.have || g.make || g.use);
   let h = head(`Lager auf ${I.name}`, `Platz für ${storeCap(I)} von jeder Ware. Mehr Platz gibt jeder Speicher.`);
-  h += `<ul class="list needs">${rows.map(g => `<li class="${g.sub ? 'sub-row' : ''}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span><b class="qty">${g.have}</b></li>`).join('')}</ul>`;
+  h += `<ul class="list needs">${rows.map(g => `<li class="${g.sub ? 'sub-row' : ''}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span><b class="qty">${g.have}</b>${g.k === 'essen' ? '' : `<button class="chip" type="button" data-act="ware" data-k="${g.k}" aria-label="Wer macht ${GN[g.k]}?">Wer?</button>`}</li>`).join('')}</ul>`;
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full');
   if (idle.length) h += `<p class="sub">Es stehen still: ${idle.map(b => `${KINDS[b.kind].n} (${b.idle.text.replace(/\.$/, '')})`).join(', ')}.</p>`;
   return h;
@@ -435,10 +429,38 @@ const shortWhy = w => w.why === 'use' ? `kein ${G1[w.k]}` : w.why === 'near' ? `
 const secsText = s => s < 90 ? `${Math.max(1, Math.ceil(s))} s` : `${Math.round(s / 60)} min`;
 function crewMarkup(I, b){
   const sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl) return '';
-  const K = KINDS[b.kind], who = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).sort((p, q) => q.on - p.on);
-  const chips = sl.map((k, i) => `<span class="who ${k}">${pipH(k)}${k === 'on' || k === 'way' ? (who[i] ? who[i].name : '') : k === 'free' ? 'frei' : 'zu'}</span>`).join('');
-  const step = K.crew && !b.bt && !(b.boat > 0) ? stepper('mc', 'mc', capOf(b), capOf(b) > 0, capOf(b) < K.crew, 'Arbeiter') : '';
-  return `<div class="crew">${chips}${step ? `<span class="grow"></span>${step}` : ''}</div>`;
+  const K = KINDS[b.kind], ids = (staffOf(I).crewP.get(b) || []), people = ids.map(id => I.people.find(p => p.id === id)).filter(Boolean);
+  const chips = sl.map((k, i) => { const p = people[i]; return p ? `<button class="who ${k}" type="button" data-act="who" data-p="${p.id}">${pipH(k)}${p.n}</button>` : `<span class="who ${k}">${pipH(k)}${k === 'off' ? 'zu' : 'frei'}</span>`; }).join('');
+  // a workplace is worked by one family; building sites and the canoe house by whoever is free
+  if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}</div>`;
+  const f = famsOf(I).find(q => q.job === b.id);
+  const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="famdel" aria-label="Familie abziehen" ${f ? '' : 'disabled'}>−</button><button type="button" data-act="famadd" aria-label="Familie schicken">+</button></span>`;
+  return `<div class="crew">${f ? `<button class="chip" type="button" data-act="fam" data-f="${f.id}">${famName(f)}</button>` : '<span class="sub">keine Familie</span>'}${chips}${ctl}</div>`;
+}
+/* A family on its own sheet: its house and step, what it has and lacks, its people by name, where it works */
+function famMarkup(I, f, withHead = true){
+  const nd = needsOf(I), m = membersOf(I, f), t = famTier(I, f), fn = famNeeds(I, f, nd.list), job = f.job && findB(f.job);
+  const name = k => k === 'dach' ? 'Dach' : GN[k], icn = k => k === 'dach' ? 'haus' : k;
+  let h = withHead ? head(famName(f), `${f.home ? TIERS[t].n : 'Ohne Dach, unter Matten beim Versammlungshaus'} · ${I.name}`) : `<p class="sec">${famName(f)} · ${TIERS[t].n}</p>`;
+  h += `<div class="chips">${fn.map(n => `<span class="need-chip ${n.state}">${icon(icn(n.k))}${name(n.k)}</span>`).join('')}</div>`;
+  if (t === 1 && f.home) h += `<p class="sub">Nächste Stufe, Familie der Tufunga: dazu ${andList(TIER2_GOODS.map(k => GN[k]))} im Lager. Dann baut sie aus (${costText(TIERS[2].cost)}) und hat Platz für ${TIERS[2].cap}.</p>`;
+  if (!f.home) h += `<p class="sub">Sobald ein Haus frei ist, zieht sie ein.</p>`;
+  h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ''}</small></button>`).join('')}</div>`;
+  h += `<div class="rowx"><span class="sub">Arbeit: ${famWork(I, f)}</span>${job ? `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Zum Arbeitsplatz</button>` : ''}${f.home && !withHead ? '' : f.home ? `<button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button>` : ''}</div>`;
+  return h;
+}
+/* A good on its own sheet: who makes it, where, and who uses it */
+function wareMarkup(I, k){
+  const by = I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (prodOf(b) === k || (byOf(b) || {})[k]));
+  const use = I.buildings.filter(b => !b.bt && KINDS[b.kind].use && Object.keys(KINDS[b.kind].use).some(q => q === k || (GROUPS[q] || []).includes(k)));
+  const need = needsOf(I).list.find(n => n.k === k), sf = staffOf(I);
+  const line = b => { const ids = sf.crewP.get(b) || [], f = famsOf(I).find(q => q.job === b.id), w = b.idle || workState(I, b);
+    return `<li>${icon(prodOf(b) || k)}<span class="nm">${KINDS[b.kind].n}<small>${f ? famName(f) + ': ' : ''}${ids.map(id => { const p = I.people.find(q => q.id === id); return p ? `<button class="link" type="button" data-act="who" data-p="${id}">${p.n}</button>` : ''; }).join(', ') || (KINDS[b.kind].crew ? 'niemand' : 'arbeitet von selbst')}${w ? ` · ${shortWhy(w)}` : ''}</small></span><button class="chip" type="button" data-act="goto" data-b="${b.id}">Hin</button></li>`; };
+  let h = head(GN[k], `${I.name}: ${I.stock[k] || 0} im Lager, +${perMin(makeRate(I, k))} −${perMin(workUse(I, k) + (need ? need.use : 0))} pro Minute`);
+  h += `<p class="sec">Wer macht es</p>` + (by.length ? `<ul class="list needs">${by.map(line).join('')}</ul>` : `<p class="sub">Niemand auf ${I.name}.</p>`);
+  if (use.length) h += `<p class="sec">Wer braucht es</p><ul class="list needs">${use.map(line).join('')}</ul>`;
+  if (need) h += `<p class="sub">Die Familien brauchen ${perMin(need.use)} pro Minute.</p>`;
+  return h;
 }
 function infoMarkup(I, b){
   const K = KINDS[b.kind], st = (cls, t) => `<span class="state ${cls}">${t}</span>`, more = [K.info];
@@ -502,6 +524,7 @@ function renderSheet(){
     const K = KINDS[b.kind], I = islOfB(b.id);
     const [main, more] = infoMarkup(I, b);
     h += head(K.n, I.name) + main;
+    if (HOME_KINDS.has(b.kind) && !b.bt){ const f = famOfHome(I, b); h += f ? famMarkup(I, f, false) : `<p class="sub">Leer. Eine neue Familie zieht ein, sobald Nahrung und Wasser reichen.</p>`; }
     if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
     if (b.kind === 'sternhaus' && !b.bt){
       const L = navLore(), S = navPupil(I, b), lv = p => Math.floor(p.nv || 0);
@@ -522,6 +545,11 @@ function renderSheet(){
     h += head('Während ihr fort wart', `${awayTime(R.ms)}${years > 0 ? `, auf den Inseln ${years === 1 ? 'ein Jahr' : `${years} Jahre`}` : ''}.`);
     h += lines.length ? `<ul class="list needs">${lines.map(([k, t, r]) => `<li>${icon(k)}<span class="nm">${t}</span>${r ? `<span class="st">${r}</span>` : ''}</li>`).join('')}</ul>` : '<p class="sub">Alles ist ruhig geblieben.</p>';
     h += `<p class="sub">In der Zeit ist niemand hungrig fortgezogen, kein Sturm kam, und das Ansehen ist geblieben.</p><div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Weiter</button></div>`;
+  } else if (sheetKind === 'fam'){
+    const I = isl(sheetData.id), f = I && famOf(I, sheetData.f); if (!f){ closeSheet(); return; }
+    h += famMarkup(I, f);
+  } else if (sheetKind === 'ware'){
+    h += wareMarkup(isl(sheetData.id), sheetData.k);
   } else if (sheetKind === 'folk'){
     // everyone by name: the chief and the line of chiefs, grown-ups, children, the old, and the ancestors
     const I = isl(sheetData.id), P = (I.people || []).slice().sort((a, b) => a.b - b.b), by = st => P.filter(p => stageOf(p) === st);
@@ -572,8 +600,10 @@ let lastSig = '';
 function sheetSig(){
   if (sheetGone()) return 'gone';
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
-  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, prioOf(I).join(), tick % GROW_EVERY, [...presentAt(I).values()].join(':'), ...Object.values(sf.cats).map(c => c.used), ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
+  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, famsOf(I).map(f => f.job + ':' + f.home).join(), I.handWork, tick % GROW_EVERY, [...presentAt(I).values()].join(':'), sf.free, sf.short, ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
   if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1, kin(T), bondsWith(T), !!weddingCheck(T).ok].join(); }
+  if (sheetKind === 'fam'){ const I = isl(sheetData.id), f = I && famOf(I, sheetData.f); if (!f) return 'gone'; return [f.home, f.job, famTier(I, f), membersOf(I, f).map(p => p.id + stageOf(p)).join(), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(), famWork(I, f)].join(); }
+  if (sheetKind === 'ware'){ const I = isl(sheetData.id), sf = staffOf(I); return [I.stock[sheetData.k], ...[...sf.crewP].map(([b, ids]) => b.id + ':' + ids.join('.')), ...I.buildings.map(b => b.idle ? b.idle.why : '')].join(); }
   if (sheetKind === 'calendar') return [moonOf(), isl(active).rahui, Math.floor(untilFestival() / 30)].join();
   if (sheetKind === 'fleet') return own().map(s => [s.state, s.port, s.route, s.hungry].join(':')).join() + routes.map(r => r.knots).join();
   if (sheetKind === 'ship'){
@@ -591,7 +621,8 @@ function sheetSig(){
   const yard = b.kind === 'werft' ? [I.yard && I.yard.left, shipAt(I.id).length, ...Object.values(SHIPS).map(S => canPay(I, S.cost))].join() : '';
   const hall = b.kind === 'halle' ? [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost)), festivalState(I), festivalParts(I).map(p => p.ok).join(), guestsFor().length].join() : '';
   const here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).map(w => w.name + w.on + w.leg).join('');
-  return ['a' + age, b.bt, b.boat, b.got, here, Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
+  const fam = HOME_KINDS.has(b.kind) ? (f => f ? [f.id, membersOf(I, f).length, famTier(I, f), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(''), famWork(I, f)].join(':') : 'leer')(famOfHome(I, b)) : (famsOf(I).find(f => f.job === b.id) || {}).id;
+  return ['a' + age, b.bt, b.boat, b.got, here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
 }
 let sliding = false;   // while a slider is dragged the sheet is not drawn anew, or the drag would break off
 $('sheetBody').addEventListener('input', e => { const el = e.target; if (!el.matches('input[type=range][data-act]')) return; sliding = true; slideTo(el); updateHUD(); });
@@ -610,6 +641,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'green'){ const I = islOfB(b.id); b.v = {...(b.v || {}), green:btn.dataset.v === '1'}; b._by = null; b.idle = null; I.staff = null; updateHUD(); renderSheet(); save(); return; }
     if (act === 'fell'){ const I = islOfB(b.id), n = FELL_WOOD[b.kind] || 0; I.stock.holz = Math.min(storeCap(I), (I.stock.holz || 0) + n); stats.gefaellt = (stats.gefaellt || 0) + 1; I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} gefällt: ${n} Holz. Was sie trug, ist fort.`, 2800, false); return; }
     if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
+    if (act === 'famadd' || act === 'famdel'){ const I = islOfB(b.id); if (act === 'famadd') famAssign(I, b); else famRelease(I, b); updateHUD(); renderSheet(); save(); return; }
     if (act === 'mc-' || act === 'mc+'){ const K = KINDS[b.kind], I = islOfB(b.id), n = clamp(capOf(b) + (act === 'mc+' ? 1 : -1), 0, K.crew); b.v = {...b.v, mc:n}; if (n === K.crew) delete b.v.mc; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
     if (act === 'nokill'){ sheetData.confirm = false; renderSheet(); return; }
@@ -624,11 +656,11 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
   if (act === 'tapu' && sheetKind === 'needs'){ const I = isl(active); setTapu(I, !I.tapu); renderSheet(); return; }
   if (act === 'folk'){ openSheet('folk', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : active}); return; }
-  if (sheetKind === 'needs' && (act === 'pup' || act === 'pdown')){
-    const I = isl(active), pr = prioOf(I), i = pr.indexOf(btn.dataset.c), j = i + (act === 'pup' ? -1 : 1);
-    if (j >= 0 && j < pr.length){ [pr[i], pr[j]] = [pr[j], pr[i]]; I.staff = null; syncWalkers(); updateHUD(); save(); }
-    renderSheet(); return;
-  }
+  if (sheetKind === 'needs' && act === 'work'){ const I = isl(active); I.handWork = btn.dataset.v === 'hand'; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
+  if (act === 'fam'){ openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
+  if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
+  if (act === 'ware'){ openSheet('ware', {id:active, k:btn.dataset.k}); return; }
+  if (act === 'goto'){ const b = findB(+btn.dataset.b); if (b){ closeSheet(); select(b); flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
   if (sheetKind === 'mana' && act === 'feast'){ holdFeast(isl(active), FEASTS.find(F => F.id === btn.dataset.f)); return; }
   if (sheetKind === 'clan' && act === 'wed'){ wedClan(isl(sheetData.id)); renderSheet(); return; }
   if (sheetKind === 'clan' && act === 'gift'){ const ri = routes.findIndex(r => r.a === sheetData.id || r.b === sheetData.id); if (ri >= 0) openRoute(ri); return; }

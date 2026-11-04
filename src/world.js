@@ -364,7 +364,7 @@ const popCap = I => Math.min(houseCap(I), islandMax(I));
 const storeCap = I => 20 + 10 * I.buildings.filter(b => b.kind === 'speicher' && !b.bt).length;
 /* In a chief's village every house and stilt house holds 6 instead of 4 */
 /* A stilt house only counts when a dugout reaches it */
-const houseCap = I => 2 + I.buildings.reduce((s, b) => s + (b.bt || (b.kind === 'pfahl' && I.settled && unserved(I, b)) ? 0 : I.lvl === 3 && (b.kind === 'haus' || b.kind === 'pfahl') ? CHIEF.cap : KINDS[b.kind].cap || 0), 0);
+const houseCap = I => homesOf(I).reduce((t, b) => t + homeCap(I, b), 0);   // homes: see homes.js
 const DEP_DECO = {ton:'clay', basalt:'rock', obsidian:'obsidian'};
 const depsOf = (I, dep) => I.deco.filter(d => d.t === DEP_DECO[dep]);
 const depNear = (I, dep, x, y, r) => depsOf(I, dep).find(d => Math.hypot(d.x - x, d.y - y) < r) || null;

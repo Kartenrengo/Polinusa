@@ -142,12 +142,12 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, boat, dry:b.kind === 'fisch' && !!I, soil:K.soil ? (b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t === 2, boat, dry:b.kind === 'fisch' && !!I, soil:K.soil ? (b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}`, art = () => artOf(b.kind, o);
+  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t2 ? 2 : ''}`, art = () => artOf(b.kind, o);
   const sc = t.s * (chief ? 1.12 : 1) * grown;
   // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
   if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
@@ -885,10 +885,15 @@ function drawNeeds(c, v, now){
     }
     for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - 14, s, 1, 0, 'need|soil', needBubble('soil'));
     for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - KINDS[b.kind].hy - 14, s, 1, 0, 'need|einbaum', needBubble('einbaum'));
-    const miss = needsOf(I).missing; if (!miss.length) continue;
+    // over each house what its family lacks; over the meeting house a roof, while families sleep there without one
+    const list = needsOf(I).list;
     for (const b of I.buildings){
-      if (!(b.kind === 'haus' || b.kind === 'pfahl' || b.kind === 'halle') || b.id % 3 || !ptIn(b.x, b.y, v)) continue;
-      const k = miss[(b.id / 3 | 0) % miss.length].k, bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
+      if (!ptIn(b.x, b.y, v)) continue;
+      let k = null;
+      if (b.kind === 'halle' && !b.bt && roofless(I)) k = 'haus';
+      else if (homeOk(I, b)){ const f = famOfHome(I, b); if (f){ const miss = famNeeds(I, f, list).filter(n => n.state === 'out'); if (miss.length) k = miss[Math.floor(now / 2400 + b.id) % miss.length].k; } }
+      if (!k) continue;
+      const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
       put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
     }
   }

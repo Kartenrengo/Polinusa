@@ -398,3 +398,11 @@ canvas.kor{display:block;width:100%;max-width:340px;aspect-ratio:340/230;margin:
 #toast{max-width:min(calc(100vw - 185px),340px)}
 .slide{width:min(42%,150px);margin-right:4px}
 .slide output{min-width:18px}
+/* families: the needs of a family as small chips, names that lead to the person */
+button.who{border:0;cursor:pointer}
+.need-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px 2px 4px;font:700 12px/1.2 var(--font-ui);border-radius:10px;background:var(--cloth-hi);border:1.5px solid var(--ok)}
+.need-chip .ic{width:15px;height:15px}
+.need-chip.low{border-color:#C99A3A;background:#F6E9C8}
+.need-chip.out{border-color:var(--ochre);background:#F6E3C4;color:var(--ochre)}
+button.link{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--ink);text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}
+.list li .chip{min-height:28px;padding:0 9px;font-size:12px}
