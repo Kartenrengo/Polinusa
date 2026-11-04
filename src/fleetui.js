@@ -4,6 +4,8 @@
 const icon = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>`;
 const shipIcon = kind => kind === 'oc' ? '<svg class="ic ship" viewBox="-13 -10 26 14" aria-hidden="true"><use href="#oc"/></svg>' : '<svg class="ic ship" viewBox="-24 -28 46 36" aria-hidden="true"><use href="#dc"/></svg>';
 const stepper = (act, k, n, canMinus, canPlus, label) => `<span class="step"><button type="button" data-act="${act}-" data-k="${k}" aria-label="${label} weniger" ${canMinus ? '' : 'disabled'}>−</button><output aria-live="polite">${n}</output><button type="button" data-act="${act}+" data-k="${k}" aria-label="${label} mehr" ${canPlus ? '' : 'disabled'}>+</button></span>`;
+/* a slider for amounts: drag to load or unload; the number beside it is what really went aboard */
+const slider = (act, k, n, max, label) => `<span class="slide"><input type="range" min="0" max="${Math.max(max, n, 1)}" step="1" value="${n}" data-act="${act}" data-k="${k}" data-v="${n}" aria-label="${label}"${max > 0 || n > 0 ? '' : ' disabled'}><output>${n}</output></span>`;
 function shipStatus(s){
   const r = s.route != null ? routes[s.route] : null;
   if (s.auto) return s.state === 'sail' && s.dest && s.dest.isl ? `Erkundet von selbst, holt Proviant auf ${isl(s.dest.isl).name}.` : 'Erkundet von selbst.';
@@ -29,8 +31,8 @@ function shipMarkup(s){
   else if (P && P.settled && s.route == null){
     const goods = GOODS.filter(k => (P.stock[k] || 0) > 0 || s.cargo[k] || (S.fog && k === 'proviant')).sort((a, b) => S.fog ? (b === 'proviant') - (a === 'proviant') : 0);   // provisions first on the double canoe
     h += `<ul class="list needs">`;
-    h += `<li>${icon('pop')}<span class="nm">Siedler<small>Auf ${P.name}: ${P.pop}</small></span>${stepper('pp', 'pop', s.people, s.people > 0, s.people < S.people && P.pop > SETTLE.keep, 'Siedler')}</li>`;
-    h += goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${P.stock[k] || 0}</small></span>${stepper('cg', k, s.cargo[k] || 0, (s.cargo[k] || 0) > 0, load < S.cap && (P.stock[k] || 0) > 0, GN[k])}</li>`).join('');
+    h += `<li>${icon('pop')}<span class="nm">Siedler<small>Auf ${P.name}: ${P.pop}</small></span>${slider('pp', 'pop', s.people, s.people + Math.max(0, Math.min(S.people - s.people, P.pop - SETTLE.keep)), 'Siedler')}</li>`;
+    h += goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${P.stock[k] || 0}</small></span>${slider('cg', k, s.cargo[k] || 0, (s.cargo[k] || 0) + Math.max(0, Math.min(S.cap - load, P.stock[k] || 0)), GN[k])}</li>`).join('');
     h += `</ul>` + lifeMarkup(s, P, load) + `${s.people ? `<p class="sub">Siedler an Bord. Nimm auch Holz und Nahrung mit, damit sie am neuen Ort gleich bauen und essen können.</p>` : ''}<div class="rowx"><span class="sub">Ladung ${load} von ${S.cap}, Siedler ${s.people} von ${S.people}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
     const here = routes.map((r, i) => [r, i]).filter(([r]) => r.a === P.id || r.b === P.id);
     if (here.length) h += `<div class="rowx"><span class="sub">In eine Handelskette einsetzen:</span><span class="chips">${here.map(([r, i]) => `<button class="chip" type="button" data-act="assign" data-r="${i}">${isl(r.a === P.id ? r.b : r.a).name}</button>`).join('')}</span></div>`;
@@ -76,7 +78,7 @@ function routeMarkup(ri){
   else if (!on.length) h += `<p class="sub">Bau im Kanuhaus ein Auslegerkanu und bring es nach ${mineEnd.name}, dann kannst du es hier einsetzen.</p>`;
   const side = (from, to, key) => {
     const plan = r.plan[key] || (r.plan[key] = {}), goods = GOODS.filter(k => (from.stock[k] || 0) > 0 || plan[k]), cap = 24, sum = Object.values(plan).reduce((a, b) => a + b, 0);
-    return `<p><b>Von ${from.name} nach ${to.name}</b> <span class="sub">${to.clan ? 'als Gabe' : ''}</span></p>` + (goods.length ? `<ul class="list needs">${goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}</small></span>${stepper('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) > 0, sum < cap, GN[k])}</li>`).join('')}</ul>` : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
+    return `<p><b>Von ${from.name} nach ${to.name}</b> <span class="sub">${to.clan ? 'als Gabe' : ''}</span></p>` + (goods.length ? `<ul class="list needs">${goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}</small></span>${slider('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) + Math.max(0, cap - sum), GN[k])}</li>`).join('')}</ul>` : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
   };
   if (A.settled) h += side(A, B, 'a');
   if (B.settled) h += side(B, A, 'b');
@@ -128,8 +130,22 @@ function festivalMarkup(I){
   h += `<div class="rowx"><span>Ansehen +${festivalGain(I, chosen)}</span><button class="btn primary" type="button" data-act="festival">Fest feiern</button></div>`;
   return h;
 }
+/* What a slider stands for right now */
+function slideValue(act, k){
+  if (sheetKind === 'ship'){ const s = ships.find(q => q.id === sheetData.id); if (!s) return 0; return act === 'pp' ? s.people : s.cargo[k] || 0; }
+  if (sheetKind === 'route'){ const r = routes[sheetData.r], [key, g] = k.split(':'), plan = r && r.plan[key]; return plan && plan[g] || 0; }
+  return 0;
+}
+/* Dragging a slider loads or unloads one at a time, as the buttons did, until it gets there or nothing more fits */
+function slideTo(el){
+  const act = el.dataset.act, k = el.dataset.k, want = +el.value, fake = {dataset:{k}};
+  for (let n = slideValue(act, k), guard = 0; n !== want && guard < 200; guard++){
+    fleetAct(act + (want > n ? '+' : '-'), fake, true); const m = slideValue(act, k); if (m === n) break; n = m;
+  }
+  const v = slideValue(act, k); el.value = v; el.dataset.v = v; const o = el.nextElementSibling; if (o) o.textContent = v;
+}
 /* Buttons in these sheets. Returns true when it handled the tap. */
-function fleetAct(act, btn){
+function fleetAct(act, btn, quiet = false){
   if (sheetKind === 'ship'){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return false;
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
@@ -146,7 +162,7 @@ function fleetAct(act, btn){
     else if (act === 'settle'){ settleFrom(s); closeSheet(); return true; }
     else if (act === 'gift') giveGift(s);
     else return false;
-    updateHUD(); renderSheet(); save(); return true;
+    if (!quiet){ updateHUD(); renderSheet(); save(); } return true;
   }
   if (sheetKind === 'route'){
     const r = routes[sheetData.r];
@@ -155,7 +171,7 @@ function fleetAct(act, btn){
     else if (act === 'unassign'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) unassign(s); }
     else if (act === 'pl+' || act === 'pl-'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}); plan[k] = Math.max(0, (plan[k] || 0) + (act === 'pl+' ? 1 : -1)); if (!plan[k]) delete plan[k]; }
     else return false;
-    renderSheet(); save(); return true;
+    if (!quiet){ renderSheet(); save(); } return true;
   }
   if (sheetKind === 'fleet'){
     if (act === 'steer'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) steerShip(s); return true; }

@@ -373,7 +373,7 @@ const treeAt = (I, x, y, rad) => I.trees && I.trees.find(t => t.st !== 1 && Math
 const treesNear = (I, x, y, rad) => (I.trees || []).filter(t => t.st === 0 && t.w > 0 && Math.hypot(t.x - x, (t.y - y) * 1.25) < rad);
 const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => b.kind === kind && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
 /* Beauty: what adorns an island, counted from finished decorations */
-const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0) + Math.min(8, Math.floor(roadLen(I) / 60)) + Math.min(3, Object.keys(I.mot || {}).length);   // laid paths adorn the village too, and pots with patterns from elsewhere
+const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0) + Math.min(8, Math.floor(roadCells(I) / 25)) + Math.min(3, Object.keys(I.mot || {}).length);   // laid paths adorn the village too, and pots with patterns from elsewhere
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
 function inLagoon(I, p){
   if (landAt(I, p)) return false;
@@ -418,7 +418,6 @@ function variant(kind, r = Math.random){
   else if (kind === 'palme' || kind === 'pandanus') v.scale = fx(.7 + r() * .22);
   else if (kind === 'baum') v.scale = fx(.85 + r() * .2);
   else if (kind === 'taro') v.rot = Math.round(r() * 80);
-  else if (kind === 'weg') v.rot = Math.round((r() - .5) * 60);
   else if (kind === 'hibiskus') v.scale = fx(.85 + r() * .25);
   else if (kind === 'speicher') v.scale = fx(.75 + r() * .12);
   return v;

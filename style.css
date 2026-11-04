@@ -316,3 +316,85 @@ body.landing #bottom, body.landing #quest, body.landing .top-right, body.landing
 canvas.kor{display:block;width:100%;max-width:340px;aspect-ratio:340/230;margin:0 auto;touch-action:none;cursor:pointer}
 /* the message list: a plain sheet of bark cloth, so no text ever stands outside it */
 .newslist{background:var(--cream) none!important;border:2px solid var(--brown);border-radius:6px;max-height:calc(100% - 260px)}
+/* ---------- smaller: the map is the game, everything around it takes as little room as it can and stays easy to tap */
+.manulua{height:9px;background-size:12px 9px}
+.top-inner{gap:2px;padding-block:4px 3px}
+.isle-name{font-size:18px}
+.pop b{font-size:15px}
+.pop span{font-size:11px}
+.top-right .ic{width:17px;height:17px}
+.mana{font-size:13px;padding:0 6px 0 4px}
+.mana .ic{width:15px;height:15px}
+.goods .g{font-size:13px}
+.goods .ic{width:16px;height:16px}
+.top-row.two .vital span{font-size:11.5px}
+#compass{padding:2px 8px 2px 2px;gap:4px}
+#compass svg{width:30px;height:30px}
+#compass span b{font-size:11.5px}
+#compass span small,#compass .moon{font-size:10.5px}
+#compass .moon .ic{width:12px;height:12px}
+#sidectl{gap:6px}
+.round{width:38px;height:38px}
+.round svg{width:22px;height:22px}
+#toast{font-size:13px;min-height:36px;padding:7px 12px!important;right:calc(54px + env(safe-area-inset-right,0px));max-width:min(calc(100vw - 130px),340px)}
+.newslist{right:calc(54px + env(safe-area-inset-right,0px));padding:8px 12px 10px}
+.newslist li{font-size:13px;padding:5px 0}
+.sheet{max-height:62%}
+.sheet-body{padding-block:9px 12px;gap:7px;padding-left:max(13px,env(safe-area-inset-left,0px));padding-right:max(13px,env(safe-area-inset-right,0px))}
+.sheet h2{font-size:18px}
+.sheet-head{gap:8px}
+.sub{font-size:12.5px}
+.x{width:36px;height:36px;font-size:19px}
+.list{gap:4px}
+.list li{min-height:34px;padding:3px 7px;gap:6px}
+.list li .nm{font-size:13.5px}
+.needs small{font-size:11.5px}
+.list li.sub-row{min-height:28px;margin-left:18px}
+.list li.sub-row .nm{font-size:13px}
+.btn{min-height:38px;padding:0 12px;font-size:14px}
+.btn.small{min-height:32px;padding:0 9px;font-size:12.5px}
+.chip{min-height:32px;padding:0 10px;font-size:12.5px}
+.step button{width:34px;height:34px;font-size:18px}
+.step output{font-size:14px}
+.help{font-size:13.5px;gap:4px}
+.state{font-size:10px;padding:2px 6px}
+.sheet-body .sec{font-size:11px;margin-top:3px}
+.ic.ship{width:26px;height:19px}
+.qty{font-size:15px}
+.place-inner{padding-block:7px 9px;gap:8px}
+.place-ic{width:40px;height:40px}
+.place-txt b{font-size:15px}
+.place-txt span{font-size:12.5px}
+.quest{padding:5px 10px 6px}
+.quest .q-t{font-size:14.5px}
+.q-p{font-size:12px}
+.bottom-inner{padding-block:4px 6px}
+.bottom-row{gap:6px}
+.build-list{gap:6px}
+.bbtn{width:50px;height:54px;font-size:10.5px}
+.bbtn svg{width:36px;height:32px}
+.tbtn{width:56px;height:54px;font-size:11.5px}
+.tbtn svg{width:38px;height:19px}
+#bottom .tbtn.build svg{width:34px;height:26px}
+#bottom:not(.open) .tbtn{height:42px;padding:0 10px 0 6px;font-size:12px}
+#bottom:not(.open) .tbtn svg{width:30px;height:22px}
+#bottom.open .tbtn{width:56px}
+/* the fleet bar: the fleet button is pressed, the build button just switches over */
+#bottom.open.fleet .tbtn.build{background-image:var(--e2)}
+#bottom.open.fleet #tradeBtn{background-image:var(--eturm)}
+.bbtn.ship svg{width:40px;height:26px}
+.bbtn.route svg{width:24px;height:24px}
+.bbtn .sdot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:62% 38% 55% 45%/48% 58% 42% 52%;border:1.5px solid var(--ink);background:var(--cream)}
+.bbtn .sdot.on{background:var(--ok)}.bbtn .sdot.way{background:var(--turmeric)}.bbtn .sdot.out{background:var(--ochre)}
+/* sliders for loading: a cord with a shell to drag */
+.slide{display:flex;align-items:center;gap:6px;flex:none;width:min(46%,170px)}
+.slide input{flex:1;min-width:0;height:28px;margin:0;background:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;cursor:pointer}
+.slide input::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:repeating-linear-gradient(90deg,#B08048 0 3px,#6E4A28 3px 5px);border:1px solid var(--ink)}
+.slide input::-moz-range-track{height:5px;border-radius:3px;background:repeating-linear-gradient(90deg,#B08048 0 3px,#6E4A28 3px 5px);border:1px solid var(--ink)}
+.slide input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9.5px;border-radius:50% 50% 46% 54%;background:var(--turmeric);border:2px solid var(--ink)}
+.slide input::-moz-range-thumb{width:18px;height:18px;border-radius:50% 50% 46% 54%;background:var(--turmeric);border:2px solid var(--ink)}
+.slide input:disabled{opacity:.4}
+.slide output{min-width:22px;text-align:right;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+#toast{max-width:min(calc(100vw - 185px),340px)}
+.slide{width:min(42%,150px);margin-right:4px}
+.slide output{min-width:18px}

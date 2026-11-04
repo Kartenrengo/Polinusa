@@ -246,7 +246,7 @@ function artOf(kind, o = {}){
     case 'pferch': { const P = ring(0, 0, 12, 5.6, 15, 361, .18), fence = smooth(P).d; return `<path d="${wob(13, 5.4, 363, .08, 12, 1, 1)}" fill="#1F140D" opacity=".16"/><path d="${fence}" fill="#9C7A50"/><use href="#pig" transform="translate(-3.5 1.6)"/><use href="#pig" transform="translate(4.5 -.4) scale(-.85 .85)"/>${stoneAt(-8, -1.6, 1.1, 367, '#7A5434')}<path d="${fence}" fill="none" stroke="#3B2618" stroke-width=".6" transform="translate(0 -2)"/><g stroke="#3B2618" stroke-width=".9" stroke-linecap="round">${P.map(q => `<path d="M${fx(q.x)} ${fx(q.y)}V${fx(q.y - 3.2)}"/>`).join('')}</g>`; }
     case 'bananen': return FIELD('#6E7A3A', 345) + [[-6, -.6], [5.6, -1.2], [-.4, -2.6], [-3, 3.4], [3.2, 3.2]].map(([x, y]) => `<use href="#bananaplant" transform="translate(${x} ${y})"/>`).join('') + fieldState(o);
     case 'kavagarten': return FIELD('#7A5A33', 341) + [[-5.5, -1.4], [0, -1.8], [5.5, -1.4], [-2.8, 3], [2.8, 3]].map(([x, y]) => `<use href="#kavaplant" transform="translate(${x} ${y})"/>`).join('') + fieldState(o);
-    case 'hibiskus': case 'blumen': case 'weg': case 'fackel': case 'pfosten': case 'trommel': case 'tanzplatz': return `<use href="#${kind}"/>`;
+    case 'hibiskus': case 'blumen': case 'fackel': case 'pfosten': case 'trommel': case 'tanzplatz': return `<use href="#${kind}"/>`;
     case 'faeller': return hut + `<g stroke-linecap="round"><path d="M7.4 3.6H16.6M8 1.1H16" stroke="#2B1D14" stroke-width="2.6"/><path d="M7.4 3.6H16.6M8 1.1H16" stroke="#9C7246" stroke-width="1.5"/></g><circle cx="16.6" cy="3.6" r="1.3" fill="#D2A66E" stroke="#2B1D14" stroke-width=".4"/><circle cx="16" cy="1.1" r="1.2" fill="#D2A66E" stroke="#2B1D14" stroke-width=".4"/><rect x="-16" y="1" width="4.2" height="2.8" rx="1" fill="#7A5434" stroke="#2B1D14" stroke-width=".45"/><path d="M-13.9 1.4L-11.6-2.8" stroke="#2B1D14" stroke-width=".9"/><path d="M-12.4-3.4L-10.2-2.6L-11.2-1.2Z" fill="#6F737A" stroke="#2B1D14" stroke-width=".35"/>`;
     case 'pflanzer': return hut + `<use href="#sapling" transform="translate(9 3.4)"/><use href="#sapling" transform="translate(13.4 1.4) scale(.8)"/><use href="#sapling" transform="translate(16.4 4.2) scale(.9)"/><path d="M-15.6 4L-12.4-3.4" stroke="#2B1D14" stroke-width="1" stroke-linecap="round"/><path d="M-17 3.6Q-15 1.6-13 3.4Q-15 4.6-17 3.6Z" fill="#B08048" stroke="#2B1D14" stroke-width=".4"/>`;
     case 'pulaka': return `<path d="${wob(12, 5.6, 351, .1, 12, 1, 1.6)}" fill="#1F140D" opacity=".16"/><path d="${wob(11.2, 6.1, 353, .1, 13)}" fill="#D6C08A" stroke="#6B5030" stroke-width=".6"/><path d="${wob(8.4, 4, 357, .13, 11)}" fill="#3E6A5A" stroke="#2B1D14" stroke-width=".5"/><path d="M-6.4 1.6h2M2.4 2.6h2.4" stroke="#9CCFC6" stroke-width=".5" stroke-linecap="round"/>` + [[-4.6, 1.8, 1], [0, .4, 1.15], [4.6, 1.8, 1], [-2.2, 3.6, .85], [2.6, 3.8, .85]].map(([x, y, k]) => `<use href="#pleaf" transform="translate(${x} ${y}) scale(${k})"/>`).join('') + fieldState(o);
@@ -263,7 +263,7 @@ function xformOf(kind, v = {}){
   switch (kind){
     case 'haus': case 'pfahl': case 'speicher': case 'palme': case 'pandanus': return {m, s, rot:0};
     case 'baum': return {m:1, s, rot:0};
-    case 'taro': case 'weg': return {m:1, s:1, rot:(v.rot || 0) * Math.PI / 180};
+    case 'taro': return {m:1, s:1, rot:(v.rot || 0) * Math.PI / 180};
     case 'hibiskus': case 'pfosten': case 'trommel': case 'fackel': return {m, s, rot:0};
     case 'steg': return {m:1, s:1, rot:(v.rot || 0) * Math.PI / 180};
   }

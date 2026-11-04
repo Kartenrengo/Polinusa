@@ -28,6 +28,7 @@ function edgeURL(seed, fill, stroke = '#3E2416', sw = 1.6, round = false){
 /* ---------- top bar */
 let lastStock = {};
 function updateHUD(){
+  if (barMode === 'fleet' && fleetKey !== fleetSig()) renderBuildBar();
   document.body.classList.toggle('landing', !!landing);
   if (landing){ $('isleName').textContent = landing.found ? `Landung auf ${isl('heimat').name}` : 'Auf See im Ahnenkanu'; showWind(); $('moonUse').setAttribute('href', '#' + SEASON_ICON[seasonOf().id]); $('moonTxt').textContent = `${moonOf() + 1}. Mond`; return; }
   const I = isl(active);
@@ -58,18 +59,34 @@ function updateHUD(){
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
 /* Two menus: what the village needs, with paths at the end, and what only adorns it */
-let buildTab = 'bau', buildOpen = false, sideOpen = false;
+let buildTab = 'bau', buildOpen = false, barMode = null, sideOpen = false, fleetKey = '';
 /* speed and menu fold out from the side button, the conch with the messages always stays */
 function setSideOpen(on){ sideOpen = !!on; $('sidectl').classList.toggle('open', sideOpen); $('moreBtn').setAttribute('aria-expanded', sideOpen); $('speedMark').hidden = sideOpen || gameSpeed === 1; }
 /* The build bar is folded away until the build button is pressed, so the map shows more; tapping empty map folds it again */
-function setBuildOpen(on){
-  buildOpen = !!on; $('bottom').classList.toggle('open', buildOpen);
-  const b = $('buildBtn'); b.setAttribute('aria-expanded', buildOpen); b.querySelector('span').textContent = buildOpen ? 'Zu' : 'Bauen';
-  b.setAttribute('aria-label', buildOpen ? 'Bauleiste schließen' : 'Bauen: Bauleiste öffnen');
+/* The fleet works the same way: its button folds out a bar with every canoe and trade chain */
+function setBar(m){
+  const was = barMode; barMode = m === 'build' || m === 'fleet' ? m : null; buildOpen = barMode === 'build';
+  $('bottom').classList.toggle('open', !!barMode); $('bottom').classList.toggle('fleet', barMode === 'fleet');
+  const b = $('buildBtn'), f = $('tradeBtn');
+  b.setAttribute('aria-expanded', barMode === 'build'); b.querySelector('span').textContent = barMode === 'build' ? 'Zu' : 'Bauen';
+  b.setAttribute('aria-label', barMode === 'build' ? 'Bauleiste schließen' : 'Bauen: Bauleiste öffnen');
+  f.setAttribute('aria-expanded', barMode === 'fleet'); f.querySelector('span').textContent = barMode === 'fleet' ? 'Zu' : 'Flotte';
+  f.setAttribute('aria-label', barMode === 'fleet' ? 'Flotte schließen' : 'Flotte: alle Kanus und Handelsketten');
+  if (was !== barMode){ fleetKey = ''; renderBuildBar(); }
   measure();
 }
+const setBuildOpen = on => setBar(on ? 'build' : barMode === 'build' ? null : barMode);
+/* the fleet bar: one button per canoe (tap steers it), one per trade chain, and the whole list */
+function fleetItems(){
+  const mine = own(), dot = s => s.hungry ? 'out' : s.state === 'sail' ? 'way' : s.route != null ? 'on' : 'free';
+  return mine.map(s => `<button type="button" class="bbtn ship" data-ship="${s.id}" aria-label="${s.name}: ${shipStatus(s)}"><svg viewBox="${s.kind === 'oc' ? '-13 -10 26 14' : '-24 -28 46 36'}" aria-hidden="true"><use href="#${s.kind}"/></svg><span>${(s.name || SHIPS[s.kind].n).split(' ')[0].slice(0, 8)}</span><i class="sdot ${dot(s)}" aria-hidden="true"></i></button>`).join('') +
+    routes.map((r, i) => `<button type="button" class="bbtn route" data-route="${i}" aria-label="Handelskette ${isl(r.a).name} – ${isl(r.b).name}, ${r.knots} Knoten"><svg viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-schnur"/></svg><span>${isl(r.b).name.slice(0, 7)}</span></button>`).join('') +
+    `<button type="button" class="bbtn" data-fleet="1" aria-label="Alle Kanus und Ketten als Liste"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6H16M4 10H16M4 14H16" stroke="#2B1D14" stroke-width="1.8" stroke-linecap="round"/></svg><span>Liste</span></button>`;
+}
+const fleetSig = () => own().map(s => s.id + s.state + s.route + (s.hungry ? 1 : 0) + s.name).join() + '|' + routes.map(r => r.a + r.b + r.knots).join();
 function renderBuildBar(){
   const I = isl(active);
+  if (barMode === 'fleet'){ fleetKey = fleetSig(); $('buildList').innerHTML = fleetItems(); document.querySelector('.bottom-head').hidden = true; $('tradeBtn').hidden = false; updateHUD(); return; }
   $('buildWhere').textContent = '';   // the island's name stands at the top already
   const fleet = own().length > 0 || routes.length > 0;
   $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
@@ -81,9 +98,7 @@ function renderBuildBar(){
   $('tabBau').setAttribute('aria-pressed', buildTab === 'bau'); $('tabDeco').setAttribute('aria-pressed', buildTab === 'deco');
   const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
   $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
-    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}${hasLife(I, k) ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${hasLife(I, k) ? `kostet ${costText(costOf(k, I))}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('') +
-    (buildTab === 'bau' ? `<button type="button" class="bbtn" data-road="1" aria-pressed="false" aria-label="Weg anlegen, kostet nichts"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}</svg><span>Weg</span></button>` +
-      (I.roads && I.roads.length ? `<button type="button" class="bbtn" data-road="cut" aria-pressed="false" aria-label="Wege entfernen"><svg viewBox="${KINDS.weg.vb}" aria-hidden="true">${iconMarkup('weg')}<path d="M-6-4.5L6 4.5M6-4.5L-6 4.5" stroke="#A84A2C" stroke-width="2.2" stroke-linecap="round"/></svg><span>Weg weg</span></button>` : '') : '');
+    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}${hasLife(I, k) ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${hasLife(I, k) ? `kostet ${costText(costOf(k, I))}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
   updateHUD();
 }
 function renameIsland(I, v){
@@ -143,7 +158,7 @@ $('toast').addEventListener('click', () => { if (news.length && news[0].msg === 
 
 /* ---------- placing and moving */
 function ghostRender(){
-  if (!placing || placing.road || placing.unroad){ requestDraw(); return; }
+  if (!placing){ requestDraw(); return; }
   const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
   if (placing.kind === 'steg' && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
   placing.ok = ok; placing.msg = msg;
@@ -189,53 +204,6 @@ function startSpot(I, K){
     const c = src.reduce((m, q) => score(q) > score(m) ? q : m); return {x:c.x + 12, y:c.y + 6}; } }
   return vc;
 }
-/* ---------- laying a path: tap points on the island one after another, tap the last one again to take it back */
-function startRoad(){
-  const I = isl(active); closeSheet(); selectedId = null; invalidate();
-  mode = 'road'; placing = {kind:'weg', road:true, island:I.id, pts:[]};
-  $('placeName').textContent = 'Weg'; $('placeIc').setAttribute('viewBox', KINDS.weg.vb); $('placeIc').innerHTML = iconMarkup('weg');
-  $('placeOk').textContent = 'Anlegen'; $('placeInfo').textContent = 'Kostet nichts. Auf Wegen gehen die Leute schneller, und sie schmücken das Dorf.';
-  $('bottom').hidden = true; $('place').hidden = false; roadMsg(); measure();
-  if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); }
-}
-/* Taking paths away: each tap removes the piece of path between two of its points */
-function startUnroad(){
-  const I = isl(active); closeSheet(); selectedId = null;
-  mode = 'unroad'; placing = {kind:'weg', unroad:true, island:I.id};
-  $('placeName').textContent = 'Wege entfernen'; $('placeIc').setAttribute('viewBox', KINDS.weg.vb); $('placeIc').innerHTML = iconMarkup('weg');
-  $('placeInfo').textContent = 'Tippe auf ein Stück Weg, dann ist es weg. Das Gras wächst wieder darüber.';
-  $('placeMsg').textContent = ''; $('placeMsg').classList.remove('bad'); $('placeOk').hidden = true;
-  $('bottom').hidden = true; $('place').hidden = false; measure(); requestDraw();
-  if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); }
-}
-function roadCut(p){
-  const hit = hitRoad(p), el = $('placeMsg');
-  if (!hit || hit.id !== placing.island){ el.textContent = 'Hier liegt kein Weg.'; el.classList.add('bad'); return; }
-  const I = isl(hit.id), r = I.roads[hit.r], a = r.slice(0, hit.k), b = r.slice(hit.k);
-  I.roads.splice(hit.r, 1, ...[a, b].filter(q => q.length > 1)); roadsChanged(I);
-  el.textContent = 'Ein Stück Weg ist weg.'; el.classList.remove('bad');
-  if (!I.roads.length) endPlace();
-}
-function roadMsg(bad){
-  const pts = placing.pts, n = pts.length, len = pts.reduce((s, p, k) => k ? s + Math.hypot(p.x - pts[k - 1].x, p.y - pts[k - 1].y) : 0, 0), el = $('placeMsg');
-  el.textContent = bad || (n ? `${n} ${n === 1 ? 'Punkt' : 'Punkte'}, ${Math.round(len)} Schritte. Den letzten Punkt antippen nimmt ihn zurück.` : 'Tippe auf der Insel, wo der Weg beginnt, dann Punkt für Punkt weiter.');
-  el.classList.toggle('bad', !!bad); $('placeOk').disabled = n < 2; requestDraw();
-}
-function roadTap(p){
-  const I = isl(placing.island), pts = placing.pts, last = pts[pts.length - 1];
-  if (last && Math.hypot(p.x - last.x, p.y - last.y) < Math.max(6, 16 / cam.z)){ pts.pop(); roadMsg(); return; }
-  if (!landAt(I, p)){ roadMsg('Wege gehen nur über Land.'); return; }
-  if (last){
-    const d = Math.hypot(p.x - last.x, p.y - last.y);
-    if (d > 240){ roadMsg('So weit auf einmal geht es nicht. Setze einen Punkt dazwischen.'); return; }
-    for (let s = 3; s < d; s += 3) if (!landAt(I, {x:last.x + (p.x - last.x) * s / d, y:last.y + (p.y - last.y) * s / d})){ roadMsg('Dazwischen liegt Wasser.'); return; }
-  }
-  pts.push({x:fx(p.x), y:fx(p.y)}); roadMsg();
-}
-function layRoad(){
-  if (!placing || !placing.road || placing.pts.length < 2) return false;
-  const I = isl(placing.island); (I.roads = I.roads || []).push(placing.pts); placing.pts = []; roadsChanged(I); updateHUD(); renderBuildBar(); return true;
-}
 function startMove(b){
   const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:b.v, moveId:b.id};
   showPlaceBar(); invalidate(); ghostRender(); if (lod === 'far') flyTo(b.x, b.y, 1.6);
@@ -251,17 +219,14 @@ function showPlaceBar(){
   $('bottom').hidden = true; $('place').hidden = false; measure();
 }
 function endPlace(){
-  if (placing && placing.road) layRoad();
   if (placing && placing.founding) return;   // the meeting house must stand somewhere; there is no going back to sea
-  const wasMove = mode === 'move', cut = mode === 'unroad'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false; $('placeOk').hidden = false; $('placeDone').hidden = false;
-  if (cut) renderBuildBar();
+  const wasMove = mode === 'move'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false; $('placeOk').hidden = false; $('placeDone').hidden = false;
   $('place').hidden = true; $('bottom').hidden = false; measure();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', 'false');
   if (wasMove) invalidate();
 }
 function confirmPlace(){
   if (placing && placing.founding){ confirmFounding(); return; }
-  if (placing && placing.road){ if (layRoad()){ toast('Der Weg ist angelegt.', 2000, false); roadMsg(); } return; }
   if (!placing || !placing.ok) return;
   const I = isl(placing.island), K = KINDS[placing.kind];
   if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
@@ -276,9 +241,9 @@ function confirmPlace(){
 }
 
 /* ---------- sheets */
-function openSheet(kind, data){ if (kind !== 'ship') endSteer(); sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
+function openSheet(kind, data){ if (kind !== 'ship') endSteer(); sliding = false; sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
 function closeSheet(){ endSteer(); if (!sheetKind) return; if (sheetKind === 'event') eventNow = null;   // closing an event lets it pass
-  sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
+  sliding = false; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
 function endSteer(){ if (mode === 'steer'){ mode = 'idle'; selShip = null; requestDraw(); } }
 const perMin = v => v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
 function growText(I, nd){
@@ -513,6 +478,7 @@ function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2
 /* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
 const sheetGone = () => !!sheetData && typeof sheetData.id === 'string' && !isl(sheetData.id);
 function renderSheet(){
+  if (sliding) return;
   const body = $('sheetBody'); let h = '';
   if (sheetGone()){ closeSheet(); return; }
   if (sheetKind === 'ship'){
@@ -540,7 +506,6 @@ function renderSheet(){
     }
     if (b.kind === 'toepfer' && !b.bt) h += `<p class="sec">Muster</p>${motifRows(I) || '<p class="sub">Sobald die ersten Töpfe gebrannt sind, findet das Dorf sein Muster.</p>'}<p class="sub">${motifHelp(I)}</p>`;
     if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${(I.ahnen || []).length} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
-    if (b.kind === 'halle' && !b.bt) h += `<div class="rowx"><span class="sub">Im Schatten des Hauses spielen die Leute Kōruru, das Spiel der fünf Knöchelchen.</span><button class="btn" type="button" data-act="koruru">Kōruru spielen</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
@@ -565,11 +530,6 @@ function renderSheet(){
     // an island can get the name its people give it
     const I = isl(sheetData.id);
     h += head('Insel benennen', I.custom ? `Früher ${I.name0}.` : 'So nennen die Leute sie bisher.') + `<div class="rowx"><input id="nameIn" class="name-in" type="text" maxlength="18" autocomplete="off" value="${esc(I.name)}" aria-label="Name der Insel"><button class="btn primary" type="button" data-act="rename">Benennen</button></div>`;
-  } else if (sheetKind === 'road'){
-    const I = isl(sheetData.id), r = I && I.roads && I.roads[sheetData.r]; if (!r){ closeSheet(); return; }
-    h += head('Weg', I.name) + `<p class="sub">Muscheln und Korallensand. Die Leute gehen hier schneller.</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="delroad">Entfernen</button></span></div>`;
-  } else if (sheetKind === 'koruru'){
-    h += koruruMarkup();
   } else if (sheetKind === 'landing'){
     h += landingMarkup();
   } else if (sheetKind === 'intro'){
@@ -597,11 +557,10 @@ function renderSheet(){
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Kōruru</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig();
-  if (sheetKind === 'koruru') koruruMount();
 }
 let lastSig = '';
 function sheetSig(){
@@ -628,6 +587,10 @@ function sheetSig(){
   const here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).map(w => w.name + w.on + w.leg).join('');
   return ['a' + age, b.bt, b.boat, b.got, here, Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
 }
+let sliding = false;   // while a slider is dragged the sheet is not drawn anew, or the drag would break off
+$('sheetBody').addEventListener('input', e => { const el = e.target; if (!el.matches('input[type=range][data-act]')) return; sliding = true; slideTo(el); updateHUD(); });
+document.addEventListener('pointerup', () => { if (sliding) setTimeout(() => { if (sliding){ sliding = false; save(); renderSheet(); } }, 0); }, true);
+$('sheetBody').addEventListener('change', e => { if (!e.target.matches('input[type=range][data-act]')) return; sliding = false; save(); renderSheet(); });
 $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.more') && sheetData) sheetData.more = e.target.open; }, true);
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;
@@ -647,14 +610,10 @@ $('sheetBody').addEventListener('click', e => {
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (act === 'skipq'){ closeSheet(); skipTutorial(); return; }
-  if (act === 'koruru'){ koruruNew(); openSheet('koruru', {}); return; }
-  if (sheetKind === 'koruru' && act === 'kthrow'){ koruruThrow(); return; }
-  if (sheetKind === 'koruru' && act === 'knew'){ koruruNew(); renderSheet(); return; }
   if (sheetKind === 'landing' && act === 'intro' && landing){ landing.skip = btn.dataset.v === 'off'; renderSheet(); return; }
   if (sheetKind === 'landing' && act === 'lookat'){ const I = isl(btn.dataset.i); if (I){ sheetData = {id:I.id}; renderSheet(); flyTo(I.center.x, I.center.y, Math.max(cam.z, .9)); } return; }
   if (sheetKind === 'landing' && act === 'found'){ chooseHome(isl(btn.dataset.i)); return; }
   if (sheetKind === 'rename' && act === 'rename'){ renameIsland(isl(sheetData.id), $('nameIn').value); return; }
-  if (sheetKind === 'road' && act === 'delroad'){ const I = isl(sheetData.id); I.roads.splice(sheetData.r, 1); roadsChanged(I); closeSheet(); renderBuildBar(); toast('Der Weg ist weg.', 2000, false); return; }
   if (act === 'tapu' && sheetKind === 'needs'){ const I = isl(active); setTapu(I, !I.tapu); renderSheet(); return; }
   if (act === 'folk'){ openSheet('folk', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : active}); return; }
   if (sheetKind === 'needs' && (act === 'pup' || act === 'pdown')){

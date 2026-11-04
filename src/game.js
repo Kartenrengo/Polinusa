@@ -752,17 +752,20 @@ function stepWalkers(dt){
   }
 }
 /* ---------- paths. Where people walk often the grass wears away and a path appears by itself, as in any village;
-   where nobody walks any more it grows over again. Paths of crushed shell and coral sand that you lay are quicker. */
-const WEAR_CELL = 6, WEAR_UP = [5, 15, 35], WEAR_VAL = [0, 8, 22, 42];
+   where nobody walks any more it grows over again. A path trodden hard for a long time is strewn with crushed shell and
+   coral sand, as villages did: people walk faster there, and it adorns the village. Nobody lays paths by hand. */
+const WEAR_CELL = 6, WEAR_UP = [5, 15, 35], WEAR_VAL = [0, 8, 22, 42], ROAD_AGE = 40, ROAD_MAX = 255;   // checks (every 5 ticks) at the deepest wear before shell is strewn; checks it lasts unused
 function wearGrid(I){
   if (I._wg) return I._wg;
   const b = I.box, w = Math.ceil((b.x1 - b.x0) / WEAR_CELL) + 1, h = Math.ceil((b.y1 - b.y0) / WEAR_CELL) + 1;
-  const g = I._wg = {x0:b.x0, y0:b.y0, w, h, v:new Float32Array(w * h), lv:new Uint8Array(w * h), road:new Uint8Array(w * h)};
-  if (I.wearSaved){ let i = 0; const c = I.wearSaved; for (let k = 0; k + 1 < c.length; k += 2) for (let n = 0; n < c[k + 1] && i < g.v.length; n++, i++){ g.lv[i] = c[k]; g.v[i] = WEAR_VAL[c[k]]; } I.wearSaved = null; }
-  markRoads(I); return g;
+  const g = I._wg = {x0:b.x0, y0:b.y0, w, h, v:new Float32Array(w * h), lv:new Uint8Array(w * h), road:new Uint8Array(w * h), age:new Uint8Array(w * h)};
+  // saved as runs of the same level; 4 is a shell path
+  if (I.wearSaved){ let i = 0; const c = I.wearSaved; for (let k = 0; k + 1 < c.length; k += 2) for (let n = 0; n < c[k + 1] && i < g.v.length; n++, i++){ const l = Math.min(3, c[k]); g.lv[i] = l; g.v[i] = WEAR_VAL[l]; if (c[k] === 4){ g.road[i] = 1; g.age[i] = ROAD_MAX; } } I.wearSaved = null; }
+  return g;
 }
 const wearAt = (g, x, y) => { const cx = Math.floor((x - g.x0) / WEAR_CELL), cy = Math.floor((y - g.y0) / WEAR_CELL); return cx < 0 || cy < 0 || cx >= g.w || cy >= g.h ? -1 : cy * g.w + cx; };
-/* Every tick the paths fade a little; every few ticks the drawn ones follow, with some slack so they do not flicker */
+/* Every tick the paths fade a little; every few ticks the drawn ones follow, with some slack so they do not flicker.
+   Shell is strewn where the path has been deep for a long while, and goes again only after a long time unused. */
 function stepWear(I){
   const g = I._wg; if (!g) return;
   for (let i = 0; i < g.v.length; i++) if (g.v[i]) g.v[i] = g.v[i] < .05 ? 0 : g.v[i] * .997;
@@ -773,25 +776,14 @@ function stepWear(I){
     while (l < 3 && v >= WEAR_UP[l]) l++;
     while (l > 0 && v < WEAR_UP[l - 1] * .75) l--;
     if (l !== g.lv[i]){ g.lv[i] = l; changed = true; }
+    if (l === 3){ if (g.age[i] < ROAD_MAX) g.age[i]++; if (!g.road[i] && g.age[i] >= ROAD_AGE){ g.road[i] = 1; g.age[i] = ROAD_MAX; changed = true; } }
+    else if (g.age[i] && l < 2){ g.age[i]--; if (g.road[i] && !g.age[i]){ g.road[i] = 0; changed = true; } }
   }
   if (changed){ I._wp = null; invalidate(); }
 }
-/* saved as runs of the same wear */
-function wearCode(g){ const out = []; for (let i = 0; i < g.lv.length; i++){ const l = g.lv[i]; if (out.length && out[out.length - 2] === l) out[out.length - 1]++; else out.push(l, 1); } return out; }
-function markRoads(I){
-  const g = I._wg; if (!g) return; g.road.fill(0);
-  for (const r of I.roads || []) for (let k = 1; k < r.length; k++){
-    const a = r[k - 1], b = r[k], d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    for (let s = 0; s <= d; s += 2) for (const [ox, oy] of [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3]]){ const i = wearAt(g, a.x + (b.x - a.x) * s / d + ox, a.y + (b.y - a.y) * s / d + oy); if (i >= 0) g.road[i] = 1; }
-  }
-}
-const roadLen = I => (I.roads || []).reduce((t, r) => t + r.reduce((s, p, k) => k ? s + Math.hypot(p.x - r[k - 1].x, p.y - r[k - 1].y) : 0, 0), 0);
-function hitRoad(p){
-  if (lod === 'far') return null; const lim = Math.max(5, 12 / cam.z);
-  for (const I of islands) for (let ri = 0; ri < (I.roads || []).length; ri++){ const r = I.roads[ri]; for (let k = 1; k < r.length; k++) if (segDist(p, r[k - 1], r[k]) < lim) return {id:I.id, r:ri, k}; }
-  return null;
-}
-function roadsChanged(I){ I._rp = null; markRoads(I); invalidate(); save(); }
+function wearCode(g){ const out = []; for (let i = 0; i < g.lv.length; i++){ const l = g.road[i] ? 4 : g.lv[i]; if (out.length && out[out.length - 2] === l) out[out.length - 1]++; else out.push(l, 1); } return out; }
+/* how much shell path a village has, in cells */
+const roadCells = I => { const g = I._wg; if (!g) return I.wearSaved ? I.wearSaved.reduce((t, v, k) => k % 2 === 0 && v === 4 ? t + I.wearSaved[k + 1] : t, 0) : 0; let n = 0; for (let i = 0; i < g.road.length; i++) n += g.road[i]; return n; };
 
 /* People keep working while the map is not drawn: the steps are made up in small pieces */
 let walkAt = 0;
@@ -1049,8 +1041,6 @@ function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < ro
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
   if (landing && !landing.found){ landingTap(p); return; }
-  if (mode === 'road'){ roadTap(p); return; }
-  if (mode === 'unroad'){ roadCut(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   const sh = hitShip(p);
   if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu ${clanVom(C)}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
@@ -1060,14 +1050,13 @@ function onTap(p){
   const w = hitWalker(p);
   if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${whoIs(w)} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
   const b = hitBuilding(p); if (b){ select(b); return; }
-  const rd = hitRoad(p); if (rd){ closeSheet(); openSheet('road', rd); return; }
   const ri = hitCord(p); if (ri >= 0){ openRoute(ri); return; }
   const I = hitIsland(p);
   // from further out a tap on an island takes you close to it, and you build there
   if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I){ closeSheet(); setActive(I.id); updateHUD(); if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); } return; }
-  closeSheet(); if (buildOpen) setBuildOpen(false);   // a tap on empty sea folds the build bar away
+  closeSheet(); if (barMode) setBar(null);   // a tap on empty sea folds the bar away
 }
 const ptrs = new Map(); let ges = null;
 mapC.addEventListener('pointerdown', e => {
@@ -1112,17 +1101,21 @@ $('popBtn').addEventListener('click', () => openSheet('needs'));
 $('vitalBtn').addEventListener('click', () => openSheet('needs'));
 $('storeBtn').addEventListener('click', () => openSheet('store'));
 $('manaBtn').addEventListener('click', () => openSheet('mana'));
-$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return; if (b.dataset.road){ if (placing) endPlace(); if (b.dataset.road === 'cut') startUnroad(); else startRoad(); return; } newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
+$('buildList').addEventListener('click', e => { const b = e.target.closest('.bbtn'); if (!b) return;
+  if (b.dataset.ship){ const sh = ships.find(q => q.id === +b.dataset.ship || q.id === b.dataset.ship); if (sh) steerShip(sh); return; }
+  if (b.dataset.route){ openRoute(+b.dataset.route); return; }
+  if (b.dataset.fleet){ openSheet('fleet'); return; }
+  newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
 $('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
 $('idleBtn').addEventListener('click', showIdle);
 $('isleName').addEventListener('click', () => { if (landing){ if (!landing.found) openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
-$('tradeBtn').addEventListener('click', () => openSheet('fleet'));
+$('tradeBtn').addEventListener('click', () => { closeSheet(); setBar(barMode === 'fleet' ? null : 'fleet'); });
 $('moreBtn').addEventListener('click', () => setSideOpen(!sideOpen));
 $('compass').addEventListener('click', () => openSheet('calendar'));
 $('compass').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSheet('calendar'); } });
-$('buildBtn').addEventListener('click', () => { closeSheet(); setBuildOpen(!buildOpen); });
+$('buildBtn').addEventListener('click', () => { closeSheet(); setBar(barMode === 'build' ? null : 'build'); });
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
 $('placeOk').addEventListener('click', confirmPlace);
 $('placeDone').addEventListener('click', endPlace);
@@ -1146,8 +1139,8 @@ function chooseHome(I){
 }
 function beginLanding(){
   if (placing && placing.founding){ placing = null; mode = 'idle'; $('placeDone').hidden = false; $('place').hidden = true; $('bottom').hidden = false; }
-  setBuildOpen(false);
-  if (mode === 'place' || mode === 'move' || mode === 'road' || mode === 'unroad') endPlace();   // a building half placed in the old game goes with it
+  setBar(null);
+  if (mode === 'place' || mode === 'move') endPlace();   // a building half placed in the old game goes with it
   document.body.classList.add('landing'); closeSheet(); renderAll(); updateHUD();
   const sh = ships.find(s => s.founder), b = boxOf(islands.filter(I => I.start));
   if (sh){ b.x0 = Math.min(b.x0, sh.x - 30); b.x1 = Math.max(b.x1, sh.x + 30); }
@@ -1324,6 +1317,8 @@ function start(data){
   injectDefs();
   let ok = false;
   try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); } catch (e){}
+  // a game from the old rules is not carried over: the island economy works differently now
+  let oldGame = false; try { for (const k of OLD_KEYS) if (localStorage.getItem(k)){ oldGame = true; localStorage.removeItem(k); } } catch (e){}
   if (!ok) newGame();
   const away = ok && savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
   renderAll(); measure();
@@ -1336,9 +1331,8 @@ function start(data){
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
-    if (!ok) beginLanding();
+    if (!ok){ beginLanding(); if (oldGame) toast('Neue Regeln für Haushalte und Rohstoffe: Das Spiel beginnt neu.', 6000); }
     else if (away && away.ms >= 3 * 60000) welcomeBack(away);
-    else if (oilGift) toast('Neu: Große Dörfer wollen Kokosöl. Baut Palmenkletterer und Ölhütte. Ein erster Vorrat liegt im Lager.', 6000);
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });
 }

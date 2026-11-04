@@ -297,27 +297,22 @@ function ribbon(pts, w){
 function drawWear(c, I){
   const g = I._wg; if (!g) return;
   if (!I._wp){
-    const P = [new Path2D(), new Path2D(), new Path2D()], R = [4.8, 3.6, 2.4];
+    const P = [new Path2D(), new Path2D(), new Path2D(), new Path2D(), new Path2D()], R = [4.8, 3.6, 2.4];
     for (let i = 0; i < g.lv.length; i++){
-      const l = g.lv[i]; if (!l) continue;
+      const l = g.lv[i]; if (!l && !g.road[i]) continue;
       const h = Math.imul(i + 1, 2654435761) >>> 0, x = g.x0 + (i % g.w + .5) * WEAR_CELL + ((h & 15) / 15 - .5) * 2.6, y = g.y0 + (Math.floor(i / g.w) + .5) * WEAR_CELL + (((h >> 4) & 15) / 15 - .5) * 2.6;
       if (!landAt(I, {x, y}) || (I.river && polyDist({x, y}, I.river, false) < 3)) continue;
       for (let k = 0; k < l; k++){ const r = R[k] * (.82 + ((h >> (8 + k * 3)) & 7) / 22); P[k].moveTo(x + r, y); P[k].ellipse(x, y, r, r * .78, ((h >> 20) & 7) / 7, 0, TAU); }
+      // a shell path: pale coral sand with a darker edge, and a few bright bits of shell
+      if (g.road[i]){ const r = 4.4 * (.9 + ((h >> 9) & 7) / 30); P[3].moveTo(x + r, y); P[3].ellipse(x, y, r, r * .8, 0, 0, TAU);
+        if ((h & 3) === 0){ const sx = x + (((h >> 12) & 7) - 3.5) * .6, sy = y + (((h >> 15) & 7) - 3.5) * .45; P[4].moveTo(sx + .7, sy); P[4].ellipse(sx, sy, .7, .45, 0, 0, TAU); } }
     }
     I._wp = P;
   }
-  const [a, b, d] = I._wp;
-  c.fillStyle = '#9C7E4E'; c.globalAlpha = .2; c.fill(a); c.fillStyle = '#B89A62'; c.globalAlpha = .26; c.fill(b); c.fillStyle = '#D9C48E'; c.globalAlpha = .32; c.fill(d); c.globalAlpha = 1;
+  const [a, b, d, sh, bits] = I._wp;
+  c.fillStyle = '#9C7E4E'; c.globalAlpha = .2; c.fill(a); c.fillStyle = '#B89A62'; c.globalAlpha = .26; c.fill(b); c.fillStyle = '#D9C48E'; c.globalAlpha = .32; c.fill(d);
+  c.globalAlpha = .9; c.lineWidth = 1.1; c.strokeStyle = '#B9A06C'; c.stroke(sh); c.fillStyle = '#EDE3C8'; c.fill(sh); c.fillStyle = '#FFFFFF'; c.globalAlpha = .8; c.fill(bits); c.globalAlpha = 1;
 }
-/* Laid paths: crushed shell and coral sand between darker edges, rounded through the points you set */
-const roadCurve = r => r.length > 2 ? spline([r[0], ...r, r[r.length - 1]], 6) : r;
-function drawRoads(c, I){
-  if (!I.roads || !I.roads.length) return;
-  if (!I._rp){ const p = new Path2D(); for (const r of I.roads){ if (r.length < 2) continue; const sm = roadCurve(r); p.moveTo(sm[0].x, sm[0].y); for (const q of sm) p.lineTo(q.x, q.y); } I._rp = p; }
-  stroke(c, I._rp, '#7E6440', 7.4, null, 'round', .38); stroke(c, I._rp, '#E6DABA', 5.4, null, 'round', .95);
-  stroke(c, I._rp, '#BFA67A', 1.3, [.1, 2.7], 'round', .75); stroke(c, I._rp, '#FFFBF0', 1.2, [.1, 3.9], 'round', .9);
-}
-/* The forest floor under the trees close up, one green mass far away. Cached until a tree changes. */
 function treePaths(I){
   if (I._tp) return I._tp;
   const T = (I.trees || []).filter(t => t.st === 0 || (t.st === 2 && t.g < GROW_TICKS * .5));
@@ -385,7 +380,7 @@ function seaRect(c, v, color, pat, from){
 function drawBase(c, v){
   seaRect(c, v, '#2F5F73', 'pSea', .3);   // waves fade out far away, where they would only flicker
   for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I, v);
-  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); drawRoads(c, I); }
+  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); }
   drawSel(c); drawCords(c); drawObjects(c, v);
 }
 
@@ -906,8 +901,6 @@ function drawNeeds(c, v, now){
   }
 }
 function drawGhost(c){
-  if (placing.road){ drawRoadGhost(c); return; }
-  if (placing.unroad){ const I = isl(placing.island); if (I.roads) for (const r of I.roads){ const p = new Path2D(), sm = roadCurve(r); p.moveTo(sm[0].x, sm[0].y); for (const q of sm) p.lineTo(q.x, q.y); stroke(c, p, '#A84A2C', 2.4, [4, 3], 'round', .9); for (const q of r){ c.fillStyle = '#A84A2C'; c.fill(ellipse(q.x, q.y, 1.8, 1.5)); } } return; }
   const K = KINDS[placing.kind], r = K.r + 5, e = loopPath(placing.x, placing.y + 1, r, r * .45, 7, .06, 13), ok = placing.ok, I = isl(placing.island);
   // while placing, rings show where the deposit is and how far the workshop reaches for its plants
   // how far a workshop reaches: a ring of dots laid on the ground by hand
@@ -917,13 +910,6 @@ function drawGhost(c){
   c.fillStyle = ok ? 'rgba(62,122,58,.25)' : 'rgba(168,74,44,.25)'; c.fill(e);
   sketch(c, placing.x, placing.y + 1, r, r * .45, 7, ok ? '#3E7A3A' : '#A84A2C', 2.2);
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
-}
-/* While laying a path: the points so far, the way between them, and a ring round the last one (tap it to take it back) */
-function drawRoadGhost(c){
-  const pts = placing.pts; if (!pts.length) return;
-  if (pts.length > 1){ const p = new Path2D(), sm = roadCurve(pts); p.moveTo(sm[0].x, sm[0].y); for (const q of sm) p.lineTo(q.x, q.y); stroke(c, p, '#3E2416', 6.4, null, 'round', .35); stroke(c, p, '#F4ECD8', 4.4, [5, 3], 'round', .95); }
-  for (const q of pts){ c.fillStyle = '#F4ECD8'; c.fill(ellipse(q.x, q.y, 2.4, 2)); stroke(c, ellipse(q.x, q.y, 2.4, 2), '#3E2416', .9); }
-  const l = pts[pts.length - 1]; sketch(c, l.x, l.y, 7, 5, pts.length * 7, '#F4ECD8', 1.8);
 }
 function drawTop(c, now){
   const v = view(120), far = lod === 'far', ks = far ? clamp(.6 / cam.z, 1, 2.4) : 1;

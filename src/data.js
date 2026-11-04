@@ -1,7 +1,7 @@
 'use strict';
 /* Goods, buildings, needs and the rules of exchange */
 
-const TICK = 2000, DAY = 3, AGE_FULL = 150, LOAD = 12, SAVE_KEY = 'polinusa-3';
+const TICK = 2000, DAY = 3, AGE_FULL = 150, LOAD = 12, SAVE_KEY = 'polinusa-4', OLD_KEYS = ['polinusa-3'];
 
 const GOODS = ['nahrung','fisch','meeres','wild','kokos','holz','proviant','toepfe','beile','klingen','matten','schnur','tapa','oel','schweine','kava','schmuck','perlmutt','federn','tabua'];
 const TREASURE_GOODS = ['perlmutt', 'federn', 'tabua'];   // found only on the treasure islands
@@ -54,7 +54,6 @@ const KINDS = {
   // things that only make the village beautiful
   hibiskus:{n:'Hibiskus', s:'Hibiskus', on:['hoch','atoll'], bt:8, cost:{}, r:5, hy:6, plant:true, beauty:1, info:'Rote Blüten für Haar und Kränze.', vb:'-9 -14 18 16'},
   blumen:{n:'Blumenbeet', s:'Blumen', on:['hoch','atoll'], bt:5, cost:{holz:1}, r:7, hy:3, beauty:2, info:'Duftende Tiare und Hibiskus, eingefasst mit Holz.', vb:'-11 -9 22 14'},
-  weg:{n:'Muschelweg', s:'Weg', on:['hoch','atoll'], bt:2, cost:{holz:1}, r:6, hy:0, beauty:1, path:true, info:'Ein Weg aus zerstoßenen Muscheln und Korallensand.', vb:'-13 -6 26 12'},
   fackel:{n:'Fackel', s:'Fackel', on:['hoch','atoll'], bt:4, cost:{holz:1}, r:4, hy:14, beauty:1, info:'Leuchtet bei Festen am Abend.', vb:'-6 -19 12 21'},
   pfosten:{n:'Ahnenpfosten', s:'Pfosten', on:['hoch','atoll'], bt:10, cost:{holz:2}, r:6, hy:18, beauty:3, info:'Ein geschnitzter Pfosten mit dem Gesicht der Ahnen.', vb:'-7 -26 14 28'},
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:10, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Ruft das Dorf und gibt den Takt.', vb:'-13 -10 26 14'},
@@ -75,7 +74,7 @@ const LIFE = {
 const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in the canoe
 const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from);   // what the clan brought from the old land; the rest comes from other peoples
 for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
-const DECO = ['hibiskus', 'blumen', 'weg', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
+const DECO = ['hibiskus', 'blumen', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
 const SHIPS = {
