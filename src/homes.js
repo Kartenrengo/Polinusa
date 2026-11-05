@@ -153,14 +153,22 @@ function famNeeds(I, f, list){
   const t = famTier(I, f), by = new Map(list.map(n => [n.k, n]));
   return TIERS[t].needs.map(k => k === 'dach' ? {k, state:f.home ? 'ok' : 'out'} : {k, state:(by.get(k) || {state:'ok'}).state});
 }
-/* A house rises: a hut is bound anew with fibre and sennit (a family house), a family house with pots, mats and oil in
-   store becomes a master's house. A master family falls back when one of its goods has run out for half a minute;
-   the sennit of a family house holds. */
-function canUpgrade(I, b){
-  const t = tierOf(b); if (t >= 3 || !famOfHome(I, b)) return false;
-  if (t === 1) return canPay(I, TIERS[2].cost);
-  return MASTER_GOODS.every(k => (I.stock[k] || 0) > 0) && canPay(I, TIERS[3].cost) && membersOf(I, famOfHome(I, b)).length >= 3;
+/* Rising, as in Anno. A house can rise one step when every need of its family is met and the material for the next step
+   lies in store; for a master's house its new goods must be there too. You tap the house and "Aufsteigen" (or let houses
+   rise by themselves). A hut is bound anew with fibre and sennit: a family house, with room for children. A family house
+   with pots, mats and coconut oil becomes a master's house. A master family falls back when one of its goods has run out
+   for half a minute; the sennit of a family house holds. */
+function upgradeSteps(I, b, list){
+  const t = tierOf(b), f = famOfHome(I, b); if (t >= 3 || !f || b.bt) return null;
+  list = list || needsOf(I).list;
+  const T = TIERS[t + 1], fn = famNeeds(I, f, list), miss = fn.filter(n => n.state === 'out').map(n => n.k), steps = [];
+  steps.push({k:'needs', ok:!miss.length, miss, t:miss.length ? `Es fehlt ${andList(miss.map(k => k === 'dach' ? 'Dach' : GN[k]))}` : 'Alle Bedürfnisse erfüllt'});
+  if (t === 2) for (const k of MASTER_GOODS) steps.push({k, ok:(I.stock[k] || 0) > 0, t:`${GN[k]} im Lager`, have:I.stock[k] || 0, need:1});
+  for (const [k, v] of Object.entries(T.cost)) steps.push({k, ok:(I.stock[k] || 0) >= v, t:amount(k, v), have:I.stock[k] || 0, need:v});
+  return {t:t + 1, T, steps, ready:steps.every(q => q.ok)};
 }
+const canUpgrade = (I, b, list) => { const u = upgradeSteps(I, b, list); return !!u && u.ready; };
+const readyHomes = (I, list) => homesOf(I).filter(b => canUpgrade(I, b, list));
 function upgradeHouse(I, b){
   const t = tierOf(b) + 1, f = famOfHome(I, b); if (t > 3 || !f) return false;
   pay(I, TIERS[t].cost); b.t = t; b.miss = 0; invalidate(); I.staff = null;
@@ -176,15 +184,10 @@ function tierTick(I, list, force = false){
     b.miss = MASTER_GOODS.some(k => out.has(k)) ? (b.miss || 0) + 10 : 0;
     if (b.miss >= 30){ b.t = 2; b.miss = 0; invalidate(); I.staff = null; const f = famOfHome(I, b); if (I.id === active && !awayQuiet) note(`${f ? famName(f) : 'Ein Haus'} hat keine ${MASTER_GOODS.filter(k => out.has(k)).map(k => GN[k]).join(' und ')} mehr und lebt wieder als einfache Familie.`); }
   }
-  if (out.has('essen') || out.has('wasser') || I.noUpgrade) return;
-  const homes = homesOf(I).filter(b => famOfHome(I, b)).sort((a, q) => a.born - q.born);
-  // huts first, as long as enough sennit stays in store for nets and canoes
-  const keep = {...TIERS[2].cost}; for (const [k, v] of Object.entries(UPGRADE_KEEP)) keep[k] = (keep[k] || 0) + v;
-  const hut = canPay(I, keep) && homes.find(b => tierOf(b) === 1);
-  if (hut){ upgradeHouse(I, hut); return; }
-  if (out.has('speisen')) return;
-  const fam = homes.find(b => tierOf(b) === 2 && canUpgrade(I, b));
-  if (fam) upgradeHouse(I, fam);
+  // by themselves the houses rise only when the player wants it so; a reserve of sennit stays for nets and canoes
+  if (!I.autoUp) return;
+  const b = homesOf(I).sort((a, q) => tierOf(a) - tierOf(q) || a.born - q.born).find(q => canUpgrade(I, q, list) && (tierOf(q) > 1 || (I.stock.schnur || 0) >= TIERS[2].cost.schnur + UPGRADE_KEEP.schnur));
+  if (b) upgradeHouse(I, b);
 }
 /* A family without a roof waits by the plaza; when no house is being built for a long while, one of them leaves */
 function rooflessTick(I){
@@ -266,7 +269,8 @@ function staff(I){
   if (want.length){
     // whose work can wait best: a full store first, then a good in plenty, crafts before wood, wood before food and water
     const need = needOf(I, places), cap = storeCap(I), plenty = b => (I.stock[prodOfB(b)] || 0) / cap, pull = b => need(b) * 10 + plenty(b) * 5 + rankOf(b);
-    const order = places.filter(b => (at.get(b) || []).length).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
+    // nobody leaves water or food that is running out
+    const order = places.filter(b => (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
     for (const [s, n] of want){
       const use = pool.splice(0, n);
       while (use.length < n){

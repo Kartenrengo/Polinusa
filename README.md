@@ -151,21 +151,26 @@ Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick. Danach geht d
 
 ## Die Oberfläche
 
-Alles ist nach Bedeutung geordnet und nimmt so wenig Platz wie möglich:
+Einfach und nach Bedeutung geordnet:
 
-- **Oben, die Insel:** In der ersten Zeile nur der Name (antippen benennt um), rechts Ansehen, Leute ohne Arbeit und
-  Bewohner mit Platz. Darunter die Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, Häuser
-  voll, oder wann der Nächste kommt. Was nicht in die Zeile passt, zeigt das Lager.
-- **Links, Zeit und Wetter:** Ein Schild mit Kompass, Wind („Wind aus SO, frisch“) und Mond; antippen öffnet den Kalender.
-- **Rechts:** die Muschel mit den Nachrichten und „⋯“, das doppelte Geschwindigkeit und Menü ausklappt. Läuft das Spiel
-  doppelt so schnell, zeigt „⋯“ ein kleines „2×“.
-- **Unten, handeln:** Die Aufgabe in einer Zeile mit Fortschritt (antippen erklärt sie). Die Bauleiste ist zugeklappt,
-  nur „Bauen“ und „Flotte“ schweben über der Karte. „Bauen“ klappt sie auf (dann heißt der Knopf „Zu“), ein Tipp aufs
-  leere Meer klappt sie wieder zu; „Zeig es mir“ öffnet sie von selbst. Die Reiter „Bauen“ und „Schmuck“ erscheinen erst,
-  wenn es Schmuck gibt.
-- **Kurze Texte:** Aufgaben, Gebäude, Hilfe und Meldungen erklären sich in ein, zwei Sätzen. Mehr steht unter „Mehr
-  dazu“ auf der Tafel eines Gebäudes.
-- **Nachrichten:** Die Liste rollt rechts aus der Muschel, auf festem Grund und nie tiefer als bis über die Bauleiste.
+- **Oben, die Insel:** der Name, Ansehen, Leute ohne Arbeit und die Bewohner mit ihrem Platz. Darunter die wichtigsten
+  Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„↑ 2 aufsteigen“**, Häuser voll, ein
+  Kanu kommt. Antippen öffnet die Übersicht.
+- **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
+  „Flotte“.
+- **Ein Haus antippen** zeigt alles wie bei Anno: wer dort wohnt (mit Namen, Alter und Arbeit), die Plätze (besetzt, frei
+  und die, die erst mit mehr Bedürfnissen aufgehen), jedes Bedürfnis mit Haken oder „fehlt“ und woher es kommt, mit einem
+  Knopf „Bauen“ oder „Kanus“, und darunter, was zum **Aufsteigen** fehlt, Punkt für Punkt, und den Knopf „Aufsteigen“.
+- **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
+  holen sollen.
+- **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
+  - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
+    können aufsteigen, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
+    voll. Darunter die Häuser nach Stufe mit ihren Bedürfnissen als Zeichen, grün, gelb oder rot; ein Tipp auf ein
+    Zeichen zeigt, wer die Ware macht. Dazu Zuzug und Kinder und die Verwandtschaft.
+  - **Arbeit:** automatisch oder von Hand, wer frei ist, welche Plätze Raum haben oder ruhen, alle Familien.
+  - **Insel:** Wald, Felder, Wild, Riff, Pflanzen und Tiere, Muster, Navigatoren, der Weg zum Häuptlingsdorf.
+- **Kurze Texte:** Mehr steht unter „Mehr dazu“.
 
 ## Essen
 
@@ -223,9 +228,14 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
   frühen Lapita lebten wohl dort, wo die Familie der Frau lebte.
 - **Hütte:** Pfosten und ein Dach aus Palmwedeln, ohne Nägel. Sie ist das Zuhause einer Familie, bis 4 Menschen. In einer
   Hütte kommen **keine Kinder** zur Welt.
-- **Familienhaus:** Wird eine Hütte mit Kokosfasern und Sennit neu gebunden, hat sie Platz für Kinder. Liegt das Material im
-  Lager (und bleibt Schnur für Netze und Kanus übrig), bindet eine Familie ihre Hütte von selbst neu; auf der Tafel des
-  Hauses geht es mit „Ausbauen“ sofort. In der Übersicht lässt sich „Von selbst ausbauen“ abschalten.
+- **Aufsteigen wie bei Anno:** Ein Haus kann eine Stufe höher, wenn **alle Bedürfnisse seiner Familie erfüllt** sind und
+  das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da sein. Dann steht ein
+  grüner Pfeil über dem Haus, oben steht „↑ aufsteigen“, und auf der Tafel des Hauses ist der Knopf „Aufsteigen“ frei. In
+  der Übersicht steigen mit „Alle aufsteigen“ alle bereiten Häuser auf einmal auf. Wer will, schaltet dort „Von selbst“
+  ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
+- **Weiterkommen:** Die Tafel zeigt, was fehlt, und woher es kommt. Manches gibt es nicht auf jeder Insel: Matten nur auf
+  Atollen, Töpfe nur auf hohen Inseln, feine Dinge nur auf Inseln mit besonderem Boden. Ab dem Meisterhaus muss das Dorf
+  also hinaus: siedeln, tauschen, Gaben bringen.
 - **Kinder:** Sie kommen in Familienhäusern, wo eine Frau und ein Mann leben, Platz ist und die Ernte mehr als reicht.
   Jedes Kind gehört zur Linie seiner Mutter. Mit sechs Jahren arbeitet es mit.
 - **Platz nach Bedürfnissen, wie bei Anno:** Jedes erfüllte Bedürfnis bringt Platz für einen Menschen mehr. Fehlt etwas,
@@ -592,13 +602,17 @@ und biegen sich, wie echte. Am Rand stehen Grasbüschel, auf dem nackten Boden l
 wächst der Pfad wieder zu. Ein Pfad, der lange viel begangen wird, wird mit Korallensand und Muschelstückchen bestreut;
 darauf geht man schneller.
 
-## Wolken und Regen
+## Wolken, Wellen und Wind
 
-Die Wolken der Passatzeit sind kleine Haufenwolken: Jede wächst, steht eine Weile und löst sich wieder auf; draußen auf
-dem Meer leben sie Dutzende Minuten, im Spiel ein, zwei Minuten. Sie ziehen mit dem Wind, ihr Schatten liegt darunter auf
-Meer und Land. Eine große Wolke regnet, solange sie reif ist: graue Schleier fallen schräg mit dem Wind, auf dem Wasser
-breiten sich Ringe aus. In der Sturmzeit gibt es mehr, dunklere und nassere Wolken, in der mageren Zeit nur wenige.
-
+- **Wolken** sind gezeichnet wie alles andere: eine Tuschelinie, cremefarbene Fläche, eine schattige Unterseite und ein paar
+  Striche im Innern, die Mitte am höchsten. Jede wächst, steht eine Weile und löst sich wieder auf; dabei bricht ihre
+  Linie auf. Ihr Schatten liegt als dunkler Fleck darunter. Eine große Wolke regnet, solange sie reif ist: Reihen kurzer
+  Striche fallen schräg mit dem Wind, auf dem Wasser breiten sich Ringe aus. In der Sturmzeit gibt es mehr, grauere
+  Wolken, in der mageren Zeit wenige.
+- **Wellen:** Das offene Meer hat zwei Lagen Wellenzeichen, die ruhig und gleichmäßig mit dem Wind ziehen und sich leicht
+  heben und senken. Am Riff bricht die Brandung in einem ruhigen, gleichen Takt; im Sturm schneller und höher.
+- **Wind:** Aus der Nähe wiegen sich Grasbüschel, Farne, Schilf und Blumen, Palmen, Pandanus, Brotfruchtbäume und der Wald
+  leicht im Wind. Böen laufen in Windrichtung über die Insel, bei starkem Wind neigt sich alles mehr.
 ## Inseln wechseln
 
 Gebaut wird auf der Insel, die man nah vor sich hat. Wer heranzoomt, ist dort; die Leisten zeigen dann diese Insel. Von

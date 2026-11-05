@@ -144,6 +144,7 @@ const SYM = {
 };
 const PAT = {
   pSea: [16, 10, '<rect width="16" height="10" fill="#2F5F73"/><path d="M1 7q3.5-4 7 0M9 2q3.5-4 7 0" fill="none" stroke="#E6DBBF" stroke-opacity=".26" stroke-width=".9" stroke-linecap="round"/>'],
+  pSeaW: [16, 10, '<path d="M1 7q3.5-4 7 0M9 2q3.5-4 7 0" fill="none" stroke="#E6DBBF" stroke-opacity=".26" stroke-width=".9" stroke-linecap="round"/>'],
   pLag: [14, 9, '<rect width="14" height="9" fill="#79C6B8"/><path d="M1 6q3-3.2 6 0M8 1.5q3-3.2 6 0" fill="none" stroke="#F3F8EE" stroke-opacity=".5" stroke-width=".8" stroke-linecap="round"/>'],
   pCloth: [40, 6, '<rect width="40" height="6" fill="#EADFC6"/><path d="M0 2.5h17M21 2.5h12M5 5.3h9M27 5.3h10" stroke="#D8CAA8" stroke-width=".7"/>'],
   pDots: [9, 9, '<circle cx="2" cy="2" r=".75" fill="#2E4A1C" fill-opacity=".28"/><circle cx="6.5" cy="6.5" r=".75" fill="#2E4A1C" fill-opacity=".28"/>'],

@@ -1094,7 +1094,7 @@ function econ(){
     // without food or water people leave, slowly, but a few always stay
     // without food or water a family packs up and leaves in its canoe, the youngest household first, never the last one
     I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : 0;
-    if (I.hunger >= 20 && famsOf(I).length > 1 && tick >= (I.grace || 0)){ I.hunger = 0; famLeaves(I, nd.missing.find(n => n.k === 'essen' || n.k === 'wasser').k); }
+    if (I.hunger >= 45 && famsOf(I).length > 1 && tick >= (I.grace || 0)){ I.hunger = 0; famLeaves(I, nd.missing.find(n => n.k === 'essen' || n.k === 'wasser').k); }
   }
   stageTick();
   if (tick % 2 === 0){ const was = $('quest').hidden; renderQuest(); if (was !== $('quest').hidden) measure(); }   // the elders' advice follows the village

@@ -32,7 +32,7 @@ const QUESTS = [
     n:() => Math.min(3, linesWith(isl('heimat'))), of:3, show:{needs:true}, unlock:[], gift:{}},
   {id:'sennit', t:'Sennit drehen', d:'Baue eine Seilerei.', why:'Aus den Fasern der Kokosnüsse wird Sennit gedreht. Damit werden Hütten neu gebunden, Netze geknüpft und Kanus gebaut. Die Fasern bringt das Erntehaus mit den reifen Nüssen.',
     n:() => count('heimat', 'schnur'), of:1, show:{build:'schnur'}, unlock:[], gift:{faser:3}},
-  {id:'ausbau', t:'Ein Familienhaus', d:'Binde eine Hütte mit Fasern und Sennit neu.', get why(){ return `Ein Familienhaus hat Platz für Kinder: Erst dort kommt Nachwuchs. Es braucht ${costText(TIERS[2].cost)}; liegt genug im Lager, bindet eine Familie ihre Hütte von selbst neu, oder du tippst auf der Hütte auf „Ausbauen“. Dann will die Familie Gekochtes.`; },
+  {id:'ausbau', t:'Ein Familienhaus', d:'Lass eine Hütte aufsteigen.', get why(){ return `Wie bei Anno: Tippe auf eine Hütte. Dort steht, wer wohnt, was die Familie braucht und was zum Aufsteigen fehlt: alle Bedürfnisse erfüllt und ${costText(TIERS[2].cost)}. Ist alles da, zeigt ein Pfeil über der Hütte: Aufsteigen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
     n:() => homesOf(isl('heimat')).filter(b => tierOf(b) >= 2).length, of:1, show:{needs:true}, unlock:[], gift:{}},
   {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
     n:() => count('heimat', 'umu'), of:1, show:{build:'umu'}, unlock:[], gift:{steine:3}},
@@ -174,16 +174,15 @@ function adviceOf(I, urgentOnly = false){
   if (stillB) return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze den Platz dorthin.' : ''), goto:stillB.id};
   const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
+  // houses whose needs are met and whose material lies ready rise, as in Anno, when you say so
+  { const r = I.autoUp ? [] : readyHomes(I, nd.list); if (r.length) return {t:'Aufsteigen', d:`${r.length} ${r.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen: Tippe drauf, dann „Aufsteigen“.`, goto:r[0].id}; }
   // what every building needs: wood and palm fronds
   if ((I.stock.dach || 0) < 3){ const e = I.buildings.find(b => b.kind === 'ernte'); if (!e) return {t:'Palmwedel holen', d:'Jedes Gebäude braucht Palmwedel fürs Dach. Das Erntehaus holt sie von den Palmen.', build:'ernte'}; if (!(e.v && e.v.pick === 'dach') && choiceOf(e) !== 'dach') return {t:'Palmwedel holen', d:'Im Erntehaus kannst du die Leute auf Wedel stellen, bis genug da ist.', goto:e.id}; }
   if ((I.stock.holz || 0) < 3 && I.type === 'hoch' && !has('faeller')) return {t:'Holz schlagen', d:'Jedes Gebäude braucht Holz. Ein Holzfäller am Waldrand, zu zweit.', build:'faeller'};
-  // fibre and sennit, link by link: the ripe nuts bring the fibre, the rope works turn it into sennit
-  if (unlocked('schnur') && (I.stock.schnur || 0) < 2){
-    if (!has('ernte')) return {t:'Kokosfasern holen', d:'Sennit wird aus Kokosfasern gedreht. Das Erntehaus bringt sie mit den reifen Nüssen.', build:'ernte'};
-    if (!has('schnur')) return {t:'Schnur drehen', d:'Die Seilerei dreht aus Kokosfasern Sennit für Häuser, Netze und Kanus.', build:'schnur'};
-  }
-  if (unlocked('schnur') && done('schnur') && !homesOf(I).some(b => tierOf(b) >= 2) && homesOf(I).some(b => famOfHome(I, b))) return {t:'Ein Familienhaus', d:`Erst im Familienhaus kommen Kinder. Es braucht ${costText(TIERS[2].cost)}${canPay(I, TIERS[2].cost) ? '. Es liegt bereit: Tippe auf eine Hütte, dann auf „Ausbauen“.' : `, es fehlt ${lacking(I, TIERS[2].cost)}.`}`, goto:(homesOf(I).find(b => famOfHome(I, b) && tierOf(b) === 1) || {}).id};
-  if (homesOf(I).some(b => tierOf(b) >= 2) && unlocked('umu') && !has('umu')) return {t:'Gekochtes', d:'Die Familienhäuser wollen Gekochtes aus dem Erdofen.', build:'umu'};
+  // the next step up, as the houses show it: what the first house that cannot rise yet still lacks
+  { const g = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => [b, upgradeSteps(I, b, nd.list)]).find(([, u]) => u && !u.ready);
+    if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
+      if (w && (w.build || w.fleet)) return {t:`Für ${u.T.n}: ${needName(k)}`, d:w.text, build:w.build && w.build !== 'haus' ? w.build : null, fleet:w.fleet, goto:w.build || w.fleet ? null : hb.id}; } }
   if (nd.full && !nd.atMax && !emptyHome(I)) return {t:'Mehr Hütten', d:'Alle Hütten sind belegt. Eine leere Hütte zieht eine Familie von weit her an.', build:'haus'};
   if (I.pop >= 8 && kinState(I) !== 'ok') return {t:'Neues Blut', d:kinText(I).help, needs:true};
   const nextS = STAGES[stageNow() + 1]; if (nextS && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:'haus'};

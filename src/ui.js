@@ -265,82 +265,129 @@ function motifRows(I){
     return `<li>${motifIcon(k)}<span class="nm">${MOTIFS[k].n}<small>${own ? `Das eigene Muster von ${I.name}. ${MOTIFS[k].t}` : `Von ${src ? src.name : 'weit her'}. ${fading ? 'Bald vergessen, wenn keine Töpfe damit kommen.' : `Bleibt noch ${Math.ceil(left / MOON)} Monde ohne neue Töpfe.`}`}</small></span>${own ? '<span class="state ok">eigenes</span>' : fading ? '<span class="state low">verblasst</span>' : ''}</li>`; }).join('')}</ul>`;
 }
 const motifHelp = I => `${I.motif ? '' : I.type === 'hoch' ? 'Mit der ersten Töpferei findet das Dorf ein eigenes Muster. ' : 'Auf einem Atoll gibt es keinen Ton; Muster kommen mit Töpfen von anderswo. '}Wohin Töpfe fahren, wandern die Muster mit. Was zwei Jahre keine Töpfe wieder bringen, wird vergessen. Jedes fremde Muster schmückt das Dorf.`;
-/* Needs sheet: room first, then every good the people use, with what the island makes per minute */
+/* ---------- needs, as in Anno. Where something comes from: what makes it here, what could be built here, or that it has
+   to come from outside, from another island or a clan */
+function makersOf(I, k){ const ks = k === 'essen' ? FOODS : [k]; return I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (ks.includes(prodOf(b)) || ks.some(q => (KINDS[b.kind].picks || {})[q] || (byOf(b) || {})[q]))); }
+function needWay(I, k){
+  if (k === 'dach') return {text:'Eine Hütte für jede Familie', build:'haus'};
+  const names = [...new Set(makersOf(I, k).map(b => KINDS[b.kind].n))];
+  const makes = q => { const K = KINDS[q]; return K.prod === k || (K.by || {})[k] || Object.entries(K.picks || {}).some(([pk, P]) => pk === k || (P.by || {})[k]); };
+  const kinds = k === 'essen' ? ['ernte', 'fisch', 'taro', 'pulaka', 'pansammler', 'bananen'] : ORDER.filter(q => KINDS[q] && !KINDS[q].plant && makes(q));
+  const here = kinds.filter(q => KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
+  const build = here.find(q => !I.buildings.some(b => b.kind === q)) || here[0];
+  if (build) return {text:names.length ? `Von ${andList(names)}. Mehr davon: ${KINDS[build].n}` : `Baue ${KINDS[build].n}`, build};
+  if (names.length) return {text:`Von ${andList(names)}`};
+  const any = kinds[0], K = any && KINDS[any];
+  if (!K) return {text:`${GN[k]} kommt von anderen Inseln`, fleet:true, outside:true};
+  if (!K.on.includes(I.type)) return {text:`${GN[k]} gibt es nur auf ${K.on.includes('atoll') ? 'Atollen' : 'hohen Inseln'}: Besiedelt eine oder tauscht im Kanu`, fleet:true, outside:true};
+  if (SPEC_OF_KIND[any] && specOf(I) !== SPEC_OF_KIND[any]){ const isles = specIslesFor(k); return {text:`${K.n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[any]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}: Besiedelt sie oder tauscht`, fleet:true, outside:true}; }
+  if (!hasLife(I, any)) return {text:lifeMissing(I, any), fleet:true, outside:true};
+  if (!unlocked(any)){ const st = STAGES[stageOfKind(any)]; return {text:`${K.n} kommt ab ${st.pop} Menschen`}; }
+  return {text:`Baue ${K.n}`, build:any};
+}
+const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">Bauen</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
+const needName = k => k === 'dach' ? 'Dach' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
+/* one need of a family: met, short or missing, with where it comes from */
+function needRow(I, n, nd){
+  const N = nd.list.find(q => q.k === n.k), way = n.state !== 'ok' ? needWay(I, n.k) : null;
+  const info = n.k === 'dach' ? 'Die Familie hat ein Haus' : N ? `${N.stock} im Lager · +${perMin(N.make)} −${perMin(N.use + N.work)} pro Minute` : '';
+  return `<li class="${n.state === 'ok' ? '' : 'need'}">${icon(needIcon(n.k))}<span class="nm">${needName(n.k)}<small>${way ? way.text : info}</small></span>${wayBtn(way)}<span class="state ${n.state}">${n.state === 'ok' ? '✓' : n.state === 'low' ? 'knapp' : 'fehlt'}</span></li>`;
+}
+/* ---------- a house, as in Anno: who lives here, what they need, and what it takes to rise */
+const seatIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg>';
+function houseMarkup(I, b){
+  const f = famOfHome(I, b), t = tierOf(b), T = TIERS[t], nd = needsOf(I), top = b.kind === 'fale' ? 4 : 3;
+  let h = head(`${T.n}${f ? ` · ${famName(f)}` : ''}`, `Stufe ${t} von ${top}${t > 1 ? ` · ${T.fam}` : ''}`);
+  if (!f){ const imm = immigFor(I); return h + `<p>Leer.</p><p class="sub">${imm ? `Ein Kanu ${imm.immig.from} bringt eine Familie.` : 'Bald kommt ein Kanu von weit her mit einer Familie, wenn Nahrung und Wasser reichen.'}</p>`; }
+  const m = membersOf(I, f), cap = homeCap(I, b), max = homeCapMax(I, b);
+  // the places: who lives here, free places, and places that open with what is still missing
+  h += `<div class="seats">${Array.from({length:max}, (_, i) => `<span class="seat ${i < m.length ? 'on' : i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length} von ${cap}</b></div>`;
+  h += `<p class="sub">${cap < max ? `${max - cap} ${max - cap === 1 ? 'Platz' : 'Plätze'} mehr, wenn alles da ist. ` : ''}${t === 1 ? 'In einer Hütte kommen keine Kinder; neue Leute kommen in leere Hütten.' : 'Hier kommen Kinder, wenn Platz ist.'}</p>`;
+  h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ` · ${personWork(I, p)}`}${p.wk ? ', schwach' : ''}</small></button>`).join('')}</div>`;
+  h += `<p class="sec">Bedürfnisse</p><ul class="list needs">${famNeeds(I, f, nd.list).map(n => needRow(I, n, nd)).join('')}</ul>`;
+  const u = upgradeSteps(I, b, nd.list);
+  if (u){
+    const add = TIERS[u.t].needs.filter(k => !T.needs.includes(k));
+    h += `<p class="sec">Aufsteigen: ${u.T.n}</p><p class="sub">Platz für ${u.T.cap}${u.t === 2 ? ', und es kommen Kinder' : ''}. Will dazu ${andList(add.map(k => GN[k]))}.</p>`;
+    h += `<ul class="list needs steps">${u.steps.map(q => { const w = !q.ok ? (q.k === 'needs' ? (q.miss[0] ? needWay(I, q.miss[0]) : null) : needWay(I, q.k)) : null;
+      return `<li class="${q.ok ? 'okk' : 'need'}"><span class="state ${q.ok ? 'ok' : 'out'}">${q.ok ? '✓' : '–'}</span><span class="nm">${q.t}${q.need ? ` <small>${q.have} von ${q.need} im Lager</small>` : ''}${w ? `<small>${w.text}</small>` : ''}</span>${wayBtn(w)}</li>`; }).join('')}</ul>`;
+    h += `<div class="rowx"><span class="sub">${u.ready ? 'Alles bereit.' : 'Noch nicht bereit.'}</span><button class="btn primary big" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>Aufsteigen</button></div>`;
+  } else if (t === 3) h += `<p class="sub">Die höchste Stufe eines Hauses. Die Häuptlingsfamilie wohnt im Häuptlingshaus.</p>`;
+  { const ln = m[0] && m[0].ln; h += `<p class="sub">Linie: ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
+  return h;
+}
+/* ---------- the overview: Bewohner as in Anno (the houses by step and their needs), Arbeit, Insel */
+/* what keeps the village from going on, in one line, with the button that helps */
+function villageGoal(I, nd){
+  const ready = readyHomes(I, nd.list);
+  if (nd.roofless) return {cls:'out', t:`${nd.roofless} ohne Dach`, d:'Baue Hütten aus Holz und Palmwedeln.', btn:wayBtn({build:'haus'})};
+  const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:w.text, btn:wayBtn(w)}; }
+  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen`, d:'Alle Bedürfnisse erfüllt, das Material liegt bereit.', btn:'<button class="btn primary small" type="button" data-act="upall">Alle aufsteigen</button>'};
+  // the next step up: what the first house that cannot rise yet still lacks
+  const next = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => upgradeSteps(I, b, nd.list)).find(Boolean);
+  if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
+    return {cls:w && w.outside ? 'far' : 'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w ? w.text : '', btn:wayBtn(w)}; }
+  if (nd.atMax) return {cls:'far', t:'Die Insel ist voll', d:`${I.name} trägt höchstens ${islandMax(I)} Menschen. Gründet ein Dorf auf einer anderen Insel.`, btn:wayBtn({fleet:true})};
+  const st = STAGES[stageNow() + 1]; if (st && I.pop < st.pop) return {cls:'low', t:`Ab ${st.pop} Menschen: ${st.n}`, d:'Baut Hütten, dann kommen Familien. In Familienhäusern kommen Kinder.', btn:wayBtn({build:'haus'})};
+  return null;
+}
 function needsMarkup(I){
-  const nd = needsOf(I), sf = staffOf(I), chip = (cls, t) => `<span class="state ${cls}">${t}</span>`, bar = f => `<span class="mbar"><i style="width:${clamp(f, 0, 1) * 100}%"></i></span>`;
-  const ic = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true">${k ? `<use href="#ic-${k}"/>` : ''}</svg>`, row = (k, n, small, extra, right, cls = '') => `<li class="${cls}">${ic(k)}<span class="nm">${n}<small>${small}</small>${extra || ''}</span>${right || ''}</li>`;
-  let h = head(`Übersicht ${I.name}`, `${LEVEL_NAMES[I.lvl || 1]}. ${growText(I, nd)}`);
-  // people and who comes next
-  h += `<p class="sec">Bewohner</p><ul class="list needs">`;
-  const P = I.people || [], kids = P.filter(p => stageOf(p) === 'kid').length, rest = kids + P.filter(p => stageOf(p) === 'old').length;
-  h += row('pop', `${I.pop} Bewohner, ${famsOf(I).length} ${famsOf(I).length === 1 ? 'Familie' : 'Familien'}`, `${sf.total - sf.free - sf.build} arbeiten, ${sf.build} bauen, ${sf.free} frei, ${kids} Kinder, ${rest - kids} Alte${nd.roofless ? `, ${nd.roofless} ohne Dach` : ''}. Platz für ${nd.cap}, die Insel trägt höchstens ${islandMax(I)}.`, bar(I.pop / Math.max(1, nd.cap)), nd.roofless ? chip('out', `${nd.roofless} ohne Dach`) : nd.full ? chip('low', 'voll') : chip('ok', `${Math.max(0, nd.cap - I.pop)} frei`));
-  h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Die Menschen mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${I.ahnen.length} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li>`;
+  const tab = (sheetData && sheetData.tab) || 'leute', nd = needsOf(I);
+  let h = head(I.name, `${LEVEL_NAMES[I.lvl || 1]} · ${I.pop} Bewohner · Platz für ${nd.cap}`);
+  h += `<div class="tabs" role="tablist">${[['leute', 'Bewohner'], ['arbeit', 'Arbeit'], ['insel', 'Insel']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="tab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
+  return h + (tab === 'arbeit' ? workTab(I, nd) : tab === 'insel' ? isleTab(I, nd) : peopleTab(I, nd));
+}
+const chipS = (cls, t) => `<span class="state ${cls}">${t}</span>`, barS = f => `<span class="mbar"><i style="width:${clamp(f, 0, 1) * 100}%"></i></span>`;
+const rowS = (k, n, small, extra, right, cls = '') => `<li class="${cls}">${k ? icon(k) : ''}<span class="nm">${n}<small>${small}</small>${extra || ''}</span>${right || ''}</li>`;
+function peopleTab(I, nd){
+  let h = '';
+  const g = villageGoal(I, nd); if (g) h += `<div class="goal ${g.cls}"><span><b>${g.t}</b>${g.d ? `<small>${g.d}</small>` : ''}</span>${g.btn || ''}</div>`;
+  // the houses by step, each with the needs of its step
+  const roof = nd.roofless ? 'out' : 'ok';
+  for (const t of [1, 2, 3, 4]){
+    const hs = homesOf(I).filter(b => tierOf(b) === t), fams = hs.map(b => famOfHome(I, b)).filter(Boolean), people = fams.reduce((n, f) => n + membersOf(I, f).length, 0);
+    const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && homesOf(I).some(b => tierOf(b) === 2)); if (!shown) continue;
+    const ready = hs.filter(b => canUpgrade(I, b, nd.list)).length;
+    h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${TIERS[t].n}</b><small>${hs.length ? `${hs.length} ${hs.length === 1 ? 'Haus' : 'Häuser'} · ${people} Menschen` : 'noch keines'}</small>${ready && !I.autoUp ? `<button class="btn primary small" type="button" data-act="upall" data-t="${t}">${ready} aufsteigen</button>` : ''}</div>`;
+    h += `<div class="chips">${TIERS[t].needs.map(k => { const st = k === 'dach' ? roof : hs.length ? (nd.list.find(n => n.k === k) || {state:'ok'}).state : 'none';
+      return k === 'dach' ? `<span class="need-chip ${st}">${icon('haus')}Dach</span>` : `<button class="need-chip ${st}" type="button" data-act="${k === 'essen' ? 'store' : 'ware'}" data-k="${k}">${icon(k)}${GN[k]}</button>`; }).join('')}</div></div>`;
+  }
+  h += `<div class="rowx"><span class="sub">Ist alles da, steigen Häuser von selbst auf.</span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">Von selbst</button></div>`;
+  h += `<ul class="list needs">`;
   { const imm = immigFor(I), emp = emptyHome(I), grow = imm || (emp && wantsSettlers(I)) || nd.growing;
-    h += row('pop', 'Zuzug und Kinder', arrivalText(I, nd), '', grow ? chip('ok', imm ? 'Kanu kommt' : 'wächst') : chip(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll'), grow ? '' : 'need'); }
-  // kin: how many lines live here, and what that means for the children
-  { const K = kinText(I); h += row('pop', `Verwandtschaft: ${K.soft ? `${linesOf(I).length} ${linesOf(I).length === 1 ? 'Linie' : 'Linien'}` : kinWord(I)}`, `${K.line}. ${K.help}`, bar(Math.min(1, K.d / KIN_OK)), chip(K.soft ? 'low' : K.st, K.st === 'ok' ? 'gesund' : K.soft ? 'später' : K.st === 'low' ? 'eng' : 'zu nah'), K.st === 'ok' || K.soft ? '' : 'need'); }
-  h += `</ul>`;
-  // the clan's navigators, wherever they live
-  { const L = navLore(); if (L.lvl || I.buildings.some(b => b.kind === 'sternhaus')) h += `<p class="sec">Navigatoren</p><ul class="list needs">` + row('einbaum', L.lvl ? `Stufe ${L.lvl}: ${NAV_N[L.lvl]}` : 'Noch kein Navigator', L.best ? `${L.best.p.n} auf ${L.best.I.name}, ${Math.floor(ageOf(L.best.p))} Jahre. Stirbt ${L.best.p.n} ohne Schüler, ist das Wissen fort.` : 'Im Haus der Navigatoren lernt jemand die Zeichen von Wellen, Vögeln und Sternen.', '', L.lvl ? chip('ok', `Stufe ${L.lvl}`) : chip('low', 'keiner')) + `</ul>`; }
-  // the land: how much forest still holds the soil, and how many fields are worn out
-  const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;
-  {
-    h += `<p class="sec">Land</p><ul class="list needs">`;
-    if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
-      h += row('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus, das Riff leidet. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', bar(f / .6), e ? chip(e > 1 ? 'out' : 'low', 'Erosion') : chip('ok', 'hält'), e ? 'need' : ''); }
-    if (fields.length) h += row('soil', `${fields.length} Felder`, `${tired ? `${tired} ausgelaugt` : 'Der Boden trägt'}${resting ? `, ${resting} brach` : ''}. Ausgelaugte Felder brachliegen lassen.`, '', tired ? chip('low', 'müde') : chip('ok', 'gut'), tired ? 'need' : '');
-    // the wild, and the tapu that spares it
-    const W = wildOf(I), F = foragers(I), gone = goneOf(I);
-    h += row('wild', `Wild: ${wildWord(W)}`, `${I.tapu ? 'Tapu: Niemand jagt oder sammelt. Es erholt sich langsam.' : F ? `${F} ohne Arbeit sammeln Eier, Krebse und Vögel, +${perMin(forageRate(I))} pro Minute.` : 'Wer keine Arbeit hat, sammelt im Wald und am Strand.'}${gone ? ` ${gone > 1 ? 'Zwei Arten sind' : 'Eine Art ist'} hier ausgestorben, für immer.` : W < .45 ? ' Wird weiter so viel gejagt, sterben Arten aus.' : ''}`, bar(W), `<button class="chip" type="button" data-act="tapu" aria-pressed="${!!I.tapu}">Tapu</button>`, W < .3 && !I.tapu ? 'need' : '');
-    // what came in the canoes, and what is still missing here
-    const fit = LIFE_IDS.filter(id => lifeFits(I, id) && lifeKnown(id)), have = fit.filter(id => lifeOf(I).includes(id)), miss = fit.filter(id => !have.includes(id));
-    h += row('setzling', have.length ? `Mitgebracht: ${andList(have.map(id => LIFE[id].n))}` : 'Noch nichts mitgebracht', miss.length ? `Es fehlen ${andList(miss.map(id => LIFE[id].n))}. Ein Kanu bringt sie aus einem Dorf, wo sie wachsen: im Hafen „Beladen“, dann „Leben fürs neue Land“.` : 'Alles, was hier wachsen kann, ist da.', '', miss.length ? chip('low', `${miss.length} fehlen`) : chip('ok', 'alles da'), miss.length ? 'need' : '');
-    h += `</ul>`;
-  }
-  if (motifsOf(I).length || I.buildings.some(b => b.kind === 'toepfer')) h += `<p class="sec">Muster auf den Töpfen</p>${motifRows(I)}<p class="sub">${motifHelp(I)}</p>`;
-  // work: every grown-up has a place; it goes by itself or by hand. Then the families: where they live and what they lack
-  h += `<p class="sec">Arbeit</p><div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden: was fehlt zuerst, dann Essen und Wasser.' : 'Du verteilst die Leute: auf der Tafel eines Arbeitsplatzes mit + und −.'} Wird gebaut und ist niemand frei, legen zwei ihre Arbeit nieder.</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
-  { const P = I.people || [], freeP = sf.freeP.map(id => P.find(p => p.id === id)).filter(Boolean), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
-    h += row('pop', freeP.length ? `${freeP.length} ${freeP.length === 1 ? 'Mensch ist' : 'Menschen sind'} frei` : 'Alle haben Arbeit', freeP.length ? `${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. Wer frei ist, sammelt im Wald und am Strand.` : sf.build ? `${sf.build} bauen gerade.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chip('low', `${freeP.length} frei`) : chip('ok', 'alle'), '');
-    if (open.length) h += row('', `${open.length} ${open.length === 1 ? 'Arbeitsplatz hat' : 'Arbeitsplätze haben'} Platz`, open.slice(0, 6).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${KINDS[b.kind].n} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chip(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
-    const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += row('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}, die Leute bauen`, andList(pulled.map(b => KINDS[b.kind].n)), '', chip('low', 'bauen'), ''); }
-  { const fl = famsOf(I).map(f => ({f, lack:famNeeds(I, f, nd.list).filter(n => n.state === 'out')})), ok = fl.filter(x => !x.lack.length).length, by = {};
-    for (const x of fl) for (const n of x.lack) by[n.k] = (by[n.k] || 0) + 1;
-    const nm = k => k === 'dach' ? 'Dach' : GN[k];
-    h += row('haus', `${fl.length} ${fl.length === 1 ? 'Familie' : 'Familien'}: ${ok} ${ok === 1 ? 'hat' : 'haben'} alles`, Object.keys(by).length ? Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${n} fehlt ${nm(k)}`).join(', ') : 'Allen geht es gut.', '', Object.keys(by).length ? chip('out', `${fl.length - ok} fehlt etwas`) : chip('ok', 'gut'), Object.keys(by).length ? 'need' : ''); }
-  h += `</ul><details class="more famlist"${famListOpen ? ' open' : ''}><summary>Alle Familien einzeln</summary><ul class="list needs">`;
+    h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), '', grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }
+  { const K = kinText(I); h += rowS('pop', `Verwandtschaft: ${K.soft ? `${linesOf(I).length} ${linesOf(I).length === 1 ? 'Linie' : 'Linien'}` : kinWord(I)}`, `${K.line}. ${K.help}`, barS(Math.min(1, K.d / KIN_OK)), chipS(K.soft ? 'low' : K.st, K.st === 'ok' ? 'gesund' : K.soft ? 'später' : K.st === 'low' ? 'eng' : 'zu nah'), K.st === 'ok' || K.soft ? '' : 'need'); }
+  h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Alle mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${ancCount(I)} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li></ul>`;
+  return h;
+}
+function workTab(I, nd){
+  const sf = staffOf(I), P = I.people || [], freeP = sf.freeP.map(id => P.find(p => p.id === id)).filter(Boolean), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
+  let h = `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
+  h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} frei`, freeP.length ? `Frei: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. Wer frei ist, sammelt im Wald und am Strand.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
+  if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${KINDS[b.kind].n} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
+  { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => KINDS[b.kind].n)), '', chipS('low', 'bauen')); }
+  h += `</ul><details class="more famlist"${famListOpen ? ' open' : ''}><summary>${famsOf(I).length} Familien</summary><ul class="list needs">`;
   for (const f of famsOf(I).slice().sort((a, b) => (!a.home) - (!b.home) || a.id - b.id)){
-    const m = membersOf(I, f), fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out');
-    h += `<li class="${lack.length ? 'need' : ''}">${ic(f.home ? 'haus' : 'pop')}<span class="nm">${famName(f)}<small>${m.length} Menschen · ${famLabel(I, f)} · ${famWork(I, f)}</small></span>${lack.length ? `<span class="state out">${lack.map(n => n.k === 'dach' ? 'Dach' : GN[n.k]).join(', ')}</span>` : ''}<button class="chip" type="button" data-act="fam" data-f="${f.id}">Ansehen</button></li>`;
+    const m = membersOf(I, f), lack = famNeeds(I, f, nd.list).filter(n => n.state === 'out');
+    h += `<li class="${lack.length ? 'need' : ''}">${icon(f.home ? 'haus' : 'pop')}<span class="nm">${famName(f)}<small>${m.length} · ${famLabel(I, f)} · ${famWork(I, f)}</small></span>${lack.length ? chipS('out', lack.map(n => needName(n.k)).join(', ')) : ''}<button class="chip" type="button" data-act="fam" data-f="${f.id}">Ansehen</button></li>`;
   }
-  h += `</ul></details>`;
-  h += `<div class="rowx"><span class="sub">Liegen ${costText(TIERS[2].cost)} im Lager, binden Familien ihre Hütten von selbst neu: Familienhäuser mit Platz für Kinder.</span><button class="chip" type="button" data-act="noup" aria-pressed="${!I.noUpgrade}">Von selbst ausbauen</button></div>`;
-  // food: all of it together, what comes in and goes out and how long it lasts, then each kind of food
-  const fn = nd.list.find(x => x.k === 'essen'), net = fn.make - fn.use - fn.work, left = net < 0 ? fn.stock / -net : Infinity;
-  h += `<p class="sec">Nahrung</p><ul class="list needs">`;
-  h += row('essen', `Nahrung ${fn.stock}`, `Pro Minute +${perMin(fn.make)} und −${perMin(fn.use + fn.work)}. ${net >= 0 ? 'Es wird mehr.' : fn.stock ? `Reicht noch ${left < 1 ? 'weniger als eine Minute' : Math.floor(left) + ' Minuten'}.` : 'Es ist nichts mehr da.'}`, bar(fn.use + fn.work ? fn.make / (fn.use + fn.work) : 1), net >= 0 ? chip('ok', 'reicht') : fn.stock > 0 ? chip('low', left < 1 ? 'knapp' : `${Math.floor(left)} Min`) : chip('out', 'fehlt'), fn.state !== 'ok' ? 'need' : '');
-  for (const k of FOODS) h += row(k, GN[k], `+${perMin(makeRate(I, k))} pro Minute${workUse(I, k) ? `, −${perMin(workUse(I, k))} für Werkstätten` : ''}`, '', `<b class="qty">${I.stock[k] || 0}</b>`, 'sub-row');
+  return h + `</ul></details>`;
+}
+function isleTab(I, nd){
+  let h = `<ul class="list needs">`;
+  if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
+    h += rowS('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', barS(f / .6), e ? chipS(e > 1 ? 'out' : 'low', 'Erosion') : chipS('ok', 'hält'), e ? 'need' : ''); }
+  { const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;
+    if (fields.length) h += rowS('soil', `${fields.length} Felder`, `${tired ? `${tired} ausgelaugt` : 'Der Boden trägt'}${resting ? `, ${resting} brach` : ''}. Ausgelaugte Felder brachliegen lassen.`, '', tired ? chipS('low', 'müde') : chipS('ok', 'gut'), tired ? 'need' : ''); }
+  { const W = wildOf(I), F = foragers(I), gone = goneOf(I);
+    h += rowS('wild', `Wild: ${wildWord(W)}`, `${I.tapu ? 'Tapu: Niemand jagt oder sammelt, es erholt sich.' : F ? `${F} ohne Arbeit sammeln, +${perMin(forageRate(I))} pro Minute.` : 'Wer keine Arbeit hat, sammelt im Wald und am Strand.'}${gone ? ` ${gone > 1 ? 'Zwei Arten sind' : 'Eine Art ist'} ausgestorben.` : ''}`, barS(W), `<button class="chip" type="button" data-act="tapu" aria-pressed="${!!I.tapu}">Tapu</button>`, W < .3 && !I.tapu ? 'need' : ''); }
+  { const R = I.reefLife ?? 1; if (I.buildings.some(b => b.kind === 'fisch')) h += rowS('meeres', `Riff: ${R > .55 ? 'reich' : R > .3 ? 'abgesammelt' : 'leer'}`, 'Wo viel gesammelt wird, gibt das Riff weniger. Es erholt sich langsam, unter Rāhui schneller.', barS(R), chipS(R > .55 ? 'ok' : R > .3 ? 'low' : 'out', R > .55 ? 'reich' : R > .3 ? 'weniger' : 'leer'), R > .3 ? '' : 'need'); }
+  { const fit = LIFE_IDS.filter(id => lifeFits(I, id) && lifeKnown(id)), have = fit.filter(id => lifeOf(I).includes(id)), miss = fit.filter(id => !have.includes(id));
+    h += rowS('setzling', have.length ? `Pflanzen und Tiere: ${andList(have.map(id => LIFE[id].n))}` : 'Noch nichts mitgebracht', miss.length ? `Es fehlen ${andList(miss.map(id => LIFE[id].n))}. Ein Kanu bringt sie aus einem Dorf, wo sie wachsen.` : 'Alles, was hier wachsen kann, ist da.', '', miss.length ? chipS('low', `${miss.length} fehlen`) : chipS('ok', 'alles'), ''); }
+  { const L = navLore(); if (L.lvl || I.buildings.some(b => b.kind === 'sternhaus')) h += rowS('einbaum', L.lvl ? `Navigatoren: Stufe ${L.lvl}` : 'Noch kein Navigator', L.best ? `${L.best.p.n} auf ${L.best.I.name}: ${NAV_N[L.lvl]}. Stirbt er ohne Schüler, ist das Wissen fort.` : 'Im Haus der Navigatoren lernt jemand Wellen, Vögel und Sterne.', '', L.lvl ? chipS('ok', `Stufe ${L.lvl}`) : chipS('low', 'keiner')); }
   h += `</ul>`;
-  // the other needs
-  const other = nd.list.filter(n => n.k !== 'essen');
-  if (other.length){
-    h += `<p class="sec">Weiterer Bedarf</p><ul class="list needs">`;
-    for (const n of other){
-      const st = n.state === 'ok' ? chip('ok', 'reicht') : n.state === 'low' ? chip('low', n.mins < 1 ? 'knapp' : `noch ${Math.floor(n.mins)} Min`) : chip('out', 'fehlt');
-      h += row(n.k, GN[n.k], `Bedarf ${perMin(n.use)}${n.work ? ` und ${perMin(n.work)} für Werkstätten` : ''}, Ernte ${perMin(n.make)} pro Minute, im Lager ${n.stock}`, bar(n.use + n.work ? n.make / (n.use + n.work) : 1), st, n.state === 'ok' ? '' : 'need');
-    }
-    h += `</ul>`;
-  }
-  const lifeFor = {essen:'taro', schweine:'schwein', kava:'kava', tapa:'maulbeer'};
-  const tips = nd.list.filter(n => n.state !== 'ok').map(n => { const id = lifeFor[n.k];
-    return id && lifeFits(I, id) && !lifeOf(I).includes(id) ? (n.k === 'essen' ? `Auf ${I.name} gibt es ${LIFE.taro.no}. Bis ein Kanu Setzlinge bringt, nähren Erntehaus, Fischerhütte und das Wild.` : `${GN[n.k]}: Auf ${I.name} gibt es ${LIFE[id].no}. Bring ${LIFE[id].s} im Kanu mit, oder schick ${GN[n.k]} her.`) : n.N.hint[I.type]; });
-  if (nd.atMax) tips.push(`${I.name} trägt höchstens ${islandMax(I)} Menschen. Wer mehr will, schickt Siedler im Kanu los und gründet anderswo ein Dorf.`);
-  else if (nd.full) tips.push('Baue Hütten, dann kommen Familien von weit her.');
-  if (tips.length) h += `<p class="sub">${tips.join(' ')}</p>`;
-  if (nd.list.some(n => n.k === 'essen' && n.state === 'out')) h += `<p class="sub">Ohne Nahrung ziehen nach und nach Leute fort.</p>`;
-  // the way to a chief's village, step by step
-  h += `<p class="sec">${I.lvl === 3 ? 'Häuptlingsdorf' : 'Weg zum Häuptlingsdorf'}</p><ul class="list needs">${chiefSteps(I, nd).map(s => `<li class="${s.ok ? 'okk' : ''}"><span class="state ${s.ok ? 'ok' : 'out'}">${s.ok ? '✓' : '–'}</span><span class="nm">${s.t}<small>${s.now}</small></span></li>`).join('')}</ul>`;
-  { const f = chiefFam(I); if (f){ const m = I.people.find(p => p.id === I.mat), c = I.people.find(p => p.id === I.chief); h += `<p class="sub">${famName(f)} lebt im Häuptlingshaus.${m ? ` Matriarchin ist ${m.n}.` : ''}${c && I.lvl === 3 ? ` Häuptling ist ${c.n}.` : ''} Sie braucht dazu ${andList(CHIEF_GOODS.map(k => GN[k]))}.</p>`; } }
+  if (motifsOf(I).length || I.buildings.some(b => b.kind === 'toepfer')) h += `<p class="sec">Muster auf den Töpfen</p>${motifRows(I)}`;
+  h += `<p class="sec">${I.lvl === 3 ? 'Häuptlingsdorf' : 'Weg zum Häuptlingsdorf'}</p><ul class="list needs">${chiefSteps(I, nd).map(q => `<li class="${q.ok ? 'okk' : ''}"><span class="state ${q.ok ? 'ok' : 'out'}">${q.ok ? '✓' : '–'}</span><span class="nm">${q.t}<small>${q.now}</small></span></li>`).join('')}</ul>`;
   return h;
 }
 const activeCount = I => I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).length;
@@ -363,6 +410,7 @@ function vitalLine(I){
   if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
   if (nd.roofless) return `<span class="warn">${ic('haus')}${nd.roofless} ohne Dach</span>`;
   if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
+  { const r = I.autoUp ? 0 : readyHomes(I, nd.list).length; if (r) return `<span class="up">↑ ${r} aufsteigen</span>`; }
   if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
   if (immigFor(I)) return `<span>${ic('einbaum')}Kanu kommt</span>`;
@@ -526,7 +574,7 @@ function infoMarkup(I, b){
   if (b.kind === 'sternhaus') more.push('Stufe 1: Vögel zeigen, wo im Nebel Land liegt. Stufe 2: Wolken stehen über Inseln. Stufe 3: Der Proviant reicht länger, das Doppelkanu sieht weiter.',
     'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
-  return [crewMarkup(I, b) + bar + (line ? `<div class="stat">${line}</div>` : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
+  return [(line ? `<div class="stat">${line}</div>` : '') + bar + crewMarkup(I, b) + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 /* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
@@ -547,10 +595,9 @@ function renderSheet(){
     h += calendarMarkup();
   } else if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b){ closeSheet(); return; }
-    const K = KINDS[b.kind], I = islOfB(b.id);
-    const [main, more] = infoMarkup(I, b);
-    h += head(K.n, I.name) + main;
-    if (HOME_KINDS.has(b.kind) && !b.bt){ const f = famOfHome(I, b), imm = immigFor(I); h += f ? famMarkup(I, f, false) : `<p class="sub">Leer. ${imm ? `Ein Kanu ${imm.immig.from} bringt eine Familie.` : 'Bald kommt ein Kanu von weit her mit einer Familie, wenn Nahrung und Wasser reichen.'}</p>`; }
+    const K = KINDS[b.kind], I = islOfB(b.id), home = HOME_KINDS.has(b.kind) && !b.bt;
+    const [main, more] = home ? [houseMarkup(I, b), ''] : infoMarkup(I, b);
+    h += home ? main : head(K.n, I.name) + main;
     if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
     if (b.kind === 'sternhaus' && !b.bt){
       const L = navLore(), S = navPupil(I, b), lv = p => Math.floor(p.nv || 0);
@@ -601,7 +648,7 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet.` : '');
-    h += `<ul class="help"><li>Oben steht die nächste Aufgabe. Tippe darauf, dann zeigt das Spiel den Weg.</li><li>Tippe oben auf die Bewohnerzahl: Dort steht, was fehlt und wer wo arbeitet.</li><li>Tippe auf die Waren: Das ganze Lager, mit Zu- und Abgang pro Minute.</li><li>Bauen: Baumenü öffnen, etwas wählen, auf Land tippen, Bauen.</li><li>Jedes Gebäude braucht Holz und Palmwedel. Gebaut wird zu zweit; ist niemand frei, legen zwei ihre Arbeit nieder.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Steht eine Hütte leer, kommt eine Familie von weit her im Kanu. Kinder kommen erst in Familienhäusern.</li><li>Alles Essen zählt als Nahrung: Feldfrüchte, Fisch, Meeresfrüchte, Kokos.</li><li>Ein Jahr dauert zwölf Minuten. Kinder arbeiten ab sechs, irgendwann gehen alle zu den Ahnen.</li><li>Kanu antippen, dann Meer oder Insel antippen. Die Schnur zwischen Inseln ist eine Handelskette.</li><li>Felder laugen aus. Lass sie brachliegen und schone den Wald.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li><li>Die Inseln leben bis zu acht Stunden weiter, wenn das Spiel zu ist.</li></ul>`;
+    h += `<ul class="help"><li>Unten steht der nächste Schritt. Antippen zeigt den Weg.</li><li><b>Tippe auf ein Haus:</b> wer dort wohnt, was die Familie braucht und was zum Aufsteigen fehlt. Ein Pfeil über einem Haus heißt: Es kann aufsteigen.</li><li>Tippe oben auf die Bewohnerzahl: Bewohner, Arbeit und Insel auf einen Blick.</li><li>Bauen: Gebäude wählen, auf Land tippen, Bauen. Jedes Gebäude braucht Holz und Palmwedel.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Leere Hütten ziehen Familien von weit her an. Kinder kommen in Familienhäusern.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -633,7 +680,7 @@ function sheetSig(){
   if (sheetGone()) return 'gone';
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
   if (sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); return sh && sh.immig ? Math.ceil((tick - (sh.askAt || tick)) / 5) + ':' + needsOf(isl(sh.to)).list.map(n => n.state).join('') : 'gone'; }
-  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, famsOf(I).map(f => f.home).join(), (I.people || []).map(p => p.job).join('.'), I.handWork, I.noUpgrade, !!immigFor(I), kinState(I), linesOf(I).length, Math.floor(tick / 5), [...presentAt(I).values()].join(':'), sf.free, sf.short, ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
+  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, sheetData && sheetData.tab, readyHomes(I, nd.list).length, I.autoUp, homesOf(I).map(tierOf).join(''), active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, famsOf(I).map(f => f.home).join(), (I.people || []).map(p => p.job).join('.'), I.handWork, I.noUpgrade, !!immigFor(I), kinState(I), linesOf(I).length, Math.floor(tick / 5), [...presentAt(I).values()].join(':'), sf.free, sf.short, ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
   if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1, kin(T), bondsWith(T), !!weddingCheck(T).ok].join(); }
   if (sheetKind === 'fam'){ const I = isl(sheetData.id), f = I && famOf(I, sheetData.f); if (!f) return 'gone'; return [f.home, f.home && canUpgrade(I, findB(f.home)), famTier(I, f), membersOf(I, f).map(p => p.id + stageOf(p)).join(), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(), famWork(I, f)].join(); }
   if (sheetKind === 'ware'){ const I = isl(sheetData.id), sf = staffOf(I); return [I.stock[sheetData.k], ...[...sf.crewP].map(([b, ids]) => b.id + ':' + ids.join('.')), ...I.buildings.map(b => b.idle ? b.idle.why : '')].join(); }
@@ -693,9 +740,14 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'folk'){ openSheet('folk', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : active}); return; }
   if (sheetKind === 'needs' && act === 'work'){ const I = isl(active); I.handWork = btn.dataset.v === 'hand'; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
   if (act === 'upgrade'){ const b = findB(+btn.dataset.b), I = b && islOfB(b.id); if (b && canUpgrade(I, b)) upgradeHouse(I, b); updateHUD(); renderSheet(); save(); checkQuest(); return; }
-  if (act === 'noup' && sheetKind === 'needs'){ const I = isl(active); I.noUpgrade = !I.noUpgrade; renderSheet(); save(); return; }
+  if (act === 'autoup' && sheetKind === 'needs'){ const I = isl(active); I.autoUp = !I.autoUp; renderSheet(); save(); return; }
+  if (act === 'tab' && sheetKind === 'needs'){ sheetData = {...(sheetData || {}), tab:btn.dataset.v}; renderSheet(); return; }
+  if (act === 'hint'){ closeSheet(); hintBuild(btn.dataset.k); return; }
+  if (act === 'fleetbar'){ closeSheet(); setBar('fleet'); return; }
+  if (act === 'store'){ openSheet('store'); return; }
+  if (act === 'upall'){ const I = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), t = +btn.dataset.t || 0, list = needsOf(I).list; let n = 0; for (const b of readyHomes(I, list)) if ((!t || tierOf(b) === t) && canUpgrade(I, b)){ upgradeHouse(I, b); n++; } if (n > 1) toast(`${n} Häuser sind aufgestiegen.`, 2600, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
   if (act === 'immig' && sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); if (sh) immigAnswer(sh, btn.dataset.v === 'yes'); updateHUD(); return; }
-  if (act === 'fam'){ openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
+  if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
   if (act === 'koruru'){ if (!kor || kor.state === 'done' && korCanThrow()) korNew(); openSheet('koruru', {}); return; }
   if (sheetKind === 'koruru' && act === 'kthrow' && korCanThrow()){ korRoll(false); renderSheet(); return; }

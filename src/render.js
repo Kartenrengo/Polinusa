@@ -245,7 +245,7 @@ function drawIsland(c, I, area){
   stroke(c, p.ring, '#24505F', 16, null, null, .45);
   fillWith(c, p.ring, '#79C6B8', 'pLag'); stroke(c, p.ring, '#4E9C9A', 8);
   stroke(c, p.ring, '#F4EEDC', 2, [.1, 3.6], 'round');
-  fillWith(c, p.harbor, '#2F5F73', 'pSea');
+  c.save(); c.globalCompositeOperation = 'destination-out'; c.fill(p.harbor); c.restore();   // the passage is open sea
   if (p.patches){ c.fillStyle = '#4E9C9A'; c.fill(p.patches); stroke(c, p.patches, '#F3F8EE', .6, null, null, .7); }
   // silt clouds the water off each mouth and fades out into the lagoon
   const ero = I.settled ? I._ero || 0 : 0, mouths = I.delta ? I.delta.exits : I.river && I.river.length ? [I.river[I.river.length - 1]] : [];
@@ -278,7 +278,8 @@ function drawIsland(c, I, area){
   // grass, shells and such hide where a building stands on them
   const under = d => d.s && I.buildings.some(b => { const r = KINDS[b.kind].r; return Math.abs(b.x - d.x) < r + 3 && Math.abs(b.y - d.y) < r * .7 + 3; });
   const v = area ? grow(area, 40) : I.box;
-  for (const d of I.deco) if (ptIn(d.x, d.y, v) && !(d.s && (lod === 'far' || under(d)))) put(c, d.x, d.y, 1, 1, d.rot * Math.PI / 180, d.t, `<use href="#${d.t}"/>`);
+  const sw = swayOn();
+  for (const d of I.deco) if (ptIn(d.x, d.y, v) && !(d.s && (lod === 'far' || under(d))) && !(sw && SWAY_DECO.has(d.t))) put(c, d.x, d.y, 1, 1, d.rot * Math.PI / 180, d.t, `<use href="#${d.t}"/>`);
   if (I.volcano) put(c, I.volcano.x, I.volcano.y, 1.6, 1, 0, 'volcano', '<use href="#volcano"/>');
 }
 const SEASON_TINT = {mager:'rgba(212,180,92,.2)', sturm:'rgba(34,74,56,.08)'};
@@ -370,6 +371,14 @@ function drawCords(c){
     for (let j = 0; j < n; j++){ const q = curveAt(cv, (j + 1) / (n + 1)); put(c, q.x, q.y, far ? 2.4 : 1, 1, 0, 'knot', KNOT); }
   }
 }
+/* Close up, grass, palms and trees move in the wind. They are then not part of the still ground layer but drawn with the
+   people, each frame, swaying a little; the forest only where not too many trees are in view. */
+const SWAY_KINDS = new Set(['palme', 'pandanus', 'baum', 'hibiskus']), SWAY_DECO = new Set(['tuft', 'fern', 'reed', 'flowers']);
+const swayOn = () => !reduced && cam.z > PEOPLE_Z;
+function swayK(x, y, amp, now){
+  const W = wind(), t = now / 1000, ph = Math.sin(x * 12.9898 + y * 78.233) * 6, g = (x * W.tx + y * W.ty) / 90;   // gusts run across with the wind
+  return amp * (.35 + .65 * W.str) * (Math.sin(t * 1.25 + ph) * .65 + Math.sin(t * .5 - g) * .35 + W.tx * W.str * .5);
+}
 function drawObjects(c, area){
   if (lod === 'far'){
     for (const I of islands){
@@ -379,17 +388,19 @@ function drawObjects(c, area){
     }
     return;
   }
-  const v = grow(area, 60), all = [], movingId = mode === 'move' && placing ? placing.moveId : 0;
+  const v = grow(area, 60), all = [], movingId = mode === 'move' && placing ? placing.moveId : 0, sw = swayOn();
+  let trees = 0; if (sw) for (const I of islands) if (seen(I) && boxIn(I.box, v)) for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) trees++;
+  const swT = sw && trees < 320; if (baseL.at) baseL.at.swT = swT;
   for (const I of islands){
     if (!seen(I) || !boxIn(I.box, v)) continue;
-    const sway = cycloneOver(I);   // in a cyclone the palms bend and are drawn moving (drawStormPalms)
-    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v) && !(sway && (b.kind === 'palme' || b.kind === 'pandanus'))) all.push([b, I]);
+    const storm = cycloneOver(I);   // in a cyclone the palms bend and are drawn moving (drawStormSea)
+    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v) && !(storm && (b.kind === 'palme' || b.kind === 'pandanus'))) all.push([b, I]);
     for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) all.push([t, null]);
   }
   all.sort((a, b) => a[0].y - b[0].y);
-  // first every shadow on the ground, then the things themselves, so no shadow lies over a roof
+  // first every shadow on the ground, then the things themselves, so no shadow lies over a roof; what sways is drawn later
   const sh = sunShadow(); if (sh.alpha > 0) for (const [b, I] of all){ if (I){ if (b.id !== movingId) drawBuilding(c, b, I, 1, sh); } else drawTree(c, b, sh); }
-  for (const [b, I] of all) if (I) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); else drawTree(c, b);
+  for (const [b, I] of all){ if (I){ if (!(sw && SWAY_KINDS.has(b.kind))) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); } else if (!swT || b.st === 1) drawTree(c, b); }
 }
 function drawSel(c){
   if (lod === 'far' || !selectedId) return; const b = findB(selectedId); if (!b) return;
@@ -400,7 +411,7 @@ function seaRect(c, v, color, pat, from){
   if (pats[pat] && cam.z > from){ c.globalAlpha = clamp((cam.z - from) / .35, 0, 1); c.fillStyle = pats[pat]; c.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); c.globalAlpha = 1; }
 }
 function drawBase(c, v){
-  seaRect(c, v, '#2F5F73', 'pSea', .3);   // waves fade out far away, where they would only flicker
+  // the open sea is not in this layer: it is painted under it every frame, so its waves can move (drawSea)
   for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I, v);
   if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); }
   drawSel(c); drawCords(c); drawObjects(c, v);
@@ -457,9 +468,9 @@ function drawAnim(c, now){
   if (lod !== 'far' && !reduced) for (const I of islands){
     // surf runs along the reef and swells now and then
     if (!seen(I) || !boxIn(I.box, v)) continue;
-    const p = islandPaths(I), sk = cycloneOver(I) ? cycloneLevel() : 0, sw = .5 + .5 * Math.sin(now / (1900 - 1300 * sk) + I.center.x);
-    stroke(c, p.ring, '#F4EEDC', 7 + 9 * sk, null, null, .05 + .09 * sw + .3 * sk);   // in a storm the breakers pound the reef
-    c.lineDashOffset = -(now / 240) % 3.7; stroke(c, p.ring, '#F4EEDC', 2.2, [.1, 3.6], 'round', .5); c.lineDashOffset = 0;
+    const p = islandPaths(I), sk = cycloneOver(I) ? cycloneLevel() : 0, sw = .5 + .5 * Math.sin(now / (2600 - 1900 * sk) + I.center.x * .01);
+    stroke(c, p.ring, '#F4EEDC', 7 + 9 * sk, null, null, .06 + .07 * sw + .3 * sk);   // the swell breaks on the reef in an even rhythm; in a storm the breakers pound it
+    c.lineDashOffset = -(now / (700 - 450 * sk)) % 3.7; stroke(c, p.ring, '#F4EEDC', 2.2, [.1, 3.6], 'round', .5); c.lineDashOffset = 0;
   }
   if (cyclone && lod !== 'far') drawStormSea(c, v, now);
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
@@ -777,41 +788,35 @@ function drawSeaLife(c, v, now){
     }
   }
 }
-/* Clouds of the trade winds. Each one grows, stands a while and dissolves again (out there in tens of minutes, here in a
-   minute or two) and drifts with the wind. Its shadow lies on the sea and the land below, pushed aside by the sun. A big
-   cloud rains while it is mature: grey curtains slant with the wind and rings spread where the drops hit the water. In the
-   storm season there are more of them, darker and wetter, in the lean season only a few. Bodies and shadows are painted
-   once and then only scaled and faded. */
+/* Clouds of the trade winds, drawn like everything else: an ink outline, flat colour, a shaded underside and a few
+   strokes inside. Each one grows, stands a while and dissolves again (out there in tens of minutes, here in a minute or
+   two); while it dissolves its outline breaks up. It drifts with the wind, its shadow lies on the sea and the land below.
+   A big cloud rains while it is mature: rows of short strokes slant with the wind, rings spread on the water. In the
+   storm season there are more of them, greyer and wetter, in the lean season only a few. */
 const CLOUD_T = 900;
 let cloudX = 0, cloudY = 0, cloudAt = 0;
 const cloudArt = new Map();
-function cloudBody(seed, wet){
-  const key = (seed % 12) + (wet ? 'w' : 'f'); if (cloudArt.has(key)) return cloudArt.get(key);
-  const cv = document.createElement('canvas'), W0 = 240, H0 = 150; cv.width = W0; cv.height = H0; const x = cv.getContext('2d');
-  const r = rng(seed * 7919 + (wet ? 3 : 1)), puffs = [];
-  // a flat base and billows above it, the biggest in the middle
-  for (let i = 0; i < 9; i++){ const f = i / 8 - .5, rr = (34 - Math.abs(f) * 30) * (.8 + r() * .45); puffs.push({x:W0 / 2 + f * 150 + (r() - .5) * 14, y:H0 * .62 - rr * (.45 + r() * .4), r:rr}); }
-  for (let i = 0; i < 4; i++){ const rr = 16 + r() * 14; puffs.push({x:W0 / 2 + (r() - .5) * 90, y:H0 * .38 - r() * 16, r:rr}); }
-  x.save(); x.beginPath(); x.rect(0, 0, W0, H0 * .7); x.clip();   // the underside is flat, as with every cumulus
-  for (const q of puffs){
-    const g = x.createRadialGradient(q.x - q.r * .35, q.y - q.r * .4, q.r * .1, q.x, q.y, q.r);
-    if (wet){ g.addColorStop(0, 'rgba(226,232,236,.95)'); g.addColorStop(.6, 'rgba(164,176,184,.9)'); g.addColorStop(1, 'rgba(120,132,140,0)'); }
-    else { g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(.65, 'rgba(238,243,246,.75)'); g.addColorStop(1, 'rgba(225,233,238,0)'); }
-    x.fillStyle = g; x.beginPath(); x.arc(q.x, q.y, q.r, 0, TAU); x.fill();
+/* the outline of a cumulus 100 wide: a flat base, round billows over the top, bigger towards the middle, the one in the
+   middle towering; a few strokes inside where billows overlap */
+function cloudShape(seed){
+  const key = seed % 24; if (cloudArt.has(key)) return cloudArt.get(key);
+  const r = rng(seed * 7919 + 17), n = 5 + Math.floor(r() * 2), x0 = -50, x1 = 50, step = (x1 - x0) / n, P = new Path2D(), inner = new Path2D(), base = new Path2D();
+  P.moveTo(x0, 0);
+  for (let i = 1; i <= 5; i++) P.lineTo(x0 + (x1 - x0) * i / 5, (r() - .5) * 1.2);
+  const top = Math.floor(n / 2) - (r() < .5 ? 0 : 1);
+  let x = x1, y = 0;
+  for (let i = 0; i < n; i++){
+    const xn = x - step, mid = (x + xn) / 2, hump = 1 - Math.abs(mid) / 55, yn = i === n - 1 ? 0 : -(3 + hump * 11 + r() * 3);
+    const b = step * (.5 + .45 * hump) * (n - 1 - i === top ? 1.2 : 1) * (.9 + r() * .2);
+    P.bezierCurveTo(x - step * .02, y - b * 1.35, xn + step * .02, yn - b * 1.35, xn, yn);
+    if (i > 0 && i < n - 1 && r() < .75){ const cx = xn + step * .15, cy = yn - b * .25; inner.moveTo(cx - 4, cy + 3); inner.quadraticCurveTo(cx - 1, cy - 2, cx + 4, cy - 1); }
+    x = xn; y = yn;
   }
-  x.restore();
-  // the shaded base
-  const bg = x.createLinearGradient(0, H0 * .5, 0, H0 * .72); bg.addColorStop(0, 'rgba(0,0,0,0)'); bg.addColorStop(1, wet ? 'rgba(70,84,96,.55)' : 'rgba(150,166,178,.35)');
-  x.globalCompositeOperation = 'source-atop'; x.fillStyle = bg; x.fillRect(0, 0, W0, H0);
-  cloudArt.set(key, cv); return cv;
+  P.closePath();
+  base.moveTo(x0 + 8, -4); base.quadraticCurveTo(0, -1.5, x1 - 8, -4);
+  const o = {P, inner, base}; cloudArt.set(key, o); return o;
 }
-function cloudShade(){
-  if (cloudArt.has('shade')) return cloudArt.get('shade');
-  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const x = cv.getContext('2d');
-  const g = x.createRadialGradient(64, 32, 0, 64, 32, 64); g.addColorStop(0, 'rgba(14,32,42,1)'); g.addColorStop(.55, 'rgba(14,32,42,.6)'); g.addColorStop(1, 'rgba(14,32,42,0)');
-  x.fillStyle = g; x.save(); x.scale(1, .5); x.beginPath(); x.arc(64, 64, 64, 0, TAU); x.fill(); x.restore();
-  cloudArt.set('shade', cv); return cv;
-}
+const smooth01c = f => f <= 0 ? 0 : f >= 1 ? 1 : f * f * (3 - 2 * f);
 function drawWeather(c, v, now){
   const W = wind(), dt = Math.min(100, now - (cloudAt || now)); cloudAt = now; cloudX += W.tx * (4 + 10 * W.str) * dt / 1000; cloudY += W.ty * (4 + 10 * W.str) * dt / 1000;
   const S = seasonOf().id, wetness = S === 'sturm' ? .85 : S === 'mager' ? .12 : .4, per = S === 'sturm' ? 4 : S === 'mager' ? 1 : 2, t = now / 1000, far = lod === 'far', sh = sunShadow();
@@ -823,27 +828,30 @@ function drawWeather(c, v, now){
       const r1 = hsh(tx * 13 + gen * 7.3, ty * 11 + k), r2 = hsh(ty * 19 + gen * 3.1, tx * 5 + k * 3), r3 = hsh(gen + k * 17.7, tx + ty * 3);
       const R = 46 + r3 * 74, x = tx * CLOUD_T + ((r1 * CLOUD_T + ox) % CLOUD_T), y = ty * CLOUD_T + ((r2 * CLOUD_T + oy) % CLOUD_T);
       if (x + R * 2 < v.x0 || x - R * 2 > v.x1 || y + R < v.y0 || y - R * 2 > v.y1) continue;
-      const grow = ph < .22 ? smooth01(ph / .22) : ph > .72 ? smooth01(1 - (ph - .72) / .28) : 1, wet = R > 78 && hsh(gen * 2.3, k + tx) < wetness;
-      const rain = wet ? clamp((ph - .3) / .08, 0, 1) * clamp((.74 - ph) / .1, 0, 1) : 0;
-      // the shadow below: paler while the cloud is thin, darker under a rain cloud
-      const sw = R * (1.5 + .5 * grow), sa = (wet ? .2 : .11) * grow * (1 - night * .7);
-      c.globalAlpha = sa; c.drawImage(cloudShade(), x - sw, y - sw * .32, sw * 2, sw * .64); c.globalAlpha = 1;
+      const grow = ph < .22 ? smooth01c(ph / .22) : ph > .72 ? smooth01c(1 - (ph - .72) / .28) : 1, wet = R > 78 && hsh(gen * 2.3, k + tx) < wetness;
+      const rain = wet ? clamp((ph - .3) / .08, 0, 1) * clamp((.74 - ph) / .1, 0, 1) : 0, shape = cloudShape(Math.floor(r3 * 997) + gen * 31 + k);
+      const sc = R / 50 * (.55 + .45 * grow + (ph > .72 ? (ph - .72) * .4 : 0)), lift = R * .8, cx = x - sh.c * 8 - W.tx * 4, cy = y - lift;
+      // its shadow below: the same shape, flat and dark, like every shadow in the game
+      c.globalAlpha = (wet ? .13 : .08) * grow * (1 - night * .7); c.fillStyle = '#1F140D'; c.fill(loopPath(x, y, R * .95 * (.6 + .4 * grow), R * .3 * (.6 + .4 * grow), gen + k, .1, 15)); c.globalAlpha = 1;
       if (far) continue;
-      const lift = R * .8, cx = x - sh.c * 8 - W.tx * 4, cy = y - lift;
       if (rain > .01){
-        // curtains of rain from the base of the cloud down to its shadow, slanting with the wind, and rings on the water
-        const p = new Path2D(), fall = (t * 1.6) % 1, n = Math.round(26 + R * .2);
-        for (let i = 0; i < n; i++){ const a = (i * 2.399) % TAU, d = Math.sqrt((i + .5) / n) * R * .62, sx = cx + Math.cos(a) * d * 1.25, f = (fall + i * .137) % 1, sy = cy + R * .22 + f * (lift - R * .18), sl = W.tx * 6;
-          p.moveTo(sx + sl * f, sy); p.lineTo(sx + sl * f + W.tx * 2.2, sy + 6.5); }
-        c.save(); c.globalAlpha = .38 * rain; c.strokeStyle = '#DCE6EA'; c.lineWidth = .7; c.lineCap = 'round'; c.stroke(p); c.restore();
-        const veil = c.createLinearGradient(0, cy + R * .2, 0, y + 4); veil.addColorStop(0, `rgba(150,166,176,${.28 * rain})`); veil.addColorStop(1, 'rgba(150,166,176,0)');
-        c.fillStyle = veil; c.beginPath(); c.moveTo(cx - R * .7, cy + R * .2); c.lineTo(cx + R * .7, cy + R * .2); c.lineTo(x + R * .75 + W.tx * 6, y + 2); c.lineTo(x - R * .75 + W.tx * 6, y + 2); c.closePath(); c.fill();
-        if (lod === 'near') for (let i = 0; i < 6; i++){ const f2 = (t * .9 + i / 6) % 1, a = i * 2.1 + gen, rx = x + Math.cos(a) * R * .5 * ((i * 37 % 10) / 10) + W.tx * 5, ry = y + Math.sin(a) * R * .18;
-          c.globalAlpha = (1 - f2) * .5 * rain; c.strokeStyle = '#F4FBFA'; c.lineWidth = .5; c.beginPath(); c.ellipse(rx, ry, .6 + f2 * 3.2, (.6 + f2 * 3.2) * .4, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; }
+        // rain: rows of short strokes from the base of the cloud down to its shadow, slanting with the wind
+        const p = new Path2D(), fall = (t * 1.3) % 1, n = Math.round(14 + R * .14), sl = W.tx * 3;
+        for (let i = 0; i < n; i++){ const qx = cx + ((i * .618) % 1 - .5) * R * 1.5, f = (fall + i * .37) % 1, qy = cy + 3 + f * (lift - 6);
+          p.moveTo(qx + sl * f * 2, qy); p.lineTo(qx + sl * f * 2 + sl, qy + 5); }
+        c.save(); c.globalAlpha = .45 * rain * (1 - night * .4); c.strokeStyle = '#2B1D14'; c.lineWidth = .6; c.lineCap = 'round'; c.setLineDash([]); c.stroke(p); c.restore();
+        if (lod === 'near') for (let i = 0; i < 5; i++){ const f2 = (t * .8 + i / 5) % 1, rx = x + ((i * .73) % 1 - .5) * R * 1.2 + W.tx * 6, ry = y + ((i * .41) % 1 - .5) * R * .3;
+          c.globalAlpha = (1 - f2) * .6 * rain; c.strokeStyle = '#F4ECD8'; c.lineWidth = .5; c.beginPath(); c.ellipse(rx, ry, .6 + f2 * 3, (.6 + f2 * 3) * .4, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; }
       }
-      // the body: it swells as it grows and frays as it goes
-      const sc = .55 + .45 * grow + (ph > .72 ? (ph - .72) * .5 : 0), bw = R * 2.3 * sc, bh = bw * .62;
-      c.globalAlpha = (wet ? .9 : .72) * grow * (1 - night * .45); c.drawImage(cloudBody(Math.floor(r3 * 997) + gen, wet), cx - bw / 2, cy - bh * .62, bw, bh); c.globalAlpha = 1;
+      // the cloud: cream or grey, a shaded underside, the ink line that breaks up while it dissolves
+      const a = (wet ? .9 : .84) * grow * (1 - night * .45), gone = ph > .72 ? (ph - .72) / .28 : 0;
+      c.save(); c.translate(cx, cy); c.scale(sc, sc); c.globalAlpha = a;
+      c.fillStyle = wet ? '#D3D4CC' : '#F7F1E3'; c.fill(shape.P);
+      c.save(); c.clip(shape.P); c.fillStyle = wet ? '#A9AEA9' : '#DCDCD0'; c.fillRect(-60, -9, 120, 12); c.restore();
+      c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#2B1D14'; c.lineWidth = 1.1 / sc;
+      if (gone > 0) c.setLineDash([(8 - gone * 6) / sc * 2, (1 + gone * 9) / sc * 2]); else c.setLineDash([]);
+      c.stroke(shape.P); c.setLineDash([]); c.globalAlpha = a * .6; c.lineWidth = .8 / sc; c.stroke(shape.inner); c.globalAlpha = a * .35; c.stroke(shape.base);
+      c.restore();
     }
   }
 }
@@ -879,10 +887,38 @@ function drawDugouts(c, v, now){
     });
   }
 }
+const SWAY_AMP = {palme:.07, pandanus:.06, baum:.035, hibiskus:.05};
+/* grass, ferns, reeds and flowers bend in the wind, the grass most */
+function drawSwayDeco(c, v, now){
+  for (const I of islands){
+    if (!seen(I) || !boxIn(I.box, grow(v, 20))) continue;
+    for (const d of I.deco){
+      if (!SWAY_DECO.has(d.t) || !ptIn(d.x, d.y, v)) continue;
+      if (d.s && I.buildings.some(b => { const r = KINDS[b.kind].r; return Math.abs(b.x - d.x) < r + 3 && Math.abs(b.y - d.y) < r * .7 + 3; })) continue;
+      const k = swayK(d.x, d.y, d.t === 'tuft' || d.t === 'reed' ? .16 : .09, now);
+      c.save(); c.translate(d.x, d.y); c.transform(1, 0, -k, 1, 0, 0); if (d.rot) c.rotate(d.rot * Math.PI / 180); blit(c, d.t, `<use href="#${d.t}"/>`); c.restore();
+    }
+  }
+}
 const FLAT = new Set(['taro', 'platz', 'tanzplatz', 'pulaka', 'garten', 'kurkumagarten', 'kavagarten', 'brunnen', 'quelle']);
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v, now){
   const vis = [...walkers, ...critters].filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
+  // close up, palms and trees sway: they are drawn here, and whatever stands in front of them is drawn again over them
+  const sway = new Set(), sw = swayOn() && baseL.at && baseL.at.sw, swT = sw && baseL.at.swT, vv = grow(v, 30);
+  if (sw){
+    drawSwayDeco(c, v, now);
+    for (const I of islands){
+      if (!seen(I) || !boxIn(I.box, vv)) continue;
+      const storm = cycloneOver(I), front = I.buildings.filter(b => !FLAT.has(b.kind) && !SWAY_KINDS.has(b.kind) && ptIn(b.x, b.y, grow(v, 60))), mine = [];
+      if (I.discovered) for (const b of I.buildings) if (SWAY_KINDS.has(b.kind) && ptIn(b.x, b.y, vv) && !(storm && (b.kind === 'palme' || b.kind === 'pandanus'))){ near.set(b, I); sway.add(b); mine.push(b); }
+      if (swT) for (const t of I.trees) if (t.st !== 1 && ptIn(t.x, t.y, vv)){ near.set(t, null); sway.add(t); mine.push(t); }
+      for (const q of mine){
+        for (const b of front) if (!near.has(b) && b.y > q.y && b.y - q.y < KINDS[b.kind].hy * ((b.v && b.v.scale) || 1) + 26 && Math.abs(b.x - q.x) < KINDS[b.kind].r + 12) near.set(b, I);
+        if (!swT) for (const t of I.trees) if (t.st !== 1 && !near.has(t) && t.y > q.y && t.y - q.y < 24 && Math.abs(t.x - q.x) < 10) near.set(t, null);
+      }
+    }
+  }
   // buildings standing in front of someone are drawn again over them, so people can walk behind a house
   for (const w of vis){
     const I = isl(w.isl);
@@ -904,8 +940,12 @@ function drawPeople(c, v, now){
   }
   for (const [, w] of items){
     if (w.home){ drawCritter(c, w); continue; }
-    if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
-    if (w.st != null){ drawTree(c, w); continue; }
+    if (w.kind || w.st != null){
+      const k = sway.has(w) ? swayK(w.x, w.y, w.kind ? SWAY_AMP[w.kind] : .03, now) : 0;
+      if (k){ c.save(); c.translate(w.x, w.y); c.transform(1, 0, -k, 1, 0, 0); c.translate(-w.x, -w.y); }
+      if (w.kind) drawBuilding(c, w, near.get(w)); else drawTree(c, w);
+      if (k) c.restore(); continue;
+    }
     if (w.ride) continue;   // in the canoe of the other fisher
     // across the lagoon they paddle a dugout
     if (w.boat || (w.paddle && !landAt(isl(w.isl), w))){ drawBoatFig(c, w, now); continue; }
@@ -1039,6 +1079,7 @@ function drawCritter(c, a){
 }
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
 const bubbleArt = inner => `<path d="M-6.1-13.7Q-1.2-14.5 6.4-13.8Q7-8.2 6.1-2.4Q3.4-1.9 1.6-2.2L0 .6L-1.5-2.1Q-4.2-1.8-6.4-2.5Q-7.1-8.1-6.1-13.7Z" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/>${inner}`;
+const UP_BUBBLE = bubbleArt('<path d="M0-12.6L4-8H1.6V-4.2H-1.6V-8H-4Z" fill="#4E8A3E" stroke="#2B1D14" stroke-width=".55" stroke-linejoin="round"/>');
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
@@ -1062,9 +1103,12 @@ function drawNeeds(c, v, now){
       let k = null;
       if ((b.kind === 'halle' && !b.bt || b.kind === 'platz' && !I.buildings.some(q => q.kind === 'halle' && !q.bt)) && roofless(I)) k = 'haus';
       else if (homeOk(I, b)){ const f = famOfHome(I, b); if (f){ const miss = famNeeds(I, f, list).filter(n => n.state === 'out'); if (miss.length) k = miss[Math.floor(now / 2400 + b.id) % miss.length].k; } }
-      if (!k) continue;
+      // a house that can rise shows the arrow, as in Anno
+      const up = !k && !I.autoUp && homeOk(I, b) && canUpgrade(I, b, list);
+      if (!k && !up) continue;
       const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
-      put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
+      if (up) put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob * 1.6, s * 1.1, 1, 0, 'need|up', UP_BUBBLE);
+      else put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
     }
   }
   // a canoe from far away waits at the beach: the family asks to stay
@@ -1230,10 +1274,26 @@ function seaNames(c, k){
   c.restore();
 }
 
+/* ---------- the open sea: two layers of wave marks drift slowly and evenly with the wind, the upper one a little faster,
+   and rise and fall gently. They fade out far away, where they would only flicker. */
+let seaX = 0, seaY = 0, seaAt = 0;
+function drawSea(now){
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2F5F73'; ctx.fillRect(0, 0, mapC.width, mapC.height);
+  const P = pats.pSeaW; if (!P || cam.z <= .3) return;
+  const W = wind(), dt = Math.min(100, now - (seaAt || now)); seaAt = now;
+  if (!reduced){ seaX += W.tx * (1.6 + 1.4 * W.str) * dt / 1000; seaY += W.ty * (1.6 + 1.4 * W.str) * dt / 1000; }
+  camXform(ctx); const v = view(40), t = reduced ? 0 : now / 1000, fade = clamp((cam.z - .3) / .35, 0, 1);
+  for (const [k, sp, a, bob] of [[1.7, .55, .45, 1.2], [1, 1, .9, .6]]){
+    const ox = seaX * sp, oy = seaY * sp + Math.sin(t * .8 + k) * bob;
+    ctx.save(); ctx.scale(k, k); ctx.translate(((ox / k) % 16 + 16) % 16, ((oy / k) % 10 + 10) % 10);
+    ctx.globalAlpha = fade * a; ctx.fillStyle = P; ctx.fillRect(v.x0 / k - 32, v.y0 / k - 32, (v.x1 - v.x0) / k + 64, (v.y1 - v.y0) / k + 64); ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
 /* ---------- layers and one frame */
 function renderLayer(L, paint){
   L.w = vw * OVER; L.h = vh * OVER;
-  const pw = Math.round(L.w * DPR), ph = Math.round(L.h * DPR), a = L.at = {x:cam.x, y:cam.y, z:cam.z, lod}, k = a.z * DPR;
+  const pw = Math.round(L.w * DPR), ph = Math.round(L.h * DPR), a = L.at = {x:cam.x, y:cam.y, z:cam.z, lod, sw:swayOn()}, k = a.z * DPR;
   if (L.c.width !== pw || L.c.height !== ph){ L.c.width = pw; L.c.height = ph; }
   const c = L.x; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, pw, ph);
   c.setTransform(k, 0, 0, k, (L.w / 2 - a.x * a.z) * DPR, (L.h / 2 - a.y * a.z) * DPR);
@@ -1242,7 +1302,7 @@ function renderLayer(L, paint){
 }
 /* A layer can be reused while it still covers the screen. During a zoom it is stretched, then repainted sharp. */
 function fresh(L, now){
-  const a = L.at; if (L.dirty || !a || a.lod !== lod) return false;
+  const a = L.at; if (L.dirty || !a || a.lod !== lod || (L === baseL && a.sw !== swayOn())) return false;
   const k = cam.z / a.z; if (k !== 1 && (k > 1.3 || k < .77 || now - lastCamMove > 140)) return false;
   const v = view(), hw = L.w / 2 / a.z, hh = L.h / 2 / a.z;
   return v.x0 >= a.x - hw && v.x1 <= a.x + hw && v.y0 >= a.y - hh && v.y1 <= a.y + hh;
@@ -1256,7 +1316,7 @@ function draw(now){
   frameNo++;
   if (!fresh(baseL, now)) renderLayer(baseL, drawBase);
   if (!fresh(fogL, now)) renderLayer(fogL, drawFog);
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2F5F73'; ctx.fillRect(0, 0, mapC.width, mapC.height); blitLayer(baseL);
+  drawSea(now); ctx.setTransform(1, 0, 0, 1, 0, 0); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
   camXform(ctx); drawTop(ctx, now); drawNight(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
