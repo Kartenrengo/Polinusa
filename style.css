@@ -452,3 +452,48 @@ span.need-chip{cursor:default}
 .seat.free .ic{opacity:.35}
 .seat.lock .ic{opacity:.12}
 #vitalBtn .up{color:var(--ok);font-weight:800}
+/* ---------- the island's own hand, not a strategy game's panels. Buttons give like plaited pandanus: pressed they sink and
+   spring back; a tap sends rings out as a pebble does in the lagoon; what is ready to do pulls at its knot. */
+button{transition:scale .2s cubic-bezier(.3,1.8,.5,1)}
+button:active:not(:disabled){scale:.93}
+.tapring{position:absolute;z-index:20;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:2px dotted rgba(43,29,20,.6);pointer-events:none;animation:tapring .62s ease-out forwards}
+.tapring.b{border:1.5px solid rgba(244,236,216,.9);animation-delay:.09s;opacity:0}
+@keyframes tapring{0%{transform:scale(.4);opacity:1}100%{transform:scale(4.6);opacity:0}}
+.btn .ic,.goal .btn .ic{display:inline-block;width:19px;height:19px;vertical-align:-4px;margin:0 5px 0 -3px}
+.btn.small .ic{width:16px;height:16px;vertical-align:-3px}
+.tie{position:relative}
+.tie::after{content:"";position:absolute;inset:-6px -7px;border:2px dashed var(--ochre);border-radius:14px 10px 16px 11px;pointer-events:none;animation:tie 2.4s ease-in-out infinite}
+.tie .ic{animation:knot 2.4s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes tie{0%{transform:scale(1.16);opacity:0}35%{opacity:.95}62%{transform:scale(1);opacity:0}100%{opacity:0}}
+@keyframes knot{0%,45%,100%{transform:none}52%{transform:scale(.82) rotate(-8deg)}60%{transform:scale(1.08) rotate(4deg)}}
+#vitalBtn .up .ic{animation:knot 2.4s ease-in-out infinite}
+/* the cord of a family's needs */
+.cord{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:0;margin:0 0 2px;overflow-x:auto;max-width:100%}
+.cord svg{display:block;flex:none;overflow:visible}
+.cord .sub{margin-top:-2px}
+.cord .kn{transform-box:fill-box;transform-origin:50% 50%}
+.cord .kn.tight{animation:tight .55s cubic-bezier(.3,1.7,.5,1) both}
+.cord .kn.loose{animation:loose 2.8s ease-in-out infinite}
+@keyframes tight{0%{transform:scale(1.5) rotate(20deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes loose{50%{transform:scale(1.08) rotate(-6deg)}}
+/* a sheet rises like a mat unrolled: its parts come up one after the other */
+#sheet.opening .sheet-body > *{animation:rise .38s cubic-bezier(.2,.9,.3,1.25) both}
+#sheet.opening .sheet-body > :nth-child(2){animation-delay:.04s}#sheet.opening .sheet-body > :nth-child(3){animation-delay:.08s}
+#sheet.opening .sheet-body > :nth-child(4){animation-delay:.12s}#sheet.opening .sheet-body > :nth-child(5){animation-delay:.16s}
+#sheet.opening .sheet-body > :nth-child(6){animation-delay:.2s}#sheet.opening .sheet-body > :nth-child(n+7){animation-delay:.24s}
+@keyframes rise{0%{transform:translateY(14px);opacity:0}100%{transform:none;opacity:1}}
+/* the elders speak: a small carved face before their advice */
+.quest.advice:not(.urgent) .q-n::before{content:"";display:inline-block;width:13px;height:15px;margin-right:4px;vertical-align:-3px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M2 3Q2 .6 7 .6Q12 .6 12 3V12Q12 15.4 7 15.4Q2 15.4 2 12Z' fill='%23A0703E' stroke='%232B1D14' stroke-width='1'/%3E%3Cellipse cx='4.8' cy='6' rx='1.7' ry='1.35' fill='%23F4ECD8' stroke='%232B1D14' stroke-width='.7'/%3E%3Cellipse cx='9.2' cy='6' rx='1.7' ry='1.35' fill='%23F4ECD8' stroke='%232B1D14' stroke-width='.7'/%3E%3Ccircle cx='4.8' cy='6' r='.65' fill='%232B1D14'/%3E%3Ccircle cx='9.2' cy='6' r='.65' fill='%232B1D14'/%3E%3Cpath d='M4 11.2Q7 13.6 10 11.2' fill='none' stroke='%232B1D14' stroke-width='.9'/%3E%3Cpath d='M7 7V9.6' stroke='%232B1D14' stroke-width='.7'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%}
+.quest{transition:scale .2s cubic-bezier(.3,1.8,.5,1)}
+.quest.fresh{animation:fresh .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes fresh{0%{transform:translateY(8px) rotate(-1deg);opacity:.3}100%{transform:none;opacity:1}}
+/* newly unlocked buildings and the tab dot pull gently */
+.bbtn.new::after,.tab.new::after{animation:dotpull 2s ease-in-out infinite}
+@keyframes dotpull{50%{transform:scale(1.35)}}
+.bbtn{transition:scale .2s cubic-bezier(.3,1.8,.5,1),translate .2s}
+.bbtn[aria-pressed="true"]{translate:0 -3px}
+@media (prefers-reduced-motion:reduce){
+  button,.quest,.bbtn{transition:none}
+  .tapring,.tie::after,.tie .ic,#vitalBtn .up .ic,.cord .kn,#sheet.opening .sheet-body > *,.quest.fresh,.bbtn.new::after,.tab.new::after{animation:none}
+  .tapring{display:none}
+}

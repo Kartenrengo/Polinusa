@@ -171,7 +171,7 @@ const canUpgrade = (I, b, list) => { const u = upgradeSteps(I, b, list); return 
 const readyHomes = (I, list) => homesOf(I).filter(b => canUpgrade(I, b, list));
 function upgradeHouse(I, b){
   const t = tierOf(b) + 1, f = famOfHome(I, b); if (t > 3 || !f) return false;
-  pay(I, TIERS[t].cost); b.t = t; b.miss = 0; invalidate(); I.staff = null;
+  pay(I, TIERS[t].cost); b.t = t; b.miss = 0; b.blessAt = typeof performance !== 'undefined' ? performance.now() : 0; invalidate(); I.staff = null;
   if (t === 2) stats.ausbau = (stats.ausbau || 0) + 1; else stats.tufunga = (stats.tufunga || 0) + 1;
   if (!awayQuiet && I.id === active) toast(t === 2 ? `${famName(f)} bindet ihre Hütte mit Kokosfaser und Sennit neu: ein Familienhaus mit Platz für ${TIERS[2].cap}. Jetzt können Kinder kommen. Die Familie will Gekochtes.` : `${famName(f)} baut ihr Haus aus: eine Meisterfamilie, Meister eines Handwerks (später nannte man sie in Tonga und Samoa tufunga), mit Platz für ${TIERS[3].cap}. Sie will ${andList(MASTER_GOODS.map(k => GN[k]))}.`, 4600);
   return true;

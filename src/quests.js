@@ -32,7 +32,7 @@ const QUESTS = [
     n:() => Math.min(3, linesWith(isl('heimat'))), of:3, show:{needs:true}, unlock:[], gift:{}},
   {id:'sennit', t:'Sennit drehen', d:'Baue eine Seilerei.', why:'Aus den Fasern der Kokosnüsse wird Sennit gedreht. Damit werden Hütten neu gebunden, Netze geknüpft und Kanus gebaut. Die Fasern bringt das Erntehaus mit den reifen Nüssen.',
     n:() => count('heimat', 'schnur'), of:1, show:{build:'schnur'}, unlock:[], gift:{faser:3}},
-  {id:'ausbau', t:'Ein Familienhaus', d:'Lass eine Hütte aufsteigen.', get why(){ return `Wie bei Anno: Tippe auf eine Hütte. Dort steht, wer wohnt, was die Familie braucht und was zum Aufsteigen fehlt: alle Bedürfnisse erfüllt und ${costText(TIERS[2].cost)}. Ist alles da, zeigt ein Pfeil über der Hütte: Aufsteigen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
+  {id:'ausbau', t:'Ein Familienhaus', d:'Lass eine Hütte aufsteigen.', get why(){ return `Tippe auf eine Hütte. Dort steht, wer wohnt, die Schnur der Familie mit einem Knoten für jedes Bedürfnis und was zum Aufsteigen fehlt: alle Knoten fest und ${costText(TIERS[2].cost)}. Ist alles da, schwebt ein Knoten mit Blüte über der Hütte: Aufsteigen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
     n:() => homesOf(isl('heimat')).filter(b => tierOf(b) >= 2).length, of:1, show:{needs:true}, unlock:[], gift:{}},
   {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
     n:() => count('heimat', 'umu'), of:1, show:{build:'umu'}, unlock:[], gift:{steine:3}},
@@ -210,8 +210,10 @@ function renderQuest(){
   const el = $('quest'), I = isl(active), A = !landing && I && I.settled ? (quest < QUESTS.length ? adviceOf(I, true) : adviceOf(I)) : null;
   const show = (quest < QUESTS.length || A) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;
   el.hidden = !show; curAdvice = A; el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
+  // a new task or new advice slides in, so the eye catches that something changed
+  { const key = A ? A.t : 'q' + quest; if (el.dataset.k !== key){ if (el.dataset.k && !reduced){ el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); } el.dataset.k = key; } }
   if (A){
-    el.querySelector('.q-n').textContent = A.urgent ? 'Jetzt' : 'Rat';
+    el.querySelector('.q-n').textContent = A.urgent ? 'Jetzt' : 'Die Alten';
     el.querySelector('.q-t').textContent = A.t; el.querySelector('.q-d').textContent = A.d; el.querySelector('.q-p').textContent = 'Zeigen ›';
     el.querySelector('.q-bar i').style.width = '0%'; el.setAttribute('aria-label', `Rat der Ältesten: ${A.t}. ${A.d}`); return;
   }

@@ -527,7 +527,8 @@ const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.peopl
 const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.mat === p.id ? 'Matriarchin ' : I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
-  if (w.child) return 'Kind'; if (w.old) return 'alt, arbeitet nicht mehr'; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
+  const pl = w.play && !j ? ' · ' + PLAY[w.play.k].n : '';
+  if (w.child) return 'Kind' + pl; if (w.old) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
   const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
@@ -574,7 +575,7 @@ function stepCritters(dt){
 /* Where to next. Wherever the way leaves the land, across a lagoon or a bay, they paddle a dugout; a few steps into
    the shallows at either end they wade. */
 function goTo(I, w, x, y, wait = 0){
-  w.tx = x; w.ty = y; w.wait = wait; w.sx = w.x; w.sy = w.y;
+  w.tx = x; w.ty = y; w.wait = wait; w.sx = w.x; w.sy = w.y; w.swim = false;
   w.paddle = !w.boat && wetWay(I, w, {x, y});
 }
 function wetWay(I, a, b){
@@ -607,6 +608,100 @@ function landCatch(I, b, crew, k){
   if (k === 'fisch') b.hung = Math.min(7, (b.hung || 0) + got);
   return got;
 }
+/* ---------- free time. Whoever has nothing to do just now (children, the old, grown-ups without work) does what people
+   on the islands have always done: surfing on a board in the break (heʻe nalu in Hawaiʻi, faʻaheʻe in Tahiti, children on
+   small boards), swimming and jumping into the lagoon, a kite of pandanus leaf on the beach, string figures (whai, fai,
+   ʻai), juggling candlenuts (hiko, a game of Tongan girls), a nap in the shade, the slit drum on the plaza in the evening,
+   a toy outrigger in the shallows, garlands of blossoms, and the old telling of the ancestors. Only for the eye: free time
+   changes nothing in the stores. */
+const PLAY = {
+  surf:{n:'reitet auf einem Brett die Wellen'}, swim:{n:'schwimmt in der Lagune'}, kite:{n:'lässt einen Drachen aus Pandanusblatt steigen'},
+  string:{n:'legt Fadenfiguren'}, hiko:{n:'jongliert mit Kerzennüssen'}, nap:{n:'döst im Schatten'}, drum:{n:'schlägt die Schlitztrommel'},
+  toy:{n:'lässt ein kleines Auslegerkanu schwimmen'}, garland:{n:'flicht einen Blütenkranz'}, story:{n:'erzählt von den Ahnen'}, listen:{n:'hört den Geschichten der Alten zu'},
+};
+const PLAY_FX = {string:'string', hiko:'hiko', garland:'garland', story:'story', drum:'drum', kite:'kite', toy:'toy'};
+const landC = L => L._c || (L._c = L.poly.reduce((m, q) => ({x:m.x + q.x / L.poly.length, y:m.y + q.y / L.poly.length}), {x:0, y:0}));
+/* a place on the beach and a spot out in the water before it, with only water between; for surf on the ocean side */
+function shoreSpot(I, w, out0, out1, open){
+  const L = I.lands[landOf(I, w)]; if (!L) return null;
+  const c = landC(L);
+  for (let k = 0; k < 14; k++){
+    const v = L.poly[Math.floor(Math.random() * L.poly.length)], dx = v.x - c.x, dy = v.y - c.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    if (Math.hypot(v.x - w.x, v.y - w.y) > 150) continue;
+    if (open && I.atoll && (v.x - I.atoll.cx) * ux + (v.y - I.atoll.cy) * uy < 0) continue;
+    const b = {x:v.x - ux * 2.5, y:v.y - uy * 2.5}; if (landAt(I, b) !== L) continue;
+    const m = out0 + Math.random() * (out1 - out0), s = {x:v.x + ux * m, y:v.y + uy * m * .8};
+    if (landAt(I, s) || I.lands.some(q => polyDist(s, q.poly) < 3)) continue;
+    if ([.35, .6, .85].some(f => landAt(I, {x:v.x + (s.x - v.x) * f, y:v.y + (s.y - v.y) * f}))) continue;
+    return {b, s, ux, uy};
+  }
+  return null;
+}
+/* somewhere to sit: in the shade of a palm or a tree, or in front of a house, on the land one stands on */
+function restSpot(I, w, shade){
+  const L = landOf(I, w);
+  if (shade){
+    const P = I.buildings.filter(b => SWAY_KINDS.has(b.kind) && !b.bt && landOfB(I, b) === L && Math.hypot(b.x - w.x, b.y - w.y) < 130);
+    if (P.length){ const b = P[Math.floor(Math.random() * P.length)]; return {x:b.x + 4 + Math.random() * 3, y:b.y + 3 + Math.random() * 2}; }
+    for (let k = 0; k < 8; k++){ const t = I.trees[Math.floor(Math.random() * I.trees.length)]; if (t && t.st === 0 && landAt(I, t) === I.lands[L] && Math.hypot(t.x - w.x, t.y - w.y) < 130) return {x:t.x + 4, y:t.y + 4}; }
+  }
+  const H = I.buildings.filter(b => KINDS[b.kind].roof && !b.bt && landOfB(I, b) === L); if (!H.length) return null;
+  const b = H[Math.floor(Math.random() * H.length)]; return {x:b.x + rnd(9), y:b.y + 6 + Math.random() * 6};
+}
+const playersOf = (I, k) => walkers.filter(q => q.isl === I.id && q.play && q.play.k === k);
+function startPlay(I, w, force){
+  const W = wind(), ph = dayPhase(), kid = w.child, old = w.old, ch = [];
+  const add = (k, wt) => { if (wt > 0) ch.push([k, wt]); };
+  if (!old){ add('swim', kid ? 2.4 : 1); if (W.str > .22 && W.str < .86) add('surf', kid ? .9 : 1.5); }
+  if (kid){ add('kite', W.str > .3 ? 2 : .3); add('toy', 1.1); add('hiko', .9); add('string', .9); if (playersOf(I, 'story').some(q => q.play.ph === 'do')) add('listen', 3); }
+  else if (old){ add('story', playersOf(I, 'story').length ? 0 : 2.4); add('nap', 2); add('string', .8); add('garland', 1.1); }
+  else { add('nap', .7); add('hiko', .5); add('garland', .7); add('string', .6); }
+  if (ph > .45 && ph < .66 && !kid && !playersOf(I, 'drum').length) add('drum', 2.6);
+  let r = Math.random() * ch.reduce((s, o) => s + o[1], 0), k = force || null; if (!k) for (const [q, wt] of ch) if ((r -= wt) <= 0){ k = q; break; }
+  if (!k) return false;
+  const P = {k, ph:'go', n:0, max:2 + Math.floor(Math.random() * 3)};
+  let to = null;
+  if (k === 'surf' || k === 'swim' || k === 'toy' || k === 'kite'){
+    const sp = shoreSpot(I, w, k === 'surf' ? 14 : 6, k === 'surf' ? 24 : 12, k === 'surf'); if (!sp) return false;
+    Object.assign(P, sp); to = sp.b;
+  } else if (k === 'listen'){ const s = playersOf(I, 'story').find(q => q.play.ph === 'do'); if (!s) return false; const a = Math.random() * Math.PI; P.teller = s; to = {x:s.x + Math.cos(a) * 7, y:s.y + 2 + Math.sin(a) * 3}; }
+  else if (k === 'drum'){ const h = I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz'); if (!h || landOfB(I, h) !== landOf(I, w)) return false; to = {x:h.x + 12 + rnd(3), y:h.y + 10 + rnd(2)}; }
+  else to = restSpot(I, w, k === 'nap' || k === 'story' || Math.random() < .5);
+  if (!to || landAt(I, to) !== landAt(I, w)) return false;
+  w.play = P; goTo(I, w, to.x, to.y); return true;
+}
+function endPlay(w){ w.play = null; w.swim = false; w.lie = false; w.hop = false; }
+/* the next step of what someone does in free time; false when it is over */
+function playLeg(I, w){
+  const P = w.play, now = performance.now();
+  const swimTo = (x, y, wait = 0) => { goTo(I, w, x, y, wait); w.paddle = false; w.swim = true; };
+  if (P.ph === 'done'){ endPlay(w); return false; }
+  if (P.k === 'surf'){
+    // out lying on the board, paddling with the arms; sitting up, waiting for the right wave; then standing, riding it in
+    if (P.ph === 'go' || P.ph === 'ride' && ++P.n < P.max){ P.ph = 'out'; swimTo(P.s.x + rnd(4), P.s.y + rnd(3)); return true; }
+    if (P.ph === 'out'){ P.ph = 'sit'; w.swim = true; w.wait = 900 + Math.random() * 2400; return true; }
+    if (P.ph === 'sit'){ P.ph = 'ride'; P.at = now; swimTo(P.b.x + P.ux * 4 + rnd(7), P.b.y + P.uy * 3 + rnd(4)); return true; }
+    P.ph = 'done'; goTo(I, w, P.b.x, P.b.y, 500); return true;
+  }
+  if (P.k === 'swim'){
+    // children run in and jump; then a few strokes here and there, now and then under water, and back to the beach
+    if (P.ph === 'go'){ P.ph = 'in'; P.at = now; P.jump = w.child || Math.random() < .3; swimTo(P.b.x + P.ux * 6, P.b.y + P.uy * 5); return true; }
+    if (P.n++ < P.max + 1){ P.ph = 'paddle'; const s = {x:P.s.x + rnd(7), y:P.s.y + rnd(4)}; if (!landAt(I, s)){ const wait = Math.random() < .5 ? 700 + Math.random() * 1600 : 0; swimTo(s.x, s.y, wait); P.duck = Math.random() < .4 ? now + 300 : 0; return true; } }
+    P.ph = 'done'; goTo(I, w, P.b.x, P.b.y, 400); return true;
+  }
+  if (P.ph === 'go'){
+    P.ph = 'do'; P.at = now;
+    if (P.k === 'toy'){ goTo(I, w, P.b.x + P.ux * 3.5, P.b.y + P.uy * 3); P.ph = 'wade'; return true; }
+    if (P.k === 'nap'){ w.lie = true; w.wait = 7000 + Math.random() * 8000; return true; }
+    if (P.k === 'listen'){ w.sit = true; w.left = !!P.teller && P.teller.x < w.x; w.wait = 5000 + Math.random() * 5000; return true; }
+    w.busy = {x:w.x, y:w.y}; w.fx = PLAY_FX[P.k]; w.sit = P.k !== 'hiko' && P.k !== 'kite';
+    if (P.k === 'kite') w.left = wind().tx < 0;   // the back to the wind, the kite flies off downwind
+    w.wait = (P.k === 'story' || P.k === 'drum' ? 9000 : P.k === 'kite' ? 8000 : 5000) + Math.random() * 5000; return true;
+  }
+  if (P.ph === 'wade'){ P.ph = 'do'; w.busy = {x:w.x, y:w.y}; w.fx = 'toy'; w.wait = 5000 + Math.random() * 4000; return true; }
+  if (P.ph === 'do'){ P.ph = 'done'; w.lie = false; w.sit = false; if (P.k === 'toy') { goTo(I, w, P.b.x, P.b.y, 300); return true; } }
+  endPlay(w); return false;
+}
 /* The day in the village: at midday people gather by the earth oven, in the evening the grown-ups sit in the meeting house
    for kava while the old tell the stories of the ancestors, at night everyone goes home. Children play on the plaza. */
 function villageLife(I, w){
@@ -615,13 +710,15 @@ function villageLife(I, w){
   if (opts.night && ph > .66){ if (home){ goTo(I, w, home.x + rnd(6), home.y + 6); w.sit = true; w.wait = 6000 + Math.random() * 6000; return true; } return false; }
   if (ph > .5 && hall && !w.child && Math.random() < .7){ near(hall, w.old ? 9 : 16, .5); w.sit = true; w.wait = 5000 + Math.random() * 5000; return true; }
   if (ph > .25 && ph < .4 && !w.child && Math.random() < .6){ const u = I.buildings.filter(b => b.kind === 'umu' && !b.bt); if (u.length){ near(u[Math.floor(Math.random() * u.length)], 10, .5); w.sit = true; w.wait = 4000 + Math.random() * 3000; return true; } }
+  if (w.child && hall && playersOf(I, 'drum').some(q => q.play.ph === 'do') && Math.random() < .7){ near(hall, 14, .45); w.hop = true; w.wait = 2500 + Math.random() * 2500; return true; }   // the drum sounds: the children dance
   if (w.child && hall && Math.random() < .5){ near(hall, 22, .45); w.wait = 300 + Math.random() * 600; return true; }
   return false;
 }
 function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
-  w.dance = false; w.busy = null; w.fx = null; w.hurry = I.feastEnd > tick; w.paddle = false;   // people hurry to a feast
+  w.dance = false; w.busy = null; w.fx = null; w.hurry = I.feastEnd > tick; w.paddle = false; w.hop = false;   // people hurry to a feast
+  if (w.play && (w.job || w.boat || I.feastEnd > tick)) endPlay(w);
   if (I.feastEnd > tick && !w.boat){
     const d = I.festYear === yearOf() && I.buildings.find(b => b.kind === 'tanzplatz' && !b.bt), h = I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
     if (d || h){ if (w.job){ w.leg = 'go'; w.bout = false; } w.carry = null; w.sit = false; }
@@ -629,6 +726,7 @@ function nextLeg(w){
     if (h){ goTo(I, w, h.x + (Math.random() - .5) * 40, h.y + 14 + Math.random() * 16, 700 + Math.random() * 1400); return; }
   }
   if (w.job){ jobLeg(I, w, w.job); return; }
+  if (w.play && playLeg(I, w)) return;
   // without work, grown-ups gather what the wild gives: out to the nests and the shore, bent down a while, the basket to the store
   if (w.role === 'idle' && !w.boat){
     if (w.forage === 1){ w.forage = 2; w.busy = {x:w.x, y:w.y}; w.fx = 'plant'; w.sit = true; w.wait = 2600 + Math.random() * 2400; return; }
@@ -636,6 +734,8 @@ function nextLeg(w){
     if (w.forage === 3){ w.forage = 0; w.carry = null; }
     if (foragers(I) && Math.random() < .55){ const p = forageSpot(I, w); if (p){ w.forage = 1; w.sit = false; goTo(I, w, p.x, p.y, 300); return; } }
   } else if (w.forage){ w.forage = 0; if (w.carry === 'eier') w.carry = null; }
+  // free time: children often, the old and those without work now and then; at night all are at home
+  if (I.settled && !w.boat && !w.forage && !(opts.night && dayPhase() > .66) && Math.random() < (w.child ? .5 : w.old ? .4 : .42) && startPlay(I, w)) return;
   if (I.settled && villageLife(I, w)) return;
   const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && (!w.old || KINDS[b.kind].roof) && landOfB(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
   if (t) goTo(I, w, t.x + rnd(w.old ? 8 : 11), t.y + 4 + Math.random() * 8);
@@ -645,6 +745,7 @@ function nextLeg(w){
 }
 /* One step of the work. Builders: fetch wood or fronds, bring it, build a while at the site, until it is done.
    Everyone else: a while at the place (felling, climbing, at the craft), and after a few rounds the load to the store. */
+const REST_FX = ['drink', 'stretch', 'wipe', 'drink'];
 const BOUT = {chop:[2400, 1200], pull:[2600, 1400], climb:[5600, 2200], wade:[2600, 2400], plant:[500, 0], wait:[2500, 3000]};
 function jobLeg(I, w, j){
   const T = j.type;
@@ -676,6 +777,9 @@ function jobLeg(I, w, j){
       return;
     }
     w.bout = false;
+    // now and then a short rest at the place: a drink from a green nut, a stretch, the sweat off the brow
+    if (w.rest) w.rest = false;
+    else if (T !== 'wait' && T !== 'plant' && Math.random() < .1){ w.rest = true; w.bout = true; w.fx = REST_FX[Math.floor(Math.random() * REST_FX.length)]; w.busy = {x:w.x, y:w.y}; w.sit = w.fx === 'drink' && Math.random() < .5; w.wait = 1800 + Math.random() * 1400; w.boutT = w.wait; return; }
     if (T === 'wait' || T === 'learn'){ goTo(I, w, j.x + rnd(T === 'learn' ? 3 : 8), j.y + rnd(T === 'learn' ? 2 : 4)); return; }
     // at a craft or with the rope they work a few rounds before a load goes to the store; a felled piece goes at once
     if (T === 'carry' || T === 'pull'){ w.nb = (w.nb || 0) + 1; if (w.nb < (T === 'pull' ? 3 : 2) || !j.load){ w.wait = 200 + Math.random() * 500; if (!j.load) w.nb = 0; return; } w.nb = 0; }
@@ -761,7 +865,7 @@ function diveLeg(I, w, j){
     case 'spot':
       if (w.under){
         // up again: breath, and what the hands found; the clearer the water, the better the luck
-        w.under = 0; w.dives++; w.strain = (w.strain || 0) + (deep ? 2 : 1); stats.tauch = (stats.tauch || 0) + 1;
+        w.under = 0; w.upAt = performance.now(); w.dives++; w.strain = (w.strain || 0) + (deep ? 2 : 1); stats.tauch = (stats.tauch || 0) + 1;
         if (Math.random() < .55 + .3 * (1 - wind().str * .6)){ const k = deep && I.treasure.left > 0 && Math.random() < .5 ? (I.treasure.left--, 'perlmutt') : I.atoll && Math.random() < .14 ? 'beile' : 'meeres'; w.catch.push(k); if (k === 'meeres') w.catch.push(k); }   // a giant clam is a meal for two
         w.wait = (partner && partner.on && partner.leg === 'spot' ? 3000 : 6000) + Math.random() * 1500;   // alone nobody keeps watch: a longer rest
         return;
@@ -798,16 +902,16 @@ function stepWalkers(dt){
     if (w.on && w.leg === 'work' && w.job && BUILD_JOBS.has(w.job.type) && !w.hurry) buildBit(w, dt, at.get(w.job.type === 'yard' ? 'y' + w.isl : w.job.b.id) || 1);
     if (w.wait > 0){
       w.wait -= dt;
-      if (w.dance && Math.hypot(w.x - w.dance.x, (w.y - w.dance.y) * 2) < 26){ w.moving = true; w.phase += dt * .008; }
-      else if (w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3){ w.moving = true; w.phase += dt * .014; }
+      if (w.dance && Math.hypot(w.x - w.dance.x, (w.y - w.dance.y) * 2) < 26 || w.hop){ w.moving = true; w.phase += dt * .008; }
+      else if (w.busy && !w.rest && !(w.play && w.fx !== 'drum') && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3){ w.moving = true; w.phase += dt * .014; }
       continue;
     }
     const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
     if (d < 1.5){ nextLeg(w); continue; }
-    w.sit = false;
+    w.sit = false; w.lie = false;
     // feet wear the ground, children less as they run everywhere; on a laid path people walk faster
-    const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle ? -1 : wearAt(g, w.x, w.y);
-    const v = Math.min(d, dt * (w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle || w.swim ? -1 : wearAt(g, w.x, w.y);
+    const v = Math.min(d, dt * (w.swim ? (w.play && w.play.ph === 'ride' ? .02 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
     // feet find the trodden way: a little to the side where the ground is more worn, so paths gather and bend as real ones do
     if (ci >= 0 && d > 14 && !w.child){
       const ux = dx / d, uy = dy / d, ax = w.x + ux * 7, ay = w.y + uy * 7, l = wearAt(g, ax - uy * 4.5, ay + ux * 4.5), r = wearAt(g, ax + uy * 4.5, ay - ux * 4.5);

@@ -582,6 +582,22 @@ function drawBoatFig(c, w, now){
     const sx = x + (w.left ? -5 : 5), cord = new Path2D(); cord.moveTo(sx, y - .4); cord.quadraticCurveTo(sx + (w.left ? -2 : 2), y + 2, sx + (w.left ? -1.5 : 1.5), y + 4.5);
     stroke(c, cord, '#E9DCC0', .45, null, 'round', .9); stroke(c, ellipse(sx + (w.left ? -1.5 : 1.5), y + 4.6, 1.3, .55), '#F4ECD8', .5, null, null, .5);
     if (!reduced) for (let k = 0; k < 3; k++){ const f = ((now - w.under) / 1400 + k / 3) % 1; c.globalAlpha = 1 - f; stroke(c, ellipse(sx + Math.sin(f * 6 + k) * .8, y + 4 - f * 4, .55 + f * .4, .55 + f * .4), '#F4FBFA', .4); c.globalAlpha = 1; }
+    // the splash where the diver went in, feet last
+    const g = (now - w.under) / 600; if (g < 1 && !reduced){ for (let k = 0; k < 6; k++){ const a = k / 6 * Math.PI; c.globalAlpha = 1 - g; c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(sx + 1.5 * (w.left ? -1 : 1) + Math.cos(a) * (1.5 + g * 2.5), y + 4.4 - Math.sin(a) * g * 3, .4, 0, TAU); c.fill(); } c.globalAlpha = 1; stroke(c, ellipse(sx, y + 4.6, 2 + g * 3, (2 + g * 3) * .4), '#F4FBFA', .5, null, null, 1 - g); }
+    return;
+  }
+  // up again beside the canoe: a puff of breath, the catch held up, then back in
+  const up = w.upAt && w.leg === 'spot' && !reduced ? (now - w.upAt) / 1900 : 9;
+  if (up < 1){
+    put(c, x, y, 1, w.left ? -1 : 1, rock, 'einbaumE', '<use href="#einbaumE"/>');
+    const sx = x + (w.left ? -6.5 : 6.5), hy = y + 3.2, rise = Math.min(1, up * 4) * (up > .8 ? 1 - (up - .8) * 3 : 1);
+    c.save(); c.beginPath(); c.rect(sx - 6, hy - 16, 12, 16); c.clip(); c.translate(sx, hy + 7 - rise * 2); if (w.left) c.scale(-1, 1); blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
+    const arm = new Path2D(); arm.moveTo(1.3, -6.9); arm.lineTo(2.3, -9.8); stroke(c, arm, '#2B1D14', .95, null, 'round'); stroke(c, arm, SKINS[+w.look[0]], .5, null, 'round');
+    // what the hand found: a giant clam with its wavy rim, or a pearl shell
+    const C = new Path2D('M.2-10.2Q.6-12.6 2.6-13Q4.6-12.6 5-10.2Q2.6-9.4.2-10.2Z'); c.fillStyle = '#E4DCC4'; c.fill(C); stroke(c, C, '#2B1D14', .4);
+    const R = new Path2D('M1.4-10.1L2-12.4M2.6-9.9V-12.9M3.8-10.1L3.2-12.4'); stroke(c, R, '#8C8470', .3); c.restore();
+    stroke(c, ellipse(sx, hy, 3.6, 1.3), '#F4FBFA', .5, [.5, .8], 'round', .8);
+    if (up < .35) for (let k = 0; k < 4; k++){ const q = up / .35; c.globalAlpha = 1 - q; c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(sx - 1 + k * .7, hy - 5 - q * 4 - k * .5, .35, 0, TAU); c.fill(); c.globalAlpha = 1; }
     return;
   }
   // on the reef flat: the canoe lies in the shallows, both wade and gather
@@ -601,9 +617,16 @@ function drawBoatFig(c, w, now){
   if (w.mate) drawDugout2(c, x, yy, w.left, rock, w.look, w.old, w.mate.look, w.mate.old, now, w.phase || 0, !w.fishing);
   else drawDugout(c, x, yy, w.left, rock, w.look, w.old, now, w.phase || 0, !w.fishing);
   if (!w.fishing || reduced) return;
-  const n = ((now - w.fishing) % 3600) / 1200; if (n > 1) return;
-  const ox = x + (w.left ? -6 : 6), r = 2 + n * 7;
-  stroke(c, loopPath(ox, y + 1, r, r * .55, w.x | 0, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7);
+  const cyc = (now - w.fishing) / 3600, n = (cyc % 1) * 3, ox = x + (w.left ? -6 : 6);
+  if (n <= 1){ const r = 2 + n * 7; stroke(c, loopPath(ox, y + 1, r, r * .55, w.x | 0, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
+  // now and then a fish comes up over the side, flapping, into the canoe
+  else if (n > 1.4 && n < 2.2 && hsh(Math.floor(cyc), w.x | 0) < .6){
+    const g = (n - 1.4) / .8, d = w.left ? -1 : 1, fx = x + d * (9 - g * 7), fy = y + 1 - Math.sin(g * Math.PI) * 6;
+    c.save(); c.translate(fx, fy); c.rotate(d * (g * 2.4 - 1.2) + Math.sin(now / 60) * .25); c.fillStyle = '#9FB7C0'; c.beginPath(); c.ellipse(0, 0, 1.6, .6, 0, 0, TAU); c.fill(); c.beginPath(); c.moveTo(-1.4, 0); c.lineTo(-2.4, -.7); c.lineTo(-2.4, .7); c.closePath(); c.fill(); stroke(c, ellipse(0, 0, 1.6, .6), '#2B1D14', .3); c.restore();
+    if (g < .25) for (let k = 0; k < 3; k++){ c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(x + d * (9 + k - 1), y + 1.4 - g * 6, .35, 0, TAU); c.fill(); }
+  }
+  // sea birds circle over the canoe, as they gather over a shoal: the old sign where the fish are
+  for (let k = 0; k < 2; k++){ const a = now / 2600 * (k ? -1 : 1) + k * 2.6 + w.x; c.save(); c.translate(x + Math.cos(a) * 12, y - 18 + Math.sin(a) * 4 - k * 3); c.scale(.55, .55); stroke(c, Math.sin(now / 190 + k * 2) > -.2 ? BIRD1 : BIRD2, '#2B1D14', 1.4, null, 'round', .8); c.restore(); }
 }
 const WADE = ellipse(0, .3, 3, 1.3);
 const glint = (x, y, r) => { const p = new Path2D(); p.moveTo(x - r, y); p.lineTo(x + r, y); p.moveTo(x, y - r * .7); p.lineTo(x, y + r * .7); return p; };
@@ -932,7 +955,7 @@ function drawPeople(c, v, now){
   items.sort((a, b) => a[0] - b[0]);
   const sh = sunShadow();
   if (sh.alpha > 0) for (const w of vis){
-    if (w.ride || w.boat || (w.paddle && !landAt(isl(w.isl), w))) continue;
+    if (w.ride || w.boat || w.lie || (w.paddle || w.swim) && !landAt(isl(w.isl), w)) continue;
     c.save(); c.translate(w.x, w.y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (w.left) c.scale(-1, 1);
     if (w.home) blitShadow(c, 'cr|' + w.kind, `<use href="#${w.kind}"/>`, sh.alpha);
     else { if (w.child) c.scale(.7, .7); if (w.sit && (!w.moving || w.busy)) c.scale(1, .78); blitShadow(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old), sh.alpha); }
@@ -949,6 +972,15 @@ function drawPeople(c, v, now){
     if (w.ride) continue;   // in the canoe of the other fisher
     // across the lagoon they paddle a dugout
     if (w.boat || (w.paddle && !landAt(isl(w.isl), w))){ drawBoatFig(c, w, now); continue; }
+    if (w.swim && swimming(isl(w.isl), w, now)){ drawSwimmer(c, w, now); continue; }
+    // a nap in the shade: lying on a mat, breathing slowly
+    if (w.lie && !w.moving){
+      c.save(); c.translate(w.x, w.y); if (w.left) c.scale(-1, 1); c.fillStyle = '#DCC48C'; c.fill(MAT_L); stroke(c, MAT_L, '#2B1D14', .35);
+      if (w.child) c.scale(.7, .7);
+      c.save(); c.translate(4.6, -1.3); c.rotate(-Math.PI / 2); c.scale(.8, 1 + (reduced ? 0 : Math.sin(now / 1100 + w.phase) * .025)); figOf(c, w); c.restore();
+      if (!reduced){ const q = ((now / 2600) + w.x * .1) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2.2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', -4.6 + q * 2, -3 - q * 6); c.globalAlpha = 1; }
+      c.restore(); continue;
+    }
     const up = w.fx === 'climb' && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
     const bob = w.moving && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced && !up ? Math.sin(w.phase) * .05 : 0;
     // up at the crown a nut drops now and then
@@ -958,6 +990,7 @@ function drawPeople(c, v, now){
     if (w.sit && (!w.moving || w.busy)){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
     if (w.child) c.scale(.7, .7);
     if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
+    if (w.play && w.play.k === 'surf'){ c.save(); c.translate(2.4, -4.4); c.rotate(-1.25); c.fillStyle = '#C9A36A'; c.fill(BOARD_S); stroke(c, BOARD_S, '#2B1D14', .4); c.restore(); }   // the board under the arm
     blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
     const tool = w.old ? 'stab' : !w.carry && w.job && w.job.tool, at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3;
     // at work the adze and the digging stick swing
@@ -969,6 +1002,72 @@ function drawPeople(c, v, now){
     if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
     c.restore();
   }
+}
+/* ---------- in the water for fun. Swimmers show head and shoulders and leave rings, and now and then duck under;
+   children jump in from the beach. Surfers paddle out lying on the board, sit up and wait for the wave, and ride it in
+   standing, knees bent, the white water curling behind them. */
+const BOARD = ellipse(0, 0, 5.4, 1.15), BOARD_S = ellipse(0, 0, 3.8, .95);
+const figOf = (c, w) => blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
+const swimming = (I, w, now) => w.swim && (!landAt(I, w) || jumpF(w, now) < 1);
+const jumpF = (w, now) => { const P = w.play; return P && P.k === 'swim' && P.ph === 'in' && P.jump ? (now - P.at) / 760 : 9; };
+function drawSwimmer(c, w, now){
+  const P = w.play || {}, t = reduced ? 0 : now, dir = w.left ? -1 : 1, s = w.child ? .72 : 1, ph = (w.phase || 0) + w.x;
+  const ring = (x, y, r, a) => stroke(c, ellipse(x, y, r, r * .42), '#F4FBFA', .45, [.5, .8], 'round', a);
+  const drop = (x, y, r, a = 1) => { c.globalAlpha = a; c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.globalAlpha = 1; };
+  c.save(); c.translate(w.x, w.y);
+  if (P.k === 'surf'){
+    c.scale(dir, 1);
+    if (P.ph === 'ride'){
+      // the wave behind the rider, a curl of white; spray off the tail of the board
+      const g = ((now - (P.at || now)) / 1000) % 1, lean = reduced ? 0 : Math.sin(t / 240 + ph) * .07;
+      const wave = new Path2D(); wave.moveTo(-15, 2.6); wave.quadraticCurveTo(-8, -1.4, -2, 1.2); wave.quadraticCurveTo(1, 2.4, 3, 1.8);
+      stroke(c, wave, '#2F5F73', 2.4, null, 'round', .35); stroke(c, wave, '#F4FBFA', 1.1, null, 'round', .95);
+      stroke(c, ellipse(-9, 2.2, 6, 1.2), '#F4FBFA', .5, [.4, .9], 'round', .7);
+      if (!reduced) for (let k = 0; k < 4; k++){ const q = (g + k / 4) % 1; drop(-4.5 - q * 5, -.6 - Math.sin(q * Math.PI) * 2.4, .38 * (1 - q) + .1, 1 - q); }
+      c.save(); c.scale(s, s); c.fillStyle = '#C9A36A'; c.fill(BOARD); stroke(c, BOARD, '#2B1D14', .45);
+      c.translate(0, -.3); c.rotate(lean); c.scale(1, .9); figOf(c, w);
+      // arms out for balance
+      const arm = new Path2D(); arm.moveTo(-1.2, -6.8); arm.lineTo(-4.4, -6 + Math.sin(t / 300) * .6); arm.moveTo(1.2, -6.8); arm.lineTo(4.4, -7.4 - Math.sin(t / 300) * .6);
+      stroke(c, arm, '#2B1D14', .95, null, 'round'); stroke(c, arm, SKINS[+w.look[0]], .5, null, 'round');
+      c.restore();
+    } else if (P.ph === 'sit'){
+      // astride the board, bobbing on the swell, looking out for the next wave
+      const bob = reduced ? 0 : Math.sin(t / 700 + ph) * .5;
+      c.translate(0, bob); ring(0, .6, 5.6 * s, .6);
+      seatedFig(c, w.look, w.old, 0, -.2, s);
+      c.save(); c.scale(s, s); c.fillStyle = '#C9A36A'; c.fill(BOARD); stroke(c, BOARD, '#2B1D14', .45); c.restore();
+    } else {
+      // lying on the board, arms paddling in turn
+      c.save(); c.scale(s, s); c.fillStyle = '#C9A36A'; c.fill(BOARD); stroke(c, BOARD, '#2B1D14', .45);
+      c.save(); c.translate(-4.4, -.9); c.rotate(Math.PI / 2); c.scale(.8, .95); figOf(c, w); c.restore();
+      const a = reduced ? 0 : Math.sin(t / 260 + ph);
+      for (const side of [-1, 1]){ const k = side * a; if (k > .4) drop(2.4 + k * 1.5, side * 1.5 + .4, .45, .9); }
+      ring(-5.6, .2, 2.2, .6);
+      c.restore();
+    }
+    c.restore(); return;
+  }
+  // the jump from the beach: up, over, and in with a splash
+  const jf = jumpF(w, now);
+  if (jf < 1){
+    const up = Math.sin(jf * Math.PI) * 6; c.save(); c.translate(0, -up); c.rotate(dir * jf * 1.1); c.scale(s, s); figOf(c, w); c.restore();
+    if (jf > .82) for (let k = 0; k < 5; k++){ const a = k / 5 * Math.PI; drop(Math.cos(a) * 3, -Math.sin(a) * 2.6 * (jf - .8) * 5, .4); }
+    c.restore(); return;
+  }
+  const duck = P.duck && now > P.duck && now < P.duck + 1300;
+  if (duck){
+    // under water: only rings and rising bubbles
+    if (!reduced) for (let k = 0; k < 3; k++){ const q = ((now - P.duck) / 600 + k / 3) % 1; stroke(c, ellipse(Math.sin(q * 5 + k), -q * 2, .4 + q * .3, .4 + q * .3), '#F4FBFA', .35, null, null, 1 - q); }
+    ring(0, .3, 3, .7);
+  } else {
+    // head and shoulders over the water, the arms reach forward in turn
+    c.save(); c.beginPath(); c.rect(-6, -14, 12, 14); c.clip(); c.translate(0, 6.4 * s); c.scale(s * dir, s); figOf(c, w); c.restore();
+    const a = reduced ? 0 : Math.sin(t / 330 + ph), moving = w.moving;
+    if (moving){ const arm = new Path2D(); arm.moveTo(dir * 1.2, -1); arm.quadraticCurveTo(dir * (2.6 + a), -2.6 - Math.abs(a), dir * (4 + a * 1.2), -.2); stroke(c, arm, '#2B1D14', .9, null, 'round'); stroke(c, arm, SKINS[+w.look[0]], .45, null, 'round'); if (a > .6) drop(dir * 4.6, -.2, .45, .9); }
+    ring(0, .2, 3.4 * s + (reduced ? 0 : (t / 900 + ph) % 1 * 1.4), .75);
+    if (moving) stroke(c, ellipse(-dir * 4.5, .3, 2.4, .6), '#F4FBFA', .4, [.4, .7], 'round', .55);   // the wake
+  }
+  c.restore();
 }
 /* What each kind of work looks like, small and in front of the worker, who faces right here */
 const SWING = new Set(['dig', 'chop', 'build', 'carve']);
@@ -1035,6 +1134,59 @@ function workFx(c, w, now){
     case 'stir': { blob(4.6, -.6, 2, .9, '#7A5434'); blob(4.6, -1, 1.5, .4, '#E3C35A'); const a = t * 4; dot(4.6 + Math.cos(a) * .9, -1.1, .4, '#E86A8A'); line(3.4, -4, 4.6 + Math.cos(a) * .6, -1.2, '#6B4428', .4); break; }   // blossoms stirred into the oil
     case 'grate': { blob(4.8, -.4, 1.6, 1, '#6B4A2E'); blob(4.8, -.9, 1.1, .6, '#F4ECD8'); const x = 4.8 + Math.sin(t * 8); line(x - 1, -2, x + 1, -2, '#8C6440', .5); if (Math.sin(t * 8) > .8) dot(6.6, .2, .3, '#F4ECD8'); break; }   // coconut flesh rasped on a shell
     case 'cut': { line(5.4, .4, 5.4, -8, '#7A9A4A', 1.2); blob(4, -6.4, 1.6, 1.3, '#D8C24A'); const sw = Math.sin(t * 3) * .4; line(1.6, -4.5, 4.2 + sw, -6 + sw, '#2B1D14', .45); break; }   // a bunch of bananas cut down
+    // ---- free time and short rests
+    case 'kite': {   // a kite of pandanus leaf on a cord of coconut fibre, off downwind, dancing in the gusts
+      const kx = 15 + Math.sin(t * .9) * 1.6, ky = -25 + Math.cos(t * 1.3) * 2.2, rot = Math.sin(t * 1.7) * .25;
+      c.strokeStyle = '#6B4428'; c.lineWidth = .3; c.beginPath(); c.moveTo(1.6, -6.6); c.quadraticCurveTo(kx * .55, ky * .3, kx, ky + 2); c.stroke();
+      c.save(); c.translate(kx, ky); c.rotate(rot); const K = new Path2D('M0-3.6Q2.6-1.4 0 3.2Q-2.6-1.4 0-3.6Z'); c.fillStyle = '#D9C27A'; c.fill(K); stroke(c, K, '#2B1D14', .4); line(0, -3.2, 0, 3, '#8C6440', .3);
+      c.strokeStyle = '#B03A2E'; c.lineWidth = .35; c.beginPath(); c.moveTo(0, 3.2); for (let k = 1; k <= 4; k++) c.lineTo(Math.sin(t * 3 + k) * 1.2, 3.2 + k * 1.6); c.stroke(); c.restore();
+      line(1.2, -6.8, 2.2, -8.6, '#2B1D14', .7); break; }
+    case 'toy': {   // a toy outrigger with a crab-claw sail goes round in the shallows
+      c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9);
+      const a = t * .9, x = 6 + Math.cos(a) * 3, y = 1.2 + Math.sin(a) * 1.1, d = Math.cos(a + Math.PI / 2) < 0 ? -1 : 1;
+      c.save(); c.translate(x, y); c.scale(d, 1); blob(0, 0, 1.6, .45, '#8C5C36'); line(-.6, -.1, -.6, 1, '#6B4428', .25); line(-1.2, 1.1, 1, 1.1, '#6B4428', .35);
+      const S = new Path2D('M0-.2L-1.4-3.8Q-.2-2.6 .3-3.6Q.2-1.6 0-.2Z'); c.fillStyle = '#E9DCC0'; c.fill(S); stroke(c, S, '#2B1D14', .25); c.restore();
+      if (Math.sin(a * 3) > .7) dot(x - 2, y + .3, .3, '#F4FBFA'); break; }
+    case 'string': {   // a string figure between the hands, a new one every few breaths
+      const k = Math.floor(t / 1.6) % 3, x0 = 1.2, x1 = 4.6, y = -5.6;
+      c.strokeStyle = '#B03A2E'; c.lineWidth = .3; c.beginPath();
+      if (k === 0){ c.moveTo(x0, y - 1); c.lineTo(x1, y + 1); c.moveTo(x0, y + 1); c.lineTo(x1, y - 1); c.moveTo(x0, y - 1); c.lineTo(x1, y - 1); c.moveTo(x0, y + 1); c.lineTo(x1, y + 1); }
+      else if (k === 1){ for (let i = 0; i < 3; i++){ const a = x0 + i * 1.13; c.moveTo(a, y - 1); c.lineTo(a + .57, y + 1); c.lineTo(a + 1.13, y - 1); } c.moveTo(x0, y + 1); c.lineTo(x1, y + 1); }
+      else { c.moveTo(x0, y); c.lineTo((x0 + x1) / 2, y - 1.4); c.lineTo(x1, y); c.lineTo((x0 + x1) / 2, y + 1.4); c.closePath(); c.moveTo(x0, y - 1); c.lineTo(x1, y + 1); }
+      c.stroke(); dot(x0, y, .5, SKINS[+w.look[0]]); dot(x1, y, .5, SKINS[+w.look[0]]); break; }
+    case 'hiko': {   // three candlenuts in a loop over the head, caught and thrown, never one on the ground
+      for (let k = 0; k < 3; k++){ const a = (t * 1.2 + k / 3) * TAU, y = -14.2 + Math.sin(a) * 2.6 - (Math.sin(a) < 0 ? 1.6 : 0); blob(.6 + Math.cos(a) * 2.6, y, .75, .75, k === 1 ? '#A0703E' : '#7A5434'); }
+      const h = Math.sin(t * 1.2 * TAU) * .8, sk = SKINS[+w.look[0]];
+      for (const [x0, x1, d] of [[-1.3, -2, h], [1.3, 2.6, -h]]){ const p = new Path2D(); p.moveTo(x0, -6.9); p.lineTo(x1, -10.4 + d); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); } break; }
+    case 'garland': {   // blossoms threaded on a strip of hibiscus bast, one after the other
+      c.strokeStyle = '#7E9A3A'; c.lineWidth = .35; c.beginPath(); c.moveTo(2, -1.2); c.quadraticCurveTo(4.6, .6, 7.2, -1.2); c.stroke();
+      const n = 1 + Math.floor((t * .6) % 5), col = ['#E86A8A', '#F4ECD8', '#F3D9A0', '#E86A8A', '#F4ECD8'];
+      for (let k = 0; k < n; k++){ const q = k / 4; dot(2 + q * 5.2, -1.2 + Math.sin(q * Math.PI) * 1.4, .6, col[k]); }
+      line(3.4 + n * .9, -3.4, 2.4 + n * 1.1, -1.2, '#2B1D14', .4); break; }
+    case 'story': {   // the hand moves with the words; over it what the story is about: turtle, canoe, star, shark, fish
+      const g = Math.floor(t / 2.6), k = (g + (w.x | 0)) % 5, pop = Math.min(1, (t / 2.6 - g) * 5);
+      line(1.2, -6.6, 3.2 + Math.sin(t * 2.2) * .9, -8.4 + Math.cos(t * 1.7) * .6, '#2B1D14', .7);
+      c.save(); c.translate(4.6, -15.4); c.scale(pop, pop); const B = loopPath(0, 0, 3.4, 2.7, 7 + k, .06, 11); c.globalAlpha = .95; c.fillStyle = '#F4ECD8'; c.fill(B); c.globalAlpha = 1; stroke(c, B, '#3E2416', .4);
+      c.fillStyle = '#2B1D14'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35;
+      if (k === 0){ c.beginPath(); c.ellipse(0, 0, 1.5, 1, 0, 0, TAU); c.fill(); for (const [x, y] of [[-1.4, -1], [1.4, -1], [-1.4, 1], [1.4, 1]]){ c.beginPath(); c.arc(x, y, .4, 0, TAU); c.fill(); } c.beginPath(); c.arc(1.9, 0, .45, 0, TAU); c.fill(); }
+      else if (k === 1){ c.beginPath(); c.moveTo(-2, .6); c.quadraticCurveTo(0, 1.8, 2, .6); c.closePath(); c.fill(); c.beginPath(); c.moveTo(0, .6); c.lineTo(-1.2, -1.8); c.quadraticCurveTo(0, -1, .8, -1.9); c.closePath(); c.stroke(); }
+      else if (k === 2){ c.beginPath(); for (let i = 0; i < 8; i++){ const a = i / 8 * TAU, r = i % 2 ? .5 : 1.7; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); }
+      else if (k === 3){ c.beginPath(); c.moveTo(-2, .8); c.lineTo(.2, -1.8); c.lineTo(1.2, .8); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-2.4, 1); c.lineTo(2.4, 1); c.stroke(); }
+      else { c.beginPath(); c.ellipse(-.3, 0, 1.5, .8, 0, 0, TAU); c.fill(); c.beginPath(); c.moveTo(1, 0); c.lineTo(2.2, -.9); c.lineTo(2.2, .9); c.closePath(); c.fill(); }
+      c.restore(); break; }
+    case 'drum': {   // the slit drum (lali, pātē): a hollowed log, beaten with two sticks; the sound goes out in rings
+      blob(5.2, -.6, 3.4, 1.2, '#6B4428'); line(3.2, -1.1, 7.2, -1.1, '#1F140D', .45);
+      const a = Math.sin(t * 7), b = Math.sin(t * 7 + Math.PI);
+      line(1.2, -5.4, 4.2, -2 - Math.max(0, a) * 2.4, '#8C6440', .5); line(1.8, -5, 6.2, -2 - Math.max(0, b) * 2.4, '#8C6440', .5);
+      const q = (t * 1.2) % 1; c.globalAlpha = 1 - q; c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.arc(5.2, -2, 2 + q * 5, -2.4, -.7); c.stroke(); c.globalAlpha = 1; break; }
+    case 'drink': {   // a green coconut tipped to the mouth
+      const up = .5 + .5 * Math.sin(t * 1.4), x = 1.6 - up * .2, y = -7.6 - up * 1.2;
+      line(1.2, -6.8, x, y, '#2B1D14', .75); blob(x + .6, y, 1.2, 1.05, '#7E9A3A'); if (up > .8) dot(x - .2, y + .6, .25, '#F4FBFA'); break; }
+    case 'stretch': {   // arms up, a long breath
+      const u = Math.min(1, Math.sin(Math.min(1, (1 - w.wait / (w.boutT || 2400))) * Math.PI) * 1.6), sk = SKINS[+w.look[0]];
+      for (const s of [-1, 1]){ const p = new Path2D(); p.moveTo(s * 1.3, -6.9); p.lineTo(s * (1.6 + u * .6), -6.9 - u * 4.4); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); } break; }
+    case 'wipe': {   // the back of the hand across the brow, a drop runs down
+      const x = .2 + Math.sin(t * 3) * .9; line(1.3, -6.8, x, -9.6, '#2B1D14', .75); const q = (t * .8) % 1; dot(-1.4, -9 + q * 4, .25, '#BFE3EA', 1 - q); break; }
   }
 }
 /* how high a climber is up the palm: up, a while at the crown, down again */
@@ -1071,7 +1223,7 @@ function drawWork(c, v){
     }
   }
 }
-const MAT = roundRect(-3.2, -.9, 6.4, 1.8, .6);
+const MAT = roundRect(-3.2, -.9, 6.4, 1.8, .6), MAT_L = roundRect(-5.8, -2.4, 11.6, 3, .8);
 function drawCritter(c, a){
   const hop = a.moving && !reduced ? -Math.abs(Math.sin(a.phase)) * (a.kind === 'chicken' ? .9 : .5) : 0;
   c.save(); c.translate(a.x, a.y + hop); if (a.left) c.scale(-1, 1); if (a.kind === 'chicken' && a.peck > 0) c.rotate(.35);
@@ -1079,7 +1231,7 @@ function drawCritter(c, a){
 }
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
 const bubbleArt = inner => `<path d="M-6.1-13.7Q-1.2-14.5 6.4-13.8Q7-8.2 6.1-2.4Q3.4-1.9 1.6-2.2L0 .6L-1.5-2.1Q-4.2-1.8-6.4-2.5Q-7.1-8.1-6.1-13.7Z" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/>${inner}`;
-const UP_BUBBLE = bubbleArt('<path d="M0-12.6L4-8H1.6V-4.2H-1.6V-8H-4Z" fill="#4E8A3E" stroke="#2B1D14" stroke-width=".55" stroke-linejoin="round"/>');
+const UP_BUBBLE = bubbleArt('<g transform="translate(-4.6 -12.9) scale(.46)"><use href="#ic-knot"/></g><g transform="translate(3.1 -11.2)" fill="#F7F1E3" stroke="#2B1D14" stroke-width=".28">' + [0, 72, 144, 216, 288].map(a => `<ellipse cy="-1.05" rx=".72" ry="1.12" transform="rotate(${a})"/>`).join('') + '<circle r=".55" fill="#E3B23C"/></g>');
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
@@ -1107,13 +1259,24 @@ function drawNeeds(c, v, now){
       const up = !k && !I.autoUp && homeOk(I, b) && canUpgrade(I, b, list);
       if (!k && !up) continue;
       const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
-      if (up) put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob * 1.6, s * 1.1, 1, 0, 'need|up', UP_BUBBLE);
+      if (up) put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob * 1.6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), 1, reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE);
       else put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
     }
   }
   // a canoe from far away waits at the beach: the family asks to stay
   for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); }
   const t = now;
+  // a house newly bound: blossoms rain on its roof, as garlands are laid on a new house at its blessing
+  for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings){
+    const f = b.blessAt ? (t - b.blessAt) / 5200 : 9; if (f < 0 || f >= 1 || !ptIn(b.x, b.y, v)) continue;
+    const top = b.y - KINDS[b.kind].hy * ((b.v && b.v.scale) || 1);
+    for (let k = 0; k < 18; k++){
+      const q = (f * 1.6 + hsh(k, b.id) * .9) % 1, x = b.x + (hsh(k + 3, b.id) - .5) * 30 + Math.sin(q * 6 + k) * 3, y = top - 14 + q * 30, al = (1 - f) * (q < .1 ? q * 10 : 1);
+      c.save(); c.translate(x, y); c.rotate(q * 5 + k); c.globalAlpha = al; c.fillStyle = ['#E86A8A', '#F7F1E3', '#F3D9A0', '#D9472B'][k % 4]; c.beginPath(); c.ellipse(0, 0, 1.3 * s, .7 * s, 0, 0, TAU); c.fill(); c.restore();
+    }
+    c.globalAlpha = 1;
+    if (f < .5){ const r = 6 + f * 50; stroke(c, ellipse(b.x, b.y + 2, r, r * .4), '#F7F1E3', 1.2, [.5, 1.6], 'round', (.5 - f) * 1.6); }   // the voices go out over the village
+  }
   hearts = hearts.filter(h => t - h.t0 < 1600);
   for (const h of hearts){
     const f = (t - h.t0) / 1600; if (f < 0) continue;

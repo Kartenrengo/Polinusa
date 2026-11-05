@@ -1,6 +1,7 @@
 # Polinusa
 
-Aufbauspiel fürs Handy im Stil von Anno. Zeit: die Lapita-Phase der Austronesier, um 1500 v. Chr.
+Aufbauspiel fürs Handy. Zeit: die Lapita-Phase der Austronesier, um 1500 v. Chr. Von Anno kommt nur der Gedanke, dass
+Häuser mit ihren Bedürfnissen wachsen; alles andere ist Ozeanien (siehe „Eigene Handschrift“).
 Ein Clan fährt los, findet leere Inseln, siedelt dort und treibt Handel über das offene Meer.
 
 ## Starten
@@ -154,13 +155,14 @@ Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick. Danach geht d
 Einfach und nach Bedeutung geordnet:
 
 - **Oben, die Insel:** der Name, Ansehen, Leute ohne Arbeit und die Bewohner mit ihrem Platz. Darunter die wichtigsten
-  Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„↑ 2 aufsteigen“**, Häuser voll, ein
+  Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„2 aufsteigen“** mit einem Knoten, Häuser voll, ein
   Kanu kommt. Antippen öffnet die Übersicht.
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.
-- **Ein Haus antippen** zeigt alles wie bei Anno: wer dort wohnt (mit Namen, Alter und Arbeit), die Plätze (besetzt, frei
-  und die, die erst mit mehr Bedürfnissen aufgehen), jedes Bedürfnis mit Haken oder „fehlt“ und woher es kommt, mit einem
-  Knopf „Bauen“ oder „Kanus“, und darunter, was zum **Aufsteigen** fehlt, Punkt für Punkt, und den Knopf „Aufsteigen“.
+- **Ein Haus antippen** zeigt die Familie: wer dort wohnt (mit Namen, Alter und Arbeit), die Plätze (besetzt, frei
+  und die, die erst mit mehr Bedürfnissen aufgehen), dann **die Schnur der Familie** (siehe unten), jedes Bedürfnis mit
+  Haken oder „fehlt“ und woher es kommt, mit einem Knopf „Bauen“ oder „Kanus“, und darunter, was zum **Aufsteigen**
+  fehlt, Punkt für Punkt, und den Knopf „Aufsteigen“.
 - **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
   holen sollen.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
@@ -171,6 +173,28 @@ Einfach und nach Bedeutung geordnet:
   - **Arbeit:** automatisch oder von Hand, wer frei ist, welche Plätze Raum haben oder ruhen, alle Familien.
   - **Insel:** Wald, Felder, Wild, Riff, Pflanzen und Tiere, Muster, Navigatoren, der Weg zum Häuptlingsdorf.
 - **Kurze Texte:** Mehr steht unter „Mehr dazu“.
+
+### Eigene Handschrift
+
+Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
+
+- **Die Schnur der Familie statt Balken:** Die Bedürfnisse eines Hauses sind Knoten auf einer Schnur aus Sennit, nach den
+  geknoteten Ahnenschnüren der Marquesas (taʻo mata). Ein fest gezogener Knoten ist erfüllt, eine lose Schlaufe ist
+  knapp, eine ausgefranste Lücke fehlt. Nach einer Muschelperle folgen hell die Knoten, die die nächste Stufe will. Ist
+  das Blatt offen, ziehen sich die Knoten nacheinander fest.
+- **Ein Knoten statt Pfeil:** Über einem Haus, das aufsteigen kann, schwebt ein Knoten mit einer Tiare-Blüte und wiegt
+  sich. Auch der Knopf „Aufsteigen“ trägt ihn; ist alles bereit, zieht der Knoten sich im Takt zusammen und ein
+  gestrichelter Ring legt sich um den Knopf.
+- **Hausweihe:** Steigt ein Haus auf, regnen Blüten auf sein Dach, wie man bei der Weihe eines neuen Hauses Kränze auflegt,
+  und ein Ring geht wie Stimmen über das Dorf.
+- **Die Alten raten:** Der Hinweis unten spricht mit der Stimme der Ältesten; vor ihm steht ein kleines geschnitztes
+  Gesicht. Dringendes heißt „Jetzt“.
+- **Menschen statt Zahlen:** Jede Person hat Namen, Alter, Arbeit und die Linie ihrer Mutter. Neue Familien kommen im Kanu
+  aus der Ferne und fragen, ob sie bleiben dürfen. Gegen Inzucht hilft neues Blut von anderen Inseln.
+- **Knöpfe aus Rindenstoff:** Jeder Knopf ist von Hand zugeschnitten. Gedrückt gibt er nach wie geflochtener Pandanus und
+  federt zurück; ein Tipp schickt Ringe aus wie ein Kiesel in der Lagune. Ein Blatt rollt sich auf wie eine Matte, seine
+  Teile kommen nacheinander hoch. Ein neuer Rat oder eine neue Aufgabe gleitet herein. Wer weniger Bewegung wünscht,
+  bekommt nichts davon.
 
 ## Essen
 
@@ -228,9 +252,10 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
   frühen Lapita lebten wohl dort, wo die Familie der Frau lebte.
 - **Hütte:** Pfosten und ein Dach aus Palmwedeln, ohne Nägel. Sie ist das Zuhause einer Familie, bis 4 Menschen. In einer
   Hütte kommen **keine Kinder** zur Welt.
-- **Aufsteigen wie bei Anno:** Ein Haus kann eine Stufe höher, wenn **alle Bedürfnisse seiner Familie erfüllt** sind und
-  das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da sein. Dann steht ein
-  grüner Pfeil über dem Haus, oben steht „↑ aufsteigen“, und auf der Tafel des Hauses ist der Knopf „Aufsteigen“ frei. In
+- **Aufsteigen:** Ein Haus kann eine Stufe höher, wenn **alle Knoten seiner Schnur fest** sind, also alle Bedürfnisse
+  der Familie erfüllt, und das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da
+  sein. Dann schwebt ein Knoten mit Blüte über dem Haus, oben steht „aufsteigen“, und auf der Tafel des Hauses ist der
+  Knopf „Aufsteigen“ frei. Beim Aufsteigen regnen Blüten aufs Dach. In
   der Übersicht steigen mit „Alle aufsteigen“ alle bereiten Häuser auf einmal auf. Wer will, schaltet dort „Von selbst“
   ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
 - **Weiterkommen:** Die Tafel zeigt, was fehlt, und woher es kommt. Manches gibt es nicht auf jeder Insel: Matten nur auf
@@ -877,6 +902,35 @@ Erwachsene frei sind, Erwachsene zuerst. Wer geht, nimmt seine Linie mit. Die H�
   Namen aller Häuptlinge bleiben.
 - **Weniger Gedränge:** Höchstens 60 Figuren je Insel sind unterwegs; in einem großen Dorf bleiben die anderen im Haus.
 
+## Freizeit
+
+Wer gerade nichts zu tun hat, Kinder, Alte und Leute ohne Arbeit, tut, was man auf den Inseln immer getan hat. Man sieht
+immer wieder etwas anderes:
+
+- **Surfen:** Mit dem Brett unter dem Arm zum Strand, liegend hinauspaddeln, auf dem Brett sitzen und auf die Welle
+  warten, dann stehend hereinreiten, die Knie gebeugt, die Arme ausgestreckt, hinter sich die weiße Gischt. Surfen ist
+  auf Hawaiʻi (heʻe nalu) und Tahiti (faʻaheʻe) alt; Kinder ritten auf kleinen Brettern. Nur bei Wind, nicht im Sturm,
+  und auf Atollen an der Seite zum offenen Meer.
+- **Schwimmen:** Kinder rennen hinein und springen mit einem Platscher, dann ein paar Züge hierhin und dorthin, manchmal
+  ganz untertauchen, Ringe auf dem Wasser, und zurück an den Strand.
+- **Drachen:** Ein Drachen aus Pandanusblatt mit rotem Schwanz steigt am Strand, immer mit dem Wind.
+- **Spielzeugkanu:** Ein Kind watet in die Lagune und lässt ein kleines Auslegerkanu mit Krebsscherensegel kreisen.
+- **Fadenspiele:** Zwischen den Händen entsteht alle paar Atemzüge eine neue Figur (whai, fai, ʻai).
+- **Jonglieren:** Drei Kerzennüsse fliegen über dem Kopf im Kreis, wie beim hiko der Mädchen in Tonga.
+- **Blütenkränze:** Blüte um Blüte auf einen Streifen Bast.
+- **Mittagsschlaf:** Im Schatten einer Palme auf der Matte liegen und langsam atmen.
+- **Geschichten:** Eine Alte erzählt; über ihr erscheint, wovon: Schildkröte, Kanu, Stern, Hai, Fisch. Kinder setzen
+  sich dazu und hören zu.
+- **Schlitztrommel:** Abends schlägt jemand am Dorfplatz die Schlitztrommel; die Klänge gehen in Ringen hinaus, und die
+  Kinder tanzen dazu.
+
+Bei der Arbeit gibt es kleine Pausen: ein Schluck aus einer grünen Kokosnuss, Strecken, den Schweiß von der Stirn
+wischen. Taucher springen mit einem Platscher ab und kommen neben dem Kanu wieder hoch, prusten und halten die Muschel in
+die Höhe. Bei den Fischern springt ab und zu ein Fisch ins Kanu, und über ihnen kreisen Seevögel, wie über einem
+Schwarm; danach haben sich Fischer immer gerichtet.
+
+Freizeit ist nur fürs Auge: Sie ändert nichts an den Vorräten, und die kleinen Pausen kosten keine Arbeit.
+
 ## Ansehen
 
 Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Feldfrüchte, 4 Fisch und 2 Töpfe, +5;
@@ -979,7 +1033,8 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
 - **Dorf:** Kinder rennen und spielen, Erwachsene setzen sich zwischendurch auf eine Matte vor die Häuser. Über manchen
   Häusern steigt Kochrauch auf. Neben den Häusern liegt Feuerholz, stehen Töpfe, trocknet eine Matte oder dampft ein Erdofen.
   Trampelpfade entstehen dort, wo die Leute laufen.
-- **Am Wasser:** Die Fischer paddeln zu zweit hinaus, werfen ihr Netz und hängen den Fang ans Gestell, oder sie waten mit dem
+- **Am Wasser:** Die Fischer paddeln zu zweit hinaus, werfen ihr Netz, holen ab und zu einen zappelnden Fisch ins Kanu und
+  hängen den Fang ans Gestell, oder sie waten mit dem
   Korb im seichten Wasser, nah am Strand. Wo ein Weg übers Wasser führt, über eine Lagune oder eine Bucht, paddeln die
   Leute im Einbaum; niemand läuft übers Riff. Beides ruht unter Rāhui.
 - **Im Meer:** Fischschwärme und Schildkröten ziehen durch die Lagunen. Auf offener, schon gesehener See taucht ab und zu

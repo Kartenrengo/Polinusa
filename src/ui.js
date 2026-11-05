@@ -246,7 +246,17 @@ function confirmPlace(){
 }
 
 /* ---------- sheets */
-function openSheet(kind, data){ if (kind !== 'ship') endSteer(); sliding = false; sheetKind = kind; sheetData = data; $('sheet').hidden = false; renderSheet(); measure(); }
+function openSheet(kind, data){
+  if (kind !== 'ship') endSteer(); sliding = false; sheetKind = kind; sheetData = data;
+  const el = $('sheet'); if (el.hidden && !reduced){ el.classList.add('opening'); clearTimeout(el._op); el._op = setTimeout(() => el.classList.remove('opening'), 700); }
+  el.hidden = false; renderSheet(); measure();
+}
+/* a tap on any button sends rings out, as a pebble dropped in the lagoon */
+document.addEventListener('pointerdown', e => {
+  const b = !reduced && e.target.closest && e.target.closest('button'); if (!b || b.disabled) return;
+  const app = $('app'), r = app.getBoundingClientRect();
+  for (const k of ['', ' b']){ const d = document.createElement('i'); d.className = 'tapring' + k; d.style.left = (e.clientX - r.left) + 'px'; d.style.top = (e.clientY - r.top) + 'px'; app.appendChild(d); setTimeout(() => d.remove(), 900); }
+}, {passive:true});
 function closeSheet(){ endSteer(); if (!sheetKind) return; if (sheetKind === 'event') eventNow = null;   // closing an event lets it pass
   sliding = false; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
 function endSteer(){ if (mode === 'steer'){ mode = 'idle'; selShip = null; requestDraw(); } }
@@ -293,7 +303,29 @@ function needRow(I, n, nd){
   const info = n.k === 'dach' ? 'Die Familie hat ein Haus' : N ? `${N.stock} im Lager · +${perMin(N.make)} −${perMin(N.use + N.work)} pro Minute` : '';
   return `<li class="${n.state === 'ok' ? '' : 'need'}">${icon(needIcon(n.k))}<span class="nm">${needName(n.k)}<small>${way ? way.text : info}</small></span>${wayBtn(way)}<span class="state ${n.state}">${n.state === 'ok' ? '✓' : n.state === 'low' ? 'knapp' : 'fehlt'}</span></li>`;
 }
-/* ---------- a house, as in Anno: who lives here, what they need, and what it takes to rise */
+/* The needs of a family as knots on a cord of sennit, after the knotted cords on which the Marquesans kept their
+   genealogies (taʻo mata): a knot tied tight is a need met, a loose loop one that runs short, a frayed gap one that is
+   missing. After a shell bead come, faint, the knots the next step will ask for. */
+function knotCord(I, f, t, nd){
+  const cur = famNeeds(I, f, nd.list), nxt = t < 3 ? TIERS[t + 1].needs.filter(k => !TIERS[t].needs.includes(k)) : [];
+  const ks = [...cur.map(n => ({k:n.k, st:n.state})), ...nxt.map(k => ({k, st:'next'}))], step = 30, gap = cur.length && nxt.length ? 14 : 0;
+  const W = 22 + (ks.length - 1) * step + gap + 22, H = 46, y0 = 13, yAt = x => y0 + 2.4 * (1 - (2 * x / W - 1) ** 2);
+  const cord = `M3 ${y0}Q${W / 2} ${y0 + 4.8} ${W - 3} ${y0}`;
+  let g = `<path d="${cord}" fill="none" stroke="#2B1D14" stroke-width="4.4" stroke-linecap="round"/><path d="${cord}" fill="none" stroke="#B08048" stroke-width="2.6" stroke-linecap="round"/><path d="${cord}" fill="none" stroke="#6E4A28" stroke-width="2.6" stroke-dasharray="1.1 2.3"/>`;
+  ks.forEach((q, i) => {
+    const x = 22 + i * step + (i >= cur.length ? gap : 0), y = yAt(x), del = i * .12;
+    if (q.st === 'ok') g += `<g class="kn tight" style="animation-delay:${del}s"><ellipse cx="${x}" cy="${y}" rx="5.6" ry="6.6" fill="#7A4E2E" stroke="#2B1D14" stroke-width="1.1"/><path d="M${x - 1.8} ${y - 3.6}q2.4 3.6.2 7.2" fill="none" stroke="#C99A62" stroke-width="1"/><path d="M${x - 5} ${y + 1.6}q5 2.4 10 0" fill="none" stroke="#2B1D14" stroke-width=".7"/></g>`;
+    else if (q.st === 'low') g += `<g class="kn loose" style="animation-delay:${del}s"><ellipse cx="${x}" cy="${y - 1}" rx="6.4" ry="7.6" fill="none" stroke="#2B1D14" stroke-width="3.6"/><ellipse cx="${x}" cy="${y - 1}" rx="6.4" ry="7.6" fill="none" stroke="#E0B060" stroke-width="2"/></g>`;
+    else if (q.st === 'out') g += `<g class="kn frayed"><rect x="${x - 7}" y="${y - 4}" width="14" height="8" fill="#EEE3C8"/><path d="M${x - 7} ${y}l3.4-2.6M${x - 7} ${y}l3.8 0M${x - 7} ${y}l3.4 2.6M${x + 7} ${y}l-3.4-2.6M${x + 7} ${y}l-3.8 0M${x + 7} ${y}l-3.4 2.6" stroke="#A84A2C" stroke-width="1.1" stroke-linecap="round"/></g>`;
+    else g += `<ellipse cx="${x}" cy="${y}" rx="5" ry="6" fill="none" stroke="#6E4A28" stroke-width="1.1" stroke-dasharray="1.2 1.8" opacity=".75"/>`;
+    g += `<g transform="translate(${x - 7.5} ${y0 + 13}) scale(.75)" opacity="${q.st === 'next' ? .45 : 1}"><use href="#ic-${needIcon(q.k)}"/></g>`;
+  });
+  if (gap){ const x = 22 + (cur.length - 1) * step + (step + gap) / 2, y = yAt(x); g += `<ellipse cx="${x}" cy="${y}" rx="2.8" ry="4" fill="#F7F1E3" stroke="#2B1D14" stroke-width=".8"/><path d="M${x} ${y - 2.6}V${y + 2.6}" stroke="#2B1D14" stroke-width=".6"/>`; }
+  const ok = cur.filter(n => n.state === 'ok').length;
+  return `<div class="cord"><svg viewBox="0 0 ${W} ${H}" width="${Math.round(W * 1.3)}" height="${Math.round(H * 1.3)}" role="img" aria-label="${ok} von ${cur.length} Knoten fest">${g}</svg><span class="sub">${ok === cur.length ? 'Alle Knoten fest.' : `${ok} von ${cur.length} Knoten fest.`}${nxt.length ? ' Hell: was die nächste Stufe will.' : ''}</span></div>`;
+}
+const knotIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knot"/></svg>';
+/* ---------- a house: who lives here, the cord of its needs, and what it takes to rise */
 const seatIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg>';
 function houseMarkup(I, b){
   const f = famOfHome(I, b), t = tierOf(b), T = TIERS[t], nd = needsOf(I), top = b.kind === 'fale' ? 4 : 3;
@@ -304,14 +336,14 @@ function houseMarkup(I, b){
   h += `<div class="seats">${Array.from({length:max}, (_, i) => `<span class="seat ${i < m.length ? 'on' : i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length} von ${cap}</b></div>`;
   h += `<p class="sub">${cap < max ? `${max - cap} ${max - cap === 1 ? 'Platz' : 'Plätze'} mehr, wenn alles da ist. ` : ''}${t === 1 ? 'In einer Hütte kommen keine Kinder; neue Leute kommen in leere Hütten.' : 'Hier kommen Kinder, wenn Platz ist.'}</p>`;
   h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ` · ${personWork(I, p)}`}${p.wk ? ', schwach' : ''}</small></button>`).join('')}</div>`;
-  h += `<p class="sec">Bedürfnisse</p><ul class="list needs">${famNeeds(I, f, nd.list).map(n => needRow(I, n, nd)).join('')}</ul>`;
+  h += `<p class="sec">Die Schnur der Familie</p>${knotCord(I, f, t, nd)}<ul class="list needs">${famNeeds(I, f, nd.list).map(n => needRow(I, n, nd)).join('')}</ul>`;
   const u = upgradeSteps(I, b, nd.list);
   if (u){
     const add = TIERS[u.t].needs.filter(k => !T.needs.includes(k));
     h += `<p class="sec">Aufsteigen: ${u.T.n}</p><p class="sub">Platz für ${u.T.cap}${u.t === 2 ? ', und es kommen Kinder' : ''}. Will dazu ${andList(add.map(k => GN[k]))}.</p>`;
     h += `<ul class="list needs steps">${u.steps.map(q => { const w = !q.ok ? (q.k === 'needs' ? (q.miss[0] ? needWay(I, q.miss[0]) : null) : needWay(I, q.k)) : null;
       return `<li class="${q.ok ? 'okk' : 'need'}"><span class="state ${q.ok ? 'ok' : 'out'}">${q.ok ? '✓' : '–'}</span><span class="nm">${q.t}${q.need ? ` <small>${q.have} von ${q.need} im Lager</small>` : ''}${w ? `<small>${w.text}</small>` : ''}</span>${wayBtn(w)}</li>`; }).join('')}</ul>`;
-    h += `<div class="rowx"><span class="sub">${u.ready ? 'Alles bereit.' : 'Noch nicht bereit.'}</span><button class="btn primary big" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>Aufsteigen</button></div>`;
+    h += `<div class="rowx"><span class="sub">${u.ready ? 'Alles bereit.' : 'Noch nicht bereit.'}</span><button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Aufsteigen</button></div>`;
   } else if (t === 3) h += `<p class="sub">Die höchste Stufe eines Hauses. Die Häuptlingsfamilie wohnt im Häuptlingshaus.</p>`;
   { const ln = m[0] && m[0].ln; h += `<p class="sub">Linie: ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
   return h;
@@ -322,7 +354,7 @@ function villageGoal(I, nd){
   const ready = readyHomes(I, nd.list);
   if (nd.roofless) return {cls:'out', t:`${nd.roofless} ohne Dach`, d:'Baue Hütten aus Holz und Palmwedeln.', btn:wayBtn({build:'haus'})};
   const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:w.text, btn:wayBtn(w)}; }
-  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen`, d:'Alle Bedürfnisse erfüllt, das Material liegt bereit.', btn:'<button class="btn primary small" type="button" data-act="upall">Alle aufsteigen</button>'};
+  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen`, d:'Alle Bedürfnisse erfüllt, das Material liegt bereit.', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle aufsteigen</button>`};
   // the next step up: what the first house that cannot rise yet still lacks
   const next = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => upgradeSteps(I, b, nd.list)).find(Boolean);
   if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
@@ -410,7 +442,7 @@ function vitalLine(I){
   if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
   if (nd.roofless) return `<span class="warn">${ic('haus')}${nd.roofless} ohne Dach</span>`;
   if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
-  { const r = I.autoUp ? 0 : readyHomes(I, nd.list).length; if (r) return `<span class="up">↑ ${r} aufsteigen</span>`; }
+  { const r = I.autoUp ? 0 : readyHomes(I, nd.list).length; if (r) return `<span class="up">${knotIc}${r} aufsteigen</span>`; }
   if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
   if (immigFor(I)) return `<span>${ic('einbaum')}Kanu kommt</span>`;
@@ -648,7 +680,7 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet.` : '');
-    h += `<ul class="help"><li>Unten steht der nächste Schritt. Antippen zeigt den Weg.</li><li><b>Tippe auf ein Haus:</b> wer dort wohnt, was die Familie braucht und was zum Aufsteigen fehlt. Ein Pfeil über einem Haus heißt: Es kann aufsteigen.</li><li>Tippe oben auf die Bewohnerzahl: Bewohner, Arbeit und Insel auf einen Blick.</li><li>Bauen: Gebäude wählen, auf Land tippen, Bauen. Jedes Gebäude braucht Holz und Palmwedel.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Leere Hütten ziehen Familien von weit her an. Kinder kommen in Familienhäusern.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li></ul>`;
+    h += `<ul class="help"><li>Unten steht der nächste Schritt. Antippen zeigt den Weg.</li><li><b>Tippe auf ein Haus:</b> wer dort wohnt, die Schnur der Familie (ein Knoten je Bedürfnis) und was zum Aufsteigen fehlt. Ein Knoten mit Blüte über einem Haus heißt: Es kann aufsteigen.</li><li>Tippe oben auf die Bewohnerzahl: Bewohner, Arbeit und Insel auf einen Blick.</li><li>Bauen: Gebäude wählen, auf Land tippen, Bauen. Jedes Gebäude braucht Holz und Palmwedel.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Leere Hütten ziehen Familien von weit her an. Kinder kommen in Familienhäusern.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
