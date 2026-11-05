@@ -77,7 +77,7 @@ function seedStart(I, r, at){
   // the two trees stand together, so a fermenting pit fits between them later
   const a = r() * TAU, grove = {x:an.x + Math.cos(a) * 70, y:an.y + Math.sin(a) * 56};
   for (let i = 0; i < 2; i++){ const p = findSpot(I, 'baum', {x:grove.x + i * 18, y:grove.y}); if (p) addB(I, 'baum', p, variant('baum', r), -60); }
-  palmsAlong(I, r, 22);
+  palmsAlong(I, r, 32);
 }
 function palmsAlong(I, r, n){
   const L = I.lands[0].poly, c = I.center;

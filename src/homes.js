@@ -150,19 +150,24 @@ const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.
 const autoWork = I => !I.handWork;
 function autoAssign(I, places, byJob){
   const fams = famsOf(I), free = fams.filter(f => !f.job && famAdults(I, f).length).sort((a, b) => famAdults(I, b).length - famAdults(I, a).length);
-  const low = b => (I.stock[prodOfB(b)] || 0) < 5 ? 0 : 1;
-  const open = places.filter(b => !byJob.has(b.id)).sort((a, b) => (PLACE_RANK[catOf(a)] ?? 3) - (PLACE_RANK[catOf(b)] ?? 3) || low(a) - low(b) || a.born - b.born);
+  // what is short: goods of the workplaces under 5 in store, and what those workplaces need to work (fibre for cord ...)
+  const cap = storeCap(I), outs = b => [prodOfB(b), ...Object.keys(byOf(b) || {})].filter(Boolean);
+  const short = new Set(places.map(prodOfB).filter(k => k && (I.stock[k] || 0) < 5));
+  for (const b of places) if (short.has(prodOfB(b)) && KINDS[b.kind].use) for (const k of Object.keys(KINDS[b.kind].use)) for (const q of GROUPS[k] || [k]) if ((I.stock[q] || 0) < 5) short.add(q);
+  const need = b => b.boat > 0 || outs(b).some(k => short.has(k)) ? 0 : (I.stock[prodOfB(b)] || 0) >= cap * .75 ? 2 : 1;
+  const rank = b => PLACE_RANK[catOf(b)] ?? 3;
+  const open = places.filter(b => !byJob.has(b.id)).sort((a, b) => need(a) - need(b) || rank(a) - rank(b) || a.born - b.born);
   // building sites need hands: one family stays free while something is being built
   const sites = I.buildings.some(b => b.bt && !KINDS[b.kind].plant) || !!I.yard;
   for (const b of open){
     if (!free.length) break;
-    if (sites && free.length === 1 && (PLACE_RANK[catOf(b)] ?? 3) > 0) break;
+    if (sites && free.length === 1 && need(b) > 0 && rank(b) > 0) break;
     const f = free.shift(); f.job = b.id; byJob.set(b.id, f);
   }
-  // when water or food has no family while crafts or canoes have one, a family moves over
+  // a place whose good is short and has no family takes one from a place whose store is full, or from crafts and canoes
   for (const b of open){
-    if (byJob.has(b.id) || catOf(b) !== 'essen' || low(b)) continue;
-    const take = places.filter(q => byJob.has(q.id) && (PLACE_RANK[catOf(q)] ?? 3) >= 3).sort((a, q) => (PLACE_RANK[catOf(q)] ?? 3) - (PLACE_RANK[catOf(a)] ?? 3))[0];
+    if (byJob.has(b.id) || need(b) > 0) continue;
+    const take = places.filter(q => byJob.has(q.id) && need(q) > 0 && (need(q) === 2 || rank(q) >= 3)).sort((a, q) => need(q) - need(a) || rank(q) - rank(a))[0];
     if (!take) break; const f = byJob.get(take.id); byJob.delete(take.id); f.job = b.id; byJob.set(b.id, f);
   }
 }
