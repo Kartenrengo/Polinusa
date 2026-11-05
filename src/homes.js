@@ -12,7 +12,7 @@ const TIERS = {
   3:{n:'Häuptlingsfamilie', cap:8, needs:['dach', 'essen', 'wasser', 'toepfe', 'matten', 'oel', 'speisen', 'tapa', 'schweine', 'kava', 'schmuck', 'feinmatten', 'bemtapa', 'duftoel']}
 };
 const TIER2_GOODS = ['toepfe', 'matten', 'oel', 'speisen'];
-const START_POP = 17;   // five families: each a woman and a man, children, two elders
+const START_POP = 10;   // three families: each a woman and a man, children, an elder
 let nextFam = 1;
 const famsOf = I => I.fams || (I.fams = []);
 const famOf = (I, id) => famsOf(I).find(f => f.id === id) || null;
@@ -133,7 +133,7 @@ function tierTick(I, list, force = false){
 function rooflessTick(I){
   const n = roofless(I);
   I.rl = n && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)) ? (I.rl || 0) + 1 : 0;
-  if (I.rl >= 90 && I.pop > 3){ I.rl = 0; I._leaveRoofless = true; I.pop--; syncPeople(I); if (!awayQuiet && I.id === active) note(`Ohne Dach ist jemand von ${I.name} fortgezogen. Baut Häuser.`); }
+  if (I.rl >= 90 && I.pop > 3 && tick >= (I.grace || 0)){ I.rl = 0; I._leaveRoofless = true; I.pop--; syncPeople(I); if (!awayQuiet && I.id === active) note(`Ohne Dach ist jemand von ${I.name} fortgezogen. Baut Häuser.`); }
 }
 
 /* ---------- work by family. A workplace takes one family; its grown-ups work there, as many as the place has room for,

@@ -89,14 +89,34 @@ Inseln, Panua und Talise, und das Atoll Motu.
 
 ## Anfang
 
-Wie bei Age of Empires steht am Anfang nur das Versammlungshaus. Motu ist zu sehen, aber unbewohnt.
-Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
-Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
+Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, erst sichern, dann wachsen.
 
-1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. Wasser: Quelle am Bach oder Regenfang, 5. drei Familien
-an Arbeitsplätzen, 6. Dach und Schnur: Palmenkletterer, Dachflechterin und Seilerei, 7. Fischgestell, 8. 25 Bewohner,
-9. Baumpflanzer, 10. Töpferei am Ton, 11. Erdofen, 12. Riffsammler, 13. Kanusteg und Pfahlhaus, 14. Beilwerkstatt am Felsen,
-15. Kanuhaus, 16. Auslegerkanu, 17. Siedler nach Motu, 18. Flechthütte und Seilerei auf Motu, 19. Handelskette,
+- **Die Ankunft:** drei Familien, 10 Menschen. Neben dem Versammlungshaus sind die ersten zwei Häuser schon abgesteckt,
+  die Familien bauen sie gleich. Im Lager liegt Vorrat für etwa fünf Minuten. **In den ersten fünf Minuten zieht niemand
+  fort**, auch wenn Wasser oder Dach fehlen.
+- **Wenig am Anfang:** Die Bauleiste zeigt nur, was ein Weiler braucht: Haus, Holzfäller, Taro, Quelle, Regenfang,
+  Fischgestell, Palme und Brotfrucht. Oben stehen nur Nahrung, Wasser, Holz, Dachdeckung und Schnur.
+- **Stufen wie bei Anno:** Neue Gebäude kommen mit den Menschen, eine Karte sagt, was neu ist, und die neuen Knöpfe tragen
+  einen Punkt.
+
+| Ab | Stufe | Neu |
+| --- | --- | --- |
+| Anfang | Weiler | Haus, Holz, Wasser, Fisch, Taro, Palme, Brotfrucht |
+| 15 Menschen | Dach und Schnur | Palmenkletterer, Dachflechterin, Seilerei, Speicher, Baumpflanzer, Riff, Kurkuma, Hühner |
+| 25 | Töpfe und Erdofen | Töpferei, Erdofen, Kalkbrenner, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Harz, Blumen |
+| 30 | Ein Dorf | Flechthütte, Ölhütte, Kanuhaus und Kanus, Navigatoren, Taucher |
+| 40 | Zeit der Feste | Tapa, Schweine, Kava, Trommel, Tanzplatz, Ahnenhaus, feine Dinge, Klingen, Schmuck |
+| 50 | Häuptling | Häuptlingshaus |
+
+- **Spannungskurve:** Das erste Jahr bleibt ruhig: keine Ereignisse, keine Stürme. Dann wird es enger, erst bei Dach und
+  Schnur, dann beim Handel mit Motu, ab dem zweiten Jahr kommen Sturmzeit, Dürre und Ereignisse.
+- Ein Haus zeigt „2 von 3 erfüllt“ und was die nächste Stufe braucht.
+
+Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen Stelle.
+
+1. Holzfäller, 2. zwei Häuser, 3. Wasser, 4. Taro, 5. Fischgestell, 6. drei Familien an Arbeitsplätzen, 7. 15 Bewohner,
+8. Dach und Schnur, 9. Baumpflanzer, 10. Riffsammler, 11. 25 Bewohner, 12. Töpferei, 13. Erdofen, 14. Steg und Pfahlhaus,
+15. Beilwerkstatt, 15a. 30 Bewohner, 15b. Kanuhaus, 16. Auslegerkanu, 17. Siedler nach Motu, 18. Flechthütte und Seilerei auf Motu, 19. Handelskette,
 20. ein Dorf: 30 Bewohner und eine Familie der Tufunga, 21. 6 Proviant, 22. Doppelkanu, 23. neues Land im Nebel, 24. ein Fest,
 25. das Fest der Plejaden, 26. ein Häuptlingsdorf, 27. Tauchen, 28. das Lapita-Netz, 29. die Weite See, 30. eine
 Schatzinsel, 31. ein Dorf in der Ferne, 32. das Fest der Schätze, 33. andere Menschen: ein Volk einer anderen Kultur.

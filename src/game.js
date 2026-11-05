@@ -973,8 +973,9 @@ function econ(){
     if (nd.atMax && !I.fullSaid && I.id === active && !awayQuiet){ I.fullSaid = true; toast(`${I.name} ist voll: Mehr als ${islandMax(I)} Menschen trägt die Insel nicht. Schickt Familien im Kanu aus und gründet ein neues Dorf.`, 6000); } else if (!nd.atMax) I.fullSaid = false;
     // without food or water people leave, slowly, but a few always stay
     I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : 0;
-    if (I.hunger >= 15 && I.pop > 3){ I.pop--; I.hunger = 0; syncPeople(I); }
+    if (I.hunger >= 15 && I.pop > 3 && tick >= (I.grace || 0)){ I.pop--; I.hunger = 0; syncPeople(I); }
   }
+  stageTick();
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));

@@ -46,7 +46,9 @@ function updateHUD(){
   $('popDot').className = 'dot ' + st;
   $('popBtn').setAttribute('aria-label', `${I.pop} Bewohner, Platz für ${nd.cap}. ${growText(I, nd)} Tippen zeigt den Bedarf.`);
   // the goods row shows what matters here: all food as one, wood, then whatever is stored, made or needed, at most seven
-  const shown = ['essen', 'holz', ...GOODS.filter(k => !FOODS.includes(k) && k !== 'holz' && ((I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)))].slice(0, 7);
+  // the goods row: food, water, wood, thatch and cord first, then what matters here; few while the village is small
+  const first = ['essen', 'wasser', 'holz', 'dach', 'schnur'], more = GOODS.filter(k => !FOODS.includes(k) && !first.includes(k) && ((I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)));
+  const shown = [...first, ...more].slice(0, I.pop < 15 ? 5 : 7);
   const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span></span>`).join(''); }
   for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v);
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
@@ -443,7 +445,8 @@ function famMarkup(I, f, withHead = true){
   const nd = needsOf(I), m = membersOf(I, f), t = famTier(I, f), fn = famNeeds(I, f, nd.list), job = f.job && findB(f.job);
   const name = k => k === 'dach' ? 'Dach' : GN[k], icn = k => k === 'dach' ? 'haus' : k;
   let h = withHead ? head(famName(f), `${f.home ? TIERS[t].n : 'Ohne Dach, unter Matten beim Versammlungshaus'} · ${I.name}`) : `<p class="sec">${famName(f)} · ${TIERS[t].n}</p>`;
-  h += `<div class="chips">${fn.map(n => `<span class="need-chip ${n.state}">${icon(icn(n.k))}${name(n.k)}</span>`).join('')}</div>`;
+  const met = fn.filter(n => n.state !== 'out').length;
+  h += `<div class="stat"><b>${met} von ${fn.length} erfüllt</b><span class="mbar" style="flex:1"><i style="width:${met / fn.length * 100}%"></i></span></div><div class="chips">${fn.map(n => `<span class="need-chip ${n.state}">${icon(icn(n.k))}${name(n.k)}</span>`).join('')}</div>`;
   if (t === 1 && f.home) h += `<p class="sub">Nächste Stufe, Familie der Tufunga: dazu ${andList(TIER2_GOODS.map(k => GN[k]))} im Lager. Dann baut sie aus (${costText(TIERS[2].cost)}) und hat Platz für ${TIERS[2].cap}.</p>`;
   if (!f.home) h += `<p class="sub">Sobald ein Haus frei ist, zieht sie ein.</p>`;
   h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ''}</small></button>`).join('')}</div>`;

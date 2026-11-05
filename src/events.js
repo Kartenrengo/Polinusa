@@ -125,7 +125,7 @@ function stormHits(I){
   return `Der Sturm hat Dächer zerzaust.${parts.length ? ` Zerstört: ${parts.join(', ')}. Das muss neu gebaut werden.` : ''} ${n} ${n === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden, die Felder sind ausgewaschen.${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
 }
 function eventTick(){
-  if (eventNow || tick < nextEvent || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;
+  if (eventNow || tick < nextEvent || tick < YEAR || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;   // the first year is calm
   if (sheetKind || placing){ nextEvent = tick + 5; return; }
   const ok = EVENTS.filter(E => E.id !== lastEvent).map(E => [E, E.when()]).filter(([, o]) => o);
   nextEvent = tick + 150 + Math.floor(Math.random() * 90);

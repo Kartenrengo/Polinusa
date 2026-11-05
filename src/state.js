@@ -30,7 +30,7 @@ function newGame(s = newSeed()){
   fogHoles = [home0.hole];
   const h = home0.hole; for (let cy = Math.floor((h.cy - h.ry) / CELL); cy <= Math.floor((h.cy + h.ry) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx) / CELL); cx <= Math.floor((h.cx + h.rx) / CELL); cx++) ensureCell(cx, cy, true);
   // the voyaging canoe waits at the western edge of the clearing, where the clan came from
-  const sh = makeShip('dc', isl('heimat'), {name:'Ahnenkanu', founder:true, people:START_POP, cargo:{holz:10, nahrung:30, wasser:20, dach:6, schnur:5}, life:LIFE_BASE.slice(), port:null, last:null, state:'sea'});
+  const sh = makeShip('dc', isl('heimat'), {name:'Ahnenkanu', founder:true, people:START_POP, cargo:{holz:10, nahrung:30, wasser:24, dach:6, schnur:5}, life:LIFE_BASE.slice(), port:null, last:null, state:'sea'});
   sh.x = h.cx - h.rx * .78; sh.y = h.cy + h.ry * .1; sh.hx = 1; sh.hy = 0;
   landing = {ship:sh.id};
 }
@@ -44,7 +44,7 @@ function foundHome(I){
   const Hm = isl('heimat'), r = rng(seed ^ 0x5eed ^ 0x1a4d), sh = ships.find(s => s.founder);
   if (sh) ships.splice(ships.indexOf(sh), 1);
   selShip = null; if (mode === 'steer') mode = 'idle';
-  Object.assign(Hm, {discovered:true, settled:true, pop:START_POP, people:null, fams:[], stock:{...emptyStock(), holz:10, nahrung:30, wasser:20, dach:6, schnur:5}, life:LIFE_BASE.slice(), wild:1, gone:0});
+  Object.assign(Hm, {discovered:true, settled:true, pop:START_POP, people:null, fams:[], stock:{...emptyStock(), holz:10, nahrung:30, wasser:24, dach:6, schnur:5}, life:LIFE_BASE.slice(), wild:1, gone:0});
   landing.found = 'heimat'; active = 'heimat';   // time still stands until the meeting house has its place (foundAt)
   return true;
 }
@@ -52,6 +52,9 @@ function foundHome(I){
 function foundAt(p){
   const Hm = isl('heimat'); if (!landing || !landing.found || !Hm) return false;
   seedStart(Hm, rng(seed ^ 0x5eed ^ 0x1a4d), p);
+  // the first two houses are already marked out, and for the first five minutes nobody leaves: time to settle in
+  for (let i = 0; i < 2; i++){ const q = findSpot(Hm, 'haus', {x:Hm.anchor.x + (i ? 34 : -34), y:Hm.anchor.y + 26}); if (q){ const b = addB(Hm, 'haus', q, variant('haus', rng(seed + i)), 0); b.bt = KINDS.haus.bt; b.got = 0; } }
+  Hm.grace = tick + 150;
   landing = null;
   return true;
 }
@@ -138,7 +141,7 @@ function serialize(){
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
-      fy:I.festYear, dr:I.drought || 0, rh:I.rahui || false, rx:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
+      fy:I.festYear, dr:I.drought || 0, gr:I.grace || undefined, rh:I.rahui || false, rx:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       lf:I.life || undefined, wl:I.wild != null ? Math.round(I.wild * 1000) / 1000 : undefined, wg:I.gone || undefined, tp:I.tapu || undefined, ta:I.tapuAway || undefined, mo:I.motif || undefined, mk:I.mot && Object.keys(I.mot).length ? I.mot : undefined,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || '', il:I.inlaws && I.inlaws.length ? I.inlaws.map(x => [x.n, x.from, x.at]) : undefined} : undefined,
       ppl:I.people ? I.people.map(packP) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, an:I.ahnenN || undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
@@ -156,7 +159,7 @@ function restore(raw){
     quest = questFromSave(s);
     stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
-      I.drought = d.dr || 0; I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rx; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
+      I.drought = d.dr || 0; I.grace = d.gr || 0; I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rx; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
       I.life = d.lf || null; I.wild = d.wl; I.gone = d.wg; I.tapu = !!d.tp; I.tapuAway = !!d.ta; I.motif = d.mo || null; I.mot = d.mk || {};
       if (I.clan && d.cl){ I.debt = d.cl.debt || 0; I.returnAt = d.cl.ra || 0; I.lastFrom = d.cl.lf || ''; I.inlaws = (d.cl.il || []).map(([n, from, at]) => ({n, from, at})); }
       I.buildings = (d.b || []).filter(x => KINDS[x[1]]).map(([id, kind, x, y, born, v, bt, boat, got, soil, fal, t]) => ({id, kind, x, y, born, v:v || {}, ...(t ? {t} : {}), ...(bt ? {bt} : {}), ...(boat ? {boat} : {}), ...(bt && got != null ? {got} : {}), ...(soil != null ? {soil} : {}), ...(fal ? {fallow:true} : {})}));
