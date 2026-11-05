@@ -95,7 +95,7 @@ function immigLand(I, F, custom = false){
   syncPeople(I); I.staff = null; I.immigAt = tick + IMMIG_GAP; syncWalkers(); invalidate();
   const f = famsOf(I).find(q => F.people.some(p => p.h === q.id)), home = f && f.home && findB(f.home);
   if (!awayQuiet){ for (let i = 0; i < 4; i++) heartAt(I, home || undefined);
-    if (I.id === active) toast(`${custom ? 'Nach dem Brauch der Gastfreundschaft bleibt' : 'Willkommen:'} Familie ${F.n} ${F.from}${custom ? '' : ' zieht ein'}. Sie bringen ${giftText(F.gift)}${fresh.length ? ` und ${andList(fresh.map(id => LIFE[id].s))}` : ''}. Eine neue Linie für ${I.name}.`, 5600);
+    if (I.id === active) toast(`Familie ${F.n} ${custom ? 'bleibt' : 'zieht ein'}, mit ${giftText(F.gift)}${fresh.length ? ` und ${andList(fresh.map(id => LIFE[id].s))}` : ''}. Neue Linie.`, 3600);
     save(); checkQuest(); }
 }
 function immigLeave(s){

@@ -297,55 +297,56 @@ function needWay(I, k){
 }
 const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">Bauen</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
 const needName = k => k === 'dach' ? 'Dach' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
-/* one need of a family: met, short or missing, with where it comes from */
-function needRow(I, n, nd){
-  const N = nd.list.find(q => q.k === n.k), way = n.state !== 'ok' ? needWay(I, n.k) : null;
-  const info = n.k === 'dach' ? 'Die Familie hat ein Haus' : N ? `${N.stock} im Lager · +${perMin(N.make)} −${perMin(N.use + N.work)} pro Minute` : '';
-  return `<li class="${n.state === 'ok' ? '' : 'need'}">${icon(needIcon(n.k))}<span class="nm">${needName(n.k)}<small>${way ? way.text : info}</small></span>${wayBtn(way)}<span class="state ${n.state}">${n.state === 'ok' ? '✓' : n.state === 'low' ? 'knapp' : 'fehlt'}</span></li>`;
+/* Needs as knots on a cord of sennit, after the knotted cords on which the Marquesans kept their genealogies (taʻo mata):
+   a knot tied tight is a need met, a loose loop one that runs short, a frayed gap one that is missing, a faint ring one
+   that comes with the next step. Each knot can be tapped: it shows where the thing comes from. */
+const KNOT_ST = {ok:'erfüllt', low:'knapp', out:'fehlt', next:'nächste Stufe', none:'noch nicht'};
+function cordOf(knots, count){
+  let h = '<div class="cord">';
+  knots.forEach((q, i) => {
+    if (q.bead){ h += '<i class="bead" aria-hidden="true"></i>'; return; }
+    const act = q.k === 'dach' ? 'data-act="hint" data-k="haus"' : `data-act="${q.k === 'essen' ? 'store' : 'ware'}" data-k="${q.k}"`;
+    h += `<button class="knot ${q.st}" type="button" ${act} aria-label="${needName(q.k)}: ${KNOT_ST[q.st]}" style="--d:${(i * .09).toFixed(2)}s"><svg class="kg" viewBox="0 0 24 20" aria-hidden="true"><use href="#kn-${q.st === 'none' ? 'next' : q.st}"/></svg>${icon(needIcon(q.k))}</button>`;
+  });
+  return h + (count ? `<b class="cnt">${count}</b>` : '') + '</div>';
 }
-/* The needs of a family as knots on a cord of sennit, after the knotted cords on which the Marquesans kept their
-   genealogies (taʻo mata): a knot tied tight is a need met, a loose loop one that runs short, a frayed gap one that is
-   missing. After a shell bead come, faint, the knots the next step will ask for. */
 function knotCord(I, f, t, nd){
   const cur = famNeeds(I, f, nd.list), nxt = t < 3 ? TIERS[t + 1].needs.filter(k => !TIERS[t].needs.includes(k)) : [];
-  const ks = [...cur.map(n => ({k:n.k, st:n.state})), ...nxt.map(k => ({k, st:'next'}))], step = 30, gap = cur.length && nxt.length ? 14 : 0;
-  const W = 22 + (ks.length - 1) * step + gap + 22, H = 46, y0 = 13, yAt = x => y0 + 2.4 * (1 - (2 * x / W - 1) ** 2);
-  const cord = `M3 ${y0}Q${W / 2} ${y0 + 4.8} ${W - 3} ${y0}`;
-  let g = `<path d="${cord}" fill="none" stroke="#2B1D14" stroke-width="4.4" stroke-linecap="round"/><path d="${cord}" fill="none" stroke="#B08048" stroke-width="2.6" stroke-linecap="round"/><path d="${cord}" fill="none" stroke="#6E4A28" stroke-width="2.6" stroke-dasharray="1.1 2.3"/>`;
-  ks.forEach((q, i) => {
-    const x = 22 + i * step + (i >= cur.length ? gap : 0), y = yAt(x), del = i * .12;
-    if (q.st === 'ok') g += `<g class="kn tight" style="animation-delay:${del}s"><ellipse cx="${x}" cy="${y}" rx="5.6" ry="6.6" fill="#7A4E2E" stroke="#2B1D14" stroke-width="1.1"/><path d="M${x - 1.8} ${y - 3.6}q2.4 3.6.2 7.2" fill="none" stroke="#C99A62" stroke-width="1"/><path d="M${x - 5} ${y + 1.6}q5 2.4 10 0" fill="none" stroke="#2B1D14" stroke-width=".7"/></g>`;
-    else if (q.st === 'low') g += `<g class="kn loose" style="animation-delay:${del}s"><ellipse cx="${x}" cy="${y - 1}" rx="6.4" ry="7.6" fill="none" stroke="#2B1D14" stroke-width="3.6"/><ellipse cx="${x}" cy="${y - 1}" rx="6.4" ry="7.6" fill="none" stroke="#E0B060" stroke-width="2"/></g>`;
-    else if (q.st === 'out') g += `<g class="kn frayed"><rect x="${x - 7}" y="${y - 4}" width="14" height="8" fill="#EEE3C8"/><path d="M${x - 7} ${y}l3.4-2.6M${x - 7} ${y}l3.8 0M${x - 7} ${y}l3.4 2.6M${x + 7} ${y}l-3.4-2.6M${x + 7} ${y}l-3.8 0M${x + 7} ${y}l-3.4 2.6" stroke="#A84A2C" stroke-width="1.1" stroke-linecap="round"/></g>`;
-    else g += `<ellipse cx="${x}" cy="${y}" rx="5" ry="6" fill="none" stroke="#6E4A28" stroke-width="1.1" stroke-dasharray="1.2 1.8" opacity=".75"/>`;
-    g += `<g transform="translate(${x - 7.5} ${y0 + 13}) scale(.75)" opacity="${q.st === 'next' ? .45 : 1}"><use href="#ic-${needIcon(q.k)}"/></g>`;
-  });
-  if (gap){ const x = 22 + (cur.length - 1) * step + (step + gap) / 2, y = yAt(x); g += `<ellipse cx="${x}" cy="${y}" rx="2.8" ry="4" fill="#F7F1E3" stroke="#2B1D14" stroke-width=".8"/><path d="M${x} ${y - 2.6}V${y + 2.6}" stroke="#2B1D14" stroke-width=".6"/>`; }
-  const ok = cur.filter(n => n.state === 'ok').length;
-  return `<div class="cord"><svg viewBox="0 0 ${W} ${H}" width="${Math.round(W * 1.3)}" height="${Math.round(H * 1.3)}" role="img" aria-label="${ok} von ${cur.length} Knoten fest">${g}</svg><span class="sub">${ok === cur.length ? 'Alle Knoten fest.' : `${ok} von ${cur.length} Knoten fest.`}${nxt.length ? ' Hell: was die nächste Stufe will.' : ''}</span></div>`;
+  const ok = cur.filter(n => n.state !== 'out').length;   // a loose knot still holds
+  return cordOf([...cur.map(n => ({k:n.k, st:n.state})), ...(nxt.length ? [{bead:true}] : []), ...nxt.map(k => ({k, st:'next'}))], `${ok}/${cur.length}`);
 }
+/* where something comes from, as one button with the building on it: tap it and the build bar shows that building */
+const bIcon = k => `<svg class="bi" viewBox="${KINDS[k].vb || '-17 -29 34 33'}" aria-hidden="true">${iconMarkup(k)}</svg>`;
+const wayChip = w => w && w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${bIcon(w.build)}${KINDS[w.build].n}</button>` : w && w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
 const knotIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knot"/></svg>';
 /* ---------- a house: who lives here, the cord of its needs, and what it takes to rise */
 const seatIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg>';
 function houseMarkup(I, b){
   const f = famOfHome(I, b), t = tierOf(b), T = TIERS[t], nd = needsOf(I), top = b.kind === 'fale' ? 4 : 3;
-  let h = head(`${T.n}${f ? ` · ${famName(f)}` : ''}`, `Stufe ${t} von ${top}${t > 1 ? ` · ${T.fam}` : ''}`);
-  if (!f){ const imm = immigFor(I); return h + `<p>Leer.</p><p class="sub">${imm ? `Ein Kanu ${imm.immig.from} bringt eine Familie.` : 'Bald kommt ein Kanu von weit her mit einer Familie, wenn Nahrung und Wasser reichen.'}</p>`; }
+  const pips = `<span class="pips" role="img" aria-label="Stufe ${t} von ${top}">${Array.from({length:top}, (_, i) => `<i class="${i < t ? 'on' : ''}"></i>`).join('')}</span>`;
+  let h = head(`${T.n}${f ? ` · ${famName(f)}` : ''}`, pips);
+  if (!f){ const imm = immigFor(I); return h + `<div class="seats">${Array.from({length:T.cap}, () => `<span class="seat free">${seatIc}</span>`).join('')}</div><p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>`; }
   const m = membersOf(I, f), cap = homeCap(I, b), max = homeCapMax(I, b);
-  // the places: who lives here, free places, and places that open with what is still missing
-  h += `<div class="seats">${Array.from({length:max}, (_, i) => `<span class="seat ${i < m.length ? 'on' : i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length} von ${cap}</b></div>`;
-  h += `<p class="sub">${cap < max ? `${max - cap} ${max - cap === 1 ? 'Platz' : 'Plätze'} mehr, wenn alles da ist. ` : ''}${t === 1 ? 'In einer Hütte kommen keine Kinder; neue Leute kommen in leere Hütten.' : 'Hier kommen Kinder, wenn Platz ist.'}</p>`;
-  h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ` · ${personWork(I, p)}`}${p.wk ? ', schwach' : ''}</small></button>`).join('')}</div>`;
-  h += `<p class="sec">Die Schnur der Familie</p>${knotCord(I, f, t, nd)}<ul class="list needs">${famNeeds(I, f, nd.list).map(n => needRow(I, n, nd)).join('')}</ul>`;
+  // the places: who lives here, free places, and places that open when every knot is tied; children only from step 2
+  h += `<div class="seats">${Array.from({length:max}, (_, i) => `<span class="seat ${i < m.length ? 'on' : i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length}/${cap}</b>${t >= 2 ? `<span class="kids" title="Hier kommen Kinder">${icon('kind')}</span>` : ''}</div>`;
+  h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? '' : stageOf(p) === 'old' ? '' : ` · ${personWork(I, p)}`}</small></button>`).join('')}</div>`;
+  // the cord, and under it only what needs doing, each with the building that helps
+  const lack = famNeeds(I, f, nd.list).filter(n => n.state !== 'ok');
+  h += knotCord(I, f, t, nd);
+  if (lack.length) h += `<ul class="list needs lacks">${lack.map(n => { const w = needWay(I, n.k), btn = wayChip(w);
+    return `<li class="need">${icon(needIcon(n.k))}<span class="nm">${needName(n.k)}${btn ? '' : `<small>${w.text}</small>`}</span>${chipS(n.state, n.state === 'low' ? 'knapp' : 'fehlt')}${btn}</li>`; }).join('')}</ul>`;
+  // rising: the next step, its room, and what it takes, each as a picture with have and need
   const u = upgradeSteps(I, b, nd.list);
   if (u){
-    const add = TIERS[u.t].needs.filter(k => !T.needs.includes(k));
-    h += `<p class="sec">Aufsteigen: ${u.T.n}</p><p class="sub">Platz für ${u.T.cap}${u.t === 2 ? ', und es kommen Kinder' : ''}. Will dazu ${andList(add.map(k => GN[k]))}.</p>`;
-    h += `<ul class="list needs steps">${u.steps.map(q => { const w = !q.ok ? (q.k === 'needs' ? (q.miss[0] ? needWay(I, q.miss[0]) : null) : needWay(I, q.k)) : null;
-      return `<li class="${q.ok ? 'okk' : 'need'}"><span class="state ${q.ok ? 'ok' : 'out'}">${q.ok ? '✓' : '–'}</span><span class="nm">${q.t}${q.need ? ` <small>${q.have} von ${q.need} im Lager</small>` : ''}${w ? `<small>${w.text}</small>` : ''}</span>${wayBtn(w)}</li>`; }).join('')}</ul>`;
-    h += `<div class="rowx"><span class="sub">${u.ready ? 'Alles bereit.' : 'Noch nicht bereit.'}</span><button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Aufsteigen</button></div>`;
-  } else if (t === 3) h += `<p class="sub">Die höchste Stufe eines Hauses. Die Häuptlingsfamilie wohnt im Häuptlingshaus.</p>`;
-  { const ln = m[0] && m[0].ln; h += `<p class="sub">Linie: ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
+    const chip = q => { const k = q.k === 'needs' ? 'knot' : q.k, w = q.ok ? null : q.k === 'needs' ? (q.miss[0] ? needWay(I, q.miss[0]) : null) : needWay(I, q.k);
+      const n = q.k === 'needs' ? `${famNeeds(I, f, nd.list).filter(x => x.state !== 'out').length}/${TIERS[t].needs.length}` : `${Math.min(q.have, q.need)}/${q.need}`;
+      const label = q.k === 'needs' ? 'Alle Knoten fest' : `${GN[q.k]}: ${q.have} von ${q.need}`;
+      return w && (w.build || w.fleet) ? `<button class="cost out" type="button" ${w.build ? `data-act="hint" data-k="${w.build}"` : 'data-act="fleetbar"'} aria-label="${label}">${icon(k)}<b>${n}</b></button>` : `<span class="cost ${q.ok ? 'ok' : 'out'}" role="img" aria-label="${label}">${icon(k)}<b>${n}</b></span>`; };
+    h += `<div class="rise"><div class="rise-head">${knotIc}<b>${u.T.n}</b><span class="room">${seatIc}${u.T.cap}${u.t === 2 ? icon('kind') : ''}</span></div>`;
+    h += `<div class="costs">${u.steps.map(chip).join('')}</div>`;
+    h += `<button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Aufsteigen</button></div>`;
+  }
+  { const ln = m[0] && m[0].ln; h += `<p class="sub line">Linie ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
   return h;
 }
 /* ---------- the overview: Bewohner as in Anno (the houses by step and their needs), Arbeit, Insel */
@@ -354,7 +355,7 @@ function villageGoal(I, nd){
   const ready = readyHomes(I, nd.list);
   if (nd.roofless) return {cls:'out', t:`${nd.roofless} ohne Dach`, d:'Baue Hütten aus Holz und Palmwedeln.', btn:wayBtn({build:'haus'})};
   const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:w.text, btn:wayBtn(w)}; }
-  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen`, d:'Alle Bedürfnisse erfüllt, das Material liegt bereit.', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle aufsteigen</button>`};
+  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen`, d:'', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle aufsteigen</button>`};
   // the next step up: what the first house that cannot rise yet still lacks
   const next = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => upgradeSteps(I, b, nd.list)).find(Boolean);
   if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
@@ -380,11 +381,10 @@ function peopleTab(I, nd){
     const hs = homesOf(I).filter(b => tierOf(b) === t), fams = hs.map(b => famOfHome(I, b)).filter(Boolean), people = fams.reduce((n, f) => n + membersOf(I, f).length, 0);
     const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && homesOf(I).some(b => tierOf(b) === 2)); if (!shown) continue;
     const ready = hs.filter(b => canUpgrade(I, b, nd.list)).length;
-    h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${TIERS[t].n}</b><small>${hs.length ? `${hs.length} ${hs.length === 1 ? 'Haus' : 'Häuser'} · ${people} Menschen` : 'noch keines'}</small>${ready && !I.autoUp ? `<button class="btn primary small" type="button" data-act="upall" data-t="${t}">${ready} aufsteigen</button>` : ''}</div>`;
-    h += `<div class="chips">${TIERS[t].needs.map(k => { const st = k === 'dach' ? roof : hs.length ? (nd.list.find(n => n.k === k) || {state:'ok'}).state : 'none';
-      return k === 'dach' ? `<span class="need-chip ${st}">${icon('haus')}Dach</span>` : `<button class="need-chip ${st}" type="button" data-act="${k === 'essen' ? 'store' : 'ware'}" data-k="${k}">${icon(k)}${GN[k]}</button>`; }).join('')}</div></div>`;
+    h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${TIERS[t].n}</b><small>${icon('haus')}${hs.length} ${seatIc}${people}</small>${ready && !I.autoUp ? `<button class="btn primary small tie" type="button" data-act="upall" data-t="${t}">${knotIc}${ready}</button>` : ''}</div>`;
+    h += cordOf(TIERS[t].needs.map(k => ({k, st:k === 'dach' ? (hs.length ? roof : 'none') : hs.length ? (nd.list.find(n => n.k === k) || {state:'ok'}).state : 'none'}))) + '</div>';
   }
-  h += `<div class="rowx"><span class="sub">Ist alles da, steigen Häuser von selbst auf.</span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">Von selbst</button></div>`;
+  h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">${knotIc}Von selbst aufsteigen</button></div>`;
   h += `<ul class="list needs">`;
   { const imm = immigFor(I), emp = emptyHome(I), grow = imm || (emp && wantsSettlers(I)) || nd.growing;
     h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), '', grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }

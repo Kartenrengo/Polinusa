@@ -527,6 +527,7 @@ const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.peopl
 const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.mat === p.id ? 'Matriarchin ' : I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
+  if (j && w.play) return `${KINDS[j.b.kind].n} · Feierabend, ${PLAY[w.play.k].n}`;
   const pl = w.play && !j ? ' · ' + PLAY[w.play.k].n : '';
   if (w.child) return 'Kind' + pl; if (w.old) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
   const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
@@ -718,14 +719,17 @@ function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
   w.dance = false; w.busy = null; w.fx = null; w.hurry = I.feastEnd > tick; w.paddle = false; w.hop = false;   // people hurry to a feast
-  if (w.play && (w.job || w.boat || I.feastEnd > tick)) endPlay(w);
+  if (w.play && (w.job && !w.play.off || w.boat || I.feastEnd > tick)) endPlay(w);
   if (I.feastEnd > tick && !w.boat){
     const d = I.festYear === yearOf() && I.buildings.find(b => b.kind === 'tanzplatz' && !b.bt), h = I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
     if (d || h){ if (w.job){ w.leg = 'go'; w.bout = false; } w.carry = null; w.sit = false; }
     if (d){ const a = Math.random() * TAU; goTo(I, w, d.x + Math.cos(a) * 15, d.y + Math.sin(a) * 6, 1800 + Math.random() * 1400); w.dance = d; return; }
     if (h){ goTo(I, w, h.x + (Math.random() - .5) * 40, h.y + 14 + Math.random() * 16, 700 + Math.random() * 1400); return; }
   }
-  if (w.job){ jobLeg(I, w, w.job); return; }
+  if (w.job){
+    if (w.play){ if (playLeg(I, w)) return; if (offNow(I, w, w.job.type) && startPlay(I, w)){ w.play.off = true; return; } w.leg = 'back'; w.bout = false; }
+    jobLeg(I, w, w.job); return;
+  }
   if (w.play && playLeg(I, w)) return;
   // without work, grown-ups gather what the wild gives: out to the nests and the shore, bent down a while, the basket to the store
   if (w.role === 'idle' && !w.boat){
@@ -746,6 +750,18 @@ function nextLeg(w){
 /* One step of the work. Builders: fetch wood or fronds, bring it, build a while at the site, until it is done.
    Everyone else: a while at the place (felling, climbing, at the craft), and after a few rounds the load to the store. */
 const REST_FX = ['drink', 'stretch', 'wipe', 'drink'];
+const SITE_FX = ['build', 'build', 'lash', 'raise'];   // at a site: the adze, binding a post with sennit, setting a post upright
+/* Evening off, and now and then a rest at noon: whoever works where the work goes on by itself (fields, crafts, palms,
+   the forest) takes part of the evening free and goes surfing, swimming or to the drum. Fishers, divers and builders stay
+   until their work is done. Only for the eye: the place goes on making what it makes. */
+const OFF_OK = new Set(['carry', 'learn', 'chop', 'pull', 'climb', 'wade']);
+function offNow(I, w, T){
+  if (!OFF_OK.has(T) || I.feastEnd > tick || w.carry || w.boat) return false;
+  const ph = dayPhase(), day = Math.floor((tick + 30) / DAY_TICKS), id = w.pid || (w.x | 0);
+  if (ph > .5 && ph < .64) return hsh(day, id) < .65;
+  if (ph > .27 && ph < .34) return hsh(day + .37, id) < .22;
+  return false;
+}
 const BOUT = {chop:[2400, 1200], pull:[2600, 1400], climb:[5600, 2200], wade:[2600, 2400], plant:[500, 0], wait:[2500, 3000]};
 function jobLeg(I, w, j){
   const T = j.type;
@@ -754,7 +770,7 @@ function jobLeg(I, w, j){
     const W = workOf(I, j);
     if (w.leg === 'fetch'){ w.carry = T === 'site' ? siteLoad(I, j.b) : 'holz'; w.leg = 'bring'; goTo(I, w, j.x + rnd(5), j.y + rnd(2), 300); return; }
     if (w.leg === 'bring'){ w.carry = null; w.leg = 'work'; w.bout = false; if (W){ W.o.got = Math.min(W.need, W.o.got + 1); invalidate(); } }
-    if (!w.bout && W){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = T === 'site' ? 'build' : 'carve'; w.wait = 2200 + Math.random() * 1400; return; }
+    if (!w.bout && W){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = T === 'site' ? SITE_FX[Math.floor(Math.random() * SITE_FX.length)] : 'carve'; w.wait = 2200 + Math.random() * 1400; w.boutT = w.wait; return; }
     w.bout = false;
     if (W && W.need && W.o.got + woodOnWay(I, j) < W.need && W.o[W.f] <= woodFloor(W) + .01){
       const s = storeNear(I, w); if (s){ w.leg = 'fetch'; goTo(I, w, s.x, s.y); return; }
@@ -779,6 +795,9 @@ function jobLeg(I, w, j){
     w.bout = false;
     // now and then a short rest at the place: a drink from a green nut, a stretch, the sweat off the brow
     if (w.rest) w.rest = false;
+    else if (offNow(I, w, T) && startPlay(I, w)){ w.play.off = true; w.leg = 'back'; return; }
+    // a craftswoman holds up what she has made, the potter her pot, the weaver her mat
+    else if (T === 'carry' && j.load && WORK_FX[j.b.kind] && Math.random() < .16){ w.rest = true; w.bout = true; w.fx = 'show'; w.show = j.load; w.busy = {x:w.x, y:w.y}; w.sit = false; w.wait = 1500 + Math.random() * 600; w.boutT = w.wait; return; }
     else if (T !== 'wait' && T !== 'plant' && Math.random() < .1){ w.rest = true; w.bout = true; w.fx = REST_FX[Math.floor(Math.random() * REST_FX.length)]; w.busy = {x:w.x, y:w.y}; w.sit = w.fx === 'drink' && Math.random() < .5; w.wait = 1800 + Math.random() * 1400; w.boutT = w.wait; return; }
     if (T === 'wait' || T === 'learn'){ goTo(I, w, j.x + rnd(T === 'learn' ? 3 : 8), j.y + rnd(T === 'learn' ? 2 : 4)); return; }
     // at a craft or with the rope they work a few rounds before a load goes to the store; a felled piece goes at once
@@ -1062,7 +1081,7 @@ function makePiece(I, b, add){
 function fellPalm(I, b){
   const P = palmsNear(I, b); if (P.length <= KINDS[b.kind].near.n + 3) return false;
   const old = P.reduce((m, q) => q.born < m.born ? q : m), i = I.buildings.indexOf(old); if (i < 0) return false;
-  I.buildings.splice(i, 1); const y = addB(I, 'palme', old, variant('palme'), tick); y.bt = KINDS.palme.bt; stats.palmholz = (stats.palmholz || 0) + 1; invalidate(); return true;
+  falling(old.x, old.y, {palm:{...old}, isl:I.id}, b); I.buildings.splice(i, 1); const y = addB(I, 'palme', old, variant('palme'), tick); y.bt = KINDS.palme.bt; stats.palmholz = (stats.palmholz || 0) + 1; invalidate(); return true;
 }
 function workUse(I, k){
   let u = 0;
@@ -1249,7 +1268,7 @@ function erosionOf(I){
 function fellTree(I, b){
   const t = b.cutAt && b.cutAt.st === 0 && b.cutAt.w > 0 && I.trees.includes(b.cutAt) ? b.cutAt : treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).sort((p, q) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(q.x - b.x, q.y - b.y))[0];
   if (!t) return; b.cutAt = t;
-  if (--t.w <= 0){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; b.cutAt = null; stats.gefaellt++; }
+  if (--t.w <= 0){ falling(t.x, t.y, {tree:{...t, st:0}, isl:I.id}, b); t.st = 1; t.g = STUMP_TICKS; t.w = 0; b.cutAt = null; stats.gefaellt++; }
   treesChanged(I);
 }
 function plantable(I, p){

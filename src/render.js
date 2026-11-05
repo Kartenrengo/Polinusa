@@ -475,7 +475,7 @@ function drawAnim(c, now){
   if (cyclone && lod !== 'far') drawStormSea(c, v, now);
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
   drawWhales(c, v, now); if (lod !== 'far' && !reduced) drawSeaLife(c, v, now); if (lod !== 'far') drawDrift(c, v, now);
-  if (cam.z > PEOPLE_Z) drawPeople(c, v, now);
+  if (cam.z > PEOPLE_Z){ drawPeople(c, v, now); if (falls.length) drawFalls(c, v, now); }
   drawWork(c, v);
   if (!reduced) drawWeather(c, v, now);
   if (lod !== 'far') drawNeeds(c, v, now);
@@ -1069,6 +1069,26 @@ function drawSwimmer(c, w, now){
   }
   c.restore();
 }
+/* ---------- a tree comes down: slowly at first, then fast, away from the people at work; it strikes the ground in a
+   puff of dust, lies a moment and is gone (the wood is in the store by then) */
+let falls = [];
+function falling(x, y, what, by){
+  if (reduced || awayQuiet || !what.isl || !isl(what.isl)) return;
+  falls.push({x, y, ...what, dir:by && by.x > x ? -1 : 1, t0:performance.now()}); if (falls.length > 10) falls.shift(); requestDraw();
+}
+function drawFalls(c, v, now){
+  falls = falls.filter(f => now - f.t0 < 2300);
+  for (const f of falls){
+    if (!ptIn(f.x, f.y, grow(v, 40))) continue;
+    const g = (now - f.t0) / 950, a = f.dir * 1.48 * (g >= 1 ? 1 : g * g), al = now - f.t0 > 1800 ? 1 - (now - f.t0 - 1800) / 500 : 1;
+    c.save(); c.globalAlpha = al; c.translate(f.x, f.y); c.rotate(a); c.translate(-f.x, -f.y);
+    if (f.palm) drawBuilding(c, f.palm, isl(f.isl)); else drawTree(c, f.tree);
+    c.restore(); c.globalAlpha = 1;
+    const hit = (now - f.t0 - 950) / 700, h = f.palm ? 26 : 18;
+    if (hit > 0 && hit < 1) for (let k = 0; k < 6; k++){ const x = f.x + f.dir * (h * (.35 + k * .12)) , r = 1.6 + hit * 3; c.globalAlpha = (1 - hit) * .55; c.fillStyle = '#E6D6B0'; c.beginPath(); c.ellipse(x, f.y - hit * 3 - (k % 2) * 1.5, r, r * .6, 0, 0, TAU); c.fill(); }
+    c.globalAlpha = 1;
+  }
+}
 /* What each kind of work looks like, small and in front of the worker, who faces right here */
 const SWING = new Set(['dig', 'chop', 'build', 'carve']);
 function workFx(c, w, now){
@@ -1134,6 +1154,23 @@ function workFx(c, w, now){
     case 'stir': { blob(4.6, -.6, 2, .9, '#7A5434'); blob(4.6, -1, 1.5, .4, '#E3C35A'); const a = t * 4; dot(4.6 + Math.cos(a) * .9, -1.1, .4, '#E86A8A'); line(3.4, -4, 4.6 + Math.cos(a) * .6, -1.2, '#6B4428', .4); break; }   // blossoms stirred into the oil
     case 'grate': { blob(4.8, -.4, 1.6, 1, '#6B4A2E'); blob(4.8, -.9, 1.1, .6, '#F4ECD8'); const x = 4.8 + Math.sin(t * 8); line(x - 1, -2, x + 1, -2, '#8C6440', .5); if (Math.sin(t * 8) > .8) dot(6.6, .2, .3, '#F4ECD8'); break; }   // coconut flesh rasped on a shell
     case 'cut': { line(5.4, .4, 5.4, -8, '#7A9A4A', 1.2); blob(4, -6.4, 1.6, 1.3, '#D8C24A'); const sw = Math.sin(t * 3) * .4; line(1.6, -4.5, 4.2 + sw, -6 + sw, '#2B1D14', .45); break; }   // a bunch of bananas cut down
+    case 'lash': {   // a post bound to the beam with sennit, round and round, the cord pulled tight
+      line(5, .6, 5, -10, '#7A5434', 1.3); line(2.6, -8.2, 8.4, -8.2, '#7A5434', 1);
+      c.strokeStyle = '#C99A62'; c.lineWidth = .4; c.beginPath(); for (let k = 0; k < 4; k++){ const y = -9.2 + k * .55; c.moveTo(4.2, y); c.lineTo(5.8, y + .5); } c.stroke();
+      const a = t * 5; dot(5 + Math.cos(a) * 1.6, -8.4 + Math.sin(a) * .5, .45, SKINS[+w.look[0]]); line(1.3, -6.8, 5 + Math.cos(a) * 1.6, -8.4 + Math.sin(a) * .5, '#2B1D14', .6);
+      if (Math.cos(a) > .9) line(6.6, -8.2, 8, -7.4, '#C99A62', .4); break; }
+    case 'raise': {   // a post set upright: from slanting to standing over the bout, pushed from below
+      const p = clamp(1 - w.wait / (w.boutT || 3000), 0, 1), ang = (1 - smooth01(p)) * 1.05, bx = 6, len = 11;
+      const tx = bx + Math.sin(ang) * -len * -1, ty = -Math.cos(ang) * len;
+      line(bx, .4, tx, ty, '#2B1D14', 1.7); line(bx, .4, tx, ty, '#8C5C36', 1.1);
+      const hx = bx + (tx - bx) * .45, hy = .4 + (ty - .4) * .45; line(1.3, -6.8, hx, hy, '#2B1D14', .75);
+      if (p > .92) for (let k = 0; k < 3; k++) dot(bx - 1.5 + k * 1.5, .2, .4, '#C8B48A', .8); break; }
+    case 'show': {   // what was made, held up high, a moment of pride
+      const up = Math.min(1, (1 - w.wait / (w.boutT || 1500)) * 4), back = LOAD_BACK.has(w.show), sk = SKINS[+w.look[0]];
+      for (const s of [-1, 1]){ const p = new Path2D(); p.moveTo(s * 1.3, -6.9); p.lineTo(s * 1.4, -6.9 - up * 4.2); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); }
+      if (w.show && LOADS[w.show]){ c.save(); c.translate(back ? 1 : 0, -up * 3.6 - (back ? 5 : 0)); blit(c, 'load|' + w.show, LOADS[w.show]); c.restore(); }
+      if (up >= 1){ const q = (t * 2) % 1; c.globalAlpha = 1 - q; c.strokeStyle = '#E3B23C'; c.lineWidth = .4; c.beginPath(); for (let k = 0; k < 5; k++){ const a = -Math.PI / 2 + (k - 2) * .55, r0 = 4.5 + q * 1.5; c.moveTo(Math.cos(a) * r0, -14.5 + Math.sin(a) * r0 * .7); c.lineTo(Math.cos(a) * (r0 + 1.4), -14.5 + Math.sin(a) * (r0 + 1.4) * .7); } c.stroke(); c.globalAlpha = 1; }
+      break; }
     // ---- free time and short rests
     case 'kite': {   // a kite of pandanus leaf on a cord of coconut fibre, off downwind, dancing in the gusts
       const kx = 15 + Math.sin(t * .9) * 1.6, ky = -25 + Math.cos(t * 1.3) * 2.2, rot = Math.sin(t * 1.7) * .25;

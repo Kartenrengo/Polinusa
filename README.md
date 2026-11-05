@@ -159,20 +159,22 @@ Einfach und nach Bedeutung geordnet:
   Kanu kommt. Antippen öffnet die Übersicht.
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.
-- **Ein Haus antippen** zeigt die Familie: wer dort wohnt (mit Namen, Alter und Arbeit), die Plätze (besetzt, frei
-  und die, die erst mit mehr Bedürfnissen aufgehen), dann **die Schnur der Familie** (siehe unten), jedes Bedürfnis mit
-  Haken oder „fehlt“ und woher es kommt, mit einem Knopf „Bauen“ oder „Kanus“, und darunter, was zum **Aufsteigen**
-  fehlt, Punkt für Punkt, und den Knopf „Aufsteigen“.
+- **Ein Haus antippen** zeigt fast nur Bilder: die Stufe als Punkte, die Plätze (besetzt, frei, noch zu), die Leute mit
+  Namen, Alter und Arbeit, dann **die Schnur der Familie** (siehe unten). Darunter steht nur, was knapp ist oder fehlt,
+  jeweils mit einem Knopf, auf dem das Gebäude abgebildet ist, das hilft („Quelle“, „Kanus“). Ganz unten das
+  **Aufsteigen**: die nächste Stufe mit ihrem Platz (und einem Kind, wenn dort Kinder kommen), dann jedes Material als
+  Bild mit „hat/braucht“, grün oder rot; ein rotes antippen zeigt, wo es herkommt. Daneben der Knopf „Aufsteigen“.
 - **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
   holen sollen.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
     können aufsteigen, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
-    voll. Darunter die Häuser nach Stufe mit ihren Bedürfnissen als Zeichen, grün, gelb oder rot; ein Tipp auf ein
-    Zeichen zeigt, wer die Ware macht. Dazu Zuzug und Kinder und die Verwandtschaft.
+    voll. Darunter jede Hausstufe mit Häusern und Menschen und ihrer Schnur: dieselben Knoten wie im Haus; ein Tipp auf
+    einen Knoten zeigt, wer die Ware macht. Dazu Zuzug und Kinder und die Verwandtschaft.
   - **Arbeit:** automatisch oder von Hand, wer frei ist, welche Plätze Raum haben oder ruhen, alle Familien.
   - **Insel:** Wald, Felder, Wild, Riff, Pflanzen und Tiere, Muster, Navigatoren, der Weg zum Häuptlingsdorf.
-- **Kurze Texte:** Mehr steht unter „Mehr dazu“.
+- **Wenig Text:** Bilder statt Sätze. Meldungen sind kurz („Familie Hiva zieht ein, mit 3 Feldfrüchten. Neue Linie.“).
+  Mehr steht unter „Mehr dazu“.
 
 ### Eigene Handschrift
 
@@ -181,7 +183,8 @@ Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
 - **Die Schnur der Familie statt Balken:** Die Bedürfnisse eines Hauses sind Knoten auf einer Schnur aus Sennit, nach den
   geknoteten Ahnenschnüren der Marquesas (taʻo mata). Ein fest gezogener Knoten ist erfüllt, eine lose Schlaufe ist
   knapp, eine ausgefranste Lücke fehlt. Nach einer Muschelperle folgen hell die Knoten, die die nächste Stufe will. Ist
-  das Blatt offen, ziehen sich die Knoten nacheinander fest.
+  das Blatt offen, ziehen sich die Knoten nacheinander fest. Jeder Knoten ist ein Knopf: antippen zeigt, woher es kommt.
+  Rechts steht, wie viele Knoten halten („2/3“).
 - **Ein Knoten statt Pfeil:** Über einem Haus, das aufsteigen kann, schwebt ein Knoten mit einer Tiare-Blüte und wiegt
   sich. Auch der Knopf „Aufsteigen“ trägt ihn; ist alles bereit, zieht der Knoten sich im Takt zusammen und ein
   gestrichelter Ring legt sich um den Knopf.
@@ -904,8 +907,8 @@ Erwachsene frei sind, Erwachsene zuerst. Wer geht, nimmt seine Linie mit. Die H�
 
 ## Freizeit
 
-Wer gerade nichts zu tun hat, Kinder, Alte und Leute ohne Arbeit, tut, was man auf den Inseln immer getan hat. Man sieht
-immer wieder etwas anderes:
+Wer gerade nichts zu tun hat, Kinder, Alte, Leute ohne Arbeit und am Abend die Arbeiter, tut, was man auf den Inseln immer
+getan hat. Man sieht immer wieder etwas anderes:
 
 - **Surfen:** Mit dem Brett unter dem Arm zum Strand, liegend hinauspaddeln, auf dem Brett sitzen und auf die Welle
   warten, dann stehend hereinreiten, die Knie gebeugt, die Arme ausgestreckt, hinter sich die weiße Gischt. Surfen ist
@@ -924,12 +927,20 @@ immer wieder etwas anderes:
 - **Schlitztrommel:** Abends schlägt jemand am Dorfplatz die Schlitztrommel; die Klänge gehen in Ringen hinaus, und die
   Kinder tanzen dazu.
 
+**Feierabend:** Auch wer arbeitet, hat frei. Am Abend gehen viele Arbeiter surfen, schwimmen, zur Trommel oder flechten
+Kränze, mittags machen einige eine Pause. Wer an einem Ort arbeitet, der von selbst weiterläuft (Felder, Handwerk, Palmen,
+Wald), geht; Fischer, Taucher und Bauleute bleiben, bis ihre Arbeit getan ist. Danach geht jeder zurück an seinen Platz.
+Antippen zeigt „Feierabend“.
+
 Bei der Arbeit gibt es kleine Pausen: ein Schluck aus einer grünen Kokosnuss, Strecken, den Schweiß von der Stirn
-wischen. Taucher springen mit einem Platscher ab und kommen neben dem Kanu wieder hoch, prusten und halten die Muschel in
+wischen. Handwerker halten ab und zu hoch, was sie gemacht haben: die Töpferin ihren Topf, die Weberin ihre Matte.
+Bauleute schlagen mit dem Beil, binden einen Pfosten mit Sennit fest oder richten einen Pfosten auf. Ein gefällter Baum
+kippt erst langsam, dann schnell, schlägt in einer Staubwolke auf und liegt einen Moment da; auch die alte Palme, die das
+Erntehaus fällt. Taucher springen mit einem Platscher ab und kommen neben dem Kanu wieder hoch, prusten und halten die Muschel in
 die Höhe. Bei den Fischern springt ab und zu ein Fisch ins Kanu, und über ihnen kreisen Seevögel, wie über einem
 Schwarm; danach haben sich Fischer immer gerichtet.
 
-Freizeit ist nur fürs Auge: Sie ändert nichts an den Vorräten, und die kleinen Pausen kosten keine Arbeit.
+Freizeit ist nur fürs Auge: Sie ändert nichts an den Vorräten, und Feierabend und Pausen kosten keine Arbeit.
 
 ## Ansehen
 
