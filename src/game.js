@@ -101,7 +101,7 @@ const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) 
    Work is handed out in the order the island's priorities give: building, staple food, fish and sea, wood, canoes, crafts;
    within each the oldest place first. Whoever builds is missing from what comes later and goes back once the site is done.
    Each workplace can be held to fewer workers than it has room for. */
-const WORK_SHARE = .7, GROW_EVERY = 3;   // a new person moves in every third tick while there is room and nothing is missing
+const WORK_SHARE = .7, GROW_EVERY = 5;   // a new person moves in every third tick while there is room and nothing is missing
 const workers = I => I.people ? I.people.filter(isAdult).length : Math.round(I.pop * WORK_SHARE);
 const builders = I => 1 + Math.floor(I.pop / 10);   // sites worked at the same time
 const catOf = b => { const K = KINDS[b.kind]; return ['nahrung', 'kokos', 'wasser', 'speisen', 'eier'].includes(K.prod) ? 'essen' : K.prod === 'fisch' || K.prod === 'meeres' ? 'meer' : b.kind === 'faeller' || b.kind === 'pflanzer' ? 'holz' : b.kind === 'steg' || b.kind === 'werft' || b.kind === 'sternhaus' ? 'boot' : 'handwerk'; };

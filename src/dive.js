@@ -65,7 +65,7 @@ function diveTick(){
     const r = Math.random(); let acc = 0, got = null;
     for (const [k, p, rich] of DIVE_LOOT){ acc += rich ? p * q.rich : p; if (r < acc){ got = k; break; } }
     if (got){ stats.tauchfund = (stats.tauchfund || 0) + 1; s.cargo[got] = (s.cargo[got] || 0) + 1; D.found[got] = (D.found[got] || 0) + 1; if (TREASURE_GOODS.includes(got) && !awayQuiet) toast(`${s.name}: Ein Taucher bringt ${G1[got]} herauf!`, 3600); }
-    if (D.strain > 6 && Math.random() < (D.strain - 6) * .15){ stats.taravana = (stats.taravana || 0) + 1; stopDive(s, 'Ein Taucher hat Taravana: Schwindel, die Glieder lahm. Die Mannschaft hört auf und rudert ihn in Ruhe.'); continue; }
+    if (D.strain > 6 && Math.random() < (D.strain - 6) * .15){ stats.taravana = (stats.taravana || 0) + 1; stopDive(s, 'Ein Taucher hat die Taucherkrankheit: Schwindel, die Glieder lahm. Die Mannschaft hört auf und rudert ihn in Ruhe.'); continue; }
     if (q.left <= 0){ diveSpots.splice(diveSpots.indexOf(q), 1); stopDive(s, 'Der Grund hier ist leer getaucht.'); }
   }
 }

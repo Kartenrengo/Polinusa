@@ -70,7 +70,7 @@ function koruruMarkup(){
   if (!kor) korNew();
   const can = korCanThrow(), S = kor.state === 'rolled' ? korScore() : null, picks = kor.bones.filter(b => b.pick).length;
   const step = kor.state === 'start' ? 1 : kor.state === 'rolled' ? (kor.rolls < 2 ? 2 : 3) : 4;
-  let h = head('Kōruru-Wurf', 'Fünf Knöchelchen, einmal am Tag. Gleiche Zeichen bringen Gaben.');
+  let h = head('Knöchelwurf', 'Fünf Knöchelchen, einmal am Tag. Solche Spiele kannte der ganze Pazifik; die Māori nannten es viel später Kōruru.');
   h += `<ol class="kor-steps">${['Werfen', 'Knochen antippen und neu werfen (einmal, wenn du willst)', 'Nehmen'].map((t, i) => `<li class="${step === i + 1 ? 'now' : step > i + 1 ? 'done' : ''}">${t}</li>`).join('')}</ol>`;
   h += `<canvas id="korC" class="kor" width="340" height="230" aria-label="Die Matte mit den Knochen"></canvas>`;
   if (!can && kor.state !== 'done') h += `<p class="sub">Heute ist schon geworfen. Morgen wieder.</p>`;

@@ -447,7 +447,7 @@ function famMarkup(I, f, withHead = true){
   let h = withHead ? head(famName(f), `${f.home ? TIERS[t].n : 'Ohne Dach, unter Matten beim Versammlungshaus'} · ${I.name}`) : `<p class="sec">${famName(f)} · ${TIERS[t].n}</p>`;
   const met = fn.filter(n => n.state !== 'out').length;
   h += `<div class="stat"><b>${met} von ${fn.length} erfüllt</b><span class="mbar" style="flex:1"><i style="width:${met / fn.length * 100}%"></i></span></div><div class="chips">${fn.map(n => `<span class="need-chip ${n.state}">${icon(icn(n.k))}${name(n.k)}</span>`).join('')}</div>`;
-  if (t === 1 && f.home) h += `<p class="sub">Nächste Stufe, Familie der Tufunga: dazu ${andList(TIER2_GOODS.map(k => GN[k]))} im Lager. Dann baut sie aus (${costText(TIERS[2].cost)}) und hat Platz für ${TIERS[2].cap}.</p>`;
+  if (t === 1 && f.home) h += `<p class="sub">Nächste Stufe, Meisterfamilie: dazu ${andList(TIER2_GOODS.map(k => GN[k]))} im Lager. Dann baut sie aus (${costText(TIERS[2].cost)}) und hat Platz für ${TIERS[2].cap}.</p>`;
   if (!f.home) h += `<p class="sub">Sobald ein Haus frei ist, zieht sie ein.</p>`;
   h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ''}</small></button>`).join('')}</div>`;
   h += `<div class="rowx"><span class="sub">Arbeit: ${famWork(I, f)}</span>${job ? `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Zum Arbeitsplatz</button>` : ''}${f.home && !withHead ? '' : f.home ? `<button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button>` : ''}</div>`;
@@ -491,7 +491,7 @@ function infoMarkup(I, b){
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
     // divers: whether the water allows diving, and how divers really worked
     if (K.dive){ const bl = diveBlock(I); line += `<span>${icon(bl ? 'sturm' : 'passat')}${bl ? 'kein Tauchwetter' : 'ruhiges, klares Wasser'}</span>`;
-      more.push('Sie tauchen ohne Brille, ein Stein zieht sie hinab, der Partner im Kanu wacht. Nach einigen Gängen ruhen sie an Land, sonst droht Taravana.',
+      more.push('Sie tauchen ohne Brille, ein Stein zieht sie hinab, der Partner im Kanu wacht. Nach einigen Gängen ruhen sie an Land, sonst droht die Taucherkrankheit.',
         'Bei Sturm, nachts und unter Rāhui tauchen sie nicht.',
         I.treasure && I.treasure.k === 'perlmutt' ? 'Vor Tifa liegen die Perlmuscheln tief: mehr Pause, aber Perlmutt.' : I.atoll ? 'Aus Riesenmuschelschalen schleifen sie hier Beile.' : 'Sie bringen Riesenmuscheln, Kraken und Seegurken.'); }
     // the soil of a field: how much is left, and letting it rest
@@ -539,7 +539,7 @@ function renderSheet(){
     }
     if (b.kind === 'toepfer' && !b.bt) h += `<p class="sec">Muster</p>${motifRows(I) || '<p class="sub">Sobald die ersten Töpfe gebrannt sind, findet das Dorf sein Muster.</p>'}<p class="sub">${motifHelp(I)}</p>`;
     if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${ancCount(I)} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
-    if (b.kind === 'halle' && !b.bt) h += `<div class="rowx"><span class="sub">${korCanThrow() ? 'Im Schatten wird mit fünf Knochen geworfen, einmal am Tag.' : 'Der Kōruru-Wurf ist für heute geworfen.'}</span><button class="btn" type="button" data-act="koruru">Kōruru-Wurf</button></div>`;
+    if (b.kind === 'halle' && !b.bt) h += `<div class="rowx"><span class="sub">${korCanThrow() ? 'Im Schatten wird mit fünf Knochen geworfen, einmal am Tag.' : 'Der Knöchelwurf ist für heute geworfen.'}</span><button class="btn" type="button" data-act="koruru">Knöchelwurf</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
@@ -598,7 +598,7 @@ function renderSheet(){
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Kōruru-Wurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();

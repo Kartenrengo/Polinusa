@@ -35,7 +35,7 @@ Sie landet in `dist/polinusa.html`.
 | `src/calendar.js` | Zwölf Monde, Jahreszeiten, Palolo, Rāhui, Fest der Plejaden |
 | `src/fleetui.js` | Tafeln für Kanu, Flotte, Handelskette, Kanuhaus, Kalender und Fest |
 | `src/dive.js` | Treibgut, Tauchplätze und Tauchgänge |
-| `src/koruru.js` | Der tägliche Kōruru-Wurf |
+| `src/koruru.js` | Der tägliche Knöchelwurf |
 | `src/homes.js` | Familien, Häuser und ihre Stufen, Zuzug, Arbeit nach Familien |
 | `src/game.js` | Wirtschaft, Baustellen, Menschen, Eingabe, Hauptschleife |
 
@@ -87,6 +87,22 @@ Inseln, Panua und Talise, und das Atoll Motu.
 - **Ohne Einführung:** Im Ankunftsfenster „Ohne“ wählen, dann sind gleich alle Gebäude frei, und keine Aufgaben stehen über
   der Bauleiste. In einem laufenden Spiel geht das im Menü oder im Aufgabenfenster mit „Ohne Einführung“.
 
+## Die Zeit: Lapita, etwa 1500 bis 500 vor Christus
+
+Das Spiel hält sich an die Zeit der Lapita-Leute, die als Erste von Neuguinea bis Fidschi, Tonga und Samoa fuhren.
+
+- **Kleine Dörfer:** Lapita-Siedlungen waren meist Weiler aus wenigen Häusern, oft Pfahlhäuser an der Lagune. Eine hohe
+  Insel trägt darum etwa 50 bis 110 Menschen, ein Koralleninselchen 20 bis 50. Das Dorf wächst langsamer: ein Mensch alle
+  10 Sekunden, solange ein Haus Platz hat und nichts fehlt.
+- **Was es damals gab:** Töpfe mit gestempelten Mustern und weißer Kalkfüllung, Obsidian aus dem Handel, Steinbeile,
+  Muschelschmuck, Auslegerkanus und Doppelkanus mit Mattensegel, Taro, Yams, Brotfrucht, Bananen aus
+  Neuguinea, Kokospalmen und Pandanus, Schweine, Hühner und Hunde, der Erdofen.
+- **Spätere Wörter nur als Hinweis:** Wörter aus viel späterer Zeit nutzt das Spiel nicht als Namen. Aus der Familie der
+  Tufunga wurde die Meisterfamilie (tufunga sagte man später in Tonga und Samoa), aus dem Kōruru-Wurf der Knöchelwurf (die
+  Māori nannten das Spiel später Kōruru), aus Taravana die Taucherkrankheit. Die Matriarchin folgt dem, was über
+  frühe matrilokale Familien vermutet wird; Tonga mit Fahu und Tamahā ist ein späteres Beispiel.
+- **Häuptlingshaus:** ein großes Haus auf starken Pfosten, wie die Lapita-Häuser an der Lagune.
+
 ## Anfang
 
 Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, erst sichern, dann wachsen.
@@ -113,7 +129,7 @@ Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, 
 - **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Ist etwas dringend (kein Dach und kein Haus
   im Bau, Wasser fast aus, Nahrung aus), steht es rot als „Jetzt“ über der Aufgabe. Ohne Aufgaben (am Ende oder „Ohne
   Einführung“) sagt der Rat, was als Nächstes dran ist: Familien verteilen, Dach und Schnur, mehr Häuser, die nächste
-  Stufe, Waren für die Tufunga, der nächste Schritt zum Häuptlingsdorf, neues Land, der Kōruru-Wurf. Antippen zeigt den
+  Stufe, Waren für die Meisterfamilien, der nächste Schritt zum Häuptlingsdorf, neues Land, der Knöchelwurf. Antippen zeigt den
   Knopf oder die Tafel dazu.
 - Jede neue Stufe wird gefeiert: Ansehen +2, Herzen über dem Dorf.
 - Ein Haus zeigt „2 von 3 erfüllt“ und was die nächste Stufe braucht.
@@ -123,7 +139,7 @@ Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, 
 1. Holzfäller, 2. zwei Häuser, 3. Wasser, 4. Taro, 5. Fischgestell, 6. drei Familien an Arbeitsplätzen, 7. 15 Bewohner,
 8. Dach und Schnur, 9. Baumpflanzer, 10. Riffsammler, 11. 25 Bewohner, 12. Töpferei, 13. Erdofen, 14. Steg und Pfahlhaus,
 15. Beilwerkstatt, 15a. 30 Bewohner, 15b. Kanuhaus, 16. Auslegerkanu, 17. Siedler nach Motu, 18. Flechthütte und Seilerei auf Motu, 19. Handelskette,
-20. ein Dorf: 30 Bewohner und eine Familie der Tufunga, 21. 6 Proviant, 22. Doppelkanu, 23. neues Land im Nebel, 24. ein Fest,
+20. ein Dorf: 30 Bewohner und eine Meisterfamilie, 21. 6 Proviant, 22. Doppelkanu, 23. neues Land im Nebel, 24. ein Fest,
 25. das Fest der Plejaden, 26. ein Häuptlingsdorf, 27. Tauchen, 28. das Lapita-Netz, 29. die Weite See, 30. eine
 Schatzinsel, 31. ein Dorf in der Ferne, 32. das Fest der Schätze, 33. andere Menschen: ein Volk einer anderen Kultur.
 
@@ -192,12 +208,12 @@ Wie bei Anno zählt jedes Haus für sich: Wer hat, was er braucht, holt Leute na
   ohne Dach ein. Wird lange kein Haus gebaut, zieht einer von ihnen fort.
 - **Grundbedürfnisse:** Dach, Nahrung und Wasser. Ein Haus antippen zeigt seine Familie mit Namen und Alter und ihre
   Bedürfnisse als kleine Zeichen: grün erfüllt, gelb knapp, rot fehlt. Über einem Haus schwebt, was seiner Familie fehlt.
-- **Zuzug:** Alle 6 Sekunden wächst das Dorf um einen Menschen, und zwar dort, wo es passt: Ein leeres Haus zieht eine neue
+- **Zuzug:** Alle 10 Sekunden wächst das Dorf um einen Menschen, und zwar dort, wo es passt: Ein leeres Haus zieht eine neue
   Familie an, sonst wächst die Familie mit dem meisten Platz, deren Bedürfnisse erfüllt sind. Fehlt Nahrung oder Wasser,
   wächst niemand, und nach einer Weile ziehen Leute fort.
 - **Zu voll:** Wird ein Haus zu eng, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in das nächste leere
   Haus.
-- **Zweite Stufe, Familie der Tufunga:** Tufunga heißen in Tonga und Samoa die Meister eines Handwerks. Liegen Töpfe,
+- **Zweite Stufe, Meisterfamilie:** Meister eines Handwerks; viel später hießen sie in Tonga und Samoa tufunga. Liegen Töpfe,
   Matten und Kokosöl im Lager und hat eine Familie, was sie braucht, baut sie ihr Haus aus (1 Holz, 1 Matte): eine Tapa an
   der Tür, zwei geschnitzte Pfosten, Platz für 6. Dafür braucht sie fortan auch Töpfe, Matten und Kokosöl; fehlt eines
   eine halbe Minute lang, lebt sie wieder einfach.
@@ -373,7 +389,7 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
   „Andere Menschen“, „Bananen vom Großen Land“ und „Sternwege vom Nordmeer“.
 - In Spielständen von vorher wohnen sie in einem Feld am Rand, das noch kein Kanu gesehen hat.
 
-## Kōruru-Wurf
+## Knöchelwurf
 
 Spiele mit fünf kleinen Knochen gab es im ganzen Pazifik; die Māori nannten sie Kōruru. Hier wird geworfen wie mit Würfeln,
 **einmal am Tag** (dem Kalendertag deines Geräts), im Versammlungshaus oder im Menü.
@@ -448,9 +464,9 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
 - **Treibgut:** Stämme, Kokosnüsse und Wrackteile treiben mit dem Wind und versinken nach einer Weile. Ein Kanu, das daran
   vorbeifährt, fischt sie auf, so weit Platz an Bord ist: Holz, Kokosnüsse, Holz und Schnur.
 - **Tauchplätze:** Wo Vögel über dem offenen Meer kreisen, liegt etwas am Grund: oft unter einem Wrackteil, manchmal vor
-  einem Dorf, reich nach einem Kōruru-Wurf mit fünf gleichen. Ein Kanu fährt hin und hält an, dann „Tauchen lassen“. Alle
+  einem Dorf, reich nach einem Knöchelwurf mit fünf gleichen. Ein Kanu fährt hin und hält an, dann „Tauchen lassen“. Alle
   sechs Sekunden ein Tauchgang: meist Meeresfrüchte und Muschelschalen, manchmal Perlmutt oder Schmuck, selten ein Walzahn.
-  Nach mehr als sechs Tauchgängen droht Taravana, dann hört die Mannschaft auf. Ein Platz ist nach einigen Gängen leer.
+  Nach mehr als sechs Tauchgängen droht die Taucherkrankheit, dann hört die Mannschaft auf. Ein Platz ist nach einigen Gängen leer.
 
 ## Taucher
 
@@ -462,8 +478,8 @@ Tuamotu. Der **Tauchplatz** kommt mit der Aufgabe „Leben auf dem Wasser“ und
 - **Mit Stein und Schnur:** Ein Stein an einer Schnur zieht den Taucher schnell hinab. Man sieht das leere Kanu, die
   Schnur ins Wasser und aufsteigende Luftblasen. Ohne Brille, mit offenen Augen; ein Tauchgang dauert ein bis zwei
   Minuten (im Spiel ein paar Sekunden), dann wird an der Oberfläche Atem geholt.
-- **Taravana:** Nach höchstens fünf Tauchgängen, vor Tifa schon früher, rudern sie zurück und ruhen an Land, bis der Atem
-  wieder da ist. Wer zu oft zu tief taucht, bekommt Taravana, die Taucherkrankheit der Tuamotu.
+- **die Taucherkrankheit:** Nach höchstens fünf Tauchgängen, vor Tifa schon früher, rudern sie zurück und ruhen an Land, bis der Atem
+  wieder da ist. Wer zu oft zu tief taucht, bekommt die Taucherkrankheit, die Taucherkrankheit der Tuamotu.
 - **Wetter:** Bei starkem Wind ist das Wasser aufgewühlt und trüb, nachts dunkel, unter Rāhui ruht das Riff. Dann
   bleiben sie an Land, eine Blase zeigt warum. Je klarer das Wasser, desto öfter finden sie etwas.
 - **Was sie bringen:** Riesenmuscheln, Kraken und Seegurken als Meeresfrüchte (eine Riesenmuschel reicht für zwei). Auf
@@ -691,7 +707,7 @@ oder einmal fällen.
 
 ## Veredelung, Erdofen und Tiere
 
-Aus den Rohstoffen werden die Dinge, die Familien der Tufunga und später der Häuptling wollen.
+Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptling wollen.
 
 | Ort | Braucht | Macht |
 | --- | --- | --- |
@@ -706,7 +722,7 @@ Aus den Rohstoffen werden die Dinge, die Familien der Tufunga und später der H�
 
 - **Nebenprodukte:** Taro- und Pulakafelder geben Blätter, Bananen noch mehr. Die Beilwerkstatt gibt Kochsteine aus Basalt,
   der Riffsammler Korallenbrocken als Kochsteine und Muschelschalen. Der Schweinepferch gibt Eberhauer.
-- **Gekochtes** zählt als Nahrung und ist ein Bedürfnis der Familien der Tufunga (0,3 pro Kopf und Minute).
+- **Gekochtes** zählt als Nahrung und ist ein Bedürfnis der Meisterfamilien (0,3 pro Kopf und Minute).
 - **Tiere fressen:** Jedes Schwein frisst laufend (0,25 pro Minute), jeder Hühnerhof 0,6, aus dem Futter: erst Reste, dann
   Kokosnüsse, dann Feldfrüchte. Ohne Futter legen die Hühner nicht, und jede halbe Minute geht ein Schwein ein.
 - Der Erdofen und der Kalkbrenner kommen mit der Töpferei, Kurkuma und Hühner mit dem Tarofeld, Malerin, Weberin und
@@ -720,20 +736,19 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 | Stufe | Ab | Wer braucht was (pro Kopf und Minute) |
 | --- | --- | --- |
 | Weiler | Anfang | alle: Dach, Nahrung 1,2 (jede Sorte zählt), Wasser 0,5 |
-| Dorf | 30 Bewohner | Familien der Tufunga dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04, Gekochtes 0,3 |
+| Dorf | 30 Bewohner | Meisterfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04, Gekochtes 0,3 |
 | Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
 - **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (6 Holz, 4 Dachdeckung, 3 Schnur, 1 feine Matte), eines je
-  Insel, nur auf hohen Inseln, mit dem ersten Fest. Die Familie, deren älteste Frau die älteste unter den Familien der
-  Tufunga ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
+  Insel, nur auf hohen Inseln, mit dem ersten Fest. Die Familie, deren älteste Frau die älteste unter den
+  Meisterfamilien ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
   Die Schwester des Häuptlings stand im Rang über ihm (fahu), die Tamahā war die Ranghöchste im Land.
 - **Weg zum Häuptlingsdorf**, als Liste in der Übersicht, jeder Schritt mit Haken: eine große hohe Insel, die mindestens
   80 Menschen trägt; das Häuptlingshaus; die Häuptlingsfamilie hat alles; 50 Bewohner; Ansehen 20; Schönheit 10.
 - Im Häuptlingsdorf wohnen in jedem Haus 6 Menschen. Fehlt der Häuptlingsfamilie 30 Takte lang etwas, wird es wieder ein
   Dorf.
 
-**Jede Insel trägt nur so viele Menschen, wie ihr Land ernährt.** Hohe Inseln je nach Fläche etwa 60 bis 160, Atolle 30
-bis 100. Ist die Insel voll, sagt das Spiel es einmal: Schickt Familien im Kanu aus und gründet ein neues Dorf. **Siedler
+**Jede Insel trägt nur so viele Menschen, wie ihr Land ernährt.** Hohe Inseln je nach Fläche etwa 50 bis 110, Koralleninselchen 20 bis 50. Ist die Insel voll, sagt das Spiel es einmal: Schickt Familien im Kanu aus und gründet ein neues Dorf. **Siedler
 gehen als Familien:** Beim Beladen kommt erst der Rest der Familie an Bord, die schon einsteigt, dann eine Familie ohne
 Arbeitsplatz, Erwachsene zuerst. Die Häuptlingsfamilie bleibt. Auf der neuen Insel bilden sie wieder ihre Familien.
 
