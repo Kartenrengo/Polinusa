@@ -407,3 +407,19 @@ button.who{border:0;cursor:pointer}
 button.link{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--ink);text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}
 .list li .chip{min-height:28px;padding:0 9px;font-size:12px}
 .list li small.back{font:700 11px var(--font-ui);color:var(--muted);white-space:nowrap}
+/* the daily throw: three steps, the result in a banner, the table of gifts */
+.kor-steps{display:flex;gap:6px;margin:0;padding:0;list-style:none;counter-reset:k}
+.kor-steps li{flex:1;counter-increment:k;font:700 11.5px/1.25 var(--font-ui);color:var(--muted);padding:4px 6px;border-radius:6px;background:var(--cloth-hi)}
+.kor-steps li::before{content:counter(k) ". ";font-weight:800}
+.kor-steps li.now{background:var(--turmeric);color:var(--ink);box-shadow:0 0 0 2px var(--ochre)}
+.kor-steps li.done{opacity:.55;text-decoration:line-through}
+.kor-result{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:8px;background:#F6E9C8;border:2px solid #E0A63A;text-align:center}
+.kor-result b{font:800 18px/1.15 var(--font-name)}
+.kor-result span{font:700 13px var(--font-ui);color:var(--muted)}
+.kor-table{list-style:none;margin:4px 0;padding:0;display:grid;gap:2px}
+.kor-table li{display:flex;justify-content:space-between;gap:8px;font-size:13px;border-bottom:1px dotted rgba(62,36,22,.3);padding:2px 0}
+.btn.big{min-height:46px;font-size:16px;padding:0 22px}
+/* the elders' advice in the task card: urgent things in red */
+.quest.advice .q-bar{visibility:hidden}
+.quest.urgent{filter:drop-shadow(0 0 0 #A84A2C) drop-shadow(0 3px 0 rgba(168,74,44,.6))}
+.quest.urgent .q-n{color:var(--ochre)}

@@ -110,6 +110,12 @@ Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, 
 
 - **Spannungskurve:** Das erste Jahr bleibt ruhig: keine Ereignisse, keine Stürme. Dann wird es enger, erst bei Dach und
   Schnur, dann beim Handel mit Motu, ab dem zweiten Jahr kommen Sturmzeit, Dürre und Ereignisse.
+- **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Ist etwas dringend (kein Dach und kein Haus
+  im Bau, Wasser fast aus, Nahrung aus), steht es rot als „Jetzt“ über der Aufgabe. Ohne Aufgaben (am Ende oder „Ohne
+  Einführung“) sagt der Rat, was als Nächstes dran ist: Familien verteilen, Dach und Schnur, mehr Häuser, die nächste
+  Stufe, Waren für die Tufunga, der nächste Schritt zum Häuptlingsdorf, neues Land, der Kōruru-Wurf. Antippen zeigt den
+  Knopf oder die Tafel dazu.
+- Jede neue Stufe wird gefeiert: Ansehen +2, Herzen über dem Dorf.
 - Ein Haus zeigt „2 von 3 erfüllt“ und was die nächste Stufe braucht.
 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen Stelle.
@@ -372,11 +378,14 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
 Spiele mit fünf kleinen Knochen gab es im ganzen Pazifik; die Māori nannten sie Kōruru. Hier wird geworfen wie mit Würfeln,
 **einmal am Tag** (dem Kalendertag deines Geräts), im Versammlungshaus oder im Menü.
 
-- „Werfen“: Jeder Knochen fällt auf eine von vier Seiten, die Punkte darunter zeigen welche.
-- Einmal darfst du Knochen antippen und neu werfen, dann „Nehmen“.
-- Fünf gleich: 1 Perlmutt und eine **Tauchkarte**, ein reicher Tauchplatz vor der Küste. Vier gleich: Ansehen +3. Volle Hand
-  (drei und zwei): Gekochtes. Drei gleich: Feldfrüchte. Zwei Paare: Schnur. Ein Paar: Kokosnüsse. Nichts: „Die Ahnen
-  schweigen“ und 1 Kokosnuss. Die Gaben wachsen mit der Stufe des Dorfes, bleiben aber klein.
+- Drei Schritte stehen oben als Kästchen, das aktuelle leuchtet: 1. Werfen, 2. Knochen antippen und einmal neu werfen
+  (wenn du willst), 3. Nehmen.
+- Jeder Knochen zeigt oben eines von vier Zeichen: Punkt, Kreuz, Ring oder Striche. Die Knochen fliegen aus der Hand auf
+  eine geflochtene Pandanusmatte mit Lapita-Zickzack am Rand, drehen sich und bleiben liegen.
+- Gold umrandet sind die Knochen, die gerade zählen; rot gestrichelt die, die du neu werfen willst. Ein Band unter der
+  Matte sagt, was das Bild bringt. „Was bringt was?“ klappt die ganze Tabelle auf.
+- Fünf gleich: 1 Perlmutt und eine Tauchkarte. Vier gleich: Ansehen +3. Volle Hand: Gekochtes. Drei gleich: Feldfrüchte.
+  Zwei Paare: Schnur. Ein Paar: Kokosnüsse. Nichts: 1 Kokosnuss. Die Gaben wachsen mit dem Dorf.
 
 ## Wie alles ineinandergreift
 

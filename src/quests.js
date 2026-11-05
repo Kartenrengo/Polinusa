@@ -118,7 +118,8 @@ function stageTick(){
   for (let k = before + 1; k <= now; k++){
     const S = STAGES[k], ks = S.kinds.filter(q => KINDS[q] || SHIPS[q]);
     for (const q of ks) newKinds.add(q);
-    if (!awayQuiet) toast(`Neu bei ${S.pop} Menschen: ${S.n}. ${andList(ks.slice(0, 5).map(unlockName))}${ks.length > 5 ? ' und mehr' : ''}.`, 6000);
+    mana += 2; for (const I of islands) if (I.settled && I.id === active) for (let h = 0; h < 5; h++) heartAt(I);   // the village celebrates
+    if (!awayQuiet) toast(`Ansehen +2. Neu bei ${S.pop} Menschen: ${S.n}. ${andList(ks.slice(0, 5).map(unlockName))}${ks.length > 5 ? ' und mehr' : ''}.`, 6000);
     note(`Neue Stufe: ${S.n}. Jetzt zu bauen: ${andList(ks.map(unlockName))}.`);
   }
   if (now > before) renderBuildBar();
@@ -143,9 +144,45 @@ function checkQuest(){
   }
   renderQuest();
 }
+/* ---------- the advice of the elders: always one clear next step. When something is urgent (no roof, no water, no food)
+   it stands over the task; without tasks it is the card itself. */
+const producerOf = (I, k) => ORDER.find(q => KINDS[q] && (KINDS[q].prod === k || KINDS[q].green === k) && KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river));
+function adviceOf(I, urgentOnly = false){
+  if (!I || !I.settled) return null;
+  const nd = needsOf(I), out = k => nd.list.some(n => n.k === k && n.state === 'out'), low = k => nd.list.some(n => n.k === k && n.state !== 'ok');
+  const sites = I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)), has = k => I.buildings.some(b => b.kind === k);
+  if (nd.roofless && !sites) return {t:'Häuser bauen', d:`${nd.roofless} Menschen schlafen ohne Dach. Ein Haus braucht Holz, Dachdeckung und Schnur.`, build:'haus', urgent:true};
+  if ((I.stock.wasser || 0) < 8 && low('wasser') && !['quelle', 'brunnen', 'regen'].some(has)) return {t:'Wasser holen', d:'Ohne Wasser wächst niemand zu, bald gehen Leute fort.', build:producerOf(I, 'wasser') || 'regen', urgent:true};
+  if (out('essen')) return {t:'Essen anbauen', d:'Die Nahrung ist aus. Felder, Fischgestell und Kokos helfen.', build:producerOf(I, 'nahrung') || 'fisch', urgent:true};
+  if (urgentOnly) return null;
+  const sf = staffOf(I), open = placesOf(I).filter(b => !famsOf(I).some(f => f.job === b.id));
+  if (open.length && famsOf(I).some(f => !f.job && famAdults(I, f).length) && !autoWork(I)) return {t:'Familien verteilen', d:`${open.length} Arbeitsplätze haben keine Familie. Tippe einen an und dann auf +.`, needs:true};
+  for (const k of ['dach', 'schnur']) if ((I.stock[k] || 0) < 2 && unlocked(k === 'dach' ? 'deckerin' : 'schnur') && !has(k === 'dach' ? 'deckerin' : 'schnur')) return {t:k === 'dach' ? 'Dachdeckung machen' : 'Schnur drehen', d:'Jedes neue Haus braucht Dachdeckung und Sennit.', build:k === 'dach' ? 'deckerin' : 'kletterer'};
+  if (nd.full && !nd.atMax) return {t:'Mehr Häuser', d:'Alle Häuser sind voll. Ein leeres Haus zieht eine neue Familie an.', build:'haus'};
+  const nextS = STAGES[stageNow() + 1]; if (nextS && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Halte Nahrung und Wasser im Lager und baue Häuser.`, build:'haus'};
+  const miss = TIER2_GOODS.find(k => !(I.stock[k] > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Tufunga`, d:p ? `Baue ${KINDS[p].n}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
+  const step = I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
+  if (nd.atMax) return {t:'Neues Land besiedeln', d:'Die Insel ist voll. Schicke Familien im Kanu aus.', fleet:true};
+  if (korCanThrow()) return {t:'Kōruru-Wurf', d:'Heute ist noch nicht geworfen.', koruru:true};
+  return {t:'Erkunden und handeln', d:'Fahre mit dem Doppelkanu in den Nebel oder bring Gaben zu den Clans.', fleet:true};
+}
+let curAdvice = null;
+function followAdvice(A){
+  if (!A) return; closeSheet();
+  if (A.koruru){ if (!kor || kor.state === 'done') korNew(); openSheet('koruru', {}); return; }
+  if (A.needs){ openSheet('needs'); return; }
+  if (A.fleet){ setBar('fleet'); return; }
+  if (A.build) hintBuild(A.build);
+}
 function renderQuest(){
-  const el = $('quest'), show = quest < QUESTS.length && !sheetKind && mode !== 'place' && mode !== 'move';
-  el.hidden = !show; if (!show) return;
+  const el = $('quest'), I = isl(active), A = !landing && I && I.settled ? (quest < QUESTS.length ? adviceOf(I, true) : adviceOf(I)) : null;
+  const show = (quest < QUESTS.length || A) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;
+  el.hidden = !show; curAdvice = A; el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
+  if (A){
+    el.querySelector('.q-n').textContent = A.urgent ? 'Jetzt' : 'Rat';
+    el.querySelector('.q-t').textContent = A.t; el.querySelector('.q-d').textContent = A.d; el.querySelector('.q-p').textContent = 'Zeigen ›';
+    el.querySelector('.q-bar i').style.width = '0%'; el.setAttribute('aria-label', `Rat der Ältesten: ${A.t}. ${A.d}`); return;
+  }
   const Q = QUESTS[quest], n = clamp(Q.n(), 0, Q.of);
   el.querySelector('.q-n').textContent = `${quest + 1}/${QUESTS.length}`;
   el.querySelector('.q-t').textContent = qn(Q.t);
@@ -192,4 +229,4 @@ function hintBuild(kind){
   b.scrollIntoView({inline:'center', block:'nearest', behavior:reduced ? 'auto' : 'smooth'});
   setTimeout(() => b.classList.remove('hint'), 4200);
 }
-$('quest').addEventListener('click', () => openSheet('quest'));
+$('quest').addEventListener('click', () => { if (curAdvice){ toast(curAdvice.d, 3600, false); followAdvice(curAdvice); return; } openSheet('quest'); });
