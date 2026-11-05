@@ -982,7 +982,7 @@ function econ(){
   if (tick % 20 === 0) rollAhead();
   cycloneTick();
   if (tick % 10 === 0) for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I);
-  answerGifts(); stepYards(); feedCrews(); stepTreasure(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
+  answerGifts(); stepYards(); feedCrews(); stepTreasure(); driftTick(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const T = clanOfRoute(r); if (T && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.lastGift = tick; if (!bondsWith(T)){ r.knots--; invalidate(); } } }   // kin by marriage: the cord holds
   if (tick % 8 === 0) invalidate();   // roofs age
@@ -1230,7 +1230,7 @@ function setSpeed(v){
 $('speedBtn').addEventListener('click', () => { setSpeed(gameSpeed > 1 ? 1 : 2); setSideOpen(false); });   // folded again; a mark shows double speed
 function frame(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); if (ships.length) stepShips(now, dt * gameSpeed); walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
+  stepCam(now); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
   if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
@@ -1301,7 +1301,7 @@ function catchUp(ms){
   try {
     for (let i = 1; i <= n; i++){
       tick++;
-      if (ships.length) stepShips(performance.now(), TICK);
+      if (ships.length){ stepShips(performance.now(), TICK); driftTouch(); } driftTick();
       feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
       if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I); }
       if (i % 150 === 0){ chronikTick(); checkQuest(); }

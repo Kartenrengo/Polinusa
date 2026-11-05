@@ -536,6 +536,7 @@ function renderSheet(){
     }
     if (b.kind === 'toepfer' && !b.bt) h += `<p class="sec">Muster</p>${motifRows(I) || '<p class="sub">Sobald die ersten Töpfe gebrannt sind, findet das Dorf sein Muster.</p>'}<p class="sub">${motifHelp(I)}</p>`;
     if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${ancCount(I)} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
+    if (b.kind === 'halle' && !b.bt) h += `<div class="rowx"><span class="sub">${korCanThrow() ? 'Im Schatten wird mit fünf Knochen geworfen, einmal am Tag.' : 'Der Kōruru-Wurf ist für heute geworfen.'}</span><button class="btn" type="button" data-act="koruru">Kōruru-Wurf</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
@@ -565,6 +566,8 @@ function renderSheet(){
     // an island can get the name its people give it
     const I = isl(sheetData.id);
     h += head('Insel benennen', I.custom ? `Früher ${I.name0}.` : 'So nennen die Leute sie bisher.') + `<div class="rowx"><input id="nameIn" class="name-in" type="text" maxlength="18" autocomplete="off" value="${esc(I.name)}" aria-label="Name der Insel"><button class="btn primary" type="button" data-act="rename">Benennen</button></div>`;
+  } else if (sheetKind === 'koruru'){
+    h += koruruMarkup();
   } else if (sheetKind === 'landing'){
     h += landingMarkup();
   } else if (sheetKind === 'intro'){
@@ -592,10 +595,10 @@ function renderSheet(){
   } else if (sheetKind === 'menu'){
     h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Kōruru-Wurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
   }
-  body.innerHTML = h; lastSig = sheetSig();
+  body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();
 }
 let lastSig = '';
 function sheetSig(){
@@ -610,7 +613,7 @@ function sheetSig(){
   if (sheetKind === 'ship'){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return 'gone';
     const P = s.port ? isl(s.port) : null;
-    return [s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), (s.life || []).join('+'), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
+    return [s.diving ? s.diving.n + ':' + Object.values(s.diving.found).join('.') : '-', (spotNear(s) || {}).id, s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), (s.life || []).join('+'), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
   }
   if (sheetKind === 'route'){
     const r = routes[sheetData.r]; if (!r) return 'gone';
@@ -660,6 +663,10 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'needs' && act === 'work'){ const I = isl(active); I.handWork = btn.dataset.v === 'hand'; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
   if (act === 'fam'){ openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
+  if (act === 'koruru'){ if (!kor || kor.state === 'done' && korCanThrow()) korNew(); openSheet('koruru', {}); return; }
+  if (sheetKind === 'koruru' && act === 'kthrow' && korCanThrow()){ korRoll(false); renderSheet(); return; }
+  if (sheetKind === 'koruru' && act === 'kre' && kor.rolls < 2){ korRoll(true); renderSheet(); return; }
+  if (sheetKind === 'koruru' && act === 'ktake' && kor.state === 'rolled'){ korTake(); renderSheet(); return; }
   if (act === 'ware'){ openSheet('ware', {id:active, k:btn.dataset.k}); return; }
   if (act === 'goto'){ const b = findB(+btn.dataset.b); if (b){ closeSheet(); select(b); flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
   if (sheetKind === 'mana' && act === 'feast'){ holdFeast(isl(active), FEASTS.find(F => F.id === btn.dataset.f)); return; }

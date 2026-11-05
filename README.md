@@ -34,6 +34,8 @@ Sie landet in `dist/polinusa.html`.
 | `src/fleet.js` | Kanus: Wege um Land herum, Nebel lichten, Handelsketten, Kanuhaus, Proviant |
 | `src/calendar.js` | Zwölf Monde, Jahreszeiten, Palolo, Rāhui, Fest der Plejaden |
 | `src/fleetui.js` | Tafeln für Kanu, Flotte, Handelskette, Kanuhaus, Kalender und Fest |
+| `src/dive.js` | Treibgut, Tauchplätze und Tauchgänge |
+| `src/koruru.js` | Der tägliche Kōruru-Wurf |
 | `src/homes.js` | Familien, Häuser und ihre Stufen, Zuzug, Arbeit nach Familien |
 | `src/game.js` | Wirtschaft, Baustellen, Menschen, Eingabe, Hauptschleife |
 
@@ -91,14 +93,13 @@ Wie bei Age of Empires steht am Anfang nur das Versammlungshaus. Motu ist zu seh
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen
 Stelle. Jede erledigte Aufgabe schaltet neue Gebäude frei, so bleibt die Bauleiste am Anfang klein.
 
-1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. Fischgestell, 5. 15 Bewohner, 6. Baumpflanzer,
-7. Töpferei am Ton, 8. Riffsammler, 9. Kanusteg und Pfahlhaus, 10. Beilwerkstatt am Felsen, 11. Kanuhaus (dann Blumen,
-Muschelwege, Fackeln und Hibiskus), 12. Auslegerkanu bauen, 13. vier Siedler nach Motu fahren und ein Dorf gründen,
-14. Flechthütte und Seilerei auf Motu, 15. Handelskette: Matten und Schnur in die Heimat, 16. 6 Proviant aus der Gärgrube
-(dann Doppelkanu und Ahnenpfosten), 17. Doppelkanu bauen, 18. im Nebel neues Land finden, 19. ein Fest, 20. das Fest der
-Plejaden, 21. ein Häuptlingsdorf, 22. das Lapita-Netz: 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten, 23. die Weite
-See, 24. eine Schatzinsel, 25. ein Dorf in der Ferne, 26. das Fest der Schätze, 27. andere Menschen: ein Volk einer
-anderen Kultur finden und ihm eine Gabe bringen.
+1. Holzfäller am Waldrand, 2. zwei Häuser, 3. zwei Tarofelder, 4. Wasser: Quelle am Bach oder Regenfang, 5. drei Familien
+an Arbeitsplätzen, 6. Dach und Schnur: Palmenkletterer, Dachflechterin und Seilerei, 7. Fischgestell, 8. 25 Bewohner,
+9. Baumpflanzer, 10. Töpferei am Ton, 11. Erdofen, 12. Riffsammler, 13. Kanusteg und Pfahlhaus, 14. Beilwerkstatt am Felsen,
+15. Kanuhaus, 16. Auslegerkanu, 17. Siedler nach Motu, 18. Flechthütte und Seilerei auf Motu, 19. Handelskette,
+20. ein Dorf: 30 Bewohner und eine Familie der Tufunga, 21. 6 Proviant, 22. Doppelkanu, 23. neues Land im Nebel, 24. ein Fest,
+25. das Fest der Plejaden, 26. ein Häuptlingsdorf, 27. Tauchen, 28. das Lapita-Netz, 29. die Weite See, 30. eine
+Schatzinsel, 31. ein Dorf in der Ferne, 32. das Fest der Schätze, 33. andere Menschen: ein Volk einer anderen Kultur.
 
 Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick: Dörfer, Menschen, Clans, Knoten, Kanus, Ansehen,
 entdeckte Inseln und die Völker anderer Kultur. Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen.
@@ -346,10 +347,16 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
   „Andere Menschen“, „Bananen vom Großen Land“ und „Sternwege vom Nordmeer“.
 - In Spielständen von vorher wohnen sie in einem Feld am Rand, das noch kein Kanu gesehen hat.
 
-## Kōruru, das Knochenspiel
+## Kōruru-Wurf
 
-Das Geschicklichkeitsspiel ist entfernt. Matte und Knochen bleiben: Sie kommen als täglicher Kōruru-Wurf zurück, ein kurzes
-Glücksspiel einmal am Tag (siehe Nächste Schritte).
+Spiele mit fünf kleinen Knochen gab es im ganzen Pazifik; die Māori nannten sie Kōruru. Hier wird geworfen wie mit Würfeln,
+**einmal am Tag** (dem Kalendertag deines Geräts), im Versammlungshaus oder im Menü.
+
+- „Werfen“: Jeder Knochen fällt auf eine von vier Seiten, die Punkte darunter zeigen welche.
+- Einmal darfst du Knochen antippen und neu werfen, dann „Nehmen“.
+- Fünf gleich: 1 Perlmutt und eine **Tauchkarte**, ein reicher Tauchplatz vor der Küste. Vier gleich: Ansehen +3. Volle Hand
+  (drei und zwei): Gekochtes. Drei gleich: Feldfrüchte. Zwei Paare: Schnur. Ein Paar: Kokosnüsse. Nichts: „Die Ahnen
+  schweigen“ und 1 Kokosnuss. Die Gaben wachsen mit der Stufe des Dorfes, bleiben aber klein.
 
 ## Wie alles ineinandergreift
 
@@ -398,6 +405,23 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
   erst danach folgen Siedler und Waren.
 - **Vor Anker essen** die Seefahrer an Land; Proviant brauchen sie nur auf See.
 - Ältere Spielstände behalten ihr Meer; bei ihnen liegen alle drei Schatzinseln bei den Fernen Inseln.
+
+## Das Meer: Wetter, Leben, Treibgut und Tauchen
+
+- **Wolken und Regen:** Regen fällt nur aus Wolken. In der Sturmzeit hängen graue Regenwolken über ihren Schatten, der Regen
+  fällt schräg mit dem Wind bis aufs Meer. Sonst ziehen ab und zu helle Wolken. Über einem Wirbelsturm drehen sich schwere
+  dunkle Wolken um das Auge.
+- **Leben im Meer:** Delfinschulen springen, Schildkröten paddeln, fliegende Fische springen in flachen Bögen, und über den
+  Fischgründen jedes Dorfes kreisen und stoßen Seevögel. Wale kommen vor allem in der Passatzeit, wenn die Buckelwale im
+  Südwinter nach Norden ziehen.
+- **Kanus:** Gischt am Bug, je mehr, desto stärker der Wind; die Kanus schaukeln in der Dünung und neigen sich in der Kurve;
+  das Mattensegel des Doppelkanus bläht sich im Wind.
+- **Treibgut:** Stämme, Kokosnüsse und Wrackteile treiben mit dem Wind und versinken nach einer Weile. Ein Kanu, das daran
+  vorbeifährt, fischt sie auf, so weit Platz an Bord ist: Holz, Kokosnüsse, Holz und Schnur.
+- **Tauchplätze:** Wo Vögel über dem offenen Meer kreisen, liegt etwas am Grund: oft unter einem Wrackteil, manchmal vor
+  einem Dorf, reich nach einem Kōruru-Wurf mit fünf gleichen. Ein Kanu fährt hin und hält an, dann „Tauchen lassen“. Alle
+  sechs Sekunden ein Tauchgang: meist Meeresfrüchte und Muschelschalen, manchmal Perlmutt oder Schmuck, selten ein Walzahn.
+  Nach mehr als sechs Tauchgängen droht Taravana, dann hört die Mannschaft auf. Ein Platz ist nach einigen Gängen leer.
 
 ## Taucher
 

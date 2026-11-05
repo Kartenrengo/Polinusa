@@ -25,6 +25,7 @@ function shipMarkup(s){
   // a treasure island: what the crew can gather here
   if (P && P.treasure){ const T = P.treasure; h += `<div class="stat">${icon(T.k)}<span>${GN[T.k]}: ${T.left} bereit</span><span class="sub">${s.auto ? '' : 'Solange das Kanu hier liegt, sammelt die Mannschaft.'}</span></div>`; }
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
+  h += shipDiveMarkup(s);
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', cargoLoad(s) ? giftText(s.cargo) : '', life.length ? andList(life.map(id => LIFE[id].s)) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
   if (P && P.settled && s.route == null && !sheetData.load) h += `<div class="rowx"><span class="sub">${aboard}</span><button class="btn primary" type="button" data-act="load">Beladen</button></div>`;
@@ -159,6 +160,8 @@ function fleetAct(act, btn, quiet = false){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return false;
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
     if (act === 'auto'){ setAuto(s, !s.auto); return true; }
+    if (act === 'dive'){ startDive(s); renderSheet(); return true; }
+    if (act === 'undive'){ stopDive(s, 'Die Mannschaft hört auf.'); renderSheet(); return true; }
     if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ syncPeople(P); const q = nextSettler(P, s); if (q){ P.people.splice(P.people.indexOf(q), 1); (s.folk = s.folk || []).push(q); } s.people++; P.pop--; P.staff = null; syncWalkers(); }
     else if (act === 'pp-' && P && s.people > 0){ const q = (s.folk || []).pop(); if (q){ syncPeople(P); P.people.push(q); } s.people--; P.pop++; P.staff = null; syncWalkers(); }
     else if (act === 'life' && P && P.settled) toggleLife(s, P, k);

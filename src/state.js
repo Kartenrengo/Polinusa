@@ -18,7 +18,7 @@ const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>>
 /* A new game: the clan is still at sea in its voyaging canoe, off two high islands and an atoll. The village is founded
    where the player chooses (foundHome). */
 function newGame(s = newSeed()){
-  seed = s; worldV = 3; homeSwap = 0; nextPid = 1; nextFam = 1; home0 = makeWorld(seed, worldV); resetCaches();
+  seed = s; worldV = 3; homeSwap = 0; nextPid = 1; nextFam = 1; drift = []; diveSpots = []; nextDrift = 1; home0 = makeWorld(seed, worldV); resetCaches();
   islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
   stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0}; chronik = {}; nextEvent = 300; lastEvent = ''; eventNow = null;
   resetGrid(); for (const I of islands) markLand(I);
@@ -134,7 +134,7 @@ const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1
 const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:4, wv:worldV, hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, nf:nextFam, seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
+  return JSON.stringify({v:4, wv:worldV, hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
@@ -152,7 +152,7 @@ function restore(raw){
     seed = s.seed >>> 0; worldV = s.wv || 1; homeSwap = s.hs ? 1 : 0; home0 = makeWorld(seed, worldV, homeSwap); resetCaches(); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
     home0.cultures = s.cu ? s.cu.filter(c => CULTURES[c[0]]).map(([k, cx, cy]) => ({k, cx, cy})) : placeCultures(home0.cultures, new Set(s.cells || []));
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
-    savedAt = +s.at || 0; nextPid = s.np || 1; nextFam = s.nf || 1; tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
+    savedAt = +s.at || 0; nextPid = s.np || 1; nextFam = s.nf || 1; nextDrift = s.nd || 1; drift = (s.dr || []).filter(d => DRIFT[d[1]]).map(([id, k, x, y, t0]) => ({id, k, x, y, t0})); diveSpots = (s.dv || []).map(([id, x, y, rich, left, via]) => ({id, x, y, rich, left, via})); tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
     stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
     for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; I.pop = d.pop | 0;
