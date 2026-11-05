@@ -146,7 +146,9 @@ function checkQuest(){
 }
 /* ---------- the advice of the elders: always one clear next step. When something is urgent (no roof, no water, no food)
    it stands over the task; without tasks it is the card itself. */
-const producerOf = (I, k) => ORDER.find(q => KINDS[q] && (KINDS[q].prod === k || KINDS[q].green === k) && KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river));
+const producerOf = (I, k) => ORDER.find(q => KINDS[q] && (KINDS[q].prod === k || KINDS[q].green === k) && KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
+/* where a good can be made that cannot be made here: the islands with the right ground */
+const specIslesFor = k => { const kind = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]); if (!kind) return []; return islands.filter(J => J.discovered && specOf(J) === SPEC_OF_KIND[kind]); };
 function adviceOf(I, urgentOnly = false){
   if (!I || !I.settled) return null;
   const nd = needsOf(I), out = k => nd.list.some(n => n.k === k && n.state === 'out'), low = k => nd.list.some(n => n.k === k && n.state !== 'ok');
@@ -169,6 +171,10 @@ function adviceOf(I, urgentOnly = false){
   if (nd.full && !nd.atMax) return {t:'Mehr Häuser', d:'Alle Häuser sind voll. Ein leeres Haus zieht eine neue Familie an.', build:'haus'};
   const nextS = STAGES[stageNow() + 1]; if (nextS && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Halte Nahrung und Wasser im Lager und baue Häuser.`, build:'haus'};
   const miss = TIER2_GOODS.find(k => !(I.stock[k] > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Meisterfamilien`, d:p ? `Baue ${KINDS[p].n}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
+  // the fine goods of the chief's family: some grow only on islands with the right ground
+  if (chiefFam(I)){ const k = CHIEF_GOODS.find(q => !(I.stock[q] > 0)); if (k){ const p = producerOf(I, k), isles = specIslesFor(k) || [];
+    const sp = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]);
+    return {t:`${GN[k]} für die Häuptlingsfamilie`, d:p ? `Baue ${KINDS[p].n}.` : sp ? `${KINDS[sp].n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[sp]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}. Besiedle sie oder handle.` : `${GN[k]} kommt per Kanu von anderswo.`, build:p, fleet:!p}; } }
   const step = I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
   if (nd.atMax) return {t:'Neues Land besiedeln', d:'Die Insel ist voll. Schicke Familien im Kanu aus.', fleet:true};
   if (korCanThrow()) return {t:'Knöchelwurf', d:'Heute ist noch nicht geworfen.', koruru:true};

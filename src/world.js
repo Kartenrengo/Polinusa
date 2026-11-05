@@ -385,9 +385,17 @@ function onIsland(I, p){
   if (I.atoll){ const a = I.atoll; return ((p.x - a.cx) / a.rx) ** 2 + ((p.y - a.cy) / a.ry) ** 2 < 1.08; }
   return inPoly(p, I.reef.poly);
 }
+/* the special ground of an island: Talise always has red earth, Motu cone shells, others by their place in the sea */
+function specOf(I){
+  if (!I || I.clan || I.id === 'heimat' || I.treasure) return null;
+  if (I.id === 'wahl') return 'kurkuma'; if (I.id === 'tochter') return 'conus';
+  const h = Math.abs(Math.round(I.center.x * 7 + I.center.y * 13)) % 3, list = I.type === 'atoll' ? ['feinpandanus', 'conus', null] : ['kava', 'kurkuma', null];
+  return list[h];
+}
 function check(kind, I, x, y, ignoreId){
   const K = KINDS[kind], p = {x, y};
   if (!K.on.includes(I.type)) return 'Geht auf dieser Insel nicht';
+  if (SPEC_OF_KIND[kind] && !I.clan && specOf(I) !== SPEC_OF_KIND[kind]) return `${K.n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[kind]].n}`;
   if (!hasLife(I, kind)) return lifeMissing(I, kind);
   if (K.water){ if (!inLagoon(I, p)) return `${K.n} steht in der Lagune`; }
   else {

@@ -92,7 +92,7 @@ function renderBuildBar(){
   $('buildWhere').textContent = '';   // the island's name stands at the top already
   const fleet = own().length > 0 || routes.length > 0;
   $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
-  const can = k => KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length), deco = ORDER.filter(k => DECO.includes(k) && can(k));
+  const can = k => KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length) && (!SPEC_OF_KIND[k] || specOf(I) === SPEC_OF_KIND[k]), deco = ORDER.filter(k => DECO.includes(k) && can(k));
   if (!deco.length) buildTab = 'bau';
   $('tabDeco').hidden = !deco.length; $('tabDeco').classList.toggle('new', deco.some(k => newKinds.has(k)));
   document.querySelector('.bottom-head').hidden = !deco.length;   // the tabs only when there is a choice
@@ -297,10 +297,17 @@ function needsMarkup(I){
   if (motifsOf(I).length || I.buildings.some(b => b.kind === 'toepfer')) h += `<p class="sec">Muster auf den Töpfen</p>${motifRows(I)}<p class="sub">${motifHelp(I)}</p>`;
   // the families: where they live, what they lack, where they work; the work goes by itself or by hand
   h += `<p class="sec">Familien und Arbeit</p><div class="rowx"><span class="sub">${autoWork(I) ? 'Die Familien gehen von selbst dorthin, wo sie gebraucht werden: Wasser und Essen zuerst.' : 'Du verteilst die Familien: auf der Tafel eines Arbeitsplatzes mit + und −.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
+  // the families in a few words: how many have all they need, and what the others lack; the whole list folds out
+  { const fl = famsOf(I).map(f => ({f, lack:famNeeds(I, f, nd.list).filter(n => n.state === 'out')})), ok = fl.filter(x => !x.lack.length).length, by = {};
+    for (const x of fl) for (const n of x.lack) by[n.k] = (by[n.k] || 0) + 1;
+    const nm = k => k === 'dach' ? 'Dach' : GN[k];
+    h += row('pop', `${fl.length} Familien: ${ok} haben alles`, Object.keys(by).length ? Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${n} fehlt ${nm(k)}`).join(', ') : 'Allen geht es gut.', '', Object.keys(by).length ? chip('out', `${fl.length - ok} fehlt etwas`) : chip('ok', 'gut'), Object.keys(by).length ? 'need' : ''); }
+  h += `</ul><details class="more famlist"${famListOpen ? ' open' : ''}><summary>Alle Familien einzeln</summary><ul class="list needs">`;
   for (const f of famsOf(I).slice().sort((a, b) => (!a.home) - (!b.home) || a.id - b.id)){
     const m = membersOf(I, f), fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out');
     h += `<li class="${lack.length ? 'need' : ''}">${ic(f.home ? 'haus' : 'pop')}<span class="nm">${famName(f)}<small>${m.length} Menschen, ${famAdults(I, f).length} Erwachsene · ${f.home ? TIERS[famTier(I, f)].n : 'ohne Dach'} · ${famWork(I, f)}</small></span>${lack.length ? `<span class="state out">${lack.map(n => n.k === 'dach' ? 'Dach' : GN[n.k]).join(', ')}</span>` : ''}<button class="chip" type="button" data-act="fam" data-f="${f.id}">Ansehen</button></li>`;
   }
+  h += `</ul></details><ul class="list needs">`;
   const open = placesOf(I).filter(b => !famsOf(I).some(f => f.job === b.id));
   if (open.length) h += row('', `${open.length} ${open.length === 1 ? 'Arbeitsplatz' : 'Arbeitsplätze'} ohne Familie`, andList([...new Set(open.map(b => KINDS[b.kind].n))]), '', chip('out', 'leer'), 'need');
   h += `</ul>`;
@@ -401,7 +408,7 @@ const polyArea = P => Math.abs(P.reduce((t, p, i) => { const q = P[(i + 1) % P.l
 function landFacts(I){
   const M = isl('tochter'), all = landingChoices(), area = J => polyArea(J.lands[0].poly), trees = J => (J.trees || []).length, dist = J => Math.hypot(M.center.x - J.center.x, M.center.y - J.center.y);
   const most = f => all.every(J => J === I || f(I) > f(J)), least = f => all.every(J => J === I || f(I) < f(J));
-  return [most(area) ? 'Die größere Insel' : 'Die kleinere Insel', `${trees(I)} Bäume${most(trees) ? ', mehr Wald' : ''}`, I.river ? 'ein Bach' : '', depsOf(I, 'ton').length ? 'Ton für Töpfe' : 'kein Ton', depsOf(I, 'basalt').length ? 'Basalt für Beile' : 'kein Basalt',
+  return [most(area) ? 'Die größere Insel' : 'Die kleinere Insel', `${trees(I)} Bäume${most(trees) ? ', mehr Wald' : ''}`, I.river ? 'ein Bach' : '', specOf(I) ? SPECS[specOf(I)].s : '', depsOf(I, 'ton').length ? 'Ton für Töpfe' : 'kein Ton', depsOf(I, 'basalt').length ? 'Basalt für Beile' : 'kein Basalt',
     least(dist) ? `${M.name} mit Pandanus und Kokos liegt nah` : `${M.name} liegt weiter weg`].filter(Boolean).join(', ') + '.';
 }
 function landingMarkup(){
@@ -445,7 +452,8 @@ function famMarkup(I, f, withHead = true){
   const nd = needsOf(I), m = membersOf(I, f), t = famTier(I, f), fn = famNeeds(I, f, nd.list), job = f.job && findB(f.job);
   const name = k => k === 'dach' ? 'Dach' : GN[k], icn = k => k === 'dach' ? 'haus' : k;
   let h = withHead ? head(famName(f), `${f.home ? TIERS[t].n : 'Ohne Dach, unter Matten beim Versammlungshaus'} · ${I.name}`) : `<p class="sec">${famName(f)} · ${TIERS[t].n}</p>`;
-  const met = fn.filter(n => n.state !== 'out').length;
+  const met = fn.filter(n => n.state !== 'out').length, home = f.home && findB(f.home);
+  if (home) h += `<p class="sub">Platz für ${homeCap(I, home)} von höchstens ${homeCapMax(I, home)}: Jedes erfüllte Bedürfnis bringt Platz für einen mehr. Jetzt wohnen hier ${m.length}.</p>`;
   h += `<div class="stat"><b>${met} von ${fn.length} erfüllt</b><span class="mbar" style="flex:1"><i style="width:${met / fn.length * 100}%"></i></span></div><div class="chips">${fn.map(n => `<span class="need-chip ${n.state}">${icon(icn(n.k))}${name(n.k)}</span>`).join('')}</div>`;
   if (t === 1 && f.home) h += `<p class="sub">Nächste Stufe, Meisterfamilie: dazu ${andList(TIER2_GOODS.map(k => GN[k]))} im Lager. Dann baut sie aus (${costText(TIERS[2].cost)}) und hat Platz für ${TIERS[2].cap}.</p>`;
   if (!f.home) h += `<p class="sub">Sobald ein Haus frei ist, zieht sie ein.</p>`;
@@ -635,6 +643,8 @@ let sliding = false;   // while a slider is dragged the sheet is not drawn anew,
 $('sheetBody').addEventListener('input', e => { const el = e.target; if (!el.matches('input[type=range][data-act]')) return; sliding = true; slideTo(el); updateHUD(); });
 document.addEventListener('pointerup', () => { if (sliding) setTimeout(() => { if (sliding){ sliding = false; save(); renderSheet(); } }, 0); }, true);
 $('sheetBody').addEventListener('change', e => { if (!e.target.matches('input[type=range][data-act]')) return; sliding = false; save(); renderSheet(); });
+let famListOpen = false;   // the list of all families stays open while the overview is drawn anew
+$('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.famlist')) famListOpen = e.target.open; }, true);
 $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.more') && sheetData) sheetData.more = e.target.open; }, true);
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;

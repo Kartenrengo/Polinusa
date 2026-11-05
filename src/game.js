@@ -178,7 +178,8 @@ function syncPeople(I){
     // those without a roof go first, then a grown-up of the biggest family; the married stay with their family
     const roof = new Set(famsOf(I).filter(f => f.home).map(f => f.id)), ad = I.people.filter(p => stageOf(p) === 'adult' && !p.w);
     const out = I.people.filter(p => !roof.has(p.h)), size = p => I.people.filter(q => q.h === p.h).length;
-    const list = out.length && (I._leaveRoofless || !ad.length) ? out : ad.length ? ad.sort((a, b) => size(b) - size(a)).slice(0, 3) : I.people;
+    const crowd = I._leaveFrom ? I.people.filter(p => p.h === I._leaveFrom && !p.w && stageOf(p) !== 'kid') : [];
+    const list = crowd.length ? crowd : out.length && (I._leaveRoofless || !ad.length) ? out : ad.length ? ad.sort((a, b) => size(b) - size(a)).slice(0, 3) : I.people;
     const p = list[Math.floor(Math.random() * list.length)]; I.people.splice(I.people.indexOf(p), 1);
   }
   I._leaveRoofless = false;
@@ -969,7 +970,7 @@ function econ(){
     updateLevel(I, nd); nd = needsOf(I);
     // the village grows house by house, where the needs of the family there are met
     if (tick % GROW_EVERY === 0) for (let n = I.joyUntil > tick ? 2 : 1; n > 0; n--){ const b = growTarget(I, nd.list); if (!b) break; I._growTo = b.id; I.pop++; syncPeople(I); I._growTo = 0; heartAt(I, b); }
-    tierTick(I, nd.list); rooflessTick(I);
+    tierTick(I, nd.list); rooflessTick(I); crowdTick(I);
     if (nd.atMax && !I.fullSaid && I.id === active && !awayQuiet){ I.fullSaid = true; toast(`${I.name} ist voll: Mehr als ${islandMax(I)} Menschen trägt die Insel nicht. Schickt Familien im Kanu aus und gründet ein neues Dorf.`, 6000); } else if (!nd.atMax) I.fullSaid = false;
     // without food or water people leave, slowly, but a few always stay
     I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : 0;
@@ -1292,6 +1293,7 @@ function awayMinute(I, R){
   // a minute away: the village grows house by house as at home, the houses rise or fall
   for (let n = Math.round(30 / GROW_EVERY) * (I.joyUntil > tick ? 2 : 1); n > 0; n--){ const b = growTarget(I, needsOf(I).list); if (!b) break; I._growTo = b.id; I.pop++; syncPeople(I); I._growTo = 0; }
   for (let k = 0; k < 3; k++) tierTick(I, needsOf(I).list, true);
+  crowdTick(I, true);
   I.hunger = 0; syncPeople(I); lifeTick(I); navTick(I, 30);
 }
 function catchUp(ms){

@@ -92,6 +92,16 @@ const LIFE = {
 const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in the canoe
 const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from);   // what the clan brought from the old land; the rest comes from other peoples
 for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
+/* What only some islands have: a ground that one plant needs, or shells found on one reef. The fine goods of the master
+   and chief families come from these, so a clan needs a net of islands, as the Lapita net really was. The home island
+   has none of them. */
+const SPECS = {
+  kurkuma:{n:'roter Erde', s:'Rote Erde', text:'Rote, lockere Erde: Hier gedeiht Kurkuma für Farbe und Salbe.', kinds:['kurkumagarten']},
+  kava:{n:'feuchten Hängen', s:'Feuchte Hänge', text:'Schattige, feuchte Hänge: Hier wächst Kava.', kinds:['kavagarten']},
+  conus:{n:'Kegelschnecken am Riff', s:'Kegelschnecken', text:'Am Riff liegen Kegelschnecken; aus ihnen werden Armringe geschliffen.', kinds:['schmuck']},
+  feinpandanus:{n:'feinem Pandanus', s:'Feiner Pandanus', text:'Eine Pandanus-Art mit langen, weichen Blättern für die Ehrenmatten.', kinds:['weberin']}
+};
+const SPEC_OF_KIND = Object.fromEntries(Object.entries(SPECS).flatMap(([id, S]) => S.kinds.map(k => [k, id])));
 const FELL_WOOD = {palme:2, baum:3};   // a grown palm or breadfruit tree felled gives wood once, and what it bore is gone
 const DECO = ['hibiskus', 'blumen', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,

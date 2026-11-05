@@ -21,7 +21,26 @@ const homeOk = (I, b) => !!b && !b.bt && HOME_KINDS.has(b.kind) && !(b.kind === 
 const homesOf = I => I.buildings.filter(b => homeOk(I, b));
 const tierOf = b => b && b.kind === 'fale' ? 3 : b && b.t === 2 ? 2 : 1;
 const CHIEF_GOODS = TIERS[3].needs.filter(k => !TIERS[2].needs.includes(k));
-const homeCap = (I, b) => Math.max(TIERS[tierOf(b)].cap, I.lvl === 3 ? CHIEF.cap : 0);
+/* Room in a house, as in Anno: every need met brings room for one more. A simple house holds 2, with food and water 4;
+   a house of a master family 4 to 6 by how many of its goods are in store, the chief's house 4 to 8. When a need runs
+   out the house has less room, and one by one people leave it (crowdTick). */
+const homeCapMax = (I, b) => Math.max(TIERS[tierOf(b)].cap, I.lvl === 3 && tierOf(b) < 3 ? CHIEF.cap : 0);
+function homeCap(I, b){
+  const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0, basic = ['essen', 'wasser'].filter(have).length;
+  if (t === 1) return Math.min(max, 2 + basic + (max > 4 && basic === 2 ? max - 4 : 0));
+  const extra = TIERS[t].needs.filter(k => !['dach', 'essen', 'wasser'].includes(k)), share = extra.filter(have).length / extra.length;
+  return Math.min(max, 2 + basic + Math.round(share * (max - 4)));
+}
+/* a house fuller than its room: every half minute one of its people moves away */
+function crowdTick(I, force = false){
+  if ((tick % 15 && !force) || tick < (I.grace || 0)) return;
+  for (const b of homesOf(I)){
+    const f = famOfHome(I, b); if (!f || membersOf(I, f).length <= homeCap(I, b)) continue;
+    I._leaveFrom = f.id; I.pop--; syncPeople(I); I._leaveFrom = 0;
+    if (!awayQuiet && I.id === active) note(`Bei ${famName(f)} fehlt etwas, das Haus ist zu eng: Jemand zieht fort.`);
+    return;
+  }
+}
 const famOfHome = (I, b) => famsOf(I).find(f => f.home === b.id) || null;
 const famName = f => `Familie ${f.n}`;
 const famTier = (I, f) => f.home ? tierOf(findB(f.home)) : 1;
@@ -54,7 +73,7 @@ function seedFamilies(I, n){
 function placePerson(I, p){
   const g = I._growTo && findB(I._growTo);
   if (g && homeOk(I, g)){ const f = famOfHome(I, g) || newFam(I, p.n, g.id); p.h = f.id; return; }
-  for (const f of famsOf(I)){ const b = f.home && findB(f.home); if (b && membersOf(I, f).length < homeCap(I, b)){ p.h = f.id; return; } }
+  for (const f of famsOf(I)){ const b = f.home && findB(f.home); if (b && membersOf(I, f).length < homeCapMax(I, b)){ p.h = f.id; return; } }
   p.h = newFam(I, p.n).id;
 }
 /* Families follow the people and the houses: gone families free their house, the roofless move into empty houses,
@@ -78,7 +97,7 @@ function syncFamilies(I){
   for (const f of I.fams){ if (f.home && (!byId.has(f.home) || taken.has(f.home))) f.home = 0; if (f.home) taken.add(f.home); }
   // a house too full: the youngest grown-ups (and their small children are not split off) found their own family
   for (const f of I.fams.slice()){
-    if (!f.home) continue; const m = membersOf(I, f), cap = homeCap(I, byId.get(f.home)); if (m.length <= cap) continue;
+    if (!f.home) continue; const m = membersOf(I, f), cap = homeCapMax(I, byId.get(f.home)); if (m.length <= cap) continue;
     const go = m.filter(p => stageOf(p) !== 'kid').sort((a, b) => b.b - a.b).slice(0, m.length - cap);
     if (!go.length) continue; const nf = newFam(I, go[0].n); for (const p of go) p.h = nf.id;
   }
@@ -91,7 +110,7 @@ function syncFamilies(I){
   // the roofless move into empty houses, the biggest family first
   const empty = homes.filter(b => !taken.has(b.id) && b.kind !== 'fale');
   for (const f of I.fams.filter(q => !q.home).sort((a, b) => membersOf(I, b).length - membersOf(I, a).length)){
-    const b = empty.find(q => homeCap(I, q) >= Math.min(membersOf(I, f).length, 4)) || empty[0]; if (!b) break;
+    const b = empty.find(q => homeCapMax(I, q) >= Math.min(membersOf(I, f).length, 4)) || empty[0]; if (!b) break;
     f.home = b.id; taken.add(b.id); empty.splice(empty.indexOf(b), 1);
   }
 }

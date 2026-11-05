@@ -211,6 +211,10 @@ Wie bei Anno zählt jedes Haus für sich: Wer hat, was er braucht, holt Leute na
 - **Zuzug:** Alle 10 Sekunden wächst das Dorf um einen Menschen, und zwar dort, wo es passt: Ein leeres Haus zieht eine neue
   Familie an, sonst wächst die Familie mit dem meisten Platz, deren Bedürfnisse erfüllt sind. Fehlt Nahrung oder Wasser,
   wächst niemand, und nach einer Weile ziehen Leute fort.
+- **Platz nach Bedürfnissen, wie bei Anno:** Jedes erfüllte Bedürfnis bringt Platz für einen Menschen mehr. Ein einfaches
+  Haus hat Platz für 2, mit Nahrung und Wasser für 4. Ein Haus einer Meisterfamilie hat 4 bis 6, je nachdem wie viele ihrer
+  Waren (Töpfe, Matten, Kokosöl, Gekochtes) im Lager sind; das Häuptlingshaus 4 bis 8. Fehlt etwas, wird das Haus zu eng,
+  und alle 30 Sekunden zieht von dort jemand fort. Die Tafel des Hauses sagt: „Platz für 3 von höchstens 4“.
 - **Zu voll:** Wird ein Haus zu eng, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in das nächste leere
   Haus.
 - **Zweite Stufe, Meisterfamilie:** Meister eines Handwerks; viel später hießen sie in Tonga und Samoa tufunga. Liegen Töpfe,
@@ -231,8 +235,9 @@ Familie arbeitet.
 - **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, welche Familie dort arbeitet, und ihre Leute mit Namen. Mit „+“
   schickst du die größte freie Familie hin, mit „−“ ziehst du sie ab. Dann wird die Insel von Hand verteilt; in der
   Übersicht schaltet „Automatisch“ zurück.
-- **Übersicht:** Bewohner und Familien, wer ohne Dach ist, der Zuzug, und unter „Familien und Arbeit“ jede Familie mit Haus,
-  Stufe, was ihr fehlt und wo sie arbeitet, dazu die Arbeitsplätze ohne Familie.
+- **Übersicht:** Bewohner und Familien, wer ohne Dach ist, der Zuzug. Unter „Familien und Arbeit“ steht eine Zeile wie
+  „18 Familien: 14 haben alles · 3 fehlt Kokosöl, 1 fehlt Wasser“; „Alle Familien einzeln“ klappt die ganze Liste auf.
+  Darunter die Arbeitsplätze ohne Familie.
 - **Wer macht was:** Im Lager steht neben jeder Ware „Wer?“. Das zeigt jeden Ort, der sie macht oder braucht, mit Familie
   und Namen. **Ein Tipp auf einen Namen fliegt zur Person** auf der Karte und sagt, wer sie ist und was sie tut.
 - **Bauleute:** Jede Baustelle braucht 2 Leute. Sie kommen aus den Familien ohne Arbeitsplatz und gehen sichtbar hinüber.
@@ -727,6 +732,21 @@ Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptl
   Kokosnüsse, dann Feldfrüchte. Ohne Futter legen die Hühner nicht, und jede halbe Minute geht ein Schwein ein.
 - Der Erdofen und der Kalkbrenner kommen mit der Töpferei, Kurkuma und Hühner mit dem Tarofeld, Malerin, Weberin und
   Duftöl mit dem ersten neuen Land. Die Clans schätzen die feinen Dinge als Gabe.
+
+## Besondere Böden: warum man viele Inseln braucht
+
+Die feinen Dinge wachsen nicht überall. Jede Insel außer der Heimat kann einen besonderen Boden oder ein besonderes Riff
+haben; er steht unter dem Namen der Insel auf der Karte.
+
+| Besonderheit | Wo | Was nur dort geht |
+| --- | --- | --- |
+| Rote Erde | Talise und manche hohe Inseln | Kurkumagarten: Farbe für bemalte Tapa |
+| Feuchte Hänge | manche hohe Inseln | Kavagarten |
+| Kegelschnecken | Motu und manche Koralleninseln | Schmuckschleiferei: Armringe |
+| Feiner Pandanus | manche Koralleninseln | Feinweberin: Ehrenmatten |
+
+Die Heimat hat keinen davon. Für die Häuptlingsfamilie braucht man darum ein Netz aus Inseln, mit Siedlern oder Handel, so
+wie das Lapita-Netz wirklich war. Der Rat sagt, welche Insel den fehlenden Boden hat.
 
 ## Dörfer, Stufen und die Häuptlingsfamilie
 
