@@ -529,3 +529,75 @@ button.cost::after{content:"+";margin-left:3px;font-weight:800}
   .tapring,.tie::after,.tie .ic,#vitalBtn .up .ic,.knot .kg,#sheet.opening .sheet-body > *,.quest.fresh,.bbtn.new::after,.tab.new::after{animation:none}
   .tapring{display:none}
 }
+/* the way to a good from another island: a chain of pictures, done links green, the next one a button */
+.chain{display:flex;align-items:center;flex-wrap:wrap;row-gap:4px;margin:6px 0 2px}
+.step-ic{position:relative;flex:none;width:38px;height:38px;border:0;border-radius:50%;display:grid;place-items:center;padding:0;background:var(--cloth-hi);box-shadow:inset 0 0 0 2px rgba(62,36,22,.3);color:var(--ink)}
+.step-ic .ic{width:21px;height:21px}
+.step-ic .bi{width:30px;height:26px}
+.step-ic.ok{background:#E4EED6;box-shadow:inset 0 0 0 2px var(--ok)}
+.step-ic.ok::after{content:"✓";position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;background:var(--ok);color:var(--cream);font:800 10px/15px var(--font-ui);text-align:center}
+.step-ic.next{background:var(--turmeric);box-shadow:inset 0 0 0 2.5px var(--ochre);cursor:pointer;animation:dotpull 1.8s ease-in-out infinite}
+.step-ic:not(.ok):not(.next){opacity:.5}
+.chain .arr{flex:none;width:12px;height:4px;margin:0 1px;background:repeating-linear-gradient(90deg,#8C6440 0 3px,transparent 3px 5px)}
+@media (prefers-reduced-motion:reduce){.step-ic.next{animation:none}}
+/* the long way of the village, under its name */
+.cord.epochs{margin:0 0 6px}
+.cord.epochs .knot{width:36px;cursor:default}
+.cord.epochs .knot small{font:800 11px/1 var(--font-ui);color:var(--ochre);margin-top:1px}
+/* the finale */
+.finale-scene{flex:none;border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px var(--brown)}
+.finale-scene svg{display:block;width:100%;height:auto}
+.finale-scene .tw{animation:tw 2.6s ease-in-out infinite alternate}
+.finale-scene .rise{animation:rise2 9s ease-out both}
+.finale-scene .voyage{animation:voyage 24s linear -9s infinite}
+.finale-scene .bob{animation:bob 3.2s ease-in-out infinite}
+.finale-scene .swell{animation:swell 5s linear infinite}
+@keyframes tw{0%{opacity:.25}100%{opacity:1}}
+@keyframes rise2{0%{transform:translateY(26px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes voyage{0%{transform:translate(-40px,96px)}100%{transform:translate(360px,96px)}}
+@keyframes bob{50%{transform:translateY(2px) rotate(-1.5deg)}}
+@keyframes swell{to{stroke-dashoffset:-32}}
+@media (prefers-reduced-motion:reduce){.finale-scene *{animation:none!important}.finale-scene .voyage{transform:translate(160px,96px)}}
+/* the store as tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 7px;border:0;border-radius:10px;background:var(--cloth-hi);box-shadow:inset 0 0 0 1.5px rgba(62,36,22,.35);color:var(--ink);cursor:pointer;overflow:hidden}
+.tile .ic{width:24px;height:24px}
+.tile b{font:800 17px/1 var(--font-ui);font-variant-numeric:tabular-nums}
+.tile s{font:700 10.5px/1 var(--font-ui);color:var(--muted)}
+.tile .flow{font:800 11px/1.1 var(--font-ui);color:var(--muted);font-variant-numeric:tabular-nums}
+.tile.up .flow{color:var(--ok)}
+.tile.down .flow{color:var(--ochre)}
+.tile.down{box-shadow:inset 0 0 0 2px var(--ochre)}
+.tile.sum{grid-column:span 2;background:#F6E9C8;cursor:default}
+.tile .fill{position:absolute;left:0;bottom:0;height:4px;background:repeating-linear-gradient(-55deg,#3E7A3A 0 3px,#5E9440 3px 5px)}
+.tile.down .fill{background:var(--ochre)}
+.stillrow{align-items:center;margin-top:6px}
+.chips.picks .chip{display:inline-flex;align-items:center;gap:4px;padding-left:6px}
+.chips.picks .chip .ic{width:17px;height:17px}
+.chip.auto{box-shadow:0 0 0 2px var(--ok)}
+.chip.auto::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);margin-left:2px}
+.soilbar{display:inline-flex;align-items:center;gap:6px;flex:1;max-width:200px}
+.soilbar .mbar{flex:1;height:8px}
+/* the calendar: twelve moons, four seasons */
+.moons{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:2px 0}
+.moon-d{height:16px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--brown);background:var(--cloth-hi)}
+.moon-d.plejaden{background:#E9DFC2}.moon-d.sturm{background:#B9C9CF}.moon-d.passat{background:#CFE3C4}.moon-d.mager{background:#E8D2A6}
+.moon-d.now{box-shadow:inset 0 0 0 1.5px var(--brown),0 0 0 2.5px var(--ochre);transform:scale(1.15)}
+.seasons{display:flex;gap:6px;flex-wrap:wrap}
+.season-t{display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 5px;border-radius:14px;box-shadow:inset 0 0 0 1.5px rgba(62,36,22,.3);font:700 12px/1 var(--font-ui);color:var(--muted)}
+.season-t.now{box-shadow:inset 0 0 0 2px var(--ochre);background:var(--turmeric);color:var(--ink)}
+.season-t .ic{width:17px;height:17px}
+.fest{display:inline-flex;align-items:center;gap:4px;font:700 13.5px/1 var(--font-ui)}
+/* the finger of the first tasks */
+#finger{position:absolute;z-index:12;width:28px;height:34px;pointer-events:none;animation:fingerbob .9s ease-in-out infinite}
+#finger svg{width:100%;height:100%;transform:rotate(180deg);filter:drop-shadow(0 2px 0 rgba(43,29,20,.3))}
+@keyframes fingerbob{50%{translate:0 -7px}}
+.help.pics{list-style:none;padding:0;gap:9px}
+.help.pics li{display:flex;align-items:center;gap:10px;font-weight:700}
+.help.pics .ic{width:26px;height:26px;flex:none}
+.help.pics .fing{width:22px;height:27px;flex:none;display:block}
+.help.pics .fing svg{width:100%;height:100%;transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){#finger{animation:none}}
+.savetext{width:100%;min-height:64px;margin:4px 0;padding:6px 8px;font:500 11px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);background:var(--cream);border:1.5px solid var(--brown);border-radius:6px;resize:vertical;user-select:text;-webkit-user-select:text}
+.copies{margin:4px 0}
+.btn .ic{display:inline-block}

@@ -46,7 +46,7 @@ const QUESTS = [
     n:() => Math.min(1, count('heimat', 'steg')) + Math.min(1, isl('heimat').buildings.filter(b => b.kind === 'pfahl' && !b.bt && !unserved(isl('heimat'), b)).length), of:2, get show(){ return {build:count('heimat', 'steg') ? 'pfahl' : 'steg'}; }, unlock:['taucher'], gift:{holz:3}},
   {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Ohne Steinbeile lässt sich kein Stamm für ein Kanu aushöhlen.',
     n:() => count('heimat', 'beil'), of:1, show:{build:'beil'}, unlock:['werft', 'harzer'], gift:{holz:4}},
-  {id:'dreissig', t:'Auf dem Weg zum Dorf', d:'Erreiche 30 Bewohner.', why:'Bei 30 Menschen ist es ein Dorf: Kanuhaus, Matten und Kokosöl kommen dazu.',
+  {id:'dreissig', t:'Auf dem Weg zum Dorf', d:'Erreiche 30 Bewohner.', why:'Bei 30 Menschen ist es ein Dorf: Ölhütte, Doppelkanu, Sternhaus, Taucher und Versammlungshaus kommen dazu.',
     n:() => isl('heimat').pop, of:30, show:{build:'haus'}, unlock:[], gift:{holz:4}},
   {id:'wasser', t:'Ans Wasser', d:'Baue ein Kanuhaus am Strand.', why:'Im Kanuhaus entstehen die Boote. Es steht am Strand.',
     n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'fackel'], gift:{holz:4, nahrung:4}},
@@ -109,8 +109,8 @@ const STAGES = [
   {pop:0, n:'Ankunft', kinds:['haus', 'ernte', 'faeller', 'quelle', 'brunnen', 'fisch', 'pansammler', 'baum', 'palme']},
   {pop:8, n:'Gärten', kinds:['taro', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
   {pop:12, n:'Sennit und Erdofen', kinds:['schnur', 'umu', 'kalkbrenner', 'kurkumagarten', 'harzer']},
-  {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel']},
-  {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'werft', 'oc', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
+  {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
+  {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
   {pop:40, n:'Zeit der Feste', kinds:['garten', 'klopf', 'pferch', 'kavagarten', 'trommel', 'tanzplatz', 'ahnenhaus', 'weberin', 'malerin', 'duftoel', 'klingen', 'schmuck', 'bananen']},
   {pop:50, n:'Häuptling', kinds:['fale']}
 ];
@@ -165,8 +165,9 @@ function adviceOf(I, urgentOnly = false){
   const sites = I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)), has = k => I.buildings.some(b => b.kind === k), done = k => I.buildings.some(b => b.kind === k && !b.bt);
   const wsrc = I.atoll ? 'brunnen' : I.river ? 'quelle' : 'ernte';
   if (nd.roofless && !sites) return {t:'Hütten bauen', d:`${nd.roofless} ${nd.roofless === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach. Eine Hütte braucht Holz und Palmwedel.`, build:'haus', urgent:true};
-  if ((I.stock.wasser || 0) < 8 && low('wasser')) return {t:has(wsrc) || has('ernte') ? 'Mehr Wasser' : 'Wasser holen', d:I.river ? 'Eine Quelle am Bach, oder grüne Nüsse vom Erntehaus.' : I.atoll ? 'Ein Brunnen in der Mitte des Motus, oder grüne Nüsse vom Erntehaus.' : 'Hier fließt kein Bach: Das Erntehaus holt grüne Nüsse zum Trinken.', build:has(wsrc) && wsrc !== 'ernte' ? 'ernte' : wsrc, urgent:true};
-  if (out('essen') || haveOf(I, 'essen') < 6 && low('essen')) return {t:'Mehr Essen', d:'Die Nahrung geht aus. Erntehaus, Fischerhütte und Gärten helfen, wer frei ist, sammelt.', build:!has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : producerOf(I, 'nahrung') || 'fisch', urgent:true};
+  const goes = (I.hunger || 0) >= 10 && leaverOf(I) && famsOf(I).length > 1 ? ` Sonst fährt ${famName(leaverOf(I))} fort.` : '';
+  if ((I.stock.wasser || 0) < 8 && low('wasser')) return {t:has(wsrc) || has('ernte') ? 'Mehr Wasser' : 'Wasser holen', d:goes + I.river ? 'Eine Quelle am Bach, oder grüne Nüsse vom Erntehaus.' : I.atoll ? 'Ein Brunnen in der Mitte des Motus, oder grüne Nüsse vom Erntehaus.' : 'Hier fließt kein Bach: Das Erntehaus holt grüne Nüsse zum Trinken.', build:has(wsrc) && wsrc !== 'ernte' ? 'ernte' : wsrc, urgent:true};
+  if (out('essen') || haveOf(I, 'essen') < 6 && low('essen')) return {t:'Mehr Essen', d:goes + 'Die Nahrung geht aus. Erntehaus, Fischerhütte und Gärten helfen, wer frei ist, sammelt.', build:!has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : producerOf(I, 'nahrung') || 'fisch', urgent:true};
   { const s = immigFor(I); if (s && s.state === 'moored' && s.immig) return {t:'Ein Kanu fragt', d:`Familie ${s.immig.n} ${s.immig.from} möchte auf ${I.name} bleiben.`, immig:s.id, urgent:true}; }
   if (urgentOnly) return null;
   // a workplace whose good is short stands still for a reason the player can fix
@@ -229,7 +230,7 @@ function questSheet(){
   const Q = QUESTS[quest]; if (!Q) return '';
   const n = clamp(Q.n(), 0, Q.of);
   return head(qn(Q.t), `Aufgabe ${quest + 1} von ${QUESTS.length}`) +
-    `<p><b>${dOf(Q)}</b> Bisher ${n} von ${Q.of}.</p><p class="sub">${qn(Q.why)}</p>` +
+    `<p><b>${dOf(Q)}</b></p><span class="mbar big"><i style="width:${n / Q.of * 100}%"></i></span><details class="more"><summary>Warum</summary><p class="sub">${qn(Q.why)}</p></details>` +
     (Q.unlock.length ? `<p class="sub">Danach neu zum Bauen: ${Q.unlock.map(unlockName).join(', ')}.</p>` : '') +
     `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="close">Später</button><button class="btn primary" type="button" data-act="showq">Zeig es mir</button></span></div>` +
     `<div class="rowx"><span class="sub">Kennst du das Spiel schon? Ohne Einführung ist gleich alles frei.</span><button class="btn" type="button" data-act="skipq">Ohne Einführung</button></div>`;
@@ -263,4 +264,20 @@ function hintBuild(kind){
   b.scrollIntoView({inline:'center', block:'nearest', behavior:reduced ? 'auto' : 'smooth'});
   setTimeout(() => b.classList.remove('hint'), 4200);
 }
+/* The finger: in the first tasks it bounces over the button that comes next, the build button, then the building, then
+   "Bauen" on the spot. No words needed. */
+const FINGER_SVG = '<svg viewBox="0 0 24 30" aria-hidden="true"><path d="M10 2.5Q12 1.5 13 3.5V14L14.5 12.5Q16.5 11.8 17 13.5L18 13Q20 12.6 20.3 14.6L21 14.4Q22.8 14.3 22.6 16.5V21Q22.4 26 18 28.5H11.5Q8 27 6.5 23L3.8 17.4Q3 15.5 4.8 15Q6.2 14.8 7.4 16.5L9 18.8V4Q9.2 2.8 10 2.5Z" fill="#F3D9A0" stroke="#2B1D14" stroke-width="1.3" stroke-linejoin="round"/><path d="M13 14V18M17 13.5V18M20.3 14.6V18.4" stroke="#2B1D14" stroke-width=".9" stroke-linecap="round"/></svg>';
+const fingerEl = (() => { const d = document.createElement('div'); d.id = 'finger'; d.innerHTML = FINGER_SVG; d.hidden = true; $('app').appendChild(d); return d; })();
+function fingerTarget(){
+  const Q = QUESTS[quest], H = isl('heimat'); if (landing || !Q || quest >= 10 || sheetKind || !H) return null;
+  if (mode === 'place') return placing && placing.ok && !placing.founding ? $('placeOk') : null;
+  const k = Q.show && Q.show.build; if (!k || !unlocked(k) || Q.n() >= Q.of || H.buildings.some(b => b.kind === k && b.bt)) return null;
+  if (!$('bottom').classList.contains('open') || $('bottom').classList.contains('fleet')) return $('buildBtn');
+  return $('buildList').querySelector(`[data-kind="${k}"]`);
+}
+setInterval(() => {
+  const t = fingerTarget(); if (!t || t.offsetParent === null){ fingerEl.hidden = true; return; }
+  const r = t.getBoundingClientRect(), a = $('app').getBoundingClientRect(); if (r.right < a.left + 8 || r.left > a.right - 8){ fingerEl.hidden = true; return; }
+  fingerEl.hidden = false; fingerEl.style.left = (r.left - a.left + r.width / 2 - 14) + 'px'; fingerEl.style.top = (r.top - a.top - 36) + 'px';
+}, 300);
 $('quest').addEventListener('click', () => { if (curAdvice){ toast(curAdvice.d, 3600, false); followAdvice(curAdvice); return; } openSheet('quest'); });

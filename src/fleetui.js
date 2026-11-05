@@ -112,10 +112,13 @@ function yardMarkup(I){
 }
 /* The calendar: the seasons, the palolo night, the rāhui and the next feast */
 function calendarMarkup(){
-  const S = seasonOf(), I = isl(active);
-  let h = head(`${S.n}, ${moonOf() + 1}. Mond`, S.text);
-  h += `<ul class="list needs">${SEASONS.map(Q => `<li class="${Q === S ? 'okk' : ''}">${icon(Q.id)}<span class="nm">${Q.n}<small>${Q.to - Q.from} Monde${Q.baum !== 1 ? `, Brotfrucht ${Q.baum ? 'reichlich' : 'keine'}` : ''}${`, Wind ${WINDS[Q.id].n}`}</small></span></li>`).join('')}</ul>`;
-  h += `<p class="sub">${festivalTime() ? 'Jetzt ist Festzeit. Feiert das Fest der ersten Früchte im Versammlungshaus.' : `Das Fest der Plejaden beginnt in etwa ${minutes(untilFestival())} Minuten.`} Eine Woche nach Vollmond im ersten Mond steigt der Palolo aus dem Riff.</p>`;
+  const S = seasonOf(), I = isl(active), m = moonOf();
+  let h = head(`${S.n}, ${m + 1}. Mond`, '');
+  // the year as twelve moons in a ring of seasons; this moon marked
+  h += `<div class="moons" role="img" aria-label="${S.n}, ${m + 1}. von 12 Monden">${Array.from({length:12}, (_, i) => { const Q = SEASONS.find(q => i >= q.from && i < q.to); return `<i class="moon-d ${Q.id}${i === m ? ' now' : ''}${i === Q.from ? ' start' : ''}"></i>`; }).join('')}</div>`;
+  h += `<div class="seasons">${SEASONS.map(Q => `<span class="season-t ${Q.id}${Q === S ? ' now' : ''}" aria-label="${Q.n}: ${Q.text}">${icon(Q.id)}<small>${Q.n.replace('Zeit der ', '').replace('zeit', '')}</small></span>`).join('')}</div>`;
+  h += `<p class="sub">${S.text}</p>`;
+  h += `<div class="rowx"><span class="fest">${icon('plejaden')}${festivalTime() ? '<b>Festzeit</b>' : `Fest in ${minutes(untilFestival())} min`}</span></div>`;
   if (S.id === 'mager' && I.buildings.some(b => SEA_KINDS.has(b.kind))) h += I.rahui ? `<p class="sub">Auf ${I.name} gilt Rāhui. Fischfang und Riff ruhen bis zum Fest.</p>` : `<div class="rowx"><span class="sub">Rāhui auf ${I.name}: Fischfang und Riff bis zum Fest sperren, dann dreifacher Fang und Ansehen +3.</span><button class="btn" type="button" data-act="rahui">Rāhui ausrufen</button></div>`;
   return h;
 }

@@ -8,7 +8,16 @@
    - Only what is on screen is drawn. */
 
 const mapC = $('map'), ctx = mapC.getContext('2d');
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
+let DPR = Math.min(window.devicePixelRatio || 1, 2);
+/* On a slow device the picture gets simpler by itself, step by step, and finer again when there is room:
+   2 everything, 1 plants and trees stand still, 0 also fewer pixels. See govern in game.js. */
+const DPR_MAX = DPR;
+let quality = 2;
+function setQuality(q){
+  q = clamp(q, 0, 2); if (q === quality) return; quality = q;
+  const d = q === 0 ? Math.min(DPR_MAX, 1.25) : DPR_MAX; if (d !== DPR){ DPR = d; vw = 0; measure(); }
+  invalidate(true);
+}
 const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let cam = {x:0, y:0, z:.7}, lod = 'mid', camAnim = null;
 let vw = 0, vh = 0, topH = 76, botH = 100;
@@ -374,7 +383,7 @@ function drawCords(c){
 /* Close up, grass, palms and trees move in the wind. They are then not part of the still ground layer but drawn with the
    people, each frame, swaying a little; the forest only where not too many trees are in view. */
 const SWAY_KINDS = new Set(['palme', 'pandanus', 'baum', 'hibiskus']), SWAY_DECO = new Set(['tuft', 'fern', 'reed', 'flowers']);
-const swayOn = () => !reduced && cam.z > PEOPLE_Z;
+const swayOn = () => !reduced && cam.z > PEOPLE_Z && quality > 1;
 function swayK(x, y, amp, now){
   const W = wind(), t = now / 1000, ph = Math.sin(x * 12.9898 + y * 78.233) * 6, g = (x * W.tx + y * W.ty) / 90;   // gusts run across with the wind
   return amp * (.35 + .65 * W.str) * (Math.sin(t * 1.25 + ph) * .65 + Math.sin(t * .5 - g) * .35 + W.tx * W.str * .5);
@@ -1075,6 +1084,7 @@ let falls = [];
 function falling(x, y, what, by){
   if (reduced || awayQuiet || !what.isl || !isl(what.isl)) return;
   falls.push({x, y, ...what, dir:by && by.x > x ? -1 : 1, t0:performance.now()}); if (falls.length > 10) falls.shift(); requestDraw();
+  if (cam.z > PEOPLE_Z && ptIn(x, y, view(20))) sfx('fall');
 }
 function drawFalls(c, v, now){
   falls = falls.filter(f => now - f.t0 < 2300);
@@ -1269,6 +1279,7 @@ function drawCritter(c, a){
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
 const bubbleArt = inner => `<path d="M-6.1-13.7Q-1.2-14.5 6.4-13.8Q7-8.2 6.1-2.4Q3.4-1.9 1.6-2.2L0 .6L-1.5-2.1Q-4.2-1.8-6.4-2.5Q-7.1-8.1-6.1-13.7Z" fill="#F4ECD8" stroke="#3E2416" stroke-width=".9" stroke-linejoin="round"/>${inner}`;
 const UP_BUBBLE = bubbleArt('<g transform="translate(-4.6 -12.9) scale(.46)"><use href="#ic-knot"/></g><g transform="translate(3.1 -11.2)" fill="#F7F1E3" stroke="#2B1D14" stroke-width=".28">' + [0, 72, 144, 216, 288].map(a => `<ellipse cy="-1.05" rx=".72" ry="1.12" transform="rotate(${a})"/>`).join('') + '<circle r=".55" fill="#E3B23C"/></g>');
+const LEAVE_BUBBLE = bubbleArt('<use href="#ic-einbaum" transform="translate(-4.6 -12.8) scale(.46)"/>').replace('#F4ECD8', '#F3C9B4');   // this family packs its canoe
 const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.6 -12.8) scale(.46)"/>`);
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
@@ -1299,6 +1310,13 @@ function drawNeeds(c, v, now){
       if (up) put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob * 1.6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), 1, reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE);
       else put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
     }
+  }
+  // hunger has lasted a while: over the house of the family that would go first, its canoe, rocking
+  for (const I of islands){
+    if (!I.settled || (I.hunger || 0) < HUNGER_GO / 2 || !boxIn(I.box, v)) continue;
+    const f = leaverOf(I), b = f && f.home && findB(f.home); if (!b || !ptIn(b.x, b.y, v)) continue;
+    const sc = (b.v && b.v.scale) || 1, k = (I.hunger - HUNGER_GO / 2) / (HUNGER_GO / 2), rock = reduced ? 0 : Math.sin(now / (260 - 140 * k)) * (.08 + .12 * k);
+    put(c, b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, s * (1.05 + .15 * k), 1, rock, 'need|leave', LEAVE_BUBBLE);
   }
   // a canoe from far away waits at the beach: the family asks to stay
   for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); }
@@ -1493,7 +1511,7 @@ function drawSea(now){
 /* ---------- layers and one frame */
 function renderLayer(L, paint){
   L.w = vw * OVER; L.h = vh * OVER;
-  const pw = Math.round(L.w * DPR), ph = Math.round(L.h * DPR), a = L.at = {x:cam.x, y:cam.y, z:cam.z, lod, sw:swayOn()}, k = a.z * DPR;
+  const pw = Math.round(L.w * DPR), ph = Math.round(L.h * DPR), a = L.at = {x:cam.x, y:cam.y, z:cam.z, lod, sw:swayOn(), dpr:DPR}, k = a.z * DPR;
   if (L.c.width !== pw || L.c.height !== ph){ L.c.width = pw; L.c.height = ph; }
   const c = L.x; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, pw, ph);
   c.setTransform(k, 0, 0, k, (L.w / 2 - a.x * a.z) * DPR, (L.h / 2 - a.y * a.z) * DPR);
@@ -1502,7 +1520,7 @@ function renderLayer(L, paint){
 }
 /* A layer can be reused while it still covers the screen. During a zoom it is stretched, then repainted sharp. */
 function fresh(L, now){
-  const a = L.at; if (L.dirty || !a || a.lod !== lod || (L === baseL && a.sw !== swayOn())) return false;
+  const a = L.at; if (L.dirty || !a || a.lod !== lod || a.dpr !== DPR || (L === baseL && a.sw !== swayOn())) return false;
   const k = cam.z / a.z; if (k !== 1 && (k > 1.3 || k < .77 || now - lastCamMove > 140)) return false;
   const v = view(), hw = L.w / 2 / a.z, hh = L.h / 2 / a.z;
   return v.x0 >= a.x - hw && v.x1 <= a.x + hw && v.y0 >= a.y - hh && v.y1 <= a.y + hh;

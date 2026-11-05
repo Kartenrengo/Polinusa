@@ -195,4 +195,14 @@ function restore(raw){
 const liveLines = () => { const used = new Set(); for (const I of islands) for (const p of I.people || []) used.add(p.ln); for (const s of ships) for (const p of s.folk || []) used.add(p.ln); return Object.fromEntries(Object.entries(LINES).filter(([id]) => used.has(+id))); };
 /* Saves name the current task by id */
 const questFromSave = s => s.qid === 'done' ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === s.qid));
-function save(){ if (landing) return; try { localStorage.setItem(SAVE_KEY, serialize()); } catch (e){} }   // nothing to keep before the clan has landed
+function save(){ if (landing) return; try { const raw = serialize(); localStorage.setItem(SAVE_KEY, raw); backupTick(raw); } catch (e){} }   // nothing to keep before the clan has landed
+/* Copies: every five minutes the game is also kept in one of three slots, the oldest overwritten. If the save itself is
+   ever broken, the newest copy that loads is used. From the menu the game can be saved to a file and loaded again. */
+const BACKUP_EVERY = 5 * 60 * 1000, BACKUPS = 3, backupKey = i => `${SAVE_KEY}-b${i}`;
+function backups(){ const out = []; try { for (let i = 0; i < BACKUPS; i++){ const b = JSON.parse(localStorage.getItem(backupKey(i)) || 'null'); if (b && b.raw) out.push({i, at:b.at, raw:b.raw}); } } catch (e){} return out.sort((a, b) => b.at - a.at); }
+function backupTick(raw){
+  const list = backups(); if (list.length && Date.now() - list[0].at < BACKUP_EVERY) return;
+  const slot = list.length < BACKUPS ? [...Array(BACKUPS).keys()].find(i => !list.some(b => b.i === i)) : list[list.length - 1].i;
+  try { localStorage.setItem(backupKey(slot), JSON.stringify({at:Date.now(), raw})); } catch (e){}
+}
+function restoreBackup(){ for (const b of backups()) if (restore(b.raw)) return true; return false; }

@@ -82,9 +82,9 @@ const ORDER = ['haus','ernte','faeller','quelle','brunnen','fisch','taro','pulak
    axes: with a helper bending the stem a tree needs three quarters fewer strokes). Hand in Hand: one prepares while the
    other works, alone a little slower. Jeder für sich: each does a share of their own. */
 const TEAM = {
-  pair:{n:'Zu zweit', alone:.3, text:'Zu zweit: Allein schafft einer nur ein Drittel von dem, was zwei schaffen.'},
-  hand:{n:'Hand in Hand', alone:.4, text:'Hand in Hand: Allein geht es langsamer, zwei schaffen mehr als doppelt so viel.'},
-  solo:{n:'Jeder für sich', alone:null, text:'Jeder für sich: Jeder schafft seinen Teil.'}
+  pair:{n:'Zu zweit', alone:.3, text:'Zu zweit. Allein nur ⅓.'},
+  hand:{n:'Hand in Hand', alone:.4, text:'Hand in Hand. Zwei schaffen mehr als doppelt.'},
+  solo:{n:'Jeder für sich', alone:null, text:''}
 };
 const teamUnits = (t, n) => t === 'pair' ? Math.floor(n / 2) + (n % 2) * TEAM.pair.alone : t === 'hand' ? (n === 1 ? TEAM.hand.alone * 2 : n) : n;
 /* the share of the full crew's work that n people get done */

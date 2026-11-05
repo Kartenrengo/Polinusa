@@ -7,7 +7,7 @@
      a knock when a building is finished, a splash when a canoe is launched, rattling shells for a clan's gift
    Sound starts with the first tap (browsers want that) and can be switched off in the menu. */
 
-let opts = loadOpts(), actx = null, out = null, seaVol = null, nextBird = 0, nextCricket = 0, drumAt = 0, drumStep = 0, lastAudio = 0;
+let opts = loadOpts(), actx = null, out = null, seaVol = null, windVol = null, lastSfx = {}, nextBird = 0, nextCricket = 0, drumAt = 0, drumStep = 0, lastAudio = 0;
 function loadOpts(){ try { return {sound:true, night:true, ...JSON.parse(localStorage.getItem('polinusa-opts') || '{}')}; } catch (e){ return {sound:true, night:true}; } }
 function saveOpts(){ try { localStorage.setItem('polinusa-opts', JSON.stringify(opts)); } catch (e){} }
 
@@ -27,6 +27,14 @@ function audioStart(){
   const lfo = actx.createOscillator(), depth = actx.createGain(); lfo.frequency.value = .09; depth.gain.value = .38; lfo.connect(depth); depth.connect(swell.gain);
   seaVol = actx.createGain(); seaVol.gain.value = 0;
   src.connect(lp); lp.connect(swell); swell.connect(seaVol); seaVol.connect(out); src.start(); lfo.start();
+  // the wind: white noise through a wandering band, as loud as the wind blows, with gusts
+  const wn = actx.sampleRate * 2, wb = actx.createBuffer(1, wn, actx.sampleRate), wd = wb.getChannelData(0);
+  for (let i = 0; i < wn; i++) wd[i] = Math.random() * 2 - 1;
+  for (let i = 0; i < 2000; i++){ const f = i / 2000; wd[i] *= f; wd[wn - 1 - i] *= f; }
+  const ws = actx.createBufferSource(); ws.buffer = wb; ws.loop = true;
+  const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = .8;
+  const wl = actx.createOscillator(), wdp = actx.createGain(); wl.frequency.value = .13; wdp.gain.value = 220; wl.connect(wdp); wdp.connect(bp.frequency);
+  windVol = actx.createGain(); windVol.gain.value = 0; ws.connect(bp); bp.connect(windVol); windVol.connect(out); ws.start(); wl.start();
 }
 addEventListener('pointerdown', audioStart); addEventListener('keydown', audioStart);
 document.addEventListener('visibilitychange', () => { if (!actx) return; if (document.hidden) actx.suspend(); else if (opts.sound) actx.resume(); });
@@ -48,9 +56,21 @@ function noise(t, dur, peak, type, freq, q = 1){
 }
 /* wooden notes like a marimba: a sine and a quickly fading overtone */
 const wood = (f, t, peak = .12) => { tone(f, t, peak, .9); tone(f * 4, t, peak * .25, .12); };
+const SFX_GAP = {tap:60, plop:350, fall:600, rise:900};
 function sfx(name){
   if (awayQuiet || !actx || !opts.sound || actx.state !== 'running') return;
+  const ms = performance.now(); if (ms - (lastSfx[name] || 0) < (SFX_GAP[name] || 0)) return; lastSfx[name] = ms;
   const t = now0() + .02;
+  if (name === 'tap'){ tone(1180, t, .025, .06, 'triangle'); noise(t, .02, .02, 'bandpass', 2600, 4); return; }   // a fingertip on bark cloth
+  if (name === 'rise'){ [392, 494, 587, 784].forEach((f, i) => wood(f, t + i * .1, .1)); for (let i = 0; i < 5; i++) noise(t + .45 + i * .05, .03, .05, 'bandpass', 3400 + Math.random() * 1200, 6); return; }   // notes rising, then shells of the garland
+  if (name === 'leave'){ [523, 440, 349].forEach((f, i) => wood(f, t + i * .2, .09)); return; }
+  if (name === 'plop'){ tone(700, t, .05, .12, 'sine', 180); noise(t + .02, .18, .04, 'highpass', 1800); return; }
+  if (name === 'fall'){   // the trunk creaks, then strikes the ground
+    const o = actx.createOscillator(), f = actx.createBiquadFilter(), g = actx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(95, t); o.frequency.linearRampToValueAtTime(62, t + .8);
+    f.type = 'lowpass'; f.frequency.value = 380; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.04, t + .2); g.gain.exponentialRampToValueAtTime(.0001, t + .85);
+    o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t + .9);
+    noise(t + .9, .5, .16, 'lowpass', 140); tone(70, t + .9, .1, .3, 'sine', 45); return;
+  }
   if (name === 'quest') [523, 659, 784].forEach((f, i) => wood(f, t + i * .12));
   else if (name === 'chronik') [392, 523, 659, 880].forEach((f, i) => wood(f, t + i * .14, .1));
   else if (name === 'knock'){ noise(t, .06, .12, 'bandpass', 900, 2); tone(320, t, .08, .15); }
@@ -81,6 +101,8 @@ function audioTick(now){
   seaVol.gain.setTargetAtTime(lod === 'near' ? .5 : lod === 'mid' ? .34 : .16, t, .8);
   if (lod !== 'far' && now > nextBird){ nextBird = now + 5000 + Math.random() * 11000; if (!dark) bird(t + .05); }
   if (dark && lod !== 'far' && now > nextCricket){ nextCricket = now + 700 + Math.random() * 900; cricket(t + .05); }
-  const feast = islands.some(I => I.feastEnd > tick && boxIn(I.box, v));
-  if (feast){ if (drumAt < t) drumAt = t + .05; while (drumAt < t + .45){ drum(drumAt, DRUM[drumStep++ % DRUM.length]); drumAt += .21; } }
+  windVol.gain.setTargetAtTime((.025 + wind().str * .1) * (lod === 'far' ? .7 : 1) * (.75 + Math.random() * .5), t, 1.2);   // gusts
+  // the feast's drums, or in the evening the slit drum of someone on the plaza, when it is on screen
+  const feast = islands.some(I => I.feastEnd > tick && boxIn(I.box, v)), evening = !feast && cam.z > PEOPLE_Z && walkers.some(w => w.play && w.play.k === 'drum' && w.play.ph === 'do' && ptIn(w.x, w.y, v));
+  if (feast || evening){ if (drumAt < t) drumAt = t + .05; while (drumAt < t + .45){ drum(drumAt, DRUM[drumStep++ % DRUM.length] * (feast ? 1 : .45)); drumAt += feast ? .21 : .26; } }
 }

@@ -253,7 +253,8 @@ function openSheet(kind, data){
 }
 /* a tap on any button sends rings out, as a pebble dropped in the lagoon */
 document.addEventListener('pointerdown', e => {
-  const b = !reduced && e.target.closest && e.target.closest('button'); if (!b || b.disabled) return;
+  const bt = e.target.closest && e.target.closest('button'); if (bt && !bt.disabled) sfx('tap');
+  const b = !reduced && bt; if (!b || b.disabled) return;
   const app = $('app'), r = app.getBoundingClientRect();
   for (const k of ['', ' b']){ const d = document.createElement('i'); d.className = 'tapring' + k; d.style.left = (e.clientX - r.left) + 'px'; d.style.top = (e.clientY - r.top) + 'px'; app.appendChild(d); setTimeout(() => d.remove(), 900); }
 }, {passive:true});
@@ -315,6 +316,28 @@ function knotCord(I, f, t, nd){
   const ok = cur.filter(n => n.state !== 'out').length;   // a loose knot still holds
   return cordOf([...cur.map(n => ({k:n.k, st:n.state})), ...(nxt.length ? [{bead:true}] : []), ...nxt.map(k => ({k, st:'next'}))], `${ok}/${cur.length}`);
 }
+/* The long way, as one cord: every age of the village a knot, the great voyage the last. Tied knots are behind you,
+   the loose one is next (with the number of people it takes), the faint ones lie ahead. */
+const EPOCH_IC = ['einbaum', 'setzling', 'schnur', 'toepfe', 'haus', 'plejaden', 'mana'];
+function epochCord(){
+  const now = stageNow(), done = quest >= QUESTS.length, steps = [...STAGES.map((S, i) => ({n:S.n, ic:EPOCH_IC[i], st:i <= now ? 'ok' : i === now + 1 ? 'low' : 'next', pop:S.pop})), {n:'Die große Fahrt', ic:'insel', st:done ? 'ok' : now >= STAGES.length - 2 ? 'low' : 'next'}];
+  return `<div class="cord epochs" role="list" aria-label="Der Weg des Dorfes">${steps.map(q => `<span class="knot ${q.st}" role="listitem" aria-label="${q.n}${q.st === 'ok' ? ': erreicht' : q.pop ? `: ab ${q.pop} Menschen` : ''}"><svg class="kg" viewBox="0 0 24 20" aria-hidden="true"><use href="#kn-${q.st}"/></svg>${icon(q.ic)}${q.st === 'low' && q.pop ? `<small>${q.pop}</small>` : ''}</span>`).join('')}</div>`;
+}
+/* The way to a good this island cannot make, as a chain of pictures: canoe house, canoe, an island that has it, a
+   village or a trade route there, the good in store. Done links are green, the first open one is a button. */
+const canMakeOn = (J, k) => ORDER.some(q => { const K = KINDS[q]; return K && !K.plant && (K.prod === k || (K.picks && K.picks[k])) && K.on.includes(J.type) && (!SPEC_OF_KIND[q] || specOf(J) === SPEC_OF_KIND[q]); });
+function outsideChain(I, k){
+  const own = ships.filter(s => s.own), yardB = I.buildings.find(b => b.kind === 'werft' && !b.bt), there = islands.filter(J => J !== I && J.discovered && canMakeOn(J, k));
+  const linked = there.some(J => J.settled) || routes.some(r => there.some(J => (r.a === I.id && r.b === J.id) || (r.b === I.id && r.a === J.id)));
+  const steps = [
+    {ic:bIcon('werft'), ok:!!yardB || own.length > 0, act:'data-act="hint" data-k="werft"', n:'Kanuhaus'},
+    {ic:icon('einbaum'), ok:own.length > 0, act:yardB ? `data-act="goto" data-b="${yardB.id}"` : 'data-act="fleetbar"', n:'Kanu'},
+    {ic:icon('insel'), ok:there.length > 0, act:'data-act="fleetbar"', n:`Eine Insel mit ${GN[k]}`},
+    {ic:icon('pop'), ok:linked, act:'data-act="fleetbar"', n:'Dorf oder Handelsweg dorthin'},
+    {ic:icon(k), ok:(I.stock[k] || 0) > 0, n:`${GN[k]} im Lager`}
+  ], first = steps.findIndex(q => !q.ok);
+  return `<div class="chain" role="list">${steps.map((q, i) => i === first && q.act ? `<button class="step-ic next" type="button" ${q.act} aria-label="${q.n}: als Nächstes">${q.ic}</button>` : `<span class="step-ic${q.ok ? ' ok' : ''}" role="listitem" aria-label="${q.n}${q.ok ? ': erledigt' : ''}">${q.ic}</span>`).join('<i class="arr" aria-hidden="true"></i>')}</div>`;
+}
 /* where something comes from, as one button with the building on it: tap it and the build bar shows that building */
 const bIcon = k => `<svg class="bi" viewBox="${KINDS[k].vb || '-17 -29 34 33'}" aria-hidden="true">${iconMarkup(k)}</svg>`;
 const wayChip = w => w && w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${bIcon(w.build)}${KINDS[w.build].n}</button>` : w && w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
@@ -344,6 +367,7 @@ function houseMarkup(I, b){
       return w && (w.build || w.fleet) ? `<button class="cost out" type="button" ${w.build ? `data-act="hint" data-k="${w.build}"` : 'data-act="fleetbar"'} aria-label="${label}">${icon(k)}<b>${n}</b></button>` : `<span class="cost ${q.ok ? 'ok' : 'out'}" role="img" aria-label="${label}">${icon(k)}<b>${n}</b></span>`; };
     h += `<div class="rise"><div class="rise-head">${knotIc}<b>${u.T.n}</b><span class="room">${seatIc}${u.T.cap}${u.t === 2 ? icon('kind') : ''}</span></div>`;
     h += `<div class="costs">${u.steps.map(chip).join('')}</div>`;
+    { const ks = u.steps.filter(q => !q.ok).flatMap(q => q.k === 'needs' ? q.miss : [q.k]), far = ks.find(k => k !== 'dach' && needWay(I, k).outside); if (far) h += outsideChain(I, far); }
     h += `<button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Aufsteigen</button></div>`;
   }
   { const ln = m[0] && m[0].ln; h += `<p class="sub line">Linie ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
@@ -359,7 +383,7 @@ function villageGoal(I, nd){
   // the next step up: what the first house that cannot rise yet still lacks
   const next = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => upgradeSteps(I, b, nd.list)).find(Boolean);
   if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
-    return {cls:w && w.outside ? 'far' : 'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w ? w.text : '', btn:wayBtn(w)}; }
+    return w && w.outside ? {cls:'far', t:`Für ${next.T.n}: ${GN[k]}`, d:'', chain:outsideChain(I, k)} : {cls:'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w ? w.text : '', btn:wayBtn(w)}; }
   if (nd.atMax) return {cls:'far', t:'Die Insel ist voll', d:`${I.name} trägt höchstens ${islandMax(I)} Menschen. Gründet ein Dorf auf einer anderen Insel.`, btn:wayBtn({fleet:true})};
   const st = STAGES[stageNow() + 1]; if (st && I.pop < st.pop) return {cls:'low', t:`Ab ${st.pop} Menschen: ${st.n}`, d:'Baut Hütten, dann kommen Familien. In Familienhäusern kommen Kinder.', btn:wayBtn({build:'haus'})};
   return null;
@@ -367,6 +391,7 @@ function villageGoal(I, nd){
 function needsMarkup(I){
   const tab = (sheetData && sheetData.tab) || 'leute', nd = needsOf(I);
   let h = head(I.name, `${LEVEL_NAMES[I.lvl || 1]} · ${I.pop} Bewohner · Platz für ${nd.cap}`);
+  h += epochCord();
   h += `<div class="tabs" role="tablist">${[['leute', 'Bewohner'], ['arbeit', 'Arbeit'], ['insel', 'Insel']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="tab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
   return h + (tab === 'arbeit' ? workTab(I, nd) : tab === 'insel' ? isleTab(I, nd) : peopleTab(I, nd));
 }
@@ -374,7 +399,7 @@ const chipS = (cls, t) => `<span class="state ${cls}">${t}</span>`, barS = f => 
 const rowS = (k, n, small, extra, right, cls = '') => `<li class="${cls}">${k ? icon(k) : ''}<span class="nm">${n}<small>${small}</small>${extra || ''}</span>${right || ''}</li>`;
 function peopleTab(I, nd){
   let h = '';
-  const g = villageGoal(I, nd); if (g) h += `<div class="goal ${g.cls}"><span><b>${g.t}</b>${g.d ? `<small>${g.d}</small>` : ''}</span>${g.btn || ''}</div>`;
+  const g = villageGoal(I, nd); if (g) h += `<div class="goal ${g.cls}"><span><b>${g.t}</b>${g.d ? `<small>${g.d}</small>` : ''}${g.chain || ''}</span>${g.btn || ''}</div>`;
   // the houses by step, each with the needs of its step
   const roof = nd.roofless ? 'out' : 'ok';
   for (const t of [1, 2, 3, 4]){
@@ -451,14 +476,17 @@ function vitalLine(I){
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
 function storeMarkup(I){
-  const nd = needsOf(I), rows = ['essen', ...GOODS].map(k => {
+  const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, rows = ['essen', ...GOODS].map(k => {
     const make = ofNeed(k, q => makeRate(I, q)), need = nd.list.find(n => n.k === k), use = (need ? need.use : 0) + ofNeed(k, q => workUse(I, q)), have = haveOf(I, k);
-    return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have, sub:FOODS.includes(k)};
+    return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have};
   }).filter(g => g.k === 'essen' || g.have || g.make || g.use);
-  let h = head(`Lager auf ${I.name}`, `Platz für ${storeCap(I)} von jeder Ware. Mehr Platz gibt jeder Speicher.${I._back && tick - I._back.at < 150 ? ' Links steht, was vor deiner Rückkehr da war.' : ''}`);
-  h += `<ul class="list needs">${rows.map(g => `<li class="${g.sub ? 'sub-row' : ''}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${g.k}"/></svg><span class="nm">${GN[g.k]}<small>${g.make ? `+${perMin(g.make)}` : '+0'} ${g.use ? `−${perMin(g.use)}` : ''} pro Minute</small></span>${I._back && tick - I._back.at < 150 && I._back.d[g.k] ? `<small class="back">${I._back.d[g.k][0]} →</small>` : ''}<b class="qty">${g.have}</b>${g.k === 'essen' ? '' : `<button class="chip" type="button" data-act="ware" data-k="${g.k}" aria-label="Wer macht ${GN[g.k]}?">Wer?</button>`}</li>`).join('')}</ul>`;
+  let h = head(`Lager auf ${I.name}`, `${icon('haus')} ${cap} je Ware`);
+  // each good a tile: tap it to see who makes it; the arrow is green when more comes than goes, red when it runs down
+  h += `<div class="tiles">${rows.map(g => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / (g.k === 'essen' ? cap * FOODS.length / 3 : cap));
+    const tag = g.k === 'essen' ? 'span' : 'button', at = g.k === 'essen' ? 'role="img"' : `type="button" data-act="ware" data-k="${g.k}"`;
+    return `<${tag} class="tile ${cls}${g.k === 'essen' ? ' sum' : ''}" ${at} aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute">${icon(g.k)}<b>${g.have}</b>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></${tag}>`; }).join('')}</div>`;
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full');
-  if (idle.length) h += `<p class="sub">Es stehen still: ${idle.map(b => `${KINDS[b.kind].n} (${b.idle.text.replace(/\.$/, '')})`).join(', ')}.</p>`;
+  if (idle.length) h += `<div class="chips stillrow"><span class="state out">steht still</span>${idle.slice(0, 8).map(b => `<button class="chip way" type="button" data-act="goto" data-b="${b.id}" aria-label="${KINDS[b.kind].n}: ${b.idle.text}">${bIcon(b.kind)}${KINDS[b.kind].n}</button>`).join('')}</div>`;
   return h;
 }
 /* Standing sheet: what mana is for, and the feasts this island can hold */
@@ -510,10 +538,19 @@ function landingMarkup(){
   return h;
 }
 /* The end of the tasks: what the clan has built, and the sea stays open */
+/* the finale: a double canoe under the rising Pleiades, sailing on, the stars coming out one after the other */
+const FINALE_SCENE = (() => {
+  const r = rng(77), stars = Array.from({length:34}, (_, i) => `<circle cx="${(r() * 320).toFixed(1)}" cy="${(r() * 70).toFixed(1)}" r="${(.5 + r() * .9).toFixed(2)}" fill="#F4ECD8" class="tw" style="animation-delay:${(r() * 3).toFixed(2)}s"/>`).join('');
+  const pleiades = [[236, 22], [242, 18], [247, 23], [240, 27], [251, 19], [245, 30], [254, 26]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4" fill="#FFF6DC"/>`).join('');
+  return `<div class="finale-scene" aria-hidden="true"><svg viewBox="0 0 320 128"><rect width="320" height="128" fill="#1E3346"/>${stars}<g class="rise">${pleiades}</g>` +
+    `<path d="M0 96Q40 90 80 96T160 96T240 96T320 96V128H0Z" fill="#2F5F73"/><path d="M0 104Q40 98 80 104T160 104T240 104T320 104" fill="none" stroke="#7FB5C2" stroke-width="1" stroke-dasharray="3 5" class="swell"/>` +
+    `<g class="voyage"><g class="bob"><path d="M-30 0Q0 7 30 0L26 4Q0 9-26 4Z" fill="#6B4428" stroke="#1A120C" stroke-width="1"/><path d="M-30 -6Q0 1 30 -6L26 -2Q0 3-26 -2Z" fill="#7A5434" stroke="#1A120C" stroke-width="1"/><path d="M-24-6H24" stroke="#C99A62" stroke-width="2"/>` +
+    `<path d="M2-6L-14-46Q-2-30 10-44Q6-24 2-6Z" fill="#E9DCC0" stroke="#1A120C" stroke-width="1"/><path d="M2-6V-40" stroke="#1A120C" stroke-width="1.2"/><circle cx="-12" cy="-9" r="2" fill="#1A120C"/><circle cx="16" cy="-9" r="2" fill="#1A120C"/></g></g></svg></div>`;
+})();
 function finaleMarkup(){
   const mine = islands.filter(I => I.settled), people = mine.reduce((t, I) => t + I.pop, 0), friends = routes.filter(r => isl(r.a).clan || isl(r.b).clan);
   const row = (k, label, v) => `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">${k ? `<use href="#ic-${k}"/>` : ''}</svg><span class="nm">${label}</span><b class="qty">${v}</b></li>`;
-  let h = head('Die große Fahrt ist vollbracht', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`);
+  let h = head('Die große Fahrt ist vollbracht', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`) + FINALE_SCENE + epochCord();
   h += `<p>Vom ersten Versammlungshaus auf ${isl('heimat').name} aus ist ein Netz aus Dörfern und Freundschaften entstanden, bis über die Weite See zu den Fernen Inseln, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben.</p>`;
   h += `<ul class="list needs">${row('pop', 'Eigene Dörfer', mine.length)}${row('pop', 'Menschen', people)}${row('schnur', 'Befreundete Clans', friends.length)}${row('schnur', 'Knoten auf allen Schnüren', routes.reduce((t, r) => t + r.knots, 0))}${row('einbaum', 'Kanus', own().length)}${row('mana', 'Ansehen', Math.floor(mana))}${row('', 'Entdeckte Inseln', islands.filter(I => I.discovered).length)}</ul>`;
   { const met = cultureIsles(); if (met.length) h += `<p>Am Rand der bekannten See habt ihr Menschen einer anderen Kultur getroffen: ${andList(met.map(I => I.clan.name))}.</p>`; }
@@ -533,7 +570,7 @@ function crewMarkup(I, b){
   if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}</div>`;
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
   const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < K.crew ? '' : 'disabled'}>+</button></span>`;
-  return `<div class="crew">${chips}${ctl}</div><p class="sub crewnote">${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ' Niemand ist frei.'}</p>`;
+  return `<div class="crew">${chips}${ctl}</div><p class="sub crewnote">${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
 }
 /* A family on its own sheet: its house and step, what it has and lacks, its people by name, where it works */
 function famMarkup(I, f, withHead = true){
@@ -587,7 +624,8 @@ function infoMarkup(I, b){
     line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(prodOf(b))}${perMin(rate * outOf(b))}${by}<small>/min</small></span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
     // the Erntehaus and the fishers get what is needed most, or what you hold them to
     if (K.picks){ const pk = b.v && K.picks[b.v.pick] ? b.v.pick : '';
-      why += `<div class="rowx"><span class="sub">${pk ? `Nur ${K.picks[pk].n}.` : `Von selbst, was am meisten fehlt: jetzt ${K.picks[choiceOf(b)].n}.`}</span></div><div class="chips picks" role="group" aria-label="Was sie holen"><button class="chip" type="button" data-act="pick" data-v="" aria-pressed="${!pk}">Von selbst</button>${Object.entries(K.picks).map(([k, P]) => `<button class="chip" type="button" data-act="pick" data-v="${k}" aria-pressed="${pk === k}">${P.n}</button>`).join('')}</div>`; }
+      const cur = choiceOf(b);
+      why += `<div class="chips picks" role="group" aria-label="Was sie holen"><button class="chip" type="button" data-act="pick" data-v="" aria-pressed="${!pk}">${icon('crew')}Von selbst</button>${Object.entries(K.picks).map(([k, P]) => `<button class="chip pickc${!pk && cur === k ? ' auto' : ''}" type="button" data-act="pick" data-v="${k}" aria-pressed="${pk === k}" aria-label="${P.n}${!pk && cur === k ? ', holen sie gerade' : ''}">${icon(k)}${P.n}</button>`).join('')}</div>`; }
     if (b.kind === 'ernte') more.push(`${palmsNear(I, b).length} Palmen in Reichweite. Je mehr Palmen, desto mehr Ernte, bis 8. Für Holz fällen sie eine alte Palme und setzen an ihre Stelle eine keimende Nuss; dafür müssen mehr als ${K.near.n + 3} stehen.`);
     if (b.kind === 'fisch') more.push(`Das Riff: ${(I.reefLife ?? 1) > .55 ? 'reich' : (I.reefLife ?? 1) > .3 ? 'abgesammelt, es gibt weniger' : 'leer gesammelt, kaum noch etwas'}. Es erholt sich langsam, unter einem Rāhui schneller.`);
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
@@ -598,7 +636,8 @@ function infoMarkup(I, b){
         I.treasure && I.treasure.k === 'perlmutt' ? 'Vor Tifa liegen die Perlmuscheln tief: mehr Pause, aber Perlmutt.' : I.atoll ? 'Aus Riesenmuschelschalen schleifen sie hier Beile.' : 'Sie bringen Riesenmuscheln, Kraken und Seegurken.'); }
     // the soil of a field: how much is left, and letting it rest
     if (K.soil){ line += `<span>${icon('soil')}Boden ${Math.round((b.soil ?? 1) * 100)} %${sheltered(I, b) ? ', Bäume schützen ihn' : ''}</span>`;
-      why += `<div class="rowx"><span class="sub">${b.fallow ? 'Liegt brach, bis der Boden ausgeruht ist.' : 'Jede Ernte zehrt am Boden. Brach erholt er sich in gut zwei Minuten.'}</span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }
+      more.push('Jede Ernte zehrt am Boden. Brach erholt er sich in gut zwei Minuten.');
+      why += `<div class="rowx"><span class="soilbar" role="img" aria-label="Boden ${Math.round((b.soil ?? 1) * 100)} %">${icon('soil')}<span class="mbar"><i style="width:${Math.round((b.soil ?? 1) * 100)}%"></i></span></span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }
     if (w && w.why !== 'way') why = `<p class="sub why">${w.text}</p>`;
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
@@ -680,7 +719,8 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet.` : '');
-    h += `<ul class="help"><li>Unten steht der nächste Schritt. Antippen zeigt den Weg.</li><li><b>Tippe auf ein Haus:</b> wer dort wohnt, die Schnur der Familie (ein Knoten je Bedürfnis) und was zum Aufsteigen fehlt. Ein Knoten mit Blüte über einem Haus heißt: Es kann aufsteigen.</li><li>Tippe oben auf die Bewohnerzahl: Bewohner, Arbeit und Insel auf einen Blick.</li><li>Bauen: Gebäude wählen, auf Land tippen, Bauen. Jedes Gebäude braucht Holz und Palmwedel.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Leere Hütten ziehen Familien von weit her an. Kinder kommen in Familienhäusern.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li></ul>`;
+    if (first) h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Folge dem Finger.</li><li>${icon('haus')}Tippe ein Haus an.</li><li>${knotIc}Alle Knoten fest: Das Haus steigt auf.</li></ul>`;
+    else h += `<ul class="help"><li>Unten steht der nächste Schritt. Antippen zeigt den Weg.</li><li><b>Tippe auf ein Haus:</b> wer dort wohnt, die Schnur der Familie (ein Knoten je Bedürfnis) und was zum Aufsteigen fehlt. Ein Knoten mit Blüte über einem Haus heißt: Es kann aufsteigen.</li><li>Tippe oben auf die Bewohnerzahl: Bewohner, Arbeit und Insel auf einen Blick.</li><li>Bauen: Gebäude wählen, auf Land tippen, Bauen. Jedes Gebäude braucht Holz und Palmwedel.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Leere Hütten ziehen Familien von weit her an. Kinder kommen in Familienhäusern.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -700,9 +740,12 @@ function renderSheet(){
   } else if (sheetKind === 'finale'){
     h += finaleMarkup();
   } else if (sheetKind === 'menu'){
-    h += head('Menü', `Dein Spiel bleibt in diesem Browser gespeichert. Welt Nr. ${seed}`);
+    h += head('Menü', `Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
+      `<p class="sec">Spielstand</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
+      (backups().length ? `<div class="chips copies">${backups().map(b => `<button class="chip" type="button" data-act="backup" data-i="${b.i}">Kopie ${ago(b.at)}</button>`).join('')}</div>` : '') +
+      `<details class="more"><summary>Als Text</summary><textarea id="saveText" class="savetext" rows="3" spellcheck="false" aria-label="Spielstand als Text"></textarea><div class="rowx"><span class="chips"><button class="chip" type="button" data-act="showtext">Zeigen</button><button class="chip" type="button" data-act="loadtext">Aus Text laden</button></span></div></details>` +
       `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();
@@ -797,8 +840,33 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'sound'){ setSound(!opts.sound); renderSheet(); return; }
     if (act === 'night'){ opts.night = !opts.night; saveOpts(); requestDraw(); renderSheet(); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
+    // the game as a file to keep, and back again; or as text where files cannot be saved
+    if (act === 'export'){ exportGame(); return; }
+    if (act === 'import'){ const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json,text/plain';
+      inp.onchange = () => { const f = inp.files && inp.files[0]; if (!f) return; f.text().then(loadRaw); }; inp.click(); return; }
+    if (act === 'backup'){ const b = backups().find(q => q.i === +btn.dataset.i); if (b) loadRaw(b.raw); return; }
+    if (act === 'showtext'){ const t = $('saveText'); save(); t.value = serialize(); t.focus(); t.select(); return; }
+    if (act === 'loadtext'){ loadRaw($('saveText').value.trim()); return; }
     if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); beginLanding(); toast('Neues Spiel, neue Inseln.', 2600, false); return; }
   }
 });
+/* the game as a file: inside the claude.ai viewer through its downloads capability (the viewer confirms), in a plain
+   browser as an ordinary download; where neither works, the text under "Als Text" still does */
+async function exportGame(){
+  save(); const raw = serialize(), d = new Date(), name = `polinusa-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
+  const fallback = () => toast('Sichern ging hier nicht. Unter „Als Text“ geht es auch.', 3400, false);
+  let dl = null; try { dl = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('downloads') : null; } catch (e){ dl = null; }
+  if (dl){ try { await dl.save({filename:name, data:raw}); toast('Spielstand gesichert.', 2200, false); } catch (e){ if (!e || e.code !== 'declined') fallback(); } return; }
+  try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([raw], {type:'application/json'})); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Spielstand gesichert.', 2200, false); }
+  catch (e){ fallback(); }
+}
+/* load a game from a file, a copy or text: only when it is a whole game of this version; the current one is kept as a copy */
+function loadRaw(raw){
+  let ok = false; const before = serialize();
+  try { ok = !!raw && restore(raw); } catch (e){ ok = false; }
+  if (!ok){ restore(before); renderAll(); toast('Das ist kein Spielstand, den Polinusa lesen kann.', 3200, false); return; }
+  try { localStorage.setItem(backupKey(BACKUPS - 1), JSON.stringify({at:Date.now() - 1, raw:before})); } catch (e){}
+  closeSheet(); renderAll(); save(); toast('Spielstand geladen.', 2200, false);
+}
 const giftGuess = (C, worth) => { const g = returnGoods(C, worth); return g.load ? giftText(g.cargo) : 'eine kleine Gabe'; };
 function select(b){ selectedId = b.id; invalidate(); setActive(islOfB(b.id).id); openSheet('info', {id:b.id}); }

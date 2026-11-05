@@ -437,11 +437,13 @@ function wedClan(T){
   return true;
 }
 /* a whole family leaves the island, children and all */
+const HUNGER_GO = 60;
+const leaverOf = I => famsOf(I).filter(q => q.id !== chiefFam(I)?.id).sort((a, b) => b.id - a.id)[0];
 function famLeaves(I, why){
-  const f = famsOf(I).filter(q => q.id !== chiefFam(I)?.id).sort((a, b) => b.id - a.id)[0]; if (!f) return;
+  const f = leaverOf(I); if (!f) return;
   const m = new Set(membersOf(I, f).map(p => p.id)); I.people = I.people.filter(p => !m.has(p.id)); I.pop = I.people.length; syncPeople(I); I.staff = null; syncWalkers();
   stats.fortgezogen = (stats.fortgezogen || 0) + 1;
-  if (!awayQuiet) toast(`${famName(f)} verlässt ${I.name} im Kanu: Es fehlt ${GN[why]}. Wer bleibt, braucht mehr ${why === 'wasser' ? 'Quellen oder grüne Nüsse' : 'Erntehäuser, Fischer und Gärten'}.`, 5200);
+  if (!awayQuiet){ toast(`${famName(f)} fährt fort: kein ${GN[why]}.`, 3600); sfx('leave'); }
 }
 /* a quiet message: into the list of the conch, without unrolling */
 function note(msg){ news.unshift({msg, at:Date.now()}); if (news.length > 40) news.length = 40; if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
@@ -620,6 +622,7 @@ const PLAY = {
   string:{n:'legt Fadenfiguren'}, hiko:{n:'jongliert mit Kerzennüssen'}, nap:{n:'döst im Schatten'}, drum:{n:'schlägt die Schlitztrommel'},
   toy:{n:'lässt ein kleines Auslegerkanu schwimmen'}, garland:{n:'flicht einen Blütenkranz'}, story:{n:'erzählt von den Ahnen'}, listen:{n:'hört den Geschichten der Alten zu'},
 };
+const onScreen = w => typeof cam !== 'undefined' && cam.z > PEOPLE_Z && ptIn(w.x, w.y, view(10));
 const PLAY_FX = {string:'string', hiko:'hiko', garland:'garland', story:'story', drum:'drum', kite:'kite', toy:'toy'};
 const landC = L => L._c || (L._c = L.poly.reduce((m, q) => ({x:m.x + q.x / L.poly.length, y:m.y + q.y / L.poly.length}), {x:0, y:0}));
 /* a place on the beach and a spot out in the water before it, with only water between; for surf on the ocean side */
@@ -686,7 +689,7 @@ function playLeg(I, w){
   }
   if (P.k === 'swim'){
     // children run in and jump; then a few strokes here and there, now and then under water, and back to the beach
-    if (P.ph === 'go'){ P.ph = 'in'; P.at = now; P.jump = w.child || Math.random() < .3; swimTo(P.b.x + P.ux * 6, P.b.y + P.uy * 5); return true; }
+    if (P.ph === 'go'){ P.ph = 'in'; P.at = now; P.jump = w.child || Math.random() < .3; if (P.jump && onScreen(w)) setTimeout(() => sfx('plop'), 650); swimTo(P.b.x + P.ux * 6, P.b.y + P.uy * 5); return true; }
     if (P.n++ < P.max + 1){ P.ph = 'paddle'; const s = {x:P.s.x + rnd(7), y:P.s.y + rnd(4)}; if (!landAt(I, s)){ const wait = Math.random() < .5 ? 700 + Math.random() * 1600 : 0; swimTo(s.x, s.y, wait); P.duck = Math.random() < .4 ? now + 300 : 0; return true; } }
     P.ph = 'done'; goTo(I, w, P.b.x, P.b.y, 400); return true;
   }
@@ -891,7 +894,7 @@ function diveLeg(I, w, j){
       }
       if (w.dives >= 5 || (w.strain || 0) >= 7 || diveBlock(I)){ w.leg = 'back'; goTo(I, w, L.x + rnd(3), L.y + rnd(2)); return; }
       if (partner && partner.under){ w.wait = 700; return; }   // the other is down: keep watch and hold the cord
-      w.under = performance.now(); w.wait = (deep ? 5200 : 3800) + Math.random() * 1600; return;   // down with the stone
+      w.under = performance.now(); if (onScreen(w)) sfx('plop'); w.wait = (deep ? 5200 : 3800) + Math.random() * 1600; return;   // down with the stone
     case 'back': w.boat = false; w.leg = 'land'; goTo(I, w, j.x, j.y - 1, 200); return;
     case 'land': {
       const got = {};
@@ -1094,7 +1097,9 @@ function workUse(I, k){
 }
 /* basic needs hold for everyone, the others for the families whose house has reached that step */
 const needActive = (I, N) => N.lvl === 1 || popTier(I, N.lvl) > 0;
-const needPop = (I, N) => N.lvl === 1 ? I.pop : popTier(I, N.lvl);
+// children eat and drink about half of what grown-ups do
+const eaters = I => (I.people || []).reduce((n, p) => n + (stageOf(p) === 'kid' ? .5 : 1), 0) || I.pop;
+const needPop = (I, N) => N.lvl === 1 ? eaters(I) : popTier(I, N.lvl);
 /* Food is everything people eat; any other need is one good */
 const ofNeed = (k, f) => k === 'essen' ? FOODS.reduce((t, q) => t + f(q), 0) : f(k);
 const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
@@ -1216,8 +1221,11 @@ function econ(){
     if (nd.atMax && !I.fullSaid && I.id === active && !awayQuiet){ I.fullSaid = true; toast(`${I.name} ist voll: Mehr als ${islandMax(I)} Menschen trägt die Insel nicht. Schickt Familien im Kanu aus und gründet ein neues Dorf.`, 6000); } else if (!nd.atMax) I.fullSaid = false;
     // without food or water people leave, slowly, but a few always stay
     // without food or water a family packs up and leaves in its canoe, the youngest household first, never the last one
-    I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : 0;
-    if (I.hunger >= 45 && famsOf(I).length > 1 && tick >= (I.grace || 0)){ I.hunger = 0; famLeaves(I, nd.missing.find(n => n.k === 'essen' || n.k === 'wasser').k); }
+    // hunger builds while food or water are gone and fades twice as fast when they are back; at two minutes a family
+    // goes (a canoe over its house warns from the half on). Room in the houses shrinks only after half a minute of nothing.
+    I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : Math.max(0, (I.hunger || 0) - 2);
+    if (I.hunger >= HUNGER_GO && famsOf(I).length > 1 && tick >= (I.grace || 0)){ I.hunger = 0; I.grace = tick + 60; famLeaves(I, (nd.missing.find(n => n.k === 'essen' || n.k === 'wasser') || {k:'essen'}).k); }
+    { const d = I.dry || (I.dry = {}); for (const n of nd.list) d[n.k] = n.stock > 0 ? 0 : (d[n.k] || 0) + 1; }
   }
   stageTick();
   if (tick % 2 === 0){ const was = $('quest').hidden; renderQuest(); if (was !== $('quest').hidden) measure(); }   // the elders' advice follows the village
@@ -1480,8 +1488,18 @@ function frame(now){
   const dt = Math.min(64, now - last); last = now;
   stepCam(now); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
-  if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ draw(now); lastDraw = now; }
+  if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
+}
+/* the frame governor: when the device cannot keep up (frames come slower than about 18 a second for a while), the picture
+   gets simpler; after half a minute of easy frames it gets finer again */
+let gAvg = 0, gN = 0, gEasy = 0;
+function govern(dt){
+  if (document.hidden || dt > 1000) return;
+  gAvg = gAvg ? gAvg * .94 + dt * .06 : dt; if (++gN < 45) return;
+  if (gAvg > 55 && quality > 0){ setQuality(quality - 1); gN = 0; gAvg = 0; gEasy = 0; }
+  else if (gAvg < 36){ if (++gEasy > 900 && quality < 2){ setQuality(quality + 1); gEasy = 0; gN = 0; gAvg = 0; } }
+  else gEasy = 0;
 }
 /* ---------- while you were away. The islands live on when the game is closed or out of sight, up to eight hours: canoes
    are finished and sail on, building sites are completed, the workshops make what they make, people move in while there is
@@ -1618,7 +1636,7 @@ addEventListener('pagehide', () => save());
 function start(data){
   injectDefs();
   let ok = false;
-  try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); } catch (e){}
+  try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); } catch (e){}   // a broken save: the newest copy
   // a game from the old rules is not carried over: the island economy works differently now
   let oldGame = false; try { for (const k of OLD_KEYS) if (localStorage.getItem(k)){ oldGame = true; localStorage.removeItem(k); } } catch (e){}
   if (!ok) newGame();

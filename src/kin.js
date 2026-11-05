@@ -37,7 +37,7 @@ const IMMIG_GAP = 40, IMMIG_WAIT = 75;   // ticks at least between two canoes fo
 const emptyHome = I => homesOf(I).find(b => !famOfHome(I, b) && b.kind !== 'fale') || null;
 function wantsSettlers(I){
   if (!I.settled || !I.people || I.pop >= islandMax(I) || roofless(I) || !emptyHome(I)) return false;
-  const nd = needsOf(I); return !nd.missing.some(n => n.k === 'essen' || n.k === 'wasser');
+  const nd = needsOf(I); return !nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') && surplus(I, nd.list);   // a new family only where there is enough for them
 }
 const immigFor = I => ships.find(s => s.immig && s.to === I.id) || null;
 function newImmig(I){

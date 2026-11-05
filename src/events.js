@@ -207,7 +207,8 @@ function chronikTick(){
   for (const M of CHRONIK){
     if (chronik[M.id] != null || !M.test()) continue;
     chronik[M.id] = yearOf() + 1; mana += M.mana; sfx('chronik');
-    toast(`Chronik: ${M.t}. ${M.d}${M.mana ? ` Ansehen +${M.mana}.` : ''}`, 4600); save(); return;   // one at a time, so each one is noticed
+    // in the first minutes only into the conch, so the start stays quiet; later a short line
+    const msg = `Chronik: ${M.t}.${M.mana ? ` Ansehen +${M.mana}.` : ''}`; if (tick < 150) note(msg); else toast(msg, 3200); save(); return;   // one at a time, so each one is noticed
   }
 }
 function chronikMarkup(){

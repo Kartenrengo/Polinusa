@@ -19,6 +19,26 @@ node tools/bundle.mjs
 
 Sie landet in `dist/polinusa.html`.
 
+### Tests
+
+Die Tests spielen das Spiel in einem Browser ohne Fenster (Playwright mit Chromium):
+
+```
+node tests/run.mjs
+```
+
+Sie sagen je Test „OK“ oder „FEHLER“: `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln),
+`play` (Freizeit, Feierabend, jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
+(vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
+Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer statt einem.
+
+### Spielstand
+
+Das Spiel speichert im Browser. Alle fünf Minuten legt es zusätzlich eine Kopie an, drei werden aufbewahrt; ist der
+Spielstand einmal kaputt, lädt es die neueste Kopie. Im Menü unter „Spielstand“: **Sichern** lädt eine Datei herunter,
+**Laden** liest sie wieder ein (im claude.ai-Artefakt fragt der Betrachter vorher, ob er die Datei speichern will), die Kopien lassen sich antippen, und „Als Text“ zeigt den Spielstand zum Kopieren und
+Einfügen, wo Dateien nicht gehen.
+
 ## Aufbau
 
 | Datei | Inhalt |
@@ -113,7 +133,12 @@ Das Spiel hält sich an die Zeit der Lapita-Leute, die als Erste von Neuguinea b
 ## Anfang
 
 Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, erst sichern, dann wachsen. Der Aufbau ist
-ruhig und braucht Zeit: Ein Spiel-Bot, der nur dem Rat der Ältesten folgt, hat nach einer Stunde etwa 30 Menschen.
+ruhig und braucht Zeit: Ein Spiel-Bot, der nur dem Rat der Ältesten folgt, hat nach einer Stunde 20 bis 30 Menschen,
+ohne dass ein Dorf zusammenbricht.
+
+- **Der Finger:** In den ersten Aufgaben hüpft ein gezeichneter Finger über dem Knopf, der als Nächstes dran ist: erst
+  „Bauen“, dann das Gebäude, dann „Bauen“ am Bauplatz. Die erste Tafel hat drei Zeilen mit Bildern. Die Chronik meldet
+  sich in den ersten Minuten nur still in der Muschel.
 
 - **Vier Menschen, vier Arbeitskräfte:** Jeder in der Familie arbeitet, auch die beiden Kinder. Im Lager liegt Vorrat für
   ein paar Minuten. **In den ersten fünf Minuten zieht niemand fort.**
@@ -127,8 +152,12 @@ ruhig und braucht Zeit: Ein Spiel-Bot, der nur dem Rat der Ältesten folgt, hat 
 | Anfang | Ankunft | Hütte, Erntehaus, Holzfäller, Quelle, Brunnen, Fischerhütte, Pandanusfrüchte, Palme, Brotfrucht |
 | 8 Menschen | Gärten | Taro, Pulaka, Baumpflanzer, Speicher, Hühner, Pandanus |
 | 12 | Sennit und Erdofen | Seilerei, Erdofen, Kalkbrenner, Kurkuma, Harz |
-| 20 | Töpfe und Werkzeug | Töpferei, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Flechthütte, Blumen |
-| 30 | Ein Dorf | Ölhütte, Kanuhaus und Kanus, Navigatoren, Taucher, Versammlungshaus |
+| 20 | Töpfe und Werkzeug | Töpferei, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Flechthütte, Blumen, **Kanuhaus und Auslegerkanu** |
+| 30 | Ein Dorf | Ölhütte, Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
+
+Das Kanuhaus kommt mit 20 Menschen, weil die Meisterhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
+in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe und der großen Fahrt als letztem Knoten;
+fest sind die erreichten, locker die nächste (mit der Zahl der Menschen darunter), hell die kommenden.
 | 40 | Zeit der Feste | Tapa, Schweine, Kava, Trommel, Tanzplatz, Ahnenhaus, feine Dinge, Klingen, Schmuck |
 | 50 | Häuptling | Häuptlingshaus |
 
@@ -175,6 +204,16 @@ Einfach und nach Bedeutung geordnet:
   - **Insel:** Wald, Felder, Wild, Riff, Pflanzen und Tiere, Muster, Navigatoren, der Weg zum Häuptlingsdorf.
 - **Wenig Text:** Bilder statt Sätze. Meldungen sind kurz („Familie Hiva zieht ein, mit 3 Feldfrüchten. Neue Linie.“).
   Mehr steht unter „Mehr dazu“.
+
+- **Lager:** Jede Ware eine Kachel: Bild, Zahl, ein Balken, wie voll es ist, und ▲ oder ▼ pro Minute, grün oder rot.
+  Antippen zeigt, wer sie macht. Was stillsteht, steht darunter als Knöpfe mit dem Gebäude.
+- **Kalender:** Zwölf Monde als Kreise in den Farben der vier Zeiten, der jetzige hervorgehoben; darunter die Zeiten als
+  Bilder und wann das Fest kommt.
+- **Erntehaus und Fischer:** Was sie holen, steht als Bilder; was sie von selbst gerade holen, trägt einen grünen Punkt.
+- **Waren von anderen Inseln:** Statt eines Satzes eine **Bildkette**: Kanuhaus, Kanu, eine Insel, die es hat, ein Dorf
+  oder Handelsweg dorthin, die Ware im Lager. Erledigtes ist grün, das nächste Glied ein Knopf, der hüpft.
+- **Das Finale:** Ist die große Fahrt vollbracht, segelt auf der Tafel ein Doppelkanu unter den aufgehenden Plejaden durch
+  die Nacht, darunter der ganze Weg des Dorfes.
 
 ### Eigene Handschrift
 
@@ -264,10 +303,19 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
 - **Weiterkommen:** Die Tafel zeigt, was fehlt, und woher es kommt. Manches gibt es nicht auf jeder Insel: Matten nur auf
   Atollen, Töpfe nur auf hohen Inseln, feine Dinge nur auf Inseln mit besonderem Boden. Ab dem Meisterhaus muss das Dorf
   also hinaus: siedeln, tauschen, Gaben bringen.
-- **Kinder:** Sie kommen in Familienhäusern, wo eine Frau und ein Mann leben, Platz ist und die Ernte mehr als reicht.
-  Jedes Kind gehört zur Linie seiner Mutter. Mit sechs Jahren arbeitet es mit.
-- **Platz nach Bedürfnissen, wie bei Anno:** Jedes erfüllte Bedürfnis bringt Platz für einen Menschen mehr. Fehlt etwas,
-  wird das Haus zu eng, und alle 30 Sekunden zieht von dort jemand fort. Die Tafel des Hauses sagt: „Platz für 3 von
+- **Kinder:** Sie kommen in Familienhäusern, wo eine Frau und ein Mann leben, Platz ist und die Ernte mehr als reicht:
+  Essen und Wasser kommen mindestens 15 % schneller nach, als sie gebraucht werden, oder das Lager ist gut gefüllt.
+  Jedes Kind gehört zur Linie seiner Mutter, isst und trinkt halb so viel wie ein Erwachsener und arbeitet mit sechs
+  Jahren mit.
+- **Hunger:** Fehlen Essen oder Wasser, wächst der Hunger, und er vergeht doppelt so schnell, wenn wieder etwas da ist.
+  Ab einer Minute schaukelt über dem Haus der Familie, die zuerst gehen würde, ein rötliches Kanu, und der Rat nennt sie;
+  nach zwei Minuten fährt sie fort. Danach ist eine Weile Ruhe.
+- **Baustellen mit Vorrang:** Fehlt Wasser oder Essen, bekommt eine Baustelle, die genau das macht, zuerst Bauleute,
+  notfalls auch aus der Arbeit an der anderen knappen Ware. Eine Baustelle behält ihre Leute bis zum Schluss, statt sie
+  ständig zu tauschen.
+- **Platz nach Bedürfnissen, wie bei Anno:** Jedes erfüllte Bedürfnis bringt Platz für einen Menschen mehr. Ist etwas
+  eine halbe Minute lang ganz weg, wird das Haus zu eng, und alle 30 Sekunden zieht von dort jemand fort; kurz leer
+  zählt nicht. Die Tafel des Hauses sagt: „Platz für 3 von
   höchstens 4“.
 - **Zu voll:** Werden die Kinder groß, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in die nächste
   leere Hütte.
@@ -286,7 +334,8 @@ sie bleiben darf.
   fehlen.
 - **Gastfreundschaft:** Wer nicht antwortet, nimmt sie nach gut zwei Minuten nach altem Brauch auf.
 - Jede Familie aus der Ferne bringt eine **neue Linie** mit (siehe Verwandtschaft), und jeder Erwachsene ist eine
-  Arbeitskraft. Es kommt nur jemand, solange Nahrung und Wasser nicht ausgegangen sind und niemand ohne Dach ist.
+  Arbeitskraft. Es kommt nur jemand, solange niemand ohne Dach ist und Essen und Wasser für die Neuen reichen (wie bei
+  den Kindern).
 
 ## Verwandtschaft: neues Blut
 
@@ -1013,7 +1062,13 @@ vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle
 - Der Klang entsteht im Browser, ohne Tondateien: Brandung, die beim Heranzoomen lauter wird, Vögel am Tag, Grillen in der
   Nacht, Schlitztrommeln beim Fest, das Muschelhorn bei Ereignissen und am Fest der Plejaden, Holztöne bei Aufgaben und
   Chronik, ein Klopfen, wenn etwas fertig gebaut ist, ein Platschen beim Stapellauf, klappernde Muscheln bei Gegengaben.
+- Neu dazu: **Wind**, so laut, wie er weht, mit Böen; ein leises Holzklopfen bei jedem Tipp; aufsteigende Holztöne und
+  rasselnde Muscheln, wenn ein Haus aufsteigt; ein knarrender Stamm und ein dumpfer Schlag, wenn ein Baum fällt; ein
+  Platschen, wenn ein Kind ins Wasser springt oder ein Taucher abtaucht; abends die Schlitztrommel vom Dorfplatz, leiser
+  als beim Fest; drei fallende Töne, wenn eine Familie fortfährt.
 - Klang und Tag und Nacht lassen sich im Menü ausschalten.
+- **Langsame Geräte:** Das Spiel misst, wie schnell die Bilder kommen. Kommen sie eine Weile zu langsam, stehen erst
+  Bäume und Gras still, dann zeichnet es mit weniger Pixeln. Läuft es eine halbe Minute leicht, wird es wieder feiner.
 
 ## Von Hand gemacht
 

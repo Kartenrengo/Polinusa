@@ -28,8 +28,9 @@ const CHIEF_GOODS = TIERS[4].needs.filter(k => !TIERS[3].needs.includes(k));
    house 4 to 6 with cooked food, a master's house 4 to 8, the chief's house 4 to 10, by how many of their goods are in
    store. When a need runs out the house has less room, and one by one people leave it (crowdTick). */
 const homeCapMax = (I, b) => TIERS[tierOf(b)].cap;
+const DRY_GRACE = 15;   // ticks a good may be gone before the houses lose the room it gives
 function homeCap(I, b){
-  const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0, basic = ['essen', 'wasser'].filter(have).length;
+  const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE, basic = ['essen', 'wasser'].filter(have).length;
   if (t === 1) return Math.min(max, 2 + basic);
   const extra = TIERS[t].needs.filter(k => !['dach', 'essen', 'wasser'].includes(k)), share = extra.filter(have).length / extra.length;
   return Math.min(max, 2 + basic + Math.round(share * (max - 4)));
@@ -122,12 +123,14 @@ function syncFamilies(I){
 /* Where the next child is born: a family house (step 2 or more) with room, a woman and a man. Room comes with the
    needs met (homeCap), so without cooked food a family house has no room for a child. Nobody is born while food or
    water have run out. */
+const surplus = (I, list) => ['essen', 'wasser'].every(k => { const n = list.find(q => q.k === k); return !n || n.make >= (n.use + n.work) * 1.15 || n.stock >= storeCap(I) * .6; });
 function growTarget(I, list){
   if (!I.settled || I.pop >= islandMax(I)) return null;
   const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));
   if (out.has('essen') || out.has('wasser') || haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0) return null;
-  // children come where there is more than enough: the harvest covers what everyone eats and drinks
-  if (list.some(n => (n.k === 'essen' || n.k === 'wasser') && n.state !== 'ok') && haveOf(I, 'essen') < 30) return null;
+  // children come where there is more than enough: the harvest covers what everyone eats and drinks with some to spare,
+  // or the stores are well filled
+  if (!surplus(I, list)) return null;
   let best = null, room = 0;
   for (const b of homesOf(I)){
     const t = tierOf(b), f = t >= 2 && famOfHome(I, b); if (!f) continue;
@@ -137,7 +140,7 @@ function growTarget(I, list){
   return best;
 }
 /* Children are born now and then where there is room, more seldom where the families are close kin (see kinFactor) */
-const BIRTH_EVERY = 45;   // ticks between births on an island where all is well
+const BIRTH_EVERY = 60;   // ticks between births on an island where all is well
 function birthTick(I, ticks = 1){
   const nd = needsOf(I); if (!growTarget(I, nd.list)){ I.birthAcc = Math.min(I.birthAcc || 0, BIRTH_EVERY / 2); return 0; }
   I.birthAcc = (I.birthAcc || 0) + ticks * kinFactor(I) * (I.joyUntil > tick ? 2 : 1);
@@ -173,6 +176,7 @@ function upgradeHouse(I, b){
   const t = tierOf(b) + 1, f = famOfHome(I, b); if (t > 3 || !f) return false;
   pay(I, TIERS[t].cost); b.t = t; b.miss = 0; b.blessAt = typeof performance !== 'undefined' ? performance.now() : 0; invalidate(); I.staff = null;
   if (t === 2) stats.ausbau = (stats.ausbau || 0) + 1; else stats.tufunga = (stats.tufunga || 0) + 1;
+  if (!awayQuiet && I.id === active) sfx('rise');
   if (!awayQuiet && I.id === active) toast(t === 2 ? `${famName(f)}: Familienhaus. Jetzt können Kinder kommen.` : `${famName(f)}: Meisterhaus.`, 2800);
   return true;
 }
@@ -251,6 +255,7 @@ function autoAssign(I, places, at, adults){
     }
   }
 }
+const makesK = (kind, k) => { const K = KINDS[kind] || {}, m = q => K.prod === q || !!(K.picks && K.picks[q]); return k === 'essen' ? FOODS.some(m) : m(k); };
 function staff(I){
   const crew = new Map(), crewP = new Map(), sites = [], boats = [], staffed = new Set(), pulled = new Map();
   if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], total:workers(I), build:0, short:0};
@@ -263,7 +268,10 @@ function staff(I){
   if (autoWork(I)) autoAssign(I, places, at, adults);
   const pool = adults.filter(p => !p.job);
   // the building sites and the canoe house: first who has no work, then the people of the place needed least
-  const want = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant).slice(0, builders(I)).map(b => [b, SITE_CREW]);
+  // a site that will make what is running out (water, food) goes first, then huts for those without a roof, then in order
+  const shortK = ['wasser', 'essen'].filter(k => haveOf(I, k) < 6), urgent = b => shortK.some(k => makesK(b.kind, k)), roofNeed = roofless(I);
+  const rank = b => urgent(b) ? 0 : b.kind === 'haus' && roofNeed ? 1 : 2;
+  const want = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant).sort((a, b) => rank(a) - rank(b)).slice(0, builders(I)).map(b => [b, SITE_CREW]);
   const yardB = I.yard && I.buildings.find(b => b.kind === 'werft' && !b.bt); if (yardB) want.push([yardB, YARD_CREW]);
   let yard = 0;
   if (want.length){
@@ -271,11 +279,16 @@ function staff(I){
     const need = needOf(I, places), cap = storeCap(I), plenty = b => (I.stock[prodOfB(b)] || 0) / cap, pull = b => need(b) * 10 + plenty(b) * 5 + rankOf(b);
     // nobody leaves water or food that is running out
     const order = places.filter(b => (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
+    // a site keeps the place it took its builders from until it is done, so the same people build it to the end
+    const mem = I.pullMem || (I.pullMem = {}); for (const id of Object.keys(mem)) if (!want.some(([w]) => w.id === +id)) delete mem[id];
     for (const [s, n] of want){
       const use = pool.splice(0, n);
+      // for a site that ends the shortage even a place of the other short good gives hands, never one making the same
+      let from = urgent(s) ? places.filter(b => (at.get(b) || []).length && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order;
+      const kept = mem[s.id] && from.find(b => b.id === mem[s.id]); if (kept) from = [kept, ...from.filter(b => b !== kept)];
       while (use.length < n){
-        const b = order.find(q => (at.get(q) || []).length); if (!b) break;
-        const l = at.get(b); use.push(...l.splice(Math.max(0, l.length - (n - use.length)))); pulled.set(b, s);
+        const b = from.find(q => (at.get(q) || []).length); if (!b) break;
+        const l = at.get(b); use.push(...l.splice(Math.max(0, l.length - (n - use.length)))); pulled.set(b, s); if (!mem[s.id]) mem[s.id] = b.id;
       }
       if (!use.length) continue;
       crew.set(s, use.length); crewP.set(s, use.map(p => p.id)); if (s === yardB) yard = use.length; else sites.push(s);
