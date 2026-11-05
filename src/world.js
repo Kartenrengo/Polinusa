@@ -161,7 +161,7 @@ function genHigh(s, hdir, r, volcano, home){
     }
     if (pts.length > 4 && !inPoly(p, land.poly)) riverMouth(I, pts, land);
   }
-  // things that take up ground: the village plaza and a garden on the home island, a rock on most
+  // things that take up ground: a rock on most islands; the village plaza comes with the first hut (placePlaza)
   const free = (p, rad) => inland(p, rad + 6) && !(I.forest && (inPoly(p, I.forest) || polyDist(p, I.forest) < rad + 6)) &&
     !(I.river && polyDist(p, I.river, false) < rad + 8) && !inDelta(I, p, rad + 6) && I.blocked.every(z => Math.hypot(p.x - z.x, p.y - z.y) > z.r + rad + 10);
   const place = (t, rad, near) => {
@@ -174,7 +174,6 @@ function genHigh(s, hdir, r, volcano, home){
     }
     return null;
   };
-  if (home){ const pz = place('plaza', 20, I.anchor); if (pz) I.anchor = {x:pz.x, y:pz.y}; place('garden', 32, {x:(I.anchor.x + cx) / 2, y:(I.anchor.y + cy) / 2}); }
   r(); place('rock', 20);   // basalt for stone adzes on every high island
   // clay: on the bank of the stream, or in a damp hollow near the shore
   if (home || r() < .7){
@@ -404,12 +403,13 @@ function check(kind, I, x, y, ignoreId){
     if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
     if (K.coast && dEdge > 18) return `${K.n} gehört an den Strand`;
     if (K.inland && dEdge < K.inland) return `${K.n} braucht Platz in der Mitte des Landes`;
-    if (K.spring && !(I.river && polyDist(p, I.river, false) < 28)) return I.river ? 'Eine Quelle gehört an den Bach' : 'Auf dieser Insel fließt kein Bach. Baue einen Regenfang.';
+    if (K.spring && !(I.river && polyDist(p, I.river, false) < 28)) return I.river ? 'Eine Quelle gehört an den Bach' : 'Auf dieser Insel fließt kein Bach. Grüne Nüsse vom Erntehaus geben Wasser.';
     if (K.dep && !depNear(I, K.dep, x, y, K.depR)) return `Hier ist kein ${DEPOSITS[K.dep].n} in der Nähe. ${DEPOSITS[K.dep].where}`;
     if (treeAt(I, x, y, (K.r + TREE_R) * .8)) return 'Hier stehen Bäume. Ein Holzfäller kann sie fällen.';
     if (I.river && polyDist(p, I.river, false) < 6) return 'Hier fließt der Bach';
     if (inDelta(I, p, 1)) return 'Hier fließen die Arme des Bachs ins Meer';
-    for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r && !(z.t === 'plaza' && kind === 'halle')) return 'Hier ist kein Platz';   // the clearing is meant for the meeting house
+    for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
+    if (kind === 'halle' && I.settled && !nearCount(I, 'platz', x, y, K.near.r)) return 'Das Versammlungshaus gehört an den Dorfplatz';
   }
   for (const b of I.buildings){ if (b.id === ignoreId) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + KINDS[b.kind].r) * .8) return 'Zu eng'; }
   return '';

@@ -31,7 +31,7 @@ let windCache = null;
 const wind = () => { const W = windCache && windCache.t === tick ? windCache.w : (windCache = {t:tick, w:windAt(tick)}).w; return cyclone ? (W.storm || (W.storm = {...W, str:1, word:'Sturm'})) : W; };   // in a cyclone it blows at full strength
 
 /* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night */
-const SEA_KINDS = new Set(['fisch', 'riff', 'taucher']);
+const SEA_KINDS = new Set(['fisch', 'taucher']);
 function seasonalEvery(I, b, K){
   if (K.rain){ const id = seasonOf().id; return Math.round(K.every * (id === 'sturm' ? .6 : id === 'mager' ? 2.4 : 1)); }   // rain comes with the storms
   const dry = I.drought > tick && (b.kind === 'taro' || b.kind === 'pulaka' || b.kind === 'baum') ? 2 : 1;   // a drought halves what the fields give

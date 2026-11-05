@@ -197,6 +197,8 @@ button.pop{border:0;background:none;padding:4px 2px 4px 6px;margin:-4px -2px -4p
 .pip{width:12px;height:16px;flex:none;display:inline-block;vertical-align:-3px}
 .crew{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:2px 0 6px}
 .crew .grow{flex:1}
+.crewnote{margin:-2px 0 6px;font-size:12px}
+.chips.picks{margin:2px 0 8px}
 .who{display:inline-flex;align-items:center;gap:4px;min-height:30px;padding:3px 10px 3px 7px;font:700 14px/1 var(--font-ui);color:var(--ink);background:var(--e1) no-repeat 0 0/100% 100%}
 .who.free,.who.off{color:var(--muted);font-weight:600;background-image:var(--efree)}
 .stat{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin:6px 0;font:700 14px/1.2 var(--font-ui)}

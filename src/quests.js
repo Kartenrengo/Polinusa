@@ -8,33 +8,40 @@ const newLand = () => islands.filter(I => I.discovered && !I.start).length;   //
 const stockOf = (id, k) => isl(id).stock[k] || 0;
 const fleetOf = kind => own().filter(s => s.kind === kind).length;
 /* n() counts progress towards of. show says where "Zeig es mir" leads: a build button, a building's sheet, a canoe, a trade chain or the calendar. */
+const working = I => { const sf = staffOf(I); return sf.total - sf.free; };
 const QUESTS = [
-  {id:'holz', t:'Holz schlagen', d:'Baue einen Holzfäller am Waldrand.', why:'Alles wird aus Holz gebaut. Jeder Baum gibt 3 Holz. Der Stumpf treibt erst spät wieder aus.',
+  {id:'ernte', t:'Die Palmen nutzen', d:'Baue ein Erntehaus bei den Kokospalmen.', why:'Die Kokospalme gibt fast alles: Nüsse zum Essen, grüne Nüsse zum Trinken, Wedel für die Dächer, Fasern für Schnur. Zwei arbeiten dort: einer klettert, einer schält die Nüsse.',
+    n:() => count('heimat', 'ernte'), of:1, show:{build:'ernte'}, unlock:[], gift:{dach:2}},
+  {id:'holz', t:'Holz schlagen', d:'Baue einen Holzfäller am Waldrand.', why:'Jedes Gebäude braucht Holz und Palmwedel. Zu zweit fällt es sich dreimal so schnell: Einer schlägt, der andere zieht den Stamm am Seil zur Seite.',
     n:() => count('heimat', 'faeller'), of:1, show:{build:'faeller'}, unlock:[], gift:{holz:2}},
-  {id:'dach', t:'Ein Dach für alle', d:'Baue 2 Häuser.', why:'Jedes Haus ist das Zuhause einer Familie. Wer kein Dach hat, schläft beim Versammlungshaus. An jeder Baustelle arbeiten 2 Leute.',
-    n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:['taro'], gift:{holz:3}},
-  {id:'trinken', t:'Wasser holen', d:'Baue eine Quelle am Bach oder einen Regenfang.', why:'Jeder Mensch braucht Wasser. Ohne Wasser wächst niemand zu, und bald ziehen Leute fort.',
-    n:() => count('heimat', 'quelle') + count('heimat', 'regen') + count('heimat', 'brunnen'), of:1, get show(){ return {build:isl('heimat') && isl('heimat').river ? 'quelle' : 'regen'}; }, unlock:[], gift:{wasser:6}},
-  {id:'essen', t:'Essen anbauen', d:'Lege 2 Tarofelder an.', why:'Taro, Brotfrucht, Fisch und Kokos zählen alle als Nahrung. Mit Nahrung und freien Häusern ziehen Leute zu.',
-    n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:['baum', 'palme', 'fisch', 'kurkumagarten', 'huehnerhof'], gift:{nahrung:4}},
-  {id:'fang', t:'Fisch aus der Lagune', d:'Baue ein Fischgestell am Strand.', why:'Ab 10 Bewohnern wollen die Familien Fisch. Der Fischer schnitzt zuerst seinen Einbaum.',
-    n:() => count('heimat', 'fisch'), of:1, show:{build:'fisch'}, unlock:['kletterer'], gift:{holz:2}},
-  {id:'familien', t:'Familien verteilen', d:'Lass 3 Familien an Arbeitsplätzen arbeiten.', why:'Eine Familie arbeitet an einem Ort. Tippe oben auf die Bewohnerzahl: Dort steht, wo jede Familie arbeitet. Auf jedem Arbeitsplatz schickst du mit + eine Familie hin.',
-    n:() => Math.min(3, famsOf(isl('heimat')).filter(f => f.job).length), of:3, show:{needs:true}, unlock:[], gift:{nahrung:4}},
-  {id:'wachsen', t:'Das Dorf wächst', d:'Erreiche 15 Bewohner.', why:'Bei 15 Menschen kommen Dach und Schnur dazu. Leute kommen, wenn Häuser frei sind und die Nahrung reicht. Tippe oben auf die Bewohnerzahl: Dort steht, was fehlt.',
-    n:() => isl('heimat').pop, of:15, show:{build:'haus'}, unlock:['speicher', 'toepfer', 'pflanzer'], gift:{holz:4}},
-  {id:'sennit', t:'Dach und Schnur', d:'Baue Palmenkletterer, Dachflechterin und Seilerei.', why:'Häuser werden ohne Nägel gebaut: Dachdeckung aus Wedeln, gebunden mit Sennit aus Kokosfasern. Der Kletterer bringt die Fasern.',
-    n:() => Math.min(1, count('heimat', 'kletterer')) + Math.min(1, count('heimat', 'deckerin')) + Math.min(1, count('heimat', 'schnur')), of:3, get show(){ return {build:['kletterer', 'deckerin', 'schnur'].find(k => !count('heimat', k)) || 'schnur'}; }, unlock:[], gift:{dach:2, schnur:2}},
-  {id:'wald', t:'Der Wald wächst nach', d:'Baue einen Baumpflanzer am Wald.', why:'Der Pflanzer setzt junge Bäume auf die Stümpfe. Wo Bäume stehen, kann nichts gebaut werden.',
-    n:() => count('heimat', 'pflanzer'), of:1, show:{build:'pflanzer'}, unlock:[], gift:{}},
-  {id:'riff', t:'Schätze vom Riff', d:'Baue einen Riffsammler am Strand.', why:'Ab 25 Bewohnern gehören Meeresfrüchte auf den Tisch.',
-    n:() => count('heimat', 'riff'), of:1, show:{build:'riff'}, unlock:[], gift:{}},
-  {id:'mehr', t:'Mehr Familien', d:'Erreiche 25 Bewohner.', why:'Bei 25 Menschen kommen Töpferei und Erdofen. Baue Häuser, dann ziehen Familien zu.',
-    n:() => isl('heimat').pop, of:25, show:{build:'haus'}, unlock:[], gift:{dach:2}},
-  {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ab 20 Bewohnern braucht jede Familie Töpfe. Jede Töpferei stempelt ihr eigenes Muster.',
-    n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:['beil', 'riff', 'pfahl', 'steg', 'umu', 'kalkbrenner'], gift:{}},
-  {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes brauchen die Meisterfamilien.',
+  {id:'trinken', t:'Wasser holen', d:() => isl('heimat').river ? 'Baue eine Quelle am Bach.' : 'Lagere 8 Wasser: grüne Nüsse vom Erntehaus.', why:'Jeder Mensch braucht Wasser. Ohne Wasser kommt niemand dazu, und bald ziehen Leute fort. Wo kein Bach fließt, trinkt man das Wasser der grünen Kokosnüsse.',
+    n:() => isl('heimat').river ? count('heimat', 'quelle') : (stockOf('heimat', 'wasser') >= 8 ? 1 : 0), of:1, get show(){ return isl('heimat') && isl('heimat').river ? {build:'quelle'} : {sheet:'ernte'}; }, unlock:[], gift:{wasser:6}},
+  {id:'fang', t:'Fischer am Strand', d:'Baue eine Fischerhütte am Strand.', why:'Zwei fahren zusammen im Kanu hinaus und holen, was gebraucht wird: Fisch, Meeresfrüchte, Muscheln, Kochsteine. Erst schnitzen sie ihr Kanu.',
+    n:() => count('heimat', 'fisch'), of:1, show:{build:'fisch'}, unlock:[], gift:{holz:2}},
+  {id:'huette', t:'Eine Hütte für Gäste', d:'Baue eine zweite Hütte.', why:'Steht eine Hütte leer, kommt bald ein Kanu von weit her mit einer Familie, die bleiben möchte. Gebaut wird zu zweit; ist niemand frei, legen zwei für die Bauzeit ihre Arbeit nieder.',
+    n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:[], gift:{dach:2}},
+  {id:'zuzug', t:'Neue Familien', d:'Nimm eine Familie auf, die per Kanu kommt.', why:'Jeder Erwachsene ist eine Arbeitskraft. Familien von weit her bringen eine neue Linie mit: Ihre Kinder machen das Dorf gesünder. Tippe das fremde Kanu an, wenn es anlegt.',
+    n:() => stats.zuzug ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{nahrung:4}},
+  {id:'arbeit', t:'Arbeit verteilen', d:'Lass 6 Menschen arbeiten.', why:'Tippe einen Arbeitsplatz an: Mit + schickst du jemanden hin, mit − rufst du ihn ab. Oben in der Übersicht siehst du, wer frei ist. Wer keine Arbeit hat, sammelt im Wald und am Strand.',
+    n:() => Math.min(6, working(isl('heimat'))), of:6, show:{needs:true}, unlock:[], gift:{holz:2}},
+  {id:'essen', t:'Gärten anlegen', d:'Lege 2 Tarofelder an.', why:'Bei 8 Menschen kommen die Gärten. Die Familie hat Taro als Setzlinge im Kanu mitgebracht. Taro, Fisch, Kokos und Brotfrucht zählen alle als Nahrung.',
+    n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:[], gift:{nahrung:4}},
+  {id:'wachsen', t:'Zwölf Menschen', d:'Erreiche 12 Bewohner.', why:'Bei 12 Menschen kommen Seilerei und Erdofen. Baut Hütten, dann kommen Familien. Tippe oben auf die Bewohnerzahl: Dort steht, was fehlt.',
+    n:() => isl('heimat').pop, of:12, show:{build:'haus'}, unlock:[], gift:{holz:4}},
+  {id:'blut', t:'Frisches Blut', d:'Sorge für Familien aus 3 Linien auf Panua.', why:'Eine kleine Insel wird schnell eine einzige Verwandtschaft. Familien von weit her, Leute von euren anderen Inseln oder eine Hochzeit mit einem Clan bringen neue Linien. Sind alle zu nah verwandt, kommen kaum Kinder.',
+    n:() => Math.min(3, linesWith(isl('heimat'))), of:3, show:{needs:true}, unlock:[], gift:{}},
+  {id:'sennit', t:'Sennit drehen', d:'Baue eine Seilerei.', why:'Aus den Fasern der Kokosnüsse wird Sennit gedreht. Damit werden Hütten neu gebunden, Netze geknüpft und Kanus gebaut. Die Fasern bringt das Erntehaus mit den reifen Nüssen.',
+    n:() => count('heimat', 'schnur'), of:1, show:{build:'schnur'}, unlock:[], gift:{faser:3}},
+  {id:'ausbau', t:'Ein Familienhaus', d:'Binde eine Hütte mit Fasern und Sennit neu.', get why(){ return `Ein Familienhaus hat Platz für Kinder: Erst dort kommt Nachwuchs. Es braucht ${costText(TIERS[2].cost)}; liegt genug im Lager, bindet eine Familie ihre Hütte von selbst neu, oder du tippst auf der Hütte auf „Ausbauen“. Dann will die Familie Gekochtes.`; },
+    n:() => homesOf(isl('heimat')).filter(b => tierOf(b) >= 2).length, of:1, show:{needs:true}, unlock:[], gift:{}},
+  {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
     n:() => count('heimat', 'umu'), of:1, show:{build:'umu'}, unlock:[], gift:{steine:3}},
+  {id:'wald', t:'Der Wald wächst nach', d:'Baue einen Baumpflanzer am Wald.', why:'Der Pflanzer setzt junge Bäume auf die Stümpfe. Wo zu viel Wald fällt, spült der Regen die Erde ins Meer.',
+    n:() => count('heimat', 'pflanzer'), of:1, show:{build:'pflanzer'}, unlock:[], gift:{}},
+  {id:'mehr', t:'Zwanzig Menschen', d:'Erreiche 20 Bewohner.', why:'Bei 20 Menschen kommen Töpferei, Beile und das Leben auf dem Wasser. Familienhäuser bekommen Kinder, leere Hütten ziehen Familien an.',
+    n:() => isl('heimat').pop, of:20, show:{build:'haus'}, unlock:[], gift:{dach:2}},
+  {id:'ton', t:'Ton und Feuer', d:'Baue eine Töpferei am Ton.', why:'Ab 20 Bewohnern braucht jede Familie Töpfe. Jede Töpferei stempelt ihr eigenes Muster.',
+    n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:[], gift:{}},
   {id:'lagune', t:'Leben auf dem Wasser', d:'Baue einen Kanusteg und ein Pfahlhaus.', why:'Pfahlhäuser brauchen kein Land. Ein Steg mit Einbaum reicht für 4 Pfahlhäuser.',
     n:() => Math.min(1, count('heimat', 'steg')) + Math.min(1, isl('heimat').buildings.filter(b => b.kind === 'pfahl' && !b.bt && !unserved(isl('heimat'), b)).length), of:2, get show(){ return {build:count('heimat', 'steg') ? 'pfahl' : 'steg'}; }, unlock:['taucher'], gift:{holz:3}},
   {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Ohne Steinbeile lässt sich kein Stamm für ein Kanu aushöhlen.',
@@ -45,20 +52,22 @@ const QUESTS = [
     n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'fackel'], gift:{holz:4, nahrung:4}},
   {id:'ausleger', t:'Ein Auslegerkanu', d:'Baue im Kanuhaus ein Auslegerkanu.', why:'Drei Bauleute brauchen etwa zweieinhalb Minuten. Schmücke solange das Dorf.',
     n:() => fleetOf('oc') || isl('tochter').settled ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
-  {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', why:'Siedler gehen als Familie. Tippe das Kanu an, lade Siedler, Holz, Wasser, Dachdeckung, Schnur und Taro-Setzlinge. Dann tippe auf Motu.',
+  {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', why:'Siedler gehen als Familie. Tippe das Kanu an, lade Siedler, Holz, Wasser, Palmwedel und Taro-Setzlinge. Dann tippe auf Motu. Wer übers Meer geht, nimmt seine Linie mit.',
     n:() => isl('tochter').settled ? 1 : 0, of:1, show:{ship:'oc'}, unlock:['pulaka', 'pansammler', 'flecht', 'pandanus', 'halle'], gift:{}},
   {id:'segel', t:'Segel und Schnur', d:'Baue auf Motu eine Flechthütte und eine Seilerei.', why:'Die Flechthütte braucht Pandanus, die Seilerei Kokospalmen in der Nähe. Holz kommt von Panua.',
     n:() => Math.min(1, count('tochter', 'flecht')) + Math.min(1, count('tochter', 'schnur')), of:2, get show(){ return {island:'tochter', build:count('tochter', 'flecht') ? 'schnur' : 'flecht'}; }, unlock:[], gift:{holz:2}, giftTo:'tochter'},
   {id:'tausch', t:'Eine Handelskette', d:'Bring 3 Matten und 3 Schnüre nach Panua.', why:'Tippe auf die Schnur zwischen den Inseln. Setz ein Kanu in die Kette und wähle die Ladung. Jede Fahrt knüpft einen Knoten.',
     n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube', 'oelhuette'], gift:{}},
-  {id:'dorf', t:'Ein Dorf', d:`Erreiche ${VILLAGE_POP} Bewohner und eine Meisterfamilie.`, why:'Mit Töpfen, Matten, Kokosöl und Gekochtem im Lager baut eine Familie ihr Haus aus. Mehr Platz, mehr Bedürfnisse.',
-    n:() => Math.min(1, isl('heimat').pop >= VILLAGE_POP ? 1 : 0) + Math.min(1, tier2Pop(isl('heimat')) ? 1 : 0), of:2, show:{needs:true}, unlock:[], gift:{}},
+  {id:'dorf', t:'Ein Dorf', d:`Erreiche ${VILLAGE_POP} Bewohner und eine Meisterfamilie.`, why:'Mit Töpfen, Matten und Kokosöl im Lager baut eine Familie im Familienhaus weiter aus: ein Meisterhaus. Mehr Platz, mehr Bedürfnisse.',
+    n:() => Math.min(1, isl('heimat').pop >= VILLAGE_POP ? 1 : 0) + Math.min(1, tier3Pop(isl('heimat')) ? 1 : 0), of:2, show:{needs:true}, unlock:[], gift:{}},
   {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit.',
     n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:['dc', 'pfosten'], gift:{}},
   {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu fährt über das offene Meer. Der Bau dauert etwa fünf Minuten. Neu: das Haus der Navigatoren.',
     n:() => fleetOf('dc') || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:['sternhaus'], gift:{}},
   {id:'land', t:'Neues Land', d:'Fahre mit dem Doppelkanu in den Nebel und finde eine neue Insel.', why:'Lade Proviant, tippe das Kanu an und dann auf den Nebel. Neues Land hat noch keinen Taro und keine Schweine.',
     n:() => newLand(), of:1, show:{ship:'dc'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck', 'kavagarten', 'trommel', 'tanzplatz', 'weberin', 'malerin', 'duftoel'], gift:{}},
+  {id:'heirat', t:'Eine Hochzeit', d:'Verheirate jemanden mit einem Clan oder einem anderen Volk.', why:'Mit Brautgaben aus feinen Matten und einem Schwein geht jemand von euch eine Ehe ein, und der Partner zieht zu euch: eine neue Linie, und die Schnur zu ihnen löst sich nicht mehr. Dazu braucht es 3 Knoten Vertrauen.',
+    n:() => stats.heirat ? 1 : 0, of:1, show:{fleet:true}, unlock:[], gift:{}},
   {id:'fest', t:'Ein Fest', d:'Feiere ein Fest im Versammlungshaus.', why:'Feste bringen Ansehen. Ansehen holt Siedler und macht Häuptlingsdörfer.',
     n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:['ahnenhaus', 'fale'], gift:{}},
   {id:'plejaden', t:'Das Fest der Plejaden', d:() => festivalTime() ? 'Jetzt ist Festzeit. Feiere das Fest der ersten Früchte.' : `Feiere das Fest der ersten Früchte. Die Plejaden erscheinen in etwa ${minutes(untilFestival())} Minuten.`,
@@ -93,14 +102,15 @@ const feastsOpen = () => quest >= QUESTS.findIndex(Q => Q.id === 'fest');
 let quest = 0;               // index of the current task; QUESTS.length means all are done
 const newKinds = new Set();  // unlocked but not yet tapped, they get a dot in the build bar
 
-/* ---------- stages, as in Anno: what can be built comes with the people. A hamlet has houses, wood, water, fish and
-   fields; at 15 people the cord and thatch chain opens, at 25 pots and the earth oven, at 30 the village with mats, oil
-   and canoes, at 40 the goods of the feasts, at 50 the chief's house. One chain at a time, each new set announced. */
+/* ---------- stages, as in Anno: what can be built comes with the people. The first family has huts, the Erntehaus, wood,
+   water and the fishers; at 8 people the gardens open, at 12 sennit and the earth oven, at 20 pots and tools, at 30 the
+   village with oil and canoes, at 40 the goods of the feasts, at 50 the chief's house. One chain at a time. */
 const STAGES = [
-  {pop:0, n:'Weiler', kinds:['haus', 'faeller', 'quelle', 'brunnen', 'regen', 'fisch', 'taro', 'pulaka', 'pansammler', 'baum', 'palme']},
-  {pop:15, n:'Dach und Schnur', kinds:['kletterer', 'deckerin', 'schnur', 'speicher', 'pflanzer', 'riff', 'kurkumagarten', 'huehnerhof', 'pandanus']},
-  {pop:25, n:'Töpfe und Erdofen', kinds:['toepfer', 'umu', 'kalkbrenner', 'beil', 'steg', 'pfahl', 'gaergrube', 'harzer', 'hibiskus', 'blumen', 'fackel']},
-  {pop:30, n:'Ein Dorf', kinds:['flecht', 'oelhuette', 'werft', 'oc', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
+  {pop:0, n:'Ankunft', kinds:['haus', 'ernte', 'faeller', 'quelle', 'brunnen', 'fisch', 'pansammler', 'baum', 'palme']},
+  {pop:8, n:'Gärten', kinds:['taro', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
+  {pop:12, n:'Sennit und Erdofen', kinds:['schnur', 'umu', 'kalkbrenner', 'kurkumagarten', 'harzer']},
+  {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel']},
+  {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'werft', 'oc', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
   {pop:40, n:'Zeit der Feste', kinds:['garten', 'klopf', 'pferch', 'kavagarten', 'trommel', 'tanzplatz', 'ahnenhaus', 'weberin', 'malerin', 'duftoel', 'klingen', 'schmuck', 'bananen']},
   {pop:50, n:'Häuptling', kinds:['fale']}
 ];
@@ -146,31 +156,38 @@ function checkQuest(){
 }
 /* ---------- the advice of the elders: always one clear next step. When something is urgent (no roof, no water, no food)
    it stands over the task; without tasks it is the card itself. */
-const producerOf = (I, k) => ORDER.find(q => KINDS[q] && (KINDS[q].prod === k || KINDS[q].green === k) && KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
+const producerOf = (I, k) => ORDER.find(q => KINDS[q] && (KINDS[q].prod === k || (KINDS[q].picks && KINDS[q].picks[k])) && KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
 /* where a good can be made that cannot be made here: the islands with the right ground */
 const specIslesFor = k => { const kind = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]); if (!kind) return []; return islands.filter(J => J.discovered && specOf(J) === SPEC_OF_KIND[kind]); };
 function adviceOf(I, urgentOnly = false){
   if (!I || !I.settled) return null;
   const nd = needsOf(I), out = k => nd.list.some(n => n.k === k && n.state === 'out'), low = k => nd.list.some(n => n.k === k && n.state !== 'ok');
-  const sites = I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)), has = k => I.buildings.some(b => b.kind === k);
-  if (nd.roofless && !sites) return {t:'Häuser bauen', d:`${nd.roofless} Menschen schlafen ohne Dach. Ein Haus braucht Holz, Dachdeckung und Schnur.`, build:'haus', urgent:true};
-  if ((I.stock.wasser || 0) < 8 && low('wasser')) return {t:['quelle', 'brunnen', 'regen'].some(has) ? 'Mehr Wasser' : 'Wasser holen', d:'Ohne Wasser wächst niemand zu, bald gehen Leute fort.', build:producerOf(I, 'wasser') || 'regen', urgent:true};
-  if (out('essen') || haveOf(I, 'essen') < 6 && low('essen')) return {t:'Essen anbauen', d:'Die Nahrung ist aus. Felder, Fischgestell und Kokos helfen.', build:producerOf(I, 'nahrung') || 'fisch', urgent:true};
+  const sites = I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)), has = k => I.buildings.some(b => b.kind === k), done = k => I.buildings.some(b => b.kind === k && !b.bt);
+  const wsrc = I.atoll ? 'brunnen' : I.river ? 'quelle' : 'ernte';
+  if (nd.roofless && !sites) return {t:'Hütten bauen', d:`${nd.roofless} ${nd.roofless === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach. Eine Hütte braucht Holz und Palmwedel.`, build:'haus', urgent:true};
+  if ((I.stock.wasser || 0) < 8 && low('wasser')) return {t:has(wsrc) || has('ernte') ? 'Mehr Wasser' : 'Wasser holen', d:I.river ? 'Eine Quelle am Bach, oder grüne Nüsse vom Erntehaus.' : I.atoll ? 'Ein Brunnen in der Mitte des Motus, oder grüne Nüsse vom Erntehaus.' : 'Hier fließt kein Bach: Das Erntehaus holt grüne Nüsse zum Trinken.', build:has(wsrc) && wsrc !== 'ernte' ? 'ernte' : wsrc, urgent:true};
+  if (out('essen') || haveOf(I, 'essen') < 6 && low('essen')) return {t:'Mehr Essen', d:'Die Nahrung geht aus. Erntehaus, Fischerhütte und Gärten helfen, wer frei ist, sammelt.', build:!has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : producerOf(I, 'nahrung') || 'fisch', urgent:true};
+  { const s = immigFor(I); if (s && s.state === 'moored' && s.immig) return {t:'Ein Kanu fragt', d:`Familie ${s.immig.n} ${s.immig.from} möchte auf ${I.name} bleiben.`, immig:s.id, urgent:true}; }
   if (urgentOnly) return null;
   // a workplace whose good is short stands still for a reason the player can fix
   const stillB = placesOf(I).find(b => b.idle && ['near', 'dep', 'trees', 'use'].includes(b.idle.why) && prodOfB(b) && (I.stock[prodOfB(b)] || 0) < 5);
-  if (stillB) return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze ihn dorthin.' : ''), goto:stillB.id};
-  const sf = staffOf(I), open = placesOf(I).filter(b => !famsOf(I).some(f => f.job === b.id));
-  if (open.length && famsOf(I).some(f => !f.job && famAdults(I, f).length) && !autoWork(I)) return {t:'Familien verteilen', d:`${open.length} Arbeitsplätze haben keine Familie. Tippe einen an und dann auf +.`, needs:true};
-  // thatch and cord, link by link: the climber brings the fibre, the rope works turn it into sennit
-  if ((I.stock.dach || 0) < 2 && unlocked('deckerin') && !has('deckerin')) return {t:'Dachdeckung machen', d:'Jedes neue Haus braucht Dachdeckung. Die Dachflechterin braucht Palmen oder Pandanus in der Nähe.', build:'deckerin'};
-  if ((I.stock.schnur || 0) < 2 && unlocked('schnur')){
-    if (!has('kletterer')) return {t:'Kokosfasern holen', d:'Sennit wird aus Kokosfasern gedreht. Der Palmenkletterer bringt sie.', build:'kletterer'};
-    if (!has('schnur')) return {t:'Schnur drehen', d:'Die Seilerei dreht aus Kokosfasern Sennit für Häuser und Kanus.', build:'schnur'};
+  if (stillB) return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze den Platz dorthin.' : ''), goto:stillB.id};
+  const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
+  if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
+  // what every building needs: wood and palm fronds
+  if ((I.stock.dach || 0) < 3){ const e = I.buildings.find(b => b.kind === 'ernte'); if (!e) return {t:'Palmwedel holen', d:'Jedes Gebäude braucht Palmwedel fürs Dach. Das Erntehaus holt sie von den Palmen.', build:'ernte'}; if (!(e.v && e.v.pick === 'dach') && choiceOf(e) !== 'dach') return {t:'Palmwedel holen', d:'Im Erntehaus kannst du die Leute auf Wedel stellen, bis genug da ist.', goto:e.id}; }
+  if ((I.stock.holz || 0) < 3 && I.type === 'hoch' && !has('faeller')) return {t:'Holz schlagen', d:'Jedes Gebäude braucht Holz. Ein Holzfäller am Waldrand, zu zweit.', build:'faeller'};
+  // fibre and sennit, link by link: the ripe nuts bring the fibre, the rope works turn it into sennit
+  if (unlocked('schnur') && (I.stock.schnur || 0) < 2){
+    if (!has('ernte')) return {t:'Kokosfasern holen', d:'Sennit wird aus Kokosfasern gedreht. Das Erntehaus bringt sie mit den reifen Nüssen.', build:'ernte'};
+    if (!has('schnur')) return {t:'Schnur drehen', d:'Die Seilerei dreht aus Kokosfasern Sennit für Häuser, Netze und Kanus.', build:'schnur'};
   }
-  if (nd.full && !nd.atMax) return {t:'Mehr Häuser', d:'Alle Häuser sind voll. Ein leeres Haus zieht eine neue Familie an.', build:'haus'};
-  const nextS = STAGES[stageNow() + 1]; if (nextS && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Halte Nahrung und Wasser im Lager und baue Häuser.`, build:'haus'};
-  const miss = TIER2_GOODS.find(k => !(I.stock[k] > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Meisterfamilien`, d:p ? `Baue ${KINDS[p].n}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
+  if (unlocked('schnur') && done('schnur') && !homesOf(I).some(b => tierOf(b) >= 2) && homesOf(I).some(b => famOfHome(I, b))) return {t:'Ein Familienhaus', d:`Erst im Familienhaus kommen Kinder. Es braucht ${costText(TIERS[2].cost)}${canPay(I, TIERS[2].cost) ? '. Es liegt bereit: Tippe auf eine Hütte, dann auf „Ausbauen“.' : `, es fehlt ${lacking(I, TIERS[2].cost)}.`}`, goto:(homesOf(I).find(b => famOfHome(I, b) && tierOf(b) === 1) || {}).id};
+  if (homesOf(I).some(b => tierOf(b) >= 2) && unlocked('umu') && !has('umu')) return {t:'Gekochtes', d:'Die Familienhäuser wollen Gekochtes aus dem Erdofen.', build:'umu'};
+  if (nd.full && !nd.atMax && !emptyHome(I)) return {t:'Mehr Hütten', d:'Alle Hütten sind belegt. Eine leere Hütte zieht eine Familie von weit her an.', build:'haus'};
+  if (I.pop >= 8 && kinState(I) !== 'ok') return {t:'Neues Blut', d:kinText(I).help, needs:true};
+  const nextS = STAGES[stageNow() + 1]; if (nextS && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:'haus'};
+  const miss = MASTER_GOODS.find(k => !(I.stock[k] > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Meisterfamilien`, d:p ? `Baue ${KINDS[p].n}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
   // the fine goods of the chief's family: some grow only on islands with the right ground
   if (chiefFam(I)){ const k = CHIEF_GOODS.find(q => !(I.stock[q] > 0)); if (k){ const p = producerOf(I, k), isles = specIslesFor(k) || [];
     const sp = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]);
@@ -184,6 +201,7 @@ let curAdvice = null;
 function followAdvice(A){
   if (!A) return; closeSheet();
   if (A.koruru){ if (!kor || kor.state === 'done') korNew(); openSheet('koruru', {}); return; }
+  if (A.immig){ const s = ships.find(q => q.id === A.immig); if (s){ flyTo(s.x, s.y, Math.max(cam.z, 2)); openSheet('immig', {ship:s.id}); } return; }
   if (A.needs){ openSheet('needs'); return; }
   if (A.goto){ const b = findB(A.goto); if (b){ select(b); flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
   if (A.fleet){ setBar('fleet'); return; }

@@ -131,10 +131,10 @@ function festivalMarkup(I){
   h += `<div class="rowx"><span>Ansehen +${festivalGain(I, chosen)}</span><button class="btn primary" type="button" data-act="festival">Fest feiern</button></div>`;
   return h;
 }
-/* Settlers go as families: first the rest of the family already aboard, then a family without work, grown-ups first;
-   the chief's family stays */
+/* Settlers go as families: first the rest of the family already aboard, then a family whose grown-ups are free, grown-ups
+   first; the chief's family stays. Whoever goes takes their line along. */
 function nextSettler(P, s){
-  const last = (s.folk || []).slice(-1)[0], cf = chiefFam(P), busy = new Set(famsOf(P).filter(f => f.job).map(f => f.id));
+  const last = (s.folk || []).slice(-1)[0], cf = chiefFam(P), busy = new Set(P.people.filter(p => p.job).map(p => p.h));
   const pool = P.people.filter(p => !(cf && p.h === cf.id));
   const same = last && pool.filter(p => p.h === last.h);
   const list = same && same.length ? same : pool.filter(p => !busy.has(p.h)).length ? pool.filter(p => !busy.has(p.h)) : pool;

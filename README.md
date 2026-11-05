@@ -70,81 +70,84 @@ an derselben Stelle. Gespeichert werden nur Startwert, gesehene Felder und was s
 
 ## Die Ankunft
 
-Ein neues Spiel beginnt auf See. Euer Clan hat das alte Land im Westen verlassen: fünf Familien im Ahnenkanu, mit Holz,
-Nahrung, Taro, Brotfrucht, Papiermaulbeere, Kava und einem Paar Schweine. In der Lichtung im Nebel liegen zwei hohe
-Inseln, Panua und Talise, und das Atoll Motu.
+Ein neues Spiel beginnt auf See. Eine einzige Familie hat das alte Land im Westen verlassen: Mutter, Vater und zwei
+halbwüchsige Kinder im Ahnenkanu, mit etwas Holz, Palmwedeln, Nahrung und Wasser, mit Setzlingen von Taro, Brotfrucht,
+Papiermaulbeere und Kava und einem Paar Schweine. In der Lichtung im Nebel liegen zwei hohe Inseln, Panua und Talise,
+und das Atoll Motu.
 
 - **Wählen:** Das Fenster „Die Ankunft“ vergleicht die beiden hohen Inseln: welche größer ist, wie viele Bäume, Bach, Ton,
   Basalt und wie nah Motu liegt. „Ansehen“ fliegt hin, ein Tipp auf die Karte zeigt die Insel auch. Ein Atoll ist kein
   Anfang: kein Ton, kein Stein, kaum Holz.
-- **Landen:** „Hier landen“ schickt das Ahnenkanu los. Wo es anlegt, wird das Kanu an Land gezogen, und ihr wählt, wo aus
-  seinen Planken das Versammlungshaus entsteht: Es steht zuerst auf der alten Lichtung, ein Tipp oder Ziehen setzt es
-  woanders hin, „Hier bauen“ gründet das Dorf. Erst dann beginnt die Zeit. Die andere hohe Insel bleibt frei für später.
-- Vor der Landung läuft keine Zeit, es wird nichts gebaut und nichts gespeichert. Die gewählte Insel ist von da an die
-  Heimat, alle Aufgaben nennen sie bei ihrem Namen. Beide Startinseln haben sicher Ton, Basalt und Wald, damit die
-  Aufgaben auf jeder lösbar sind.
-- Spielstände von vorher laden wie gewohnt: Dort ist Panua die Heimat.
-- **Ohne Einführung:** Im Ankunftsfenster „Ohne“ wählen, dann sind gleich alle Gebäude frei, und keine Aufgaben stehen über
-  der Bauleiste. In einem laufenden Spiel geht das im Menü oder im Aufgabenfenster mit „Ohne Einführung“.
+- **Landen:** „Hier landen“ schickt das Ahnenkanu los. Wo es anlegt, wählt ihr, wo die **erste Hütte** steht. Davor liegt
+  der **Dorfplatz** mit Feuerstelle und Sitzstamm: Er gehört fest zur ersten Hütte, um ihn wächst das Dorf, hier spielen die
+  Kinder und hier sitzt man abends. Das Versammlungshaus kommt viel später und muss am Dorfplatz stehen. „Hier bauen“
+  gründet das Dorf, erst dann beginnt die Zeit.
+- Kein Feld liegt schon da: Die Familie lebt zuerst von Kokos, Fisch und dem Wild, wie die ersten Lapita-Siedler, die
+  stark vom Sammeln und Fischen lebten, bis ihre Gärten trugen.
+- Vor der Landung läuft keine Zeit, es wird nichts gebaut und nichts gespeichert.
+- **Ohne Einführung:** Im Ankunftsfenster „Ohne“ wählen, dann stehen keine Aufgaben über der Bauleiste. In einem laufenden
+  Spiel geht das im Menü oder im Aufgabenfenster mit „Ohne Einführung“.
 
 ## Die Zeit: Lapita, etwa 1500 bis 500 vor Christus
 
 Das Spiel hält sich an die Zeit der Lapita-Leute, die als Erste von Neuguinea bis Fidschi, Tonga und Samoa fuhren.
 
-- **Kleine Dörfer:** Lapita-Siedlungen waren meist Weiler aus wenigen Häusern, oft Pfahlhäuser an der Lagune. Eine hohe
-  Insel trägt darum etwa 50 bis 110 Menschen, ein Koralleninselchen 20 bis 50. Das Dorf wächst langsamer: ein Mensch alle
-  10 Sekunden, solange ein Haus Platz hat und nichts fehlt.
+- **Kleine Gruppen:** Die ersten Siedler einer Insel waren oft nur die Leute eines Kanus. Genetische Studien zeigen kleine
+  Gründergruppen; Lapita-Dörfer waren Weiler aus wenigen Häusern, oft Pfahlhäuser an der Lagune wie in Talepakemalai auf
+  Mussau. Eine hohe Insel trägt darum etwa 30 bis 110 Menschen, ein Koralleninselchen 20 bis 50.
+- **Erst sammeln, dann pflanzen:** Die ersten Siedler lebten stark von Riff, Fisch, Schildkröten und Vögeln; Taro, Yams,
+  Brotfrucht, Bananen, Schweine und Hühner brachten sie mit, und in ein, zwei Generationen trugen die Gärten.
+- **Das Netz:** Obsidian aus Talasea und von den Admiralitätsinseln ging Hunderte Kilometer weit; Töpfe wurden zwischen
+  verwandten Dörfern getauscht. Der Archäologe Patrick Kirch sah darin eine Lebensader zur alten Heimat.
+- **Arbeit:** Männer fischten vom Kanu aus mit Leine, Netz und Speer, Frauen sammelten auf dem Riff Muscheln, Kraken und
+  Seeigel; das Dach decken war Familienarbeit, Frauen machten die Wedelmatten, Männer banden sie fest.
 - **Was es damals gab:** Töpfe mit gestempelten Mustern und weißer Kalkfüllung, Obsidian aus dem Handel, Steinbeile,
-  Muschelschmuck, Auslegerkanus und Doppelkanus mit Mattensegel, Taro, Yams, Brotfrucht, Bananen aus
-  Neuguinea, Kokospalmen und Pandanus, Schweine, Hühner und Hunde, der Erdofen.
-- **Spätere Wörter nur als Hinweis:** Wörter aus viel späterer Zeit nutzt das Spiel nicht als Namen. Aus der Familie der
-  Tufunga wurde die Meisterfamilie (tufunga sagte man später in Tonga und Samoa), aus dem Kōruru-Wurf der Knöchelwurf (die
-  Māori nannten das Spiel später Kōruru), aus Taravana die Taucherkrankheit. Die Matriarchin folgt dem, was über
-  frühe matrilokale Familien vermutet wird; Tonga mit Fahu und Tamahā ist ein späteres Beispiel.
-- **Häuptlingshaus:** ein großes Haus auf starken Pfosten, wie die Lapita-Häuser an der Lagune.
+  Muschelschmuck, Auslegerkanus und Doppelkanus mit Mattensegel, Kokospalmen und Pandanus, Sennit aus Kokosfaser, das
+  salzwasserfest Kanus, Beile und Häuser zusammenhält, der Erdofen.
+- **Spätere Wörter nur als Hinweis:** Aus der Familie der Tufunga wurde die Meisterfamilie (tufunga sagte man später in
+  Tonga und Samoa), aus dem Kōruru-Wurf der Knöchelwurf (die Māori nannten das Spiel später Kōruru), aus Taravana die
+  Taucherkrankheit. Die Matriarchin folgt dem, was über frühe matrilokale Familien vermutet wird; Tonga mit Fahu und
+  Tamahā ist ein späteres Beispiel.
 
 ## Anfang
 
-Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, erst sichern, dann wachsen.
+Vorbild sind Anno und Manor Lords: klein anfangen, eine Kette nach der anderen, erst sichern, dann wachsen. Der Aufbau ist
+ruhig und braucht Zeit: Ein Spiel-Bot, der nur dem Rat der Ältesten folgt, hat nach einer Stunde etwa 30 Menschen.
 
-- **Die Ankunft:** drei Familien, 10 Menschen. Neben dem Versammlungshaus sind die ersten zwei Häuser schon abgesteckt,
-  die Familien bauen sie gleich. Im Lager liegt Vorrat für etwa fünf Minuten. **In den ersten fünf Minuten zieht niemand
-  fort**, auch wenn Wasser oder Dach fehlen.
-- **Wenig am Anfang:** Die Bauleiste zeigt nur, was ein Weiler braucht: Haus, Holzfäller, Taro, Quelle, Regenfang,
-  Fischgestell, Palme und Brotfrucht. Oben stehen nur Nahrung, Wasser, Holz, Dachdeckung und Schnur.
+- **Vier Menschen, vier Arbeitskräfte:** Jeder in der Familie arbeitet, auch die beiden Kinder. Im Lager liegt Vorrat für
+  ein paar Minuten. **In den ersten fünf Minuten zieht niemand fort.**
+- **Wenig am Anfang:** Die Bauleiste zeigt nur, was die erste Familie braucht: Hütte, Erntehaus, Holzfäller, Quelle,
+  Fischerhütte, Palme und Brotfrucht. Oben stehen nur Nahrung, Wasser, Holz, Palmwedel und Schnur.
 - **Stufen wie bei Anno:** Neue Gebäude kommen mit den Menschen, eine Karte sagt, was neu ist, und die neuen Knöpfe tragen
   einen Punkt.
 
 | Ab | Stufe | Neu |
 | --- | --- | --- |
-| Anfang | Weiler | Haus, Holz, Wasser, Fisch, Taro, Palme, Brotfrucht |
-| 15 Menschen | Dach und Schnur | Palmenkletterer, Dachflechterin, Seilerei, Speicher, Baumpflanzer, Riff, Kurkuma, Hühner |
-| 25 | Töpfe und Erdofen | Töpferei, Erdofen, Kalkbrenner, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Harz, Blumen |
-| 30 | Ein Dorf | Flechthütte, Ölhütte, Kanuhaus und Kanus, Navigatoren, Taucher |
+| Anfang | Ankunft | Hütte, Erntehaus, Holzfäller, Quelle, Brunnen, Fischerhütte, Pandanusfrüchte, Palme, Brotfrucht |
+| 8 Menschen | Gärten | Taro, Pulaka, Baumpflanzer, Speicher, Hühner, Pandanus |
+| 12 | Sennit und Erdofen | Seilerei, Erdofen, Kalkbrenner, Kurkuma, Harz |
+| 20 | Töpfe und Werkzeug | Töpferei, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Flechthütte, Blumen |
+| 30 | Ein Dorf | Ölhütte, Kanuhaus und Kanus, Navigatoren, Taucher, Versammlungshaus |
 | 40 | Zeit der Feste | Tapa, Schweine, Kava, Trommel, Tanzplatz, Ahnenhaus, feine Dinge, Klingen, Schmuck |
 | 50 | Häuptling | Häuptlingshaus |
 
-- **Spannungskurve:** Das erste Jahr bleibt ruhig: keine Ereignisse, keine Stürme. Dann wird es enger, erst bei Dach und
-  Schnur, dann beim Handel mit Motu, ab dem zweiten Jahr kommen Sturmzeit, Dürre und Ereignisse.
-- **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Ist etwas dringend (kein Dach und kein Haus
-  im Bau, Wasser fast aus, Nahrung aus), steht es rot als „Jetzt“ über der Aufgabe. Ohne Aufgaben (am Ende oder „Ohne
-  Einführung“) sagt der Rat, was als Nächstes dran ist: Familien verteilen, Dach und Schnur, mehr Häuser, die nächste
-  Stufe, Waren für die Meisterfamilien, der nächste Schritt zum Häuptlingsdorf, neues Land, der Knöchelwurf. Antippen zeigt den
-  Knopf oder die Tafel dazu.
+- **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Dringendes steht rot als „Jetzt“: kein Dach,
+  Wasser fast aus, Nahrung aus, ein fremdes Kanu fragt. Sonst sagt der Rat, was dran ist: Leute verteilen, Palmwedel
+  holen, Holz, Fasern und Schnur, ein Familienhaus, Gekochtes, mehr Hütten, neues Blut, die nächste Stufe.
 - Jede neue Stufe wird gefeiert: Ansehen +2, Herzen über dem Dorf.
-- Ein Haus zeigt „2 von 3 erfüllt“ und was die nächste Stufe braucht.
 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen Stelle.
 
-1. Holzfäller, 2. zwei Häuser, 3. Wasser, 4. Taro, 5. Fischgestell, 6. drei Familien an Arbeitsplätzen, 7. 15 Bewohner,
-8. Dach und Schnur, 9. Baumpflanzer, 10. Riffsammler, 11. 25 Bewohner, 12. Töpferei, 13. Erdofen, 14. Steg und Pfahlhaus,
-15. Beilwerkstatt, 15a. 30 Bewohner, 15b. Kanuhaus, 16. Auslegerkanu, 17. Siedler nach Motu, 18. Flechthütte und Seilerei auf Motu, 19. Handelskette,
-20. ein Dorf: 30 Bewohner und eine Meisterfamilie, 21. 6 Proviant, 22. Doppelkanu, 23. neues Land im Nebel, 24. ein Fest,
-25. das Fest der Plejaden, 26. ein Häuptlingsdorf, 27. Tauchen, 28. das Lapita-Netz, 29. die Weite See, 30. eine
-Schatzinsel, 31. ein Dorf in der Ferne, 32. das Fest der Schätze, 33. andere Menschen: ein Volk einer anderen Kultur.
+1. Erntehaus, 2. Holzfäller, 3. Wasser (Quelle, oder 8 Wasser aus grünen Nüssen, wo kein Bach fließt), 4. Fischerhütte,
+5. eine zweite Hütte, 6. eine Familie aus der Ferne aufnehmen, 7. sechs Menschen bei der Arbeit, 8. zwei Tarofelder,
+9. 12 Bewohner, 10. Familien aus drei Linien, 11. Seilerei, 12. ein Familienhaus, 13. Erdofen, 14. Baumpflanzer,
+15. 20 Bewohner, 16. Töpferei, 17. Steg und Pfahlhaus, 18. Beilwerkstatt, 19. 30 Bewohner, 20. Kanuhaus,
+21. Auslegerkanu, 22. Siedler nach Motu, 23. Flechthütte und Seilerei auf Motu, 24. Handelskette, 25. ein Dorf mit einer
+Meisterfamilie, 26. 6 Proviant, 27. Doppelkanu, 28. neues Land im Nebel, 29. eine Hochzeit mit einem Clan, 30. ein Fest,
+31. das Fest der Plejaden, 32. ein Häuptlingsdorf, 33. Tauchen, 34. das Lapita-Netz, 35. die Weite See, 36. eine
+Schatzinsel, 37. ein Dorf in der Ferne, 38. das Fest der Schätze, 39. andere Menschen: ein Volk einer anderen Kultur.
 
-Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick: Dörfer, Menschen, Clans, Knoten, Kanus, Ansehen,
-entdeckte Inseln und die Völker anderer Kultur. Danach geht das Spiel weiter. Im Menü lässt sich der Rückblick wieder öffnen.
+Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick. Danach geht das Spiel weiter.
 
 ## Die Oberfläche
 
@@ -171,22 +174,31 @@ Bewohner isst 1,2 pro Minute, und die Leute essen das, wovon am meisten da ist.
 
 | Sorte | Woher |
 | --- | --- |
-| Feldfrüchte | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro in der Mitte eines Motus (Atolle); auf neuem Land erst, wenn ein Kanu Setzlinge gebracht hat |
-| Fisch | Fischgestell am Strand: die Fischer paddeln hinaus und hängen den Fang auf |
-| Meeresfrüchte | Riffsammler am Strand: Muscheln, Krebse, Seeigel, Tintenfisch |
+| Kokosnüsse | Erntehaus: reife Nüsse, dazu Fasern und Schalen |
+| Fisch | Fischerhütte: zwei fahren hinaus und hängen den Fang auf |
+| Meeresfrüchte | Fischerhütte: bei Ebbe auf dem Riffdach gesammelt, Muscheln, Kraken, Seeigel; Tauchplatz |
+| Feldfrüchte | Tarofeld und Brotfruchtbaum (hohe Inseln), Pulakagrube mit Sumpftaro (Atolle); auf neuem Land erst, wenn ein Kanu Setzlinge gebracht hat |
 | Wildbeute | Wer keine Arbeit hat, sammelt Eier, Vögel und Krebse; viel auf neuem Land, wenig auf bejagtem (siehe Wild) |
 
-Fehlt Nahrung, ziehen Leute fort. Werkstätten und Feste brauchen bestimmte Sorten: Gärgrube und Schweinepferch
-Feldfrüchte, das Kleine Fest Fisch, das Große Meeresfrüchte, die ersten Früchte beim Fest der Plejaden Feldfrüchte, Fisch
-und Schweine. Unter Rāhui ruhen Fischgestell und Riffsammler, nach dem Fest fangen sie dreimal so viel. In der
-Palolo-Nacht gibt es Meeresfrüchte für alle.
+Fehlt Nahrung oder Wasser lange, packt eine Familie ihre Sachen und fährt im Kanu fort, mit ihren Kindern; die letzte
+Familie bleibt immer. Unter Rāhui ruht das Riff, nach dem Fest fangen die Fischer dreimal so viel. In der Palolo-Nacht
+gibt es Meeresfrüchte für alle.
 
-## Fischfang
+## Fischfang: die Fischerhütte
 
-Steinreusen gibt es nicht mehr; das Fischgestell ist alles in einem. Zwei Fischer gehen zum Strand, schieben ihren Einbaum
-ins Wasser und paddeln in einem Bogen hinaus. Draußen werfen sie Netz und Leine mit Muschelhaken aus, dann paddeln sie
-zurück und hängen den Fang ans Gestell, wo man ihn trocknen sieht. Erst wenn die Gestelle voll sind, tragen sie getrockneten
-Fisch ins Lager. Ein Fang bringt 2 Fische, mit Netzen aus Schnur 4. Liegt niemand draußen, liegt der Einbaum am Strand.
+Fischgestell und Riffsammler sind eins: die **Fischerhütte** am Strand. Zwei Leute arbeiten dort, und sie fahren **immer zu
+zweit** hinaus, in einem Kanu: Einer steuert und paddelt hinten, der andere sitzt vorn und fischt. Erst schnitzen sie ihr
+Kanu.
+
+- **Was gebraucht wird:** Sie holen von selbst, was am meisten fehlt. Für **Fisch** paddeln sie hinaus an den Riffrand,
+  werfen Netz und Leine aus und hängen den Fang ans Gestell, wo er trocknet. Für **Meeresfrüchte, Muscheln oder
+  Kochsteine** fahren sie aufs Riffdach, steigen aus und waten bei Ebbe, das Kanu liegt im Flachen. Auf der Tafel lässt
+  sich festlegen, was sie holen.
+- **Allein** fischt einer nur mit dem Speer im flachen Wasser, ein Fisch pro Gang.
+- **Netze** aus Sennit verdoppeln den Fisch. Am Strand flicken sie die Netze auf dem Schoß.
+- **Das Riff wird weniger:** Wo viel gesammelt wird, gibt das Riff weniger her, es erholt sich langsam, unter einem Rāhui
+  schneller. Wo zu viel Wald fällt, verschlammt es. So war es auch bei den Lapita: In frühen Muschelhaufen werden die
+  Schalen von Schicht zu Schicht kleiner.
 
 ## Die Lagune und der Einbaum
 
@@ -198,65 +210,123 @@ Der Steg zeigt beim Bauen von selbst zum Wasser.
 
 ## Haushalte und Familien
 
-Wie bei Anno zählt jedes Haus für sich: Wer hat, was er braucht, holt Leute nach.
+Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
+
+| Stufe | Bau | Platz | Will |
+| --- | --- | --- | --- |
+| Hütte | 4 Holz, 4 Palmwedel | 2 bis 4 | Dach, Nahrung, Wasser |
+| Familienhaus | neu gebunden: 2 Holz, 3 Kokosfasern, 2 Schnur | 4 bis 6, **Platz für Kinder** | dazu Gekochtes |
+| Meisterhaus | 2 Holz, 2 Matten; Töpfe, Matten und Öl im Lager | 4 bis 8 | dazu Töpfe, Matten, Kokosöl |
+| Häuptlingshaus | eigenes Gebäude | 4 bis 10 | dazu das Feinste |
 
 - **Familien:** Jeder Mensch gehört zu einer Familie. Eine Familie trägt den Namen der Frau, die sie gegründet hat; die
-  frühen Lapita lebten wohl dort, wo die Familie der Frau lebte. Die Ankunft bringt fünf Familien, 17 Menschen: je eine
-  Frau und ein Mann, Kinder, dazu zwei Alte.
-- **Dach:** Ein Haus ist das Zuhause einer Familie. Wer keines hat, schläft unter Matten beim Versammlungshaus; über dem
-  Versammlungshaus schwebt dann ein Hauszeichen, oben steht „5 ohne Dach“. Ist ein Haus fertig, zieht die größte Familie
-  ohne Dach ein. Wird lange kein Haus gebaut, zieht einer von ihnen fort.
-- **Grundbedürfnisse:** Dach, Nahrung und Wasser. Ein Haus antippen zeigt seine Familie mit Namen und Alter und ihre
-  Bedürfnisse als kleine Zeichen: grün erfüllt, gelb knapp, rot fehlt. Über einem Haus schwebt, was seiner Familie fehlt.
-- **Zuzug:** Alle 10 Sekunden wächst das Dorf um einen Menschen, und zwar dort, wo es passt: Ein leeres Haus zieht eine neue
-  Familie an, sonst wächst die Familie mit dem meisten Platz, deren Bedürfnisse erfüllt sind. Fehlt Nahrung oder Wasser,
-  wächst niemand, und nach einer Weile ziehen Leute fort.
-- **Platz nach Bedürfnissen, wie bei Anno:** Jedes erfüllte Bedürfnis bringt Platz für einen Menschen mehr. Ein einfaches
-  Haus hat Platz für 2, mit Nahrung und Wasser für 4. Ein Haus einer Meisterfamilie hat 4 bis 6, je nachdem wie viele ihrer
-  Waren (Töpfe, Matten, Kokosöl, Gekochtes) im Lager sind; das Häuptlingshaus 4 bis 8. Fehlt etwas, wird das Haus zu eng,
-  und alle 30 Sekunden zieht von dort jemand fort. Die Tafel des Hauses sagt: „Platz für 3 von höchstens 4“.
-- **Zu voll:** Wird ein Haus zu eng, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in das nächste leere
-  Haus.
-- **Zweite Stufe, Meisterfamilie:** Meister eines Handwerks; viel später hießen sie in Tonga und Samoa tufunga. Liegen Töpfe,
-  Matten und Kokosöl im Lager und hat eine Familie, was sie braucht, baut sie ihr Haus aus (1 Holz, 1 Matte): eine Tapa an
-  der Tür, zwei geschnitzte Pfosten, Platz für 6. Dafür braucht sie fortan auch Töpfe, Matten und Kokosöl; fehlt eines
-  eine halbe Minute lang, lebt sie wieder einfach.
+  frühen Lapita lebten wohl dort, wo die Familie der Frau lebte.
+- **Hütte:** Pfosten und ein Dach aus Palmwedeln, ohne Nägel. Sie ist das Zuhause einer Familie, bis 4 Menschen. In einer
+  Hütte kommen **keine Kinder** zur Welt.
+- **Familienhaus:** Wird eine Hütte mit Kokosfasern und Sennit neu gebunden, hat sie Platz für Kinder. Liegt das Material im
+  Lager (und bleibt Schnur für Netze und Kanus übrig), bindet eine Familie ihre Hütte von selbst neu; auf der Tafel des
+  Hauses geht es mit „Ausbauen“ sofort. In der Übersicht lässt sich „Von selbst ausbauen“ abschalten.
+- **Kinder:** Sie kommen in Familienhäusern, wo eine Frau und ein Mann leben, Platz ist und die Ernte mehr als reicht.
+  Jedes Kind gehört zur Linie seiner Mutter. Mit sechs Jahren arbeitet es mit.
+- **Platz nach Bedürfnissen, wie bei Anno:** Jedes erfüllte Bedürfnis bringt Platz für einen Menschen mehr. Fehlt etwas,
+  wird das Haus zu eng, und alle 30 Sekunden zieht von dort jemand fort. Die Tafel des Hauses sagt: „Platz für 3 von
+  höchstens 4“.
+- **Zu voll:** Werden die Kinder groß, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in die nächste
+  leere Hütte.
+- **Meisterfamilie:** Meister eines Handwerks; viel später hießen sie in Tonga und Samoa tufunga. Fehlen Töpfe, Matten
+  oder Öl eine halbe Minute lang, lebt sie wieder als einfache Familie im Familienhaus.
 
-## Arbeit nach Familien
+## Zuzug: Familien aus der Ferne
 
-Vorbild ist Manor Lords: Eine Familie arbeitet an einem Ort. Ihre Erwachsenen arbeiten dort, so viele der Ort Plätze hat;
-die übrigen und alle Familien ohne Arbeitsplatz bauen, tragen und sammeln. Etwa sieben von zehn Menschen können arbeiten,
-Kinder und Alte nicht. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht genau zu dem Ort, an dem ihre
-Familie arbeitet.
+Neue Leute kommen nicht von selbst ins Dorf. **Steht eine Hütte leer**, geht die Nachricht über die Schnüre zwischen den
+Inseln, und nach einer Weile kommt ein fremdes Kanu von weit her, aus Mussau, Emirau, Eloaua, Watom oder einem anderen Dorf
+im Westen. Es legt am Strand an, und über ihm steht eine Sprechblase: Eine Familie von zwei bis vier Menschen fragt, ob
+sie bleiben darf.
 
-- **Automatisch:** Ohne dein Zutun gehen die Familien dorthin, wo sie gebraucht werden: erst Wasser und Essen, dann Meer,
-  Holz, Handwerk und Kanus. Wird gebaut, bleibt eine Familie frei für die Baustellen. Fehlt Wasser oder Essen, wechselt eine
-  Familie vom Handwerk dorthin.
-- **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, welche Familie dort arbeitet, und ihre Leute mit Namen. Mit „+“
-  schickst du die größte freie Familie hin, mit „−“ ziehst du sie ab. Dann wird die Insel von Hand verteilt; in der
-  Übersicht schaltet „Automatisch“ zurück.
-- **Übersicht:** Bewohner und Familien, wer ohne Dach ist, der Zuzug. Unter „Familien und Arbeit“ steht eine Zeile wie
-  „18 Familien: 14 haben alles · 3 fehlt Kokosöl, 1 fehlt Wasser“; „Alle Familien einzeln“ klappt die ganze Liste auf.
-  Darunter die Arbeitsplätze ohne Familie.
-- **Wer macht was:** Im Lager steht neben jeder Ware „Wer?“. Das zeigt jeden Ort, der sie macht oder braucht, mit Familie
-  und Namen. **Ein Tipp auf einen Namen fliegt zur Person** auf der Karte und sagt, wer sie ist und was sie tut.
-- **Bauleute:** Jede Baustelle braucht 2 Leute. Sie kommen aus den Familien ohne Arbeitsplatz und gehen sichtbar hinüber.
-  Erst holen sie das Holz aus dem Lager, ein Stück pro Gang, dann bauen sie. Gebaut wird nur, solange Bauleute an der
-  Baustelle sind, und nur so weit, wie Holz da ist.
-- **Jede Arbeit sieht anders aus:** Wer am Arbeitsplatz ist, arbeitet sichtbar. Am Feld stößt der Grabstock in die Erde,
-  der Holzfäller schlägt Späne, die Bauleute hämmern mit dem Steinbeil, in der Töpferei wächst ein Topf unter den Händen,
-  in der Beilwerkstatt wird ein Beil auf Sandstein geschliffen, der Klingenschläger schlägt Splitter vom Obsidian, in der
-  Flechthütte wächst eine Matte auf dem Schoß, in der Seilerei wird Kokosfaser zu Schnur gerollt, in der Klopfhütte schlägt
-  der Klöppel Rinde dünn, im Kavagarten wird die Wurzel gestampft, in der Schmuckschleiferei läuft der Bogenbohrer, am Pferch
-  fliegt Taro zu den Schweinen, an der Gärgrube werden Bananenblätter ausgelegt, der Pflanzer kniet, die Riffsammler waten.
-  Handwerk geschieht im Sitzen auf einer Matte.
-- **Baustellen:** Erst markieren Pflöcke und eine Schnur den Platz. Daneben liegt das Holz, das schon gebracht wurde. Dann
-  wächst das Gebäude vom Boden nach oben, und der Holzstapel wird kleiner. Ein Haus dauert etwa 40 bis 50 Sekunden mit den
-  Wegen, das Versammlungshaus gut zwei Minuten.
-- **Wer da ist, arbeitet:** Eine Werkstatt oder ein Feld erzeugt erst, wenn die Leute angekommen sind. Fischer paddeln im
-  Einbaum hinaus und kommen mit dem Fang zurück, Riffsammler waten im flachen Wasser. Auf einem Atoll paddeln die Leute
-  im Einbaum über die Lagune zu ihrem Motu.
-- **Die Arbeit läuft weiter,** auch wenn die Karte nicht gezeichnet wird: Die Schritte der Leute werden dann nachgeholt.
+- **Aufnehmen oder weiterschicken:** Ein Tipp aufs Kanu öffnet die Tafel. Sie zeigt die Menschen mit Namen und Alter und
+  was sie mitbringen: Nahrung für die ersten Tage, manchmal Schnur oder einen Topf, manchmal Setzlinge, die dem Dorf noch
+  fehlen.
+- **Gastfreundschaft:** Wer nicht antwortet, nimmt sie nach gut zwei Minuten nach altem Brauch auf.
+- Jede Familie aus der Ferne bringt eine **neue Linie** mit (siehe Verwandtschaft), und jeder Erwachsene ist eine
+  Arbeitskraft. Es kommt nur jemand, solange Nahrung und Wasser nicht ausgegangen sind und niemand ohne Dach ist.
+
+## Verwandtschaft: neues Blut
+
+Die Lapita-Siedler waren kleine Gruppen, oft die Leute eines Kanus. Am Leben hielt sie das Netz, an das sie gebunden
+blieben: Kanus fuhren zwischen den Dörfern und den alten Inseln hin und her, mit Obsidian, Töpfen und Menschen, eine
+Lebensader, wie der Archäologe Patrick Kirch es nannte. Inseln in Reichweite verheirateten sich über Generationen, und
+Neuankömmlinge wurden aufgenommen.
+
+- **Linien:** Jeder Mensch gehört zur Linie seiner Mutter. Die Übersicht zeigt unter „Verwandtschaft“, welche Linien auf
+  der Insel leben und wie viele Menschen sie haben; die Tafel einer Familie zeigt ihre Linie.
+- **Gesund, eng, zu nah:** Zählt man drei oder mehr gleich große Linien, ist das Dorf gesund. Bei weniger kommen Kinder
+  seltener; sind alle zu nah verwandt, kommen kaum Kinder, und manche sind schwach und leben nicht lange.
+- **Neues Blut kommt** mit Familien aus der Ferne (eine leere Hütte zieht sie an), mit Siedlern von euren anderen
+  Inseln, die ihre Linie im Kanu mitnehmen, und mit einer Hochzeit mit einem Clan oder einem anderen Volk: Der Partner
+  zieht zu euch und bringt die Linie seines Volkes. Dafür braucht es Vertrauen, also Gaben und Handel.
+- So muss sich das Volk ausbreiten und mit den anderen verstehen: Eine Insel allein wird zu einer einzigen
+  Verwandtschaft.
+
+## Arbeit nach Händen
+
+**Jeder Erwachsene ist eine Arbeitskraft**, Kinder unter sechs und die Alten nicht. Jeder Mensch hat seinen eigenen
+Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht genau zu ihrem Ort.
+
+- **Automatisch:** Ohne dein Zutun gehen die Leute dorthin, wo sie gebraucht werden: was fehlt zuerst, dann Essen und
+  Wasser, das Meer, Holz, Handwerk und Kanus. Ein Ort bekommt erst seine ganze Mannschaft, dann der nächste, damit die
+  Arbeit zu zweit auch zwei hat. Wer aus derselben Familie kommt, arbeitet gern zusammen.
+- **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, wer dort arbeitet, mit Namen. Mit „+“ schickst du einen Freien
+  hin, mit „−“ rufst du einen ab. Das geht für **jeden** Freien, auch wenn seine Familie schon woanders arbeitet. Dann wird
+  die Insel von Hand verteilt; in der Übersicht schaltet „Automatisch“ zurück.
+- **Übersicht:** Wer frei ist, mit Namen, welche Plätze noch Raum haben, welche ruhen, weil ihre Leute bauen, und die
+  Familien mit dem, was ihnen fehlt.
+- **Wie die Arbeit geht, mit wie vielen Händen:**
+
+| Art | Wo | Allein |
+| --- | --- | --- |
+| Zu zweit | Holzfäller, Erntehaus, Fischerhütte, Tauchplatz, Bauen | ein Drittel von dem, was zwei schaffen |
+| Hand in Hand | Töpferei, Klopfhütte, Erdofen, Schmuck | etwas langsamer, 40 % von zweien |
+| Jeder für sich | Felder, Quelle, Seilerei, Weben, Beile | jeder seinen Teil |
+
+  Vorbild sind Versuche mit Steinbeilen: Biegt ein Helfer den Stamm mit dem Seil zur Seite, braucht ein Baum fast drei
+  Viertel weniger Schläge. Der Weg zählt auch: Je weiter ein Ort vom Lager oder den Häusern steht, desto langsamer.
+- **Jede Arbeit sieht anders aus:** Am Holzfäller schlägt einer mit dem Beil, der andere lehnt sich ins Seil. Am Erntehaus
+  klettert einer mit der Fußschlinge die Palme hinauf und wirft Nüsse herunter, die andere schält sie am spitzen Pfahl.
+  Die Fischer flicken Netze oder fahren zu zweit hinaus und waten übers Riff. An der Quelle wird Wasser in Bambus gefüllt,
+  am Harzbaum tropft der Milchsaft in eine Schale, die Tapamalerin malt mit Kurkuma, in der Ölhütte wird Kokos geraspelt,
+  in der Duftölhütte rühren Blüten im Öl, am Bananenhain wird eine Staude geschnitten, die Pandanussammlerin greift nach
+  den Früchten. Töpferei, Beile, Klingen, Matten, Schnur, Tapa, Kava, Schmuck, Erdofen, Pferch und Gärgrube haben ihre
+  eigenen kleinen Handgriffe. Die Leute arbeiten ein paar Runden am Ort, ehe sie eine Last ins Lager tragen.
+- **Wer da ist, arbeitet:** Ein Ort erzeugt erst, wenn die Leute angekommen sind. Die Arbeit läuft auch weiter, wenn die
+  Karte nicht gezeichnet wird.
+
+## Bauen
+
+- **Kosten:** Jedes Gebäude mit Dach braucht **Holz und Palmwedel**, eine Hütte 4 und 4. Kokosfasern und Sennit braucht
+  man erst später: für das Familienhaus, Pfahlhaus, Kanuhaus und Kanus.
+- **Bauleute:** Gebaut wird zu zweit: Einer hält den Pfosten, der andere bindet; allein dauert es dreimal so lang. Zuerst
+  bauen, wer frei ist. **Ist niemand frei, legen zwei für die Bauzeit ihre Arbeit nieder**, von dem Ort, der am ehesten
+  warten kann: ein voller Speicher zuerst, dann Handwerk, dann Holz, Essen und Wasser zuletzt. Ihr Ort steht still, über
+  ihm steht „Leute bauen“; ist der Bau fertig, gehen sie zurück.
+- Die Bauleute tragen Holz und Palmwedel aus dem Lager herbei, ein Stück pro Gang. Gebaut wird an einer Stelle zugleich,
+  je 10 Bewohner an einer mehr.
+
+## Das Erntehaus: der Baum für alles
+
+Die Kokospalme heißt im Pazifik der Baum des Lebens. Das **Erntehaus** nutzt die Palmen ringsum, zu zweit: Einer klettert
+mit der Fußschlinge aus Kokosfaser hinauf, wie man es überall in Polynesien tat, der andere sammelt unten und schält die
+Faserhülle am spitzen Pfahl ab.
+
+| Was | Gibt |
+| --- | --- |
+| Reife Nüsse | Nahrung, dazu Kokosfasern und Schalen zum Feuern |
+| Grüne Nüsse | Wasser, 2 je Gang; wo kein Bach fließt, trinkt man das |
+| Palmwedel | das Dach jedes Gebäudes |
+| Alte Stämme | Holz: Eine alte Palme wird gefällt, an ihre Stelle kommt eine keimende Nuss |
+
+- Die Leute holen von selbst, was am meisten fehlt; auf der Tafel lässt es sich festlegen.
+- Es braucht 3 Palmen in Reichweite; je mehr Palmen, desto mehr Ernte, bis 8. Holz gibt es nur, wenn mehr als 6 Palmen
+  stehen, damit immer genug bleiben.
 
 ## Während ihr fort wart
 
@@ -503,7 +573,7 @@ Tuamotu. Der **Tauchplatz** kommt mit der Aufgabe „Leben auf dem Wasser“ und
 - **Brache:** Im Feld „Brachliegen lassen“. Dann wächst Gras darüber, die Arbeiter werden frei, und in gut zwei Minuten
   ist der Boden ausgeruht; danach wird es von selbst wieder bestellt.
 - **Erosion:** Steht auf einer hohen Insel weniger als 45 % des ursprünglichen Waldes, spült der Regen die Erde ins Meer:
-  Vor den Flussmündungen wird das Wasser braun, Felder laugen 1,6-mal so schnell aus, Riffsammler arbeiten langsamer.
+  Vor den Flussmündungen wird das Wasser braun, Felder laugen 1,6-mal so schnell aus, das Riff gibt weniger.
   Unter 25 % ist es schlimmer. Die Übersicht zeigt unter „Land“ den Wald und die müden Felder.
 - **Wirbelstürme** kommen in der Sturmzeit öfter als alles andere. Wer nicht vorsorgt, verliert Dächer, eine Werkstatt
   und ein bis zwei Häuser (bis sie neu gebaut sind, ziehen Leute fort), Bäume fallen, die Felder werden ausgewaschen,
@@ -511,7 +581,23 @@ Tuamotu. Der **Tauchplatz** kommt mit der Aufgabe „Leben auf dem Wasser“ und
 - **Man sieht ihn kommen:** Mit der Warnung verdunkelt sich der Himmel über der Insel, Regen peitscht schräg im Wind,
   Böen und abgerissene Blätter jagen vorbei, Blitze zucken, auf dem Wasser fliegt Gischt von den Wellenkämmen, die Brandung
   schlägt hoch ans Riff, und die Palmen biegen sich und schlagen hin und her. Er tobt, solange die Leute beraten, und noch
-  eine Weile danach. In der Zeit weht der Wind mit voller Kraft, und Fischer, Taucher und Riffsammler bleiben an Land.
+  eine Weile danach. In der Zeit weht der Wind mit voller Kraft, und Fischer und Taucher bleiben an Land.
+
+## Trampelpfade
+
+Pfade legt niemand an, sie entstehen beim Gehen. Wo Menschen oft laufen, liegt zuerst das Gras flach, dann zeigt sich die
+Erde, dann ist sie hart und hell getreten. Jede abgelaufene Stelle verbindet sich mit ihren Nachbarn zu einem Band, so
+laufen die Pfade als Linien. Die Leute treten gern dorthin, wo der Boden schon begangen ist, darum sammeln sich die Wege
+und biegen sich, wie echte. Am Rand stehen Grasbüschel, auf dem nackten Boden liegen Kiesel. Wo lange niemand geht,
+wächst der Pfad wieder zu. Ein Pfad, der lange viel begangen wird, wird mit Korallensand und Muschelstückchen bestreut;
+darauf geht man schneller.
+
+## Wolken und Regen
+
+Die Wolken der Passatzeit sind kleine Haufenwolken: Jede wächst, steht eine Weile und löst sich wieder auf; draußen auf
+dem Meer leben sie Dutzende Minuten, im Spiel ein, zwei Minuten. Sie ziehen mit dem Wind, ihr Schatten liegt darunter auf
+Meer und Land. Eine große Wolke regnet, solange sie reif ist: graue Schleier fallen schräg mit dem Wind, auf dem Wasser
+breiten sich Ringe aus. In der Sturmzeit gibt es mehr, dunklere und nassere Wolken, in der mageren Zeit nur wenige.
 
 ## Inseln wechseln
 
@@ -537,7 +623,7 @@ daneben ist, was wirklich an Bord ging.
 
 ## Kanus entstehen
 
-- **Erst das Kanu, dann das Wasser:** Ist ein Fischgestell gebaut, schnitzt der Fischer zuerst seinen Einbaum, etwa eine Minute.
+- **Erst das Kanu, dann das Wasser:** Ist eine Fischerhütte gebaut, schnitzen die Fischer zuerst ihr Kanu, etwa eine Minute.
   Man sieht den Stamm, das Aushöhlen mit Spänen und das fertige Kanu am Strand. Erst dann fährt er hinaus. Ebenso am Kanusteg:
   Er bedient Pfahlhäuser erst, wenn sein Einbaum fertig ist.
 - **Im Kanuhaus** entsteht ein Auslegerkanu in etwa zweieinhalb Minuten, ein Doppelkanu in etwa fünf, mit 3 Bauleuten,
@@ -616,8 +702,8 @@ Antippen öffnet den Kalender.
 | Magere Zeit | 10–12 | Brotfrucht trägt nicht, Proviant aus der Gärgrube hilft |
 
 - **Palolo:** Eine Woche nach Vollmond im ersten Mond steigt der Palolo-Wurm aus dem Riff. Drei Takte lang
-  schöpfen alle Inseln Meeresfrüchte, mit Fischgestellen und Riffsammlern mehr.
-- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischgestell oder Riffsammler ihr Riff sperren. Bis zum Fest
+  schöpfen alle Inseln Meeresfrüchte, mit Fischerhütten mehr.
+- **Rāhui:** In der mageren Zeit kann eine Insel mit Fischerhütte ihr Riff sperren. Bis zum Fest
   ruht der Fang, danach ist er dreimal so reich, und das Ansehen steigt um 3.
 
 ## Fest der Plejaden
@@ -635,40 +721,38 @@ bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Waren: Feldfrüchte, Fisch, Meeresfrüchte, Wildbeute, Kokosnüsse, Wasser, Holz, Dachdeckung, Schnur (Sennit), Kokosfasern,
+Waren: Feldfrüchte, Fisch, Meeresfrüchte, Wildbeute, Kokosnüsse, Wasser, Holz, Palmwedel, Schnur (Sennit), Kokosfasern,
 Kokosschalen, Brotfruchtharz, Muschelschalen, Proviant, Töpfe, Steinbeile, Klingen, Matten, Tapa, Kokosöl, Schweine, Kava,
 Muschelschmuck und die Schätze Perlmutt, rote Federn und Walzähne.
 Ketten haben höchstens drei Glieder.
 
-| Gebäude | Insel | Braucht | Macht pro Minute | reicht für etwa |
+| Gebäude | Insel | Braucht | Macht pro Minute, volle Mannschaft | Leute |
 | --- | --- | --- | --- | --- |
-| Holzfäller | hoch | Bäume in Reichweite, Steinbeile machen ihn schneller (1 Beil je 20 Holz) | 15 Holz, ohne Beile 10 | |
-| Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 7,5 junge Bäume | einen Holzfäller |
-| Tarofeld | hoch | | 15 Feldfrüchte | 12 Menschen |
-| Brotfruchtbaum | hoch | | 5 Feldfrüchte, je nach Jahreszeit | 4 Menschen |
-| Pulakagrube | Atoll, in der Mitte eines Motus | | 10 Feldfrüchte | 8 Menschen |
-| Fischgestell | am Strand | 2 Fischer, Schnur für Netze verdoppelt den Fang (1 Schnur je 8 Fisch) | etwa 25 Fisch, ohne Netze 12 | 20, ohne Netze 10 |
-| Riffsammler | am Strand | | 7,5 Meeresfrüchte | 6 |
-| Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Feldfrucht je Proviant | 7,5 Proviant | |
-| Töpferei | hoch | Ton in der Nähe, 1 Brennstoff je Topf (Kokosschalen, sonst Holz) | 3,75 Töpfe | 53 |
-| Beilwerkstatt | hoch | Basaltfelsen in der Nähe | 3,75 Steinbeile | 5 Holzfäller |
-| Klingenschläger | Vulkan | Obsidian in der Nähe | 3 Klingen | 2 Schmuckschleifereien |
-| Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | 3 Tapa | 50 |
-| Schweinepferch | hoch | 2 Feldfrüchte je Schwein | 1,9 Schweine | 47 |
-| Flechthütte | Atoll | 2 Pandanus daneben | 3,75 Matten | 62 |
-| Seilerei | überall | 1 Kokosfaser je Schnur | 6 Schnur | Häuser, Kanus und 4 Fischgestelle |
-| Palmenkletterer | überall | 3 Kokospalmen daneben | 10 Kokosnüsse, 10 Fasern, 10 Schalen; grün 10 Wasser | 8 Menschen |
-| Dachflechterin | überall | 2 Palmen oder Pandanus daneben | 7,5 Dachdeckung | |
-| Quelle | hohe Insel mit Bach | am Bach | 15 Wasser | 30 Menschen |
-| Brunnen | Atoll, Mitte eines Motus | | 15 Wasser | 30 Menschen |
-| Regenfang | überall | | 6 Wasser, Sturmzeit 10, magere Zeit 2,5 | 12 Menschen |
-| Harzsammler | hoch | 2 Brotfruchtbäume daneben | 3,75 Harz | |
-| Pandanussammlerin | Atoll | 2 Pandanus daneben | 7,5 Feldfrüchte | 6 Menschen |
-| Ölhütte | überall | 2 Kokosnüsse je Öl | 3,75 Kokosöl | 94 |
-| Schmuckschleiferei | Atoll, am Strand | 1 Klinge und 2 Muschelschalen je Ring | 1,5 Muschelschmuck | 75 |
-| Kavagarten | hoch | | 2,5 Kava | 83 |
+| Erntehaus | überall | 3 Kokospalmen daneben, mehr Palmen mehr Ernte | 7,5 Kokosnüsse mit 7,5 Fasern und 3,75 Schalen, oder 15 Wasser, oder 7,5 Palmwedel | 2, zu zweit |
+| Holzfäller | hoch | Bäume in Reichweite, Steinbeile machen ihn schneller (1 Beil je 20 Holz) | 5 Holz, ohne Beile 3,3 | 2, zu zweit |
+| Fischerhütte | am Strand | Schnur für Netze verdoppelt den Fisch (1 Schnur je 10 Fisch) | etwa 6 bis 8 Fisch oder Meeresfrüchte, Muscheln, Kochsteine | 2, zu zweit |
+| Quelle | hohe Insel mit Bach | am Bach | 5 Wasser | 1 |
+| Brunnen | Atoll, Mitte eines Motus | | 5 Wasser | 1 |
+| Tarofeld | hoch | | 3,75 Feldfrüchte, dazu Blätter | 1 |
+| Brotfruchtbaum | hoch | | 3,75 Feldfrüchte, je nach Jahreszeit | |
+| Pulakagrube | Atoll, in der Mitte eines Motus | | 3,3 Feldfrüchte | 1 |
+| Pandanussammlerin | Atoll | 2 Pandanus daneben | 5 Feldfrüchte | 1 |
+| Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 3,75 junge Bäume | 1 |
+| Seilerei | überall | 1 Kokosfaser je Schnur | 5 Schnur | 1 |
+| Erdofen | überall | 2 rohe Speisen, Brennstoff, Blätter | 7,5 Gekochtes | 2, Hand in Hand |
+| Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Feldfrucht je Proviant | 5 Proviant | 1 |
+| Töpferei | hoch | Ton in der Nähe, 1 Brennstoff je Topf | 3 Töpfe | 2, Hand in Hand |
+| Beilwerkstatt | hoch | Basaltfelsen in der Nähe | 3 Steinbeile | 2 |
+| Klingenschläger | Vulkan | Obsidian in der Nähe | 2,5 Klingen | 2 |
+| Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | 2,5 Tapa | 2, Hand in Hand |
+| Schweinepferch | hoch | 2 Feldfrüchte je Schwein | 1,7 Schweine | 1 |
+| Flechthütte | Atoll | 2 Pandanus daneben | 3 Matten | 1 |
+| Harzsammler | hoch | 2 Brotfruchtbäume daneben | 3 Harz | 1 |
+| Ölhütte | überall | 2 Kokosnüsse je Öl | 3 Kokosöl | 1 |
+| Schmuckschleiferei | Atoll, am Strand | 1 Klinge und 2 Muschelschalen je Ring | 1,4 Muschelschmuck | 2, Hand in Hand |
+| Kavagarten | hoch | | 2,1 Kava | 1 |
 
-Jede Werkstatt reicht für ein Dorf von etwa 50 bis 80 Menschen. Wer weiter wächst, braucht eine zweite, also mehr
+Jede Werkstatt reicht für ein kleines Dorf. Wer weiter wächst, braucht eine zweite, also mehr
 Arbeitskräfte, mehr Platz und mehr Handel. Schnur und Steinbeile werden dauerhaft verbraucht: Atolle liefern Schnur für die
 Netze der hohen Inseln, die hohen Inseln Beile und Holz.
 
@@ -686,8 +770,7 @@ oder einmal fällen.
 
 | Quelle | Wer nutzt sie | Was entsteht |
 | --- | --- | --- |
-| Kokospalme | Palmenkletterer | reife Nüsse: Kokosnüsse (Nahrung), dazu Kokosfasern und Kokosschalen; grüne Nüsse (umschaltbar): Wasser |
-| Kokospalme, Pandanus | Dachflechterin | Dachdeckung aus Palmwedeln und Pandanusblättern |
+| Kokospalme | Erntehaus | reife Nüsse (Nahrung) mit Kokosfasern und Kokosschalen, grüne Nüsse (Wasser), Palmwedel (Dach), alte Stämme (Holz) |
 | Kokosfasern | Seilerei | Sennit, die Schnur für Häuser, Kanus und Netze |
 | Kokosschalen | Töpferei | Brennstoff: erst die Schalen, dann Holz |
 | Kokosnüsse | Ölhütte | Kokosöl, 2 Nüsse je Öl |
@@ -695,20 +778,19 @@ oder einmal fällen.
 | Brotfruchtbaum | Gärgrube, Harzsammler | Proviant; Milchsaft, mit dem Kanus abgedichtet werden |
 | Bach | Quelle | Wasser, nur auf Inseln mit Bach, am Bach |
 | Süßwasser im Sand | Brunnen | Wasser, nur auf Atollen, in der Mitte eines Motus |
-| Regen | Regenfang | Wasser überall, viel in der Sturmzeit, wenig in der mageren Zeit |
-| Riff | Riffsammler | Meeresfrüchte und Muschelschalen für die Schmuckschleiferei |
+| Riff | Fischerhütte | Meeresfrüchte, Muschelschalen für die Schmuckschleiferei, Korallensteine für den Erdofen |
 
 - **Fällen:** Eine Kokospalme (2 Holz) oder ein Brotfruchtbaum (3 Holz) lässt sich auf seiner Tafel fällen. Danach ist
   weg, was er trug.
-- **Bauen wie damals:** Häuser werden ohne Nägel gebaut. Sie brauchen Holz, Dachdeckung und Sennit, ebenso Pfahlhäuser,
-  Versammlungs- und Kanuhaus; Speicher und Ahnenhaus Holz und Dachdeckung. Kanus brauchen dazu Brotfruchtharz.
+- **Bauen wie damals:** Gebäude werden ohne Nägel gebaut: Holz und Palmwedel für jedes Dach, Sennit erst für das
+  Familienhaus, Pfahlhaus, Versammlungs- und Kanuhaus. Kanus brauchen dazu Brotfruchtharz.
 - **Wasser** ist ein Grundbedürfnis: jeder Mensch braucht 0,5 pro Minute. Fehlt es, wächst das Dorf nicht.
-- **Kokosöl** wollen die Familien ab 50 Bewohnern. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der
+- **Kokosöl** wollen die Meisterfamilien. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der
   Clan vom Feuerberg und der Clan vom Kavahain schätzen es als Gabe.
 - **Warengruppen:** Eine Werkstatt kann eine Gruppe verlangen, etwa Brennstoff. Dann nimmt sie, was da ist, zuerst die
   Abfälle.
-- Das Ahnenkanu bringt 10 Holz, 10 Nahrung, 8 Wasser, 6 Dachdeckung und 5 Schnur. Quelle, Brunnen, Regenfang, Kletterer,
-  Dachflechterin und Seilerei gibt es vom ersten Tag an, den Harzsammler mit den Steinbeilen.
+- Das Ahnenkanu bringt 8 Holz, 8 Palmwedel, 24 Nahrung und 12 Wasser. Erntehaus, Holzfäller, Quelle, Brunnen und
+  Fischerhütte gibt es vom ersten Tag an.
 
 ## Veredelung, Erdofen und Tiere
 
@@ -726,7 +808,7 @@ Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptl
 | Schmuckschleiferei | Klinge, 2 Muschelschalen oder Eberhauer | Muschelschmuck |
 
 - **Nebenprodukte:** Taro- und Pulakafelder geben Blätter, Bananen noch mehr. Die Beilwerkstatt gibt Kochsteine aus Basalt,
-  der Riffsammler Korallenbrocken als Kochsteine und Muschelschalen. Der Schweinepferch gibt Eberhauer.
+  die Fischerhütte vom Riff Korallenbrocken als Kochsteine und Muschelschalen. Der Schweinepferch gibt Eberhauer.
 - **Gekochtes** zählt als Nahrung und ist ein Bedürfnis der Meisterfamilien (0,3 pro Kopf und Minute).
 - **Tiere fressen:** Jedes Schwein frisst laufend (0,25 pro Minute), jeder Hühnerhof 0,6, aus dem Futter: erst Reste, dann
   Kokosnüsse, dann Feldfrüchte. Ohne Futter legen die Hühner nicht, und jede halbe Minute geht ein Schwein ein.
@@ -755,28 +837,27 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 
 | Stufe | Ab | Wer braucht was (pro Kopf und Minute) |
 | --- | --- | --- |
-| Weiler | Anfang | alle: Dach, Nahrung 1,2 (jede Sorte zählt), Wasser 0,5 |
-| Dorf | 30 Bewohner | Meisterfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04, Gekochtes 0,3 |
+| Weiler | Anfang | alle: Dach, Nahrung 1,2 (jede Sorte zählt), Wasser 0,5; Familienhäuser dazu Gekochtes 0,3 |
+| Dorf | 30 Bewohner | Meisterfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04 |
 | Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
-- **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (6 Holz, 4 Dachdeckung, 3 Schnur, 1 feine Matte), eines je
+- **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (8 Holz, 6 Palmwedel, 4 Schnur, 1 feine Matte), eines je
   Insel, nur auf hohen Inseln, mit dem ersten Fest. Die Familie, deren älteste Frau die älteste unter den
   Meisterfamilien ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
   Die Schwester des Häuptlings stand im Rang über ihm (fahu), die Tamahā war die Ranghöchste im Land.
 - **Weg zum Häuptlingsdorf**, als Liste in der Übersicht, jeder Schritt mit Haken: eine große hohe Insel, die mindestens
   80 Menschen trägt; das Häuptlingshaus; die Häuptlingsfamilie hat alles; 50 Bewohner; Ansehen 20; Schönheit 10.
-- Im Häuptlingsdorf wohnen in jedem Haus 6 Menschen. Fehlt der Häuptlingsfamilie 30 Takte lang etwas, wird es wieder ein
-  Dorf.
+- Fehlt der Häuptlingsfamilie 30 Takte lang etwas, wird es wieder ein Dorf.
 
-**Jede Insel trägt nur so viele Menschen, wie ihr Land ernährt.** Hohe Inseln je nach Fläche etwa 50 bis 110, Koralleninselchen 20 bis 50. Ist die Insel voll, sagt das Spiel es einmal: Schickt Familien im Kanu aus und gründet ein neues Dorf. **Siedler
-gehen als Familien:** Beim Beladen kommt erst der Rest der Familie an Bord, die schon einsteigt, dann eine Familie ohne
-Arbeitsplatz, Erwachsene zuerst. Die Häuptlingsfamilie bleibt. Auf der neuen Insel bilden sie wieder ihre Familien.
+**Jede Insel trägt nur so viele Menschen, wie ihr Land ernährt.** Hohe Inseln je nach Fläche etwa 30 bis 110, Koralleninselchen 20 bis 50. Ist die Insel voll, sagt das Spiel es einmal: Schickt Familien im Kanu aus und gründet ein neues Dorf. **Siedler
+gehen als Familien:** Beim Beladen kommt erst der Rest der Familie an Bord, die schon einsteigt, dann eine Familie, deren
+Erwachsene frei sind, Erwachsene zuerst. Wer geht, nimmt seine Linie mit. Die Häuptlingsfamilie bleibt. Auf der neuen Insel bilden sie wieder ihre Familien.
 
 ## Das Leben im Dorf
 
 - **Der Tag:** Mittags sitzen die Leute ohne Arbeit beim Erdofen, abends im Versammlungshaus beim Kava, die Alten erzählen
   von den Ahnen, nachts gehen alle nach Hause. Kinder spielen auf dem Platz.
-- **Wer was arbeitet:** In jeder Familie gehen zuerst die Frauen zu Tapa, Matten, Dachdeckung, Töpfen, Hühnern und ans Riff,
+- **Wer was arbeitet:** In jeder Familie gehen zuerst die Frauen zu Tapa, Matten, Töpfen, Hühnern, an Quelle und Brunnen,
   zuerst die Männer zum Fischen auf See, zum Tauchen, Fällen, Klettern, Beilschleifen, zu den Schweinen und zum Erdofen.
 - **Ahnen:** Die Liste nennt die letzten 20 mit Namen, alle älteren werden gezählt („und 140 Ahnen der alten Zeit“). Die
   Namen aller Häuptlinge bleiben.
@@ -884,7 +965,7 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
 - **Dorf:** Kinder rennen und spielen, Erwachsene setzen sich zwischendurch auf eine Matte vor die Häuser. Über manchen
   Häusern steigt Kochrauch auf. Neben den Häusern liegt Feuerholz, stehen Töpfe, trocknet eine Matte oder dampft ein Erdofen.
   Trampelpfade entstehen dort, wo die Leute laufen.
-- **Am Wasser:** Die Fischer paddeln hinaus, werfen ihr Netz und hängen den Fang ans Gestell. Riffsammler waten mit dem
+- **Am Wasser:** Die Fischer paddeln zu zweit hinaus, werfen ihr Netz und hängen den Fang ans Gestell, oder sie waten mit dem
   Korb im seichten Wasser, nah am Strand. Wo ein Weg übers Wasser führt, über eine Lagune oder eine Bucht, paddeln die
   Leute im Einbaum; niemand läuft übers Riff. Beides ruht unter Rāhui.
 - **Im Meer:** Fischschwärme und Schildkröten ziehen durch die Lagunen. Auf offener, schon gesehener See taucht ab und zu
@@ -907,8 +988,24 @@ drei Hauttöne, Alte mit grauem Haar und Stock. Jeder Bewohner ist zu sehen und 
 vom Feld, der Werkstatt oder dem Waldrand zum Speicher: Taro oder Brotfrucht im Korb auf dem Kopf, Töpfe,
 Steine, Obsidian, Muscheln, Schnur, Tapa, Proviant, Holz, Fisch an der Stange, Matten. Die anderen schlendern zwischen den
 Häusern, die Alten sitzen oft auf Matten. Bauleute tragen Holz zu den Baustellen und hämmern dort, Holzfäller schlagen am
-Baum, Pflanzer tragen Setzlinge, Fischer fahren hinaus, Riffsammler waten.
+Baum, Pflanzer tragen Setzlinge, Fischer fahren zu zweit hinaus und waten übers Riff.
 Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unterwegs.
+
+## Quellen
+
+- Kirch, P. V. (1988), Long-distance exchange and island colonization: the Lapita case; Summerhayes, G. (2004) zu
+  Obsidian und Töpfen im Lapita-Tausch; Hogg et al. (2024) zu Lapita-Netzen.
+- Genetik früher Pazifik-Siedler: kleine Gründergruppen, Engpässe (Studien in Nature 2021 und PMC 2020–2025).
+- Fischerei im Pazifik: Männer im Kanu mit Netz, Leine und Speer, Frauen beim Sammeln auf dem Riff (SPC-Berichte, Cook
+  Islands, Hawaiʻi); Lapita-Fischerei vor allem in Riff und Lagune (Walter; Teouma).
+- Muschelhaufen auf Tongatapu und in Papua-Neuguinea: Schalen werden kleiner (Anadara), Teouma: nahe Vorkommen erschöpft.
+- Kokospalme: Wedel als Dach, Fasern zu Sennit für Kanus, Beile und Häuser, Holz; Fußschlinge zum Klettern (Polynesian
+  Cultural Center; PROSEA; Pollex, Proto-Polynesisch *kaafaga).
+- Dachdecken in Ozeanien: Pandanus hält länger als Kokoswedel, Familienarbeit (Buck, Material Culture of the Cook Islands).
+- Putz, Fletcher und Magee (2023), Tree Felling with Stone Axes: Pre-Bending Matters but Feller Sex Does Not, Forests 14.
+- Passatwolken: Lebensdauer von Dutzenden Minuten, Wachsen, Reife mit Regen, Auflösung (Witte et al. 2014; Seelig et al.
+  2023).
+- Talepakemalai, Mussau: Pfahlhäuser über der Lagune, 1300 bis 1100 v. Chr. (Kirch 2001, 2024).
 
 ## Nächste Schritte
 

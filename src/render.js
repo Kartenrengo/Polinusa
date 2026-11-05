@@ -292,26 +292,48 @@ function ribbon(pts, w){
   P.moveTo(L[0].x, L[0].y); for (const q of L) P.lineTo(q.x, q.y); for (let i = n - 1; i >= 0; i--) P.lineTo(R[i].x, R[i].y); P.closePath();
   return P;
 }
-/* Worn footpaths from every house to the meeting house, and from each workplace to the nearest house */
-/* Footpaths: bare ground where people walk often (see stepWear), soft at the edges and lighter where most feet go */
+/* Footpaths: they appear where people walk often (see stepWear). Each worn spot joins its worn neighbours in a band, so
+   the paths run on as lines: first the grass lies flat, then the earth shows, then it is trodden bare and pale in the
+   middle. Grass tufts stand at the edges, pebbles lie on the bare ground, and a path walked for a long time is strewn
+   with coral sand and bits of shell. */
+const WEAR_W = [0, 6.2, 4.4, 3, 1.7], WEAR_C = [null, ['#B5B47A', .26], ['#9C7E4E', .34], ['#C6A877', .5], ['#E0CC9E', .55]];
 function drawWear(c, I){
   const g = I._wg; if (!g) return;
   if (!I._wp){
-    const P = [new Path2D(), new Path2D(), new Path2D(), new Path2D(), new Path2D()], R = [4.8, 3.6, 2.4];
+    const band = [null, new Path2D(), new Path2D(), new Path2D(), new Path2D()], road = new Path2D(), bits = new Path2D(), pebbles = new Path2D(), tufts = new Path2D();
+    const pt = [], ok = [];
     for (let i = 0; i < g.lv.length; i++){
-      const l = g.lv[i]; if (!l && !g.road[i]) continue;
+      const l = g.road[i] ? WEAR_TOP : g.lv[i]; if (!l) continue;
       const h = Math.imul(i + 1, 2654435761) >>> 0, x = g.x0 + (i % g.w + .5) * WEAR_CELL + ((h & 15) / 15 - .5) * 2.6, y = g.y0 + (Math.floor(i / g.w) + .5) * WEAR_CELL + (((h >> 4) & 15) / 15 - .5) * 2.6;
       if (!landAt(I, {x, y}) || (I.river && polyDist({x, y}, I.river, false) < 3)) continue;
-      for (let k = 0; k < l; k++){ const r = R[k] * (.82 + ((h >> (8 + k * 3)) & 7) / 22); P[k].moveTo(x + r, y); P[k].ellipse(x, y, r, r * .78, ((h >> 20) & 7) / 7, 0, TAU); }
-      // a shell path: pale coral sand with a darker edge, and a few bright bits of shell
-      if (g.road[i]){ const r = 4.4 * (.9 + ((h >> 9) & 7) / 30); P[3].moveTo(x + r, y); P[3].ellipse(x, y, r, r * .8, 0, 0, TAU);
-        if ((h & 3) === 0){ const sx = x + (((h >> 12) & 7) - 3.5) * .6, sy = y + (((h >> 15) & 7) - 3.5) * .45; P[4].moveTo(sx + .7, sy); P[4].ellipse(sx, sy, .7, .45, 0, 0, TAU); } }
+      pt[i] = {x, y, l, h, r:g.road[i]}; ok[i] = 1;
     }
-    I._wp = P;
+    const lvAt = i => ok[i] ? pt[i].l : 0;
+    for (let i = 0; i < g.lv.length; i++){
+      if (!ok[i]) continue;
+      const P = pt[i], cx = i % g.w, nb = [cx + 1 < g.w ? i + 1 : -1, i + g.w, cx + 1 < g.w ? i + g.w + 1 : -1, cx > 0 ? i + g.w - 1 : -1];
+      for (let k = 1; k <= P.l; k++){
+        let joined = false;
+        for (const j of nb){ if (j < 0 || lvAt(j) < k) continue; const Q = pt[j]; band[k].moveTo(P.x, P.y); band[k].lineTo(Q.x, Q.y); joined = true; }
+        // a spot with no worn neighbour on its own step is a small round patch; it joins once the neighbours wear too
+        if (!joined && !(i - 1 >= 0 && lvAt(i - 1) >= k) && !(lvAt(i - g.w) >= k) && !(lvAt(i - g.w - 1) >= k) && !(lvAt(i - g.w + 1) >= k)){ band[k].moveTo(P.x, P.y); band[k].lineTo(P.x + .01, P.y); }
+      }
+      if (P.r) for (const j of nb){ if (j >= 0 && ok[j] && pt[j].r){ road.moveTo(P.x, P.y); road.lineTo(pt[j].x, pt[j].y); } }
+      if (P.r && (P.h & 3) === 0){ const sx = P.x + (((P.h >> 12) & 7) - 3.5) * .6, sy = P.y + (((P.h >> 15) & 7) - 3.5) * .45; bits.moveTo(sx + .7, sy); bits.ellipse(sx, sy, .7, .45, 0, 0, TAU); }
+      // pebbles on the bare ground, grass tufts at the edge of the flattened grass
+      if (P.l >= 3 && !P.r && (P.h >> 7) % 5 === 0){ const px = P.x + (((P.h >> 18) & 7) - 3.5) * .5, py = P.y + (((P.h >> 21) & 7) - 3.5) * .35, pr = .45 + ((P.h >> 24) & 3) * .15; pebbles.moveTo(px + pr, py); pebbles.ellipse(px, py, pr, pr * .7, 0, 0, TAU); }
+      if (P.l <= 2 && (P.h >> 9) % 3 === 0){ const side = (P.h >> 11) & 1 ? 1 : -1, tx = P.x + side * (2.6 + ((P.h >> 13) & 3) * .4), ty = P.y + (((P.h >> 16) & 7) - 3.5) * .4; tufts.moveTo(tx - .9, ty); tufts.lineTo(tx - .3, ty - 1.5); tufts.moveTo(tx, ty); tufts.lineTo(tx + .2, ty - 1.9); tufts.moveTo(tx + .9, ty); tufts.lineTo(tx + .6, ty - 1.4); }
+    }
+    I._wp = {band, road, bits, pebbles, tufts};
   }
-  const [a, b, d, sh, bits] = I._wp;
-  c.fillStyle = '#9C7E4E'; c.globalAlpha = .2; c.fill(a); c.fillStyle = '#B89A62'; c.globalAlpha = .26; c.fill(b); c.fillStyle = '#D9C48E'; c.globalAlpha = .32; c.fill(d);
-  c.globalAlpha = .9; c.lineWidth = 1.1; c.strokeStyle = '#B9A06C'; c.stroke(sh); c.fillStyle = '#EDE3C8'; c.fill(sh); c.fillStyle = '#FFFFFF'; c.globalAlpha = .8; c.fill(bits); c.globalAlpha = 1;
+  const {band, road, bits, pebbles, tufts} = I._wp;
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.setLineDash([]);
+  for (let k = 1; k <= WEAR_TOP; k++){ c.strokeStyle = WEAR_C[k][0]; c.globalAlpha = WEAR_C[k][1]; c.lineWidth = WEAR_W[k]; c.stroke(band[k]); }
+  c.globalAlpha = .8; c.lineWidth = 5.4; c.strokeStyle = '#B9A06C'; c.stroke(road); c.globalAlpha = .95; c.lineWidth = 4.2; c.strokeStyle = '#EDE3C8'; c.stroke(road);
+  c.fillStyle = '#FFFFFF'; c.globalAlpha = .8; c.fill(bits);
+  c.fillStyle = '#8E8576'; c.globalAlpha = .55; c.fill(pebbles);
+  c.strokeStyle = '#5E7A3A'; c.lineWidth = .45; c.globalAlpha = .5; c.stroke(tufts);
+  c.globalAlpha = 1; c.lineCap = 'butt';
 }
 function treePaths(I){
   if (I._tp) return I._tp;
@@ -484,7 +506,7 @@ function drawFishers(c, v, now){
   for (const I of islands){
     if (!lived(I) || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
-      if ((b.kind !== 'fisch' && b.kind !== 'riff' && b.kind !== 'taucher') || b.bt || !ptIn(b.x, b.y, grow(v, 40))) continue;
+      if ((b.kind !== 'fisch' && b.kind !== 'taucher') || b.bt || !ptIn(b.x, b.y, grow(v, 40))) continue;
       if (b.kind === 'taucher'){ if (I.settled && !(b.boat > 0) && !walkers.some(w => w.boat && w.job && w.job.b === b)){ const t = xformOf(b.kind, b.v || {}); put(c, b.x, b.y, t.s, t.m, t.rot, 'fishbeach', '<use href="#beached" transform="translate(-9 6) scale(.75)"/>'); } continue; }
       if (b.kind === 'fisch'){
         const n = I.settled ? b.hung || 0 : 4, t = xformOf(b.kind, b.v || {}); if (n) put(c, b.x, b.y, t.s, t.m, t.rot, 'rackfish|' + n, rackFish(n));
@@ -497,9 +519,10 @@ function drawFishers(c, v, now){
         let C = {x:w.x + ux * 12, y:w.y + uy * 12}; if (landAt(I, C)) C = w;
         const a = t / 11, x = C.x + Math.cos(a) * 9, y = C.y + Math.sin(a) * 4, left = -Math.sin(a) < 0;
         const n = ((now + b.id * 1300) % 9000) / 1400;
-        drawDugout(c, x, y, left, 0, figureLook(b.id * 17 + 3), false, now, b.id, n >= 1);
-        if (!reduced && n < 1){ const nx = x + (left ? -6 : 6), r = 2 + n * 7; stroke(c, loopPath(nx, y + 1, r, r * .55, b.id, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
-      } else if (cam.z > PEOPLE_Z){
+        drawDugout2(c, x, y, left, 0, figureLook(b.id * 17 + 3), false, figureLook(b.id * 23 + 5), false, now, b.id, n >= 1);
+        if (!reduced && n < 1){ const nx = x + (left ? -7 : 7), r = 2 + n * 7; stroke(c, loopPath(nx, y + 1, r, r * .55, b.id, .14, 11), '#F4ECD8', .7, [.6, .9], 'round', 1 - n * .7); }
+      }
+      if (b.kind === 'fisch' && cam.z > PEOPLE_Z){   // and someone of theirs gleans the reef flat
         const sway = Math.sin(t / 3) * 5, x = w.x + ux * 7 - uy * sway, y = w.y + uy * 7 + ux * sway;
         c.save(); c.translate(x, y); if (Math.cos(t / 3) < 0) c.scale(-1, 1);
         blit(c, 'fig|' + figureLook(b.id * 31), () => figureArt(figureLook(b.id * 31))); blit(c, 'load|muschel', LOADS.muschel);
@@ -530,6 +553,14 @@ function drawDugout(c, x, y, left, rock, look, old, now, ph, paddling){
   if (paddling) paddleStroke(c, -.6, -.2, 1, now, ph);
   c.restore();
 }
+/* two in one canoe: the steersman at the stern paddles, the fisher sits at the bow */
+function drawDugout2(c, x, y, left, rock, look, old, look2, old2, now, ph, paddling){
+  c.save(); c.translate(x, y); if (left) c.scale(-1, 1); if (rock) c.rotate(rock);
+  seatedFig(c, look2, old2, 3.8, -.4, .94); seatedFig(c, look, old, -3.8, -.1);
+  c.save(); c.scale(1.5, 1); blit(c, 'einbaumH', '<use href="#einbaumH"/>'); c.restore();
+  if (paddling) paddleStroke(c, -3.8, -.1, 1, now, ph);
+  c.restore();
+}
 function drawBoatFig(c, w, now){
   if (w.sx == null){ w.sx = w.x; w.sy = w.y; }
   const d = Math.hypot(w.tx - w.sx, w.ty - w.sy) || 1, f = clamp(1 - Math.hypot(w.tx - w.x, w.ty - w.y) / d, 0, 1), bend = (w.look.charCodeAt(1) % 2 ? 1 : -1) * Math.min(14, d * .16) * Math.sin(f * Math.PI);
@@ -542,7 +573,22 @@ function drawBoatFig(c, w, now){
     if (!reduced) for (let k = 0; k < 3; k++){ const f = ((now - w.under) / 1400 + k / 3) % 1; c.globalAlpha = 1 - f; stroke(c, ellipse(sx + Math.sin(f * 6 + k) * .8, y + 4 - f * 4, .55 + f * .4, .55 + f * .4), '#F4FBFA', .4); c.globalAlpha = 1; }
     return;
   }
-  drawDugout(c, x, y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3), w.left, rock, w.look, w.old, now, w.phase || 0, !w.fishing);
+  // on the reef flat: the canoe lies in the shallows, both wade and gather
+  if (w.glean){
+    put(c, x, y, 1, w.left ? -1 : 1, 0, 'einbaumE', '<use href="#einbaumE"/>');
+    const figs = [[w.look, w.old, -7], ...(w.mate ? [[w.mate.look, w.mate.old, 7]] : [])];
+    for (const [lk, od, dx] of figs){
+      const sway = reduced ? 0 : Math.sin(now / 900 + dx) * 1.5; c.save(); c.translate(x + dx + sway, y + 2); if (dx < 0) c.scale(-1, 1);
+      blit(c, 'fig|' + lk + (od ? 'o' : ''), () => figureArt(lk, od)); blit(c, 'load|muschel', LOADS.muschel);
+      c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9);
+      const f = ((now / 1000 + dx) * 1.3) % 1; if (f < .5 && !reduced){ c.fillStyle = '#F4ECD8'; c.beginPath(); c.arc(3 + f * 3, -1.6 - Math.sin(f * 2 * Math.PI) * 2, .45, 0, TAU); c.fill(); }
+      c.restore();
+    }
+    return;
+  }
+  const yy = y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3);
+  if (w.mate) drawDugout2(c, x, yy, w.left, rock, w.look, w.old, w.mate.look, w.mate.old, now, w.phase || 0, !w.fishing);
+  else drawDugout(c, x, yy, w.left, rock, w.look, w.old, now, w.phase || 0, !w.fishing);
   if (!w.fishing || reduced) return;
   const n = ((now - w.fishing) % 3600) / 1200; if (n > 1) return;
   const ox = x + (w.left ? -6 : 6), r = 2 + n * 7;
@@ -731,41 +777,73 @@ function drawSeaLife(c, v, now){
     }
   }
 }
-/* Cloud shadows drift over sea and land with the north wind; in the storm season they are rain showers */
-const CLOUD_T = 1100, PUFFS = [[0, 0, 1], [.55, -.18, .7], [-.6, .08, .62]];
+/* Clouds of the trade winds. Each one grows, stands a while and dissolves again (out there in tens of minutes, here in a
+   minute or two) and drifts with the wind. Its shadow lies on the sea and the land below, pushed aside by the sun. A big
+   cloud rains while it is mature: grey curtains slant with the wind and rings spread where the drops hit the water. In the
+   storm season there are more of them, darker and wetter, in the lean season only a few. Bodies and shadows are painted
+   once and then only scaled and faded. */
+const CLOUD_T = 900;
 let cloudX = 0, cloudY = 0, cloudAt = 0;
+const cloudArt = new Map();
+function cloudBody(seed, wet){
+  const key = (seed % 12) + (wet ? 'w' : 'f'); if (cloudArt.has(key)) return cloudArt.get(key);
+  const cv = document.createElement('canvas'), W0 = 240, H0 = 150; cv.width = W0; cv.height = H0; const x = cv.getContext('2d');
+  const r = rng(seed * 7919 + (wet ? 3 : 1)), puffs = [];
+  // a flat base and billows above it, the biggest in the middle
+  for (let i = 0; i < 9; i++){ const f = i / 8 - .5, rr = (34 - Math.abs(f) * 30) * (.8 + r() * .45); puffs.push({x:W0 / 2 + f * 150 + (r() - .5) * 14, y:H0 * .62 - rr * (.45 + r() * .4), r:rr}); }
+  for (let i = 0; i < 4; i++){ const rr = 16 + r() * 14; puffs.push({x:W0 / 2 + (r() - .5) * 90, y:H0 * .38 - r() * 16, r:rr}); }
+  x.save(); x.beginPath(); x.rect(0, 0, W0, H0 * .7); x.clip();   // the underside is flat, as with every cumulus
+  for (const q of puffs){
+    const g = x.createRadialGradient(q.x - q.r * .35, q.y - q.r * .4, q.r * .1, q.x, q.y, q.r);
+    if (wet){ g.addColorStop(0, 'rgba(226,232,236,.95)'); g.addColorStop(.6, 'rgba(164,176,184,.9)'); g.addColorStop(1, 'rgba(120,132,140,0)'); }
+    else { g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(.65, 'rgba(238,243,246,.75)'); g.addColorStop(1, 'rgba(225,233,238,0)'); }
+    x.fillStyle = g; x.beginPath(); x.arc(q.x, q.y, q.r, 0, TAU); x.fill();
+  }
+  x.restore();
+  // the shaded base
+  const bg = x.createLinearGradient(0, H0 * .5, 0, H0 * .72); bg.addColorStop(0, 'rgba(0,0,0,0)'); bg.addColorStop(1, wet ? 'rgba(70,84,96,.55)' : 'rgba(150,166,178,.35)');
+  x.globalCompositeOperation = 'source-atop'; x.fillStyle = bg; x.fillRect(0, 0, W0, H0);
+  cloudArt.set(key, cv); return cv;
+}
+function cloudShade(){
+  if (cloudArt.has('shade')) return cloudArt.get('shade');
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const x = cv.getContext('2d');
+  const g = x.createRadialGradient(64, 32, 0, 64, 32, 64); g.addColorStop(0, 'rgba(14,32,42,1)'); g.addColorStop(.55, 'rgba(14,32,42,.6)'); g.addColorStop(1, 'rgba(14,32,42,0)');
+  x.fillStyle = g; x.save(); x.scale(1, .5); x.beginPath(); x.arc(64, 64, 64, 0, TAU); x.fill(); x.restore();
+  cloudArt.set('shade', cv); return cv;
+}
 function drawWeather(c, v, now){
-  // the clouds drift with the wind, faster when it blows hard; far away one soft puff per cloud is enough
   const W = wind(), dt = Math.min(100, now - (cloudAt || now)); cloudAt = now; cloudX += W.tx * (4 + 10 * W.str) * dt / 1000; cloudY += W.ty * (4 + 10 * W.str) * dt / 1000;
-  const rain = seasonOf().id === 'sturm', t = now / 1000, ox = (cloudX % CLOUD_T + CLOUD_T) % CLOUD_T, oy = (cloudY % CLOUD_T + CLOUD_T) % CLOUD_T, far = lod === 'far';
-  for (let ty = Math.floor((v.y0 - 200) / CLOUD_T); ty <= Math.floor((v.y1 + 200) / CLOUD_T); ty++) for (let tx = Math.floor((v.x0 - 200) / CLOUD_T); tx <= Math.floor((v.x1 + 200) / CLOUD_T); tx++){
-    for (let k = 0; k < 3; k++){
-      const h = Math.abs(Math.sin(tx * 12.9898 + ty * 78.233 + k * 37.719) * 43758.5453), r1 = h % 1, r2 = (h * 7.13) % 1, r3 = (h * 3.71) % 1;
-      const x = tx * CLOUD_T + ((r1 * CLOUD_T + ox) % CLOUD_T), y = ty * CLOUD_T + ((r2 * CLOUD_T + oy) % CLOUD_T), R = 60 + r3 * 70;
-      if (x + R * 1.6 < v.x0 || x - R * 1.6 > v.x1 || y + R < v.y0 || y - R > v.y1) continue;
-      // three soft puffs, dark in the middle and fading out at the edge
-      for (const [px, py, pr] of far ? [[0, 0, 1.15]] : PUFFS){
-        c.save(); c.translate(x + px * R, y + py * R); c.scale(1, .55);
-        const g = c.createRadialGradient(0, 0, 0, 0, 0, R * pr); g.addColorStop(0, rain ? 'rgba(22,34,44,.24)' : 'rgba(18,38,48,.12)'); g.addColorStop(.55, rain ? 'rgba(22,34,44,.15)' : 'rgba(18,38,48,.07)'); g.addColorStop(1, 'rgba(18,38,48,0)');
-        c.fillStyle = g; c.beginPath(); c.arc(0, 0, R * pr, 0, TAU); c.fill(); c.restore();
+  const S = seasonOf().id, wetness = S === 'sturm' ? .85 : S === 'mager' ? .12 : .4, per = S === 'sturm' ? 4 : S === 'mager' ? 1 : 2, t = now / 1000, far = lod === 'far', sh = sunShadow();
+  const ox = (cloudX % CLOUD_T + CLOUD_T) % CLOUD_T, oy = (cloudY % CLOUD_T + CLOUD_T) % CLOUD_T, night = opts.night ? nightLevel() : 0;
+  for (let ty = Math.floor((v.y0 - 250) / CLOUD_T); ty <= Math.floor((v.y1 + 250) / CLOUD_T); ty++) for (let tx = Math.floor((v.x0 - 250) / CLOUD_T); tx <= Math.floor((v.x1 + 250) / CLOUD_T); tx++){
+    for (let k = 0; k < per; k++){
+      // every cloud lives through its own generations: a new one rises where the last dissolved
+      const h0 = hsh(tx * 31 + ty * 17, k * 13 + 1), life = 70 + h0 * 90, age = (t + hsh(tx, ty * 7 + k) * life) / life, gen = Math.floor(age), ph = age - gen;
+      const r1 = hsh(tx * 13 + gen * 7.3, ty * 11 + k), r2 = hsh(ty * 19 + gen * 3.1, tx * 5 + k * 3), r3 = hsh(gen + k * 17.7, tx + ty * 3);
+      const R = 46 + r3 * 74, x = tx * CLOUD_T + ((r1 * CLOUD_T + ox) % CLOUD_T), y = ty * CLOUD_T + ((r2 * CLOUD_T + oy) % CLOUD_T);
+      if (x + R * 2 < v.x0 || x - R * 2 > v.x1 || y + R < v.y0 || y - R * 2 > v.y1) continue;
+      const grow = ph < .22 ? smooth01(ph / .22) : ph > .72 ? smooth01(1 - (ph - .72) / .28) : 1, wet = R > 78 && hsh(gen * 2.3, k + tx) < wetness;
+      const rain = wet ? clamp((ph - .3) / .08, 0, 1) * clamp((.74 - ph) / .1, 0, 1) : 0;
+      // the shadow below: paler while the cloud is thin, darker under a rain cloud
+      const sw = R * (1.5 + .5 * grow), sa = (wet ? .2 : .11) * grow * (1 - night * .7);
+      c.globalAlpha = sa; c.drawImage(cloudShade(), x - sw, y - sw * .32, sw * 2, sw * .64); c.globalAlpha = 1;
+      if (far) continue;
+      const lift = R * .8, cx = x - sh.c * 8 - W.tx * 4, cy = y - lift;
+      if (rain > .01){
+        // curtains of rain from the base of the cloud down to its shadow, slanting with the wind, and rings on the water
+        const p = new Path2D(), fall = (t * 1.6) % 1, n = Math.round(26 + R * .2);
+        for (let i = 0; i < n; i++){ const a = (i * 2.399) % TAU, d = Math.sqrt((i + .5) / n) * R * .62, sx = cx + Math.cos(a) * d * 1.25, f = (fall + i * .137) % 1, sy = cy + R * .22 + f * (lift - R * .18), sl = W.tx * 6;
+          p.moveTo(sx + sl * f, sy); p.lineTo(sx + sl * f + W.tx * 2.2, sy + 6.5); }
+        c.save(); c.globalAlpha = .38 * rain; c.strokeStyle = '#DCE6EA'; c.lineWidth = .7; c.lineCap = 'round'; c.stroke(p); c.restore();
+        const veil = c.createLinearGradient(0, cy + R * .2, 0, y + 4); veil.addColorStop(0, `rgba(150,166,176,${.28 * rain})`); veil.addColorStop(1, 'rgba(150,166,176,0)');
+        c.fillStyle = veil; c.beginPath(); c.moveTo(cx - R * .7, cy + R * .2); c.lineTo(cx + R * .7, cy + R * .2); c.lineTo(x + R * .75 + W.tx * 6, y + 2); c.lineTo(x - R * .75 + W.tx * 6, y + 2); c.closePath(); c.fill();
+        if (lod === 'near') for (let i = 0; i < 6; i++){ const f2 = (t * .9 + i / 6) % 1, a = i * 2.1 + gen, rx = x + Math.cos(a) * R * .5 * ((i * 37 % 10) / 10) + W.tx * 5, ry = y + Math.sin(a) * R * .18;
+          c.globalAlpha = (1 - f2) * .5 * rain; c.strokeStyle = '#F4FBFA'; c.lineWidth = .5; c.beginPath(); c.ellipse(rx, ry, .6 + f2 * 3.2, (.6 + f2 * 3.2) * .4, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; }
       }
-      const showers = rain && r3 > .35, fair = !rain && r3 > .86;
-      if ((showers || fair) && !far){
-        // the cloud itself hangs above its shadow; from a rain cloud the rain falls down to the shadow, slanting with the wind
-        const lift = R * .75, cx0 = x - W.tx * 6, cy0 = y - lift;
-        if (showers){
-          const p = new Path2D(), fall = (t * 70) % 1;
-          for (let i = 0; i < 34; i++){ const a = (i * 2.399) % TAU, d = Math.sqrt((i + .5) / 34) * R * .75, sx = cx0 + Math.cos(a) * d * 1.2, f = (fall + i * .137) % 1, sy = cy0 + R * .18 + f * lift; p.moveTo(sx + W.tx * f * 10, sy); p.lineTo(sx + W.tx * (f * 10 + 3), sy + 7); }
-          stroke(c, p, '#E2ECEF', .8, null, 'round', .6);
-        }
-        for (const [px, py, pr] of [[0, .05, .95], [.5, -.12, .7], [-.55, -.02, .66], [.1, -.32, .62], [-.25, .18, .55], [.62, .16, .5]]){
-          const qx = cx0 + px * R, qy = cy0 + py * R * .7, rr = R * pr * .62;
-          const g = c.createRadialGradient(qx - rr * .25, qy - rr * .35, rr * .1, qx, qy, rr);
-          if (showers){ g.addColorStop(0, 'rgba(214,222,226,.9)'); g.addColorStop(.7, 'rgba(150,164,172,.82)'); g.addColorStop(1, 'rgba(120,134,142,0)'); }
-          else { g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(.7, 'rgba(240,244,246,.4)'); g.addColorStop(1, 'rgba(240,244,246,0)'); }
-          c.fillStyle = g; c.beginPath(); c.arc(qx, qy, rr, 0, TAU); c.fill();
-        }
-      }
+      // the body: it swells as it grows and frays as it goes
+      const sc = .55 + .45 * grow + (ph > .72 ? (ph - .72) * .5 : 0), bw = R * 2.3 * sc, bh = bw * .62;
+      c.globalAlpha = (wet ? .9 : .72) * grow * (1 - night * .45); c.drawImage(cloudBody(Math.floor(r3 * 997) + gen, wet), cx - bw / 2, cy - bh * .62, bw, bh); c.globalAlpha = 1;
     }
   }
 }
@@ -801,6 +879,7 @@ function drawDugouts(c, v, now){
     });
   }
 }
+const FLAT = new Set(['taro', 'platz', 'tanzplatz', 'pulaka', 'garten', 'kurkumagarten', 'kavagarten', 'brunnen', 'quelle']);
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v, now){
   const vis = [...walkers, ...critters].filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
@@ -808,7 +887,7 @@ function drawPeople(c, v, now){
   for (const w of vis){
     const I = isl(w.isl);
     for (const b of I.buildings){
-      const K = KINDS[b.kind]; if (b.kind === 'taro' || near.has(b)) continue;
+      const K = KINDS[b.kind]; if (FLAT.has(b.kind) || near.has(b)) continue;
       if (b.y > w.y && b.y - w.y < K.hy * ((b.v && b.v.scale) || 1) + 14 && Math.abs(b.x - w.x) < K.r + 6) near.set(b, I);
     }
     for (const t of I.trees) if (t.st !== 1 && !near.has(t) && t.y > w.y && t.y - w.y < 24 && Math.abs(t.x - w.x) < 9) near.set(t, null);
@@ -817,7 +896,7 @@ function drawPeople(c, v, now){
   items.sort((a, b) => a[0] - b[0]);
   const sh = sunShadow();
   if (sh.alpha > 0) for (const w of vis){
-    if (w.boat || (w.paddle && !landAt(isl(w.isl), w))) continue;
+    if (w.ride || w.boat || (w.paddle && !landAt(isl(w.isl), w))) continue;
     c.save(); c.translate(w.x, w.y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (w.left) c.scale(-1, 1);
     if (w.home) blitShadow(c, 'cr|' + w.kind, `<use href="#${w.kind}"/>`, sh.alpha);
     else { if (w.child) c.scale(.7, .7); if (w.sit && (!w.moving || w.busy)) c.scale(1, .78); blitShadow(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old), sh.alpha); }
@@ -827,10 +906,14 @@ function drawPeople(c, v, now){
     if (w.home){ drawCritter(c, w); continue; }
     if (w.kind){ drawBuilding(c, w, near.get(w)); continue; }
     if (w.st != null){ drawTree(c, w); continue; }
+    if (w.ride) continue;   // in the canoe of the other fisher
     // across the lagoon they paddle a dugout
     if (w.boat || (w.paddle && !landAt(isl(w.isl), w))){ drawBoatFig(c, w, now); continue; }
-    const bob = w.moving && !reduced ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced ? Math.sin(w.phase) * .05 : 0;
-    c.save(); c.translate(w.x, w.y + bob); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
+    const up = w.fx === 'climb' && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
+    const bob = w.moving && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced && !up ? Math.sin(w.phase) * .05 : 0;
+    // up at the crown a nut drops now and then
+    if (up > 12 && !reduced){ const f = (now / 900 + w.x) % 1; c.fillStyle = '#7A5434'; c.beginPath(); c.arc(w.x + 3, w.y - up - 2 + f * (up + 1), .9, 0, TAU); c.fill(); }
+    c.save(); c.translate(w.x, w.y + bob - up); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
     // someone sitting on a mat in front of a house; children are smaller
     if (w.sit && (!w.moving || w.busy)){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
     if (w.child) c.scale(.7, .7);
@@ -890,8 +973,32 @@ function workFx(c, w, now){
     case 'feed': { const g = (t * 1.1) % 1; if (g < .6){ const q = g / .6; dot(3.4 + q * 2.4, -4 + q * q * 4, .55, '#5E8A3A'); } break; }   // taro thrown to the pigs
     case 'stars': { const a = t * 1.2; c.strokeStyle = '#8E8A80'; c.lineWidth = .35; c.beginPath(); c.ellipse(5, -.4, 3, 1.3, 0, 0, TAU); c.stroke(); dot(5 + Math.cos(a) * 3, -.4 + Math.sin(a) * 1.3, .5, '#F4ECD8'); dot(5, -.4, .45, '#3A2E2A'); break; }   // a pebble walks the star compass
     case 'leaf': { const h = .5 + Math.abs(Math.sin(t * 2)) * .9; blob(4.4, -.5, 2.8, h, '#5E8A3A'); line(1.8, -.5, 7, -.5, '#B9D08A', .3); break; }   // banana leaves laid over the pit
+    case 'pull': { const tug = Math.abs(Math.sin(t * 2.2)); c.strokeStyle = '#B08048'; c.lineWidth = .45; c.lineCap = 'round'; c.beginPath(); c.moveTo(2.2, -5.2); c.quadraticCurveTo(5.6, -7.2 - tug * 1.4, 8.6, -12.6); c.stroke(); break; }   // leaning on the rope, the trunk bends away from the cut
+    case 'climb': { c.strokeStyle = '#B08048'; c.lineWidth = .5; c.beginPath(); c.ellipse(.2, -.6, 1.6, .5, 0, 0, TAU); c.stroke(); break; }   // the foot loop of coconut fibre
+    case 'husk': {   // a nut pressed onto the pointed stake, the husk torn off in strips
+      line(4.4, .4, 4.4, -3.4, '#6B4428', .6); const up = Math.abs(Math.sin(t * 3)); blob(4.4, -3.9 - up * 1.1, 1.3, 1.1, '#8C6440');
+      if (up < .25){ dot(5.9, -3.6, .35, '#C99A62'); dot(2.9, -3.2, .3, '#C99A62'); } blob(6.6, -.3, .9, .75, '#6B4A2E'); blob(7.6, .1, .8, .7, '#7A5434'); break; }
+    case 'net': {   // mending the net on the lap, the netting needle goes through the meshes
+      c.strokeStyle = '#8C6440'; c.lineWidth = .3; c.beginPath(); for (let k = 0; k < 4; k++){ c.moveTo(2.2 + k * 1.2, -1.6); c.lineTo(3 + k * 1.2, .4); c.moveTo(3 + k * 1.2, -1.6); c.lineTo(2.2 + k * 1.2, .4); } c.stroke();
+      const x = 2.4 + ((t * .8) % 1) * 4.8; line(x, -2.2, x + .6, -1, '#2B1D14', .5); break; }
+    case 'spear': {   // in the shallows, the spear raised; now and then a thrust and a splash
+      const th = (t * .7) % 1, down = th > .85 ? (th - .85) / .15 : 0; c.fillStyle = '#79C6B8'; c.fill(WADE);
+      line(1.2, -6.5 + down * 3, 6.5, -2 + down * 4, '#6B4428', .55); if (down > .5) for (let k = 0; k < 3; k++) dot(5.7 + k * .8, 1.6, .35, '#F4FBFA', 1 - down * .5); break; }
+    case 'water': {   // dipping a coconut shell, filling the bamboo
+      const d = Math.abs(Math.sin(t * 2)); blob(4.8, -.1 + d * .3, 1.5, .7, '#5AA9B8'); blob(3.6, -1.6 - d * 1.2, .9, .6, '#7A5434');
+      if (d > .8) dot(4.8 + Math.cos(t * 9) * .8, -1, .3, '#E2F2F4'); line(6.8, .4, 6.8, -3.4, '#B3A15C', .9); break; }
+    case 'pick': { line(1.8, -5.4, 3.6, -9.4 - Math.abs(Math.sin(t * 2)) * .8, '#2B1D14', .45); blob(4.2, -10, 1.5, 1.7, '#D9893A'); break; }   // reaching up for pandanus fruit
+    case 'tap': { line(5.6, .4, 5.6, -7, '#5C4A33', 1.4); const f2 = (t * .9) % 1; dot(5.2, -3 + f2 * 3, .3, '#F4ECD8', 1 - f2 * .3); blob(5.2, .2, 1, .45, '#B08048'); break; }   // the milky sap drips into a shell
+    case 'paint': {   // a brush dipped in turmeric, strokes on the bark cloth
+      c.fillStyle = '#E9DCC0'; c.fillRect(2.4, -1.2, 5, 1.6); c.fillStyle = '#D9A441'; for (let k = 0; k < 3; k++) c.fillRect(2.8 + k * 1.6, -1, .5, 1.2);
+      const x = 2.8 + ((t * .7) % 1) * 4.2; line(x, -3, x + .4, -1.2, '#6B4428', .5); break; }
+    case 'stir': { blob(4.6, -.6, 2, .9, '#7A5434'); blob(4.6, -1, 1.5, .4, '#E3C35A'); const a = t * 4; dot(4.6 + Math.cos(a) * .9, -1.1, .4, '#E86A8A'); line(3.4, -4, 4.6 + Math.cos(a) * .6, -1.2, '#6B4428', .4); break; }   // blossoms stirred into the oil
+    case 'grate': { blob(4.8, -.4, 1.6, 1, '#6B4A2E'); blob(4.8, -.9, 1.1, .6, '#F4ECD8'); const x = 4.8 + Math.sin(t * 8); line(x - 1, -2, x + 1, -2, '#8C6440', .5); if (Math.sin(t * 8) > .8) dot(6.6, .2, .3, '#F4ECD8'); break; }   // coconut flesh rasped on a shell
+    case 'cut': { line(5.4, .4, 5.4, -8, '#7A9A4A', 1.2); blob(4, -6.4, 1.6, 1.3, '#D8C24A'); const sw = Math.sin(t * 3) * .4; line(1.6, -4.5, 4.2 + sw, -6 + sw, '#2B1D14', .45); break; }   // a bunch of bananas cut down
   }
 }
+/* how high a climber is up the palm: up, a while at the crown, down again */
+const climbH = w => { const p = clamp(1 - w.wait / (w.boutT || 5600), 0, 1); return 15 * (p < .3 ? smooth01(p / .3) : p > .78 ? smooth01((1 - p) / .22) : 1); };
 const MARK = new Path2D('M-2.3-18.2Q0-18.8 2.4-18.1L.2-14.6Q-.4-15.6-2.3-18.2Z');
 /* Who works where: over each workplace a little tag with one mark per place. Close up, or for the selected building. */
 function slotsOf(I, b, sf, on){
@@ -953,13 +1060,15 @@ function drawNeeds(c, v, now){
     for (const b of I.buildings){
       if (!ptIn(b.x, b.y, v)) continue;
       let k = null;
-      if (b.kind === 'halle' && !b.bt && roofless(I)) k = 'haus';
+      if ((b.kind === 'halle' && !b.bt || b.kind === 'platz' && !I.buildings.some(q => q.kind === 'halle' && !q.bt)) && roofless(I)) k = 'haus';
       else if (homeOk(I, b)){ const f = famOfHome(I, b); if (f){ const miss = famNeeds(I, f, list).filter(n => n.state === 'out'); if (miss.length) k = miss[Math.floor(now / 2400 + b.id) % miss.length].k; } }
       if (!k) continue;
       const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
       put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
     }
   }
+  // a canoe from far away waits at the beach: the family asks to stay
+  for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); }
   const t = now;
   hearts = hearts.filter(h => t - h.t0 < 1600);
   for (const h of hearts){
