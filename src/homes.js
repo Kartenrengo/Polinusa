@@ -252,7 +252,7 @@ function autoAssign(I, places, at, adults){
     if (need(b) > 0) continue;
     const l = at.get(b);
     while (l.length < crewOf(b)){
-      const take = places.filter(q => q !== b && !q.prio && (at.get(q) || []).length && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
+      const take = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).length && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
       if (!take) break;
       const p = at.get(take).pop(); p.job = b.id; l.push(p);
     }
@@ -270,16 +270,55 @@ function prioTick(I){
   if (tick % 5) return;
   for (const b of I.buildings) if (b.prio && !b.bt && !(b.boat > 0)){ const k = prodOfB(b); if (k && (I.stock[k] || 0) >= storeCap(I) * .75){ b.prio = false; I.staff = null; } }
 }
+/* The household craft comes first, either or: its hands come from the family of the house, out of any other work they
+   had, else from those without work, else from the place that can wait best. Who works at home works nowhere else. */
+function craftFirst(I, places, at, adults){
+  const crafts = places.filter(b => b.at); if (!crafts.length) return;
+  const need = needOf(I, places), pmap = new Map(places.map(b => [b.id, b]));
+  for (const b of crafts){
+    const l = at.get(b) || []; at.set(b, l);
+    while (l.length < crewOf(b)){
+      const hb = findB(b.at), own = hb ? famOfHome(I, hb) : null, fam = own ? adults.filter(p => p.h === own.id && p.job !== b.id) : [];
+      const from = p => p.job && pmap.get(p.job), ok = p => { const q = from(p); return !q || (!q.prio && !q.at); };
+      const p = fam.filter(p => !p.job)[0] || fam.filter(ok).sort((x, y) => need(from(y)) - need(from(x)))[0] || (adults.some(p => !p.job) ? pickWorker(I, b, adults.filter(p => !p.job), l) : null);
+      if (!p) break;
+      const q = from(p); if (q){ const m = at.get(q); if (m) m.splice(m.indexOf(p), 1); }
+      p.job = b.id; l.push(p);
+    }
+  }
+}
+/* Nobody stands about: who is still without work after all places and sites are filled goes as a helper where a good is
+   short, then where the store has room. A place takes up to as many helpers as its crew; they make it faster, though not
+   as much as a full crew. A full store sends its helpers away again. */
+const helpOk = (I, b, need) => !b.at && !(b.boat > 0) && !KINDS[b.kind].trip && !KINDS[b.kind].yam && KINDS[b.kind].crew > 0 && need(b) < 2;
+function addHelpers(I, places, at, pool){
+  const help = new Map(); if (!pool.length) return help;
+  const need = needOf(I, places), open = places.filter(b => helpOk(I, b, need) && (at.get(b) || []).length >= crewOf(b)).sort((a, b) => need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);
+  if (!open.length) return help;
+  const room = b => (at.get(b) || []).length < 2 * crewOf(b), put = (p, b) => { pool.splice(pool.indexOf(p), 1); p.job = b.id; at.get(b).push(p); help.set(b, (help.get(b) || 0) + 1); };
+  // who helped somewhere before stays there
+  for (const p of pool.slice()){ const b = p._was && open.find(q => q.id === p._was); if (b && room(b)) put(p, b); }
+  for (const lvl of [0, 1]){
+    let go = true;
+    while (pool.length && go){
+      go = false;
+      for (const b of open){ if (!pool.length) break; if (need(b) !== lvl || !room(b)) continue; put(p0(I, b, pool, at), b); go = true; }
+    }
+  }
+  return help;
+}
+const p0 = (I, b, pool, at) => pickWorker(I, b, pool, at.get(b) || []);
 const makesK = (kind, k) => { const K = KINDS[kind] || {}, m = q => K.prod === q || !!(K.picks && K.picks[q]); return k === 'essen' ? FOODS.some(m) : m(k); };
 function staff(I){
   const crew = new Map(), crewP = new Map(), sites = [], boats = [], staffed = new Set(), pulled = new Map();
-  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], total:workers(I), build:0, short:0, queue:[]};
+  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], help:new Map(), rest:false, total:workers(I), build:0, short:0, queue:[]};
   const places = placesOf(I), pmap = new Map(places.map(b => [b.id, b])), at = new Map(), adults = I.people.filter(isAdult);
   for (const p of I.people){
     if (!isAdult(p)){ p.job = 0; continue; }
     const b = p.job && pmap.get(p.job); if (!b){ p.job = 0; continue; }
-    const l = at.get(b) || []; if (l.length >= crewOf(b)){ p.job = 0; continue; } l.push(p); at.set(b, l);
+    const l = at.get(b) || []; if (l.length >= crewOf(b)){ p._was = b.id; p.job = 0; continue; } l.push(p); at.set(b, l);
   }
+  craftFirst(I, places, at, adults);
   if (autoWork(I)) autoAssign(I, places, at, adults); else autoAssign(I, places.filter(b => b.at), at, adults);   // a household craft finds its hands even when the rest is given by hand
   // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
   { const need = needOf(I, places);
@@ -288,7 +327,7 @@ function staff(I){
       while (l.length < crewOf(b)){
         const free = adults.find(p => !p.job);
         if (free){ free.job = b.id; l.push(free); continue; }
-        const from = places.filter(q => q !== b && !q.prio && (at.get(q) || []).length).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
+        const from = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).length).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
         if (!from) break;
         const p = at.get(from).pop(); p.job = b.id; l.push(p);
       }
@@ -307,7 +346,7 @@ function staff(I){
     // whose work can wait best: a full store first, then a good in plenty, crafts before wood, wood before food and water
     const need = needOf(I, places), cap = storeCap(I), plenty = b => (I.stock[prodOfB(b)] || 0) / cap, pull = b => need(b) * 10 + plenty(b) * 5 + rankOf(b);
     // nobody leaves water or food that is running out
-    const order = places.filter(b => (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
+    const order = places.filter(b => !b.at && (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
     // a site keeps its builders until it is done: the same people carry the wood and build it to the end. Before, the
     // crew could change with every count, and whoever was carrying a load dropped it on the way.
     const mem = I.siteCrew || (I.siteCrew = {}); for (const id of Object.keys(mem)) if (!want.some(([w]) => w.id === +id)) delete mem[id];
@@ -322,7 +361,7 @@ function staff(I){
       use.push(...pool.splice(0, n - use.length));
       // for a site that ends the shortage, or one called with the conch, even a place of a short good gives hands, never one
       // making the same good, never a place called itself
-      let from = urgent(s) || s.prio ? places.filter(b => (at.get(b) || []).length && !b.prio && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order.filter(b => !b.prio);
+      let from = urgent(s) || s.prio ? places.filter(b => !b.at && (at.get(b) || []).length && !b.prio && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order.filter(b => !b.prio);
       while (use.length < n){
         const b = from.find(q => (at.get(q) || []).length); if (!b) break;
         const l = at.get(b); use.push(...l.splice(Math.max(0, l.length - (n - use.length)))); pulled.set(b, s);
@@ -333,6 +372,7 @@ function staff(I){
       crew.set(s, use.length); crewP.set(s, use.map(p => p.id)); if (s === yardB) yard = use.length; else sites.push(s);
     }
   }
+  const rest = zealOf(I) === ZEAL[0], help = autoWork(I) && !rest ? addHelpers(I, places, at, pool) : new Map();   // with much free time, who has no place rests instead of helping
   for (const b of places){
     const l = at.get(b) || []; if (!l.length) continue;
     const ord = workOrder(b, l); crew.set(b, ord.length); crewP.set(b, ord.map(p => p.id));
@@ -340,7 +380,7 @@ function staff(I){
   }
   const build = sites.reduce((t, b) => t + crew.get(b), 0) + yard;
   const short = places.filter(b => !crew.get(b)).length;
-  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), total:adults.length, build, short, queue:all.map(b => b.id)};
+  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), help, rest, total:adults.length, build, short, queue:all.map(b => b.id)};
 }
 /* The player sends one more person to a place, or calls one away; then the island is worked by hand */
 const handNote = I => { if (autoWork(I)){ I.handWork = true; toast('Die Arbeit wird jetzt von Hand verteilt. In der Übersicht geht es zurück auf Automatisch.', 3600, false); } };
@@ -423,4 +463,20 @@ function setCraft(I, h, k){
 }
 /* a craft goes with its house: moved with it, gone with it */
 function cleanCrafts(I){ if (I.buildings.some(b => b.at && !I.buildings.some(h => h.id === b.at))){ I.buildings = I.buildings.filter(b => !b.at || I.buildings.some(h => h.id === b.at)); I.staff = null; } }
+/* What a family makes at home has no workshop of its own any more: an old workshop from an earlier game moves into the
+   nearest house without a craft, best one where the craft may stand, else the nearest at all; the workshop goes. */
+function oldShops(I){
+  const shops = I.buildings.filter(b => KINDS[b.kind] && KINDS[b.kind].craft && !b.at); if (!shops.length) return;
+  for (const s of shops){
+    I.buildings = I.buildings.filter(b => b !== s); I.staff = null;
+    if (s.bt) continue;   // a workshop not yet built is simply given up
+    const homes = I.buildings.filter(h => HOME_KINDS.has(h.kind) && !h.bt && !craftOf(I, h)).sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y));
+    const h = homes.find(q => !craftWhy(I, q, s.kind)) || homes[0];
+    if (!h){ if (I.id === active) note(`${KINDS[s.kind].n} ist aufgelöst: ${KINDS[s.kind].craft} macht jetzt eine Familie zu Hause. Alle Häuser haben schon ein Hauswerk.`); continue; }
+    const b = addB(I, s.kind, craftSpot(h), {}, tick); b.at = h.id; if (s.prio) b.prio = true;
+    for (const p of I.people || []) if (p.job === s.id) p.job = 0;
+    if (I.id === active) note(`${KINDS[s.kind].n} ist jetzt Hauswerk: ${KINDS[s.kind].craft} bei ${(f => f ? famName(f) : 'einer Familie')(famOfHome(I, h))}.`);
+  }
+  syncWalkers(); invalidate();
+}
 function moveCraft(I, h){ const c = craftOf(I, h); if (!c) return; if (craftWhy(I, h, c.kind)){ setCraft(I, h, null); return; } const p = craftSpot(h); c.x = p.x; c.y = p.y; }

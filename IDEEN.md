@@ -6,10 +6,15 @@ Spieler es wählt.
 ## Offen aus der Runde „Hauswerk und das Jahr“ (Version 56)
 
 - **Auf einem echten Handy prüfen:** die Hauswerk-Zeile im Haus. Bisher nur im Test-Browser gemessen.
-- **Sennit am Feierabend:** Am Anfang hat die Familie oft keine freien Hände fürs Hauswerk, weil alle schon arbeiten.
-  Idee: Sennit drehen läuft abends nach der Arbeit vor dem Haus, langsamer, aber ohne eigene Hände.
+- ~~**Sennit am Feierabend:**~~ **anders gelöst in Version 63:** Das Hauswerk geht vor und holt die Familie von ihrer
+  anderen Arbeit, entweder oder.
 - **Hauswerk bei den Clans:** In den Dörfern der Clans gibt es noch eigene Werkstätten. Sie könnten auch Matten vor den
   Häusern zeigen.
+
+## Offen aus der Runde „Helfer und Namen“ (Version 63)
+
+- **Auf einem echten Handy prüfen:** die kleinen Namen unter den Waren oben. Im Test-Browser passen sie ab 320 Pixel.
+- **Helfer sichtbar machen:** Helfer könnten eine eigene kleine Geste haben, etwa Körbe tragen, damit man sie erkennt.
 
 ## Was die Geschichte der Völker noch hergibt
 

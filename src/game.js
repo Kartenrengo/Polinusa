@@ -1256,7 +1256,7 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
-    syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); if (tick % 15 === 0) ensureSpring(I);
+    syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){

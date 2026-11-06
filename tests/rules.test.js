@@ -72,6 +72,24 @@ const r = await p.evaluate(()=>{
     restore(serialize()); const H2 = isl('heimat'), h2 = findB(hh.id); want(craftOf(H2, h2) && craftOf(H2, h2).kind === 'schnur', 'craft: lost on load');
     H2.buildings = H2.buildings.filter(b => b !== h2); cleanCrafts(H2); want(!H2.buildings.some(b => b.at === hh.id), 'craft: stays without its house');
     out.push(`craft: ${CRAFT_KINDS.length} household crafts, ${craftsHere(H2).length} here`); }
+  // the craft comes first, either or: its family leaves the other work; an old workshop becomes a craft; nobody stands about
+  { const H = isl('heimat'); H.handWork = false; H.zeal = 1; const hh = homesOf(H).find(h => famOfHome(H, h) && famAdults(H, famOfHome(H, h)).length);
+    if (hh){ for (const p of famAdults(H, famOfHome(H, hh))) if (!p.job){ const pl = placesOf(H).find(b => !b.at && !b.prio); if (pl) p.job = pl.id; } H.staff = null; staffOf(H);
+      setCraft(H, hh, 'schnur'); const c = craftOf(H, hh), sf = staffOf(H), ids = sf.crewP.get(c) || [], who = ids.map(id => H.people.find(p => p.id === id));
+      want(c && ids.length === crewOf(c) && who.every(p => p && p.h === famOfHome(H, hh).id), 'craft first: not worked by its own family');
+      want(who.every(p => p && [...sf.crewP].filter(([b, l]) => l.includes(p.id)).length === 1), 'craft first: someone works at two places');
+      setCraft(H, hh, null); }
+    const hf = homesOf(H).find(h => !craftOf(H, h)), old = addB(H, 'flecht', {x:hf.x + 30, y:hf.y}, {}, tick); H.staff = null; oldShops(H);
+    want(!H.buildings.includes(old) && H.buildings.some(b => b.kind === 'flecht' && b.at), 'old workshop not turned into a craft');
+    for (const b of H.buildings.filter(b => b.kind === 'flecht' && b.at)) setCraft(H, findB(b.at), null);
+    // more people than places: they help where something is short, or rest when the island has much free time
+    const extra = []; for (let i = 0; i < 8; i++){ const q = {...H.people.find(isAdult)}; q.id = 900000 + i; q.job = 0; q.n = 'Helfer' + i; extra.push(q); H.people.push(q); }
+    H.staff = null; const sf = staffOf(H), nh = [...sf.help.values()].reduce((t, n) => t + n, 0);
+    out.push(`helpers: ${nh}, still free ${sf.free}, team with one helper ${teamF(KINDS.faeller, KINDS.faeller.crew + 1).toFixed(2)}`);
+    want(nh > 0 && [...sf.help].every(([b, n]) => n <= crewOf(b) && (sf.crew.get(b) || 0) <= 2 * crewOf(b)), 'helpers: none, or too many at one place');
+    want(teamF(KINDS.faeller, KINDS.faeller.crew + 1) > 1 && teamF(KINDS.faeller, 9 * KINDS.faeller.crew) <= 1.5, 'helpers: team factor');
+    H.zeal = 0; H.staff = null; const sr = staffOf(H); updateHUD(); want(!sr.help.size && sr.rest && $('idleNum').textContent === '0', 'free time: the free are shown as jobless');
+    H.zeal = 1; H.people = H.people.filter(p => !extra.includes(p)); H.staff = null; }
   // the year: canoes fast in the trade wind, pots slow in the rain, feasts count more after the yam harvest
   { const H = isl('heimat'), t0 = tick, tp = {kind:'toepfer'}, at = id => { while (seasonOf().id !== id) tick++; }, F = FEASTS.find(q => q.id === 'gross');
     at('sturm'); const wet = [seasonOf().sea, seasonalEvery(H, tp, KINDS.toepfer)]; at('passat'); const dry = [seasonOf().sea, seasonalEvery(H, tp, KINDS.toepfer)];

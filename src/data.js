@@ -100,7 +100,7 @@ const TEAM = {
 };
 const teamUnits = (t, n) => t === 'pair' ? Math.floor(n / 2) + (n % 2) * TEAM.pair.alone : t === 'hand' ? (n === 1 ? TEAM.hand.alone * 2 : n) : n;
 /* the share of the full crew's work that n people get done */
-const teamF = (K, n) => { if (!K.crew) return 1; n = Math.min(n, K.crew); return n <= 0 ? 0 : teamUnits(K.team || 'solo', n) / teamUnits(K.team || 'solo', K.crew); };
+const teamF = (K, n) => { if (!K.crew) return 1; const more = Math.max(0, Math.min(n, 2 * K.crew) - K.crew); n = Math.min(n, K.crew); return n <= 0 ? 0 : teamUnits(K.team || 'solo', n) / teamUnits(K.team || 'solo', K.crew) * (1 + .5 * more / K.crew); };   // helpers beyond the crew: each half as much
 /* What grows and lives on an island only where people have brought it: the canoe plants and the pigs. Coconut palms and
    pandanus drift ashore by themselves, the forest is there. A new island has none of these; what is not in the canoe that
    founds the village is missing there until a canoe brings it. take: what leaves the store with it. */

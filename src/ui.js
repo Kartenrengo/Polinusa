@@ -40,7 +40,7 @@ function updateHUD(){
   $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + popCap(I);
   showWind();
-  const free = staffOf(I).free; $('idleNum').textContent = free; $('idleBtn').classList.toggle('zero', !free); $('idleBtn').setAttribute('aria-label', `${free} ohne Arbeit. Tippen zeigt sie nacheinander.`);
+  const sf0 = staffOf(I), free = sf0.rest ? 0 : sf0.free; $('idleNum').textContent = free; $('idleBtn').classList.toggle('zero', !free); $('idleBtn').setAttribute('aria-label', `${free} ohne Arbeit. Tippen zeigt sie nacheinander.`);
   // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
   const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
   $('popDot').className = 'dot ' + st;
@@ -49,7 +49,7 @@ function updateHUD(){
   // the goods row: food, water, wood, thatch and cord first, then what matters here; few while the village is small
   const first = ['essen', 'wasser', 'holz', 'dach', 'schnur'], more = GOODS.filter(k => !FOODS.includes(k) && !first.includes(k) && ((I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)));
   const shown = [...first, ...more].slice(0, I.pop < 15 ? 5 : 7);
-  const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span></span>`).join(''); }
+  const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span><small class="gl" aria-hidden="true">${shortGN(k)}</small></span>`).join(''); }
   for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v);
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
   lastStock = {isl:active, ...I.stock, essen:haveOf(I, 'essen')};
@@ -117,11 +117,14 @@ function showWind(){
   C.style.setProperty('--amp', (3 + W.str * 11).toFixed(1) + 'deg'); C.style.setProperty('--gust', (1.7 - W.str * 1.3).toFixed(2) + 's');
   C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
+/* the name under each good in the top row: short, so it fits under its icon */
+const SHORT_GN = {essen:'Essen', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
+const shortGN = k => SHORT_GN[k] || (GN[k] && GN[k].length <= 8 ? GN[k] : (GN[k] || k).slice(0, 7) + '.');
 /* The idle button: one after the other, the people without work */
 let idleNo = 0;
 function showIdle(){
-  const I = isl(active), list = walkers.filter(w => w.isl === I.id && w.role === 'idle');
-  if (!list.length){ toast('Alle, die arbeiten können, haben Arbeit.', 2600, false); return; }
+  const I = isl(active), sf = staffOf(I), list = sf.rest ? [] : walkers.filter(w => w.isl === I.id && w.role === 'idle' && !w.play && !w.asleep && !w.toBed);
+  if (!list.length){ toast(sf.rest && sf.free ? `Alle Plätze sind besetzt. ${sf.free === 1 ? 'Eine Person hat' : sf.free + ' Leute haben'} Freizeit.` : 'Alle, die arbeiten können, haben Arbeit.', 2600, false); return; }
   const n = idleNo++ % list.length, w = list[n]; markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 2.2));
   toast(`${whoIs(w)} hat keine Arbeit, ${n + 1} von ${list.length}. ${foragers(I) ? 'Solange sammelt sie oder er Wild. ' : ''}Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
 }
@@ -477,8 +480,8 @@ function personMarkup(){
   let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
   h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.</p>`;
   h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', 'Spielt und lernt. Mit sechs Jahren arbeitet es mit.') : st === 'old' ? rowS('pop', 'Alt', 'Arbeitet nicht mehr, erzählt den Jüngeren von den Ahnen.') :
-    job ? rowS('', `Arbeit: ${placeName(job)}`, staffOf(I).crewP.get(job) ? `${crewAt(I, job) || 0} von ${crewOf(job)} sind dort.` : '', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) :
-    rowS('idle', 'Ohne Arbeit', 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.')}</ul>`;
+    job ? rowS('', `Arbeit: ${placeName(job)}`, staffOf(I).crewP.get(job) ? `${crewAt(I, job) || 0} von ${crewOf(job)} sind dort${(staffOf(I).help.get(job) || 0) ? `, dazu ${staffOf(I).help.get(job)} als Helfer` : ''}.` : '', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) :
+    rowS('idle', staffOf(I).rest ? 'Freizeit' : 'Ohne Arbeit', staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.')}</ul>`;
   if (st === 'adult') h += `<div class="daybar" role="img" aria-label="Der Tag: Arbeit ${pc(D.work)} %, Freizeit ${pc(D.free)} %, Schlaf ${pc(D.sleep)} %"><i class="w" style="width:${pc(D.work)}%"></i><i class="f" style="width:${pc(D.free)}%"></i><i class="s" style="width:${pc(D.sleep)}%"></i></div>` +
     `<div class="daylegend"><span class="w">Arbeit ${pc(D.work)} %</span><span class="f">Freizeit ${pc(D.free)} %</span><span class="s">Schlaf ${pc(D.sleep)} %</span></div>`;
   h += `<p class="sec">Arbeit und Freizeit auf ${I.name}</p>` + zealMarkup(I);
@@ -488,7 +491,8 @@ function personMarkup(){
 function workTab(I, nd){
   const sf = staffOf(I), P = I.people || [], freeP = sf.freeP.map(id => P.find(p => p.id === id)).filter(Boolean), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   let h = zealMarkup(I) + `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
-  h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} frei`, freeP.length ? `Frei: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. Wer frei ist, sammelt im Wald und am Strand.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
+  const nh = [...sf.help.values()].reduce((t, n) => t + n, 0);
+  h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} ${sf.rest ? 'in Freizeit' : 'frei'}`, freeP.length ? `${sf.rest ? 'Freizeit' : 'Frei'}: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. ${sf.rest ? 'Alle Plätze sind besetzt; sie ruhen und sammeln nebenbei.' : 'Wer frei ist, sammelt im Wald und am Strand.'}` : nh ? `${nh} ${nh === 1 ? 'hilft' : 'helfen'} mit, wo es knapp ist. Helfer machen einen Platz schneller.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
   if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${placeName(b)} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
   { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => placeName(b))), '', chipS('low', 'bauen')); }
   h += `</ul><details class="more famlist"${famListOpen ? ' open' : ''}><summary>${famsOf(I).length} Familien</summary><ul class="list needs">`;

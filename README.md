@@ -219,7 +219,15 @@ einem Maulbeergarten, Duftöl nur bei Blumen. Ein Bild, das hier nicht geht, ist
 Knöpfe wie „Hauswerk“ beim Rat oder bei einem fehlenden Knoten öffnen das passende Haus. Steht keines am richtigen Ort,
 öffnet sich die Bauleiste mit einer Hütte genau dort, etwa am Ton. Auch eine leere Hütte kann schon ihr Hauswerk wählen;
 dann arbeiten Leute aus anderen Familien dort, bis eine Familie einzieht. Wird das Haus versetzt, geht die Matte mit;
-wird es entfernt, ist auch das Hauswerk weg. Alte Spielstände behalten ihre Werkstätten, und sie arbeiten weiter.
+wird es entfernt, ist auch das Hauswerk weg.
+
+**Hauswerk geht vor, entweder oder.** Wer im Hauswerk arbeitet, arbeitet nirgends sonst. Die Hände kommen zuerst aus der
+eigenen Familie: Ein freies Familienmitglied, sonst eines, das woanders arbeitet und dort ganz abgezogen wird (nicht von
+einem Platz, der mit dem Muschelhorn gerufen ist). Erst wenn die Familie niemanden hat, kommt jemand ohne Arbeit, sonst
+jemand von dem Platz, der am besten warten kann. Baustellen und das Muschelhorn ziehen niemanden aus dem Hauswerk ab.
+Werkstätten für Hauswerk-Waren gibt es nicht mehr: Eine alte Werkstatt aus einem früheren Spielstand wird zum Hauswerk
+im nächsten Haus ohne Hauswerk, am liebsten in einem, wo es am Ort geht. Die Werkstatt verschwindet, eine Nachricht sagt,
+welche Familie es jetzt macht.
 
 **Angelhaken und Holzschalen.** Ab 20 Menschen kann eine Familie **Angelhaken schleifen**, aus Muschelschalen vom Riff
 (1 Muschel je Haken), wie die einteiligen Haken und Schleppköder aus Muschel und Perlmutt, die man an Lapita-Orten findet.
@@ -244,6 +252,15 @@ also kaum etwas. Ein Mangel kommt fast immer daher, dass jeder Platz besetzt ist
 frei ist, sonst sammeln sie Wild, und das wird weniger. Ein Arbeiter im Feld ernährt etwa 3 Menschen (Feldfrüchte 3,75 pro
 Minute, jeder isst 1,2), einer an der Quelle tränkt etwa 10. Der Rat sagt es jetzt: „3 sind frei, doch jeder Platz für
 Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.“
+
+**Helfer statt Herumstehen.** Bleiben nach allen Plätzen und Baustellen Leute übrig, gehen sie von selbst als **Helfer**
+an einen Platz: zuerst dorthin, wo eine Ware knapp ist, dann, wo das Lager noch Platz hat; nie ins Hauswerk, an Fischer-
+und Taucherfahrten, den Yamsgarten oder einen Platz mit vollem Lager. Ein Platz nimmt höchstens so viele Helfer, wie er
+Leute hat. Jeder Helfer bringt halb so viel wie einer der Mannschaft: Ein Fällplatz für 2 mit 1 Helfer schafft 125 %, mit
+2 Helfern 150 %. Wird das Lager voll, gehen die Helfer weiter. Über dem Platz hat jeder Helfer eine eigene Marke, das
+Personenblatt sagt „dazu 1 als Helfer“. Wer auch so keinen Platz findet, sammelt Wild und zählt oben als ohne Arbeit.
+Steht der Regler auf **Viel Freizeit**, helfen die Übrigen nicht, sie haben Freizeit: Oben zählen sie nicht als ohne
+Arbeit, und die Übersicht nennt sie „in Freizeit“. Wer Arbeit von Hand verteilt, bekommt keine Helfer.
 
 **Wasser.** Die Quelle wird nicht mehr gebaut: Jede Insel mit einem Bach hat ihre Quelle von selbst, dort, wo der Bach
 dem Dorf am nächsten ist, mit einem Wasserträger (genug für etwa 10 Menschen). Inseln ohne Bach, auch die Atolle, trinken
@@ -298,7 +315,7 @@ Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick. Danach geht d
 Einfach und nach Bedeutung geordnet:
 
 - **Oben, die Insel:** der Name, Ansehen, Leute ohne Arbeit und die Bewohner mit ihrem Platz. Darunter die wichtigsten
-  Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„2 Ausbau“** mit einem Knoten, Häuser voll, ein
+  Vorräte, jede mit ihrem Namen klein unter Bild und Zahl (Essen, Wasser, Holz, Wedel, Schnur …), und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„2 Ausbau“** mit einem Knoten, Häuser voll, ein
   Kanu kommt. Antippen öffnet die Übersicht.
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.

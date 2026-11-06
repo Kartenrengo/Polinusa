@@ -700,6 +700,10 @@ button.fix{cursor:pointer}
 .zeal input{width:100%;margin:2px 0;accent-color:var(--ochre)}
 .zeal-l{display:flex;justify-content:space-between;font:600 11.5px/1.2 var(--font-ui);color:var(--muted)}
 .zeal-l .on{color:var(--ink);font-weight:800}
+/* each good in the top row carries its name in small letters under icon and number */
+.goods .g{display:inline-grid;grid-template-columns:auto auto;align-items:center;justify-items:center;column-gap:2px;row-gap:0}
+.goods .gl{grid-column:1/-1;font-size:9px;font-weight:700;line-height:1;opacity:.72;white-space:nowrap;letter-spacing:-.1px}
+.goods .g.zero .gl{opacity:1}
 /* the smallest phones: the house before the build-out goes, the steps and their chips get smaller */
 @media (max-width:340px){
 .rise-pic .tp:not(.next){display:none}

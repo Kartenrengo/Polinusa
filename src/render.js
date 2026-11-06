@@ -1265,7 +1265,7 @@ function slotsOf(I, b, sf, on){
   if (b.bt){ if (K.plant) return null; n = open = SITE_CREW; }
   else if (b.kind === 'werft'){ if (!I.yard) return null; n = open = YARD_CREW; }
   else if (b.boat > 0) n = open = 1;
-  else if (K.crew){ n = K.crew; open = capOf(b); }
+  else if (K.crew){ n = Math.max(K.crew, sf.crew.get(b) || 0); open = Math.max(capOf(b), sf.crew.get(b) || 0); }   // helpers get a mark of their own
   else return null;
   const crew = sf.crew.get(b) || 0, here = Math.min(crew, on.get(b) || 0);
   return Array.from({length:n}, (_, i) => i < here ? 'on' : i < crew ? 'way' : i < open ? 'free' : 'off');

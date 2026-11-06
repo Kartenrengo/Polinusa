@@ -13,7 +13,7 @@ const {PAGE} = require('./lib');
     const run = n => { for (let t = 0; t < n; t++){ for (let k = 0; k < 40; k++){ stepWalkers(50); stepShips(performance.now(), 50); } walkAt = performance.now(); econ(); for (const s of ships.slice()) if (s.immig && s.state === 'moored') immigAnswer(s, true); if (sheetKind) closeSheet(); } };
     // 1. six sites at once
     for (const seed of [11, 13]){
-      const {I, put} = setup(seed); run(30); const sites = ['haus', 'taro', 'faeller', 'toepfer', 'schnur', 'haus'].map(k => put(k)).filter(Boolean); Object.assign(I.stock, {holz:20, dach:20});
+      const {I, put} = setup(seed); run(30); const sites = ['haus', 'taro', 'faeller', 'speicher', 'fisch', 'haus'].map(k => put(k)).filter(Boolean); Object.assign(I.stock, {holz:20, dach:20});
       let swaps = 0, crews = new Map(), fx = new Set();
       for (let t = 0; t < 600 && sites.some(s => s.bt); t++){ run(1);   // 20 minutes: the builders sleep at night, one night falls in it
         for (const s of sites){ const c = (staffOf(I).crewP.get(s) || []).join(); if (c && crews.has(s.id) && crews.get(s.id) && crews.get(s.id) !== c) swaps++; if (c) crews.set(s.id, c); }
@@ -24,10 +24,10 @@ const {PAGE} = require('./lib');
       if ([...fx].some(f => !['dig', 'plant'].includes(f))) bad.push('field built with ' + [...fx]);
     }
     // 2. the conch
-    { const {I, put} = setup(11); run(20); const a = put('haus'), c = put('toepfer'); Object.assign(I.stock, {holz:20, dach:20}); run(2);
+    { const {I, put} = setup(11); run(20); const a = put('haus'), c = put('speicher'); Object.assign(I.stock, {holz:20, dach:20}); run(2);
       if (crewAt(I, c)) bad.push('second site had builders before the call');
       setPrio(I, c, true); run(1); out.push(`called site: crew ${crewAt(I, c)}, the other ${crewAt(I, a)}`); if (!crewAt(I, c)) bad.push('called site got nobody'); if (!crewAt(I, a)) bad.push('the call stopped the other site');
-      restore(serialize()); const J = isl('heimat'), cc = J.buildings.find(q => q.kind === 'toepfer'); if (!cc.prio) bad.push('call not saved');
+      restore(serialize()); const J = isl('heimat'), cc = J.buildings.find(q => q.kind === 'speicher'); if (!cc.prio) bad.push('call not saved');
       for (let m = 0; m < 30 && cc.bt; m++) run(15); if (cc.bt) bad.push('called site not built'); if (cc.prio) bad.push('call stays after building');
       const e = J.buildings.find(q => q.kind === 'ernte'); J.handWork = true; for (const q of J.people) if (q.job === e.id) q.job = 0; J.staff = null;
       setPrio(J, e, true); out.push(`called workplace: ${crewAt(J, e)} of ${KINDS.ernte.crew}`); if (crewAt(J, e) < KINDS.ernte.crew) bad.push('called workplace not filled');
