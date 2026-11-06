@@ -235,7 +235,8 @@ function compassArt(){
 }
 /* ---------- buildings: the art without mirror, size or turn; those are applied when drawing */
 /* A tired field turns pale and cracks; a fallow one is grown over with grass */
-const fieldState = o => o.soil === 't' ? `<path d="${wob(9.4, 5.6, 371, .1, 12)}" fill="#C9A85A" opacity=".45"/><path d="M-6-1L-4 .4L-4.6 2M2.6-2.4L3.8-.6L6 0M-1 2.6L.6 3.4" fill="none" stroke="#6B4A2E" stroke-width=".5" stroke-linecap="round"/>` :
+const fieldState = o => o.soil === 'y' ? `<path d="${wob(9.6, 5.8, 379, .1, 12)}" fill="#8C6A44" opacity=".92"/>` + [[-6, -1.6], [-2.4, -2.6], [1.4, -2.2], [5.2, -1], [-4.6, 1.6], [-.6, 1], [3.4, 1.8], [0, 3.6]].map(([x, y]) => `<path d="M${x} ${y}q-.9-1.6-.2-2.6M${x} ${y}q.9-1.4.4-2.4" fill="none" stroke="#7FB04F" stroke-width=".7" stroke-linecap="round"/>`).join('') :
+  o.soil === 't' ? `<path d="${wob(9.4, 5.6, 371, .1, 12)}" fill="#C9A85A" opacity=".45"/><path d="M-6-1L-4 .4L-4.6 2M2.6-2.4L3.8-.6L6 0M-1 2.6L.6 3.4" fill="none" stroke="#6B4A2E" stroke-width=".5" stroke-linecap="round"/>` :
   o.soil === 'f' ? `<path d="${wob(9.6, 5.8, 373, .1, 12)}" fill="#7FA84F" opacity=".85"/>` + [[-5, -1], [1, -2.6], [5.4, .4], [-1.6, 2.4], [3, 3]].map(([x, y]) => `<use href="#tuft" transform="translate(${x} ${y}) scale(.8)"/>`).join('') : '';
 /* a master's house: what the family makes stands in front, pots and a rolled mat, and a garland over the door */
 const HOUSE_T3 = '<g transform="translate(7.4 1.4) scale(.3)"><use href="#pt"/></g><g transform="translate(10.2 1.6) scale(.24)"><use href="#pt"/></g>' +
@@ -258,6 +259,10 @@ function artOf(kind, o = {}){
     case 'halle': return `<use href="#firepit" transform="translate(0 24)"/><use href="#hm" fill="${roof}" transform="scale(.85)"/>` + (o.lvl >= 2 ? HALL_BANNERS : '') + (o.lvl >= 3 ? HALL_SHELLS : '');
     case 'werft': return `<use href="#hk" fill="${roof}"/>` + (o.canoe ? `<g transform="translate(11 12)">${yardArt(o.canoe.slice(0, 2), +o.canoe[2])}</g>` : '');
     case 'taro': return `<use href="#tp"/>` + fieldState(o);
+    case 'yams': { const st = o.yam == null || o.yam === '' ? 2 : parseInt(o.yam, 10), rack = String(o.yam || '').includes('k') ? '<path d="M8.6 4.6V-1.6M13.4 4.6V-1.6M8-.6H14M8 1.6H14" stroke="#6B4428" stroke-width=".6"/>' + [[9.4, -1.4], [11, -1.6], [12.6, -1.4], [10.2, .8], [11.8, .8]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx=".9" ry=".55" fill="#A0703E" stroke="#2B1D14" stroke-width=".25"/>`).join('') : '', P = [[-6, -1.4], [-1.8, -2.4], [2.6, -2], [6.4, -.6], [-4, 2.4], [.4, 2], [4.8, 2.6]];
+      return FIELD('#8C6A44', 357) + P.map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.9" ry="1.1" fill="#7A5A33" stroke="#5A3F22" stroke-width=".35"/>`).join('') +
+        (st >= 1 ? P.map(([x, y], i) => st === 2 || i % 2 ? `<path d="M${x} ${y - .4}V${y - 7.6}" stroke="#6B4428" stroke-width=".55"/>` : '').join('') : '') +
+        rack + (st === 2 ? P.map(([x, y], i) => `<path d="M${x} ${y - .8}q-1.2-1.8 0-3.4q1.2-1.6 0-3.2" fill="none" stroke="#4F7A33" stroke-width=".55"/>` + [[-1, -3], [1, -5], [-1, -6.6]].map(([dx, dy]) => `<path d="M${x + dx} ${y + dy}q-1.2-.9-.9-1.8q.8.2.9.9q.1-.7.9-.9q.3.9-.9 1.8z" fill="${i % 2 ? '#5E8A3A' : '#6E9A44'}"/>`).join('')).join('') : '') + fieldState(o); }
     // on the map the catch on the racks is drawn over them (see drawFishers), the dugout lies on the beach while nobody is out
     case 'fisch': return (o.boat ? `<g transform="translate(-9 7)">${yardArt('ein', o.boat - 1)}</g>` : o.dry ? '' : `<use href="#beached" transform="translate(-9 6) scale(.75)"/>`) + `<use href="#${o.dry ? 'rack0' : 'rack'}"/><use href="#${o.dry ? 'rack0' : 'rack'}" transform="translate(9 3) scale(.7)"/>`;
     // the star compass of stones beside the house, as navigators of the Carolines taught it

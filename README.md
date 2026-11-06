@@ -5,7 +5,7 @@ Häuser mit ihren Bedürfnissen wachsen; alles andere ist Ozeanien (siehe „Eig
 Ein Clan fährt los, findet leere Inseln, siedelt dort und treibt Handel über das offene Meer.
 
 **Inhalt:** [Starten und Tests](#starten) · [Anfang](#anfang) · [Oberfläche](#die-oberfläche) · [Haushalte und Ausbau](#haushalte-und-familien) ·
-[Zuzug](#zuzug-familien-aus-der-ferne) · [Bauen und Vorrang](#bauen) · [Arbeit](#arbeit-nach-händen) · [Freizeit](#freizeit) ·
+[Zuzug](#zuzug-familien-aus-der-ferne) · [Bauen und Vorrang](#bauen) · [Arbeit](#arbeit-nach-händen) · [Leben der ersten Seefahrer](#das-leben-der-ersten-seefahrer) · [Freizeit](#freizeit) ·
 [Die große Fahrt](#die-große-fahrt) · [Klang](#tag-nacht-und-klang) · [Was belegt ist und was nicht](#was-belegt-ist-und-was-später) ·
 [Quellen](#quellen)
 
@@ -35,7 +35,8 @@ node tests/run.mjs
 Zuerst prüft es, ob jede Datei fehlerfrei lesbar ist (eine kaputte Zeile hält das ganze Spiel an). Dann sagen die
 Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, ist da; jede Aufgabe und Stufe nennt Gebäude, die
 es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln),
-`build` (sechs Baustellen zugleich werden fertig, Vorrang, Felder werden gegraben), `play` (Freizeit, Feierabend,
+`build` (sechs Baustellen zugleich werden in 17 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
+Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
 jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
 (vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
 Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer je anderthalb Stunden.
@@ -984,6 +985,38 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 gehen als Familien:** Beim Beladen kommt erst der Rest der Familie an Bord, die schon einsteigt, dann eine Familie, deren
 Erwachsene frei sind, Erwachsene zuerst. Wer geht, nimmt seine Linie mit. Die Häuptlingsfamilie bleibt. Auf der neuen Insel bilden sie wieder ihre Familien.
 
+## Das Leben der ersten Seefahrer
+
+So lebten die Lapita-Leute, als sie neue Inseln besiedelten, und so lebt das Dorf im Spiel:
+
+- **Zuerst das Meer und das Wilde.** Auf einer neuen Insel gibt es Fisch, Muscheln, Vögel, Eier und die Kokospalmen, die
+  schon am Strand stehen. Davon leben die ersten Familien. Was sie im Kanu mitbringen, muss erst wachsen.
+- **Was gepflanzt ist, trägt erst nach einer Weile.** Ein Garten ist schnell angelegt, aber dann wächst er, und so lange
+  braucht er niemanden (die Leute arbeiten woanders). Die Tafel zeigt „wächst“ und wann er trägt; im Bild ist frisch
+  gegrabene Erde mit kleinen Trieben zu sehen. Nach dem Brachliegen wird ein Feld neu bepflanzt und wächst wieder.
+
+  | Was | im Leben | im Spiel bis zur ersten Ernte |
+  | --- | --- | --- |
+  | Taro, Kurkuma | knapp ein Jahr | 5 Minuten |
+  | Bananen | ein Jahr | 6 Minuten |
+  | Pulaka (Sumpftaro) | zwei bis drei Jahre | 7 Minuten |
+  | Brotfruchtbaum | drei bis fünf Jahre | 8 Minuten |
+  | Kava | drei Jahre und mehr | 10 Minuten |
+  | Kokospalme aus einer Nuss | sechs bis zehn Jahre | 10 Minuten |
+
+  Ein Spieljahr dauert 12 Minuten; die Zeiten sind also verkürzt, die Reihenfolge bleibt.
+- **Das Jahr der Yams.** Yams (neu im Kanu und im Bauen, ab den Gärten) werden in der Sturmzeit in Hügel gelegt, die
+  Ranken klettern an Stangen. Gepflanzt wird nur in der Sturmzeit; danach braucht das Feld niemanden. Wenn die magere Zeit
+  beginnt, in der die Brotfrucht nicht trägt, wird alles auf einmal geerntet: 16 Feldfrüchte. Sie halten sich auf einem
+  Gestell am Feld und gehen ins Lager, sobald dort Platz ist. Die Tafel zeigt das Jahr als Bilder: Sturm → magere Zeit,
+  +16, und wie viele Monde es noch bis zum Pflanzen oder zur Ernte sind.
+- **Nachts schlafen alle.** Wenn es dunkel wird, gehen die Leute in ihre Häuser; an den Türen glimmt Licht. Nur die
+  Fischer fahren mit einer Fackel aus Kokoswedeln am Bug hinaus, wie man auf den Inseln nachts am Riff fischte. Morgens
+  geht jeder zurück an seine Arbeit. Der Schlaf ändert nichts an den Vorräten; die Bauleute bauen dafür am Tag schneller.
+  Ohne „Tag und Nacht“ im Menü schläft niemand.
+- **Das Wilde folgt dem Jahr.** In der Sturmzeit kommen die Schildkröten zum Eierlegen an den Strand und die Seevögel
+  brüten: Wer sammelt, findet 1,4-mal so viel, auf Atollen 1,6-mal. In der mageren Zeit ist es weniger (0,7).
+
 ## Das Leben im Dorf
 
 - **Der Tag:** Mittags sitzen die Leute ohne Arbeit beim Erdofen, abends im Versammlungshaus beim Kava, die Alten erzählen
@@ -1178,6 +1211,10 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Töpfe mit Zahnstempel-Mustern, Obsidian, Muschelringe und -beile, Steinbeile | ja, durch Funde |
 | Pfahlhäuser über der Lagune (Talepakemalai, Mussau) | ja, durch Funde |
 | Schwein, Hund, Huhn, Taro, Brotfrucht, Kokos, Pandanus im Kanu mitgebracht | ja, durch Funde und Genetik |
+| Yams | wahrscheinlich; das ozeanische Wort für Yams ist alt, Reste von Knollen sind selten erhalten |
+| Zuerst vom Wilden leben: Schildkröten, Seevögel, Großfußhühner, die bald verschwinden | ja, durch Knochen in den frühesten Schichten |
+| Wachszeiten der Pflanzen | aus der Botanik; im Spiel verkürzt |
+| Nachts mit Fackeln fischen | erst später belegt, aber weit verbreitet |
 | Fischfang im Riff und in der Lagune, Muschelsammeln, kleiner werdende Muscheln | ja, durch Muschelhaufen |
 | Auslegerkanus, Fahrten über offenes Meer | ja, erschlossen aus der Besiedlung; die Kanus selbst sind nicht erhalten |
 | Grabstock, Kokosfaser, Sennit, Mattenflechten | wahrscheinlich; Werkzeuge und Fasern selten erhalten |

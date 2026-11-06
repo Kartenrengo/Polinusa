@@ -493,7 +493,7 @@ function storeMarkup(I){
   h += `<div class="tiles">${rows.map(g => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / (g.k === 'essen' ? cap * FOODS.length / 3 : cap));
     const tag = g.k === 'essen' ? 'span' : 'button', at = g.k === 'essen' ? 'role="img"' : `type="button" data-act="ware" data-k="${g.k}"`;
     return `<${tag} class="tile ${cls}${g.k === 'essen' ? ' sum' : ''}" ${at} aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute">${icon(g.k)}<b>${g.have}</b>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></${tag}>`; }).join('')}</div>`;
-  const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full');
+  const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full' && b.idle.why !== 'grow');
   if (idle.length) h += `<div class="chips stillrow"><span class="state out">steht still</span>${idle.slice(0, 8).map(b => `<button class="chip way" type="button" data-act="goto" data-b="${b.id}" aria-label="${KINDS[b.kind].n}: ${b.idle.text}">${bIcon(b.kind)}${KINDS[b.kind].n}</button>`).join('')}</div>`;
   return h;
 }
@@ -567,7 +567,7 @@ function finaleMarkup(){
 }
 /* ---------- a building: who works there, one line on how it goes, the rest folded away */
 const pipH = k => `<svg class="pip" viewBox="-2.7 -6.5 5.4 7" aria-hidden="true">${PIP[k]}</svg>`;
-const SHORT = {storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Kanu entsteht', space:'kein Platz', bau:'Leute bauen'};
+const SHORT = {grow:'wächst', yam:'wartet auf die Pflanzzeit', storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Kanu entsteht', space:'kein Platz', bau:'Leute bauen'};
 const shortWhy = w => w.why === 'use' ? `kein ${G1[w.k]}` : w.why === 'near' ? `zu wenig ${NEAR_PL[w.kind]}` : SHORT[w.why] || 'steht still';
 const secsText = s => s < 90 ? `${Math.max(1, Math.ceil(s))} s` : `${Math.round(s / 60)} min`;
 function crewMarkup(I, b, horn = ''){
@@ -613,6 +613,18 @@ function infoMarkup(I, b){
   const K = KINDS[b.kind], st = (cls, t) => `<span class="state ${cls}">${t}</span>`, more = [K.info];
   let line = '', bar = '', why = '';
   if (b.bt && K.plant) line = `${st('low', 'wächst')} <span>noch ${secsText(b.bt * TICK / 1000)}</span>`;
+  else if (K.yam && !b.bt){   // the yam year in pictures: plant in the rains, harvest as the lean time begins
+    const Y = K.yam, m = moonOf(), until = id => { const Q = SEASONS.find(q => q.id === id); return (Q.from - m + 12) % 12 || 12; };
+    line = (!b.ys ? st('low', `Pflanzzeit in ${until(Y.plant)} ${until(Y.plant) === 1 ? 'Mond' : 'Monden'}`) : b.ys === 1 ? st('ok', 'wird gepflanzt') : st('ok', `Ernte in ${until(Y.harvest)} ${until(Y.harvest) === 1 ? 'Mond' : 'Monden'}`)) +
+      (b.kept > 0 ? `<span>${icon('nahrung')}${Math.round(b.kept)} am Gestell</span>` : '') + `<span class="yamyear" aria-label="Pflanzen in der ${SEASON_IN(Y.plant)}, Ernte in der ${SEASON_IN(Y.harvest)}, ${Y.out} Feldfrüchte">${icon(Y.plant)}<i class="arr2"></i>${icon(Y.harvest)}${icon('nahrung')}+${Y.out}</span>`;
+    if (b.ys === 1) bar = `<span class="mbar big"><i style="width:${Math.round((b.sown || 0) * 100)}%"></i></span>`;
+    more.unshift(`Gepflanzt wird in der ${SEASON_IN(Y.plant)}, dann braucht das Feld niemanden. Wenn die ${SEASON_IN(Y.harvest)} beginnt, wird alles auf einmal geerntet: ${Y.out} Feldfrüchte für die Zeit, in der die Brotfrucht nicht trägt.`);
+  }
+  else if (b.grow > 0 && !b.bt){   // a garden planted, not yet bearing
+    line = `${st('low', 'wächst')}<span>${icon(prodOf(b) || K.prod)} ab ${secsText(b.grow * TICK / 1000)}</span>`;
+    bar = `<span class="mbar big"><i style="width:${Math.round((1 - b.grow / K.grow) * 100)}%"></i></span>`;
+    more.unshift('Was gepflanzt ist, trägt erst nach einer Weile. Bis dahin braucht der Garten niemanden; die Leute arbeiten woanders.');
+  }
   else if (b.bt){
     // a building site: how far, how much of the wood is there, and what the builders are doing
     const W = workOf(I, {type:'site', b}), f = 1 - b.bt / K.bt, here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b && w.on);
@@ -654,10 +666,11 @@ function infoMarkup(I, b){
     'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
   // the conch, in the row of the people: blown, people come at once; it calls attention when nobody is there
-  const lonely = !crewAt(I, b) && ((b.bt && !K.plant) || crewOf(b)), horn = (b.bt && !K.plant) || (!b.bt && crewOf(b)) ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
+  const working = (b.bt && !K.plant) || placesOf(I).includes(b);   // a growing garden or a yam field out of season needs nobody
+  const lonely = working && !crewAt(I, b), horn = working ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
   { const sb = b.idle && b.idle.site && findB(b.idle.site);   // the place whose people build: a button to their site instead of a sentence
     if (why && b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau')) why = sb ? `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>` : ''; }
-  return [(line ? `<div class="stat">${line}</div>` : '') + bar + crewMarkup(I, b, horn) + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
+  return [(line ? `<div class="stat">${line}</div>` : '') + bar + (working || b.boat > 0 ? crewMarkup(I, b, horn) : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 /* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
@@ -789,7 +802,7 @@ function sheetSig(){
   const hall = b.kind === 'halle' ? [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost)), festivalState(I), festivalParts(I).map(p => p.ok).join(), guestsFor().length].join() : '';
   const here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).map(w => w.name + w.on + w.leg).join('');
   const fam = HOME_KINDS.has(b.kind) ? (f => f ? [f.id, membersOf(I, f).length, famTier(I, f), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(''), famWork(I, f), canUpgrade(I, b)].join(':') : 'leer' + !!immigFor(I))(famOfHome(I, b)) : (I.people || []).filter(p => p.job === b.id).map(p => p.id).join('.') + ':' + staffOf(I).free + ':' + (choiceOf(b) || '') + ':' + Math.round((I.reefLife ?? 1) * 10);
-  return ['a' + age, b.bt, b.boat, b.got, b.prio, (staffOf(I).queue || []).indexOf(b.id), here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
+  return ['a' + age, b.bt, b.boat, b.got, b.prio, Math.ceil((b.grow || 0) / 15), b.ys, Math.round(b.kept || 0), Math.round((b.sown || 0) * 10), moonOf(), (staffOf(I).queue || []).indexOf(b.id), here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
 }
 let sliding = false;   // while a slider is dragged the sheet is not drawn anew, or the drag would break off
 $('sheetBody').addEventListener('input', e => { const el = e.target; if (!el.matches('input[type=range][data-act]')) return; sliding = true; slideTo(el); updateHUD(); });

@@ -32,7 +32,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     for (const s of I.buildings){
       if (!s.bt || KINDS[s.kind].plant) continue;
       const o = W.site.get(s.id) || {bt:s.bt, at:tick, born:tick, crew:'', changes:0}; W.site.set(s.id, o);
-      if (s.bt < o.bt - .01 || !crewAt(I, s)){ o.bt = s.bt; o.at = tick; }   // the clock runs only while it has builders
+      if (s.bt < o.bt - .01 || !crewAt(I, s) || sleepTime()){ o.bt = s.bt; o.at = tick; }   // the clock runs only while it has builders, and not at night
       const c = (sf.crewP.get(s) || []).join(); if (c && o.crew && c !== o.crew) o.changes++; if (c) o.crew = c;
       if (crewAt(I, s) && tick - o.at > 90 && !W.stuck.has(s.id)){ W.stuck.add(s.id); bad.push(`min ${minute}: ${s.kind}#${s.id} has builders but has not moved for 3 min (` + walkers.filter(w => w.job && w.job.b === s).map(w => w.leg + (w.on ? '' : '/off')).join(',') + ')'); }
       if (!crewAt(I, s) && tick - o.born > 450 && !W.waitLong.has(s.id)){ W.waitLong.add(s.id); log.push(`  note min ${minute}: ${s.kind}#${s.id} waits in line for 15 min`); }
@@ -41,7 +41,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     if (autoWork(I) && sf.free > 0) for (const b of placesOf(I)){ if (crewAt(I, b) || b.idle && ['use', 'near', 'trees', 'dep', 'full', 'storm', 'rahui', 'fallow'].includes(b.idle.why)) { W.empty.delete(b.id); continue; } const t0 = W.empty.get(b.id) ?? tick; W.empty.set(b.id, t0); if (tick - t0 === 60) log.push(`  note min ${minute}: ${b.kind} empty for 2 min while ${sf.free} free (${b.idle ? b.idle.why : 'no reason'})`); if (tick - t0 === 300) bad.push(`min ${minute}: ${b.kind} empty for 10 min while ${sf.free} are free`); }
     // someone at work who does not count as there: the place would make less than it shows
     for (const w of walkers) if (w.isl === I.id && w.job && !w.on && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 && !W.figStuck.has('on' + w.name)){ W.figStuck.add('on' + w.name); bad.push(`min ${minute}: ${w.name} works at ${KINDS[w.job.b.kind].n} (${w.job.type}, leg ${w.leg}, fx ${w.fx}${w.play ? ', play ' + w.play.k : ''}) but does not count as there`); }
-    for (const w of walkers){ if (w.isl !== I.id || !w.job || w.on || w.boat) { W.fig.delete(w); continue; }
+    for (const w of walkers){ if (w.isl !== I.id || !w.job || w.on || w.boat || w.asleep || w.toBed || sleepTime()) { W.fig.delete(w); continue; }
       const o = W.fig.get(w) || {x:w.x, y:w.y, at:tick}; W.fig.set(w, o); if (Math.hypot(w.x - o.x, w.y - o.y) > 3){ o.x = w.x; o.y = w.y; o.at = tick; }
       else if (tick - o.at > 45 && !W.figStuck.has(w)){ W.figStuck.add(w); bad.push(`min ${minute}: ${w.name} on the way to ${KINDS[w.job.b.kind].n} has not moved for 90 s (leg ${w.leg}, at ${w.x | 0},${w.y | 0} to ${w.tx | 0},${w.ty | 0})`); } }
     if (homesOf(I).some(b => tierOf(b) >= 2)) mark('Familienhaus', minute); if (homesOf(I).some(b => tierOf(b) >= 3)) mark('Meisterhaus', minute);

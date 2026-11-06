@@ -151,12 +151,12 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, boat, dry:b.kind === 'fisch' && !!I, soil:K.soil ? (b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}`, art = () => artOf(b.kind, o);
+  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}|${o.yam}`, art = () => artOf(b.kind, o);
   const sc = t.s * (chief ? 1.12 : 1) * grown;
   // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
   if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
@@ -633,6 +633,8 @@ function drawBoatFig(c, w, now){
     return;
   }
   const yy = y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3);
+  // at night a torch of dry coconut leaves at the bow: the fish come to the light
+  if (nightLevel() > .15 && w.job && w.job.type === 'fish'){ const tx = x + (w.left ? -5.4 : 5.4), fl = reduced ? 1 : 1 + Math.sin(now / 90 + w.x) * .15; stroke(c, new Path2D(`M${tx} ${yy}L${tx + (w.left ? -1.2 : 1.2)} ${yy - 6.4}`), '#5A3F22', .7, null, 'round'); c.save(); c.translate(tx + (w.left ? -1.3 : 1.3), yy - 6.4); c.scale(.55 * fl, .55 * fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore(); }
   if (w.mate) drawDugout2(c, x, yy, w.left, rock, w.look, w.old, w.mate.look, w.mate.old, now, w.phase || 0, !w.fishing);
   else drawDugout(c, x, yy, w.left, rock, w.look, w.old, now, w.phase || 0, !w.fishing);
   if (!w.fishing || reduced) return;
@@ -674,6 +676,7 @@ function lightsOf(v, now){
       else if (b.kind === 'haus' && b.id % 2 === 0) L.push({x:b.x, y:b.y - 2, r:13 * fl(b.id), c:'255,180,90'});
       else if (b.kind === 'toepfer') L.push({x:b.x - 11, y:b.y + 2, r:16 * fl(b.id), c:'255,130,50'});
     }
+    for (const w of walkers) if (w.isl === I.id && w.boat && w.job && w.job.type === 'fish' && ptIn(w.x, w.y, grow(v, 40))) L.push({x:w.x + (w.left ? -5 : 5), y:w.y - 7, r:24 * fl(w.x | 0), c:'255,165,70'});   // torch fishing
   }
   return L;
 }
@@ -945,7 +948,7 @@ function drawSwayDeco(c, v, now){
 const FLAT = new Set(['taro', 'platz', 'tanzplatz', 'pulaka', 'garten', 'kurkumagarten', 'kavagarten', 'brunnen', 'quelle']);
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v, now){
-  const vis = [...walkers, ...critters].filter(w => ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
+  const vis = [...walkers, ...critters].filter(w => !w.asleep && ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
   // close up, palms and trees sway: they are drawn here, and whatever stands in front of them is drawn again over them
   const sway = new Set(), sw = swayOn() && baseL.at && baseL.at.sw, swT = sw && baseL.at.swT, vv = grow(v, 30);
   if (sw){
@@ -1300,7 +1303,7 @@ function drawNeeds(c, v, now){
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
-      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
+      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || b.idle.why === 'grow' || b.idle.why === 'yam' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
       put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
     }

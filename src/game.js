@@ -49,7 +49,7 @@ function answerGifts(){
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {umu:'leaf', kalkbrenner:'pound', kurkumagarten:'dig', huehnerhof:'feed', weberin:'weave', malerin:'paint', duftoel:'stir', harzer:'tap', quelle:'water', brunnen:'water', sternhaus:'stars', ernte:'husk', oelhuette:'grate', bananen:'cut', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf', pansammler:'pick', pflanzer:'plant'};
+const WORK_FX = {yams:'dig', umu:'leaf', kalkbrenner:'pound', kurkumagarten:'dig', huehnerhof:'feed', weberin:'weave', malerin:'paint', duftoel:'stir', harzer:'tap', quelle:'water', brunnen:'water', sternhaus:'stars', ernte:'husk', oelhuette:'grate', bananen:'cut', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf', pansammler:'pick', pflanzer:'plant'};
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound', 'husk', 'grate', 'paint', 'stir', 'net']);
 const JOB_LOAD = {umu:'paket', kalkbrenner:'stein', kurkumagarten:'taro', huehnerhof:'eier', weberin:'matte', malerin:'tapa', duftoel:'schale', pansammler:'frucht', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', ernte:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 /* what someone carries from a place that gets what is needed: the load follows the pick */
@@ -146,7 +146,7 @@ const woodFloor = W => W.need ? W.all * (1 - Math.min(1, W.o.got / W.need)) : 0;
 const woodOnWay = (I, j) => walkers.reduce((t, w) => t + (w.isl === I.id && w.job && w.job.type === j.type && w.job.b === j.b && (w.leg === 'fetch' || w.leg === 'bring') ? 1 : 0), 0);
 /* Who is really there: a worker counts once they have reached their place */
 function presentAt(I){
-  const m = new Map(); for (const w of walkers) if (w.isl === I.id && w.on && w.job) m.set(w.job.b, (m.get(w.job.b) || 0) + 1);
+  const m = new Map(); for (const w of walkers) if (w.isl === I.id && (w.on || w.asleep) && w.job) m.set(w.job.b, (m.get(w.job.b) || 0) + 1);   // asleep counts as at work: the night changes nothing in the stores
   return m;
 }
 /* ---------- people as figures. On your islands every resident is one: each worker stands for one place at one workplace;
@@ -326,7 +326,10 @@ const wildOf = I => I.wild ?? (I.id === 'heimat' || I.clan ? .25 : 1);
 const goneOf = I => I.gone ?? (I.id === 'heimat' ? 1 : 0);   // on the home island the first kinds went long ago
 const wildKeep = I => 1 - .3 * goneOf(I);
 const foragers = I => !I.settled || I.tapu || wildOf(I) < .03 || (I.stock.wild || 0) >= storeCap(I) ? 0 : staffOf(I).free;
-const forageRate = I => foragers(I) * wildOf(I) * wildKeep(I) / WILD_PER * PER_MIN;   // food per minute
+/* The wild by the year: in the rains the turtles come up the beaches to lay their eggs and the seabirds nest, in the lean
+   time there is little; on an atoll the turtles and birds count for even more */
+const wildSeason = I => { const id = seasonOf().id, a = I && I.type === 'atoll'; return id === 'sturm' ? (a ? 1.6 : 1.4) : id === 'mager' ? .7 : 1; };
+const forageRate = I => foragers(I) * wildOf(I) * wildKeep(I) * wildSeason(I) / WILD_PER * PER_MIN;   // food per minute
 const wildWord = W => W > .7 ? 'reich' : W > .45 ? 'weniger' : W > .25 ? 'knapp' : W > .1 ? 'fast leer' : 'leer';
 const EXTINCT = {
   hoch:['Die Großfußhühner, die ihre Eier in warmer Erde vergruben, sind ausgestorben.', 'Die Riesenleguane und die großen Tauben sind fort, für immer.'],
@@ -335,7 +338,8 @@ const EXTINCT = {
 function wildTick(I, n = 1){
   const F = foragers(I), K = wildK(I), g = WILD_G * (I.settled ? .6 : 1), keep = wildKeep(I);
   let W = wildOf(I), got = I._wf || 0;
-  for (let i = 0; i < n; i++){ const y = F * W / WILD_PER; got += y * keep; W = clamp(W - y / K + g * Math.max(W, .03) * (1 - W), 0, 1); }
+  const sea = wildSeason(I);
+  for (let i = 0; i < n; i++){ const y = F * W / WILD_PER; got += y * keep * sea; W = clamp(W - y / K + g * Math.max(W, .03) * (1 - W), 0, 1); }
   I.wild = W;
   // a tapu the elders laid while you were away is lifted once the wild has come back
   if (I.tapuAway && W > .7 && !lifeLog){ I.tapu = I.tapuAway = false; I.staff = null; note(`Auf ${I.name} hat sich das Wild erholt. Die Ältesten heben ihr Tapu auf.`); }
@@ -531,6 +535,7 @@ const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.peopl
 const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.mat === p.id ? 'Matriarchin ' : I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
+  if (w.asleep || w.toBed) return w.asleep ? 'schläft' : 'geht schlafen';
   if (j && w.play) return `${KINDS[j.b.kind].n} · Feierabend, ${PLAY[w.play.k].n}`;
   const pl = w.play && !j ? ' · ' + PLAY[w.play.k].n : '';
   if (w.child) return 'Kind' + pl; if (w.old) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
@@ -720,6 +725,17 @@ function villageLife(I, w){
   if (w.child && hall && Math.random() < .5){ near(hall, 22, .45); w.wait = 300 + Math.random() * 600; return true; }
   return false;
 }
+/* Night: everyone sleeps in their house; only the fishers go out with torches, as people on the islands fished the reef
+   at night by torchlight. Sleep changes nothing in the stores (people count as at their work), and builders build faster
+   by day to make up for the night. In the morning each goes back to their work. */
+const sleepTime = () => opts.night && (p => p > .7 || p < .03)(dayPhase());
+function sleepLeg(I, w){
+  const p = personOf(w), f = p && famOf(I, p.h), home = (f && f.home && findB(f.home)) || I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
+  if (!home){ w.asleep = true; w.wait = 3000; return; }
+  const hx = home.x + 2, hy = home.y + 5;
+  if (Math.hypot(w.x - hx, w.y - hy) > 4){ goTo(I, w, hx + rnd(2), hy + rnd(1)); w.toBed = true; return; }
+  w.asleep = true; w.toBed = false; w.sit = false; w.wait = 2500 + Math.random() * 1500;
+}
 function nextLeg(w){
   const I = isl(w.isl);
   // during a feast everyone gathers in front of the meeting house; at the feast of the Pleiades they dance in a ring on the dance ground
@@ -731,6 +747,9 @@ function nextLeg(w){
     if (d){ const a = Math.random() * TAU; goTo(I, w, d.x + Math.cos(a) * 15, d.y + Math.sin(a) * 6, 1800 + Math.random() * 1400); w.dance = d; return; }
     if (h){ goTo(I, w, h.x + (Math.random() - .5) * 40, h.y + 14 + Math.random() * 16, 700 + Math.random() * 1400); return; }
   }
+  // night: to bed; morning: back to work
+  if (I.settled && sleepTime() && !(I.feastEnd > tick) && !w.boat && !w.ride && !w.swim && !(w.job && w.job.type === 'fish')){ if (w.play) endPlay(w); w.carry = null; sleepLeg(I, w); return; }
+  if (w.asleep || w.toBed){ w.asleep = false; w.toBed = false; if (w.job){ w.leg = 'back'; w.bout = false; } }
   if (w.job){
     if (w.play && !OFF_OK.has(w.job.type)){ endPlay(w); if (w.leg !== 'go'){ w.on = false; w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } }   // sent to other work meanwhile: go there now
     if (w.play){ if (playLeg(I, w)) return; if (offNow(I, w, w.job.type) && startPlay(I, w)){ w.play.off = true; return; } if (!w.on){ w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } w.leg = 'back'; w.bout = false; }
@@ -921,7 +940,7 @@ function diveLeg(I, w, j){
 function buildBit(w, dt, m){
   const W = workOf(isl(w.isl), w.job); if (!W) return;
   const left = W.o[W.f], floor = Math.max(1e-4, woodFloor(W)), K = w.job.type === 'site' ? SITE_K : w.job.type === 'yard' ? YARD_K : null;
-  const f = K ? teamF(K, m) * K.crew / Math.max(1, m) : 1;   // in pairs: alone one gets a third of it done
+  const f = (K ? teamF(K, m) * K.crew / Math.max(1, m) : 1) * (opts.night ? 1.5 : 1);   // in pairs: alone one gets a third of it done; by day faster, for the night they sleep
   if (left > floor) W.o[W.f] = Math.max(floor, left - dt / TICK / W.crew * f);
 }
 function stepWalkers(dt){
@@ -1077,9 +1096,32 @@ function wayF(I, b){
 }
 /* the share of a place's full speed it works at now: its people, the palms, the way */
 const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * palmF(I, b) / wayF(I, b); };
+/* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
+   (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
+   A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
+const SEASON_IN = id => ({plejaden:'Zeit der Plejaden', sturm:'Sturmzeit', passat:'Passatzeit', mager:'mageren Zeit'})[id] || id;
+function yamTick(I, b, K, n, mult = 1){
+  const Y = K.yam, S = seasonOf().id;
+  // the harvest is kept on racks by the field (a yam house) and goes into the store as there is room, all year long
+  if (b.kept > 0){ const room = Math.max(0, storeCap(I) - (I.stock.nahrung || 0)), m = Math.min(b.kept, room, 2 * mult); if (m > 0){ I.stock.nahrung = (I.stock.nahrung || 0) + m; b.kept -= m; } }
+  if (!b.ys){ if (S === Y.plant){ b.ys = 1; b.sown = 0; I.staff = null; invalidate(); } else { b.idle = {why:'yam', text:`Gepflanzt wird in der ${SEASON_IN(Y.plant)}.`}; return; } }
+  if (b.ys === 1){
+    if (S !== Y.plant){ b.ys = b.sown >= .25 ? 2 : 0; if (!b.ys) b.sown = 0; I.staff = null; invalidate(); return; }
+    b.sown = Math.min(1, (b.sown || 0) + workSpeed(I, b, n) * mult / Y.work); b.idle = n ? null : {why:'crew', text:'Niemand legt die Knollen.'};
+    if (b.sown >= 1){ b.ys = 2; I.staff = null; invalidate(); }
+    return;
+  }
+  b.idle = {why:'grow', text:`Die Ranken wachsen. Geerntet wird, wenn die ${SEASON_IN(Y.harvest)} beginnt.`};
+  if (S !== Y.harvest) return;
+  const got = Math.round(Y.out * (b.sown || 1) * Math.max(.4, b.soil ?? 1));
+  b.kept = (b.kept || 0) + got; stats.yams = (stats.yams || 0) + got;
+  b.ys = 0; b.sown = 0; b.soil = Math.max(0, (b.soil ?? 1) - .22); b.idle = null; if (b.soil < .3){ b.fallow = true; } I.staff = null; invalidate();
+  if (!awayQuiet && I.id === active){ toast(`Yamsernte: ${got} Feldfrüchte. Sie halten sich auf dem Gestell am Feld.`, 3200); sfx('rise'); }
+}
 function makeRate(I, k){
   let m = k === 'wild' ? forageRate(I) : 0;
   for (const b of I.buildings){ const K = KINDS[b.kind]; if (!K.prod || b.bt || b.boat > 0 || (b.idle && b.idle.why !== 'full')) continue;
+    if (K.yam) continue;   // the yam field gives once a year (see yamTick)
     const f = prodOf(b) === k ? 1 : (byOf(b) || {})[k] || 0; if (!f) continue;
     m += f * (prodOf(b) === k ? outOf(b) : 1) * PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, crewAt(I, b)); }
   return m;
@@ -1191,7 +1233,10 @@ function econ(){
       if (b.boat > 0){ b.idle = {why:'carving', text:'Erst wird der Einbaum geschnitzt, dann geht es aufs Wasser.'}; continue; }
       // a field lying fallow rests: its soil comes back, and it is tilled again once it has
       if (b.fallow){ b.soil = Math.min(1, (b.soil ?? 1) + .012); b.idle = {why:'fallow', text:'Das Feld liegt brach. Der Boden erholt sich.'};
-        if (b.soil >= .98){ b.fallow = false; b.idle = null; I.staff = null; invalidate(); if (I.id === active) toast(`Ein ${K.n} ist ausgeruht und wird wieder bestellt.`, 2600); } continue; }
+        if (b.soil >= .98){ b.fallow = false; b.idle = null; if (K.grow) b.grow = Math.round(K.grow / 2); I.staff = null; invalidate(); if (I.id === active) toast(`Ein ${K.n} ist ausgeruht und wird neu bepflanzt.`, 2600); } continue; }
+      if (K.yam){ yamTick(I, b, K, Math.min(sf.crew.get(b) || 0, on.get(b) || 0)); continue; }
+      // still growing: nobody is needed, nothing to harvest yet
+      if (b.grow > 0){ b.grow -= 1; b.idle = {why:'grow', text:`Wächst noch ${secsText(b.grow * TICK / 1000)}.`}; if (b.grow <= 0){ delete b.grow; b.idle = null; I.staff = null; invalidate(); } continue; }
       if (K.picks && tick % 5 === 0) choosePick(I, b);
       // only those who have got there work; with fewer than there is room for the work goes slower, and in pairs
       // much slower alone; the work moves on bit by bit, so slow places still make something
@@ -1330,6 +1375,7 @@ function clearStumps(I, b){ const r = (KINDS[b.kind].r + TREE_R) * .8, n = I.tre
 function done(I, b){
   const K = KINDS[b.kind];
   if (K.canoe) b.boat = K.canoe;   // fishers and the jetty need their dugout first
+  if (K.grow) b.grow = K.grow;   // planted now, it bears later
   if (b.prio && !(b.boat > 0)) b.prio = false;   // the call was for the building
   if (!K.plant && !K.path && I.id === active){ toast(`${K.n} ist fertig.`, 1600); sfx('knock'); }
   syncWalkers(); checkQuest();
@@ -1544,7 +1590,9 @@ function awayMinute(I, R){
   // the workshops, fields and fishers: what they make in a minute, as far as there is room and material
   for (const b of I.buildings){
     const K = KINDS[b.kind]; if (!(K.prod || K.plants) || b.bt || b.boat > 0) continue;
-    if (b.fallow){ b.soil = Math.min(1, (b.soil ?? 1) + .36); if (b.soil >= .98){ b.fallow = false; I.staff = null; } continue; }
+    if (K.yam){ yamTick(I, b, K, sf.crew.get(b) || 0, 30); continue; }
+    if (b.grow > 0){ b.grow -= 30; if (b.grow <= 0){ delete b.grow; I.staff = null; } continue; }
+    if (b.fallow){ b.soil = Math.min(1, (b.soil ?? 1) + .36); if (b.soil >= .98){ b.fallow = false; if (K.grow) b.grow = Math.round(K.grow / 2); I.staff = null; } continue; }
     if (K.picks) choosePick(I, b);
     const n = K.crew ? sf.crew.get(b) || 0 : 1, ev = seasonalEvery(I, b, K); if (!n || !ev) continue;
     const w = workState(I, b); if (w) continue;

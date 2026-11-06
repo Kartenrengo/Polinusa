@@ -107,7 +107,7 @@ const newKinds = new Set();  // unlocked but not yet tapped, they get a dot in t
    village with oil and canoes, at 40 the goods of the feasts, at 50 the chief's house. One chain at a time. */
 const STAGES = [
   {pop:0, n:'Ankunft', kinds:['haus', 'ernte', 'faeller', 'quelle', 'brunnen', 'fisch', 'pansammler', 'baum', 'palme']},
-  {pop:8, n:'Gärten', kinds:['taro', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
+  {pop:8, n:'Gärten', kinds:['taro', 'yams', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
   {pop:12, n:'Sennit und Erdofen', kinds:['schnur', 'umu', 'kalkbrenner', 'kurkumagarten', 'harzer']},
   {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
   {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},

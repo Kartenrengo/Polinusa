@@ -212,7 +212,7 @@ const WOMEN_WORK = new Set(['flecht', 'klopf', 'malerin', 'weberin', 'duftoel', 
 const MEN_WORK = new Set(['fisch', 'taucher', 'faeller', 'beil', 'klingen', 'ernte', 'pferch', 'harzer', 'kalkbrenner', 'pflanzer']);
 const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null; return w ? ad.slice().sort((p, q) => (q.s === w) - (p.s === w)) : ad; };
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
-const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow);
+const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1));   // a growing garden needs nobody yet; a yam field only at planting
 /* how many work at a place: its crew, or one who carves the dugout of a jetty (a jetty has no crew of its own) */
 const crewOf = b => KINDS[b.kind].crew || (b.boat > 0 ? 1 : 0);
 const autoWork = I => !I.handWork;
