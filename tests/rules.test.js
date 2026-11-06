@@ -118,6 +118,18 @@ const r = await p.evaluate(()=>{
     want(late.every(unlocked) && hawaiki() && lifeOf(H).includes('kava') && clanMakes(CLANS.hain).includes('kava'), 'Hawaiki: not open after a village on the far islands');
     out.push(`Hawaiki: stage ${STAGES[stageNow()].n}, chief quest after ${QUESTS[QUESTS.findIndex(Q => Q.id === 'chief') - 1].id}`);
     want(QUESTS.findIndex(Q => Q.id === 'chief') > QUESTS.findIndex(Q => Q.id === 'fern'), 'Hawaiki: chief quest before the far village'); }
+  // the long pause and the second voyage: the Leere See is empty, the morning islands have no clans, only the voyaging canoe
+  // crosses, and it can be built once a navigator in Hawaiki knows the star path
+  { let empty = 0, morn = 0, clans = 0;
+    for (let cx = EMPTY_X / CELL; cx < W / CELL; cx++) for (let cy = 0; cy < H / CELL; cy++){ const J = genCell(seed, cx, cy, home0, new Set()); if (!J) continue; if (cx * CELL < MORN_X) empty++; else { morn++; if (J.clan) clans++; } }
+    const H0 = isl('heimat'), dc = makeShip('dc', H0), vk = makeShip('vaka', H0), far = {x:EMPTY_X + 400, y:H0.center.y};
+    want(!empty && morn > 5 && !clans, `pause: Leere See ${empty} islands, morning ${morn}, clans ${clans}`);
+    want(!sailTo(dc, far, true) && sailTo(vk, far, true), 'pause: a double canoe crosses the Leere See, or the voyaging canoe does not');
+    ships = ships.filter(q => q !== dc && q !== vk);
+    stats.peakPop = 60; const h0 = stats.hawaiki, p0 = stats.pause; stats.hawaiki = 1; stats.pause = 0; loreCache = null; stageTick(); const before = unlocked('vaka');
+    const pp = H0.people.find(isAdult), nv = pp.nv; pp.nv = 3.2; loreCache = null; stageTick(); const after = unlocked('vaka') && stats.pause;
+    pp.nv = nv; loreCache = null; want(!before && after && unlocked('vaka'), `pause: vaka before ${before}, after ${after}, after the navigator ${unlocked('vaka')}`);
+    stats.hawaiki = h0; out.push(`pause: ${morn} morning islands, no clans there; the voyaging canoe opens with the star path`); }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

@@ -4,10 +4,14 @@
    always with the same result for the same seed. Before that the game itself does not know what lies there.
    Only the seed and the cells already seen are saved. */
 
-const W = 7200, H = 7200, CELL = 800, W0 = 4800;   // W0: the home waters, where the start lies
+const W = 12000, H = 7200, CELL = 800, W0 = 4800;   // W0: the home waters, where the start lies
 /* East of the home waters lies the Weite See, days of open sea, and beyond it the Ferne Inseln, as the Lapita sailed on
    to Fiji, Tonga and Samoa. Out there, and one alone in the Weite See, lie the treasure islands. */
 const WIDE_X = 3200, FAR_X = 4800, H_SEA = H;
+/* Beyond the Ferne Inseln lies the Leere See, three cells of open sea, and beyond that the Inseln des Morgens, where nobody
+   lives yet: as after the long pause the Polynesians sailed on from Tonga and Samoa to Tahiti and the Marquesas. */
+const EMPTY_X = 7200, MORN_X = 9600;
+const MORN_NAMES = {hoch:['Hiva', 'Rangi', 'Ao', 'Tua'], vulkan:['Mauna', 'Ahi Ao'], atoll:['Kura', 'Moana', 'Tahi']};   // Ahnenland, Himmel, Tag, jenseits; Berg, Feuer des Tages; rot, Meer, eins
 const TREASURES = {
   perlmutt:{n:'Perlmutt', isle:'Tifa', kind:'atoll', where:'In der Lagune von Tifa wachsen Perlmuscheln. Aus ihrem Perlmutt entstehen Haken, Köder und Schmuck.'},
   federn:{n:'Rote Federn', isle:'Kula', kind:'hoch', where:'Im Wald von Kula leben rote Papageien. Ihre Federn sind das Kostbarste, was ein Häuptling tragen kann.'},
@@ -71,12 +75,13 @@ function swapHome(islands, I){
 function genCell(seed, cx, cy, start, used){
   const r = rng((seed ^ Math.imul(cx + 101, 73856093) ^ Math.imul(cy + 211, 19349663)) >>> 0);
   const hc = {x:Math.floor(start.home.x / CELL), y:Math.floor(start.home.y / CELL)}, dc = Math.max(Math.abs(cx - hc.x), Math.abs(cy - hc.y));
-  const T = (start.treasure || []).find(t => t.cx === cx && t.cy === cy), far = cx * CELL >= FAR_X;
+  const T = (start.treasure || []).find(t => t.cx === cx && t.cy === cy), morn = cx * CELL >= MORN_X, far = cx * CELL >= FAR_X && cx * CELL < EMPTY_X;
   if (T) return treasureIsle(seed, cx, cy, start, T, r);
   const K = (start.cultures || []).find(t => t.cx === cx && t.cy === cy);
   if (K) return cultureIsle(cx, cy, start, K, r);
-  if (start.v >= 2 && cx * CELL >= WIDE_X && !far) return null;   // the Weite See: nothing but water
-  if (r() > (far ? .68 : dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
+  if (start.v >= 2 && cx * CELL >= WIDE_X && !far && !morn) return null;   // the Weite See: nothing but water
+  if (cx * CELL >= EMPTY_X && !morn) return null;   // the Leere See, in every world
+  if (r() > (far || morn ? .68 : dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
   const roll = r(), kind = roll < .42 ? 'atoll' : roll < .66 ? 'vulkan' : 'hoch';
   const size = kind === 'atoll' ? 92 + r() * 36 : kind === 'vulkan' ? 104 + r() * 22 : 108 + r() * 32, rad = radOf(kind, size), m = rad + 50;
   const x = cx * CELL + m + r() * (CELL - 2 * m), y = cy * CELL + m + r() * (CELL - 2 * m);
@@ -86,12 +91,12 @@ function genCell(seed, cx, cy, start, used){
   const len = Math.hypot(start.home.x - x, start.home.y - y) || 1, dir = {x:(start.home.x - x) / len, y:(start.home.y - y) / len};
   const sp = {x, y, size, kind};
   const I = kind === 'atoll' ? genAtoll(sp, dir, r) : genHigh(sp, dir, r, kind === 'vulkan', false);
-  const pool = NAMES[kind], base = pool[Math.floor(r() * pool.length)];
+  const pool = (morn ? MORN_NAMES : NAMES)[kind], base = pool[Math.floor(r() * pool.length)];
   let name = base; for (let i = 1; used.has(name) && i < NUMBER.length; i++) name = base + NUMBER[i];
   if (used.has(name)) name = base + ' ' + (cx * 10 + cy);
   // a clan, further out: on a volcano with obsidian, on an atoll, or in a grove of paper mulberry on a high island
   const clanRoll = r();
-  if (dc >= 2 && clanRoll < .3){ const t = kind === 'vulkan' ? 'feuer' : kind === 'atoll' ? 'riff' : 'hain'; if (t !== 'feuer' || I.deco.some(d => d.t === 'obsidian')) I.clan = {id:t, ...CLANS[t]}; }
+  if (dc >= 2 && clanRoll < .3 && !morn){ const t = kind === 'vulkan' ? 'feuer' : kind === 'atoll' ? 'riff' : 'hain'; if (t !== 'feuer' || I.deco.some(d => d.t === 'obsidian')) I.clan = {id:t, ...CLANS[t]}; }
   Object.assign(I, {id:`c${cx}_${cy}`, name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy], trees0:(I.trees || []).length});
   return I;
 }

@@ -322,11 +322,12 @@ function knotCord(I, f, t, nd, ahead = true){
 }
 /* The long way, as one cord: every age of the village a knot, then the great voyage, and after it Hawaiki, the later
    time. Tied knots are behind you, the loose one is next (with the number of people it takes), the faint ones lie ahead. */
-const EPOCH_IC = ['einbaum', 'setzling', 'schnur', 'toepfe', 'haus', 'plejaden', 'kava'];
+const EPOCH_IC = ['einbaum', 'setzling', 'schnur', 'toepfe', 'haus', 'plejaden', 'kava', 'mana'];
 function epochCord(){
   const now = stageNow(), g = STAGES.findIndex(S => S.gate), far = hawaiki();
   const steps = STAGES.map((S, i) => ({n:S.n, ic:EPOCH_IC[i], st:i <= now ? 'ok' : i === now + 1 && (!S.gate || far) ? 'low' : 'next', pop:S.gate ? 0 : S.pop}));
   steps.splice(g, 0, {n:'Die große Fahrt', ic:'insel', st:far ? 'ok' : now >= g - 1 ? 'low' : 'next'});
+  steps.push({n:'Die zweite Fahrt', ic:'passat', st:morningVillage() ? 'ok' : stats.pause ? 'low' : 'next'});   // across the Leere See to the Inseln des Morgens
   return `<div class="cord epochs" role="list" aria-label="Der Weg des Dorfes">${steps.map(q => `<span class="knot ${q.st}" role="listitem" aria-label="${q.n}${q.st === 'ok' ? ': erreicht' : q.pop ? `: ab ${q.pop} Menschen` : ''}"><svg class="kg" viewBox="0 0 24 20" aria-hidden="true"><use href="#kn-${q.st}"/></svg>${icon(q.ic)}${q.st === 'low' && q.pop ? `<small>${q.pop}</small>` : ''}</span>`).join('')}</div>`;
 }
 /* The way to a good this island cannot make, as a chain of pictures: canoe house, canoe, an island that has it, a
@@ -590,7 +591,7 @@ function finaleMarkup(){
   const mine = islands.filter(I => I.settled), people = mine.reduce((t, I) => t + I.pop, 0), friends = routes.filter(r => isl(r.a).clan || isl(r.b).clan);
   const row = (k, label, v) => `<li><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">${k ? `<use href="#ic-${k}"/>` : ''}</svg><span class="nm">${label}</span><b class="qty">${v}</b></li>`;
   let h = head('Die große Fahrt ist vollbracht', `Nach ${yearOf() + 1} ${yearOf() ? 'Jahren' : 'Jahr'} auf See und an Land.`) + FINALE_SCENE + epochCord();
-  h += `<p>Vom ersten Versammlungshaus auf ${isl('heimat').name} aus ist ein Netz aus Dörfern und Freundschaften entstanden, bis über die Weite See zu den Fernen Inseln, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben.</p>`;
+  h += `<p>Vom ersten Versammlungshaus auf ${isl('heimat').name} aus ist ein Netz aus Dörfern und Freundschaften entstanden, bis über die Weite See zu den Fernen Inseln${morningVillage() ? ' und nach der langen Pause über die Leere See zu den Inseln des Morgens' : ''}, wie es die Lapita-Leute vor über dreitausend Jahren über den Pazifik gespannt haben${morningVillage() ? ' und ihre Nachfahren, die Polynesier, bis an seine fernsten Ränder' : ''}.</p>`;
   h += `<ul class="list needs">${row('pop', 'Eigene Dörfer', mine.length)}${row('pop', 'Menschen', people)}${row('schnur', 'Befreundete Clans', friends.length)}${row('schnur', 'Knoten auf allen Schnüren', routes.reduce((t, r) => t + r.knots, 0))}${row('einbaum', 'Kanus', own().length)}${row('mana', 'Ansehen', Math.floor(mana))}${row('', 'Entdeckte Inseln', islands.filter(I => I.discovered).length)}</ul>`;
   { const met = cultureIsles(); if (met.length) h += `<p>Am Rand der bekannten See habt ihr Menschen einer anderen Kultur getroffen: ${andList(met.map(I => I.clan.name))}.</p>`; }
   h += `<p class="sub">Das Meer bleibt offen. Es gibt noch Nebel zu lichten, Dörfer zu Häuptlingsdörfern zu machen und Feste zu feiern.</p>`;

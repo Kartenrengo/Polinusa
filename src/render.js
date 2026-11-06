@@ -1413,7 +1413,7 @@ function drawTop(c, now){
     if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>');
       // two paddlers in the hull of the outrigger canoe
       if (crew) for (let k = 0; k < 2; k++){ const px = k ? 4.6 : -4.4; seatedFig(c, crewLook(s, k), false, px, -.9, .82); if (s.state === 'sail') paddleStroke(c, px, -.9, .82, now, s.id + k * 1.7); } }
-    else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1);
+    else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1); if (s.kind === 'vaka') c.scale(1.25, 1.25);   // the voyaging canoe: a bigger double canoe
       if (!crew) blit(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>');
       else {
         // the double canoe: the hull, the people on the platform and the steersman at the stern, then the sail over them
@@ -1510,7 +1510,7 @@ function drawNavHints(c, now){
 }
 /* The open sea has names too: written faintly on the chart, even where the fog still lies */
 function seaNames(c, k){
-  const y = home0.home.y + 40, names = [[FAR_X + (W - FAR_X) / 2, 'Die Fernen Inseln']];
+  const y = home0.home.y + 40, names = [[FAR_X + (EMPTY_X - FAR_X) / 2, 'Die Fernen Inseln'], ...(stats.hawaiki ? [[(EMPTY_X + MORN_X) / 2, 'Die Leere See'], [MORN_X + (W - MORN_X) / 2, 'Die Inseln des Morgens']] : [])];
   if (home0.v >= 2) names.unshift([(WIDE_X + FAR_X) / 2, 'Die Weite See']);
   const fs = 17 / cam.z;   // the same size on screen at any zoom
   c.save(); c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `italic 700 ${fs.toFixed(1)}px Alegreya, Georgia, serif`;

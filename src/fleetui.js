@@ -18,7 +18,7 @@ function shipStatus(s){
 function shipMarkup(s){
   const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = roomUsed(s), life = s.life || [];
   let h = head(s.name, shipStatus(s));
-  h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind === 'dc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
+  h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind !== 'oc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
   h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</p>`;
   if (S.fog && s.route == null) h += `<div class="rowx"><span class="sub">${s.auto ? 'Es fährt an den Rand des Bekannten, kehrt rechtzeitig um, holt im nächsten eigenen Hafen Proviant und fährt wieder los.' : 'Von selbst erkunden: an den Rand des Bekannten und rechtzeitig zurück, mit Proviant aus dem eigenen Lager.'}</span><button class="btn${s.auto ? '' : ' primary'}" type="button" data-act="auto">${s.auto ? 'Anhalten' : 'Erkunden lassen'}</button></div>`;
   if (S.fog) h += provisionNote(s, P);
@@ -107,7 +107,7 @@ function yardMarkup(I){
     return `<div class="stat"><b>${S.n} · Schritt ${k + 1}/6 · ${n}</b>${state}</div><span class="mbar big"><i style="width:${f * 100}%"></i></span>` +
       `<div class="stat"><span class="sub">${t}</span><span>${icon('holz')}${I.yard.got || 0}/${S.cost.holz}</span>${here ? `<span>noch ${secsText(secs)}</span>` : ''}</div>`;
   }
-  return Object.entries(SHIPS).filter(([k]) => k === 'oc' || unlocked('dc')).map(([k, S]) => `<div class="rowx"><span><b>${S.n}</b><br><span class="sub">${costText(S.cost)} · etwa ${String(Math.round(S.bt * TICK / 60000 * 2) / 2).replace('.', ',')} min · ${S.cap} Waren, ${S.people} Menschen${k === 'dc' ? ' · fährt ins Unbekannte' : ''}</span></span><button class="btn${canPay(I, S.cost) ? ' primary' : ''}" type="button" data-act="yard" data-k="${k}" ${canPay(I, S.cost) ? '' : 'disabled'}>Bauen</button></div>`).join('') +
+  return Object.entries(SHIPS).filter(([k]) => k === 'oc' || unlocked(k)).map(([k, S]) => `<div class="rowx"><span><b>${S.n}</b><br><span class="sub">${costText(S.cost)} · etwa ${String(Math.round(S.bt * TICK / 60000 * 2) / 2).replace('.', ',')} min · ${S.cap} Waren, ${S.people} Menschen${k === 'vaka' ? ' · fährt über die Leere See' : ''}${k === 'dc' ? ' · fährt ins Unbekannte' : ''}</span></span><button class="btn${canPay(I, S.cost) ? ' primary' : ''}" type="button" data-act="yard" data-k="${k}" ${canPay(I, S.cost) ? '' : 'disabled'}>Bauen</button></div>`).join('') +
     `<p class="sub">Im Hafen: ${shipAt(I.id).map(s => s.name).join(', ') || 'kein Kanu'}.</p>`;
 }
 /* The calendar: the seasons, the palolo night, the rāhui and the next feast */

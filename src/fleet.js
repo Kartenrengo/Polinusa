@@ -162,7 +162,7 @@ function moorSpot(I, s){
   return {x:h.x - dy / l * k + dx / l * 6, y:h.y + dx / l * k + dy / l * 6};
 }
 /* With the wind a canoe runs fast, against it slowly; the double canoe's big sail feels it more */
-function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind === 'dc' ? .4 : .25) * W.str * dot, .6, 1.45); }
+function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind !== 'oc' ? .4 : .25) * W.str * dot, .6, 1.45); }
 function speedOf(s){
   const r = s.route != null ? routes[s.route] : null;
   return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1);
@@ -175,12 +175,13 @@ function sailTo(s, dest, quiet){
   const goal = dest.isl ? moorSpot(isl(dest.isl), s) : {x:dest.x, y:dest.y};
   // past the Weite See only the double canoe goes; an outrigger is not made for days of open sea
   if (s.own && s.kind === 'oc' && goal.x > FAR_X){ if (!quiet) toast('Über die Weite See zu den Fernen Inseln fährt nur das Doppelkanu.', 3200, false); return false; }
+  if (s.own && s.kind !== 'vaka' && goal.x > EMPTY_X + 150){ if (!quiet) toast('Über die Leere See fährt nur das Reisekanu.', 3200, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
   s.path = laneOf(s, curvePath(s, path)); s.pi = 0; s.dist0 = s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
-const sight = s => SHIPS[s.kind].vision * (s.kind === 'dc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
+const sight = s => SHIPS[s.kind].vision * (s.kind !== 'oc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
 /* ---------- the double canoe explores on its own: out to the edge of the known sea, turning home in time to take on
    new provisions, and out again, until you stop it or no provisions are left at home */
 const dayPx = () => SHIPS.dc.speed * .85 * voyageDay() * TICK / 1000;   // how far a double canoe gets in one day at sea
@@ -192,7 +193,7 @@ function frontier(s, H){
   const reach = (s.cargo.proviant || 0) * dayPx(), cand = [];
   for (const R of [220, 340, 480, 640, 820]) for (let k = 0; k < 28; k++){
     const a = k / 28 * TAU + R, p = {x:s.x + Math.cos(a) * R, y:s.y + Math.sin(a) * R * .9};
-    if (p.x < 60 || p.y < 60 || p.x > W - 60 || p.y > H_SEA - 60 || islands.some(I => onIsland(I, p))) continue;
+    if (p.x < 60 || p.y < 60 || p.x > (s.kind === 'vaka' ? W : EMPTY_X + 100) - 60 || p.y > H_SEA - 60 || islands.some(I => onIsland(I, p))) continue;
     const f = fogShare(p, 120); if (f < .35) continue;
     const out = Math.hypot(p.x - s.x, p.y - s.y), back = Math.hypot(p.x - H.harbor.x, p.y - H.harbor.y);
     if ((out + back) * 1.3 + dayPx() * 2 > reach) continue;
@@ -224,7 +225,7 @@ function autoNext(s){
   sailTo(s, {isl:H.id}, true);   // the provisions will not do for more: home first
 }
 function setAuto(s, on){
-  if (on && s.kind !== 'dc') return;
+  if (on && s.kind === 'oc') return;
   s.auto = on; s.autoWait = 0;
   if (on){ if (s.route != null) unassign(s); toast(`${s.name} erkundet jetzt von selbst.`, 2600, false); if (s.state !== 'sail') autoNext(s); }
   if (sheetKind === 'ship') renderSheet(); save();
@@ -325,6 +326,7 @@ function settleFrom(s){
 function assignRoute(s, ri){
   const r = routes[ri];
   if (s.kind === 'oc' && [r.a, r.b].some(id => isl(id).center.x > FAR_X)){ toast('Über die Weite See fährt nur das Doppelkanu.', 3000, false); return; }
+  if (s.kind !== 'vaka' && [r.a, r.b].some(id => isl(id).center.x > EMPTY_X)){ toast('Über die Leere See fährt nur das Reisekanu.', 3000, false); return; }
   s.auto = false; s.route = ri; s.tripFrom = null;
   if (s.port === r.a || s.port === r.b) routeArrive(s); else sailTo(s, {isl:r.a});
   save();
@@ -356,6 +358,7 @@ function startYard(I, kind){
 }
 /* Building a canoe goes in five steps that can be watched at the canoe house; three builders make full speed */
 const YARD_STEPS = {
+  vaka:[['Die Stämme', 'Zwei lange Stämme vom höchsten Baum liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden die Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken, mit Sennit genäht und mit Harz gedichtet.'], ['Plattform', 'Querbäume und eine Plattform mit Hütte für die lange Fahrt.'], ['Das Segel', 'Ein Segel wie eine Krebsschere, aus feinen Matten genäht.'], ['Fertig', 'Das Reisekanu ist bereit für die Leere See.']],
   oc:[['Der Stamm', 'Ein Stamm vom Brotfruchtbaum liegt auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut wird der Rumpf ausgehöhlt.'], ['Bordplanken', 'Planken werden mit Kokosschnur an den Rumpf genäht.'], ['Ausleger', 'Der Schwimmer wird mit zwei Bäumen am Rumpf festgebunden.'], ['Paddel', 'Die Fugen werden mit Brotfruchtharz gedichtet, die Paddel geschnitzt.']],
   dc:[['Die Stämme', 'Zwei große Stämme liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden beide Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken werden mit Kokosschnur angenäht.'], ['Zweiter Rumpf', 'Querbäume verbinden die Rümpfe, darauf kommt eine Plattform.'], ['Mast und Segel', 'Der Mast wird gesetzt, das Segel aus Pandanusmatten genäht.']]
 };
@@ -378,7 +381,7 @@ function stepYards(){
 function feedCrews(){
   if (tick % voyageDay()) return;
   for (const s of ships){
-    if (!s.own || s.kind !== 'dc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
+    if (!s.own || s.kind === 'oc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
     if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; squall(s); continue; }
     if (s.hungry) continue;
     s.hungry = true;

@@ -141,7 +141,7 @@ const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1
 const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk, tt]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, job:job || 0, ln:ln || 0, ...(wk ? {wk} : {}), ...(tt ? {tt} : {}), ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:2, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
+  return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:3, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
@@ -195,7 +195,7 @@ function restore(raw){
 const liveLines = () => { const used = new Set(); for (const I of islands) for (const p of I.people || []) used.add(p.ln); for (const s of ships) for (const p of s.folk || []) used.add(p.ln); return Object.fromEntries(Object.entries(LINES).filter(([id]) => used.has(+id))); };
 /* Saves name the current task by id */
 // a game saved before Hawaiki came after the great voyage stood at the chief's village before the voyage: it goes on with the voyage
-const questFromSave = s => s.qid === 'done' ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === (s.qid === 'chief' && !s.qo ? 'tauchen' : s.qid)));
+const questFromSave = s => { const old = s.qo || 0, id = s.qid === 'chief' && !old ? 'tauchen' : (s.qid === 'kultur' || s.qid === 'done') && old < 3 ? 'sterne' : s.qid; return id === 'done' ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === id)); };   // and those past the chief's village go on with the long pause
 function save(){ if (landing) return; try { const raw = serialize(); localStorage.setItem(SAVE_KEY, raw); backupTick(raw); } catch (e){} }   // nothing to keep before the clan has landed
 /* Copies: every five minutes the game is also kept in one of three slots, the oldest overwritten. If the save itself is
    ever broken, the newest copy that loads is used. From the menu the game can be saved to a file and loaded again. */

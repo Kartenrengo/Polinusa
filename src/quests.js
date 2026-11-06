@@ -89,6 +89,15 @@ const QUESTS = [
   // Hawaiki: in the new homeland out east the descendants of Lapita become the Polynesians of later times
   {id:'chief', t:'Hawaiki', d:'Mach ein Dorf zum Häuptlingsdorf.', why:'Mit dem Dorf auf den Fernen Inseln beginnt eine neue Zeit: Hawaiki. Dort entstand, was man erst aus späterer Zeit kennt: Kava, feine Matten, bemalte Tapa, Duftöl und das Haus des Häuptlings. Baue ein Häuptlingshaus; die Familie der Matriarchin zieht ein und will das Feinste. Die Übersicht zeigt jeden Schritt.',
     n:() => islands.some(I => I.settled && I.lvl === 3) ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{}},
+  // the long pause, and the second great voyage across the Leere See to the Inseln des Morgens
+  {id:'sterne', t:'Die lange Pause', d:'Ein Navigator lernt den Sternenpfad.', why:'Nach Tonga und Samoa vergingen etwa 1500 Jahre, bis die Kanus weiter nach Osten fuhren. Es brauchte mehr Wissen über die Sterne und größere Kanus. Im Haus der Navigatoren lernt man den Sternenpfad, die Stufe 3. Dann lässt sich das Reisekanu bauen.',
+    n:() => pauseOver() ? 1 : 0, of:1, show:{sheet:'sternhaus'}, unlock:['vaka'], gift:{}},
+  {id:'vaka', t:'Das Reisekanu', d:'Baue im Kanuhaus ein Reisekanu.', why:'Größer und schneller als das Doppelkanu, mit einem Segel wie eine Krebsschere aus feinen Matten. Nur damit fährt man über die Leere See.',
+    n:() => fleetOf('vaka') || morningSeen() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
+  {id:'morgen', t:'Die Inseln des Morgens', d:'Fahre mit dem Reisekanu über die Leere See nach Osten.', why:'Hinter den Fernen Inseln liegt die Leere See, viele Tage ohne Land. Lade viel Proviant. Nach Osten geht es gegen den Passat; in der Sturmzeit schiebt der Westwind, doch es drohen Böen.',
+    n:() => morningSeen() ? 1 : 0, of:1, show:{ship:'vaka'}, unlock:[], gift:{proviant:6}},
+  {id:'morgendorf', t:'Ein Dorf am Morgen', d:'Gründe ein Dorf auf den Inseln des Morgens.', why:'Auf den Inseln des Morgens lebt noch niemand. So kamen die Polynesier um 1000 n. Chr. nach Tahiti und zu den Marquesas, später nach Hawaiʻi, Rapa Nui und Aotearoa.',
+    n:() => morningVillage() ? 1 : 0, of:1, show:{ship:'vaka'}, unlock:[], gift:{}},
   // at the edges of the sea: people who do not descend from your ancestors
   {id:'kultur', t:'Andere Menschen', d:'Findet ein Volk einer anderen Kultur und bringt ihm eine Gabe.', why:'Im Westen das Große Land, im Norden die Seefahrer. Bringt ihnen eine Gabe.',
     n:() => !cultureIsles(true).length ? 2 : Math.min(1, cultureIsles().length) + (cultureIsles().some(I => routes.some(r => (r.a === I.id || r.b === I.id) && (r.knots >= 1 || I.debt > 0))) ? 1 : 0), of:2, show:{ship:'dc'}, unlock:[], gift:{}}
@@ -113,7 +122,8 @@ const STAGES = [
   {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'hakenmacher', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
   {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
   {pop:40, n:'Zeit der Feste', kinds:['garten', 'klopf', 'pferch', 'trommel', 'tanzplatz', 'ahnenhaus', 'klingen', 'schmuck', 'bananen']},
-  {pop:40, n:'Hawaiki', gate:() => hawaiki(), kinds:['kavagarten', 'weberin', 'malerin', 'duftoel', 'schnitzer', 'fale']}   // after the great voyage
+  {pop:40, n:'Hawaiki', gate:() => hawaiki(), kinds:['kavagarten', 'weberin', 'malerin', 'duftoel', 'schnitzer', 'fale']},   // after the great voyage
+  {pop:40, n:'Die lange Pause', gate:() => pauseOver(), kinds:['vaka']}   // in Hawaiki, until the star path is known
 ];
 const peakPop = () => Math.max(stats.peakPop || 0, ...islands.filter(I => I.settled).map(I => I.pop));
 const stageOk = S => peakPop() >= S.pop && (!S.gate || S.gate());
@@ -124,6 +134,10 @@ const stageNow = () => { let i = 0; while (i + 1 < STAGES.length && stageOk(STAG
    no clan offers or asks for them either. */
 const LATE_GOODS = ['kava', 'feinmatten', 'bemtapa', 'duftoel'];
 const hawaiki = () => !!stats.hawaiki || islands.some(I => I.settled && I.center.x > FAR_X);
+/* The long pause: from Tonga and Samoa the canoes went no further east for some 1500 years. Here it lasts until a navigator
+   in Hawaiki knows the star path (level 3); then the voyaging canoe can be built, the only one that crosses the Leere See. */
+const pauseOver = () => !!stats.pause || (hawaiki() && navLore().lvl >= 3);
+const morningSeen = () => islands.some(I => I.discovered && I.center.x > MORN_X), morningVillage = () => islands.some(I => I.settled && I.center.x > MORN_X);
 const early = ks => hawaiki() ? ks : ks.filter(k => !LATE_GOODS.includes(k));
 const clanMakes = C => early(C.makes), clanWants = C => early(C.wants);
 const stageOfKind = k => STAGES.findIndex(S => S.kinds.includes(k));
@@ -134,6 +148,7 @@ function unlocked(kind){
 /* a new stage reached: a card says what is new, and the new buildings get their dot */
 function stageTick(){
   const p = peakPop(); if (p > (stats.peakPop || 0)) stats.peakPop = p;
+  if (!stats.pause && stats.hawaiki && pauseOver()) stats.pause = 1;   // once the star path was known, the long pause is over for good
   if (!stats.hawaiki && hawaiki()){ stats.hawaiki = 1; note('In Hawaiki treten Holzschalen an die Stelle der Töpfe, wie in Tonga und Samoa.');   // once begun, the new time stays; every village has kava cuttings from then on
     for (const I of islands) if (I.settled && !lifeOf(I).includes('kava')) I.life = [...lifeOf(I), 'kava']; }
   const now = stageNow(), before = stats.stage ?? now; stats.stage = now;   // a game saved before this counts from here
@@ -264,8 +279,8 @@ function showQuest(){
   const Q = QUESTS[quest]; if (!Q) return;
   const s = Q.show, id = s.island || 'heimat', I = isl(id);
   closeSheet();
-  if (s.ship){ const sh = own().find(q => q.kind === s.ship) || own()[0]; if (sh){ steerShip(sh); return; } }
-  if (s.sheet || s.ship){ const b = isl('heimat').buildings.find(x => x.kind === (s.sheet || 'werft')); if (b){ flyTo(b.x, b.y, Math.max(cam.z, 1.8)); select(b); return; } }
+  if (s.ship){ const sh = own().find(q => q.kind === s.ship) || (s.ship === 'vaka' ? null : own()[0]); if (sh){ steerShip(sh); return; } }
+  if (s.sheet || s.ship){ const b = isl('heimat').buildings.find(x => x.kind === (s.sheet || 'werft')) || islands.filter(J => J.settled).flatMap(J => J.buildings).find(x => x.kind === (s.sheet || 'werft')); if (b){ flyTo(b.x, b.y, Math.max(cam.z, 1.8)); select(b); return; } }
   if (s.needs){ openSheet('needs'); return; }
   if (s.fleet){ openSheet('fleet'); return; }
   if (s.route){ const i = routes.findIndex(r => r.a === s.route || r.b === s.route); if (i >= 0){ const I2 = isl(s.route); flyTo(I2.harbor.x, I2.harbor.y, Math.min(cam.z, 1)); openRoute(i); return; } }

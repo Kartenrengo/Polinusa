@@ -140,7 +140,9 @@ const DECO = ['hibiskus', 'blumen', 'fackel', 'pfosten', 'trommel', 'tanzplatz']
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
 const SHIPS = {
   oc:{n:'Auslegerkanu', cost:{holz:5, beile:1, schnur:3, harz:1}, bt:110, cap:12, people:4, speed:20, vision:150, fog:false, crew:2, crewN:'Paddler'},
-  dc:{n:'Doppelkanu', cost:{holz:8, beile:2, matten:3, schnur:5, harz:2}, bt:220, cap:24, people:8, speed:25, vision:230, fog:true, crew:4, crewN:'Seefahrer'}
+  dc:{n:'Doppelkanu', cost:{holz:8, beile:2, matten:3, schnur:5, harz:2}, bt:220, cap:24, people:8, speed:25, vision:230, fog:true, crew:4, crewN:'Seefahrer'},
+  // the voyaging canoe of the second great voyage: bigger, faster, with a crab-claw sail; only it crosses the Leere See
+  vaka:{n:'Reisekanu', cost:{holz:14, beile:3, matten:6, schnur:8, harz:3, feinmatten:2}, bt:320, cap:36, people:10, speed:32, vision:300, fog:true, crew:5, crewN:'Seefahrer'}
 };
 const SITE_CREW = 2, YARD_CREW = 3;   // people at each building site and at a canoe being built
 const SITE_K = {crew:SITE_CREW, team:'pair'}, YARD_K = {crew:YARD_CREW, team:'pair'};   // building goes as work in pairs

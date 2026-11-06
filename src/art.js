@@ -207,15 +207,16 @@ function yardArt(kind, st){
   const paddles = '<path d="M-15 4.6L-7 3.2M-14 5.8L-6 4.4" stroke="#2B1D14" stroke-width=".9" stroke-linecap="round"/><ellipse cx="-15.4" cy="4.7" rx="1.6" ry=".7" fill="#9C7246" stroke="#2B1D14" stroke-width=".35"/><ellipse cx="-14.4" cy="5.9" rx="1.6" ry=".7" fill="#9C7246" stroke="#2B1D14" stroke-width=".35"/>';
   const second = '<g transform="translate(3 -6) scale(.9)">' + log + '</g>';
   let h = kind === 'ein' ? '' : trestle;
-  if (st === 0) h += (kind === 'dc' ? second : '') + log;
+  const two = kind === 'dc' || kind === 'vaka';
+  if (st === 0) h += (two ? second : '') + log;
   else {
-    if (kind === 'dc' && st < 3) h += second;
+    if (two && st < 3) h += second;
     h += hull + hollow + (st >= 2 && kind !== 'ein' ? strake : '');
-    if (st >= 3) h += kind === 'dc' ? twin : outrig;
-    if (st >= 4) h += kind === 'dc' ? sail : paddles;
+    if (st >= 3) h += two ? twin : outrig;
+    if (st >= 4) h += two ? sail : paddles;
     if (kind === 'ein' ? st < 2 : st < 4) h += chips;
   }
-  const L = kind === 'dc' ? 1.2 : kind === 'ein' ? .6 : 1;
+  const L = kind === 'vaka' ? 1.45 : kind === 'dc' ? 1.2 : kind === 'ein' ? .6 : 1;
   return `<g transform="scale(${L} ${kind === 'ein' ? .75 : 1})">${h}</g>`;
 }
 /* The wind and the stars: a ring of stones and cowrie shells laid out by a navigator, a dark stone where the wind

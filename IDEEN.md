@@ -24,7 +24,7 @@ Reihenfolge nach Wichtigkeit. „Belegt“ heißt durch Funde oder gute Quellen,
 3. ~~**Das Ende der Töpfe**~~ **erledigt in Version 58.** (belegt). In Tonga und Samoa wurden die Muster immer einfacher; vor etwa 2000 Jahren hörte
    das Töpfern ganz auf. Holzschalen und Kokosschalen traten an die Stelle. Im Spiel: In Hawaiki werden Töpfe
    unwichtiger, Holzschalen kommen dazu.
-4. **Die lange Pause** (belegt). Nach Tonga und Samoa vergingen etwa 1500 Jahre, bis um 1000 n. Chr. Tahiti und die
+4. ~~**Die lange Pause**~~ **erledigt in Version 60.** (belegt). Nach Tonga und Samoa vergingen etwa 1500 Jahre, bis um 1000 n. Chr. Tahiti und die
    Marquesas besiedelt wurden, danach Hawaiʻi, Rapa Nui und Aotearoa. Im Spiel: ein zweites großes Ziel nach Hawaiki,
    die zweite große Fahrt nach Osten.
 5. ~~**Tatau, das Tätowieren**~~ **erledigt in Version 59.** (belegt). In Lapita-Fundorten gibt es Werkzeuge dafür aus Obsidian und Knochen; die Muster

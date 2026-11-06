@@ -177,10 +177,11 @@ ohne dass ein Dorf zusammenbricht.
 | 30 | Ein Dorf | Öl pressen (Hauswerk), Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
 | 40 | Zeit der Feste | Tapa klopfen (Hauswerk), Maulbeergarten, Schweine, Trommel, Tanzplatz, Ahnenhaus, Klingen, Schmuck, Bananen |
 | nach der großen Fahrt | **Hawaiki** | Kavagarten, Häuptlingshaus; als Hauswerk feine Matten, bemalte Tapa, Duftöl, Holzschalen |
+| in Hawaiki, mit dem Sternenpfad | **Die lange Pause** | Reisekanu |
 
 Das Kanuhaus kommt mit 20 Menschen, weil die Meisterhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
 in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe, dann der Knoten der großen Fahrt und
-zuletzt Hawaiki; fest sind die erreichten, locker die nächste (mit der Zahl der Menschen darunter), hell die kommenden.
+dann Hawaiki, die lange Pause und zuletzt die zweite Fahrt; fest sind die erreichten, locker die nächste (mit der Zahl der Menschen darunter), hell die kommenden.
 
 **Hawaiki, die spätere Zeit.** Kava, feine Matten, bemalte Tapa, Duftöl und das Haus des Häuptlings kennt man erst aus
 viel späterer Zeit, aus dem Polynesien, das in Tonga und Samoa aus den Lapita-Leuten entstand. Darum kommen sie im Spiel
@@ -189,6 +190,16 @@ Jedes Dorf hat von da an Kava-Stecklinge. Vorher bietet auch kein Clan Kava an, 
 Fest der Plejaden gibt es keine Kava-Runde und bei der Dürre keine Kava-Zeremonie. Das Häuptlingsdorf ist die Aufgabe
 nach dem Fest der Schätze; der Weg zum Häuptlingsdorf beginnt mit der großen Fahrt. Ein Spielstand, der beim
 Häuptlingsdorf stand, macht mit dem Tauchen und der großen Fahrt weiter.
+
+**Die lange Pause und die zweite Fahrt.** Von Tonga und Samoa aus fuhren die Kanus etwa 1500 Jahre lang nicht weiter
+nach Osten; erst um 1000 n. Chr. erreichten sie Tahiti und die Marquesas, danach Hawaiʻi, Rapa Nui und Aotearoa. Im Spiel
+liegt hinter den Fernen Inseln die **Leere See**, drei Felder offenes Meer ohne eine Insel, und dahinter die **Inseln
+des Morgens**, auf denen noch niemand lebt (keine Clans). Die lange Pause endet, wenn in Hawaiki ein Navigator den
+**Sternenpfad** kennt (Stufe 3). Dann lässt sich im Kanuhaus das **Reisekanu** bauen: 14 Holz, 3 Steinbeile, 6 Matten,
+8 Schnur, 3 Harz und 2 feine Matten, etwa elf Minuten, 36 Waren und 10 Menschen, schneller als das Doppelkanu und mit
+einem großen Segel. Nur das Reisekanu fährt über die Leere See; Doppelkanus und Handelsketten kehren dort um. Die Namen
+Leere See und Inseln des Morgens stehen erst ab Hawaiki auf der Karte. Der Weg des Dorfes endet mit dem Knoten
+**Die zweite Fahrt**: einem Dorf auf den Inseln des Morgens.
 
 **Hauswerk statt Werkstätten.** Sennit drehen, Matten flechten, töpfern, Öl pressen, Tapa klopfen, später auch feine
 Matten flechten, Tapa bemalen und Duftöl ansetzen: Das machten die Familien bei sich zu Hause, nicht in eigenen Hütten.
@@ -238,8 +249,10 @@ auch die Lapita-Leute: gegen den Wind hinaus, damit der Weg zurück leicht war (
 15. 20 Bewohner, 16. eine Familie am Ton töpfert, 17. Steg und Pfahlhaus, 18. Beilwerkstatt, 19. 30 Bewohner, 20. Kanuhaus,
 21. Auslegerkanu, 22. Siedler nach Motu, 23. Matten flechten und Sennit drehen auf Motu, 24. Handelskette, 25. ein Dorf mit einer
 Meisterfamilie, 26. 6 Proviant, 27. Doppelkanu, 28. neues Land im Nebel, 29. eine Hochzeit mit einem Clan, 30. ein Fest,
-31. das Fest der Plejaden, 32. ein Häuptlingsdorf, 33. Tauchen, 34. das Lapita-Netz, 35. die Weite See, 36. eine
-Schatzinsel, 37. ein Dorf in der Ferne, 38. das Fest der Schätze, 39. andere Menschen: ein Volk einer anderen Kultur.
+31. das Fest der Plejaden, 32. Tauchen, 33. das Lapita-Netz, 34. die Weite See, 35. eine Schatzinsel, 36. ein Dorf in
+der Ferne, 37. das Fest der Schätze, 38. Hawaiki: ein Häuptlingsdorf, 39. die lange Pause: ein Navigator mit dem
+Sternenpfad, 40. das Reisekanu, 41. die Inseln des Morgens, 42. ein Dorf am Morgen, 43. andere Menschen: ein Volk einer
+anderen Kultur. Ein Spielstand, der schon alle Aufgaben hatte, macht mit der langen Pause weiter.
 
 Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick. Danach geht das Spiel weiter.
 
@@ -1288,6 +1301,7 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Pazifische Ratte (kiore) im Kanu, frisst Eier und Vorräte | ja, Knochen in den frühen Schichten; Speicher mit Rattenschutz kennt man aus späterer Zeit |
 | Kanarinüsse (Canarium) als Nahrung und Vorrat | ja, Schalen an Lapita-Orten wie Talepakemalai |
 | Westwinde der Sturmzeit nach Osten, mit Gefahr | erschlossen (Irwin 1992; Klimastudien zu El Niño) |
+| Die lange Pause in Westpolynesien, Besiedlung Ostpolynesiens um 1000 bis 1250 n. Chr. | ja, durch Radiokarbondaten (Wilmshurst u. a. 2011); warum die Pause so lang war, ist umstritten (Kanus, Wind, Wissen) |
 | Land finden an Vögeln, stehenden Wolken und der Dünung | aus der überlieferten Navigation (Lewis, Piailug); für Lapita erschlossen |
 | Töpfern hört in Tonga und Samoa auf, Holzschalen statt Töpfe | ja, durch Funde: schlichte Ware, dann keine Töpfe mehr (vor etwa 2000 Jahren) |
 | Auslegerkanus, Fahrten über offenes Meer | ja, erschlossen aus der Besiedlung; die Kanus selbst sind nicht erhalten |
