@@ -41,8 +41,8 @@ const feastMana = (I, F) => F.id === 'schatz' ? F.mana : Math.round(F.mana * (af
 /* what each time of the year does, as pictures with up or down, for the calendar */
 const SEASON_FX = {
   plejaden:[['plejaden', 1, 'Fest der ersten Früchte'], ['nahrung', 1, 'Die Brotfrucht trägt reich']],
-  sturm:[['einbaum', -1, 'Kanus langsamer'], ['toepfe', -1, 'Töpfe, Tapa und Öl trocknen schlecht'], ['setzling', 1, 'Yams werden gepflanzt']],
-  passat:[['einbaum', 1, 'Kanus schneller: Zeit für weite Fahrten'], ['toepfe', 1, 'Töpfe, Tapa und Öl trocknen gut']],
+  sturm:[['einbaum', -1, 'Raue See; der Westwind schiebt nach Osten'], ['toepfe', -1, 'Töpfe, Tapa und Öl trocknen schlecht'], ['setzling', 1, 'Yams werden gepflanzt']],
+  passat:[['einbaum', 1, 'Ruhige See, Kanus schneller; nach Osten gegen den Wind'], ['toepfe', 1, 'Töpfe, Tapa und Öl trocknen gut']],
   mager:[['nahrung', -1, 'Keine Brotfrucht'], ['nahrung', 1, 'Yamsernte'], ['mana', 1, 'Nach der Ernte bringen Feste mehr Ansehen']]
 };
 function seasonalEvery(I, b, K){

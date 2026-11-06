@@ -4,6 +4,8 @@ Aufbauspiel fürs Handy. Zeit: die Lapita-Phase der Austronesier, um 1500 v. Chr
 Häuser mit ihren Bedürfnissen wachsen; alles andere ist Ozeanien (siehe „Eigene Handschrift“).
 Ein Clan fährt los, findet leere Inseln, siedelt dort und treibt Handel über das offene Meer.
 
+**Ideen für später:** [IDEEN.md](IDEEN.md)
+
 **Inhalt:** [Starten und Tests](#starten) · [Anfang](#anfang) · [Oberfläche](#die-oberfläche) · [Haushalte und Ausbau](#haushalte-und-familien) ·
 [Zuzug](#zuzug-familien-aus-der-ferne) · [Bauen und Vorrang](#bauen) · [Arbeit](#arbeit-nach-händen) · [Leben der ersten Seefahrer](#das-leben-der-ersten-seefahrer) · [Freizeit](#freizeit) ·
 [Die große Fahrt](#die-große-fahrt) · [Klang](#tag-nacht-und-klang) · [Was belegt ist und was nicht](#was-belegt-ist-und-was-später) ·
@@ -206,13 +208,14 @@ wird es entfernt, ist auch das Hauswerk weg. Alte Spielstände behalten ihre Wer
 | Zeit | Was sie bewirkt |
 | --- | --- |
 | Zeit der Plejaden | Fest der ersten Früchte, die Brotfrucht trägt reich |
-| Sturmzeit | Kanus langsamer (0,8); Töpfe, Tapa und Öl trocknen schlecht und brauchen 1,7-mal so lange; Yams werden gepflanzt |
-| Passatzeit | Kanus schneller (1,2), also auch weniger Proviant pro Fahrt; Töpfe, Tapa und Öl trocknen gut (0,8-mal so lange) |
+| Sturmzeit | raue See, Kanus langsamer (0,8), doch der Wind aus Nordwest schiebt nach Osten; Töpfe, Tapa und Öl trocknen schlecht und brauchen 1,7-mal so lange; Yams werden gepflanzt |
+| Passatzeit | ruhige See, Kanus schneller (1,2), also weniger Proviant, nur nach Osten geht es gegen den Wind aus Südost; Töpfe, Tapa und Öl trocknen gut (0,8-mal so lange) |
 | Magere Zeit | keine Brotfrucht; die Yamsernte |
 
 Nach der Yamsernte einer Insel bringen dort drei Monde lang das kleine und das große Fest anderthalbmal so viel Ansehen
 (beim großen Fest 23 statt 15). Der Rat der Ältesten sagt es dann („Fest nach der Yamsernte“). Die Aufgabe „Die Weite See“
-rät, in der Passatzeit zu fahren. Im Sturm trägt das gewählte Hauswerk-Bild von Töpfen, Tapa und Öl eine kleine Regenwolke.
+sagt: Nach Osten geht es gegen den Passat, in der Sturmzeit schiebt der Westwind, doch es drohen Stürme. So erkundeten
+auch die Lapita-Leute: gegen den Wind hinaus, damit der Weg zurück leicht war (Irwin 1992). Im Sturm trägt das gewählte Hauswerk-Bild von Töpfen, Tapa und Öl eine kleine Regenwolke.
 
 - **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Dringendes steht rot als „Jetzt“: kein Dach,
   Wasser fast aus, Nahrung aus, ein fremdes Kanu fragt. Sonst sagt der Rat, was dran ist: Leute verteilen, Palmwedel
