@@ -1476,12 +1476,13 @@ function drawLabels(c){
     ms.forEach((m, i) => put(c, I.labelAt.x + (i - (ms.length - 1) / 2) * 18 * k, I.labelAt.y + (I.treasure ? 46 : 26) * k, k * .8, 1, 0, 'mo|' + m, MOTIF_ART[m]));
   }
 }
-/* What the navigators read (see navHints): birds that fly out from hidden land at dawn and home at dusk, and over it,
-   from the second level on, a cloud that stands still while the others drift, green underneath over a lagoon */
+/* What the voyagers read (see navHints): birds that fly out from hidden land at dawn and home at dusk; with a navigator
+   the swell bending around it in slow arcs; from the second level on a cloud that stands still over it while the others
+   drift, green underneath over a lagoon */
 function drawNavHints(c, now){
   const H = navHints(); if (!H.length) return;
   const v = view(300), p = dayPhase(), k = clamp(1.2 / cam.z, .8, 4.5);
-  for (const {I, near, cloud} of H){
+  for (const {I, near, cloud, swell} of H){
     if (!boxIn(I.box, v)) continue;
     const dx = near.cx - I.center.x, dy = near.cy - I.center.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
     if (cloud){
@@ -1491,6 +1492,11 @@ function drawNavHints(c, now){
       const shape = () => { c.beginPath(); for (const [x, y, r] of puffs){ c.moveTo(x + r, y * .6); c.ellipse(x, y * .6, r, r * .62, 0, 0, TAU); } };
       shape(); c.stroke(); c.fillStyle = '#FBF8EF'; shape(); c.fill();
       c.save(); shape(); c.clip(); const u = c.createLinearGradient(0, -4, 0, 30); u.addColorStop(0, I.atoll ? 'rgba(121,198,184,0)' : 'rgba(140,140,135,0)'); u.addColorStop(1, I.atoll ? 'rgba(121,198,184,.8)' : 'rgba(140,140,135,.45)'); c.fillStyle = u; c.fillRect(-90, -4, 180, 50); c.restore();
+      c.restore();
+    }
+    if (swell){   // the swell bends around the land and runs on towards the known sea, arc after arc, fading
+      const a = Math.atan2(uy, ux); c.save(); c.lineCap = 'round'; c.lineWidth = 2.4 / Math.min(cam.z, 1.5); c.setLineDash([9 / Math.min(cam.z, 1.5), 6 / Math.min(cam.z, 1.5)]);
+      for (let i = 0; i < 3; i++){ const f = (now / 6000 + i / 3) % 1, r = 70 + f * 230; c.strokeStyle = `rgba(110,68,40,${(.7 * (1 - f)).toFixed(3)})`; c.beginPath(); c.ellipse(I.center.x, I.center.y, r, r * .85, 0, a - .5, a + .5); c.stroke(); }
       c.restore();
     }
     // at dawn the birds fly out towards the known sea, at dusk they come home; in between they fish far out

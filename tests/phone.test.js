@@ -5,7 +5,7 @@ const {chromium} = require('playwright');
 const {PAGE} = require('./lib');
 (async () => {
   const b = await chromium.launch(), bad = [], log = [];
-  for (const [w, h, dpr] of [[320, 568, 2], [390, 844, 3]]){
+  for (const [w, h, dpr] of [[320, 568, 2], [375, 667, 2], [390, 844, 3]]){
     const ctx = await b.newContext({viewport:{width:w, height:h}, deviceScaleFactor:dpr, isMobile:true, hasTouch:true}), p = await ctx.newPage(), errs = [];
     p.on('pageerror', e => errs.push('PAGE ' + e.message));
     const cdp = await ctx.newCDPSession(p); await cdp.send('Emulation.setCPUThrottlingRate', {rate:4});
@@ -26,8 +26,12 @@ const {PAGE} = require('./lib');
       for (const [k, d] of sheets){ closeSheet(); openSheet(k, d);
         const body = $('sheetBody'); if (body.scrollWidth > body.clientWidth + 2) out.push(`${k}: ${body.scrollWidth - body.clientWidth}px too wide`);
         // a house shows all of itself without scrolling, also a family house on its way to a master's house
-        if (d && HOME_KINDS.has(findB(d.id).kind)) for (const t of [1, 2]){ const hb = findB(d.id); hb.t = t; renderSheet(); $('sheet').classList.remove('opening');
-          if (body.scrollHeight > body.clientHeight + 2) out.push(`house step ${t}: sheet scrolls ${body.scrollHeight - body.clientHeight}px`); hb.t = 1; }
+        if (d && HOME_KINDS.has(findB(d.id).kind)) for (const t of [1, 2, 'full']){ const hb = findB(d.id), f = famOfHome(I, hb), keep = I.people.slice(), st = {...I.stock};
+          hb.t = t === 'full' ? 2 : t;
+          if (t === 'full'){ for (let i = 0; i < 2; i++) I.people.push(Object.assign(person(I, 22 + i), {h:f.id})); I.stock.wasser = 0; I.stock.speisen = 0; }   // six people, much missing
+          renderSheet(); $('sheet').classList.remove('opening');
+          if (body.scrollHeight > body.clientHeight + 2) out.push(`house step ${t}: sheet scrolls ${body.scrollHeight - body.clientHeight}px`);
+          hb.t = 1; I.people = keep; I.stock = st; }
         for (const el of body.querySelectorAll('button')){ const r = el.getBoundingClientRect(); if (r.width && (r.width < 28 || r.height < 26)) out.push(`${k}: small button "${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 18)}" ${r.width | 0}x${r.height | 0}`); }
       }
       closeSheet(); const top = $('top').getBoundingClientRect(); if ($('top').scrollWidth > innerWidth + 2) out.push('top band too wide');

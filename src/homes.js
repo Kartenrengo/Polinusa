@@ -166,7 +166,7 @@ function upgradeSteps(I, b, list){
   list = list || needsOf(I).list;
   const T = TIERS[t + 1], fn = famNeeds(I, f, list), miss = fn.filter(n => n.state === 'out').map(n => n.k), steps = [];
   steps.push({k:'needs', ok:!miss.length, miss, t:miss.length ? `Es fehlt ${andList(miss.map(k => k === 'dach' ? 'Dach' : GN[k]))}` : 'Alle Bedürfnisse erfüllt'});
-  if (t === 2) for (const k of MASTER_GOODS) steps.push({k, ok:(I.stock[k] || 0) > 0, t:`${GN[k]} im Lager`, have:I.stock[k] || 0, need:1});
+  if (t === 2) for (const k of MASTER_GOODS) steps.push({k, ok:haveOf(I, k) > 0, t:`${GN[k]} im Lager`, have:haveOf(I, k), need:1});
   for (const [k, v] of Object.entries(T.cost)) steps.push({k, ok:(I.stock[k] || 0) >= v, t:amount(k, v), have:I.stock[k] || 0, need:v});
   return {t:t + 1, T, steps, ready:steps.every(q => q.ok)};
 }
@@ -209,7 +209,7 @@ const PLACE_RANK = {essen:0, meer:1, holz:2, handwerk:3, boot:4};
 /* Who goes first to a place, as the old accounts tell: women beat bark cloth, plait mats and thatch, make the pots, tend
    the hens and glean the reef; men fish out at sea, dive, fell trees, climb the palms, grind adzes and keep the pigs. */
 const WOMEN_WORK = new Set(['flecht', 'klopf', 'malerin', 'weberin', 'duftoel', 'toepfer', 'pansammler', 'kurkumagarten', 'huehnerhof', 'oelhuette', 'quelle', 'brunnen']);
-const MEN_WORK = new Set(['fisch', 'taucher', 'faeller', 'beil', 'klingen', 'ernte', 'pferch', 'harzer', 'kalkbrenner', 'pflanzer']);
+const MEN_WORK = new Set(['hakenmacher', 'schnitzer', 'fisch', 'taucher', 'faeller', 'beil', 'klingen', 'ernte', 'pferch', 'harzer', 'kalkbrenner', 'pflanzer']);
 const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null; return w ? ad.slice().sort((p, q) => (q.s === w) - (p.s === w)) : ad; };
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
 const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1));   // a growing garden needs nobody yet; a yam field only at planting

@@ -40,7 +40,7 @@ es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spiele
 `build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
 Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
 jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
-(vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen, die Hausansicht scrollt nicht), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
+(vierfach langsame CPU, drei Bildschirme von 320×568 bis 390×844, Knopfgrößen, die Hausansicht scrollt nicht, auch nicht bei einem vollen Haus), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
 Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer je anderthalb Stunden.
 
 Der Bot hat **Wächter** für das, was ein Spieler sehen würde: eine Baustelle, die mit Bauleuten drei Minuten nicht
@@ -173,10 +173,10 @@ ohne dass ein Dorf zusammenbricht.
 | Anfang | Ankunft | Hütte, Erntehaus, Holzfäller, Quelle, Brunnen, Fischerhütte, Pandanusfrüchte, Palme, Brotfrucht |
 | 8 Menschen | Gärten | Taro, Pulaka, Baumpflanzer, Speicher, Hühner, Pandanus |
 | 12 | Sennit und Erdofen | Sennit drehen (Hauswerk), Erdofen, Kalkbrenner, Kurkuma, Harz |
-| 20 | Töpfe und Werkzeug | Töpfern und Matten flechten (Hauswerk), Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Blumen, **Kanuhaus und Auslegerkanu** |
+| 20 | Töpfe und Werkzeug | Töpfern, Angelhaken schleifen und Matten flechten (Hauswerk), Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Blumen, **Kanuhaus und Auslegerkanu** |
 | 30 | Ein Dorf | Öl pressen (Hauswerk), Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
 | 40 | Zeit der Feste | Tapa klopfen (Hauswerk), Maulbeergarten, Schweine, Trommel, Tanzplatz, Ahnenhaus, Klingen, Schmuck, Bananen |
-| nach der großen Fahrt | **Hawaiki** | Kavagarten, Häuptlingshaus; als Hauswerk feine Matten, bemalte Tapa, Duftöl |
+| nach der großen Fahrt | **Hawaiki** | Kavagarten, Häuptlingshaus; als Hauswerk feine Matten, bemalte Tapa, Duftöl, Holzschalen |
 
 Das Kanuhaus kommt mit 20 Menschen, weil die Meisterhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
 in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe, dann der Knoten der großen Fahrt und
@@ -202,6 +202,14 @@ Knöpfe wie „Hauswerk“ beim Rat oder bei einem fehlenden Knoten öffnen das 
 öffnet sich die Bauleiste mit einer Hütte genau dort, etwa am Ton. Auch eine leere Hütte kann schon ihr Hauswerk wählen;
 dann arbeiten Leute aus anderen Familien dort, bis eine Familie einzieht. Wird das Haus versetzt, geht die Matte mit;
 wird es entfernt, ist auch das Hauswerk weg. Alte Spielstände behalten ihre Werkstätten, und sie arbeiten weiter.
+
+**Angelhaken und Holzschalen.** Ab 20 Menschen kann eine Familie **Angelhaken schleifen**, aus Muschelschalen vom Riff
+(1 Muschel je Haken), wie die einteiligen Haken und Schleppköder aus Muschel und Perlmutt, die man an Lapita-Orten findet.
+Liegen Haken im Lager, fangen die Fischer anderthalbmal so viel Fisch; ein Haken hält für etwa 8 Fische. Ab **Hawaiki**
+kann eine Familie **Schalen schnitzen** (1 Holz je Schale). Holzschalen erfüllen dann das Bedürfnis nach Töpfen: In Tonga
+und Samoa wurden die Muster der Töpfe immer einfacher, vor etwa 2000 Jahren hörte das Töpfern auf, Schalen aus Holz und
+Kokos traten an ihre Stelle. Darum heißt der Knoten dann „Töpfe oder Holzschalen“, und auch Atolle ohne Ton können ihn
+fest knüpfen.
 
 **Das Jahr steuert die Arbeit.** Im Kalender stehen zu jeder Zeit Bilder mit ▲ oder ▼:
 
@@ -546,9 +554,14 @@ Das Wissen der Seefahrer steckt in Menschen, nicht in Gebäuden. Es wird gelehrt
 - **Haus der Navigatoren** (mit der Aufgabe „Das große Kanu“): ein Haus mit einem Kreis aus Steinen, an dem die Punkte des
   Sternenkompasses gelernt werden, wie es Mau Piailug von Satawal noch lehrte. Ein Bewohner sitzt dort und lernt; das
   kostet einen Arbeiter.
-- **Drei Stufen:** 1 *Wellen und Vögel*: Landvögel fliegen morgens zum Fischen hinaus und abends heim. Auf der Karte
-  zeigen sie, in welcher Richtung im Nebel Land liegt. 2 *Wolken über Land*: Über einer Insel bleibt eine Wolke stehen,
-  über einer Lagune ist ihre Unterseite grün. Man sieht sie weiter als die Vögel. 3 *Sternenpfad*: Auf See reicht der
+- **Land finden ohne Karte:** Seevögel fliegen morgens von verborgenem Land zum Fischen hinaus und abends heim. Das sieht
+  jeder, auch ohne Navigator, für Land nahe am bekannten Meer (bis 450 Schritte). Beim ersten Mal sagen es die Ältesten.
+  Ein Tippen auf die Zeichen im Nebel sagt, was man liest: „Dort im Nebel liegt Land.“ Auch das Doppelkanu, das von selbst
+  erkundet, fährt lieber dorthin.
+- **Drei Stufen:** 1 *Wellen und Vögel*: Der Navigator folgt den Vögeln weiter hinaus (bis 800) und liest die Dünung:
+  Braune Bögen laufen von verborgenem Land auf das bekannte Meer zu, wie Wellen, die sich an einer Insel brechen und
+  biegen. 2 *Wolken über Land*: Über einer Insel bleibt eine Wolke stehen,
+  über einer Lagune ist ihre Unterseite grün. Man sieht sie weiter als die Vögel (bis 1150). 3 *Sternenpfad*: Auf See reicht der
   Proviant 40 % länger, und das Doppelkanu sieht ein Viertel weiter.
 - **Lernen:** Der Schüler kommt eine Stufe weiter als der beste Lehrer seiner Insel. Was der Lehrer schon weiß, lernt er
   in drei Jahren, Neues allein in sechs. Ist ein Schüler so weit, wie es geht, setzt sich der Nächste an die Steine, so
@@ -1260,6 +1273,9 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Wachszeiten der Pflanzen | aus der Botanik; im Spiel verkürzt |
 | Nachts mit Fackeln fischen | erst später belegt, aber weit verbreitet |
 | Fischfang im Riff und in der Lagune, Muschelsammeln, kleiner werdende Muscheln | ja, durch Muschelhaufen |
+| Angelhaken und Schleppköder aus Muschel und Perlmutt | ja, typische Funde an Lapita-Orten |
+| Land finden an Vögeln, stehenden Wolken und der Dünung | aus der überlieferten Navigation (Lewis, Piailug); für Lapita erschlossen |
+| Töpfern hört in Tonga und Samoa auf, Holzschalen statt Töpfe | ja, durch Funde: schlichte Ware, dann keine Töpfe mehr (vor etwa 2000 Jahren) |
 | Auslegerkanus, Fahrten über offenes Meer | ja, erschlossen aus der Besiedlung; die Kanus selbst sind nicht erhalten |
 | Grabstock, Kokosfaser, Sennit, Mattenflechten | wahrscheinlich; Werkzeuge und Fasern selten erhalten |
 | Muschelhorn (pū) zum Rufen | Tritonshörner sind im Pazifik alt; für Lapita selbst nicht sicher |

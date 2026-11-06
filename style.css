@@ -660,6 +660,7 @@ button.fix{cursor:pointer}
 .fix > span{position:relative;top:1px}
 }
 .sheet.tall{max-height:72%}
+@media (max-height:700px){.sheet.tall{max-height:78%}}
 @media (max-height:620px){.sheet.tall{max-height:80%}}
 .rise .step-ic{width:32px;height:32px}
 .rise .step-ic .ic{width:18px;height:18px}

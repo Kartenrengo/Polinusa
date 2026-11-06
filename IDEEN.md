@@ -19,9 +19,9 @@ Reihenfolge nach Wichtigkeit. „Belegt“ heißt durch Funde oder gute Quellen,
    damit der Rückweg mit dem Wind leicht war. Westwinde in der Sturmzeit und in El-Niño-Jahren halfen nach Osten.
    Im Spiel: Die Fahrt nach Osten ist schon von der Windrichtung abhängig. Dazu könnte kommen: sichere Heimkehr mit dem
    Wind, Gefahr im Sturm.
-2. **Landfinden ohne Karte** (belegt aus der Navigation). Seevögel fliegen abends zu ihrer Insel, Wolken stehen still
+2. ~~**Landfinden ohne Karte**~~ **erledigt in Version 58.** (belegt aus der Navigation). Seevögel fliegen abends zu ihrer Insel, Wolken stehen still
    über Land, die Dünung bricht an Inseln. Im Spiel: Zeichen im Nebel, die zeigen, wo Land liegt.
-3. **Das Ende der Töpfe** (belegt). In Tonga und Samoa wurden die Muster immer einfacher; vor etwa 2000 Jahren hörte
+3. ~~**Das Ende der Töpfe**~~ **erledigt in Version 58.** (belegt). In Tonga und Samoa wurden die Muster immer einfacher; vor etwa 2000 Jahren hörte
    das Töpfern ganz auf. Holzschalen und Kokosschalen traten an die Stelle. Im Spiel: In Hawaiki werden Töpfe
    unwichtiger, Holzschalen kommen dazu.
 4. **Die lange Pause** (belegt). Nach Tonga und Samoa vergingen etwa 1500 Jahre, bis um 1000 n. Chr. Tahiti und die
@@ -31,7 +31,7 @@ Reihenfolge nach Wichtigkeit. „Belegt“ heißt durch Funde oder gute Quellen,
    ähneln denen der Töpfe. Im Spiel: ein Fest des Erwachsenwerdens, das Ansehen bringt.
 6. **Ratten im Kanu** (belegt). Die Pazifische Ratte (kiore) reiste mit, fraß Vogeleier und Samen und half beim
    Aussterben der Vögel. Im Spiel: Wild schwindet schneller, Vorräte leiden.
-7. **Angelhaken und Schleppköder aus Muschel und Perlmutt** (belegt, typische Lapita-Funde). Im Spiel: ein Hauswerk
+7. ~~**Angelhaken und Schleppköder aus Muschel und Perlmutt**~~ **erledigt in Version 58.** (belegt, typische Lapita-Funde). Im Spiel: ein Hauswerk
    „Angelhaken“, mit dem die Fischer mehr fangen.
 8. **Baumgärten mit Nüssen** (belegt). Kanarinüsse (Canarium) und andere Fruchtbäume waren wichtig. Im Spiel: ein
    Nussbaum, der lange wächst und Proviant gibt.

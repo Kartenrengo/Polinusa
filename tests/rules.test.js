@@ -78,6 +78,18 @@ const r = await p.evaluate(()=>{
     want(dry[0] > 1 && wet[0] < 1 && wet[1] > KINDS.toepfer.every && dry[1] < KINDS.toepfer.every, `year: seasons do not steer canoes and pots (${wet} ${dry})`);
     const y0 = H.yamAt; H.yamAt = tick; want(feastMana(H, F) > F.mana, 'year: no bonus for a feast after the yam harvest'); H.yamAt = y0; tick = t0;
     out.push(`year: canoes ${wet[0]}/${dry[0]}, pots every ${wet[1]}/${dry[1]} in storm/trade wind`); }
+  // shell hooks: the fishers catch more and wear them out; wooden bowls stand in for pots only from Hawaiki on
+  { const H = isl('heimat'), fb = H.buildings.find(b => b.kind === 'fisch') || addB(H, 'fisch', findSpot(H, 'fisch', startSpot(H, KINDS.fisch)), variant('fisch'), tick);
+    delete fb.boat; fb.idle = null; const sum = n => { let g = 0; for (let i = 0; i < 40; i++){ H.stock.fisch = 0; g += landCatch(H, fb, 2, 'fisch'); } return g; };
+    const fr = H.reefLife; H.stock.schnur = 0; H.stock.haken = 0; const plain = sum(); H.reefLife = fr; H.stock.haken = 30; const hooked = sum(); H.reefLife = fr;
+    want(hooked > plain * 1.2 && H.stock.haken < 30, `hooks: no more fish or no wear (${plain} → ${hooked}, ${H.stock.haken} hooks left)`);
+    out.push(`hooks: 40 trips ${plain} fish, with hooks ${hooked}, ${30 - H.stock.haken} hooks used`);
+    const pots = () => haveOf(H, 'toepfe'); H.stock.toepfe = 0; H.stock.kumete = 5; const h0 = stats.hawaiki;
+    stats.hawaiki = 0; const before = pots(), carve0 = !craftIsle(H, 'schnitzer'); stats.hawaiki = 1; const after = pots();
+    want(before === 0 && after === 5 && !carve0, `bowls: before Hawaiki ${before}, after ${after}, carving early ${carve0}`); stats.hawaiki = h0; H.stock.kumete = 0; }
+  // finding land: birds show hidden land near the known sea even without a navigator, a tap on them says so
+  { rollAhead(); hintCache = null; const hs = navHints(), h = hs[0]; want(hs.length && /liegt Land/.test(signAt({x:h.I.center.x, y:h.I.center.y})), 'signs: no birds over hidden land without a navigator');
+    out.push(`signs: ${hs.length} hidden islands shown by birds`); }
   // Hawaiki: kava, fine mats, painted tapa, scented oil and the chief's house only after the great voyage
   { const late = ['kavagarten', 'weberin', 'malerin', 'duftoel', 'fale'], H = isl('heimat'), M = isl('tochter'), x0 = M.center.x, s0 = M.settled;
     stats.peakPop = 60; stageTick(); want(!late.some(unlocked) && unlocked('trommel'), 'Hawaiki: late things open before the great voyage');

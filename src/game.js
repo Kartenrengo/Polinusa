@@ -49,9 +49,9 @@ function answerGifts(){
 /* ---------- people. Every resident is a figure: the workers at their places, those without work about the village,
    children and the old. You see them close up only, but the work goes on when you look away. */
 /* How work looks at each place (drawn by workFx) and which of it is done sitting */
-const WORK_FX = {yams:'dig', umu:'leaf', kalkbrenner:'pound', kurkumagarten:'dig', huehnerhof:'feed', weberin:'weave', malerin:'paint', duftoel:'stir', harzer:'tap', quelle:'water', brunnen:'water', sternhaus:'stars', ernte:'husk', oelhuette:'grate', bananen:'cut', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf', pansammler:'pick', pflanzer:'plant'};
+const WORK_FX = {hakenmacher:'drill', schnitzer:'grind', yams:'dig', umu:'leaf', kalkbrenner:'pound', kurkumagarten:'dig', huehnerhof:'feed', weberin:'weave', malerin:'paint', duftoel:'stir', harzer:'tap', quelle:'water', brunnen:'water', sternhaus:'stars', ernte:'husk', oelhuette:'grate', bananen:'cut', taro:'dig', pulaka:'dig', kavagarten:'pound', toepfer:'pot', beil:'grind', klingen:'knap', flecht:'weave', schnur:'cord', klopf:'beat', schmuck:'drill', pferch:'feed', gaergrube:'leaf', pansammler:'pick', pflanzer:'plant'};
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound', 'husk', 'grate', 'paint', 'stir', 'net']);
-const JOB_LOAD = {umu:'paket', kalkbrenner:'stein', kurkumagarten:'taro', huehnerhof:'eier', weberin:'matte', malerin:'tapa', duftoel:'schale', pansammler:'frucht', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', ernte:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
+const JOB_LOAD = {hakenmacher:'muschel', schnitzer:'schale', umu:'paket', kalkbrenner:'stein', kurkumagarten:'taro', huehnerhof:'eier', weberin:'matte', malerin:'tapa', duftoel:'schale', pansammler:'frucht', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', ernte:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
 /* what someone carries from a place that gets what is needed: the load follows the pick */
 const PICK_LOAD = {kokos:'nuss', wasser:'schale', dach:'matte', holz:'holz', fisch:'fisch', meeres:'muschel', muschel:'muschel', steine:'stein'};
 const landOf = (I, p) => I.lands.indexOf(landAt(I, p));
@@ -266,25 +266,26 @@ function navTick(I, n = 1){
     else toast(`${p.n} ist jetzt Navigator: ${NAV_N[Math.floor(p.nv)]}.${navLore().lvl > lore0 ? ' ' + navGain(navLore().lvl) : ''}`, 4600);
   }
 }
-const navGain = l => l === 1 ? 'Draußen zeigen jetzt Vögel, wo im Nebel Land liegt: morgens fliegen sie hinaus, abends heim.' : l === 2 ? 'Jetzt sieht man auch die Wolken, die über fernem Land stehen.' : 'Auf dem Sternenpfad reicht der Proviant länger, und das Doppelkanu sieht weiter.';
-/* hidden land the navigators can read from birds and clouds: not yet seen, but within reach of the known sea. Land birds
-   fish a day's flight out, a standing cloud is seen from further. */
-const navRange = L => L >= 2 ? 1150 : 800;
+const navGain = l => l === 1 ? 'Jetzt liest man die Dünung, die sich an fernem Land bricht, und folgt den Vögeln weiter hinaus.' : l === 2 ? 'Jetzt sieht man auch die Wolken, die über fernem Land stehen.' : 'Auf dem Sternenpfad reicht der Proviant länger, und das Doppelkanu sieht weiter.';
+/* Finding land without a chart, as the voyagers did: seabirds that fly out from land at dawn and home at dusk, seen by
+   everyone close to the known sea; the swell that bends and breaks around an island, read by a navigator, who also
+   follows the birds further out; a cloud that stands still over land, from the second level on. */
+const navRange = L => L >= 2 ? 1150 : L >= 1 ? 800 : 450;
 let hintCache = null;
 function navHints(){
-  const L = navLore().lvl; if (!L) return [];
+  const L = navLore().lvl;
   if (hintCache && hintCache.t > tick - 10 && hintCache.l === L) return hintCache.list;
   const range = navRange(L), list = [];
   for (const I of islands){
     if (I.discovered) continue;
     let d = Infinity; for (const h of fogHoles) d = Math.min(d, Math.hypot(I.center.x - h.cx, I.center.y - h.cy) - Math.max(h.rx, h.ry));
-    if (d < range) list.push({I, near:fogHoles.reduce((m, h) => Math.hypot(I.center.x - h.cx, I.center.y - h.cy) < Math.hypot(I.center.x - m.cx, I.center.y - m.cy) ? h : m, fogHoles[0]), cloud:L >= 2});
+    if (d < range) list.push({I, near:fogHoles.reduce((m, h) => Math.hypot(I.center.x - h.cx, I.center.y - h.cy) < Math.hypot(I.center.x - m.cx, I.center.y - m.cy) ? h : m, fogHoles[0]), cloud:L >= 2, swell:L >= 1});
   }
   return (hintCache = {t:tick, l:L, list}).list;
 }
 /* the sea next to the known one is rolled in advance, so the birds have somewhere to fly from */
 function rollAhead(){
-  const L = navLore().lvl; if (!L) return;
+  const L = navLore().lvl;
   const r = navRange(L);
   for (const h of fogHoles) for (let cy = Math.floor((h.cy - h.ry - r) / CELL); cy <= Math.floor((h.cy + h.ry + r) / CELL); cy++) for (let cx = Math.floor((h.cx - h.rx - r) / CELL); cx <= Math.floor((h.cx + h.rx + r) / CELL); cx++) ensureCell(cx, cy, true);
 }
@@ -602,18 +603,21 @@ function fishingSpot(I, L, b){
   }
   return {x:L.x + rnd(8), y:L.y + rnd(5)};
 }
+const HOOK = {per:8, more:1.5};   // a shell hook lasts for about eight fish; with hooks a catch is half as big again
 /* What the fishers bring in: two in the canoe bring a full catch, with nets twice the fish, after the rāhui three times;
    one alone with the spear a single fish. The reef gives less where it has been gleaned bare or is silted up. */
 function landCatch(I, b, crew, k){
   const K = KINDS[b.kind]; b.idle = workState(I, b); if (b.idle) return 0;
   const reef = I.reefLife ?? 1, rf = k === 'fisch' ? (reef > .3 ? 1 : .7) : reef > .55 ? 1 : reef > .3 ? .7 : .4, silt = k === 'fisch' ? 1 : [1, .8, .6][erosionOf(I)];
-  let n = crew >= 2 ? ((K.picks && K.picks[k]) || {out:2}).out * (k === 'fisch' && tooled(I, K) ? 2 : 1) : 1;
+  const hook = k === 'fisch' && (I.stock.haken || 0) > 0;   // with hooks of shell the line catches more
+  let n = crew >= 2 ? ((K.picks && K.picks[k]) || {out:2}).out * (k === 'fisch' && tooled(I, K) ? 2 : 1) * (hook ? HOOK.more : 1) : hook ? 2 : 1;
   n *= rf * silt * (I.rahuiDone === yearOf() && festivalTime() ? 3 : 1); n = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
   let got = 0;
   while (got < n && (I.stock[k] || 0) < storeCap(I)){
     I.stock[k] = (I.stock[k] || 0) + 1; got++; if (k === 'fisch') stats.fisch++;
     I.reefLife = Math.max(0, reef - got * (k === 'fisch' ? .003 : .008));
     if (k === 'fisch' && K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; I.stock[K.boost.k]--; }   // the net tears
+    if (hook && (I.stock.haken || 0) > 0 && (b.hookWorn = (b.hookWorn || 0) + 1) >= HOOK.per){ b.hookWorn = 0; I.stock.haken--; }   // a hook breaks or is lost
   }
   if (k === 'fisch') b.hung = Math.min(7, (b.hung || 0) + got);
   return got;
@@ -1144,6 +1148,7 @@ function workUse(I, k){
     const K = KINDS[b.kind]; if (b.bt || (b.idle && b.idle.why !== 'full')) continue;
     if (K.use) for (const [q, v] of Object.entries(K.use)) if (q === k || groupNext(I, q) === k && GROUPS[q]) u += PER_MIN / K.every * v;
     if (K.boost && K.boost.k === k && tooled(I, K)) u += PER_MIN / K.every / K.boost.per;
+    if (k === 'haken' && b.kind === 'fisch' && crewAt(I, b) && (I.stock.haken || 0) > 0) u += PER_MIN / K.every / HOOK.per;
   }
   return u;
 }
@@ -1153,7 +1158,9 @@ const needActive = (I, N) => N.lvl === 1 || popTier(I, N.lvl) > 0;
 const eaters = I => (I.people || []).reduce((n, p) => n + (stageOf(p) === 'kid' ? .5 : 1), 0) || I.pop;
 const needPop = (I, N) => N.lvl === 1 ? eaters(I) : popTier(I, N.lvl);
 /* Food is everything people eat; any other need is one good */
-const ofNeed = (k, f) => k === 'essen' ? FOODS.reduce((t, q) => t + f(q), 0) : f(k);
+/* the goods that meet a need: food of every kind; pots, and from Hawaiki on wooden bowls as well */
+const needGoods = k => k === 'essen' ? FOODS : k === 'toepfe' && stats.hawaiki ? ['toepfe', 'kumete'] : [k];
+const ofNeed = (k, f) => needGoods(k).reduce((t, q) => t + f(q), 0);
 const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
 function needsOf(I){
   const list = NEEDS.filter(N => needActive(I, N)).map(N => {
@@ -1264,9 +1271,9 @@ function econ(){
       if (!needActive(I, N)) continue;
       I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate / PER_MIN;
       const take = Math.floor(I.owe[N.k]); if (take <= 0) continue; I.owe[N.k] -= take;
-      if (N.k !== 'essen'){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
-      // people eat what there is most of
-      for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
+      const ks = needGoods(N.k); if (ks.length < 2){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
+      // people eat what there is most of, and use the bowl or the pot there is more of
+      for (let i = 0; i < take; i++){ const k = ks.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
     }
     feedAnimals(I, 1);
     let nd = needsOf(I);
@@ -1290,6 +1297,7 @@ function econ(){
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
   for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
   if (tick % 20 === 0) rollAhead();
+  if (tick % 10 === 0 && !stats.signs && !awayQuiet && dayPhase() < .62 && navHints().some(h => boxIn(h.I.box, view(200)))){ stats.signs = 1; toast('Seevögel fliegen aus dem Nebel und wieder hinein: Dort liegt Land. Tippe auf die Vögel.', 6000); }
   cycloneTick();
   if (tick % 10 === 0) for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I);
   answerGifts(); stepYards(); feedCrews(); stepTreasure(); driftTick(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
@@ -1414,7 +1422,17 @@ function onTap(p){
   if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I){ closeSheet(); setActive(I.id); updateHUD(); if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); } return; }
+  { const t = signAt(p); if (t){ toast(t, 5200, false); return; } }
   closeSheet(); if (barMode) setBar(null);   // a tap on empty sea folds the bar away
+}
+/* what a tap on a sign in the fog reads from it */
+function signAt(p){
+  if (revealed(p)) return '';
+  const h = navHints().find(q => Math.hypot(q.I.center.x - p.x, q.I.center.y - p.y) < 300 / Math.min(1, cam.z) + 80); if (!h) return '';
+  const say = ['Seevögel fliegen morgens hinaus und abends heim'];
+  if (h.swell) say.push('die Dünung bricht sich');
+  if (h.cloud) say.push('eine Wolke steht still');
+  return `${andList(say)}: Dort im Nebel liegt Land. Fahr mit dem Doppelkanu hin.`;
 }
 const ptrs = new Map(); let ges = null;
 mapC.addEventListener('pointerdown', e => {

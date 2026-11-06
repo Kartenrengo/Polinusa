@@ -281,11 +281,11 @@ function motifRows(I){
 const motifHelp = I => `${I.motif ? '' : I.type === 'hoch' ? 'Mit den ersten Töpfen findet das Dorf ein eigenes Muster. ' : 'Auf einem Atoll gibt es keinen Ton; Muster kommen mit Töpfen von anderswo. '}Wohin Töpfe fahren, wandern die Muster mit. Was zwei Jahre keine Töpfe wieder bringen, wird vergessen. Jedes fremde Muster schmückt das Dorf.`;
 /* ---------- needs, as in Anno. Where something comes from: what makes it here, what could be built here, or that it has
    to come from outside, from another island or a clan */
-function makersOf(I, k){ const ks = k === 'essen' ? FOODS : [k]; return I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (ks.includes(prodOf(b)) || ks.some(q => (KINDS[b.kind].picks || {})[q] || (byOf(b) || {})[q]))); }
+function makersOf(I, k){ const ks = needGoods(k); return I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (ks.includes(prodOf(b)) || ks.some(q => (KINDS[b.kind].picks || {})[q] || (byOf(b) || {})[q]))); }
 function needWay(I, k){
   if (k === 'dach') return {text:'Eine Hütte für jede Familie', build:'haus'};
   const names = [...new Set(makersOf(I, k).map(b => placeName(b)))];
-  const makes = q => { const K = KINDS[q]; return K.prod === k || (K.by || {})[k] || Object.entries(K.picks || {}).some(([pk, P]) => pk === k || (P.by || {})[k]); };
+  const makes = q => { const K = KINDS[q]; return needGoods(k).includes(K.prod) || K.prod === k || (K.by || {})[k] || Object.entries(K.picks || {}).some(([pk, P]) => pk === k || (P.by || {})[k]); };
   const kinds = k === 'essen' ? ['ernte', 'fisch', 'taro', 'pulaka', 'pansammler', 'bananen'] : ORDER.filter(q => KINDS[q] && !KINDS[q].plant && makes(q));
   const here = kinds.filter(q => KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
   const build = here.find(q => !I.buildings.some(b => b.kind === q)) || here[0];
@@ -301,7 +301,7 @@ function needWay(I, k){
   return {text:`Baue ${K.n}`, build:any};
 }
 const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">${KINDS[w.build].craft ? 'Im Haus' : 'Bauen'}</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
-const needName = k => k === 'dach' ? 'Dach' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
+const needName = k => k === 'dach' ? 'Dach' : k === 'toepfe' && stats.hawaiki ? 'Töpfe oder Holzschalen' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
 /* Needs as knots on a cord of sennit, after the knotted cords on which the Marquesans kept their genealogies (taʻo mata):
    a knot tied tight is a need met, a loose loop one that runs short, a frayed gap one that is missing, a faint ring one
    that comes with the next step. Each knot can be tapped: it shows where the thing comes from. */
@@ -691,6 +691,7 @@ function infoMarkup(I, b){
     if (w && w.why !== 'way') why = `<p class="sub why">${w.text}</p>`;
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
+  if (b.kind === 'fisch' && !b.bt && (unlocked('hakenmacher') || I.stock.haken > 0)) more.push((I.stock.haken || 0) > 0 ? `Mit Angelhaken aus Muschel fangen sie anderthalbmal so viel Fisch; ein Haken hält für etwa ${HOOK.per} Fische.` : 'Mit Angelhaken aus Muschel fingen sie mehr Fisch. Eine Familie kann sie schleifen.');
   if (K.beauty && !b.bt) line += `<span>Schönheit +${K.beauty}</span>`;
   if (b.kind === 'sternhaus') more.push('Stufe 1: Vögel zeigen, wo im Nebel Land liegt. Stufe 2: Wolken stehen über Inseln. Stufe 3: Der Proviant reicht länger, das Doppelkanu sieht weiter.',
     'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
