@@ -65,7 +65,7 @@ const rnd = r => (Math.random() - .5) * 2 * r;
    go out together, everyone else works at the place and carries what it makes to the store now and then. */
 function jobFor(I, b, i){
   const K = KINDS[b.kind], side = i % 2 ? -1 : 1, job = (type, x, y, more) => ({key:type + ':' + b.id + '#' + i, type, b, i, x, y, ...more});
-  if (b.bt) return job('site', b.x + 6 * side, b.y + 5, {tool:'toki'});
+  if (b.bt) return job('site', b.x + 6 * side, b.y + 5, {tool:groundSite(b.kind) ? 'ko' : 'toki'});   // a field is dug with the digging stick, a house built with the adze
   if (b.kind === 'werft' && I.yard){ const h = yardSpot(b); return job('yard', h.x + (i - 1) * 7, h.y + 3, {tool:'toki'}); }
   if (b.boat > 0){ const h = dugSpot(b); return job('carve', h.x + 3 - i * 6, h.y + 2, {tool:'toki'}); }
   if (b.kind === 'faeller'){ const t = b.cutAt && b.cutAt.st === 0 && I.trees.includes(b.cutAt) ? b.cutAt : nearestTree(I, b); return t ? (i % 2 ? job('pull', t.x - 7, t.y + 2, {tree:t}) : job('chop', t.x + 4, t.y + 3, {load:'holz', tool:'toki', tree:t})) : job('wait', b.x + 5 * side, b.y + 6, {tool:'toki'}); }
@@ -131,7 +131,8 @@ function storeNear(I, p){
    builder carries one piece from the store, wood and fronds and cord, and the work only gets as far as what is already
    there. Building goes as work in pairs does: one holds the post while the other lashes it, alone it is slow. */
 const siteNeed = (I, b) => Object.values(costOf(b.kind, I)).reduce((t, v) => t + v, 0);
-const siteLoad = (I, b) => { const c = costOf(b.kind, I), got = b.got || 0; let n = 0; for (const [k, v] of Object.entries(c)){ n += v; if (got < n) return k === 'holz' ? 'holz' : k === 'dach' ? 'matte' : k === 'schnur' || k === 'faser' ? 'rolle' : 'paket'; } return 'holz'; };
+// what a builder carries to a site: wood, fronds, cord, or for a field the shoots to set
+const siteLoad = (I, b) => { if (KINDS[b.kind].soil) return 'setzling'; const c = costOf(b.kind, I), got = b.got || 0; let n = 0; for (const [k, v] of Object.entries(c)){ n += v; if (got < n) return k === 'holz' ? 'holz' : k === 'dach' ? 'matte' : k === 'schnur' || k === 'faser' ? 'rolle' : 'paket'; } return 'holz'; };
 function workOf(I, j){
   let W = null;
   if (j.type === 'site' && j.b.bt) W = {o:j.b, f:'bt', all:KINDS[j.b.kind].bt, need:siteNeed(I, j.b), crew:SITE_CREW};
@@ -459,7 +460,7 @@ function spawnFig(I, homes, role, at, p){
 }
 function setJob(I, w, j){
   if (w.mate && w.mate.ride === w){ w.mate.ride = null; w.mate.boat = false; }
-  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, sit:false, boat:false, fishing:0, glean:0, under:0, catch:[], wait:0, forage:0, ride:null, mate:null});
+  Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, fx:null, rest:false, sit:false, boat:false, fishing:0, glean:0, under:0, catch:[], wait:0, forage:0, ride:null, mate:null});
   if (initSync){ w.on = true; w.leg = 'work'; w.wait = Math.random() * 1500; return; }   // already at work
   w.on = false; w.leg = 'go'; goTo(I, w, j.x, j.y);
 }
@@ -730,6 +731,7 @@ function nextLeg(w){
     if (h){ goTo(I, w, h.x + (Math.random() - .5) * 40, h.y + 14 + Math.random() * 16, 700 + Math.random() * 1400); return; }
   }
   if (w.job){
+    if (w.play && !OFF_OK.has(w.job.type)){ endPlay(w); if (w.leg !== 'go'){ w.on = false; w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } }   // sent to other work meanwhile: go there now
     if (w.play){ if (playLeg(I, w)) return; if (offNow(I, w, w.job.type) && startPlay(I, w)){ w.play.off = true; return; } w.leg = 'back'; w.bout = false; }
     jobLeg(I, w, w.job); return;
   }
@@ -754,12 +756,16 @@ function nextLeg(w){
    Everyone else: a while at the place (felling, climbing, at the craft), and after a few rounds the load to the store. */
 const REST_FX = ['drink', 'stretch', 'wipe', 'drink'];
 const SITE_FX = ['build', 'build', 'lash', 'raise'];   // at a site: the adze, binding a post with sennit, setting a post upright
+/* fields, pits, springs and plazas are not built but dug: the ground is broken with the digging stick, and in a field the
+   shoots are set */
+const groundSite = k => !!(KINDS[k].soil || FLAT.has(k));
+const GROUND_FX = k => KINDS[k].soil ? ['dig', 'dig', 'plant'] : ['dig'];
 /* Evening off, and now and then a rest at noon: whoever works where the work goes on by itself (fields, crafts, palms,
    the forest) takes part of the evening free and goes surfing, swimming or to the drum. Fishers, divers and builders stay
    until their work is done. Only for the eye: the place goes on making what it makes. */
 const OFF_OK = new Set(['carry', 'learn', 'chop', 'pull', 'climb', 'wade']);
 function offNow(I, w, T){
-  if (!OFF_OK.has(T) || I.feastEnd > tick || w.carry || w.boat) return false;
+  if (!OFF_OK.has(T) || I.feastEnd > tick || w.carry || w.boat || (w.job && w.job.b && w.job.b.prio)) return false;   // a place called with the conch has no evening off
   const ph = dayPhase(), day = Math.floor((tick + 30) / DAY_TICKS), id = w.pid || (w.x | 0);
   if (ph > .5 && ph < .64) return hsh(day, id) < .65;
   if (ph > .27 && ph < .34) return hsh(day + .37, id) < .22;
@@ -771,9 +777,10 @@ function jobLeg(I, w, j){
   if (w.leg === 'go'){ w.on = true; w.leg = 'work'; w.bout = false; }
   if (BUILD_JOBS.has(T)){
     const W = workOf(I, j);
+    if (w.leg !== 'fetch' && w.leg !== 'bring' && w.leg !== 'work'){ w.on = false; w.leg = 'go'; goTo(I, w, j.x + rnd(4), j.y + rnd(2)); return; }   // not yet at the site: walk there first
     if (w.leg === 'fetch'){ w.carry = T === 'site' ? siteLoad(I, j.b) : 'holz'; w.leg = 'bring'; goTo(I, w, j.x + rnd(5), j.y + rnd(2), 300); return; }
-    if (w.leg === 'bring'){ w.carry = null; w.leg = 'work'; w.bout = false; if (W){ W.o.got = Math.min(W.need, W.o.got + 1); invalidate(); } }
-    if (!w.bout && W){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = T === 'site' ? SITE_FX[Math.floor(Math.random() * SITE_FX.length)] : 'carve'; w.wait = 2200 + Math.random() * 1400; w.boutT = w.wait; return; }
+    if (w.leg === 'bring'){ w.carry = null; w.leg = 'work'; w.bout = false; if (W){ W.o.got = Math.min(W.need, W.o.got + 2); invalidate(); } }   // a bundle: two loads a trip
+    if (!w.bout && W){ w.bout = true; w.busy = {x:w.x, y:w.y}; w.fx = T === 'site' ? (fx => fx[Math.floor(Math.random() * fx.length)])(groundSite(j.b.kind) ? GROUND_FX(j.b.kind) : SITE_FX) : 'carve'; if (w.fx === 'plant' || w.fx === 'dig') w.sit = w.fx === 'plant'; w.wait = 2200 + Math.random() * 1400; w.boutT = w.wait; return; }
     w.bout = false;
     if (W && W.need && W.o.got + woodOnWay(I, j) < W.need && W.o[W.f] <= woodFloor(W) + .01){
       const s = storeNear(I, w); if (s){ w.leg = 'fetch'; goTo(I, w, s.x, s.y); return; }
@@ -933,7 +940,7 @@ function stepWalkers(dt){
     w.sit = false; w.lie = false;
     // feet wear the ground, children less as they run everywhere; on a laid path people walk faster
     const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle || w.swim ? -1 : wearAt(g, w.x, w.y);
-    const v = Math.min(d, dt * (w.swim ? (w.play && w.play.ph === 'ride' ? .02 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    const v = Math.min(d, dt * (w.swim ? (w.play && w.play.ph === 'ride' ? .02 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
     // feet find the trodden way: a little to the side where the ground is more worn, so paths gather and bend as real ones do
     if (ci >= 0 && d > 14 && !w.child){
       const ux = dx / d, uy = dy / d, ax = w.x + ux * 7, ay = w.y + uy * 7, l = wearAt(g, ax - uy * 4.5, ay + ux * 4.5), r = wearAt(g, ax + uy * 4.5, ay - ux * 4.5);
@@ -994,8 +1001,8 @@ function workState(I, b){
   if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Ein Kanusteg bringt die Leute hin, jeder Steg für bis zu 4 Plätze.'};
   if (K.crew && I.settled && !crewAt(I, b)){
     const site = staffOf(I).pulled.get(b);
-    if (site) return {why:'bau', text:`Die Leute von hier bauen gerade: ${site.bt ? KINDS[site.kind].n : I.yard ? SHIPS[I.yard.kind].n : KINDS[site.kind].n}. Danach geht die Arbeit hier weiter.`};
-    return {why:'crew', text:autoWork(I) ? 'Niemand ist frei. Baut Hütten, dann kommen Familien von weit her, oder andere Arbeit ruht.' : 'Niemand arbeitet hier. Tippe auf +.'};
+    if (site) return {why:'bau', site:site.id, text:`Die Leute von hier bauen gerade: ${site.bt ? KINDS[site.kind].n : I.yard ? SHIPS[I.yard.kind].n : KINDS[site.kind].n}. Danach geht die Arbeit hier weiter.`};
+    return {why:'crew', text:autoWork(I) ? 'Niemand ist frei. Vorrang holt Leute von anderer Arbeit; mehr Hütten bringen neue Familien.' : 'Niemand arbeitet hier. Tippe auf + oder Vorrang.'};
   }
   if (K.trees && !treesNear(I, b.x, b.y, K.trees.r).length) return {why:'trees', text:'Keine Bäume mehr in der Nähe. Ein Baumpflanzer lässt den Wald nachwachsen.'};
   if (K.near){ const n = nearCount(I, K.near.kind, b.x, b.y, K.near.r); if (n < K.near.n) return {why:'near', kind:K.near.kind, text:`Zu wenig ${NEAR_PL[K.near.kind]} in der Nähe, ${n} von ${K.near.n}.`}; }
@@ -1217,7 +1224,7 @@ function econ(){
     updateLevel(I, nd); nd = needsOf(I);
     // the village grows: children in the family houses, families by canoe from far away into empty huts
     birthTick(I); immigTick(I);
-    tierTick(I, nd.list); rooflessTick(I); crowdTick(I);
+    tierTick(I, nd.list); rooflessTick(I); crowdTick(I); prioTick(I);
     if (nd.atMax && !I.fullSaid && I.id === active && !awayQuiet){ I.fullSaid = true; toast(`${I.name} ist voll: Mehr als ${islandMax(I)} Menschen trägt die Insel nicht. Schickt Familien im Kanu aus und gründet ein neues Dorf.`, 6000); } else if (!nd.atMax) I.fullSaid = false;
     // without food or water people leave, slowly, but a few always stay
     // without food or water a family packs up and leaves in its canoe, the youngest household first, never the last one
@@ -1320,6 +1327,7 @@ function clearStumps(I, b){ const r = (KINDS[b.kind].r + TREE_R) * .8, n = I.tre
 function done(I, b){
   const K = KINDS[b.kind];
   if (K.canoe) b.boat = K.canoe;   // fishers and the jetty need their dugout first
+  if (b.prio && !(b.boat > 0)) b.prio = false;   // the call was for the building
   if (!K.plant && !K.path && I.id === active){ toast(`${K.n} ist fertig.`, 1600); sfx('knock'); }
   syncWalkers(); checkQuest();
 }
@@ -1488,7 +1496,7 @@ function frame(now){
   const dt = Math.min(64, now - last); last = now;
   stepCam(now); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
-  if (needDraw || stale(now) || (animating() && now - lastDraw > 32) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; }
+  if (needDraw || stale(now) || (animating() && now - lastDraw > (quality ? 32 : 48)) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; }
   requestAnimationFrame(frame);
 }
 /* the frame governor: when the device cannot keep up (frames come slower than about 18 a second for a while), the picture

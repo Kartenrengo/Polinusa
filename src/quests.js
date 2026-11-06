@@ -32,7 +32,7 @@ const QUESTS = [
     n:() => Math.min(3, linesWith(isl('heimat'))), of:3, show:{needs:true}, unlock:[], gift:{}},
   {id:'sennit', t:'Sennit drehen', d:'Baue eine Seilerei.', why:'Aus den Fasern der Kokosnüsse wird Sennit gedreht. Damit werden Hütten neu gebunden, Netze geknüpft und Kanus gebaut. Die Fasern bringt das Erntehaus mit den reifen Nüssen.',
     n:() => count('heimat', 'schnur'), of:1, show:{build:'schnur'}, unlock:[], gift:{faser:3}},
-  {id:'ausbau', t:'Ein Familienhaus', d:'Lass eine Hütte aufsteigen.', get why(){ return `Tippe auf eine Hütte. Dort steht, wer wohnt, die Schnur der Familie mit einem Knoten für jedes Bedürfnis und was zum Aufsteigen fehlt: alle Knoten fest und ${costText(TIERS[2].cost)}. Ist alles da, schwebt ein Knoten mit Blüte über der Hütte: Aufsteigen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
+  {id:'ausbau', t:'Ein Familienhaus', d:'Baue eine Hütte aus.', get why(){ return `Tippe auf eine Hütte. Dort steht, wer wohnt, die Schnur der Familie mit einem Knoten für jedes Bedürfnis und was zum Ausbau fehlt: alle Knoten fest und ${costText(TIERS[2].cost)}. Ist alles da, schwebt ein Knoten mit Blüte über der Hütte: Ausbauen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
     n:() => homesOf(isl('heimat')).filter(b => tierOf(b) >= 2).length, of:1, show:{needs:true}, unlock:[], gift:{}},
   {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
     n:() => count('heimat', 'umu'), of:1, show:{build:'umu'}, unlock:[], gift:{steine:3}},
@@ -176,7 +176,7 @@ function adviceOf(I, urgentOnly = false){
   const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
   // houses whose needs are met and whose material lies ready rise, as in Anno, when you say so
-  { const r = I.autoUp ? [] : readyHomes(I, nd.list); if (r.length) return {t:'Aufsteigen', d:`${r.length} ${r.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen: Tippe drauf, dann „Aufsteigen“.`, goto:r[0].id}; }
+  { const r = I.autoUp ? [] : readyHomes(I, nd.list); if (r.length) return {t:'Ausbau', d:`${r.length} ${r.length === 1 ? 'Haus ist' : 'Häuser sind'} bereit: Tippe drauf, dann „Ausbauen“.`, goto:r[0].id}; }
   // what every building needs: wood and palm fronds
   if ((I.stock.dach || 0) < 3){ const e = I.buildings.find(b => b.kind === 'ernte'); if (!e) return {t:'Palmwedel holen', d:'Jedes Gebäude braucht Palmwedel fürs Dach. Das Erntehaus holt sie von den Palmen.', build:'ernte'}; if (!(e.v && e.v.pick === 'dach') && choiceOf(e) !== 'dach') return {t:'Palmwedel holen', d:'Im Erntehaus kannst du die Leute auf Wedel stellen, bis genug da ist.', goto:e.id}; }
   if ((I.stock.holz || 0) < 3 && I.type === 'hoch' && !has('faeller')) return {t:'Holz schlagen', d:'Jedes Gebäude braucht Holz. Ein Holzfäller am Waldrand, zu zweit.', build:'faeller'};

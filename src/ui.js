@@ -341,6 +341,8 @@ function outsideChain(I, k){
 /* where something comes from, as one button with the building on it: tap it and the build bar shows that building */
 const bIcon = k => `<svg class="bi" viewBox="${KINDS[k].vb || '-17 -29 34 33'}" aria-hidden="true">${iconMarkup(k)}</svg>`;
 const wayChip = w => w && w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${bIcon(w.build)}${KINDS[w.build].n}</button>` : w && w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
+/* a house of a step, small, for the build-out pictures */
+const tierPic = t => `<svg class="tierpic" viewBox="-17 -26 34 30" aria-hidden="true">${artOf('haus', {t2:t >= 2, t3:t >= 3})}</svg>`;
 const knotIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knot"/></svg>';
 /* ---------- a house: who lives here, the cord of its needs, and what it takes to rise */
 const seatIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg>';
@@ -365,10 +367,13 @@ function houseMarkup(I, b){
       const n = q.k === 'needs' ? `${famNeeds(I, f, nd.list).filter(x => x.state !== 'out').length}/${TIERS[t].needs.length}` : `${Math.min(q.have, q.need)}/${q.need}`;
       const label = q.k === 'needs' ? 'Alle Knoten fest' : `${GN[q.k]}: ${q.have} von ${q.need}`;
       return w && (w.build || w.fleet) ? `<button class="cost out" type="button" ${w.build ? `data-act="hint" data-k="${w.build}"` : 'data-act="fleetbar"'} aria-label="${label}">${icon(k)}<b>${n}</b></button>` : `<span class="cost ${q.ok ? 'ok' : 'out'}" role="img" aria-label="${label}">${icon(k)}<b>${n}</b></span>`; };
-    h += `<div class="rise"><div class="rise-head">${knotIc}<b>${u.T.n}</b><span class="room">${seatIc}${u.T.cap}${u.t === 2 ? icon('kind') : ''}</span></div>`;
+    const add = TIERS[u.t].needs.filter(k => !TIERS[t].needs.includes(k));
+    h += `<div class="rise"><p class="sec">Ausbau</p><div class="rise-pic" role="img" aria-label="${T.n} wird ${u.T.n}: Platz für ${u.T.cap}${u.t === 2 ? ', Kinder kommen' : ''}, will dazu ${andList(add.map(k => GN[k]))}">` +
+      `<span class="tp">${tierPic(t)}<small>${T.n}</small></span><i class="arr2" aria-hidden="true"></i><span class="tp next">${tierPic(u.t)}<small>${u.T.n}</small></span>` +
+      `<span class="gain"><span>${seatIc}<b>${homeCapMax(I, b)}→${u.T.cap}</b></span>${u.t === 2 ? `<span>${icon('kind')}</span>` : ''}<span class="wants">+${add.map(k => icon(k)).join('')}</span></span></div>`;
     h += `<div class="costs">${u.steps.map(chip).join('')}</div>`;
     { const ks = u.steps.filter(q => !q.ok).flatMap(q => q.k === 'needs' ? q.miss : [q.k]), far = ks.find(k => k !== 'dach' && needWay(I, k).outside); if (far) h += outsideChain(I, far); }
-    h += `<button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Aufsteigen</button></div>`;
+    h += `<button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Ausbauen</button></div>`;
   }
   { const ln = m[0] && m[0].ln; h += `<p class="sub line">Linie ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
   return h;
@@ -377,13 +382,13 @@ function houseMarkup(I, b){
 /* what keeps the village from going on, in one line, with the button that helps */
 function villageGoal(I, nd){
   const ready = readyHomes(I, nd.list);
-  if (nd.roofless) return {cls:'out', t:`${nd.roofless} ohne Dach`, d:'Baue Hütten aus Holz und Palmwedeln.', btn:wayBtn({build:'haus'})};
-  const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:w.text, btn:wayBtn(w)}; }
-  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus kann' : 'Häuser können'} aufsteigen`, d:'', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle aufsteigen</button>`};
+  if (nd.roofless) return {cls:'out', t:`${nd.roofless} ohne Dach`, d:'', btn:wayChip({build:'haus'})};
+  const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:wayChip(w) ? '' : w.text, btn:wayChip(w) || wayBtn(w)}; }
+  if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus' : 'Häuser'} zum Ausbau bereit`, d:'', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle ausbauen</button>`};
   // the next step up: what the first house that cannot rise yet still lacks
   const next = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => upgradeSteps(I, b, nd.list)).find(Boolean);
   if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
-    return w && w.outside ? {cls:'far', t:`Für ${next.T.n}: ${GN[k]}`, d:'', chain:outsideChain(I, k)} : {cls:'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w ? w.text : '', btn:wayBtn(w)}; }
+    return w && w.outside ? {cls:'far', t:`Für ${next.T.n}: ${GN[k]}`, d:'', chain:outsideChain(I, k)} : {cls:'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w && !wayChip(w) ? w.text : '', btn:wayChip(w) || wayBtn(w)}; }
   if (nd.atMax) return {cls:'far', t:'Die Insel ist voll', d:`${I.name} trägt höchstens ${islandMax(I)} Menschen. Gründet ein Dorf auf einer anderen Insel.`, btn:wayBtn({fleet:true})};
   const st = STAGES[stageNow() + 1]; if (st && I.pop < st.pop) return {cls:'low', t:`Ab ${st.pop} Menschen: ${st.n}`, d:'Baut Hütten, dann kommen Familien. In Familienhäusern kommen Kinder.', btn:wayBtn({build:'haus'})};
   return null;
@@ -409,7 +414,7 @@ function peopleTab(I, nd){
     h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${TIERS[t].n}</b><small>${icon('haus')}${hs.length} ${seatIc}${people}</small>${ready && !I.autoUp ? `<button class="btn primary small tie" type="button" data-act="upall" data-t="${t}">${knotIc}${ready}</button>` : ''}</div>`;
     h += cordOf(TIERS[t].needs.map(k => ({k, st:k === 'dach' ? (hs.length ? roof : 'none') : hs.length ? (nd.list.find(n => n.k === k) || {state:'ok'}).state : 'none'}))) + '</div>';
   }
-  h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">${knotIc}Von selbst aufsteigen</button></div>`;
+  h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">${knotIc}Von selbst ausbauen</button></div>`;
   h += `<ul class="list needs">`;
   { const imm = immigFor(I), emp = emptyHome(I), grow = imm || (emp && wantsSettlers(I)) || nd.growing;
     h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), '', grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }
@@ -467,7 +472,7 @@ function vitalLine(I){
   if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
   if (nd.roofless) return `<span class="warn">${ic('haus')}${nd.roofless} ohne Dach</span>`;
   if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
-  { const r = I.autoUp ? 0 : readyHomes(I, nd.list).length; if (r) return `<span class="up">${knotIc}${r} aufsteigen</span>`; }
+  { const r = I.autoUp ? 0 : readyHomes(I, nd.list).length; if (r) return `<span class="up">${knotIc}${r} Ausbau</span>`; }
   if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
   if (immigFor(I)) return `<span>${ic('einbaum')}Kanu kommt</span>`;
@@ -562,15 +567,15 @@ const pipH = k => `<svg class="pip" viewBox="-2.7 -6.5 5.4 7" aria-hidden="true"
 const SHORT = {storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Kanu entsteht', space:'kein Platz', bau:'Leute bauen'};
 const shortWhy = w => w.why === 'use' ? `kein ${G1[w.k]}` : w.why === 'near' ? `zu wenig ${NEAR_PL[w.kind]}` : SHORT[w.why] || 'steht still';
 const secsText = s => s < 90 ? `${Math.max(1, Math.ceil(s))} s` : `${Math.round(s / 60)} min`;
-function crewMarkup(I, b){
+function crewMarkup(I, b, horn = ''){
   const sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl) return '';
   const K = KINDS[b.kind], ids = (staffOf(I).crewP.get(b) || []), people = ids.map(id => I.people.find(p => p.id === id)).filter(Boolean);
   const chips = sl.map((k, i) => { const p = people[i]; return p ? `<button class="who ${k}" type="button" data-act="who" data-p="${p.id}">${pipH(k)}${p.n}</button>` : `<span class="who ${k}">${pipH(k)}${k === 'off' ? 'zu' : 'frei'}</span>`; }).join('');
   // building sites and the canoe house are worked by whoever is free, or by those called from their work
-  if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}</div>`;
+  if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}<span class="grow"></span>${horn}</div>`;
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
   const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < K.crew ? '' : 'disabled'}>+</button></span>`;
-  return `<div class="crew">${chips}${ctl}</div><p class="sub crewnote">${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
+  return `<div class="crew">${chips}${ctl.replace('<span class="grow"></span>', `<span class="grow"></span>${horn}`)}</div><p class="sub crewnote">${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
 }
 /* A family on its own sheet: its house and step, what it has and lacks, its people by name, where it works */
 function famMarkup(I, f, withHead = true){
@@ -608,7 +613,7 @@ function infoMarkup(I, b){
   else if (b.bt){
     // a building site: how far, how much of the wood is there, and what the builders are doing
     const W = workOf(I, {type:'site', b}), f = 1 - b.bt / K.bt, here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b && w.on);
-    const doing = !crewAt(I, b) ? st('out', 'wartet auf Bauleute') : !here.length ? st('low', 'Bauleute kommen') : here.some(w => w.leg === 'work') && b.bt > woodFloor(W) + .01 ? st('ok', 'wird gebaut') : st('low', 'Holz wird geholt');
+    const qi = (staffOf(I).queue || []).indexOf(b.id), lim = builders(I) + I.buildings.filter(q => q.bt && q.prio).length, doing = !crewAt(I, b) ? st('out', qi >= lim ? `wartet · ${qi + 1 - lim}. in der Reihe` : 'keine Leute frei') : !here.length ? st('low', 'Bauleute kommen') : here.some(w => w.leg === 'work') && b.bt > woodFloor(W) + .01 ? st('ok', groundSite(b.kind) ? 'wird angelegt' : 'wird gebaut') : st('low', 'Holz wird geholt');
     line = `${doing}<span>${icon('holz')}${W.o.got}/${W.need}</span><span>${Math.round(f * 100)} %</span>`;
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
     if (!crewAt(I, b)) more.unshift(`Es wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} zugleich gebaut, je 10 Bewohner eine mehr. Ist niemand frei, legen zwei ihre Arbeit dafür nieder.`);
@@ -645,7 +650,11 @@ function infoMarkup(I, b){
   if (b.kind === 'sternhaus') more.push('Stufe 1: Vögel zeigen, wo im Nebel Land liegt. Stufe 2: Wolken stehen über Inseln. Stufe 3: Der Proviant reicht länger, das Doppelkanu sieht weiter.',
     'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
-  return [(line ? `<div class="stat">${line}</div>` : '') + bar + crewMarkup(I, b) + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
+  // the conch, in the row of the people: blown, people come at once; it calls attention when nobody is there
+  const lonely = !crewAt(I, b) && ((b.bt && !K.plant) || K.crew), horn = (b.bt && !K.plant) || (!b.bt && K.crew) ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
+  { const sb = b.idle && b.idle.site && findB(b.idle.site);   // the place whose people build: a button to their site instead of a sentence
+    if (why && b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau')) why = sb ? `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>` : ''; }
+  return [(line ? `<div class="stat">${line}</div>` : '') + bar + crewMarkup(I, b, horn) + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 /* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
@@ -719,8 +728,8 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet.` : '');
-    if (first) h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Folge dem Finger.</li><li>${icon('haus')}Tippe ein Haus an.</li><li>${knotIc}Alle Knoten fest: Das Haus steigt auf.</li></ul>`;
-    else h += `<ul class="help"><li>Unten steht der nächste Schritt. Antippen zeigt den Weg.</li><li><b>Tippe auf ein Haus:</b> wer dort wohnt, die Schnur der Familie (ein Knoten je Bedürfnis) und was zum Aufsteigen fehlt. Ein Knoten mit Blüte über einem Haus heißt: Es kann aufsteigen.</li><li>Tippe oben auf die Bewohnerzahl: Bewohner, Arbeit und Insel auf einen Blick.</li><li>Bauen: Gebäude wählen, auf Land tippen, Bauen. Jedes Gebäude braucht Holz und Palmwedel.</li><li>Jeder Erwachsene arbeitet. Auf einem Arbeitsplatz schickst du mit + jemanden hin.</li><li>Leere Hütten ziehen Familien von weit her an. Kinder kommen in Familienhäusern.</li><li>Ziehen schiebt die Karte, zwei Finger oder Mausrad zoomen.</li></ul>`;
+    if (first) h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Folge dem Finger.</li><li>${icon('haus')}Tippe ein Haus an.</li><li>${knotIc}Alle Knoten fest: Das Haus wird ausgebaut.</li></ul>`;
+    else h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Unten der nächste Schritt. Antippen zeigt den Weg.</li><li>${icon('haus')}Haus antippen: Familie, Knoten, Ausbau.</li><li>${knotIc}Alle Knoten fest: Ausbau.</li><li>${icon('pop')}Bewohnerzahl oben: alles auf einen Blick.</li><li>${bIcon('haus')}Bauen: Gebäude wählen, auf Land tippen.</li><li>${icon('horn')}Vorrang: Leute kommen sofort.</li><li>${icon('einbaum')}Leere Hütte: Eine Familie kommt im Kanu.</li><li>${icon('kind')}Kinder kommen im Familienhaus.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();
@@ -777,7 +786,7 @@ function sheetSig(){
   const hall = b.kind === 'halle' ? [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost)), festivalState(I), festivalParts(I).map(p => p.ok).join(), guestsFor().length].join() : '';
   const here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).map(w => w.name + w.on + w.leg).join('');
   const fam = HOME_KINDS.has(b.kind) ? (f => f ? [f.id, membersOf(I, f).length, famTier(I, f), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(''), famWork(I, f), canUpgrade(I, b)].join(':') : 'leer' + !!immigFor(I))(famOfHome(I, b)) : (I.people || []).filter(p => p.job === b.id).map(p => p.id).join('.') + ':' + staffOf(I).free + ':' + (choiceOf(b) || '') + ':' + Math.round((I.reefLife ?? 1) * 10);
-  return ['a' + age, b.bt, b.boat, b.got, here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
+  return ['a' + age, b.bt, b.boat, b.got, b.prio, (staffOf(I).queue || []).indexOf(b.id), here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
 }
 let sliding = false;   // while a slider is dragged the sheet is not drawn anew, or the drag would break off
 $('sheetBody').addEventListener('input', e => { const el = e.target; if (!el.matches('input[type=range][data-act]')) return; sliding = true; slideTo(el); updateHUD(); });
@@ -795,6 +804,7 @@ $('sheetBody').addEventListener('click', e => {
   if (sheetKind === 'info'){
     const b = findB(sheetData.id); if (!b) return;
     if (act === 'move'){ startMove(b); return; }
+    if (act === 'prio'){ setPrio(islOfB(b.id), b, !b.prio); updateHUD(); renderSheet(); save(); return; }
     if (act === 'pick'){ const I = islOfB(b.id), v = btn.dataset.v; b.v = {...(b.v || {})}; if (v) b.v.pick = v; else delete b.v.pick; b._by = null; b.idle = null; if (!v) choosePick(I, b); syncWalkers(); updateHUD(); renderSheet(); save(); return; }
     if (act === 'fell'){ const I = islOfB(b.id), n = FELL_WOOD[b.kind] || 0; I.stock.holz = Math.min(storeCap(I), (I.stock.holz || 0) + n); stats.gefaellt = (stats.gefaellt || 0) + 1; I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} gefällt: ${n} Holz. Was sie trug, ist fort.`, 2800, false); return; }
     if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
@@ -820,7 +830,7 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'hint'){ closeSheet(); hintBuild(btn.dataset.k); return; }
   if (act === 'fleetbar'){ closeSheet(); setBar('fleet'); return; }
   if (act === 'store'){ openSheet('store'); return; }
-  if (act === 'upall'){ const I = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), t = +btn.dataset.t || 0, list = needsOf(I).list; let n = 0; for (const b of readyHomes(I, list)) if ((!t || tierOf(b) === t) && canUpgrade(I, b)){ upgradeHouse(I, b); n++; } if (n > 1) toast(`${n} Häuser sind aufgestiegen.`, 2600, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
+  if (act === 'upall'){ const I = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), t = +btn.dataset.t || 0, list = needsOf(I).list; let n = 0; for (const b of readyHomes(I, list)) if ((!t || tierOf(b) === t) && canUpgrade(I, b)){ upgradeHouse(I, b); n++; } if (n > 1) toast(`${n} Häuser ausgebaut.`, 2600, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
   if (act === 'immig' && sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); if (sh) immigAnswer(sh, btn.dataset.v === 'yes'); updateHUD(); return; }
   if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }

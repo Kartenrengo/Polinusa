@@ -42,6 +42,7 @@ const SYM = {
   "kn-out": '<rect x="3.4" y="5" width="17.2" height="10" fill="#EEE3C8"/><path d="M3.6 10l4-3.2M3.6 10h4.8M3.6 10l4 3.2M20.4 10l-4-3.2M20.4 10h-4.8M20.4 10l-4 3.2" stroke="#A84A2C" stroke-width="1.4" stroke-linecap="round"/>',
   "kn-next": '<ellipse cx="12" cy="10" rx="5.8" ry="6.8" fill="none" stroke="#6E4A28" stroke-width="1.3" stroke-dasharray="1.4 1.9"/>',
   "ic-kind": '<circle cx="7" cy="5" r="2.6" fill="#2B1D14"/><path d="M2.6 17.5L7 8.8L11.4 17.5Z" fill="#A84A2C" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><circle cx="14.8" cy="9.6" r="1.9" fill="#2B1D14"/><path d="M11.8 17.5L14.8 12.1L17.8 17.5Z" fill="#D9A441" stroke="#2B1D14" stroke-width=".8" stroke-linejoin="round"/>',
+  "ic-horn": '<path d="M1.4 13.6L11.2 4.8Q15.4 2.2 17.6 6.2Q19 10.6 15.8 13.8Q12.4 16.6 8.2 15.6Z" fill="#F3D9A0" stroke="#2B1D14" stroke-width="1" stroke-linejoin="round"/><path d="M5 10.8Q7.2 13 8.2 15.4M8 8.2Q11 11 12 15.6M11.2 5.6Q14.2 8.6 15.6 13.6" fill="none" stroke="#B5774A" stroke-width=".85"/><ellipse cx="15.4" cy="9.4" rx="1.7" ry="3.2" transform="rotate(-32 15.4 9.4)" fill="#E89A8A" stroke="#2B1D14" stroke-width=".6"/><path d="M1.4 13.6L.4 15L1.4 15.8L2.6 14.6" fill="#7A4E2E" stroke="#2B1D14" stroke-width=".55" stroke-linejoin="round"/><path d="M18.6 2.6q1.6 1.8.7 4M16.8.6q3.2 2.6 1.8 7" fill="none" stroke="#A84A2C" stroke-width="1" stroke-linecap="round"/>',
   "ic-knot": '<path d="M2.5 13.6Q6 5 10 10Q14 15 17.5 6.4" fill="none" stroke="#2B1D14" stroke-width="3.6" stroke-linecap="round"/><path d="M2.5 13.6Q6 5 10 10Q14 15 17.5 6.4" fill="none" stroke="#B08048" stroke-width="2" stroke-linecap="round"/><path d="M2.5 13.6Q6 5 10 10Q14 15 17.5 6.4" fill="none" stroke="#6E4A28" stroke-width="2" stroke-dasharray="1 1.8"/><ellipse cx="10" cy="10" rx="3.7" ry="4.4" fill="#7A4E2E" stroke="#2B1D14" stroke-width=".9"/><path d="M8.9 7.7q1.7 2.3.2 4.6" fill="none" stroke="#C99A62" stroke-width=".85"/>',
   "ic-pop": '<circle cx="10" cy="5.2" r="2.7" fill="#2B1D14"/><path d="M5.2 17.5L10 8.8L14.8 17.5Z" fill="#A84A2C" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M7.4 13.6H12.6" stroke="#F2E6CB" stroke-width="1.1" stroke-dasharray=".1 1.7" stroke-linecap="round"/>',
   "rock": '<path d="M-14 10L-9-5L-1.5-12L6-7.5L13.5 8Q0 13-14 10Z" fill="#9A8C70" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-1.5-12L6-7.5L13.5 8Q7 10.6 1 11Z" fill="#2B1D14" opacity=".22"/>',
@@ -236,13 +237,17 @@ function compassArt(){
 /* A tired field turns pale and cracks; a fallow one is grown over with grass */
 const fieldState = o => o.soil === 't' ? `<path d="${wob(9.4, 5.6, 371, .1, 12)}" fill="#C9A85A" opacity=".45"/><path d="M-6-1L-4 .4L-4.6 2M2.6-2.4L3.8-.6L6 0M-1 2.6L.6 3.4" fill="none" stroke="#6B4A2E" stroke-width=".5" stroke-linecap="round"/>` :
   o.soil === 'f' ? `<path d="${wob(9.6, 5.8, 373, .1, 12)}" fill="#7FA84F" opacity=".85"/>` + [[-5, -1], [1, -2.6], [5.4, .4], [-1.6, 2.4], [3, 3]].map(([x, y]) => `<use href="#tuft" transform="translate(${x} ${y}) scale(.8)"/>`).join('') : '';
+/* a master's house: what the family makes stands in front, pots and a rolled mat, and a garland over the door */
+const HOUSE_T3 = '<g transform="translate(7.4 1.4) scale(.3)"><use href="#pt"/></g><g transform="translate(10.2 1.6) scale(.24)"><use href="#pt"/></g>' +
+  '<rect x="-11.6" y="-.4" width="5.2" height="1.7" rx=".85" fill="#DCC48C" stroke="#2B1D14" stroke-width=".4"/><path d="M-10.6-.4V1.3M-9.3-.4V1.3M-8 -.4V1.3" stroke="#B89A62" stroke-width=".3"/>' +
+  '<path d="M-3.4-12Q0-10.4 3.4-12" fill="none" stroke="#5E8A3A" stroke-width=".7"/><circle cx="-2.2" cy="-11.4" r=".55" fill="#E86A8A"/><circle cx="0" cy="-11" r=".55" fill="#F4ECD8"/><circle cx="2.2" cy="-11.4" r=".55" fill="#E86A8A"/>';
 const HOUSE_T2 = '<path d="M-3.2-11.4H3.2V-5.6H-3.2Z" fill="#E9DCC0" stroke="#2B1D14" stroke-width=".45"/><path d="M-3.2-9.6H3.2M-3.2-7.6H3.2" stroke="#6B4428" stroke-width=".45"/><path d="M-2.6-8.6L-1.3-9.2L0-8.6L1.3-9.2L2.6-8.6" fill="none" stroke="#A84A2C" stroke-width=".45"/>' +
   '<g transform="translate(-12.6 2) scale(.34)"><use href="#pfosten"/></g><g transform="translate(12.6 2) scale(.34)"><use href="#pfosten"/></g>';
 function artOf(kind, o = {}){
   const roof = o.roof || ROOF_NEW, hut = `<use href="#hc" fill="${roof}" transform="scale(.9)"/>`;
   switch (kind){
     // a house of the second step: a bark cloth hung at the door and two carved posts in front
-    case 'haus': return `<use href="#${o.shape === 'hr' ? 'hr' : 'hw'}" fill="${roof}"/>` + (HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '') + (o.t2 ? HOUSE_T2 : '');
+    case 'haus': return `<use href="#${o.shape === 'hr' ? 'hr' : 'hw'}" fill="${roof}"/>` + (HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '') + (o.t2 ? HOUSE_T2 : '') + (o.t3 ? HOUSE_T3 : '');
     case 'pfahl': return `<use href="#hp" fill="${roof}"/>`;
     case 'speicher': return `<use href="#hs" fill="${roof}"/>`;
     // the village plaza in front of the first house: trodden earth, the hearth with its cooking stones, a log to sit on

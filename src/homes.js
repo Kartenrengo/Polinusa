@@ -236,7 +236,7 @@ function pickWorker(I, b, free, here){
 }
 function autoAssign(I, places, at, adults){
   const free = adults.filter(p => !p.job), need = needOf(I, places);
-  const open = places.slice().sort((a, b) => need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);
+  const open = places.slice().sort((a, b) => (b.prio ? 1 : 0) - (a.prio ? 1 : 0) || need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);   // a called place first
   for (const b of open){
     const l = at.get(b) || []; at.set(b, l);
     while (l.length < KINDS[b.kind].crew && free.length){
@@ -249,16 +249,28 @@ function autoAssign(I, places, at, adults){
     if (need(b) > 0) continue;
     const l = at.get(b);
     while (l.length < KINDS[b.kind].crew){
-      const take = places.filter(q => q !== b && (at.get(q) || []).length && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
+      const take = places.filter(q => q !== b && !q.prio && (at.get(q) || []).length && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
       if (!take) break;
       const p = at.get(take).pop(); p.job = b.id; l.push(p);
     }
   }
 }
+/* The conch (pū): blown at a place, its people come at once. At most two places at a time; a third call takes the oldest
+   back. A site's call ends when it is built, a workplace's when its store is well filled again. */
+const PRIO_MAX = 2;
+function setPrio(I, b, on){
+  if (on){ const others = I.buildings.filter(q => q.prio && q !== b).sort((x, y) => (x.prioAt || 0) - (y.prioAt || 0)); while (others.length >= PRIO_MAX) others.shift().prio = false; b.prio = true; b.prioAt = tick; }
+  else { b.prio = false; }
+  I.staff = null; syncWalkers(); invalidate(); if (on) sfx('horn');
+}
+function prioTick(I){
+  if (tick % 5) return;
+  for (const b of I.buildings) if (b.prio && !b.bt && !(b.boat > 0)){ const k = prodOfB(b); if (k && (I.stock[k] || 0) >= storeCap(I) * .75){ b.prio = false; I.staff = null; } }
+}
 const makesK = (kind, k) => { const K = KINDS[kind] || {}, m = q => K.prod === q || !!(K.picks && K.picks[q]); return k === 'essen' ? FOODS.some(m) : m(k); };
 function staff(I){
   const crew = new Map(), crewP = new Map(), sites = [], boats = [], staffed = new Set(), pulled = new Map();
-  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], total:workers(I), build:0, short:0};
+  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], total:workers(I), build:0, short:0, queue:[]};
   const places = placesOf(I), pmap = new Map(places.map(b => [b.id, b])), at = new Map(), adults = I.people.filter(isAdult);
   for (const p of I.people){
     if (!isAdult(p)){ p.job = 0; continue; }
@@ -266,12 +278,26 @@ function staff(I){
     const l = at.get(b) || []; if (l.length >= KINDS[b.kind].crew){ p.job = 0; continue; } l.push(p); at.set(b, l);
   }
   if (autoWork(I)) autoAssign(I, places, at, adults);
+  // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
+  { const need = needOf(I, places);
+    for (const b of places.filter(q => q.prio)){
+      const l = at.get(b) || []; at.set(b, l);
+      while (l.length < KINDS[b.kind].crew){
+        const free = adults.find(p => !p.job);
+        if (free){ free.job = b.id; l.push(free); continue; }
+        const from = places.filter(q => q !== b && !q.prio && (at.get(q) || []).length).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
+        if (!from) break;
+        const p = at.get(from).pop(); p.job = b.id; l.push(p);
+      }
+    } }
   const pool = adults.filter(p => !p.job);
   // the building sites and the canoe house: first who has no work, then the people of the place needed least
   // a site that will make what is running out (water, food) goes first, then huts for those without a roof, then in order
   const shortK = ['wasser', 'essen'].filter(k => haveOf(I, k) < 6), urgent = b => shortK.some(k => makesK(b.kind, k)), roofNeed = roofless(I);
-  const rank = b => urgent(b) ? 0 : b.kind === 'haus' && roofNeed ? 1 : 2;
-  const want = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant).sort((a, b) => rank(a) - rank(b)).slice(0, builders(I)).map(b => [b, SITE_CREW]);
+  // a site called with the conch comes first of all, and always gets its builders, even beyond the usual number of sites
+  const rank = b => b.prio ? -1 : urgent(b) ? 0 : b.kind === 'haus' && roofNeed ? 1 : 2;
+  const all = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant).sort((a, b) => rank(a) - rank(b) || a.id - b.id), lim = builders(I) + all.filter(q => q.prio).length;   // a called site comes on top, it does not stop one already worked
+  const want = all.slice(0, lim).map(b => [b, SITE_CREW]);
   const yardB = I.yard && I.buildings.find(b => b.kind === 'werft' && !b.bt); if (yardB) want.push([yardB, YARD_CREW]);
   let yard = 0;
   if (want.length){
@@ -279,17 +305,27 @@ function staff(I){
     const need = needOf(I, places), cap = storeCap(I), plenty = b => (I.stock[prodOfB(b)] || 0) / cap, pull = b => need(b) * 10 + plenty(b) * 5 + rankOf(b);
     // nobody leaves water or food that is running out
     const order = places.filter(b => (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
-    // a site keeps the place it took its builders from until it is done, so the same people build it to the end
-    const mem = I.pullMem || (I.pullMem = {}); for (const id of Object.keys(mem)) if (!want.some(([w]) => w.id === +id)) delete mem[id];
+    // a site keeps its builders until it is done: the same people carry the wood and build it to the end. Before, the
+    // crew could change with every count, and whoever was carrying a load dropped it on the way.
+    const mem = I.siteCrew || (I.siteCrew = {}); for (const id of Object.keys(mem)) if (!want.some(([w]) => w.id === +id)) delete mem[id];
+    const taken = new Set();
     for (const [s, n] of want){
-      const use = pool.splice(0, n);
-      // for a site that ends the shortage even a place of the other short good gives hands, never one making the same
-      let from = urgent(s) ? places.filter(b => (at.get(b) || []).length && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order;
-      const kept = mem[s.id] && from.find(b => b.id === mem[s.id]); if (kept) from = [kept, ...from.filter(b => b !== kept)];
+      const use = [];
+      for (const pid of mem[s.id] || []){
+        if (use.length >= n) break; const p = adults.find(q => q.id === pid); if (!p || taken.has(p)) continue;
+        const i = pool.indexOf(p); if (i >= 0){ pool.splice(i, 1); use.push(p); continue; }
+        const b = p.job && pmap.get(p.job), l = b && at.get(b); if (l && l.includes(p) && !b.prio){ l.splice(l.indexOf(p), 1); use.push(p); pulled.set(b, s); }
+      }
+      use.push(...pool.splice(0, n - use.length));
+      // for a site that ends the shortage, or one called with the conch, even a place of a short good gives hands, never one
+      // making the same good, never a place called itself
+      let from = urgent(s) || s.prio ? places.filter(b => (at.get(b) || []).length && !b.prio && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order.filter(b => !b.prio);
       while (use.length < n){
         const b = from.find(q => (at.get(q) || []).length); if (!b) break;
-        const l = at.get(b); use.push(...l.splice(Math.max(0, l.length - (n - use.length)))); pulled.set(b, s); if (!mem[s.id]) mem[s.id] = b.id;
+        const l = at.get(b); use.push(...l.splice(Math.max(0, l.length - (n - use.length)))); pulled.set(b, s);
       }
+      for (const p of use) taken.add(p);
+      mem[s.id] = use.map(p => p.id);
       if (!use.length) continue;
       crew.set(s, use.length); crewP.set(s, use.map(p => p.id)); if (s === yardB) yard = use.length; else sites.push(s);
     }
@@ -301,7 +337,7 @@ function staff(I){
   }
   const build = sites.reduce((t, b) => t + crew.get(b), 0) + yard;
   const short = places.filter(b => !crew.get(b)).length;
-  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), total:adults.length, build, short};
+  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), total:adults.length, build, short, queue:all.map(b => b.id)};
 }
 /* The player sends one more person to a place, or calls one away; then the island is worked by hand */
 const handNote = I => { if (autoWork(I)){ I.handWork = true; toast('Die Arbeit wird jetzt von Hand verteilt. In der Übersicht geht es zurück auf Automatisch.', 3600, false); } };

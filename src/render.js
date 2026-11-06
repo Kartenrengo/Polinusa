@@ -151,21 +151,31 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t === 2, boat, dry:b.kind === 'fisch' && !!I, soil:K.soil ? (b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, boat, dry:b.kind === 'fisch' && !!I, soil:K.soil ? (b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t2 ? 2 : ''}`, art = () => artOf(b.kind, o);
+  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}`, art = () => artOf(b.kind, o);
   const sc = t.s * (chief ? 1.12 : 1) * grown;
   // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
   if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
   else if (b._sk && b._sk !== key && sprites.has(b._sk)){ if (!sh) put(c, b.x, b.y, sc, t.m, t.rot, key, art, 0); const old = sprites.get(b._sk); key = b._sk; art = old.art; }
   if (sh){ if (!site && K.hy > 3) putShadow(c, b.x, b.y, sc, t.m, t.rot, key, art, sh); return; }   // flat things like fields and paths cast none
   if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
+  // a field, a pit or a plaza: no frame of posts; the ground is dug row by row and the picture comes up out of it
+  if (FLAT.has(b.kind) || K.soil){ drawStakes(c, b, K, f, alpha, I); put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha * (.18 + .82 * f)); drawFurrows(c, b, K, f, alpha); return; }
   drawStakes(c, b, K, f, alpha, I);
   if (f > .15) putRising(c, b.x, b.y, sc, t.m, t.rot, key, art, (f - .15) / .85, alpha);
   drawSite(c, b, K, f, alpha);
+}
+function drawFurrows(c, b, K, f, alpha){
+  if (f >= .97) return;
+  const rx = Math.max(6, K.r * .8), ry = rx * .38, n = 6, done = Math.ceil(f * n), P = new Path2D(), M = new Path2D();
+  for (let i = 0; i < n; i++){ const y = b.y - ry + (i + .5) * (2 * ry / n), w = rx * Math.sqrt(Math.max(0, 1 - ((y - b.y) / ry) ** 2)) * .9; if (w < 1.5) continue;
+    if (i < done){ P.moveTo(b.x - w, y); P.lineTo(b.x + w, y); } else for (let k = -w; k < w; k += 3.2){ M.moveTo(b.x + k + 1.2, y); M.ellipse(b.x + k, y, 1.2, .45, 0, 0, TAU); } }
+  stroke(c, P, '#6B4A2E', .9, [1.6, .9], 'round', alpha * .85);   // dug rows
+  c.globalAlpha = alpha * .5; c.fillStyle = '#8C9A52'; c.fill(M); c.globalAlpha = 1;   // grass still standing
 }
 function putRising(c, x, y, s, m, rot, key, art, f, alpha){
   const e = spriteOf(key, art), bx = e.box;
@@ -1318,6 +1328,11 @@ function drawNeeds(c, v, now){
     const sc = (b.v && b.v.scale) || 1, k = (I.hunger - HUNGER_GO / 2) / (HUNGER_GO / 2), rock = reduced ? 0 : Math.sin(now / (260 - 140 * k)) * (.08 + .12 * k);
     put(c, b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, s * (1.05 + .15 * k), 1, rock, 'need|leave', LEAVE_BUBBLE);
   }
+  // a place called with the conch: the horn over it, sounding
+  for (const I of islands){ if (!I.settled || !boxIn(I.box, v)) continue;
+    for (const b of I.buildings){ if (!b.prio || !ptIn(b.x, b.y, v)) continue;
+      const sc = (b.v && b.v.scale) || 1, top = b.bt ? KINDS[b.kind].hy * .5 : KINDS[b.kind].hy * sc, pulse = reduced ? 1 : 1 + Math.max(0, Math.sin(now / 260)) * .08;
+      put(c, b.x - 10, b.y - top - 12 + (reduced ? 0 : Math.sin(now / 500 + b.id) * .8), s * pulse, 1, 0, 'need|horn', needBubble('horn')); } }
   // a canoe from far away waits at the beach: the family asks to stay
   for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); }
   const t = now;
@@ -1501,7 +1516,7 @@ function drawSea(now){
   const W = wind(), dt = Math.min(100, now - (seaAt || now)); seaAt = now;
   if (!reduced){ seaX += W.tx * (1.6 + 1.4 * W.str) * dt / 1000; seaY += W.ty * (1.6 + 1.4 * W.str) * dt / 1000; }
   camXform(ctx); const v = view(40), t = reduced ? 0 : now / 1000, fade = clamp((cam.z - .3) / .35, 0, 1);
-  for (const [k, sp, a, bob] of [[1.7, .55, .45, 1.2], [1, 1, .9, .6]]){
+  for (const [k, sp, a, bob] of quality ? [[1.7, .55, .45, 1.2], [1, 1, .9, .6]] : [[1, 1, .9, .6]]){   // on a slow device one layer of waves
     const ox = seaX * sp, oy = seaY * sp + Math.sin(t * .8 + k) * bob;
     ctx.save(); ctx.scale(k, k); ctx.translate(((ox / k) % 16 + 16) % 16, ((oy / k) % 10 + 10) % 10);
     ctx.globalAlpha = fade * a; ctx.fillStyle = P; ctx.fillRect(v.x0 / k - 32, v.y0 / k - 32, (v.x1 - v.x0) / k + 64, (v.y1 - v.y0) / k + 64); ctx.restore();

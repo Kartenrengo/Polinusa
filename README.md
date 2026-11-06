@@ -28,7 +28,8 @@ node tests/run.mjs
 ```
 
 Sie sagen je Test „OK“ oder „FEHLER“: `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln),
-`play` (Freizeit, Feierabend, jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
+`build` (sechs Baustellen zugleich werden fertig, Vorrang, Felder werden gegraben), `play` (Freizeit, Feierabend,
+jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
 (vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
 Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer statt einem.
 
@@ -184,20 +185,21 @@ Ist die letzte Aufgabe geschafft, zeigt eine Tafel den Rückblick. Danach geht d
 Einfach und nach Bedeutung geordnet:
 
 - **Oben, die Insel:** der Name, Ansehen, Leute ohne Arbeit und die Bewohner mit ihrem Platz. Darunter die wichtigsten
-  Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„2 aufsteigen“** mit einem Knoten, Häuser voll, ein
+  Vorräte und genau ein Hinweis, der gerade zählt: Essen wird knapp, etwas fehlt, **„2 Ausbau“** mit einem Knoten, Häuser voll, ein
   Kanu kommt. Antippen öffnet die Übersicht.
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.
 - **Ein Haus antippen** zeigt fast nur Bilder: die Stufe als Punkte, die Plätze (besetzt, frei, noch zu), die Leute mit
   Namen, Alter und Arbeit, dann **die Schnur der Familie** (siehe unten). Darunter steht nur, was knapp ist oder fehlt,
   jeweils mit einem Knopf, auf dem das Gebäude abgebildet ist, das hilft („Quelle“, „Kanus“). Ganz unten das
-  **Aufsteigen**: die nächste Stufe mit ihrem Platz (und einem Kind, wenn dort Kinder kommen), dann jedes Material als
-  Bild mit „hat/braucht“, grün oder rot; ein rotes antippen zeigt, wo es herkommt. Daneben der Knopf „Aufsteigen“.
+  **Ausbau** in Bildern: das Haus jetzt → das Haus danach, die Plätze („4→6“), ein Kind, wenn dort Kinder kommen, und
+  „+“ mit den Bildern dessen, was die Familie dann dazu will; darunter jedes Material als Bild mit „hat/braucht“, grün
+  oder rot; ein rotes antippen zeigt, wo es herkommt. Daneben der Knopf „Ausbauen“.
 - **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
   holen sollen.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
-    können aufsteigen, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
+    sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
     voll. Darunter jede Hausstufe mit Häusern und Menschen und ihrer Schnur: dieselben Knoten wie im Haus; ein Tipp auf
     einen Knoten zeigt, wer die Ware macht. Dazu Zuzug und Kinder und die Verwandtschaft.
   - **Arbeit:** automatisch oder von Hand, wer frei ist, welche Plätze Raum haben oder ruhen, alle Familien.
@@ -224,8 +226,8 @@ Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
   knapp, eine ausgefranste Lücke fehlt. Nach einer Muschelperle folgen hell die Knoten, die die nächste Stufe will. Ist
   das Blatt offen, ziehen sich die Knoten nacheinander fest. Jeder Knoten ist ein Knopf: antippen zeigt, woher es kommt.
   Rechts steht, wie viele Knoten halten („2/3“).
-- **Ein Knoten statt Pfeil:** Über einem Haus, das aufsteigen kann, schwebt ein Knoten mit einer Tiare-Blüte und wiegt
-  sich. Auch der Knopf „Aufsteigen“ trägt ihn; ist alles bereit, zieht der Knoten sich im Takt zusammen und ein
+- **Ein Knoten statt Pfeil:** Über einem Haus, das ausgebaut werden kann, schwebt ein Knoten mit einer Tiare-Blüte und
+  wiegt sich. Auch der Knopf „Ausbauen“ trägt ihn; ist alles bereit, zieht der Knoten sich im Takt zusammen und ein
   gestrichelter Ring legt sich um den Knopf.
 - **Hausweihe:** Steigt ein Haus auf, regnen Blüten auf sein Dach, wie man bei der Weihe eines neuen Hauses Kränze auflegt,
   und ein Ring geht wie Stimmen über das Dorf.
@@ -294,12 +296,13 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
   frühen Lapita lebten wohl dort, wo die Familie der Frau lebte.
 - **Hütte:** Pfosten und ein Dach aus Palmwedeln, ohne Nägel. Sie ist das Zuhause einer Familie, bis 4 Menschen. In einer
   Hütte kommen **keine Kinder** zur Welt.
-- **Aufsteigen:** Ein Haus kann eine Stufe höher, wenn **alle Knoten seiner Schnur fest** sind, also alle Bedürfnisse
-  der Familie erfüllt, und das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da
-  sein. Dann schwebt ein Knoten mit Blüte über dem Haus, oben steht „aufsteigen“, und auf der Tafel des Hauses ist der
-  Knopf „Aufsteigen“ frei. Beim Aufsteigen regnen Blüten aufs Dach. In
-  der Übersicht steigen mit „Alle aufsteigen“ alle bereiten Häuser auf einmal auf. Wer will, schaltet dort „Von selbst“
-  ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
+- **Ausbau:** Ein Haus kann eine Stufe höher, wenn **alle Knoten seiner Schnur fest** sind, also alle Bedürfnisse der
+  Familie erfüllt, und das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da sein.
+  Dann schwebt ein Knoten mit Blüte über dem Haus, oben steht „Ausbau“, und auf der Tafel des Hauses ist der Knopf
+  „Ausbauen“ frei. Beim Ausbau regnen Blüten aufs Dach. In der Übersicht baut „Alle ausbauen“ alle bereiten Häuser auf
+  einmal aus. Wer will, schaltet dort „Von selbst ausbauen“ ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
+- **So sieht man die Stufe:** Das Familienhaus hat Tapa an der Tür und zwei geschnitzte Pfosten, das Meisterhaus dazu
+  Töpfe und eine gerollte Matte davor und einen Blütenkranz über der Tür.
 - **Weiterkommen:** Die Tafel zeigt, was fehlt, und woher es kommt. Manches gibt es nicht auf jeder Insel: Matten nur auf
   Atollen, Töpfe nur auf hohen Inseln, feine Dinge nur auf Inseln mit besonderem Boden. Ab dem Meisterhaus muss das Dorf
   also hinaus: siedeln, tauschen, Gaben bringen.
@@ -395,8 +398,28 @@ Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht
   bauen, wer frei ist. **Ist niemand frei, legen zwei für die Bauzeit ihre Arbeit nieder**, von dem Ort, der am ehesten
   warten kann: ein voller Speicher zuerst, dann Handwerk, dann Holz, Essen und Wasser zuletzt. Ihr Ort steht still, über
   ihm steht „Leute bauen“; ist der Bau fertig, gehen sie zurück.
-- Die Bauleute tragen Holz und Palmwedel aus dem Lager herbei, ein Stück pro Gang. Gebaut wird an einer Stelle zugleich,
-  je 10 Bewohner an einer mehr.
+- Die Bauleute tragen Holz und Palmwedel aus dem Lager herbei, **zwei Stück pro Gang**. Gebaut wird an einer Stelle
+  zugleich, je 10 Bewohner an einer mehr; die anderen Baustellen zeigen, der wievielte sie in der Reihe sind.
+- **Dieselben Leute bis zum Schluss:** Eine Baustelle behält ihre Bauleute, bis sie steht. Vorher konnten sie bei jeder
+  Zählung wechseln, und wer gerade eine Last trug, ließ sie fallen; manche Baustellen kamen so kaum voran.
+- **Felder werden gegraben, nicht gezimmert:** Bei Tarofeld, Pulakagrube, Gärten, Quelle, Brunnen und Plätzen brechen die
+  Leute mit dem Grabstock den Boden auf und setzen im Feld Taroschösslinge. Statt eines Gerüsts erscheinen Reihe um Reihe
+  frisch gegrabene Furchen, und das Feld kommt aus dem Boden. Die Tafel sagt „wird angelegt“.
+
+### Vorrang: das Muschelhorn
+
+Mit dem Muschelhorn (pū) rief man auf den Inseln die Leute zusammen. Auf der Tafel jeder Baustelle und jedes
+Arbeitsplatzes sitzt in der Reihe der Leute der Knopf **Vorrang** mit dem Horn:
+
+- **Baustelle:** Sie bekommt sofort Bauleute, zusätzlich zu den Baustellen, an denen schon gearbeitet wird, auch wenn
+  sie noch weit hinten in der Reihe war.
+- **Arbeitsplatz:** Er wird sofort voll besetzt, erst mit Freien, dann mit Leuten von dem Ort, der am ehesten warten
+  kann. Die automatische Verteilung nimmt ihm niemanden mehr weg.
+- Gerufene Leute **eilen** hin, und ein Ort mit Vorrang hat keinen Feierabend.
+- Über dem Ort schwebt das Horn. Höchstens **zwei Orte** zugleich; ein dritter Ruf nimmt den ältesten zurück.
+- Der Ruf endet von selbst, wenn die Baustelle steht oder der Speicher des Arbeitsplatzes wieder gut gefüllt ist; er
+  wird gespeichert.
+- Hat ein Ort niemanden, leuchtet der Knopf auf.
 
 ## Das Erntehaus: der Baum für alles
 
@@ -1063,7 +1086,7 @@ vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle
   Nacht, Schlitztrommeln beim Fest, das Muschelhorn bei Ereignissen und am Fest der Plejaden, Holztöne bei Aufgaben und
   Chronik, ein Klopfen, wenn etwas fertig gebaut ist, ein Platschen beim Stapellauf, klappernde Muscheln bei Gegengaben.
 - Neu dazu: **Wind**, so laut, wie er weht, mit Böen; ein leises Holzklopfen bei jedem Tipp; aufsteigende Holztöne und
-  rasselnde Muscheln, wenn ein Haus aufsteigt; ein knarrender Stamm und ein dumpfer Schlag, wenn ein Baum fällt; ein
+  rasselnde Muscheln, wenn ein Haus ausgebaut wird; ein knarrender Stamm und ein dumpfer Schlag, wenn ein Baum fällt; ein
   Platschen, wenn ein Kind ins Wasser springt oder ein Taucher abtaucht; abends die Schlitztrommel vom Dorfplatz, leiser
   als beim Fest; drei fallende Töne, wenn eine Familie fortfährt.
 - Klang und Tag und Nacht lassen sich im Menü ausschalten.

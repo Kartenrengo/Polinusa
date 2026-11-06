@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const dir = path.dirname(fileURLToPath(import.meta.url)), long = process.argv.includes('--long');
-const tests = [['smoke'], ['rules'], ['play'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? [] : ['101'])]];
+const tests = [['smoke'], ['rules'], ['build'], ['play'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? [] : ['101'])]];
 let failed = 0;
 for (const [name, ...args] of tests){
   const t0 = Date.now(), r = spawnSync(process.execPath, [path.join(dir, name + '.test.js'), ...args], {encoding:'utf8', timeout:15 * 60 * 1000});

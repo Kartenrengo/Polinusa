@@ -588,6 +588,16 @@ button.cost::after{content:"+";margin-left:3px;font-weight:800}
 .season-t.now{box-shadow:inset 0 0 0 2px var(--ochre);background:var(--turmeric);color:var(--ink)}
 .season-t .ic{width:17px;height:17px}
 .fest{display:inline-flex;align-items:center;gap:4px;font:700 13.5px/1 var(--font-ui)}
+/* the conch: call people to a place */
+.rowx.prio{margin:2px 0}
+.chip.horn{display:inline-flex;align-items:center;gap:4px;padding-left:6px}
+.chip.horn .ic{width:20px;height:20px}
+.chip.horn[aria-pressed="true"]{animation:hornpull 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.chip.horn[aria-pressed="true"]{animation:none}}
+.chip.horn.hint{box-shadow:0 0 0 2px var(--ochre);animation:hornpull 1.4s ease-in-out infinite}
+@keyframes hornpull{50%{transform:scale(1.06) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.chip.horn.hint{animation:none}}
+.crew .chip.horn{min-height:34px}
 /* the finger of the first tasks */
 #finger{position:absolute;z-index:12;width:28px;height:34px;pointer-events:none;animation:fingerbob .9s ease-in-out infinite}
 #finger svg{width:100%;height:100%;transform:rotate(180deg);filter:drop-shadow(0 2px 0 rgba(43,29,20,.3))}
@@ -601,3 +611,17 @@ button.cost::after{content:"+";margin-left:3px;font-weight:800}
 .savetext{width:100%;min-height:64px;margin:4px 0;padding:6px 8px;font:500 11px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);background:var(--cream);border:1.5px solid var(--brown);border-radius:6px;resize:vertical;user-select:text;-webkit-user-select:text}
 .copies{margin:4px 0}
 .btn .ic{display:inline-block}
+/* the build-out: house now → house then, the room, children, the new needs */
+.rise .sec{margin:0}
+.rise-pic{display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap}
+.rise-pic .tp{display:flex;flex-direction:column;align-items:center;gap:0}
+.rise-pic .tp small{font:700 11px/1.1 var(--font-ui);color:var(--muted)}
+.rise-pic .tp.next small{color:var(--ink)}
+.tierpic{width:56px;height:50px;display:block}
+.rise-pic .tp:not(.next) .tierpic{width:46px;height:41px;opacity:.85}
+.arr2{width:22px;height:12px;margin-bottom:22px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 12'%3E%3Cpath d='M1 6Q6 3 11 6T19 6' fill='none' stroke='%23A84A2C' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M15 2.4L20.4 6L15 9.6' fill='none' stroke='%23A84A2C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.rise-pic .gain{margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.rise-pic .gain > span{display:inline-flex;align-items:center;gap:2px;font:800 14px/1 var(--font-ui)}
+.rise-pic .gain .ic{width:20px;height:20px}
+.rise-pic .wants{padding:2px 7px 2px 5px;border-radius:12px;background:#F6E9C8;box-shadow:inset 0 0 0 1.5px #C99A3A;color:var(--ochre)}
+.help.pics .bi{width:30px;height:26px;flex:none;margin:0 -2px}
