@@ -1114,7 +1114,7 @@ function yamTick(I, b, K, n, mult = 1){
   b.idle = {why:'grow', text:`Die Ranken wachsen. Geerntet wird, wenn die ${SEASON_IN(Y.harvest)} beginnt.`};
   if (S !== Y.harvest) return;
   const got = Math.round(Y.out * (b.sown || 1) * Math.max(.4, b.soil ?? 1));
-  b.kept = (b.kept || 0) + got; stats.yams = (stats.yams || 0) + got;
+  b.kept = (b.kept || 0) + got; stats.yams = (stats.yams || 0) + got; if (got > 0) I.yamAt = tick;
   b.ys = 0; b.sown = 0; b.soil = Math.max(0, (b.soil ?? 1) - .22); b.idle = null; if (b.soil < .3){ b.fallow = true; } I.staff = null; invalidate();
   if (!awayQuiet && I.id === active){ toast(`Yamsernte: ${got} Feldfrüchte. Sie halten sich auf dem Gestell am Feld.`, 3200); sfx('rise'); }
 }
@@ -1201,11 +1201,11 @@ function feastState(I, F){
 }
 function holdFeast(I, F){
   const no = feastState(I, F); if (no){ toast(no, 2600, false); return; }
-  pay(I, F.cost); mana += F.mana; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN; if (F.joy) I.joyUntil = tick + F.joy; if (F.id === 'schatz') stats.schatzfest = (stats.schatzfest || 0) + 1;
+  const gain = feastMana(I, F); pay(I, F.cost); mana += gain; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN; if (F.joy) I.joyUntil = tick + F.joy; if (F.id === 'schatz') stats.schatzfest = (stats.schatzfest || 0) + 1;
   for (const w of walkers) if (w.isl === I.id){ nextLeg(w); w.wait = 0; }
   for (let i = 0; i < 6; i++) heartAt(I);
   updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
-  toast(`${F.n} auf ${I.name}. Ansehen +${F.mana}.`, 3600);
+  toast(`${F.n} auf ${I.name}. Ansehen +${gain}${gain > F.mana ? ', nach der Yamsernte' : ''}.`, 3600);
 }
 let hearts = [], sunKey = '';   // a heart rises over a house when someone moves in
 function econ(){

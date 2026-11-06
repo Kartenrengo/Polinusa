@@ -30,8 +30,21 @@ function windAt(t){
 let windCache = null;
 const wind = () => { const W = windCache && windCache.t === tick ? windCache.w : (windCache = {t:tick, w:windAt(tick)}).w; return cyclone ? (W.storm || (W.storm = {...W, str:1, word:'Sturm'})) : W; };   // in a cyclone it blows at full strength
 
-/* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night */
-const SEA_KINDS = new Set(['fisch', 'taucher']);
+/* Production that follows the year: breadfruit by season, fish and reef under rāhui, the palolo night, and what has to
+   dry in the sun: pots before the firing, beaten bark cloth, grated coconut for the oil. In the wet storm months that goes
+   slowly, in the dry trade wind months well. */
+const SEA_KINDS = new Set(['fisch', 'taucher']), DRY_WORK = new Set(['toepfer', 'klopf', 'oelhuette']);
+const dryPace = () => { const id = seasonOf().id; return id === 'sturm' ? 1.7 : id === 'passat' ? .8 : 1; };
+/* after the yam harvest the stores are full: for three moons a feast brings half as much standing again */
+const afterHarvest = I => !!I && I.yamAt > 0 && tick - I.yamAt < 3 * MOON;
+const feastMana = (I, F) => F.id === 'schatz' ? F.mana : Math.round(F.mana * (afterHarvest(I) ? 1.5 : 1));
+/* what each time of the year does, as pictures with up or down, for the calendar */
+const SEASON_FX = {
+  plejaden:[['plejaden', 1, 'Fest der ersten Früchte'], ['nahrung', 1, 'Die Brotfrucht trägt reich']],
+  sturm:[['einbaum', -1, 'Kanus langsamer'], ['toepfe', -1, 'Töpfe, Tapa und Öl trocknen schlecht'], ['setzling', 1, 'Yams werden gepflanzt']],
+  passat:[['einbaum', 1, 'Kanus schneller: Zeit für weite Fahrten'], ['toepfe', 1, 'Töpfe, Tapa und Öl trocknen gut']],
+  mager:[['nahrung', -1, 'Keine Brotfrucht'], ['nahrung', 1, 'Yamsernte'], ['mana', 1, 'Nach der Ernte bringen Feste mehr Ansehen']]
+};
 function seasonalEvery(I, b, K){
   if (K.rain){ const id = seasonOf().id; return Math.round(K.every * (id === 'sturm' ? .6 : id === 'mager' ? 2.4 : 1)); }   // rain comes with the storms
   const dry = I.drought > tick && (b.kind === 'taro' || b.kind === 'pulaka' || b.kind === 'baum') ? 2 : 1;   // a drought halves what the fields give
@@ -41,6 +54,7 @@ function seasonalEvery(I, b, K){
     if (I.rahui && seasonOf().id === 'mager') return 0;   // the reef rests
     if (I.rahuiDone === yearOf() && festivalTime()) return Math.max(1, Math.round(K.every / 3));   // after the rāhui the lagoon is full
   }
+  if (DRY_WORK.has(b.kind)) return Math.round(K.every * dryPace());
   return K.every;
 }
 function calendarTick(){

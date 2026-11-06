@@ -681,6 +681,14 @@ button.fix{cursor:pointer}
 .chip.craft.idle{box-shadow:0 0 0 2px var(--ochre)}
 .crafts .cost{min-height:26px;padding:0 5px}
 .folk.home .wk.craft{display:inline-flex;padding:1px 2px;border-radius:5px;background:#E9DDC0}
+/* what this time of the year does: a picture with up or down and a few words */
+.sfx{display:flex;flex-wrap:wrap;gap:5px 10px}
+.sfx-i{display:inline-flex;align-items:center;gap:2px;font:700 12.5px/1.2 var(--font-ui);color:var(--ink)}
+.sfx-i .ic{width:18px;height:18px;flex:none}
+.sfx-i b{font-size:10px;margin-right:2px}
+.sfx-i.up b{color:var(--ok)}
+.sfx-i.down b{color:var(--ochre)}
+.chip.craft .wet .ic{width:13px;height:13px;opacity:.8}
 /* the smallest phones: the house before the build-out goes, the steps and their chips get smaller */
 @media (max-width:340px){
 .rise-pic .tp:not(.next){display:none}

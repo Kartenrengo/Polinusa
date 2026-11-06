@@ -212,8 +212,8 @@ function returnGoods(C, worth){
 const MOON = 30, YEAR = 12 * MOON, YEAR_START = 5 * MOON;   // ticks per moon; a new game begins in the trade wind season
 const SEASONS = [
   {id:'plejaden', n:'Zeit der Plejaden', from:0, to:2, baum:1.5, sea:1, text:'Die Plejaden gehen auf. Das Jahr beginnt mit dem Fest der ersten Früchte.'},
-  {id:'sturm', n:'Sturmzeit', from:2, to:5, baum:1, sea:.85, text:'Regen und Böen. Die Yams werden gepflanzt, Schildkröten legen ihre Eier am Strand.'},
-  {id:'passat', n:'Passatzeit', from:5, to:9, baum:1, sea:1, text:'Stetiger Wind aus Südost. Gute Zeit für weite Fahrten.'},
+  {id:'sturm', n:'Sturmzeit', from:2, to:5, baum:1, sea:.8, text:'Regen und Böen. Die Yams werden gepflanzt, Schildkröten legen ihre Eier am Strand.'},
+  {id:'passat', n:'Passatzeit', from:5, to:9, baum:1, sea:1.2, text:'Stetiger Wind aus Südost. Gute Zeit für weite Fahrten.'},
   {id:'mager', n:'Magere Zeit', from:9, to:12, baum:0, sea:1, text:'Die Brotfrucht trägt nicht. Jetzt werden die Yams geerntet; Proviant hilft, ein Rāhui bringt reichen Fang zum Fest.'}
 ];
 const PALOLO = {moon:0, from:20, to:23};   // a week after full moon in the first moon the palolo worm rises from the reef, for three ticks

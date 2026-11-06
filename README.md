@@ -34,11 +34,11 @@ node tests/run.mjs
 
 Zuerst prüft es, ob jede Datei fehlerfrei lesbar ist (eine kaputte Zeile hält das ganze Spiel an). Dann sagen die
 Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, ist da; jede Aufgabe und Stufe nennt Gebäude, die
-es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln),
-`build` (sechs Baustellen zugleich werden in 17 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
+es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki),
+`build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
 Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
 jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
-(vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
+(vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen, die Hausansicht scrollt nicht), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
 Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer je anderthalb Stunden.
 
 Der Bot hat **Wächter** für das, was ein Spieler sehen würde: eine Baustelle, die mit Bauleuten drei Minuten nicht
@@ -170,11 +170,11 @@ ohne dass ein Dorf zusammenbricht.
 | --- | --- | --- |
 | Anfang | Ankunft | Hütte, Erntehaus, Holzfäller, Quelle, Brunnen, Fischerhütte, Pandanusfrüchte, Palme, Brotfrucht |
 | 8 Menschen | Gärten | Taro, Pulaka, Baumpflanzer, Speicher, Hühner, Pandanus |
-| 12 | Sennit und Erdofen | Seilerei, Erdofen, Kalkbrenner, Kurkuma, Harz |
-| 20 | Töpfe und Werkzeug | Töpferei, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Flechthütte, Blumen, **Kanuhaus und Auslegerkanu** |
-| 30 | Ein Dorf | Ölhütte, Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
-| 40 | Zeit der Feste | Tapa, Schweine, Trommel, Tanzplatz, Ahnenhaus, Klingen, Schmuck, Bananen |
-| nach der großen Fahrt | **Hawaiki** | Kavagarten, Feinweberin, Tapamalerin, Duftölhütte, Häuptlingshaus |
+| 12 | Sennit und Erdofen | Sennit drehen (Hauswerk), Erdofen, Kalkbrenner, Kurkuma, Harz |
+| 20 | Töpfe und Werkzeug | Töpfern und Matten flechten (Hauswerk), Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Blumen, **Kanuhaus und Auslegerkanu** |
+| 30 | Ein Dorf | Öl pressen (Hauswerk), Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
+| 40 | Zeit der Feste | Tapa klopfen (Hauswerk), Maulbeergarten, Schweine, Trommel, Tanzplatz, Ahnenhaus, Klingen, Schmuck, Bananen |
+| nach der großen Fahrt | **Hawaiki** | Kavagarten, Häuptlingshaus; als Hauswerk feine Matten, bemalte Tapa, Duftöl |
 
 Das Kanuhaus kommt mit 20 Menschen, weil die Meisterhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
 in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe, dann der Knoten der großen Fahrt und
@@ -188,6 +188,32 @@ Fest der Plejaden gibt es keine Kava-Runde und bei der Dürre keine Kava-Zeremon
 nach dem Fest der Schätze; der Weg zum Häuptlingsdorf beginnt mit der großen Fahrt. Ein Spielstand, der beim
 Häuptlingsdorf stand, macht mit dem Tauchen und der großen Fahrt weiter.
 
+**Hauswerk statt Werkstätten.** Sennit drehen, Matten flechten, töpfern, Öl pressen, Tapa klopfen, später auch feine
+Matten flechten, Tapa bemalen und Duftöl ansetzen: Das machten die Familien bei sich zu Hause, nicht in eigenen Hütten.
+Darum stehen diese Dinge nicht mehr in der Bauleiste. Auf der Tafel eines Hauses gibt es die Zeile **Hauswerk** mit einem
+Bild je Ware. Ein Tippen wählt das Hauswerk dieses Hauses, noch ein Tippen nimmt es weg. Ein Haus hat höchstens ein
+Hauswerk. Gearbeitet wird auf einer Matte vor dem Haus; zuerst arbeitet die eigene Familie, sonst hilft jemand, der frei
+ist. Auf dem gewählten Bild steht, wie viele arbeiten („1/1“), fehlt etwas, steht das Bild davon daneben. Der Ort zählt
+weiter: Töpfern geht nur in einem Haus nah am Ton, Matten flechten nur mit 2 Pandanus nah am Haus, Tapa klopfen nur bei
+einem Maulbeergarten, Duftöl nur bei Blumen. Ein Bild, das hier nicht geht, ist blass und sagt beim Tippen, warum.
+Knöpfe wie „Hauswerk“ beim Rat oder bei einem fehlenden Knoten öffnen das passende Haus. Steht keines am richtigen Ort,
+öffnet sich die Bauleiste mit einer Hütte genau dort, etwa am Ton. Auch eine leere Hütte kann schon ihr Hauswerk wählen;
+dann arbeiten Leute aus anderen Familien dort, bis eine Familie einzieht. Wird das Haus versetzt, geht die Matte mit;
+wird es entfernt, ist auch das Hauswerk weg. Alte Spielstände behalten ihre Werkstätten, und sie arbeiten weiter.
+
+**Das Jahr steuert die Arbeit.** Im Kalender stehen zu jeder Zeit Bilder mit ▲ oder ▼:
+
+| Zeit | Was sie bewirkt |
+| --- | --- |
+| Zeit der Plejaden | Fest der ersten Früchte, die Brotfrucht trägt reich |
+| Sturmzeit | Kanus langsamer (0,8); Töpfe, Tapa und Öl trocknen schlecht und brauchen 1,7-mal so lange; Yams werden gepflanzt |
+| Passatzeit | Kanus schneller (1,2), also auch weniger Proviant pro Fahrt; Töpfe, Tapa und Öl trocknen gut (0,8-mal so lange) |
+| Magere Zeit | keine Brotfrucht; die Yamsernte |
+
+Nach der Yamsernte einer Insel bringen dort drei Monde lang das kleine und das große Fest anderthalbmal so viel Ansehen
+(beim großen Fest 23 statt 15). Der Rat der Ältesten sagt es dann („Fest nach der Yamsernte“). Die Aufgabe „Die Weite See“
+rät, in der Passatzeit zu fahren. Im Sturm trägt das gewählte Hauswerk-Bild von Töpfen, Tapa und Öl eine kleine Regenwolke.
+
 - **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Dringendes steht rot als „Jetzt“: kein Dach,
   Wasser fast aus, Nahrung aus, ein fremdes Kanu fragt. Sonst sagt der Rat, was dran ist: Leute verteilen, Palmwedel
   holen, Holz, Fasern und Schnur, ein Familienhaus, Gekochtes, mehr Hütten, neues Blut, die nächste Stufe.
@@ -197,9 +223,9 @@ Häuptlingsdorf stand, macht mit dem Tauchen und der großen Fahrt weiter.
 
 1. Erntehaus, 2. Holzfäller, 3. Wasser (Quelle, oder 8 Wasser aus grünen Nüssen, wo kein Bach fließt), 4. Fischerhütte,
 5. eine zweite Hütte, 6. eine Familie aus der Ferne aufnehmen, 7. sechs Menschen bei der Arbeit, 8. zwei Tarofelder,
-9. 12 Bewohner, 10. Familien aus drei Linien, 11. Seilerei, 12. ein Familienhaus, 13. Erdofen, 14. Baumpflanzer,
-15. 20 Bewohner, 16. Töpferei, 17. Steg und Pfahlhaus, 18. Beilwerkstatt, 19. 30 Bewohner, 20. Kanuhaus,
-21. Auslegerkanu, 22. Siedler nach Motu, 23. Flechthütte und Seilerei auf Motu, 24. Handelskette, 25. ein Dorf mit einer
+9. 12 Bewohner, 10. Familien aus drei Linien, 11. Sennit drehen im Haus, 12. ein Familienhaus, 13. Erdofen, 14. Baumpflanzer,
+15. 20 Bewohner, 16. eine Familie am Ton töpfert, 17. Steg und Pfahlhaus, 18. Beilwerkstatt, 19. 30 Bewohner, 20. Kanuhaus,
+21. Auslegerkanu, 22. Siedler nach Motu, 23. Matten flechten und Sennit drehen auf Motu, 24. Handelskette, 25. ein Dorf mit einer
 Meisterfamilie, 26. 6 Proviant, 27. Doppelkanu, 28. neues Land im Nebel, 29. eine Hochzeit mit einem Clan, 30. ein Fest,
 31. das Fest der Plejaden, 32. ein Häuptlingsdorf, 33. Tauchen, 34. das Lapita-Netz, 35. die Weite See, 36. eine
 Schatzinsel, 37. ein Dorf in der Ferne, 38. das Fest der Schätze, 39. andere Menschen: ein Volk einer anderen Kultur.
@@ -571,7 +597,7 @@ Lapita-Töpfe sind berühmt für ihre Muster: Mit gezähnten Stempeln drückten 
 feuchten Ton und rieben weißen Kalk hinein. Gleiche Muster von Neuguinea bis Samoa zeigen, wie eng die Inseln verbunden
 waren; wo der Kontakt abriss, wurden die Töpfe schlichter.
 
-- **Eigenes Muster:** Ein Dorf findet es mit seiner ersten Töpferei. Panua stempelt das Gesicht der Ahnen mit der langen
+- **Eigenes Muster:** Ein Dorf findet es mit den ersten Töpfen, die eine Familie dort brennt. Panua stempelt das Gesicht der Ahnen mit der langen
   Nase, andere Dörfer Mäander, Rauten, Spirale oder Leiter. Jeder Clan hat sein eigenes (Zickzack, Bögen, Kreise).
   Ansehen +2.
 - **Muster wandern mit Töpfen:** Kommt ein Kanu mit Töpfen an ein Dorf oder einen Clan, kennen sie dort von nun an alle
@@ -841,9 +867,9 @@ Antippen öffnet den Kalender.
 | Zeit | Monde | Wirkung |
 | --- | --- | --- |
 | Zeit der Plejaden | 1–2 | Neujahr und Fest, Brotfrucht reichlich |
-| Sturmzeit | 3–5 | Kanus langsamer |
-| Passatzeit | 6–9 | Kanus schneller |
-| Magere Zeit | 10–12 | Brotfrucht trägt nicht, Proviant aus der Gärgrube hilft |
+| Sturmzeit | 3–5 | Kanus langsamer, Töpfe, Tapa und Öl trocknen schlecht |
+| Passatzeit | 6–9 | Kanus schneller, Töpfe, Tapa und Öl trocknen gut |
+| Magere Zeit | 10–12 | Brotfrucht trägt nicht, Proviant aus der Gärgrube hilft; Yamsernte, danach bringen Feste mehr |
 
 - **Palolo:** Eine Woche nach Vollmond im ersten Mond steigt der Palolo-Wurm aus dem Riff. Drei Takte lang
   schöpfen alle Inseln Meeresfrüchte, mit Fischerhütten mehr.
@@ -883,17 +909,17 @@ Ketten haben höchstens drei Glieder.
 | Pulakagrube | Atoll, in der Mitte eines Motus | | 3,3 Feldfrüchte | 1 |
 | Pandanussammlerin | Atoll | 2 Pandanus daneben | 5 Feldfrüchte | 1 |
 | Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 3,75 junge Bäume | 1 |
-| Seilerei | überall | 1 Kokosfaser je Schnur | 5 Schnur | 1 |
+| Sennit drehen (Hauswerk) | überall | 1 Kokosfaser je Schnur | 5 Schnur | 1 |
 | Erdofen | überall | 2 rohe Speisen, Brennstoff, Blätter | 7,5 Gekochtes | 2, Hand in Hand |
 | Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Feldfrucht je Proviant | 5 Proviant | 1 |
-| Töpferei | hoch | Ton in der Nähe, 1 Brennstoff je Topf | 3 Töpfe | 2, Hand in Hand |
+| Töpfern (Hauswerk) | hoch | Haus nah am Ton, 1 Brennstoff je Topf | 3 Töpfe, in der Sturmzeit weniger | 2, Hand in Hand |
 | Beilwerkstatt | hoch | Basaltfelsen in der Nähe | 3 Steinbeile | 2 |
 | Klingenschläger | Vulkan | Obsidian in der Nähe | 2,5 Klingen | 2 |
-| Maulbeergarten + Klopfhütte | hoch | Garten neben der Hütte | 2,5 Tapa | 2, Hand in Hand |
+| Tapa klopfen (Hauswerk) | hoch | Maulbeergarten nah am Haus | 2,5 Tapa, in der Sturmzeit weniger | 2, Hand in Hand |
 | Schweinepferch | hoch | 2 Feldfrüchte je Schwein | 1,7 Schweine | 1 |
-| Flechthütte | Atoll | 2 Pandanus daneben | 3 Matten | 1 |
+| Matten flechten (Hauswerk) | Atoll | 2 Pandanus nah am Haus | 3 Matten | 1 |
 | Harzsammler | hoch | 2 Brotfruchtbäume daneben | 3 Harz | 1 |
-| Ölhütte | überall | 2 Kokosnüsse je Öl | 3 Kokosöl | 1 |
+| Öl pressen (Hauswerk) | überall | 2 Kokosnüsse je Öl | 3 Kokosöl, in der Sturmzeit weniger | 1 |
 | Schmuckschleiferei | Atoll, am Strand | 1 Klinge und 2 Muschelschalen je Ring | 1,4 Muschelschmuck | 2, Hand in Hand |
 | Kavagarten | hoch | | 2,1 Kava | 1 |
 
@@ -916,10 +942,10 @@ oder einmal fällen.
 | Quelle | Wer nutzt sie | Was entsteht |
 | --- | --- | --- |
 | Kokospalme | Erntehaus | reife Nüsse (Nahrung) mit Kokosfasern und Kokosschalen, grüne Nüsse (Wasser), Palmwedel (Dach), alte Stämme (Holz) |
-| Kokosfasern | Seilerei | Sennit, die Schnur für Häuser, Kanus und Netze |
-| Kokosschalen | Töpferei | Brennstoff: erst die Schalen, dann Holz |
-| Kokosnüsse | Ölhütte | Kokosöl, 2 Nüsse je Öl |
-| Pandanus | Flechthütte, Pandanussammlerin | Matten und Segel; Früchte als Nahrung (Atoll) |
+| Kokosfasern | Sennit drehen | Sennit, die Schnur für Häuser, Kanus und Netze |
+| Kokosschalen | Töpfern | Brennstoff: erst die Schalen, dann Holz |
+| Kokosnüsse | Öl pressen | Kokosöl, 2 Nüsse je Öl |
+| Pandanus | Matten flechten, Pandanussammlerin | Matten und Segel; Früchte als Nahrung (Atoll) |
 | Brotfruchtbaum | Gärgrube, Harzsammler | Proviant; Milchsaft, mit dem Kanus abgedichtet werden |
 | Bach | Quelle | Wasser, nur auf Inseln mit Bach, am Bach |
 | Süßwasser im Sand | Brunnen | Wasser, nur auf Atollen, in der Mitte eines Motus |
@@ -947,9 +973,9 @@ Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptl
 | Kalkbrenner, am Strand | Brennstoff | Korallenkalk; die Töpferei füllt damit die Muster weiß und arbeitet schneller |
 | Kurkumagarten | Kurkuma, mitgebracht im Ahnenkanu | Kurkuma |
 | Hühnerhof | Hühner, mitgebracht; Futter | Eier (Nahrung) |
-| Tapamalerin | Tapa und Kurkuma | Bemalte Tapa |
-| Feinweberin | 2 Matten | Feine Matten, die Ehrenmatten für Hochzeit und Tod |
-| Duftölhütte | Kokosöl, Blumen oder Hibiskus in der Nähe | Duftöl |
+| Tapa bemalen (Hauswerk) | Tapa und Kurkuma | Bemalte Tapa |
+| Feine Matten flechten (Hauswerk) | 2 Matten | Feine Matten, die Ehrenmatten für Hochzeit und Tod |
+| Duftöl ansetzen (Hauswerk) | Kokosöl, Blumen oder Hibiskus nah am Haus | Duftöl |
 | Schmuckschleiferei | Klinge, 2 Muschelschalen oder Eberhauer | Muschelschmuck |
 
 - **Nebenprodukte:** Taro- und Pulakafelder geben Blätter, Bananen noch mehr. Die Beilwerkstatt gibt Kochsteine aus Basalt,
@@ -970,7 +996,7 @@ haben; er steht unter dem Namen der Insel auf der Karte.
 | Rote Erde | Talise und manche hohe Inseln | Kurkumagarten: Farbe für bemalte Tapa |
 | Feuchte Hänge | manche hohe Inseln | Kavagarten |
 | Kegelschnecken | Motu und manche Koralleninseln | Schmuckschleiferei: Armringe |
-| Feiner Pandanus | manche Koralleninseln | Feinweberin: Ehrenmatten |
+| Feiner Pandanus | manche Koralleninseln | feine Matten flechten: Ehrenmatten |
 
 Die Heimat hat keinen davon. Für die Häuptlingsfamilie braucht man darum ein Netz aus Inseln, mit Siedlern oder Handel, so
 wie das Lapita-Netz wirklich war. Der Rat sagt, welche Insel den fehlenden Boden hat.

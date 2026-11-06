@@ -118,6 +118,7 @@ function calendarMarkup(){
   h += `<div class="moons" role="img" aria-label="${S.n}, ${m + 1}. von 12 Monden">${Array.from({length:12}, (_, i) => { const Q = SEASONS.find(q => i >= q.from && i < q.to); return `<i class="moon-d ${Q.id}${i === m ? ' now' : ''}${i === Q.from ? ' start' : ''}"></i>`; }).join('')}</div>`;
   h += `<div class="seasons">${SEASONS.map(Q => `<span class="season-t ${Q.id}${Q === S ? ' now' : ''}" aria-label="${Q.n}: ${Q.text}">${icon(Q.id)}<small>${Q.n.replace('Zeit der ', '').replace('zeit', '')}</small></span>`).join('')}</div>`;
   h += `<p class="sub">${S.text}</p>`;
+  h += `<div class="sfx">${SEASON_FX[S.id].map(([k, d, t]) => `<span class="sfx-i ${d > 0 ? 'up' : 'down'}" role="img" aria-label="${t}">${icon(k)}<b>${d > 0 ? '▲' : '▼'}</b><small>${t}</small></span>`).join('')}</div>`;
   h += `<div class="rowx"><span class="fest">${icon('plejaden')}${festivalTime() ? '<b>Festzeit</b>' : `Fest in ${minutes(untilFestival())} min`}</span></div>`;
   if (S.id === 'mager' && I.buildings.some(b => SEA_KINDS.has(b.kind))) h += I.rahui ? `<p class="sub">Auf ${I.name} gilt Rāhui. Fischfang und Riff ruhen bis zum Fest.</p>` : `<div class="rowx"><span class="sub">Rāhui auf ${I.name}: Fischfang und Riff bis zum Fest sperren, dann dreifacher Fang und Ansehen +3.</span><button class="btn" type="button" data-act="rahui">Rāhui ausrufen</button></div>`;
   return h;

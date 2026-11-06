@@ -72,6 +72,12 @@ const r = await p.evaluate(()=>{
     restore(serialize()); const H2 = isl('heimat'), h2 = findB(hh.id); want(craftOf(H2, h2) && craftOf(H2, h2).kind === 'schnur', 'craft: lost on load');
     H2.buildings = H2.buildings.filter(b => b !== h2); cleanCrafts(H2); want(!H2.buildings.some(b => b.at === hh.id), 'craft: stays without its house');
     out.push(`craft: ${CRAFT_KINDS.length} household crafts, ${craftsHere(H2).length} here`); }
+  // the year: canoes fast in the trade wind, pots slow in the rain, feasts count more after the yam harvest
+  { const H = isl('heimat'), t0 = tick, tp = {kind:'toepfer'}, at = id => { while (seasonOf().id !== id) tick++; }, F = FEASTS.find(q => q.id === 'gross');
+    at('sturm'); const wet = [seasonOf().sea, seasonalEvery(H, tp, KINDS.toepfer)]; at('passat'); const dry = [seasonOf().sea, seasonalEvery(H, tp, KINDS.toepfer)];
+    want(dry[0] > 1 && wet[0] < 1 && wet[1] > KINDS.toepfer.every && dry[1] < KINDS.toepfer.every, `year: seasons do not steer canoes and pots (${wet} ${dry})`);
+    const y0 = H.yamAt; H.yamAt = tick; want(feastMana(H, F) > F.mana, 'year: no bonus for a feast after the yam harvest'); H.yamAt = y0; tick = t0;
+    out.push(`year: canoes ${wet[0]}/${dry[0]}, pots every ${wet[1]}/${dry[1]} in storm/trade wind`); }
   // Hawaiki: kava, fine mats, painted tapa, scented oil and the chief's house only after the great voyage
   { const late = ['kavagarten', 'weberin', 'malerin', 'duftoel', 'fale'], H = isl('heimat'), M = isl('tochter'), x0 = M.center.x, s0 = M.settled;
     stats.peakPop = 60; stageTick(); want(!late.some(unlocked) && unlocked('trommel'), 'Hawaiki: late things open before the great voyage');

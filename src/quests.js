@@ -78,7 +78,7 @@ const QUESTS = [
   {id:'netz', t:'Das Lapita-Netz', d:'Verbinde 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten.', why:'Dörfer auf vielen Inseln, verbunden durch Fahrten und Gaben. Dann ruft der Osten.',
     n:() => Math.min(4, islands.filter(I => I.settled).length) + Math.min(2, routes.filter(r => (isl(r.a).clan || isl(r.b).clan) && r.knots >= 4).length), of:6, show:{fleet:true}, unlock:[], gift:{}},
   // the great voyage: across the Weite See to the Ferne Inseln, their treasures, and the greatest feast
-  {id:'weite', t:'Die Weite See', d:'Finde mit dem Doppelkanu Land jenseits der Weiten See im Osten.', why:'Hinüber braucht das Doppelkanu etwa 12 Proviant. Tifa liegt auf halbem Weg. Navigatoren sparen Proviant.',
+  {id:'weite', t:'Die Weite See', d:'Finde mit dem Doppelkanu Land jenseits der Weiten See im Osten.', why:'Fahrt in der Passatzeit: Dann ist das Kanu schneller und braucht weniger Proviant. Hinüber braucht das Doppelkanu etwa 12 Proviant. Tifa liegt auf halbem Weg. Navigatoren sparen Proviant.',
     n:() => islands.some(I => I.discovered && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:[], gift:{proviant:6}},
   {id:'schatz', t:'Schätze der Ferne', d:'Bring Perlmutt, rote Federn und einen Walzahn in ein eigenes Dorf.', why:'Tifa, Kula und Tabua haben Schätze, die es sonst nirgends gibt. Leg dort an, die Mannschaft sammelt.',
     n:() => TREASURE_GOODS.filter(k => islands.some(I => I.settled && (I.stock[k] || 0) > 0)).length, of:3, show:{fleet:true}, unlock:[], gift:{}},
@@ -207,6 +207,7 @@ function adviceOf(I, urgentOnly = false){
     return {t:`${GN[k]} für die Häuptlingsfamilie`, d:p ? `${doIt(p)}.` : sp ? `${KINDS[sp].n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[sp]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}. Besiedle sie oder handle.` : `${GN[k]} kommt per Kanu von anderswo.`, build:p, fleet:!p}; } }
   const step = hawaiki() && I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
   if (nd.atMax) return {t:'Neues Land besiedeln', d:'Die Insel ist voll. Schicke Familien im Kanu aus.', fleet:true};
+  { const hl = afterHarvest(I) && I.buildings.find(b => b.kind === 'halle' && !b.bt), F = hl && FEASTS.find(q => q.id !== 'schatz' && !feastState(I, q)); if (F) return {t:'Fest nach der Yamsernte', d:`${F.n}: jetzt Ansehen +${feastMana(I, F)}.`, goto:hl.id}; }
   if (korCanThrow()) return {t:'Knöchelwurf', d:'Heute ist noch nicht geworfen.', koruru:true};
   return {t:'Erkunden und handeln', d:'Fahre mit dem Doppelkanu in den Nebel oder bring Gaben zu den Clans.', fleet:true};
 }

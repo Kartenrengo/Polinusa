@@ -366,7 +366,7 @@ function craftRow(I, h){
   const ks = craftsHere(I); if (!ks.length) return '';
   const cur = craftOf(I, h), ws = cur && cur.idle && !['way', 'grow'].includes(cur.idle.why) ? cur.idle : null;
   return `<div class="crafts" role="group" aria-label="Hauswerk"><span class="lbl">Hauswerk</span>${ks.map(k => { const K = KINDS[k], on = !!cur && cur.kind === k, why = on ? '' : craftWhy(I, h, k), n = on ? crewAt(I, cur) || 0 : 0;
-    return `<button class="chip craft${why ? ' no' : ''}${on && ws ? ' idle' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${K.craft}${why ? `: ${why}` : on ? `, ${n} von ${crewOf(cur)}${ws ? `. ${ws.text}` : ''}` : ''}">${icon(K.prod)}${on ? `<b>${n}/${crewOf(cur)}</b>` : ''}</button>`; }).join('')}` +
+    return `<button class="chip craft${why ? ' no' : ''}${on && ws ? ' idle' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${K.craft}${why ? `: ${why}` : on ? `, ${n} von ${crewOf(cur)}${ws ? `. ${ws.text}` : ''}` : ''}">${icon(K.prod)}${on ? `<b>${n}/${crewOf(cur)}</b>` : ''}${on && DRY_WORK.has(k) && dryPace() > 1 ? `<span class="wet" role="img" aria-label="Regenzeit: trocknet langsam">${icon('sturm')}</span>` : ''}</button>`; }).join('')}` +
     (ws && ws.k ? `<span class="cost out" role="img" aria-label="${ws.text}">${icon(ws.k)}</span>` : '') + '</div>';
 }
 /* One sheet without scrolling: the family and its step; the people with their work and the free places in one row; the
@@ -531,7 +531,7 @@ function storeMarkup(I){
 function feastMarkup(I){
   // the feast of treasures only once a treasure has been seen
   const known = islands.some(J => J.treasure && J.discovered) || islands.some(J => J.settled && TREASURE_GOODS.some(k => (J.stock[k] || 0) > 0));
-  return FEASTS.filter(F => F.id !== 'schatz' || known).map(F => { const no = feastState(I, F); return `<div class="rowx"><span><b>${F.n}</b> <span class="sub">${costText(F.cost)}, Ansehen +${F.mana}</span>${no ? `<br><span class="sub">${no}</span>` : ''}</span><button class="btn${no ? '' : ' primary'}" type="button" data-act="feast" data-f="${F.id}" ${no ? 'disabled' : ''}>Feiern</button></div>`; }).join('');
+  return FEASTS.filter(F => F.id !== 'schatz' || known).map(F => { const no = feastState(I, F); return `<div class="rowx"><span><b>${F.n}</b> <span class="sub">${costText(F.cost)}, Ansehen +${feastMana(I, F)}${feastMana(I, F) > F.mana ? ' (nach der Yamsernte)' : ''}</span>${no ? `<br><span class="sub">${no}</span>` : ''}</span><button class="btn${no ? '' : ' primary'}" type="button" data-act="feast" data-f="${F.id}" ${no ? 'disabled' : ''}>Feiern</button></div>`; }).join('');
 }
 function manaMarkup(I){
   let h = head(`Ansehen ${Math.floor(mana)}`, 'Das Ansehen des Clans. Es wächst mit Festen und Gaben und sinkt langsam, etwa 1 pro Minute.');
