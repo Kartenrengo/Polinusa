@@ -11,6 +11,11 @@ Spieler es wählt.
 - **Hauswerk bei den Clans:** In den Dörfern der Clans gibt es noch eigene Werkstätten. Sie könnten auch Matten vor den
   Häusern zeigen.
 
+## Offen aus der Runde „Bewegungen“ (Version 65)
+
+- **Auf einem echten Handy ansehen:** Die neuen Bewegungen sind klein. Bisher nur im Test-Browser und nah gezoomt geprüft.
+- **Zu zweit arbeiten:** Zwei tragen einen Stamm zusammen, zwei heben den Pfosten. Bisher arbeitet jeder für sich.
+
 ## Offen aus der Runde „Alter und Stände“ (Version 64)
 
 - **Wasser im langen Lauf:** Im Probelauf über 50 Jahre fehlte von Jahr 12 bis 26 oft Wasser, und es kamen keine

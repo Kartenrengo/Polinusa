@@ -30,8 +30,10 @@ const {PAGE} = require('./lib');
         if (m) sure = Math.max(sure, +m[1]); if (Q.id === 'dorf') sure = Math.max(sure, VILLAGE_POP); } }
     // every kind of work, rest and play has a drawing
     const src = workFx.toString(), cases = new Set([...src.matchAll(/case '([\w]+)'/g)].map(m => m[1]));
-    const fx = new Set([...Object.values(WORK_FX), ...SITE_FX, ...REST_FX, ...Object.values(PLAY_FX), 'dig', 'plant', 'chop', 'pull', 'climb', 'scoop', 'net', 'spear', 'hang', 'show']);
+    const looks = LOOKS(), fx = new Set([...Object.values(looks).flat(), 'show'].filter(f => f[0] !== '~'));
     for (const f of fx) if (!cases.has(f)) bad.push(`work look "${f}" has no drawing`);
+    // every activity at least two looks, all different
+    for (const [k, L] of Object.entries(looks)) if (new Set(L).size < 2) bad.push(`activity "${k}" has only ${new Set(L).size} look`);
     // a fresh game: every task can be counted, every sheet opens and its pictures exist
     window.save = () => {}; newGame(4242); landHome(isl('heimat')); closeSheet(); nextEvent = 1e9;
     for (const Q of QUESTS){ try { Q.n(); } catch (e){ bad.push(`task ${Q.id} cannot be counted: ${e.message}`); } }

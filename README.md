@@ -1217,6 +1217,49 @@ Schwarm; danach haben sich Fischer immer gerichtet.
 
 Freizeit ist nur fürs Auge: Sie ändert nichts an den Vorräten, und Feierabend und Pausen kosten keine Arbeit.
 
+### Jede Tätigkeit mit mindestens zwei Bewegungen
+
+Seit Version 65 hat jede Tätigkeit mindestens zwei eigene Bewegungen, die sich abwechseln: 66 Tätigkeiten mit zusammen
+116 Bewegungen. Wer an einem Platz arbeitet, nimmt bei jedem Arbeitsgang die nächste, manchmal wird eine übersprungen,
+damit Nachbarn nicht im Gleichtakt arbeiten. Bei manchen Arbeiten beugt sich die Figur vor (Knollen ziehen, Eier sammeln,
+unter Steinen tasten). Wer etwas anderes in den Händen hat, legt das Werkzeug ab. Der Test prüft, dass jede Tätigkeit
+zwei verschiedene Bewegungen hat und dass jede davon gezeichnet wird.
+
+| Bereich | Erste Bewegung | Dazu jetzt |
+| --- | --- | --- |
+| Töpfern | Wulst auf Wulst aufbauen | mit Paddel und Amboss dünn klopfen; der **Zahnstempel** drückt Reihe um Reihe das Lapita-Muster in den feuchten Ton |
+| Sennit, Matten, feine Matten | auf dem Schenkel rollen, flechten | drei Stränge zum Zopf flechten; Pandanusblätter mit der Muschel in feine Streifen teilen |
+| Tapa klopfen, bemalen | Rinde klopfen, mit Pinsel malen | die weiße Innenrinde vom Maulbeerstock abziehen; den Stoff über ein geschnitztes Musterbrett reiben |
+| Öl, Duftöl | Kokos raspeln, Blüten rühren | im Faserbeutel auspressen, das Öl tropft in die Schale |
+| Angelhaken, Schmuck | mit dem Bogenbohrer bohren | den Haken mit Korallenfeile formen; Muschel glattreiben |
+| Schalen schnitzen | | den Block mit dem Beil aushöhlen; mit Koralle und Bimsstein glätten |
+| Beile, Klingen | schleifen, abschlagen | mit dem Klopfstein grob zuschlagen; feine Abschläge mit der Knochenspitze |
+| Felder | graben | Taro und Kurkuma an den Blättern ziehen und abschütteln; beim Yams Erde anhäufeln; in die Pulakagrube Laub werfen |
+| Erdofen, Gärgrube | Blätter auflegen | heiße Steine mit der Holzzange heben, Rauch; Speisen in Bananenblätter wickeln |
+| Bananen, Pandanus, Palmen | schneiden, pflücken, schälen | dürre Blätter abschneiden; Früchte auflesen; eine grüne Nuss mit dem Stein öffnen; oben in der Krone Nüsse abdrehen, ein trockener Wedel fällt |
+| Holz | hacken, am Seil ziehen | einen Keil mit der Keule in den Schnitt treiben; das Seil aufschießen |
+| Hühner, Schweine | füttern | Eier in den Korb sammeln; Schweine mit dem Stock zurücktreiben |
+| Wasser, Harz, Kalk | schöpfen, zapfen, stampfen | in das Bambusrohr gießen; getrocknetes Harz abkratzen; das Feuer schüren, Funken |
+| Navigatoren | Steine des Sternkompasses | auf einen Stern über dem Meer zeigen und seinen Weg nachziehen |
+| Fischer | Netz flicken, Speer, aufhängen | Fisch auf dem Brett ausnehmen; mit gesenktem Speer anschleichen; Fische am Gestell wenden |
+| Im Kanu, auf dem Riff | Leine und Ringe | ein rundes **Wurfnetz** fliegt, öffnet sich und sinkt; einer schöpft, der andere stochert mit dem Stock unter den Steinen |
+| Taucher | Muschel hochhalten | auch eine Krake, die sich um den Arm legt; an Land Haare auswringen, die Leine aufschießen |
+| Bauen | behauen, binden, Pfosten aufrichten | **Dach decken**: Wedel in Reihen anbinden; ein Platz oder Brunnen wird festgestampft |
+| Kanu bauen | aushauen | mit **Feuer aushöhlen**, Glut und Rauch; den Ausleger anbinden |
+| Tragen | auf dem Kopf, Holz auf der Schulter | zwei Körbe an der **Tragestange**; Bauleute schleifen einen Stamm am Seil hinter sich her, Staub steigt auf |
+| Baumpflanzer | Setzling einsetzen | die Erde rundum feststampfen |
+| Sammeln ohne Arbeit | am Boden suchen | eine Krabbe jagen und am Bein fangen; Eier aus den Nestern |
+| Surfen, Schwimmen | paddeln, warten, reiten; springen, kraulen, tauchen | manchmal wirft die Welle den Reiter ab, das Brett fliegt; auf dem Rücken treiben |
+| Spiele | Drachen, Fadenfigur, Jonglieren, Kranz, Spielkanu | ein Vogeldrachen stößt herab und steigt; die fertige Figur hochhalten; zwei Nüsse in einer Hand, die dritte hoch; den Kranz aufsetzen; das Kanu an der Schnur hinterherziehen |
+| Alte, Zuhörer | erzählen mit Bildern, Mittagsschlaf | in den Sand zeichnen; am Stamm sitzend einnicken; zuhören mit Nicken oder Klatschen |
+| Trommel | zwei Stöcke, schnell | stehend mit dem großen Schlägel, langsam und weit hallend |
+| Dorfleben | sitzen | am Abend Kava aus der Kokosschale, mittags essen vom Blatt am Erdofen, reden mit den Händen, sich Luft zufächeln |
+| Fest und Tanz | im Kreis wiegen | Arme in weichen Wellen (Siva); über dem Kopf klatschen; Kinder springen mit hochgeworfenen Armen zur Trommel |
+
+Belegt sind davon für die Lapita-Zeit vor allem: Zahnstempel und Paddel-und-Amboss beim Töpfern, Bogenbohrer, Muschelhaken
+mit Korallenfeilen, Erdöfen mit Kochsteinen, Ausbrennen und Behauen beim Kanubau. Sennitzöpfe, Tapa mit Musterbrett und
+Tanz kennt man aus späteren Berichten.
+
 ## Ansehen
 
 Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Feldfrüchte, 4 Fisch und 2 Töpfe, +5;
