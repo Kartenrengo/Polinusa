@@ -60,7 +60,7 @@ const QUESTS = [
     n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube', 'oelhuette'], gift:{}},
   {id:'dorf', t:'Ein Dorf', d:`Erreiche ${VILLAGE_POP} Bewohner und eine Meisterfamilie.`, why:'Mit Töpfen, Matten und Kokosöl im Lager baut eine Familie im Familienhaus weiter aus: ein Meisterhaus. Mehr Platz, mehr Bedürfnisse.',
     n:() => Math.min(1, isl('heimat').pop >= VILLAGE_POP ? 1 : 0) + Math.min(1, tier3Pop(isl('heimat')) ? 1 : 0), of:2, show:{needs:true}, unlock:[], gift:{}},
-  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit.',
+  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube; auch getrocknete Kanarinüsse halten auf See. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit.',
     n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:['dc', 'pfosten'], gift:{}},
   {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu fährt über das offene Meer. Der Bau dauert etwa fünf Minuten. Neu: das Haus der Navigatoren.',
     n:() => fleetOf('dc') || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:['sternhaus'], gift:{}},
@@ -108,7 +108,7 @@ const newKinds = new Set();  // unlocked but not yet tapped, they get a dot in t
    village with oil and canoes, at 40 the goods of the feasts. After the great voyage comes Hawaiki (above). One chain at a time. */
 const STAGES = [
   {pop:0, n:'Ankunft', kinds:['haus', 'ernte', 'faeller', 'quelle', 'brunnen', 'fisch', 'pansammler', 'baum', 'palme']},
-  {pop:8, n:'Gärten', kinds:['taro', 'yams', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
+  {pop:8, n:'Gärten', kinds:['taro', 'yams', 'nussbaum', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
   {pop:12, n:'Sennit und Erdofen', kinds:['schnur', 'umu', 'kalkbrenner', 'kurkumagarten', 'harzer']},
   {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'hakenmacher', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
   {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
@@ -207,6 +207,9 @@ function adviceOf(I, urgentOnly = false){
     return {t:`${GN[k]} für die Häuptlingsfamilie`, d:p ? `${doIt(p)}.` : sp ? `${KINDS[sp].n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[sp]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}. Besiedle sie oder handle.` : `${GN[k]} kommt per Kanu von anderswo.`, build:p, fleet:!p}; } }
   const step = hawaiki() && I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
   if (nd.atMax) return {t:'Neues Land besiedeln', d:'Die Insel ist voll. Schicke Familien im Kanu aus.', fleet:true};
+  if (ratRate(I) >= .75 && unlocked('speicher') && !I.buildings.some(b => b.kind === 'speicher' && b.bt)) return {t:'Ratten im Vorrat', d:`Sie fressen etwa ${perMin(ratRate(I))} Feldfrüchte pro Minute. Ein Speicher auf Pfosten hält sie fern.`, build:'speicher'};
+  { const hl = I.buildings.find(b => b.kind === 'halle' && !b.bt), T = FEASTS.find(q => q.id === 'tatau'), yo = youthsOf(I).length;
+    if (hl && feastsOpen() && yo >= 3 && !feastState(I, T)) return {t:'Tatau', d:`${yo} junge Leute tragen noch kein Muster. Ansehen +${feastMana(I, T)}.`, goto:hl.id}; }
   { const hl = afterHarvest(I) && I.buildings.find(b => b.kind === 'halle' && !b.bt), F = hl && FEASTS.find(q => q.id !== 'schatz' && !feastState(I, q)); if (F) return {t:'Fest nach der Yamsernte', d:`${F.n}: jetzt Ansehen +${feastMana(I, F)}.`, goto:hl.id}; }
   if (korCanThrow()) return {t:'Knöchelwurf', d:'Heute ist noch nicht geworfen.', koruru:true};
   return {t:'Erkunden und handeln', d:'Fahre mit dem Doppelkanu in den Nebel oder bring Gaben zu den Clans.', fleet:true};

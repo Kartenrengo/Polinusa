@@ -15,7 +15,7 @@ Spieler es wählt.
 
 Reihenfolge nach Wichtigkeit. „Belegt“ heißt durch Funde oder gute Quellen, „vermutet“ heißt umstritten.
 
-1. **Wind und Richtung beim Entdecken** (belegt, Irwin 1992). Die Lapita-Leute fuhren gegen den Passat nach Osten,
+1. ~~**Wind und Richtung beim Entdecken**~~ **erledigt in Version 59** (Böen in der Sturmzeit). (belegt, Irwin 1992). Die Lapita-Leute fuhren gegen den Passat nach Osten,
    damit der Rückweg mit dem Wind leicht war. Westwinde in der Sturmzeit und in El-Niño-Jahren halfen nach Osten.
    Im Spiel: Die Fahrt nach Osten ist schon von der Windrichtung abhängig. Dazu könnte kommen: sichere Heimkehr mit dem
    Wind, Gefahr im Sturm.
@@ -27,13 +27,13 @@ Reihenfolge nach Wichtigkeit. „Belegt“ heißt durch Funde oder gute Quellen,
 4. **Die lange Pause** (belegt). Nach Tonga und Samoa vergingen etwa 1500 Jahre, bis um 1000 n. Chr. Tahiti und die
    Marquesas besiedelt wurden, danach Hawaiʻi, Rapa Nui und Aotearoa. Im Spiel: ein zweites großes Ziel nach Hawaiki,
    die zweite große Fahrt nach Osten.
-5. **Tatau, das Tätowieren** (belegt). In Lapita-Fundorten gibt es Werkzeuge dafür aus Obsidian und Knochen; die Muster
+5. ~~**Tatau, das Tätowieren**~~ **erledigt in Version 59.** (belegt). In Lapita-Fundorten gibt es Werkzeuge dafür aus Obsidian und Knochen; die Muster
    ähneln denen der Töpfe. Im Spiel: ein Fest des Erwachsenwerdens, das Ansehen bringt.
-6. **Ratten im Kanu** (belegt). Die Pazifische Ratte (kiore) reiste mit, fraß Vogeleier und Samen und half beim
+6. ~~**Ratten im Kanu**~~ **erledigt in Version 59.** (belegt). Die Pazifische Ratte (kiore) reiste mit, fraß Vogeleier und Samen und half beim
    Aussterben der Vögel. Im Spiel: Wild schwindet schneller, Vorräte leiden.
 7. ~~**Angelhaken und Schleppköder aus Muschel und Perlmutt**~~ **erledigt in Version 58.** (belegt, typische Lapita-Funde). Im Spiel: ein Hauswerk
    „Angelhaken“, mit dem die Fischer mehr fangen.
-8. **Baumgärten mit Nüssen** (belegt). Kanarinüsse (Canarium) und andere Fruchtbäume waren wichtig. Im Spiel: ein
+8. ~~**Baumgärten mit Nüssen**~~ **erledigt in Version 59.** (belegt). Kanarinüsse (Canarium) und andere Fruchtbäume waren wichtig. Im Spiel: ein
    Nussbaum, der lange wächst und Proviant gibt.
 9. **Totenbrauch** (belegt, Teouma auf Vanuatu). Die Toten wurden begraben, später nahm man die Schädel heraus, manche
    kamen zu Töpfen. Im Spiel: Das Ahnenhaus hat schon Schädel; Töpfe für die Ahnen könnten dazukommen.

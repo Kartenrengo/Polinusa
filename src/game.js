@@ -337,7 +337,7 @@ const EXTINCT = {
   atoll:['Die Seevögel brüten hier nicht mehr in Kolonien.', 'Die Meeresschildkröten kommen nicht mehr zum Eierlegen an den Strand.']
 };
 function wildTick(I, n = 1){
-  const F = foragers(I), K = wildK(I), g = WILD_G * (I.settled ? .6 : 1), keep = wildKeep(I);
+  const F = foragers(I), K = wildK(I), g = WILD_G * (I.settled ? .5 : 1), keep = wildKeep(I);   // where people live, the rats they brought eat eggs and seeds: the wild comes back slowly
   let W = wildOf(I), got = I._wf || 0;
   const sea = wildSeason(I);
   for (let i = 0; i < n; i++){ const y = F * W / WILD_PER; got += y * keep * sea; W = clamp(W - y / K + g * Math.max(W, .03) * (1 - W), 0, 1); }
@@ -456,7 +456,7 @@ function note(msg){ news.unshift({msg, at:Date.now()}); if (news.length > 40) ne
 
 function spawnFig(I, homes, role, at, p){
   const h = homes[Math.floor(Math.random() * homes.length)], n = nameNo++;
-  const w = {isl:I.id, name:p ? p.n : PEOPLE_NAMES[(n * 7 + (I.center.x | 0)) % PEOPLE_NAMES.length], look:figureLook(p ? p.id * 7919 + 13 : n * 7919 + I.center.x | 0), pid:p ? p.id : 0, role, child:role === 'kid', old:role === 'old',
+  const w = {isl:I.id, name:p ? p.n : PEOPLE_NAMES[(n * 7 + (I.center.x | 0)) % PEOPLE_NAMES.length], look:figureLook(p ? p.id * 7919 + 13 : n * 7919 + I.center.x | 0) + (p && p.tt ? 't' : ''), pid:p ? p.id : 0, role, child:role === 'kid', old:role === 'old',
     x:h.x + 4, y:h.y + 5, tx:h.x + 4, ty:h.y + 5, job:null, leg:'free', carry:null, wait:Math.random() * 800, phase:0, left:false, moving:false, on:false, bout:false};
   // at the start everyone is already about the village
   const q = at || (initSync && homes[Math.floor(Math.random() * homes.length)]);
@@ -533,7 +533,7 @@ function syncFolk(I, homes, mine){
 function spawnWalkers(){ walkers = []; critters = []; initSync = true; try { syncWalkers(); } finally { initSync = false; } }
 /* Who someone is and what they do, for a tap on a figure */
 const personOf = w => { const I = isl(w.isl); return w.pid && I.people ? I.people.find(p => p.id === w.pid) : null; };
-const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.mat === p.id ? 'Matriarchin ' : I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
+const whoIs = w => { const p = personOf(w), I = isl(w.isl), f = p && famOf(I, p.h); return p ? `${I.mat === p.id ? 'Matriarchin ' : I.chief === p.id ? 'Häuptling ' : ''}${p.n}, ${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}${f.home ? '' : ', ohne Dach'}` : ''}` : w.name; };
 function whatDoes(w){
   const I = isl(w.isl), j = w.job;
   if (w.asleep || w.toBed) return w.asleep ? 'schläft' : 'geht schlafen';
@@ -1038,6 +1038,17 @@ function workState(I, b){
   if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => groupHave(I, q) < K.use[q]); return {why:'use', k:groupNext(I, k), text:`Kein Vorrat an ${GN[k]}.`}; }
   return null;
 }
+/* ---------- rats. The Pacific rat (kiore) came along in every canoe. On the islands it ate birds' eggs and seeds, and in
+   the villages the stores: every minute a twentieth of the field crops, half as much with one storehouse on posts (their
+   rat guards keep them off), nothing with two. */
+const RAT_SHARE = .05, ratGuard = I => { const n = I.buildings.filter(b => b.kind === 'speicher' && !b.bt).length; return n >= 2 ? 0 : n ? .5 : 1; };
+const ratRate = I => (I.stock.nahrung || 0) * RAT_SHARE * ratGuard(I);   // field crops a minute
+function ratTick(I){
+  if (tick % 30 || tick < (I.grace || 0)) return;
+  I.ratAcc = (I.ratAcc || 0) + ratRate(I); const n = Math.min(Math.floor(I.ratAcc), I.stock.nahrung || 0); if (n <= 0) return;
+  I.ratAcc -= n; I.stock.nahrung -= n; I.ratAte = (I.ratAte || 0) + n;
+  if (!stats.rats && !awayQuiet && I.id === active){ stats.rats = 1; toast(`Ratten sind mit den Kanus gekommen und fressen am Vorrat von ${I.name}. Ein Speicher auf Pfosten hält sie fern.`, 5200); }
+}
 /* ---------- animals eat all the time: pigs and hens take from the feed (scraps first, then coconut and taro). Without
    feed the hens stop laying and, after a while, a pig is lost. */
 const feedNeed = I => ((I.stock.schweine || 0) * KINDS.pferch.feed + I.buildings.filter(b => b.kind === 'huehnerhof' && !b.bt).length * KINDS.huehnerhof.feed) / PER_MIN;
@@ -1200,19 +1211,24 @@ function updateLevel(I, nd){
 }
 const chiefGoods = I => CHIEF_GOODS.every(k => (I.stock[k] || 0) > 0);
 /* ---------- feasts: food, pots, pigs and bark cloth for standing */
+/* who has come of age and carries no pattern yet */
+const youthsOf = I => (I.people || []).filter(p => isAdult(p) && ageOf(p) < 20 && !p.tt);
 function feastState(I, F){
   if (!I.buildings.some(b => b.kind === 'halle')) return 'Feste feiert man im Versammlungshaus.';
+  if (F.per && !youthsOf(I).length) return 'Niemand ist gerade erwachsen geworden.';
   const wait = (I.feastAt || -FEAST_PAUSE) + FEAST_PAUSE - tick; if (I.feastAt && wait > 0) return `Das nächste Fest geht in ${Math.ceil(wait * TICK / 1000)} Sekunden.`;
   if (!canPay(I, F.cost)) return `Es fehlt ${lacking(I, F.cost)}.`;
   return '';
 }
 function holdFeast(I, F){
   const no = feastState(I, F); if (no){ toast(no, 2600, false); return; }
-  const gain = feastMana(I, F); pay(I, F.cost); mana += gain; I.feastAt = tick; I.feastEnd = tick + FEAST_LEN; if (F.joy) I.joyUntil = tick + F.joy; if (F.id === 'schatz') stats.schatzfest = (stats.schatzfest || 0) + 1;
+  const gain = feastMana(I, F), young = F.per ? youthsOf(I) : []; pay(I, F.cost); mana += gain; I.feastAt = tick;
+  for (const p of young){ p.tt = 1; for (const w of walkers) if (w.isl === I.id && w.pid === p.id && !w.look.endsWith('t')) w.look += 't'; }
+  if (young.length) stats.tatau = (stats.tatau || 0) + young.length; I.feastEnd = tick + FEAST_LEN; if (F.joy) I.joyUntil = tick + F.joy; if (F.id === 'schatz') stats.schatzfest = (stats.schatzfest || 0) + 1;
   for (const w of walkers) if (w.isl === I.id){ nextLeg(w); w.wait = 0; }
   for (let i = 0; i < 6; i++) heartAt(I);
   updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
-  toast(`${F.n} auf ${I.name}. Ansehen +${gain}${gain > F.mana ? ', nach der Yamsernte' : ''}.`, 3600);
+  toast(young.length ? `Tatau auf ${I.name}: ${andList(young.map(p => p.n))} ${young.length === 1 ? 'trägt' : 'tragen'} jetzt ${young.length === 1 ? 'ihr Muster' : 'ihre Muster'}. Ansehen +${gain}.` : `${F.n} auf ${I.name}. Ansehen +${gain}${afterHarvest(I) ? ', nach der Yamsernte' : ''}.`, 4200);
 }
 let hearts = [], sunKey = '';   // a heart rises over a house when someone moves in
 function econ(){
@@ -1275,7 +1291,7 @@ function econ(){
       // people eat what there is most of, and use the bowl or the pot there is more of
       for (let i = 0; i < take; i++){ const k = ks.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
     }
-    feedAnimals(I, 1);
+    feedAnimals(I, 1); ratTick(I);
     let nd = needsOf(I);
     updateLevel(I, nd); nd = needsOf(I);
     // the village grows: children in the family houses, families by canoe from far away into empty huts

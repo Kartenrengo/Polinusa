@@ -137,8 +137,8 @@ function homeSpot(I){
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 /* a person as stored: id, name, birth, lifespan, grown, navigator knowledge, and for the married their clan, where they
    came from and the partner's name */
-const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1000 : 0, p.w || 0, p.f || 0, p.sp || 0, p.s || 'f', p.h || 0, p.job || 0, p.ln || 0, p.wk || 0];
-const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, job:job || 0, ln:ln || 0, ...(wk ? {wk} : {}), ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
+const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1000 : 0, p.w || 0, p.f || 0, p.sp || 0, p.s || 'f', p.h || 0, p.job || 0, p.ln || 0, p.wk || 0, p.tt || 0];
+const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk, tt]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, job:job || 0, ln:ln || 0, ...(wk ? {wk} : {}), ...(tt ? {tt} : {}), ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
   return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:2, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],

@@ -64,6 +64,8 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     if (A.needs && !Hm().handWork) {} // automatic families
     if (A.build && A.build !== want) tryBuild(A.build); if (A.goto){ const gb = findB(A.goto); if (gb && gb.idle && gb.idle.why !== 'use'){ const q = startSpot(Hm(), KINDS[gb.kind]); const s2 = findSpot(Hm(), gb.kind, q); if (s2){ gb.x = s2.x; gb.y = s2.y; } } }
     if (Hm().stock.holz < 4) tryBuild('faeller');
+    // like a player, it sets the Erntehaus on fronds when the elders say so, and lets it choose again once there are enough
+    { const e = Hm().buildings.find(b => b.kind === 'ernte' && !b.bt), d = Hm().stock.dach || 0; if (e && A.t === 'Palmwedel holen' && A.goto) e.v = {...e.v, pick:'dach'}; else if (e && e.v && e.v.pick === 'dach' && d >= 8){ const v = {...e.v}; delete v.pick; e.v = v; } }
     const key = A.t || Q && Q.t; if (key === lastAdvice) same++; else { same = 0; lastAdvice = key; }
     if (same === 8) stuck.push(`min ${minute}: "${key}" (${want}: ${res})`);
     if (minute % 5 === 4){ check('min ' + (minute + 1)); log.push(`min ${minute + 1}: pop ${Hm().pop} fams ${famsOf(Hm()).length} roofless ${roofless(Hm())} stage ${STAGES[stageNow()].n} quest ${QUESTS[quest] ? QUESTS[quest].id : 'done'} advice "${A.t || '-'}" t2 ${tier2Pop(Hm())} lines ${linesOf(Hm()).length} kin ${kinState(Hm())} work ${staffOf(Hm()).total - staffOf(Hm()).free} free ${staffOf(Hm()).free} houses ${homesOf(Hm()).map(tierOf).join('')} stock ${['nahrung','wasser','holz','dach','faser','schnur'].map(k => k[0] + (Hm().stock[k] || 0)).join(' ')}`); }

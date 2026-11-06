@@ -68,12 +68,14 @@ const KINDS = {
   sternhaus:{n:'Haus der Navigatoren', s:'Navigator', on:['hoch','atoll'], crew:1, bt:40, cost:{holz:4, dach:3, matten:1}, r:11, hy:7, max:1, roof:true, info:'Hier lernt ein Navigator Sterne, Wellen und Vögel. Stirbt er ohne Schüler, ist das Wissen verloren.', vb:'-18 -17 38 22'},
   werft:{n:'Kanuhaus', s:'Kanuhaus', on:['hoch'], bt:50, cost:{holz:6, dach:4, schnur:2}, r:16, hy:6, max:1, coast:true, roof:true, info:'Hier entstehen die Kanus. Es steht am Strand.', vb:'-21 -19 44 24'},
   pfahl:{n:'Pfahlhaus', s:'Pfahlhaus', on:['hoch','atoll'], bt:44, cost:{holz:5, dach:4, schnur:2}, r:11, hy:18, cap:4, water:true, roof:true, info:'Ein Zuhause in der Lagune, auf Pfosten wie die Häuser der Lapita in Talepakemalai. Ein Einbaum vom Kanusteg bringt die Leute an Land.', vb:'-17 -34 34 37'},
-  speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:30, cost:{holz:3, dach:3}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware.', vb:'-12 -28 24 30'},
+  speicher:{n:'Speicher', s:'Speicher', on:['hoch','atoll'], bt:30, cost:{holz:3, dach:3}, r:8, hy:12, store:10, roof:true, info:'+10 Platz für jede Ware. Er steht auf Pfosten mit Rattenschutz: Ein Speicher halbiert, was die Ratten aus dem Vorrat fressen, zwei halten sie ganz fern.', vb:'-12 -28 24 30'},
   ahnenhaus:{n:'Ahnenhaus', s:'Ahnen', on:['hoch','atoll'], bt:46, cost:{holz:4, dach:3}, r:9, hy:15, max:1, roof:true, beauty:2, info:'Hier ruhen die Schädel der Ahnen, wie bei den Lapita in Teouma. Jeder Tote bringt dem Clan Ansehen.', vb:'-14 -32 28 35'},
   fale:{n:'Häuptlingshaus', s:'Häuptling', on:['hoch'], bt:70, cost:{holz:8, dach:6, schnur:4, feinmatten:1}, r:15, hy:20, max:1, cap:10, roof:true, beauty:2, info:'Das große Haus der Häuptlingsfamilie, auf starken Pfosten wie die Häuser der Lapita an der Lagune. Hier lebt die Matriarchin: Wie in Tonga steht die Schwester des Häuptlings im Rang über ihm. Ihre Familie braucht das Feinste.', vb:'-21 -34 42 37'},
   halle:{n:'Versammlungshaus', s:'Dorfhaus', on:['hoch'], bt:70, cost:{holz:8, dach:6, schnur:3}, r:19, hy:16, max:1, near:{kind:'platz', n:1, r:70}, roof:true, info:'Das Herz des Dorfes, am Dorfplatz. Hier werden Feste gefeiert. Familien ohne Haus schlafen hier unter Matten.', vb:'-21 -34 42 37'},
   platz:{n:'Dorfplatz', s:'Dorfplatz', on:['hoch','atoll'], bt:0, cost:{}, r:20, hy:2, fixed:true, info:'Der Platz vor dem ersten Haus: festgetretene Erde, eine Feuerstelle mit Kochsteinen. Hier sitzt man abends zusammen, hier spielen die Kinder. Das Versammlungshaus gehört an den Dorfplatz.', vb:'-24 -13 48 26'},
   palme:{n:'Kokospalme', s:'Palme', on:['hoch','atoll'], bt:300, cost:{}, r:5, hy:10, beach:true, plant:true, info:'Nüsse, Fasern, Schalen und Wedel, ein Baum für alles. Das Erntehaus erntet sie; eine junge Palme trägt erst nach Jahren.', vb:'-13 -25 26 28'},
+  // canarium almonds: tall trees with hard, oily nuts, found at Lapita places; they bear late and keep a long time
+  nussbaum:{n:'Kanarinussbaum', s:'Nüsse', on:['hoch'], bt:420, cost:{}, r:7, hy:12, prod:'nahrung', every:10, by:{proviant:.34}, plant:true, info:'Ein hoher Baum mit harten, öligen Nüssen. Er braucht lange, bis er trägt; dann gibt er Feldfrüchte, und jede dritte Nuss wird getrocknet und geht als Proviant mit aufs Meer.', vb:'-10 -25 20 27'},
   baum:{n:'Brotfruchtbaum', s:'Baum', on:['hoch'], bt:240, cost:{}, r:7, hy:9, prod:'nahrung', every:8, plant:true, info:'Trägt Brotfrucht für Essen und Gärgrube, sein Milchsaft dichtet Kanus; gefällt gibt er Holz für Kanus.', vb:'-10 -21 20 23'},
   pandanus:{n:'Pandanus', s:'Pandanus', on:['atoll'], bt:150, cost:{}, r:5, hy:9, beach:true, plant:true, info:'Die Blätter werden zu Matten, Segeln und Dachdeckung.', vb:'-10 -21 20 23'},
   bananen:{n:'Bananenhain', s:'Bananen', on:['hoch'], crew:1, team:'solo', grow:180, bt:20, cost:{holz:1}, r:10, hy:8, prod:'nahrung', by:{blaetter:1}, every:6, info:'Bananen vom Großen Land. Sie tragen das ganze Jahr und zehren nicht am Boden.', vb:'-13 -17 26 22'},
@@ -86,7 +88,7 @@ const KINDS = {
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:24, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Ruft das Dorf und gibt den Takt.', vb:'-13 -10 26 14'},
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:30, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Festgestampfte Erde, mit Steinen eingefasst. Hier wird getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','ernte','faeller','quelle','brunnen','fisch','taro','yams','pulaka','pansammler','schnur','umu','pflanzer','speicher','huehnerhof','taucher','schnitzer','toepfer','hakenmacher','beil','flecht','oelhuette','gaergrube','harzer','kalkbrenner','kurkumagarten','weberin','malerin','duftoel','werft','sternhaus','pfahl','steg','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','fale','ahnenhaus','palme','baum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz','platz'];
+const ORDER = ['haus','ernte','faeller','quelle','brunnen','fisch','taro','yams','pulaka','pansammler','schnur','umu','pflanzer','speicher','huehnerhof','taucher','schnitzer','toepfer','hakenmacher','beil','flecht','oelhuette','gaergrube','harzer','kalkbrenner','kurkumagarten','weberin','malerin','duftoel','werft','sternhaus','pfahl','steg','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','fale','ahnenhaus','palme','baum','nussbaum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz','platz'];
 /* How the work goes with fewer hands than the place has room for. Zu zweit: one cuts while the other pulls the trunk aside,
    one steers the canoe while the other fishes; alone one gets a third done of what two do (felling trials with stone
    axes: with a helper bending the stem a tree needs three quarters fewer strokes). Hand in Hand: one prepares while the
@@ -132,7 +134,7 @@ const SPECS = {
   feinpandanus:{n:'feinem Pandanus', s:'Feiner Pandanus', text:'Eine Pandanus-Art mit langen, weichen Blättern für die Ehrenmatten.', kinds:['weberin']}
 };
 const SPEC_OF_KIND = Object.fromEntries(Object.entries(SPECS).flatMap(([id, S]) => S.kinds.map(k => [k, id])));
-const FELL_WOOD = {palme:2, baum:3};   // a grown palm or breadfruit tree felled gives wood once, and what it bore is gone
+const FELL_WOOD = {palme:2, baum:3, nussbaum:4};   // a grown palm or breadfruit tree felled gives wood once, and what it bore is gone
 const DECO = ['hibiskus', 'blumen', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
@@ -175,6 +177,9 @@ const CHIEF = {pop:50, mana:20, beauty:10, isle:80};   // a chief's village: peo
 const FEASTS = [
   {id:'klein', n:'Kleines Fest', cost:{nahrung:10, fisch:4, toepfe:2}, mana:5},
   {id:'gross', n:'Großes Fest', cost:{schweine:4, nahrung:12, meeres:4, tapa:2}, mana:15},
+  // tatau: the young who have come of age get their patterns, cut with obsidian and coloured with soot, as the tools
+  // found at Lapita places show; every one of them adds to the standing
+  {id:'tatau', n:'Tatau', cost:{nahrung:8, speisen:4, klingen:1}, mana:3, per:2},
   // with the treasures of the far islands: the greatest feast, the village grows twice as fast for a while
   {id:'schatz', n:'Fest der Schätze', cost:{perlmutt:2, federn:2, tabua:1, schweine:2}, mana:30, joy:40}
 ];

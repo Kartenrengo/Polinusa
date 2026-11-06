@@ -379,13 +379,24 @@ function feedCrews(){
   if (tick % voyageDay()) return;
   for (const s of ships){
     if (!s.own || s.kind !== 'dc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
-    if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; continue; }
+    if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; squall(s); continue; }
     if (s.hungry) continue;
     s.hungry = true;
     const home = homeFor(s); if (!home) continue;
     if (s.route != null) unassign(s);
     sailTo(s, {isl:home.id}); toast(`${s.name} hat keinen Proviant mehr. Die Mannschaft kehrt hungrig nach ${home.name} zurück.`, 4200);
   }
+}
+/* In the storm months the sea is rough: a double canoe out on a free voyage may run into a squall that washes away
+   provisions. That was the price of the westerlies that carried the voyagers east. A navigator who reads the clouds
+   (level 2) sees it coming more often and takes in the sail in time. */
+const SQUALL = {chance:.16, read:.07, lose:2};
+function squall(s){
+  if (seasonOf().id !== 'sturm' || Math.random() >= (navLore().lvl >= 2 ? SQUALL.read : SQUALL.chance)) return 0;
+  const n = Math.min(SQUALL.lose, s.cargo.proviant || 0); if (!n) return 0;
+  s.cargo.proviant -= n; stats.boeen = (stats.boeen || 0) + 1;
+  if (!awayQuiet) toast(`Böen auf See: ${s.name || 'Das Doppelkanu'} verliert ${n} Proviant. In der Sturmzeit ist das Meer rau.`, 4200);
+  return n;
 }
 /* A clan canoe: a return gift, or guests for the feast */
 function clanShip(T, toId, cargo, guest, life = []){

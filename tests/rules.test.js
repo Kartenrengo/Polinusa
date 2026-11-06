@@ -87,6 +87,26 @@ const r = await p.evaluate(()=>{
     const pots = () => haveOf(H, 'toepfe'); H.stock.toepfe = 0; H.stock.kumete = 5; const h0 = stats.hawaiki;
     stats.hawaiki = 0; const before = pots(), carve0 = !craftIsle(H, 'schnitzer'); stats.hawaiki = 1; const after = pots();
     want(before === 0 && after === 5 && !carve0, `bowls: before Hawaiki ${before}, after ${after}, carving early ${carve0}`); stats.hawaiki = h0; H.stock.kumete = 0; }
+  // tatau: the young who have come of age get their pattern at a feast in the meeting house; it stays with them
+  { const H = isl('heimat'); if (!H.buildings.some(b => b.kind === 'halle')) addB(H, 'halle', findSpot(H, 'halle', startSpot(H, KINDS.halle)) || {x:H.center.x, y:H.center.y}, {}, tick);
+    const T = FEASTS.find(q => q.id === 'tatau'), young = youthsOf(H); Object.assign(H.stock, {nahrung:20, speisen:10, klingen:2}); H.feastAt = 0; const m0 = mana, gain = feastMana(H, T);
+    holdFeast(H, T); want(young.length && young.every(p => p.tt) && mana - m0 === gain && gain >= T.mana + T.per, `tatau: ${young.length} young, gain ${mana - m0} of ${gain}`);
+    restore(serialize()); const H2 = isl('heimat'); want(young.every(p => H2.people.find(q => q.id === p.id && q.tt)), 'tatau: pattern lost on load');
+    out.push(`tatau: ${young.length} young, Ansehen +${gain}`); }
+  // rats: they eat from the field crops in store, a storehouse on posts halves it, two keep them off
+  { const H = isl('heimat'), keep = H.buildings.slice(), g0 = H.grace; H.grace = 0; H.buildings = H.buildings.filter(b => b.kind !== 'speicher');
+    const eat = () => { H.stock.nahrung = 40; H.ratAcc = 0; for (let i = 0; i < 4; i++){ tick += 30 - tick % 30; ratTick(H); H.stock.nahrung = 40; } return H.ratAte; };
+    H.ratAte = 0; const none = eat(); const sp = addB(H, 'speicher', {x:H.center.x, y:H.center.y}, {}, tick); H.ratAte = 0; const one = eat(); addB(H, 'speicher', {x:H.center.x + 20, y:H.center.y}, {}, tick); H.ratAte = 0; const two = eat();
+    want(none > one && one > two && two === 0, `rats: no storehouse ${none}, one ${one}, two ${two}`); out.push(`rats in 4 minutes with 40 crops in store: ${none}, with one storehouse ${one}, with two ${two}`);
+    H.buildings = keep; H.grace = g0; }
+  // the canarium nut tree: grows long, then gives field crops and now and then provisions
+  { const H = isl('heimat'), nb = addB(H, 'nussbaum', findSpot(H, 'nussbaum', startSpot(H, KINDS.nussbaum)) || {x:H.center.x, y:H.center.y}, {}, tick); nb.bt = KINDS.nussbaum.bt;
+    const p0 = H.stock.proviant || 0; let grew = -1; for (let t = 1; t < KINDS.nussbaum.bt + 200; t++){ econ(); if (!nb.bt && grew < 0) grew = t; }
+    want(grew >= KINDS.nussbaum.bt * .9 && (H.stock.proviant || 0) > p0, `nut tree: grown after ${grew}, provisions ${p0} → ${H.stock.proviant || 0}`); out.push(`nut tree: bears after ${grew} ticks, provisions ${p0} → ${H.stock.proviant || 0}`); }
+  // squalls: in the storm months a double canoe at sea can lose provisions, never in the trade wind months
+  { const t0 = tick, r0 = Math.random, sh = {name:'Test', cargo:{proviant:5}}; Math.random = () => 0;
+    while (seasonOf().id !== 'passat') tick++; const calm = squall(sh); while (seasonOf().id !== 'sturm') tick++; const rough = squall(sh);
+    Math.random = r0; tick = t0; want(calm === 0 && rough === 2 && sh.cargo.proviant === 3, `squall: passat ${calm}, sturm ${rough}`); out.push(`squall: storm months cost ${rough} provisions, trade wind ${calm}`); }
   // finding land: birds show hidden land near the known sea even without a navigator, a tap on them says so
   { rollAhead(); hintCache = null; const hs = navHints(), h = hs[0]; want(hs.length && /liegt Land/.test(signAt({x:h.I.center.x, y:h.I.center.y})), 'signs: no birds over hidden land without a navigator');
     out.push(`signs: ${hs.length} hidden islands shown by birds`); }

@@ -425,7 +425,7 @@ function variant(kind, r = Math.random){
   if (kind === 'haus') Object.assign(v, {shape:r() < .32 ? 'hr' : 'hw', scale:fx(.7 + r() * .18), tint:r() < .3 ? 1 : 0});
   else if (kind === 'pfahl') v.scale = fx(.72 + r() * .14);
   else if (kind === 'palme' || kind === 'pandanus') v.scale = fx(.7 + r() * .22);
-  else if (kind === 'baum') v.scale = fx(.85 + r() * .2);
+  else if (kind === 'baum' || kind === 'nussbaum') v.scale = fx(.85 + r() * .2);
   else if (kind === 'taro') v.rot = Math.round(r() * 80);
   else if (kind === 'hibiskus') v.scale = fx(.85 + r() * .25);
   else if (kind === 'speicher') v.scale = fx(.75 + r() * .12);

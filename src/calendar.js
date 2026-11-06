@@ -37,11 +37,11 @@ const SEA_KINDS = new Set(['fisch', 'taucher']), DRY_WORK = new Set(['toepfer', 
 const dryPace = () => { const id = seasonOf().id; return id === 'sturm' ? 1.7 : id === 'passat' ? .8 : 1; };
 /* after the yam harvest the stores are full: for three moons a feast brings half as much standing again */
 const afterHarvest = I => !!I && I.yamAt > 0 && tick - I.yamAt < 3 * MOON;
-const feastMana = (I, F) => F.id === 'schatz' ? F.mana : Math.round(F.mana * (afterHarvest(I) ? 1.5 : 1));
+const feastMana = (I, F) => { const base = F.mana + (F.per ? Math.min(12, F.per * youthsOf(I).length) : 0); return F.id === 'schatz' ? base : Math.round(base * (afterHarvest(I) ? 1.5 : 1)); };
 /* what each time of the year does, as pictures with up or down, for the calendar */
 const SEASON_FX = {
   plejaden:[['plejaden', 1, 'Fest der ersten Früchte'], ['nahrung', 1, 'Die Brotfrucht trägt reich']],
-  sturm:[['einbaum', -1, 'Raue See; der Westwind schiebt nach Osten'], ['toepfe', -1, 'Töpfe, Tapa und Öl trocknen schlecht'], ['setzling', 1, 'Yams werden gepflanzt']],
+  sturm:[['einbaum', -1, 'Raue See, Böen kosten Proviant; der Westwind schiebt nach Osten'], ['toepfe', -1, 'Töpfe, Tapa und Öl trocknen schlecht'], ['setzling', 1, 'Yams werden gepflanzt']],
   passat:[['einbaum', 1, 'Ruhige See, Kanus schneller; nach Osten gegen den Wind'], ['toepfe', 1, 'Töpfe, Tapa und Öl trocknen gut']],
   mager:[['nahrung', -1, 'Keine Brotfrucht'], ['nahrung', 1, 'Yamsernte'], ['mana', 1, 'Nach der Ernte bringen Feste mehr Ansehen']]
 };

@@ -171,7 +171,7 @@ ohne dass ein Dorf zusammenbricht.
 | Ab | Stufe | Neu |
 | --- | --- | --- |
 | Anfang | Ankunft | Hütte, Erntehaus, Holzfäller, Quelle, Brunnen, Fischerhütte, Pandanusfrüchte, Palme, Brotfrucht |
-| 8 Menschen | Gärten | Taro, Pulaka, Baumpflanzer, Speicher, Hühner, Pandanus |
+| 8 Menschen | Gärten | Taro, Pulaka, Kanarinussbaum, Baumpflanzer, Speicher, Hühner, Pandanus |
 | 12 | Sennit und Erdofen | Sennit drehen (Hauswerk), Erdofen, Kalkbrenner, Kurkuma, Harz |
 | 20 | Töpfe und Werkzeug | Töpfern, Angelhaken schleifen und Matten flechten (Hauswerk), Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Blumen, **Kanuhaus und Auslegerkanu** |
 | 30 | Ein Dorf | Öl pressen (Hauswerk), Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
@@ -216,7 +216,7 @@ fest knüpfen.
 | Zeit | Was sie bewirkt |
 | --- | --- |
 | Zeit der Plejaden | Fest der ersten Früchte, die Brotfrucht trägt reich |
-| Sturmzeit | raue See, Kanus langsamer (0,8), doch der Wind aus Nordwest schiebt nach Osten; Töpfe, Tapa und Öl trocknen schlecht und brauchen 1,7-mal so lange; Yams werden gepflanzt |
+| Sturmzeit | raue See, Kanus langsamer (0,8), doch der Wind aus Nordwest schiebt nach Osten; ein Doppelkanu auf freier Fahrt gerät an jedem Fahrtag mit 16 % Wahrscheinlichkeit in Böen und verliert 2 Proviant, mit einem Navigator ab Stufe 2 nur mit 7 %; Töpfe, Tapa und Öl trocknen schlecht und brauchen 1,7-mal so lange; Yams werden gepflanzt |
 | Passatzeit | ruhige See, Kanus schneller (1,2), also weniger Proviant, nur nach Osten geht es gegen den Wind aus Südost; Töpfe, Tapa und Öl trocknen gut (0,8-mal so lange) |
 | Magere Zeit | keine Brotfrucht; die Yamsernte |
 
@@ -597,8 +597,11 @@ Generationen aus.
 
 - **Sammeln:** Wer keine Arbeit hat, geht in den Wald und an den Strand und bringt „Wildbeute“ ins Lager. Sie zählt als
   Nahrung. Auf neuem Land ist das viel, auf dem längst bejagten Panua wenig.
-- **Weniger werden:** Jeder, der sammelt, nimmt etwas weg. Wild wächst langsam nach, auf bewohnten Inseln langsamer,
-  weil mit den Kanus Ratten kamen, die Eier fressen. Drei oder vier Sammler trägt eine Insel auf Dauer; mehr leeren sie.
+- **Weniger werden:** Jeder, der sammelt, nimmt etwas weg. Wild wächst langsam nach, auf bewohnten Inseln nur halb so
+  schnell, weil mit den Kanus Ratten kamen, die Eier fressen.
+- **Ratten im Vorrat:** Die Pazifische Ratte (kiore) fährt in jedem Kanu mit. In jedem Dorf frisst sie jede Minute ein
+  Zwanzigstel der Feldfrüchte im Lager. Ein Speicher auf Pfosten mit Rattenschutz halbiert das, zwei halten sie ganz fern.
+  Die Übersicht (Reiter Insel) zeigt, wie viel sie fressen; fressen sie viel, raten die Ältesten zu einem Speicher. Drei oder vier Sammler trägt eine Insel auf Dauer; mehr leeren sie.
 - **Aussterben:** Fällt das Wild unter ein Drittel, stirbt die erste Art aus (Großfußhühner auf hohen Inseln, die
   Seevogelkolonien auf Atollen), unter ein Achtel die zweite (Riesenleguane und große Tauben, die Eier legenden
   Schildkröten). Das ist für immer: Die Insel gibt danach weniger. Die Chronik hält es fest.
@@ -922,6 +925,7 @@ Ketten haben höchstens drei Glieder.
 | Brunnen | Atoll, Mitte eines Motus | | 5 Wasser | 1 |
 | Tarofeld | hoch | | 3,75 Feldfrüchte, dazu Blätter | 1 |
 | Brotfruchtbaum | hoch | | 3,75 Feldfrüchte, je nach Jahreszeit | |
+| Kanarinussbaum | hoch | wächst 14 Minuten | 3 Feldfrüchte, dazu 1 Proviant | |
 | Pulakagrube | Atoll, in der Mitte eines Motus | | 3,3 Feldfrüchte | 1 |
 | Pandanussammlerin | Atoll | 2 Pandanus daneben | 5 Feldfrüchte | 1 |
 | Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 3,75 junge Bäume | 1 |
@@ -1126,6 +1130,12 @@ Freizeit ist nur fürs Auge: Sie ändert nichts an den Vorräten, und Feierabend
 Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Feldfrüchte, 4 Fisch und 2 Töpfe, +5;
 Großes Fest: 4 Schweine, 12 Feldfrüchte, 4 Meeresfrüchte und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
 schönen Dorf. Es sinkt um etwa 1 pro Minute.
+
+**Tatau.** Wer erwachsen geworden ist (jünger als 20 Jahre) und noch kein Muster trägt, bekommt es beim Tatau im
+Versammlungshaus: 8 Feldfrüchte, 4 Gekochtes und 1 Obsidianklinge, Ansehen +3 und +2 für jeden jungen Menschen (höchstens
++12 dazu). Die Klinge erinnert an die Werkzeuge aus Obsidian, mit denen man an Lapita-Orten tätowierte. Danach tragen die
+Figuren ein Zickzack und eine Reihe Punkte auf der Brust, wie die Bänder auf den Töpfen; wer sie antippt, liest „mit
+Tatau“. Sind es drei oder mehr, sagen es die Ältesten. Das Muster bleibt beim Speichern.
 Gebraucht wird es für jede weitere Siedlungsfahrt (8 mehr pro Siedlung nach den ersten beiden) und für ein Häuptlingsdorf.
 Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus.
 
@@ -1274,6 +1284,10 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Nachts mit Fackeln fischen | erst später belegt, aber weit verbreitet |
 | Fischfang im Riff und in der Lagune, Muschelsammeln, kleiner werdende Muscheln | ja, durch Muschelhaufen |
 | Angelhaken und Schleppköder aus Muschel und Perlmutt | ja, typische Funde an Lapita-Orten |
+| Tatau mit Werkzeugen aus Obsidian | ja, Gebrauchsspuren an Obsidian von Lapita-Orten (Kononenko u. a. 2016); die Muster der Figuren sind erfunden |
+| Pazifische Ratte (kiore) im Kanu, frisst Eier und Vorräte | ja, Knochen in den frühen Schichten; Speicher mit Rattenschutz kennt man aus späterer Zeit |
+| Kanarinüsse (Canarium) als Nahrung und Vorrat | ja, Schalen an Lapita-Orten wie Talepakemalai |
+| Westwinde der Sturmzeit nach Osten, mit Gefahr | erschlossen (Irwin 1992; Klimastudien zu El Niño) |
 | Land finden an Vögeln, stehenden Wolken und der Dünung | aus der überlieferten Navigation (Lewis, Piailug); für Lapita erschlossen |
 | Töpfern hört in Tonga und Samoa auf, Holzschalen statt Töpfe | ja, durch Funde: schlichte Ware, dann keine Töpfe mehr (vor etwa 2000 Jahren) |
 | Auslegerkanus, Fahrten über offenes Meer | ja, erschlossen aus der Besiedlung; die Kanus selbst sind nicht erhalten |
