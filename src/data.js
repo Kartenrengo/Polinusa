@@ -112,6 +112,12 @@ const LIFE = {
 const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in the canoe
 const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from && !LIFE[id].late);   // what the clan brought from the old land; the rest comes from other peoples, kava with Hawaiki
 for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
+/* Household crafts (homes.js): work a family did at home, not in a workshop. They are not built on their own any more;
+   a house takes one of them up. CRAFT_DO is how the advice says it. */
+const CRAFTS = {schnur:'Sennit drehen', flecht:'Matten flechten', toepfer:'Töpfern', oelhuette:'Öl pressen', klopf:'Tapa klopfen', weberin:'Feine Matten flechten', malerin:'Tapa bemalen', duftoel:'Duftöl ansetzen'};
+const CRAFT_DO = {toepfer:'töpfern', weberin:'feine Matten flechten'};
+for (const [k, n] of Object.entries(CRAFTS)) KINDS[k].craft = n;
+const CRAFT_KINDS = Object.keys(CRAFTS);
 /* What only some islands have: a ground that one plant needs, or shells found on one reef. The fine goods of the master
    and chief families come from these, so a clan needs a net of islands, as the Lapita net really was. The home island
    has none of them. */
@@ -146,16 +152,16 @@ const NEEDS = [
   {k:'essen', lvl:1, rate:1.2, hint:{hoch:'Das Erntehaus bringt Kokosnüsse, die Fischerhütte Fisch und Meeresfrüchte, später Tarofelder und Brotfrucht.', atoll:'Das Erntehaus bringt Kokosnüsse, die Fischerhütte Fisch und Meeresfrüchte, später Pulakagruben.'}},
   {k:'wasser', lvl:1, rate:.5, hint:{hoch:'Baue eine Quelle am Bach. Grüne Kokosnüsse vom Erntehaus geben auch Wasser.', atoll:'Baue einen Brunnen in der Mitte des Motus. Grüne Kokosnüsse vom Erntehaus geben auch Wasser.'}},
   {k:'speisen', lvl:2, rate:.3, hint:{hoch:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.', atoll:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.'}},
-  {k:'toepfe', lvl:3, rate:.07, hint:{hoch:'Baue eine Töpferei am Ton.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
-  {k:'matten', lvl:3, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Baue eine Flechthütte bei den Pandanus.'}},
-  {k:'oel', lvl:3, rate:.04, hint:{hoch:'Das Erntehaus bringt Kokosnüsse, die Ölhütte macht Öl daraus.', atoll:'Das Erntehaus bringt Kokosnüsse, die Ölhütte macht Öl daraus.'}},
-  {k:'tapa', lvl:4, rate:.3, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln.'}},
+  {k:'toepfe', lvl:3, rate:.07, hint:{hoch:'Lass eine Familie am Ton töpfern.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
+  {k:'matten', lvl:3, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Lass eine Familie bei den Pandanus Matten flechten.'}},
+  {k:'oel', lvl:3, rate:.04, hint:{hoch:'Das Erntehaus bringt Kokosnüsse, eine Familie presst Öl daraus.', atoll:'Das Erntehaus bringt Kokosnüsse, eine Familie presst Öl daraus.'}},
+  {k:'tapa', lvl:4, rate:.3, hint:{hoch:'Pflanze einen Maulbeergarten an ein Haus; die Familie dort klopft Tapa.', atoll:'Tapa kommt von hohen Inseln.'}},
   {k:'schweine', lvl:4, rate:.2, hint:{hoch:'Baue einen Schweinepferch und gib den Tieren Futter.', atoll:'Schweine kommen von hohen Inseln.'}},
   {k:'kava', lvl:4, rate:.2, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Maulbeerhain.', atoll:'Kava wächst auf hohen Inseln.'}},
   {k:'schmuck', lvl:4, rate:.1, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt von einem Clan.', atoll:'Baue eine Schmuckschleiferei am Strand.'}},
-  {k:'feinmatten', lvl:4, rate:.1, hint:{hoch:'Baue eine Feinweberin. Sie braucht Matten.', atoll:'Baue eine Feinweberin. Sie braucht Matten.'}},
-  {k:'bemtapa', lvl:4, rate:.15, hint:{hoch:'Baue eine Tapamalerin. Sie braucht Tapa und Kurkuma.', atoll:'Bemalte Tapa kommt von hohen Inseln.'}},
-  {k:'duftoel', lvl:4, rate:.15, hint:{hoch:'Baue eine Duftölhütte bei Blumen.', atoll:'Baue eine Duftölhütte bei Blumen.'}}
+  {k:'feinmatten', lvl:4, rate:.1, hint:{hoch:'Eine Familie flicht feine Matten. Sie braucht Matten.', atoll:'Eine Familie flicht feine Matten. Sie braucht Matten.'}},
+  {k:'bemtapa', lvl:4, rate:.15, hint:{hoch:'Eine Familie bemalt Tapa. Sie braucht Tapa und Kurkuma.', atoll:'Bemalte Tapa kommt von hohen Inseln.'}},
+  {k:'duftoel', lvl:4, rate:.15, hint:{hoch:'Eine Familie bei Blumen setzt Duftöl an.', atoll:'Eine Familie bei Blumen setzt Duftöl an.'}}
 ];
 const LEVEL_NAMES = ['', 'Weiler', 'Dorf', 'Häuptlingsdorf'];
 const VILLAGE_POP = 30;   // a hamlet up to about thirty, then a village

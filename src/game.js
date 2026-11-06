@@ -473,7 +473,7 @@ function freeFig(w){ if (w.mate && w.mate.ride === w){ w.mate.ride = null; w.mat
 function syncWalkers(){
   for (const I of islands){
     const mine = walkers.filter(w => w.isl === I.id);
-    const homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && (KINDS[b.kind].roof || b.kind === 'platz') && !b.bt) : [];   // without a roof people stay by the plaza
+    const homes = lived(I) ? I.buildings.filter(b => !KINDS[b.kind].water && (KINDS[b.kind].roof || b.kind === 'platz') && !b.bt && !b.at) : [];   // without a roof people stay by the plaza
     if (!homes.length){ if (mine.length) walkers = walkers.filter(w => w.isl !== I.id); I.inside = 0; continue; }
     if (I.settled){ syncFolk(I, homes, mine); continue; }
     let slots = [], idle, kids, old;
@@ -656,7 +656,7 @@ function restSpot(I, w, shade){
     if (P.length){ const b = P[Math.floor(Math.random() * P.length)]; return {x:b.x + 4 + Math.random() * 3, y:b.y + 3 + Math.random() * 2}; }
     for (let k = 0; k < 8; k++){ const t = I.trees[Math.floor(Math.random() * I.trees.length)]; if (t && t.st === 0 && landAt(I, t) === I.lands[L] && Math.hypot(t.x - w.x, t.y - w.y) < 130) return {x:t.x + 4, y:t.y + 4}; }
   }
-  const H = I.buildings.filter(b => KINDS[b.kind].roof && !b.bt && landOfB(I, b) === L); if (!H.length) return null;
+  const H = I.buildings.filter(b => KINDS[b.kind].roof && !b.bt && !b.at && landOfB(I, b) === L); if (!H.length) return null;
   const b = H[Math.floor(Math.random() * H.length)]; return {x:b.x + rnd(9), y:b.y + 6 + Math.random() * 6};
 }
 const playersOf = (I, k) => walkers.filter(q => q.isl === I.id && q.play && q.play.k === k);
@@ -766,7 +766,7 @@ function nextLeg(w){
   // free time: children often, the old and those without work now and then; at night all are at home
   if (I.settled && !w.boat && !w.forage && !(opts.night && dayPhase() > .66) && Math.random() < (w.child ? .5 : w.old ? .4 : .42) && startPlay(I, w)) return;
   if (I.settled && villageLife(I, w)) return;
-  const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && (!w.old || KINDS[b.kind].roof) && landOfB(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
+  const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && (!w.old || KINDS[b.kind].roof) && !b.at && landOfB(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
   if (t) goTo(I, w, t.x + rnd(w.old ? 8 : 11), t.y + 4 + Math.random() * 8);
   // grown-ups who stroll sometimes sit down on a mat for a while, the old more often; children are off again quickly
   w.sit = !w.child && Math.random() < (w.old ? .65 : .35);
@@ -1214,7 +1214,7 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
-    syncPeople(I); lifeTick(I); navTick(I);
+    syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I);
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){
@@ -1391,7 +1391,7 @@ function heartAt(I, at){
 /* ---------- hit tests and input */
 function hitBuilding(p){
   if (lod === 'far') return null; let best = null, bd = Infinity;
-  for (const I of islands){ if (!I.settled) continue; for (const b of I.buildings){ const K = KINDS[b.kind]; const d = Math.hypot(p.x - b.x, p.y - (b.y - K.hy * .6)); const lim = Math.max(K.r + 3, 14 / cam.z); if (d < lim && d < bd){ bd = d; best = b; } } }
+  for (const I of islands){ if (!I.settled) continue; for (const b of I.buildings){ if (b.at) continue; const K = KINDS[b.kind]; const d = Math.hypot(p.x - b.x, p.y - (b.y - K.hy * .6)); const lim = Math.max(K.r + 3, 14 / cam.z); if (d < lim && d < bd){ bd = d; best = b; } } }
   return best;
 }
 function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }

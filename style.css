@@ -659,7 +659,7 @@ button.fix{cursor:pointer}
 .rise .costs .btn{padding:0 10px}
 .fix > span{position:relative;top:1px}
 }
-.sheet.tall{max-height:68%}
+.sheet.tall{max-height:72%}
 @media (max-height:620px){.sheet.tall{max-height:80%}}
 .rise .step-ic{width:32px;height:32px}
 .rise .step-ic .ic{width:18px;height:18px}
@@ -671,6 +671,16 @@ button.fix{cursor:pointer}
 .rowx.foot{flex-wrap:nowrap}
 .rowx.foot .chips{margin-left:auto;flex:none}
 .rowx.foot .line{min-width:0}
+/* the household craft: a row of goods, the one taken up pressed with its hands, one that cannot be done here faint */
+.crafts{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.crafts .lbl{font:800 10.5px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.chip.craft{display:inline-flex;align-items:center;gap:3px;min-height:30px;padding:0 7px}
+.chip.craft .ic{width:18px;height:18px}
+.chip.craft b{font:800 12px/1 var(--font-ui)}
+.chip.craft.no{opacity:.42;border-style:dashed}
+.chip.craft.idle{box-shadow:0 0 0 2px var(--ochre)}
+.crafts .cost{min-height:26px;padding:0 5px}
+.folk.home .wk.craft{display:inline-flex;padding:1px 2px;border-radius:5px;background:#E9DDC0}
 /* the smallest phones: the house before the build-out goes, the steps and their chips get smaller */
 @media (max-width:340px){
 .rise-pic .tp:not(.next){display:none}

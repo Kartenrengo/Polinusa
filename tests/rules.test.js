@@ -64,6 +64,14 @@ const r = await p.evaluate(()=>{
   // save and load
   const raw = serialize(); restore(raw); const J = isl('heimat');
   out.push(`after load: pop ${J.pop} jobs ${J.people.filter(q => q.job).length} lines ${linesOf(J).length} plaza ${!!J.buildings.find(b => b.kind === 'platz')} names ${Object.keys(LINES).length}`); want(J.people.some(q => q.job) && linesOf(J).length >= 2, 'save keeps work and lines');
+  // household crafts: not in the build bar; a house takes one up, it saves, it goes with its house
+  { stats.peakPop = Math.max(stats.peakPop || 0, 25); stageTick(); const H = isl('heimat'), hh = homesOf(H)[0]; renderBuildBar();
+    want(!CRAFT_KINDS.some(k => $('buildList').querySelector(`[data-kind="${k}"]`)), 'craft: a workshop still in the build bar');
+    setCraft(H, hh, 'schnur'); const c = craftOf(H, hh); want(c && c.kind === 'schnur' && placesOf(H).includes(c), 'craft: not taken up (' + craftWhy(H, hh, 'schnur') + ')');
+    if (c) select(c); want(sheetKind === 'info' && findB(sheetData.id) === hh && /data-act="craft"/.test($('sheetBody').innerHTML), 'craft: the sheet of a craft is not its house'); closeSheet();
+    restore(serialize()); const H2 = isl('heimat'), h2 = findB(hh.id); want(craftOf(H2, h2) && craftOf(H2, h2).kind === 'schnur', 'craft: lost on load');
+    H2.buildings = H2.buildings.filter(b => b !== h2); cleanCrafts(H2); want(!H2.buildings.some(b => b.at === hh.id), 'craft: stays without its house');
+    out.push(`craft: ${CRAFT_KINDS.length} household crafts, ${craftsHere(H2).length} here`); }
   // Hawaiki: kava, fine mats, painted tapa, scented oil and the chief's house only after the great voyage
   { const late = ['kavagarten', 'weberin', 'malerin', 'duftoel', 'fale'], H = isl('heimat'), M = isl('tochter'), x0 = M.center.x, s0 = M.settled;
     stats.peakPop = 60; stageTick(); want(!late.some(unlocked) && unlocked('trommel'), 'Hawaiki: late things open before the great voyage');

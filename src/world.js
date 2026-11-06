@@ -411,7 +411,7 @@ function check(kind, I, x, y, ignoreId){
     for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
     if (kind === 'halle' && I.settled && !nearCount(I, 'platz', x, y, K.near.r)) return 'Das Versammlungshaus gehört an den Dorfplatz';
   }
-  for (const b of I.buildings){ if (b.id === ignoreId) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + KINDS[b.kind].r) * .8) return 'Zu eng'; }
+  for (const b of I.buildings){ if (b.id === ignoreId || b.at) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + KINDS[b.kind].r) * .8) return 'Zu eng'; }
   return '';
 }
 function findSpot(I, kind, from){

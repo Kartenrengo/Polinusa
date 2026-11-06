@@ -233,7 +233,8 @@ const rankOf = b => PLACE_RANK[catOf(b)] ?? 3;
 /* the best of those free for a place: someone of the family already there, then by the old ways, then who lives nearest */
 function pickWorker(I, b, free, here){
   const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null, fams = new Set(here.map(p => p.h));
-  const score = p => { const f = famOf(I, p.h), h = f && f.home && findB(f.home); return (fams.has(p.h) ? 100 : 0) + (w && p.s === w ? 50 : 0) - (h ? Math.hypot(h.x - b.x, h.y - b.y) : 200) / 10; };
+  const hb = b.at && findB(b.at), own = hb ? famOfHome(I, hb) : null;   // a household craft: the family itself first
+  const score = p => { const f = famOf(I, p.h), h = f && f.home && findB(f.home); return (own && p.h === own.id ? 300 : 0) + (fams.has(p.h) ? 100 : 0) + (w && p.s === w ? 50 : 0) - (h ? Math.hypot(h.x - b.x, h.y - b.y) : 200) / 10; };
   return free.reduce((m, p) => score(p) > score(m) ? p : m, free[0]);
 }
 function autoAssign(I, places, at, adults){
@@ -279,7 +280,7 @@ function staff(I){
     const b = p.job && pmap.get(p.job); if (!b){ p.job = 0; continue; }
     const l = at.get(b) || []; if (l.length >= crewOf(b)){ p.job = 0; continue; } l.push(p); at.set(b, l);
   }
-  if (autoWork(I)) autoAssign(I, places, at, adults);
+  if (autoWork(I)) autoAssign(I, places, at, adults); else autoAssign(I, places.filter(b => b.at), at, adults);   // a household craft finds its hands even when the rest is given by hand
   // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
   { const need = needOf(I, places);
     for (const b of places.filter(q => q.prio)){
@@ -360,7 +361,7 @@ function personWork(I, p){
   if (!isAdult(p)) return stageOf(p) === 'kid' ? 'Kind' : 'alt';
   const sf = staffOf(I), site = [...sf.crewP].find(([q, ids]) => (q.bt || (q.kind === 'werft' && I.yard)) && ids.includes(p.id));
   if (site) return `baut: ${site[0].bt ? KINDS[site[0].kind].n : SHIPS[I.yard.kind].n}`;
-  const b = p.job && findB(p.job); if (b) return KINDS[b.kind].n;
+  const b = p.job && findB(p.job); if (b) return placeName(b);
   return 'frei';
 }
 function famWork(I, f){
@@ -378,3 +379,48 @@ function focusPerson(pid){
   markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 3.2));
   toast(`${whoIs(w)} · ${whatDoes(w)}`, 3400, false);
 }
+/* ---------- household crafts. Sennit was rolled on the thigh at home, mats plaited, bark beaten into cloth, pots built up
+   from coils of clay: work of the families, not of workshops. A house takes up one craft; whoever does it sits on a mat in
+   front of the house, the family itself first. The place still counts: pots only near the clay, mats only with pandanus
+   close by, tapa only near a mulberry garden. Inside, a craft is a small workplace that belongs to its house (b.at) and
+   works like the old workshop: same hands, same recipe. */
+const craftOf = (I, h) => I.buildings.find(b => b.at === h.id) || null;
+const placeName = b => b.at ? KINDS[b.kind].craft : KINDS[b.kind].n;
+const craftSpot = h => { const s = h.v && h.v.mirror ? -1 : 1; return {x:h.x + s * (KINDS[h.kind].r + 4), y:h.y + 5}; };
+const doIt = k => KINDS[k].craft ? `Lass eine Familie ${CRAFT_DO[k] || KINDS[k].craft}` : `Baue ${KINDS[k].n}`;
+/* what speaks against a craft on this island at all ('' when nothing does) */
+function craftIsle(I, k){
+  const K = KINDS[k];
+  if (!K.on.includes(I.type)) return K.on.includes('hoch') ? 'nur auf hohen Inseln' : 'nur auf Atollen';
+  if (!unlocked(k)){ const st = STAGES[stageOfKind(k)]; return st && st.gate ? `erst mit ${st.n}` : st ? `erst ab ${st.pop} Menschen` : 'noch nicht'; }
+  if (SPEC_OF_KIND[k] && specOf(I) !== SPEC_OF_KIND[k]) return `nur auf Inseln mit ${SPECS[SPEC_OF_KIND[k]].n}`;
+  if (!hasLife(I, k)) return lifeMissing(I, k);
+  if (K.dep && !depsOf(I, K.dep).length) return `auf ${I.name} gibt es keinen ${DEPOSITS[K.dep].n}`;
+  return '';
+}
+const craftsHere = I => CRAFT_KINDS.filter(k => !craftIsle(I, k));
+/* and against it in this house: its place */
+function craftWhy(I, h, k){
+  const K = KINDS[k], why = craftIsle(I, k); if (why) return why;
+  const p = craftSpot(h);
+  if (K.dep && !depNear(I, K.dep, p.x, p.y, K.depR)) return `nur in einem Haus nah am ${DEPOSITS[K.dep].n}`;
+  if (K.near && nearCount(I, K.near.kind, p.x, p.y, K.near.r) < K.near.n) return `braucht ${K.near.n} ${NEAR_PL[K.near.kind]} nah am Haus`;
+  return '';
+}
+const placeWhy = (I, k) => { const K = KINDS[k]; return !craftIsle(I, k) && (K.dep || K.near); };   // a house elsewhere would do
+/* where a house for a craft would have to stand: by the clay, among the pandanus, beside the mulberry */
+function craftPlace(I, k){
+  const K = KINDS[k];
+  if (K.dep){ const d = depsOf(I, K.dep)[0]; return d ? {x:d.x, y:d.y + 10} : null; }
+  if (K.near){ const kinds = [].concat(K.near.kind), src = I.buildings.filter(b => kinds.includes(b.kind) && !b.bt); if (!src.length) return null;
+    return src.reduce((m, q) => nearCount(I, K.near.kind, q.x, q.y, K.near.r * .7) > nearCount(I, K.near.kind, m.x, m.y, K.near.r * .7) ? q : m); }
+  return null;
+}
+function setCraft(I, h, k){
+  const old = craftOf(I, h); if (old) I.buildings = I.buildings.filter(b => b !== old);
+  if (k && !(old && old.kind === k) && !craftWhy(I, h, k)){ const b = addB(I, k, craftSpot(h), {}, tick); b.at = h.id; }
+  I.staff = null; syncWalkers(); invalidate();
+}
+/* a craft goes with its house: moved with it, gone with it */
+function cleanCrafts(I){ if (I.buildings.some(b => b.at && !I.buildings.some(h => h.id === b.at))){ I.buildings = I.buildings.filter(b => !b.at || I.buildings.some(h => h.id === b.at)); I.staff = null; } }
+function moveCraft(I, h){ const c = craftOf(I, h); if (!c) return; if (craftWhy(I, h, c.kind)){ setCraft(I, h, null); return; } const p = craftSpot(h); c.x = p.x; c.y = p.y; }

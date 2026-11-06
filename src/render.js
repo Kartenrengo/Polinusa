@@ -147,7 +147,9 @@ function blitShadow(c, key, art, alpha){
 function putShadow(c, x, y, s, m, rot, key, art, sh){
   c.save(); c.translate(x, y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (rot) c.rotate(rot); c.scale(s * m, s); blitShadow(c, key, art, sh.alpha); c.restore();
 }
+const craftArt = k => `<ellipse cx="0" cy="1.6" rx="9" ry="3.6" fill="#D8BF86" stroke="#2B1D14" stroke-width=".55"/><path d="M-6.4 .5H6.4M-7.6 1.7H7.6M-6.4 2.9H6.4" stroke="#A8864E" stroke-width=".4" stroke-dasharray="1.2 .8"/><use href="#ic-${KINDS[k].prod}" transform="translate(.5 -6) scale(.44)"/>`;
 function drawBuilding(c, b, I, alpha = 1, sh = null){
+  if (b.at){ if (!sh) put(c, b.x, b.y, 1, 1, 0, 'craft|' + b.kind, craftArt(b.kind), alpha); return; }
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
@@ -401,7 +403,7 @@ function swayK(x, y, amp, now){
 function drawObjects(c, area){
   if (lod === 'far'){
     for (const I of islands){
-      if (!lived(I)) continue; const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) continue;
+      if (!lived(I)) continue; const hs = I.buildings.filter(b => KINDS[b.kind].roof && !b.at); if (!hs.length) continue;
       const n = hs.length < 3 ? 0 : hs.length < 7 ? 1 : 2;
       put(c, hs.reduce((t, b) => t + b.x, 0) / hs.length, hs.reduce((t, b) => t + b.y, 0) / hs.length, 2.6, 1, 0, 'village' + n, VILLAGE[n]);
     }

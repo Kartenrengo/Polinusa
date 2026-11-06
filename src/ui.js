@@ -92,7 +92,7 @@ function renderBuildBar(){
   $('buildWhere').textContent = '';   // the island's name stands at the top already
   const fleet = own().length > 0 || routes.length > 0;
   $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
-  const can = k => !KINDS[k].fixed && KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length) && (!SPEC_OF_KIND[k] || specOf(I) === SPEC_OF_KIND[k]), deco = ORDER.filter(k => DECO.includes(k) && can(k));
+  const can = k => !KINDS[k].fixed && !KINDS[k].craft && KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length) && (!SPEC_OF_KIND[k] || specOf(I) === SPEC_OF_KIND[k]), deco = ORDER.filter(k => DECO.includes(k) && can(k));
   if (!deco.length) buildTab = 'bau';
   $('tabDeco').hidden = !deco.length; $('tabDeco').classList.toggle('new', deco.some(k => newKinds.has(k)));
   document.querySelector('.bottom-head').hidden = !deco.length;   // the tabs only when there is a choice
@@ -234,7 +234,7 @@ function confirmPlace(){
   if (placing && placing.founding){ confirmFounding(); return; }
   if (!placing || !placing.ok) return;
   const I = isl(placing.island), K = KINDS[placing.kind];
-  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
+  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); moveCraft(I, b); I.staff = null; syncWalkers(); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
   const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`, 2600, false); return; }
   // nothing stands at once: a building site waits for builders, a young plant grows
   pay(I, c); const b = addB(I, placing.kind, placing, placing.v, tick); if (K.bt) b.bt = K.bt; clearStumps(I, b);
@@ -278,17 +278,18 @@ function motifRows(I){
   return `<ul class="list needs">${ks.map(k => { const own = k === motifOf(I), src = motifFrom(k), left = own ? 0 : MOTIF_YEARS * YEAR - (tick - I.mot[k]), fading = !own && left < YEAR / 2;
     return `<li>${motifIcon(k)}<span class="nm">${MOTIFS[k].n}<small>${own ? `Das eigene Muster von ${I.name}. ${MOTIFS[k].t}` : `Von ${src ? src.name : 'weit her'}. ${fading ? 'Bald vergessen, wenn keine Töpfe damit kommen.' : `Bleibt noch ${Math.ceil(left / MOON)} Monde ohne neue Töpfe.`}`}</small></span>${own ? '<span class="state ok">eigenes</span>' : fading ? '<span class="state low">verblasst</span>' : ''}</li>`; }).join('')}</ul>`;
 }
-const motifHelp = I => `${I.motif ? '' : I.type === 'hoch' ? 'Mit der ersten Töpferei findet das Dorf ein eigenes Muster. ' : 'Auf einem Atoll gibt es keinen Ton; Muster kommen mit Töpfen von anderswo. '}Wohin Töpfe fahren, wandern die Muster mit. Was zwei Jahre keine Töpfe wieder bringen, wird vergessen. Jedes fremde Muster schmückt das Dorf.`;
+const motifHelp = I => `${I.motif ? '' : I.type === 'hoch' ? 'Mit den ersten Töpfen findet das Dorf ein eigenes Muster. ' : 'Auf einem Atoll gibt es keinen Ton; Muster kommen mit Töpfen von anderswo. '}Wohin Töpfe fahren, wandern die Muster mit. Was zwei Jahre keine Töpfe wieder bringen, wird vergessen. Jedes fremde Muster schmückt das Dorf.`;
 /* ---------- needs, as in Anno. Where something comes from: what makes it here, what could be built here, or that it has
    to come from outside, from another island or a clan */
 function makersOf(I, k){ const ks = k === 'essen' ? FOODS : [k]; return I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (ks.includes(prodOf(b)) || ks.some(q => (KINDS[b.kind].picks || {})[q] || (byOf(b) || {})[q]))); }
 function needWay(I, k){
   if (k === 'dach') return {text:'Eine Hütte für jede Familie', build:'haus'};
-  const names = [...new Set(makersOf(I, k).map(b => KINDS[b.kind].n))];
+  const names = [...new Set(makersOf(I, k).map(b => placeName(b)))];
   const makes = q => { const K = KINDS[q]; return K.prod === k || (K.by || {})[k] || Object.entries(K.picks || {}).some(([pk, P]) => pk === k || (P.by || {})[k]); };
   const kinds = k === 'essen' ? ['ernte', 'fisch', 'taro', 'pulaka', 'pansammler', 'bananen'] : ORDER.filter(q => KINDS[q] && !KINDS[q].plant && makes(q));
   const here = kinds.filter(q => KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
   const build = here.find(q => !I.buildings.some(b => b.kind === q)) || here[0];
+  if (build && KINDS[build].craft) return {text:names.length ? `${andList(names)} im Haus. Mehr davon in einem weiteren Haus` : doIt(build), build};
   if (build) return {text:names.length ? `Von ${andList(names)}. Mehr davon: ${KINDS[build].n}` : `Baue ${KINDS[build].n}`, build};
   if (names.length) return {text:`Von ${andList(names)}`};
   const any = kinds[0], K = any && KINDS[any];
@@ -296,10 +297,10 @@ function needWay(I, k){
   if (!K.on.includes(I.type)) return {text:`${GN[k]} gibt es nur auf ${K.on.includes('atoll') ? 'Atollen' : 'hohen Inseln'}: Besiedelt eine oder tauscht im Kanu`, fleet:true, outside:true};
   if (SPEC_OF_KIND[any] && specOf(I) !== SPEC_OF_KIND[any]){ const isles = specIslesFor(k); return {text:`${K.n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[any]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}: Besiedelt sie oder tauscht`, fleet:true, outside:true}; }
   if (!hasLife(I, any)) return {text:lifeMissing(I, any), fleet:true, outside:true};
-  if (!unlocked(any)){ const st = STAGES[stageOfKind(any)]; return {text:st.gate ? `${K.n} kommt nach der großen Fahrt, mit ${st.n}` : `${K.n} kommt ab ${st.pop} Menschen`}; }
+  if (!unlocked(any)){ const st = STAGES[stageOfKind(any)], n = K.craft || K.n; return {text:st.gate ? `${n} kommt nach der großen Fahrt, mit ${st.n}` : `${n} kommt ab ${st.pop} Menschen`}; }
   return {text:`Baue ${K.n}`, build:any};
 }
-const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">Bauen</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
+const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">${KINDS[w.build].craft ? 'Im Haus' : 'Bauen'}</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
 const needName = k => k === 'dach' ? 'Dach' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
 /* Needs as knots on a cord of sennit, after the knotted cords on which the Marquesans kept their genealogies (taʻo mata):
    a knot tied tight is a need met, a loose loop one that runs short, a frayed gap one that is missing, a faint ring one
@@ -345,7 +346,8 @@ function outsideChain(I, k){
 }
 /* where something comes from, as one button with the building on it: tap it and the build bar shows that building */
 const bIcon = k => `<svg class="bi" viewBox="${KINDS[k].vb || '-17 -29 34 33'}" aria-hidden="true">${iconMarkup(k)}</svg>`;
-const wayChip = w => w && w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${bIcon(w.build)}${KINDS[w.build].n}</button>` : w && w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
+const buildPic = k => KINDS[k].craft ? icon(KINDS[k].prod) : bIcon(k), buildName = k => KINDS[k].craft ? 'Hauswerk' : KINDS[k].n;
+const wayChip = w => w && w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${buildPic(w.build)}${buildName(w.build)}</button>` : w && w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
 /* a house of a step, small, for the build-out pictures */
 const tierPic = t => `<svg class="tierpic" viewBox="-17 -26 34 30" aria-hidden="true">${artOf('haus', {t2:t >= 2, t3:t >= 3})}</svg>`;
 const knotIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knot"/></svg>';
@@ -356,7 +358,16 @@ function workPic(I, p){
   if (!isAdult(p)) return stageOf(p) === 'kid' ? icon('kind') : '';
   const site = [...staffOf(I).crewP].find(([q, ids]) => (q.bt || (q.kind === 'werft' && I.yard)) && ids.includes(p.id));
   if (site) return `<span class="wk site">${bIcon(site[0].kind)}</span>`;
-  const b = p.job && findB(p.job); return b ? bIcon(b.kind) : icon('idle');
+  const b = p.job && findB(p.job); return b ? (b.at ? `<span class="wk craft">${icon(KINDS[b.kind].prod)}</span>` : bIcon(b.kind)) : icon('idle');
+}
+/* the household craft of a house: each craft this island knows as the picture of its good; the one taken up is pressed and
+   shows its hands, one that cannot be done here is faint and says why when tapped; what it lacks follows it */
+function craftRow(I, h){
+  const ks = craftsHere(I); if (!ks.length) return '';
+  const cur = craftOf(I, h), ws = cur && cur.idle && !['way', 'grow'].includes(cur.idle.why) ? cur.idle : null;
+  return `<div class="crafts" role="group" aria-label="Hauswerk"><span class="lbl">Hauswerk</span>${ks.map(k => { const K = KINDS[k], on = !!cur && cur.kind === k, why = on ? '' : craftWhy(I, h, k), n = on ? crewAt(I, cur) || 0 : 0;
+    return `<button class="chip craft${why ? ' no' : ''}${on && ws ? ' idle' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${K.craft}${why ? `: ${why}` : on ? `, ${n} von ${crewOf(cur)}${ws ? `. ${ws.text}` : ''}` : ''}">${icon(K.prod)}${on ? `<b>${n}/${crewOf(cur)}</b>` : ''}</button>`; }).join('')}` +
+    (ws && ws.k ? `<span class="cost out" role="img" aria-label="${ws.text}">${icon(ws.k)}</span>` : '') + '</div>';
 }
 /* One sheet without scrolling: the family and its step; the people with their work and the free places in one row; the
    cord of today's needs; what is short as one button each to the building that helps; the build-out as house → house,
@@ -364,19 +375,20 @@ function workPic(I, p){
 function houseMarkup(I, b){
   const f = famOfHome(I, b), t = tierOf(b), T = TIERS[t], nd = needsOf(I), top = b.kind === 'fale' ? 4 : 3;
   const pips = `<span class="pips" role="img" aria-label="Stufe ${t} von ${top}">${Array.from({length:top}, (_, i) => `<i class="${i < t ? 'on' : ''}"></i>`).join('')}</span>`;
-  if (!f){ const imm = immigFor(I); return head(T.n, `${pips}<span class="seats">${Array.from({length:T.cap}, () => `<span class="seat free">${seatIc}</span>`).join('')}</span>`) + `<p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>`; }
+  if (!f){ const imm = immigFor(I); return head(T.n, `${pips}<span class="seats">${Array.from({length:T.cap}, () => `<span class="seat free">${seatIc}</span>`).join('')}</span>`) + `<p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>` + craftRow(I, b); }   // a hut by the clay can take up its craft before anyone lives there
   const m = membersOf(I, f), cap = homeCap(I, b), max = homeCapMax(I, b);
   // under the name: the step, then the room: free places, and places that open when every knot is tied; children from step 2
   const room = `<span class="seats" role="img" aria-label="${m.length} von ${cap} Plätzen${cap < max ? `, ${max} wenn alle Knoten fest sind` : ''}${t >= 2 ? ', hier kommen Kinder' : ''}">${Array.from({length:Math.max(0, max - m.length)}, (_, i) => `<span class="seat ${m.length + i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length}/${cap}</b>${t >= 2 ? `<span class="kids">${icon('kind')}</span>` : ''}</span>`;
   let h = head(famName(f), `${pips}<span class="tn0">${T.n}</span>${room}`);
   // the people, each with the picture of their work
   h += `<div class="folk home">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}">${p.n}<small>${Math.floor(ageOf(p))}</small>${workPic(I, p)}</button>`).join('')}</div>`;
+  h += craftRow(I, b);
   // the cord of this step, and for each loose or missing knot one button: the need, then the building that helps
   h += knotCord(I, f, t, nd, false);
   const lack = famNeeds(I, f, nd.list).filter(n => n.state !== 'ok');
   if (lack.length) h += `<div class="fixes">${lack.map(n => { const w = needWay(I, n.k), st = n.state === 'low' ? 'knapp' : 'fehlt', lead = `<svg class="kg" viewBox="0 0 24 20" aria-hidden="true"><use href="#kn-${n.state}"/></svg>${icon(needIcon(n.k))}`;
     const act = w.build ? `data-act="hint" data-k="${w.build}"` : w.fleet ? 'data-act="fleetbar"' : '';
-    return act ? `<button class="fix ${n.state}" type="button" ${act} aria-label="${needName(n.k)} ${st}: ${w.build ? KINDS[w.build].n : 'Kanus'}">${lead}<i class="arr" aria-hidden="true"></i>${w.build ? `${bIcon(w.build)}<span>${KINDS[w.build].n}</span>` : `${icon('einbaum')}<span>Kanus</span>`}</button>`
+    return act ? `<button class="fix ${n.state}" type="button" ${act} aria-label="${needName(n.k)} ${st}: ${w.build ? buildName(w.build) : 'Kanus'}">${lead}<i class="arr" aria-hidden="true"></i>${w.build ? `${buildPic(w.build)}<span>${buildName(w.build)}</span>` : `${icon('einbaum')}<span>Kanus</span>`}</button>`
       : `<span class="fix ${n.state}" role="img" aria-label="${needName(n.k)} ${st}">${lead}<small>${w.text}</small></span>`; }).join('')}</div>`;
   // the build-out: the house now and then, what it brings, and what it takes, a good once even when it is wanted twice
   const u = upgradeSteps(I, b, nd.list);
@@ -447,8 +459,8 @@ function workTab(I, nd){
   const sf = staffOf(I), P = I.people || [], freeP = sf.freeP.map(id => P.find(p => p.id === id)).filter(Boolean), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   let h = `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
   h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} frei`, freeP.length ? `Frei: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. Wer frei ist, sammelt im Wald und am Strand.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
-  if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${KINDS[b.kind].n} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
-  { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => KINDS[b.kind].n)), '', chipS('low', 'bauen')); }
+  if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${placeName(b)} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
+  { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => placeName(b))), '', chipS('low', 'bauen')); }
   h += `</ul><details class="more famlist"${famListOpen ? ' open' : ''}><summary>${famsOf(I).length} Familien</summary><ul class="list needs">`;
   for (const f of famsOf(I).slice().sort((a, b) => (!a.home) - (!b.home) || a.id - b.id)){
     const m = membersOf(I, f), lack = famNeeds(I, f, nd.list).filter(n => n.state === 'out');
@@ -709,6 +721,7 @@ function renderSheet(){
   } else if (sheetKind === 'calendar'){
     h += calendarMarkup();
   } else if (sheetKind === 'info'){
+    { const c = findB(sheetData.id); if (c && c.at && findB(c.at)) sheetData.id = c.at; }   // a household craft shows its house
     const b = findB(sheetData.id); if (!b){ closeSheet(); return; }
     const K = KINDS[b.kind], I = islOfB(b.id), home = HOME_KINDS.has(b.kind) && !b.bt;
     const [main, more] = home ? [houseMarkup(I, b), ''] : infoMarkup(I, b);
@@ -846,6 +859,10 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'workadd' || act === 'workdel'){ const I = islOfB(b.id), p = act === 'workadd' ? workAdd(I, b) : workDel(I, b); if (p && !awayQuiet) toast(act === 'workadd' ? `${p.n} geht zu ${KINDS[b.kind].n}.` : `${p.n} ist jetzt frei.`, 1800, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
     if (act === 'mc-' || act === 'mc+'){ const K = KINDS[b.kind], I = islOfB(b.id), n = clamp(capOf(b) + (act === 'mc+' ? 1 : -1), 0, K.crew); b.v = {...b.v, mc:n}; if (n === K.crew) delete b.v.mc; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
+    if (act === 'craft'){ const I = islOfB(b.id), k = btn.dataset.k, K = KINDS[k], cur = craftOf(I, b), off = !!cur && cur.kind === k, why = off ? '' : craftWhy(I, b, k);
+      if (why){ toast(`${K.craft}: ${why}.`, 3000, false); return; }
+      setCraft(I, b, off ? null : k); const f = famOfHome(I, b); if (!off && f) toast(`${famName(f)}: ${K.craft}.`, 2000, false);
+      updateHUD(); renderSheet(); save(); checkQuest(); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
     if (act === 'nokill'){ sheetData.confirm = false; renderSheet(); return; }
     if (act === 'kill'){ const I = islOfB(b.id), c = costOf(b.kind, I); for (const [k, v] of Object.entries(c)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + Math.floor(v / 2)); I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} ist weg.`, 2600, false); return; }
@@ -916,4 +933,4 @@ function loadRaw(raw){
   closeSheet(); renderAll(); save(); toast('Spielstand geladen.', 2200, false);
 }
 const giftGuess = (C, worth) => { const g = returnGoods(C, worth); return g.load ? giftText(g.cargo) : 'eine kleine Gabe'; };
-function select(b){ selectedId = b.id; invalidate(); setActive(islOfB(b.id).id); openSheet('info', {id:b.id}); }
+function select(b){ if (b.at && findB(b.at)) b = findB(b.at); selectedId = b.id; invalidate(); setActive(islOfB(b.id).id); openSheet('info', {id:b.id}); }

@@ -113,8 +113,8 @@ function cycloneTick(){
 function stormHits(I){
   stats.stuerme++;
   const pick = (list, n) => list.sort(() => Math.random() - .5).slice(0, n);
-  for (const b of pick(I.buildings.filter(b => KINDS[b.kind].roof && !b.bt), 3)) b.born = tick - AGE_FULL;
-  const hit = pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
+  for (const b of pick(I.buildings.filter(b => KINDS[b.kind].roof && !b.bt && !b.at), 3)) b.born = tick - AGE_FULL;
+  const hit = pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !b.at)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
   const homes = pick(I.buildings.filter(b => (b.kind === 'haus' || b.kind === 'pfahl') && !b.bt), 1 + (Math.random() < .5 ? 1 : 0)); for (const b of homes) b.bt = Math.ceil(KINDS[b.kind].bt / 2);
   const down = pick(I.trees.filter(t => t.st === 0), Math.round(I.trees.filter(t => t.st === 0).length * .08)); for (const t of down){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; }
   if (down.length) treesChanged(I);
