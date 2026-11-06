@@ -690,6 +690,16 @@ button.fix{cursor:pointer}
 .sfx-i.up b{color:var(--ok)}
 .sfx-i.down b{color:var(--ochre)}
 .chip.craft .wet .ic{width:13px;height:13px;opacity:.8}
+/* a person's day as a bar, and the village's slider between free time and work */
+.daybar{display:flex;height:12px;border-radius:6px;overflow:hidden;box-shadow:inset 0 0 0 1.5px var(--brown)}
+.daybar i{display:block;height:100%}
+.daybar .w{background:var(--ochre)}.daybar .f{background:#79C6B8}.daybar .s{background:#3E4A6B}
+.daylegend{display:flex;gap:12px;font:700 12px/1.2 var(--font-ui);flex-wrap:wrap}
+.daylegend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.daylegend .w::before{background:var(--ochre)}.daylegend .f::before{background:#79C6B8}.daylegend .s::before{background:#3E4A6B}
+.zeal input{width:100%;margin:2px 0;accent-color:var(--ochre)}
+.zeal-l{display:flex;justify-content:space-between;font:600 11.5px/1.2 var(--font-ui);color:var(--muted)}
+.zeal-l .on{color:var(--ink);font-weight:800}
 /* the smallest phones: the house before the build-out goes, the steps and their chips get smaller */
 @media (max-width:340px){
 .rise-pic .tp:not(.next){display:none}

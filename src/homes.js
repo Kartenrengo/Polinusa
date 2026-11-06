@@ -143,7 +143,7 @@ function growTarget(I, list){
 const BIRTH_EVERY = 60;   // ticks between births on an island where all is well
 function birthTick(I, ticks = 1){
   const nd = needsOf(I); if (!growTarget(I, nd.list)){ I.birthAcc = Math.min(I.birthAcc || 0, BIRTH_EVERY / 2); return 0; }
-  I.birthAcc = (I.birthAcc || 0) + ticks * kinFactor(I) * (I.joyUntil > tick ? 2 : 1);
+  I.birthAcc = (I.birthAcc || 0) + ticks * kinFactor(I) * (I.joyUntil > tick ? 2 : 1) * zealOf(I).birth;
   let n = 0;
   while (I.birthAcc >= BIRTH_EVERY){
     I.birthAcc -= BIRTH_EVERY; const b = growTarget(I, needsOf(I).list); if (!b) break;
@@ -377,7 +377,7 @@ function focusPerson(pid){
   closeSheet();
   if (!w){ toast(`${I.people.find(p => p.id === pid).n} ist gerade im Haus.`, 2600, false); return; }
   markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 3.2));
-  toast(`${whoIs(w)} · ${whatDoes(w)}`, 3400, false);
+  openSheet('person', {id:I.id, p:pid});
 }
 /* ---------- household crafts. Sennit was rolled on the thigh at home, mats plaited, bark beaten into cloth, pots built up
    from coils of clay: work of the families, not of workshops. A house takes up one craft; whoever does it sits on a mat in

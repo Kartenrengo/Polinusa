@@ -153,7 +153,7 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:v.shape === 'hr' ? 'hr' : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {shape:HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
@@ -457,6 +457,11 @@ const SMOKE_V = new Path2D('M0-40q-3-3 0-6q3-3 0-6q-3-3 0-6'), SMOKE_T = new Pat
 const PEOPLE_Z = .9;   // people show from this zoom on
 const FLAME = new Path2D('M0 0C-3.4 0-4-2.6-2.6-4.6C-2-3.4-1-3.2-1-3.2C-1.6-5.6 0-7.6 1.2-9C1.2-6.6 3.8-5.4 3-2.4C2.6-.8 1.6 0 0 0Z');
 const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4-5 3-2.5 0 0Z'), BIRD1 = new Path2D('M-5 0q2.5-3.2 5 0q2.5-3.2 5 0'), BIRD2 = new Path2D('M-4.4 0q2.2-3 4.4 0q2.2-3 4.4 0');
+/* more birds in the same stroke: the frigatebird, long angled wings and a forked tail, that mostly soars; the small tern
+   with narrow wings that beats fast; and the noddy and booby of the old shape */
+const FRIG1 = new Path2D('M-7.6 1.2L-3.4-1.9L0 .2L3.4-1.9L7.6 1.2M0 .2L-.7 2.2M0 .2L.7 2.2'), FRIG2 = new Path2D('M-7.2.5L-3.4-.7L0 .2L3.4-.7L7.2.5M0 .2L-.7 2.2M0 .2L.7 2.2');
+const TERN1 = new Path2D('M-4.2-.2q2-1.9 4.2.2q2.1-2.1 4.2-.2'), TERN2 = new Path2D('M-4-.1q2-.6 4 .1q2-.8 4-.1');
+const birdOf = (k, t) => k % 3 === 1 ? {p:Math.sin(t / 900 + k) > .6 ? FRIG2 : FRIG1, s:1.25, w:1.1} : k % 3 === 2 ? {p:Math.sin(t / 110 + k * 2) > -.2 ? TERN1 : TERN2, s:.7, w:1.2} : {p:Math.sin(t / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, s:1, w:1.3};
 function drawAnim(c, now){
   const v = view(40), ph = (now % 3400) / 3400 * TAU, a = reduced ? .4 : .41 - .29 * Math.cos(ph), dy = reduced ? 0 : 1.5 * Math.cos(ph);
   for (const I of islands){
@@ -477,7 +482,7 @@ function drawAnim(c, now){
     const w = (I.box.x1 - I.box.x0) * .4, h = (I.box.y1 - I.box.y0) * .32, n = 1 + Math.round(wildOf(I) * wildKeep(I) * 6);
     for (let k = 0; k < n; k++){
       const a = now / (9000 + k * 2300) * (k % 2 ? -1 : 1) + k * 2.4 + I.center.x, rr = k < 2 ? 1 : .45 + (k * 7 % 5) / 8, x = I.center.x + Math.cos(a) * w * rr, y = I.center.y + Math.sin(a) * h * rr - 24 - (k % 3) * 6;
-      c.save(); c.translate(x, y); stroke(c, Math.sin(now / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, '#2B1D14', 1.3, null, 'round', .85); c.restore();
+      const B = birdOf(k, now); c.save(); c.translate(x, y); c.scale(B.s, B.s); stroke(c, B.p, '#2B1D14', B.w / B.s, null, 'round', .85); c.restore();
     }
   }
   if (lod === 'near') for (const I of islands) if (lived(I) && boxIn(I.box, v)) for (const b of I.buildings){

@@ -791,8 +791,9 @@ const OFF_OK = new Set(['carry', 'learn', 'chop', 'pull', 'climb', 'wade']);
 function offNow(I, w, T){
   if (!OFF_OK.has(T) || I.feastEnd > tick || w.carry || w.boat || (w.job && w.job.b && w.job.b.prio)) return false;   // a place called with the conch has no evening off
   const ph = dayPhase(), day = Math.floor((tick + 30) / DAY_TICKS), id = w.pid || (w.x | 0);
-  if (ph > .5 && ph < .64) return hsh(day, id) < .65;
-  if (ph > .27 && ph < .34) return hsh(day + .37, id) < .22;
+  const Z = zealOf(I);
+  if (ph > .5 && ph < .64) return hsh(day, id) < Z.off[0];
+  if (ph > .27 && ph < .34) return hsh(day + .37, id) < Z.off[1];
   return false;
 }
 const BOUT = {chop:[2400, 1200], pull:[2600, 1400], climb:[5600, 2200], wade:[2600, 2400], plant:[500, 0], wait:[2500, 3000]};
@@ -966,7 +967,7 @@ function stepWalkers(dt){
     w.sit = false; w.lie = false;
     // feet wear the ground, children less as they run everywhere; on a laid path people walk faster
     const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle || w.swim ? -1 : wearAt(g, w.x, w.y);
-    const v = Math.min(d, dt * (w.swim ? (w.play && w.play.ph === 'ride' ? .02 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    const v = Math.min(d, dt * (w.swim ? (w.play && w.play.ph === 'ride' ? .0085 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
     // feet find the trodden way: a little to the side where the ground is more worn, so paths gather and bend as real ones do
     if (ci >= 0 && d > 14 && !w.child){
       const ux = dx / d, uy = dy / d, ax = w.x + ux * 7, ay = w.y + uy * 7, l = wearAt(g, ax - uy * 4.5, ay + ux * 4.5), r = wearAt(g, ax + uy * 4.5, ay - ux * 4.5);
@@ -1037,6 +1038,13 @@ function workState(I, b){
   if (K.feed === .6 && groupHave(I, 'futter') <= 0) return {why:'use', k:'reste', text:'Die Hühner haben kein Futter: Reste, Kokos oder Feldfrüchte.'};
   if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => groupHave(I, q) < K.use[q]); return {why:'use', k:groupNext(I, k), text:`Kein Vorrat an ${GN[k]}.`}; }
   return null;
+}
+/* Every island with a stream has its spring where the stream comes closest to the village; it is part of the island and
+   cannot be built or taken away. Islands without a stream drink from green coconuts. */
+function ensureSpring(I){
+  if (!I.settled || !I.river || I.buildings.some(b => b.kind === 'quelle')) return;
+  const at = startSpot(I, KINDS.quelle), p = at && findSpot(I, 'quelle', at); if (!p) return;
+  addB(I, 'quelle', p, {}, tick); I.staff = null; syncWalkers(); invalidate();
 }
 /* ---------- rats. The Pacific rat (kiore) came along in every canoe. On the islands it ate birds' eggs and seeds, and in
    the villages the stores: every minute a twentieth of the field crops, half as much with one storehouse on posts (their
@@ -1110,7 +1118,18 @@ function wayF(I, b){
   return (b._way = {t:tick, v:clamp(1 + (d - 60) / 260, 1, 1.5)}).v;
 }
 /* the share of a place's full speed it works at now: its people, the palms, the way */
-const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * palmF(I, b) / wayF(I, b); };
+/* How the village shares its day (I.zeal): 0 much free time, 1 balanced, 2 work comes first. More free time makes every
+   workplace slower and brings children more often; when workers are needed badly, the work goes faster, nobody takes the
+   evening off, and fewer children come, there is no time for them. */
+const ZEAL = [{n:'Viel Freizeit', work:.85, birth:1.25, off:[.9, .45]}, {n:'Ausgewogen', work:1, birth:1, off:[.65, .22]}, {n:'Dringend Arbeit', work:1.25, birth:.5, off:[0, 0]}];
+const zealOf = I => ZEAL[I && I.zeal != null ? I.zeal : 1];
+/* the share of a grown-up's day: sleep at night, the evening off and the rest at noon by the village's choice, the rest work */
+function dayShares(I, p){
+  const sleep = opts.night ? .33 : 0, Z = zealOf(I), free = !p || !p.job ? null : .14 * Z.off[0] + .07 * Z.off[1];
+  if (free == null) return {sleep, free:1 - sleep, work:0};
+  return {sleep, free, work:1 - sleep - free};
+}
+const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * palmF(I, b) / wayF(I, b) * zealOf(I).work; };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
    A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
@@ -1237,7 +1256,7 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
-    syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I);
+    syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); if (tick % 15 === 0) ensureSpring(I);
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){
@@ -1430,7 +1449,7 @@ function onTap(p){
   if (mode === 'steer'){ steerTap(p); return; }
   // a tap on someone: who it is and what they do, and their workplace opens
   const w = hitWalker(p);
-  if (w){ markW = w; markUntil = performance.now() + 5000; toast(`${whoIs(w)} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
+  if (w){ markW = w; markUntil = performance.now() + 5000; if (w.pid && personOf(w)){ openSheet('person', {id:w.isl, p:w.pid}); requestDraw(); return; } toast(`${whoIs(w)} · ${whatDoes(w)}`, 3200, false); if (w.job && findB(w.job.b.id)) select(w.job.b); else requestDraw(); return; }
   const b = hitBuilding(p); if (b){ select(b); return; }
   const ri = hitCord(p); if (ri >= 0){ openRoute(ri); return; }
   const I = hitIsland(p);

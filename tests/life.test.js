@@ -10,7 +10,7 @@ const {PAGE} = require('./lib');
   const r = await p.evaluate(() => { window.save = () => {}; const out = [], bad = [];
     newGame(11); landHome(isl('heimat')); closeSheet(); skipTutorial(true); nextEvent = 1e9; opts.night = true;
     const I = isl('heimat'), put = (kind, site) => { const q = findSpot(I, kind, startSpot(I, KINDS[kind])); const x = addB(I, kind, q, variant(kind), tick); if (site){ x.bt = KINDS[kind].bt; x.got = 0; } I.staff = null; return x; };
-    for (let i = 0; i < 4; i++) I.people.push(Object.assign(person(I, 25), {h:famsOf(I)[0].id})); I.pop = I.people.length; syncPeople(I);
+    for (let i = 0; i < 6; i++) I.people.push(Object.assign(person(I, 25), {h:famsOf(I)[0].id})); I.pop = I.people.length; syncPeople(I);   // the spring by the stream takes one more
     const fi = put('fisch'); delete fi.boat; put('ernte'); const y = put('yams'), t = put('taro', true); stats.peakPop = 25; I.stock.nahrung = 4;
     const run = n => { for (let k = 0; k < n; k++){ for (let s = 0; s < 40; s++) stepWalkers(50); walkAt = performance.now(); econ(); if (sheetKind) closeSheet(); } };
     // the taro field: built, then growing, nobody needed, nothing made

@@ -24,6 +24,10 @@ const {PAGE} = require('./lib');
       for (const k of Q.unlock || []) if (!KINDS[k] && !SHIPS[k]) bad.push(`task ${Q.id} unlocks unknown ${k}`); }
     for (const S of STAGES) for (const k of S.kinds) if (!KINDS[k] && !SHIPS[k]) bad.push(`stage ${S.n}: unknown ${k}`);
     for (const k of ORDER) if (!KINDS[k]) bad.push(`build order: unknown ${k}`);
+    // no task asks for a building before the village surely has the people it takes
+    { let sure = START_POP; for (const Q of QUESTS){ const k = Q.show && Q.show.build, st = k && KINDS[k] && STAGES[stageOfKind(k)], m = typeof Q.d === 'string' && /Erreiche (\d+) Bewohner/.exec(Q.d);
+        if (st && !st.gate && st.pop > sure) bad.push(`task ${Q.id} asks for ${k} (from ${st.pop} people) when only ${sure} are sure`);
+        if (m) sure = Math.max(sure, +m[1]); if (Q.id === 'dorf') sure = Math.max(sure, VILLAGE_POP); } }
     // every kind of work, rest and play has a drawing
     const src = workFx.toString(), cases = new Set([...src.matchAll(/case '([\w]+)'/g)].map(m => m[1]));
     const fx = new Set([...Object.values(WORK_FX), ...SITE_FX, ...REST_FX, ...Object.values(PLAY_FX), 'dig', 'plant', 'chop', 'pull', 'climb', 'scoop', 'net', 'spear', 'hang', 'show']);

@@ -295,7 +295,7 @@ function needWay(I, k){
   const names = [...new Set(makersOf(I, k).map(b => placeName(b)))];
   const makes = q => { const K = KINDS[q]; return needGoods(k).includes(K.prod) || K.prod === k || (K.by || {})[k] || Object.entries(K.picks || {}).some(([pk, P]) => pk === k || (P.by || {})[k]); };
   const kinds = k === 'essen' ? ['ernte', 'fisch', 'taro', 'pulaka', 'pansammler', 'bananen'] : ORDER.filter(q => KINDS[q] && !KINDS[q].plant && makes(q));
-  const here = kinds.filter(q => KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
+  const here = kinds.filter(q => !KINDS[q].fixed && KINDS[q].on.includes(I.type) && unlocked(q) && hasLife(I, q) && !(KINDS[q].spring && !I.river) && (!SPEC_OF_KIND[q] || specOf(I) === SPEC_OF_KIND[q]));
   const build = here.find(q => !I.buildings.some(b => b.kind === q)) || here[0];
   if (build && KINDS[build].craft) return {text:names.length ? `${andList(names)} im Haus. Mehr davon in einem weiteren Haus` : doIt(build), build};
   if (build) return {text:names.length ? `Von ${andList(names)}. Mehr davon: ${KINDS[build].n}` : `Baue ${KINDS[build].n}`, build};
@@ -464,9 +464,30 @@ function peopleTab(I, nd){
   h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Alle mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${ancCount(I)} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li></ul>`;
   return h;
 }
+/* Arbeit und Freizeit: the slider for a whole village, with what it does */
+const ZEAL_TEXT = ['Alle Arbeit geht langsamer (85 %), dafür ist mehr Zeit für Familie und Spiel: Kinder kommen öfter.', 'Abends hat ein Teil frei, mittags ruhen einige.', 'Alle arbeiten schneller (125 %), niemand nimmt den Abend frei. Für Kinder bleibt keine Zeit: Sie kommen halb so oft.'];
+function zealMarkup(I){
+  const z = I.zeal != null ? I.zeal : 1;
+  return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><p class="sub">${ZEAL_TEXT[z]}</p></div>`;
+}
+/* A person: who, what they do now, where they work, how their day is shared, and the village's slider */
+function personMarkup(){
+  const I = sheetData && isl(sheetData.id), p = I && I.people && I.people.find(q => q.id === sheetData.p); if (!p) return '';
+  const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
+  let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
+  h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.</p>`;
+  h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', 'Spielt und lernt. Mit sechs Jahren arbeitet es mit.') : st === 'old' ? rowS('pop', 'Alt', 'Arbeitet nicht mehr, erzählt den Jüngeren von den Ahnen.') :
+    job ? rowS('', `Arbeit: ${placeName(job)}`, staffOf(I).crewP.get(job) ? `${crewAt(I, job) || 0} von ${crewOf(job)} sind dort.` : '', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) :
+    rowS('idle', 'Ohne Arbeit', 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.')}</ul>`;
+  if (st === 'adult') h += `<div class="daybar" role="img" aria-label="Der Tag: Arbeit ${pc(D.work)} %, Freizeit ${pc(D.free)} %, Schlaf ${pc(D.sleep)} %"><i class="w" style="width:${pc(D.work)}%"></i><i class="f" style="width:${pc(D.free)}%"></i><i class="s" style="width:${pc(D.sleep)}%"></i></div>` +
+    `<div class="daylegend"><span class="w">Arbeit ${pc(D.work)} %</span><span class="f">Freizeit ${pc(D.free)} %</span><span class="s">Schlaf ${pc(D.sleep)} %</span></div>`;
+  h += `<p class="sec">Arbeit und Freizeit auf ${I.name}</p>` + zealMarkup(I);
+  if (f && f.home) h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button></div>`;
+  return h;
+}
 function workTab(I, nd){
   const sf = staffOf(I), P = I.people || [], freeP = sf.freeP.map(id => P.find(p => p.id === id)).filter(Boolean), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
-  let h = `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
+  let h = zealMarkup(I) + `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
   h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} frei`, freeP.length ? `Frei: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. Wer frei ist, sammelt im Wald und am Strand.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
   if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${placeName(b)} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
   { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => placeName(b))), '', chipS('low', 'bauen')); }
@@ -729,6 +750,8 @@ function renderSheet(){
     h += routeMarkup(sheetData.r);
   } else if (sheetKind === 'fleet'){
     h += fleetMarkup();
+  } else if (sheetKind === 'person'){
+    const m = personMarkup(); if (!m){ closeSheet(); return; } h += m;
   } else if (sheetKind === 'calendar'){
     h += calendarMarkup();
   } else if (sheetKind === 'info'){
@@ -857,6 +880,12 @@ $('sheetBody').addEventListener('change', e => { if (!e.target.matches('input[ty
 let famListOpen = false;   // the list of all families stays open while the overview is drawn anew
 $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.famlist')) famListOpen = e.target.open; }, true);
 $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.more') && sheetData) sheetData.more = e.target.open; }, true);
+/* the village's share of work and free time, as a slider */
+$('sheetBody').addEventListener('change', e => {
+  if (e.target.id !== 'zealIn') return;
+  const I = isl(e.target.dataset.i); if (!I) return;
+  I.zeal = clamp(Math.round(+e.target.value), 0, 2); I.staff = null; save(); renderSheet(); toast(`${I.name}: ${ZEAL[I.zeal].n}.`, 2200, false);
+});
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;
   const act = btn.dataset.act;

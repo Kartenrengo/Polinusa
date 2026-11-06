@@ -229,6 +229,36 @@ und Samoa wurden die Muster der Töpfe immer einfacher, vor etwa 2000 Jahren hö
 Kokos traten an ihre Stelle. Darum heißt der Knoten dann „Töpfe oder Holzschalen“, und auch Atolle ohne Ton können ihn
 fest knüpfen.
 
+**Arbeit und Freizeit.** Ein Tippen auf eine Person öffnet ihr Blatt: Name, Alter, Familie, was sie gerade tut, wo sie
+arbeitet (mit „Hingehen“) und wie ihr Tag geteilt ist, als Balken: Arbeit, Freizeit, Schlaf. Darunter ein **Regler für
+das ganze Dorf**, auch oben im Reiter „Arbeit“ der Übersicht:
+
+| Stellung | Arbeit | Feierabend | Kinder |
+| --- | --- | --- | --- |
+| Viel Freizeit | 85 % so schnell | die meisten abends, viele mittags | kommen öfter (125 %) |
+| Ausgewogen | wie bisher | ein Teil abends, einige mittags | wie bisher |
+| Dringend Arbeit | 125 % so schnell | niemand | kommen halb so oft |
+
+**Warum Mangel trotz vieler Bewohner?** Gemessen: Wer einen Arbeitsplatz hat, ist dort 98 % der Zeit, Freizeit kostet
+also kaum etwas. Ein Mangel kommt fast immer daher, dass jeder Platz besetzt ist: Freie Leute arbeiten nur, wo ein Platz
+frei ist, sonst sammeln sie Wild, und das wird weniger. Ein Arbeiter im Feld ernährt etwa 3 Menschen (Feldfrüchte 3,75 pro
+Minute, jeder isst 1,2), einer an der Quelle tränkt etwa 10. Der Rat sagt es jetzt: „3 sind frei, doch jeder Platz für
+Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.“
+
+**Wasser.** Die Quelle wird nicht mehr gebaut: Jede Insel mit einem Bach hat ihre Quelle von selbst, dort, wo der Bach
+dem Dorf am nächsten ist, mit einem Wasserträger (genug für etwa 10 Menschen). Inseln ohne Bach, auch die Atolle, trinken
+das Wasser grüner Kokosnüsse aus dem Erntehaus; Brunnen gibt es nicht mehr in der Bauleiste. Die Aufgabe „Wasser holen“
+heißt jetzt überall: 8 Wasser lagern.
+
+**Aufgaben und Bewohner.** Keine Aufgabe verlangt ein Gebäude, bevor das Dorf sicher die Menschen dafür hat; ein Test prüft
+die Reihenfolge. Vor „Gärten anlegen“ kommt darum „Acht Menschen“. Wäre ein Gebäude doch noch gesperrt, sagt die Karte
+„… gibt es erst ab N Menschen. Baut bis dahin Hütten“, und „Zeigen“ führt zur Hütte.
+
+**Häuser, Vögel, Wellenreiten.** Hütten haben vier Formen: mit runden Enden, ganz rund, mit hohem Giebel und gekreuzten
+Firststangen, und lang und niedrig mit zwei Türen. Über den Inseln kreisen drei Arten Vögel im selben Strich: die bisherigen
+Seevögel, Fregattvögel mit langen, eckigen Flügeln und gegabeltem Schwanz, die fast nur segeln, und kleine Seeschwalben,
+die schnell schlagen. Wer surft, gleitet jetzt ruhiger auf der Welle (etwas langsamer als vorher das Doppelte des Gehens).
+
 **Das Jahr steuert die Arbeit.** Im Kalender stehen zu jeder Zeit Bilder mit ▲ oder ▼:
 
 | Zeit | Was sie bewirkt |
@@ -250,8 +280,8 @@ auch die Lapita-Leute: gegen den Wind hinaus, damit der Weg zurück leicht war (
 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen Stelle.
 
-1. Erntehaus, 2. Holzfäller, 3. Wasser (Quelle, oder 8 Wasser aus grünen Nüssen, wo kein Bach fließt), 4. Fischerhütte,
-5. eine zweite Hütte, 6. eine Familie aus der Ferne aufnehmen, 7. sechs Menschen bei der Arbeit, 8. zwei Tarofelder,
+1. Erntehaus, 2. Holzfäller, 3. 8 Wasser (von der Quelle oder aus grünen Nüssen), 4. Fischerhütte,
+5. eine zweite Hütte, 6. eine Familie aus der Ferne aufnehmen, 7. sechs Menschen bei der Arbeit, 8. acht Menschen, 8a. zwei Tarofelder,
 9. 12 Bewohner, 10. Familien aus drei Linien, 11. Sennit drehen im Haus, 12. ein Familienhaus, 13. Erdofen, 14. Baumpflanzer,
 15. 20 Bewohner, 16. eine Familie am Ton töpfert, 17. Steg und Pfahlhaus, 18. Beilwerkstatt, 19. 30 Bewohner, 20. Kanuhaus,
 21. Auslegerkanu, 22. Siedler nach Motu, 23. Matten flechten und Sennit drehen auf Motu, 24. Handelskette, 25. ein Dorf mit einer

@@ -427,7 +427,7 @@ function findSpot(I, kind, from){
 /* Every house looks a little different: mirrored, sized, roof shape and tint */
 function variant(kind, r = Math.random){
   const v = {mirror:r() < .5 ? 1 : 0};
-  if (kind === 'haus') Object.assign(v, {shape:r() < .32 ? 'hr' : 'hw', scale:fx(.7 + r() * .18), tint:r() < .3 ? 1 : 0});
+  if (kind === 'haus'){ const q = r(); Object.assign(v, {shape:q < .26 ? 'hr' : q < .44 ? 'hg' : q < .6 ? 'hl' : 'hw', scale:fx(.7 + r() * .18), tint:r() < .3 ? 1 : 0}); }
   else if (kind === 'pfahl') v.scale = fx(.72 + r() * .14);
   else if (kind === 'palme' || kind === 'pandanus') v.scale = fx(.7 + r() * .22);
   else if (kind === 'baum' || kind === 'nussbaum') v.scale = fx(.85 + r() * .2);
