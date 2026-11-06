@@ -64,6 +64,14 @@ const r = await p.evaluate(()=>{
   // save and load
   const raw = serialize(); restore(raw); const J = isl('heimat');
   out.push(`after load: pop ${J.pop} jobs ${J.people.filter(q => q.job).length} lines ${linesOf(J).length} plaza ${!!J.buildings.find(b => b.kind === 'platz')} names ${Object.keys(LINES).length}`); want(J.people.some(q => q.job) && linesOf(J).length >= 2, 'save keeps work and lines');
+  // Hawaiki: kava, fine mats, painted tapa, scented oil and the chief's house only after the great voyage
+  { const late = ['kavagarten', 'weberin', 'malerin', 'duftoel', 'fale'], H = isl('heimat'), M = isl('tochter'), x0 = M.center.x, s0 = M.settled;
+    stats.peakPop = 60; stageTick(); want(!late.some(unlocked) && unlocked('trommel'), 'Hawaiki: late things open before the great voyage');
+    want(!clanMakes(CLANS.hain).includes('kava') && !festivalParts(H).some(q => q.P.id === 'kava') && !lifeOf(H).includes('kava'), 'Hawaiki: kava before the great voyage');
+    M.center.x = FAR_X + 10; M.settled = true; stageTick(); M.center.x = x0; M.settled = s0;
+    want(late.every(unlocked) && hawaiki() && lifeOf(H).includes('kava') && clanMakes(CLANS.hain).includes('kava'), 'Hawaiki: not open after a village on the far islands');
+    out.push(`Hawaiki: stage ${STAGES[stageNow()].n}, chief quest after ${QUESTS[QUESTS.findIndex(Q => Q.id === 'chief') - 1].id}`);
+    want(QUESTS.findIndex(Q => Q.id === 'chief') > QUESTS.findIndex(Q => Q.id === 'fern'), 'Hawaiki: chief quest before the far village'); }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

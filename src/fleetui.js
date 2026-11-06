@@ -83,7 +83,7 @@ function routeMarkup(ri){
   };
   if (A.settled) h += side(A, B, 'a');
   if (B.settled) h += side(B, A, 'b');
-  if (C) h += `<p class="sub">Sie antworten später mit ${C.makes.map(k => GN[k]).join(' und ')}. Was sie schätzen: ${C.wants.map(k => GN[k]).join(', ')}. ${kin(A.clan ? A : B) ? 'Sie stempeln euer Muster: Eure Gaben zählen mehr.' : 'Töpfe in der Gabe bringen ihnen euer Muster, dann zählen eure Gaben mehr.'}</p>`;
+  if (C) h += `<p class="sub">Sie antworten später mit ${clanMakes(C).map(k => GN[k]).join(' und ')}. Was sie schätzen: ${clanWants(C).map(k => GN[k]).join(', ')}. ${kin(A.clan ? A : B) ? 'Sie stempeln euer Muster: Eure Gaben zählen mehr.' : 'Töpfe in der Gabe bringen ihnen euer Muster, dann zählen eure Gaben mehr.'}</p>`;
   return h;
 }
 function openRoute(ri){ const r = routes[ri]; if (isl(r.a).settled && r.a !== active && r.b !== active) setActive(r.a); selectedId = null; invalidate(); openSheet('route', {r:ri}); }

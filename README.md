@@ -173,12 +173,20 @@ ohne dass ein Dorf zusammenbricht.
 | 12 | Sennit und Erdofen | Seilerei, Erdofen, Kalkbrenner, Kurkuma, Harz |
 | 20 | Töpfe und Werkzeug | Töpferei, Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Flechthütte, Blumen, **Kanuhaus und Auslegerkanu** |
 | 30 | Ein Dorf | Ölhütte, Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
+| 40 | Zeit der Feste | Tapa, Schweine, Trommel, Tanzplatz, Ahnenhaus, Klingen, Schmuck, Bananen |
+| nach der großen Fahrt | **Hawaiki** | Kavagarten, Feinweberin, Tapamalerin, Duftölhütte, Häuptlingshaus |
 
 Das Kanuhaus kommt mit 20 Menschen, weil die Meisterhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
-in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe und der großen Fahrt als letztem Knoten;
-fest sind die erreichten, locker die nächste (mit der Zahl der Menschen darunter), hell die kommenden.
-| 40 | Zeit der Feste | Tapa, Schweine, Kava, Trommel, Tanzplatz, Ahnenhaus, feine Dinge, Klingen, Schmuck |
-| 50 | Häuptling | Häuptlingshaus |
+in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe, dann der Knoten der großen Fahrt und
+zuletzt Hawaiki; fest sind die erreichten, locker die nächste (mit der Zahl der Menschen darunter), hell die kommenden.
+
+**Hawaiki, die spätere Zeit.** Kava, feine Matten, bemalte Tapa, Duftöl und das Haus des Häuptlings kennt man erst aus
+viel späterer Zeit, aus dem Polynesien, das in Tonga und Samoa aus den Lapita-Leuten entstand. Darum kommen sie im Spiel
+erst mit dem **ersten Dorf auf den Fernen Inseln**: Dann beginnt eine neue Zeit, Hawaiki, auf allen Inseln des Clans.
+Jedes Dorf hat von da an Kava-Stecklinge. Vorher bietet auch kein Clan Kava an, keiner fragt nach den feinen Dingen, beim
+Fest der Plejaden gibt es keine Kava-Runde und bei der Dürre keine Kava-Zeremonie. Das Häuptlingsdorf ist die Aufgabe
+nach dem Fest der Schätze; der Weg zum Häuptlingsdorf beginnt mit der großen Fahrt. Ein Spielstand, der beim
+Häuptlingsdorf stand, macht mit dem Tauchen und der großen Fahrt weiter.
 
 - **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Dringendes steht rot als „Jetzt“: kein Dach,
   Wasser fast aus, Nahrung aus, ein fremdes Kanu fragt. Sonst sagt der Rat, was dran ist: Leute verteilen, Palmwedel
@@ -847,7 +855,8 @@ Antippen öffnet den Kalender.
 In der Zeit der Plejaden im Versammlungshaus. Die ersten Früchte (12 Feldfrüchte, 6 Fisch, 2 Schweine) gehören den Ahnen, das bringt
 Ansehen 10. Dazu kann man wählen:
 
-- Kava-Runde (3 Kava): +5, Gäste der Clans knüpfen einen Knoten mehr. Kava wächst im Kavagarten oder kommt vom Clan vom Kavahain.
+- Kava-Runde (3 Kava, erst ab Hawaiki): +5, Gäste der Clans knüpfen einen Knoten mehr. Kava wächst im Kavagarten oder
+  kommt vom Clan vom Maulbeerhain.
 - Tanz zur Schlitztrommel: +4, braucht Schlitztrommel und Tanzplatz. Die Leute tanzen dann im Kreis auf dem Tanzplatz.
 - Salbung mit Kokosöl (2 Öl): +3.
 - Kanurennen in der Lagune: +2 je Kanu im Hafen, höchstens vier. Die Kanus fahren um das Riff.
@@ -922,7 +931,7 @@ oder einmal fällen.
   Familienhaus, Pfahlhaus, Versammlungs- und Kanuhaus. Kanus brauchen dazu Brotfruchtharz.
 - **Wasser** ist ein Grundbedürfnis: jeder Mensch braucht 0,5 pro Minute. Fehlt es, wächst das Dorf nicht.
 - **Kokosöl** wollen die Meisterfamilien. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der
-  Clan vom Feuerberg und der Clan vom Kavahain schätzen es als Gabe.
+  Clan vom Feuerberg und der Clan vom Maulbeerhain schätzen es als Gabe.
 - **Warengruppen:** Eine Werkstatt kann eine Gruppe verlangen, etwa Brennstoff. Dann nimmt sie, was da ist, zuerst die
   Abfälle.
 - Das Ahnenkanu bringt 8 Holz, 8 Palmwedel, 24 Nahrung und 12 Wasser. Erntehaus, Holzfäller, Quelle, Brunnen und
@@ -949,7 +958,7 @@ Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptl
 - **Tiere fressen:** Jedes Schwein frisst laufend (0,25 pro Minute), jeder Hühnerhof 0,6, aus dem Futter: erst Reste, dann
   Kokosnüsse, dann Feldfrüchte. Ohne Futter legen die Hühner nicht, und jede halbe Minute geht ein Schwein ein.
 - Der Erdofen und der Kalkbrenner kommen mit der Töpferei, Kurkuma und Hühner mit dem Tarofeld, Malerin, Weberin und
-  Duftöl mit dem ersten neuen Land. Die Clans schätzen die feinen Dinge als Gabe.
+  Duftöl mit Hawaiki, nach der großen Fahrt. Dann schätzen die Clans die feinen Dinge als Gabe.
 
 ## Besondere Böden: warum man viele Inseln braucht
 
@@ -978,10 +987,11 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 | Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
 - **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (8 Holz, 6 Palmwedel, 4 Schnur, 1 feine Matte), eines je
-  Insel, nur auf hohen Inseln, mit dem ersten Fest. Die Familie, deren älteste Frau die älteste unter den
+  Insel, nur auf hohen Inseln, mit Hawaiki. Die Familie, deren älteste Frau die älteste unter den
   Meisterfamilien ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
   Die Schwester des Häuptlings stand im Rang über ihm (fahu), die Tamahā war die Ranghöchste im Land.
-- **Weg zum Häuptlingsdorf**, als Liste in der Übersicht, jeder Schritt mit Haken: eine große hohe Insel, die mindestens
+- **Weg zum Häuptlingsdorf**, als Liste in der Übersicht, jeder Schritt mit Haken: die große Fahrt (ein Dorf auf den
+  Fernen Inseln); eine große hohe Insel, die mindestens
   80 Menschen trägt; das Häuptlingshaus; die Häuptlingsfamilie hat alles; 50 Bewohner; Ansehen 20; Schönheit 10.
 - Fehlt der Häuptlingsfamilie 30 Takte lang etwas, wird es wieder ein Dorf.
 
@@ -1081,7 +1091,8 @@ Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus.
 
 Weiter draußen leben schon Menschen: der Clan vom Feuerberg auf Vulkanen (macht Klingen und Schweine, schätzt Matten,
 Schnur und Muschelschmuck), der Clan vom Riff auf Atollen (macht Muschelschmuck und Matten, schätzt Töpfe, Steinbeile
-und Klingen) und der Clan vom Kavahain auf hohen Inseln (macht Kava und Tapa, schätzt Matten, Muschelschmuck und Klingen).
+und Klingen) und der Clan vom Maulbeerhain auf hohen Inseln (macht Tapa, ab Hawaiki auch Kava, schätzt Matten,
+Muschelschmuck und Klingen).
 Erreicht ein Kanu einen Clan, entsteht eine Schnur. Waren an einen Clan sind Gaben: „Gabe übergeben“ im Kanu oder
 eine Handelskette. Sie antworten später mit einem eigenen Kanu voller Waren. Wie reich die Gegengabe ausfällt,
 hängt von den Knoten auf der Schnur ab. Muschelschmuck knüpft einen Knoten extra, ohne Gaben löst sich alle drei Minuten einer.
@@ -1226,7 +1237,8 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Surfen auf Brettern | erst später belegt (Hawaiʻi, Tahiti, Berichte ab 1777) |
 | Drachen aus Blättern, Fadenspiele, Jonglieren (hiko) | erst später belegt (Melanesien und Polynesien, 19. und 20. Jh.) |
 | Geknotete Ahnenschnüre (taʻo mata) als Vorbild der Knotenschnur | erst später belegt (Marquesas, in Museen) |
-| Schlitztrommel (lali, pātē), Kava, Tapa | erst später belegt; Tapa-Schlegel aus Stein sind älter, aber nicht lapitazeitlich sicher |
+| Schlitztrommel (lali, pātē), Tapa | erst später belegt; Tapa-Schlegel aus Stein sind älter, aber nicht lapitazeitlich sicher |
+| Kava, feine Matten, bemalte Tapa, Duftöl, Häuptlingshaus | erst aus dem späteren Polynesien bekannt; im Spiel darum erst ab **Hawaiki**, nach der großen Fahrt |
 | Wörter wie rāhui, tufunga, taravana, fale | spätere polynesische Wörter, im Spiel als Namen genutzt |
 
 ## Quellen

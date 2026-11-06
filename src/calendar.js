@@ -70,7 +70,7 @@ function declareRahui(I){
 
 /* ---------- the feast of the first fruits */
 function festivalParts(I){
-  return FESTIVAL.parts.map(P => {
+  return FESTIVAL.parts.filter(P => !P.cost || early(Object.keys(P.cost)).length).map(P => {   // no kava round before Hawaiki
     let ok = true, why = '';
     if (P.cost && !canPay(I, P.cost)){ ok = false; why = `Es fehlt ${lacking(I, P.cost)}.`; }
     if (P.needs){ const miss = P.needs.filter(k => !I.buildings.some(b => b.kind === k && !b.bt)); if (miss.length){ ok = false; why = `Es fehlt ${miss.map(k => KINDS[k].n).join(' und ')}.`; } }

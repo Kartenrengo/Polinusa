@@ -103,14 +103,14 @@ const LIFE = {
   taro:{n:'Taro', no:'noch keinen Taro', s:'Taro-Setzlinge', kinds:['taro', 'pulaka'], text:'Knollenspitzen in nassen Blättern. Auf Atollen wird daraus Sumpftaro.'},
   brot:{n:'Brotfrucht', no:'noch keine Brotfrucht', s:'Brotfrucht-Schösslinge', kinds:['baum'], text:'Schösslinge in feuchtem Moos. Ohne Brotfrucht kein Proviant.'},
   maulbeer:{n:'Papiermaulbeere', no:'noch keine Papiermaulbeere', s:'Maulbeer-Stecklinge', kinds:['garten'], text:'Stecklinge für Tapa. Er wächst nur, wo Menschen ihn setzen.'},
-  kava:{n:'Kava', no:'noch keine Kava', s:'Kava-Stecklinge', kinds:['kavagarten'], text:'Kava hat keine Samen und reist nur im Kanu.'},
+  kava:{n:'Kava', no:'noch keine Kava', s:'Kava-Stecklinge', kinds:['kavagarten'], late:true, text:'Kava hat keine Samen und reist nur im Kanu.'},
   banane:{n:'Bananen', no:'noch keine Bananen', s:'Bananen-Schösslinge', kinds:['bananen'], from:'alte', text:'Ein Geschenk der Alten vom Großen Land.'},
   kurkuma:{n:'Kurkuma', no:'noch keine Kurkuma', s:'Kurkuma-Wurzeln', kinds:['kurkumagarten'], text:'Wurzelstücke für Farbe und Salbe.'},
   huhn:{n:'Hühner', no:'noch keine Hühner', s:'ein paar Hühner', kinds:['huehnerhof'], text:'Hühner reisen in Körben mit.'},
   schwein:{n:'Schweine', no:'noch keine Schweine', s:'ein Paar Schweine', kinds:['pferch'], take:{schweine:2}, text:'Ein Zuchtpaar aus dem Lager.'}
 };
 const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in the canoe
-const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from);   // what the clan brought from the old land; the rest comes from other peoples
+const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from && !LIFE[id].late);   // what the clan brought from the old land; the rest comes from other peoples, kava with Hawaiki
 for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
 /* What only some islands have: a ground that one plant needs, or shells found on one reef. The fine goods of the master
    and chief families come from these, so a clan needs a net of islands, as the Lapita net really was. The home island
@@ -151,7 +151,7 @@ const NEEDS = [
   {k:'oel', lvl:3, rate:.04, hint:{hoch:'Das Erntehaus bringt Kokosnüsse, die Ölhütte macht Öl daraus.', atoll:'Das Erntehaus bringt Kokosnüsse, die Ölhütte macht Öl daraus.'}},
   {k:'tapa', lvl:4, rate:.3, hint:{hoch:'Baue einen Maulbeergarten und daneben eine Klopfhütte.', atoll:'Tapa kommt von hohen Inseln.'}},
   {k:'schweine', lvl:4, rate:.2, hint:{hoch:'Baue einen Schweinepferch und gib den Tieren Futter.', atoll:'Schweine kommen von hohen Inseln.'}},
-  {k:'kava', lvl:4, rate:.2, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Kavahain.', atoll:'Kava wächst auf hohen Inseln.'}},
+  {k:'kava', lvl:4, rate:.2, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Maulbeerhain.', atoll:'Kava wächst auf hohen Inseln.'}},
   {k:'schmuck', lvl:4, rate:.1, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt von einem Clan.', atoll:'Baue eine Schmuckschleiferei am Strand.'}},
   {k:'feinmatten', lvl:4, rate:.1, hint:{hoch:'Baue eine Feinweberin. Sie braucht Matten.', atoll:'Baue eine Feinweberin. Sie braucht Matten.'}},
   {k:'bemtapa', lvl:4, rate:.15, hint:{hoch:'Baue eine Tapamalerin. Sie braucht Tapa und Kurkuma.', atoll:'Bemalte Tapa kommt von hohen Inseln.'}},
@@ -175,7 +175,7 @@ const VALUE = {eier:.3, speisen:.5, blaetter:.1, steine:.2, kalk:.5, kurkuma:.8,
 const CLANS = {
   feuer:{name:'Clan vom Feuerberg', motif:'zahn', on:'vulkan', makes:['klingen', 'schweine'], wants:['matten', 'schnur', 'schmuck', 'oel', 'feinmatten'], pop:30},
   riff:{name:'Clan vom Riff', motif:'boegen', on:'atoll', makes:['schmuck', 'matten', 'schnur'], wants:['toepfe', 'beile', 'klingen', 'duftoel'], pop:22},
-  hain:{name:'Clan vom Kavahain', motif:'kreis', on:'hoch', makes:['kava', 'tapa'], wants:['matten', 'schmuck', 'klingen', 'oel', 'harz', 'bemtapa'], pop:26}
+  hain:{name:'Clan vom Maulbeerhain', motif:'kreis', on:'hoch', makes:['kava', 'tapa'], wants:['matten', 'schmuck', 'klingen', 'oel', 'harz', 'bemtapa'], pop:26}
 };
 /* Other peoples, at the edges of the sea. They answer gifts like a clan, but they are not of your kind: another language,
    other ways, and something to teach that no clan knows. */
@@ -192,12 +192,12 @@ const clanDer = C => C.culture ? C.name : `Der ${C.name}`;
 const clanBeim = C => C.culture ? `bei ${C.dat}` : `beim ${C.name}`;
 const clanVom = C => C.culture ? `von ${C.dat}` : `vom ${C.name}`;
 const clanZum = C => C.culture ? `zu ${C.dat}` : `zum ${C.name}`;
-const giftValue = (C, cargo) => Object.entries(cargo).reduce((s, [k, v]) => s + v * VALUE[k] * (C.wants.includes(k) ? 1.5 : C.makes.includes(k) ? .3 : 1), 0);
+const giftValue = (C, cargo) => Object.entries(cargo).reduce((s, [k, v]) => s + v * VALUE[k] * (clanWants(C).includes(k) ? 1.5 : clanMakes(C).includes(k) ? .3 : 1), 0);
 const returnRate = knots => Math.min(1.2, .6 + .06 * knots);
 /* What a clan sends back for a debt: their most valuable good first, as soon as the debt covers one, the rest in the cheaper one */
 function returnGoods(C, worth){
   const cargo = {}; let left = worth, load = 0;
-  const ks = C.makes.slice().sort((a, b) => VALUE[b] - VALUE[a]);
+  const ks = clanMakes(C).slice().sort((a, b) => VALUE[b] - VALUE[a]);
   ks.forEach((k, i) => { const q = Math.min(LOAD - load, Math.max(left >= VALUE[k] ? 1 : 0, Math.floor(left / (ks.length - i) / VALUE[k]))); if (q > 0){ cargo[k] = q; load += q; left -= q * VALUE[k]; } });
   return {cargo, left, load};
 }

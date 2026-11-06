@@ -65,16 +65,14 @@ const QUESTS = [
   {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu fährt über das offene Meer. Der Bau dauert etwa fünf Minuten. Neu: das Haus der Navigatoren.',
     n:() => fleetOf('dc') || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:['sternhaus'], gift:{}},
   {id:'land', t:'Neues Land', d:'Fahre mit dem Doppelkanu in den Nebel und finde eine neue Insel.', why:'Lade Proviant, tippe das Kanu an und dann auf den Nebel. Neues Land hat noch keinen Taro und keine Schweine.',
-    n:() => newLand(), of:1, show:{ship:'dc'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck', 'kavagarten', 'trommel', 'tanzplatz', 'weberin', 'malerin', 'duftoel'], gift:{}},
-  {id:'heirat', t:'Eine Hochzeit', d:'Verheirate jemanden mit einem Clan oder einem anderen Volk.', why:'Mit Brautgaben aus feinen Matten und einem Schwein geht jemand von euch eine Ehe ein, und der Partner zieht zu euch: eine neue Linie, und die Schnur zu ihnen löst sich nicht mehr. Dazu braucht es 3 Knoten Vertrauen.',
+    n:() => newLand(), of:1, show:{ship:'dc'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck', 'trommel', 'tanzplatz'], gift:{}},
+  {id:'heirat', t:'Eine Hochzeit', d:'Verheirate jemanden mit einem Clan oder einem anderen Volk.', why:'Mit Brautgaben aus Matten und einem Schwein geht jemand von euch eine Ehe ein, und der Partner zieht zu euch: eine neue Linie, und die Schnur zu ihnen löst sich nicht mehr. Dazu braucht es 3 Knoten Vertrauen.',
     n:() => stats.heirat ? 1 : 0, of:1, show:{fleet:true}, unlock:[], gift:{}},
-  {id:'fest', t:'Ein Fest', d:'Feiere ein Fest im Versammlungshaus.', why:'Feste bringen Ansehen. Ansehen holt Siedler und macht Häuptlingsdörfer.',
-    n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:['ahnenhaus', 'fale'], gift:{}},
+  {id:'fest', t:'Ein Fest', d:'Feiere ein Fest im Versammlungshaus.', why:'Feste bringen Ansehen. Ansehen holt Siedler.',
+    n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:['ahnenhaus'], gift:{}},
   {id:'plejaden', t:'Das Fest der Plejaden', d:() => festivalTime() ? 'Jetzt ist Festzeit. Feiere das Fest der ersten Früchte.' : `Feiere das Fest der ersten Früchte. Die Plejaden erscheinen in etwa ${minutes(untilFestival())} Minuten.`,
-    why:'Mit den Plejaden beginnt das Jahr. Kava, Tanz, Salbung und Kanurennen machen das Fest größer.',
+    why:'Mit den Plejaden beginnt das Jahr. Tanz, Salbung mit Öl und Kanurennen machen das Fest größer.',
     n:() => islands.some(I => I.festYear != null) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
-  {id:'chief', t:'Ein Häuptlingsdorf', d:'Mach ein Dorf zum Häuptlingsdorf.', why:`Baue ein Häuptlingshaus. Die Familie der Matriarchin zieht ein und will das Feinste. Die Übersicht zeigt jeden Schritt.`,
-    n:() => islands.some(I => I.settled && I.lvl === 3) ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{}},
   {id:'tauchen', t:'Tauchen', d:'Lass von einem Kanu aus tauchen und finde etwas.', why:'Wo Vögel über dem Meer kreisen, liegt etwas am Grund, oft unter Treibgut. Kanu hinfahren, „Tauchen lassen“. Zu viele Tauchgänge machen krank.',
     n:() => stats.tauchfund ? 1 : 0, of:1, show:{fleet:true}, unlock:[], gift:{}},
   {id:'netz', t:'Das Lapita-Netz', d:'Verbinde 4 eigene Dörfer und 2 Clans mit mindestens 4 Knoten.', why:'Dörfer auf vielen Inseln, verbunden durch Fahrten und Gaben. Dann ruft der Osten.',
@@ -84,10 +82,13 @@ const QUESTS = [
     n:() => islands.some(I => I.discovered && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:[], gift:{proviant:6}},
   {id:'schatz', t:'Schätze der Ferne', d:'Bring Perlmutt, rote Federn und einen Walzahn in ein eigenes Dorf.', why:'Tifa, Kula und Tabua haben Schätze, die es sonst nirgends gibt. Leg dort an, die Mannschaft sammelt.',
     n:() => TREASURE_GOODS.filter(k => islands.some(I => I.settled && (I.stock[k] || 0) > 0)).length, of:3, show:{fleet:true}, unlock:[], gift:{}},
-  {id:'fern', t:'Ein Dorf in der Ferne', d:'Gründe ein Dorf auf den Fernen Inseln.', why:'Erst erkunden, dann siedeln: Siedler, Holz, Nahrung und Proviant aufs Doppelkanu, dann die Insel antippen.',
-    n:() => islands.some(I => I.settled && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:[], gift:{}},
+  {id:'fern', t:'Ein Dorf in der Ferne', d:'Gründe ein Dorf auf den Fernen Inseln.', why:'Erst erkunden, dann siedeln: Siedler, Holz, Nahrung und Proviant aufs Doppelkanu, dann die Insel antippen. Mit dem ersten Dorf dort beginnt eine neue Zeit.',
+    n:() => islands.some(I => I.settled && I.center.x > FAR_X) ? 1 : 0, of:1, show:{ship:'dc'}, unlock:['kavagarten', 'weberin', 'malerin', 'duftoel', 'fale'], gift:{}},
   {id:'ahnen', t:'Das Fest der Schätze', d:'Feiere im Versammlungshaus das Fest der Schätze.', why:'Das größte Fest. Danach wächst das Dorf eine Weile doppelt so schnell.',
     n:() => stats.schatzfest ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
+  // Hawaiki: in the new homeland out east the descendants of Lapita become the Polynesians of later times
+  {id:'chief', t:'Hawaiki', d:'Mach ein Dorf zum Häuptlingsdorf.', why:'Mit dem Dorf auf den Fernen Inseln beginnt eine neue Zeit: Hawaiki. Dort entstand, was man erst aus späterer Zeit kennt: Kava, feine Matten, bemalte Tapa, Duftöl und das Haus des Häuptlings. Baue ein Häuptlingshaus; die Familie der Matriarchin zieht ein und will das Feinste. Die Übersicht zeigt jeden Schritt.',
+    n:() => islands.some(I => I.settled && I.lvl === 3) ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{}},
   // at the edges of the sea: people who do not descend from your ancestors
   {id:'kultur', t:'Andere Menschen', d:'Findet ein Volk einer anderen Kultur und bringt ihm eine Gabe.', why:'Im Westen das Große Land, im Norden die Seefahrer. Bringt ihnen eine Gabe.',
     n:() => !cultureIsles(true).length ? 2 : Math.min(1, cultureIsles().length) + (cultureIsles().some(I => routes.some(r => (r.a === I.id || r.b === I.id) && (r.knots >= 1 || I.debt > 0))) ? 1 : 0), of:2, show:{ship:'dc'}, unlock:[], gift:{}}
@@ -104,18 +105,27 @@ const newKinds = new Set();  // unlocked but not yet tapped, they get a dot in t
 
 /* ---------- stages, as in Anno: what can be built comes with the people. The first family has huts, the Erntehaus, wood,
    water and the fishers; at 8 people the gardens open, at 12 sennit and the earth oven, at 20 pots and tools, at 30 the
-   village with oil and canoes, at 40 the goods of the feasts, at 50 the chief's house. One chain at a time. */
+   village with oil and canoes, at 40 the goods of the feasts. After the great voyage comes Hawaiki (above). One chain at a time. */
 const STAGES = [
   {pop:0, n:'Ankunft', kinds:['haus', 'ernte', 'faeller', 'quelle', 'brunnen', 'fisch', 'pansammler', 'baum', 'palme']},
   {pop:8, n:'Gärten', kinds:['taro', 'yams', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
   {pop:12, n:'Sennit und Erdofen', kinds:['schnur', 'umu', 'kalkbrenner', 'kurkumagarten', 'harzer']},
   {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'beil', 'steg', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
   {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
-  {pop:40, n:'Zeit der Feste', kinds:['garten', 'klopf', 'pferch', 'kavagarten', 'trommel', 'tanzplatz', 'ahnenhaus', 'weberin', 'malerin', 'duftoel', 'klingen', 'schmuck', 'bananen']},
-  {pop:50, n:'Häuptling', kinds:['fale']}
+  {pop:40, n:'Zeit der Feste', kinds:['garten', 'klopf', 'pferch', 'trommel', 'tanzplatz', 'ahnenhaus', 'klingen', 'schmuck', 'bananen']},
+  {pop:40, n:'Hawaiki', gate:() => hawaiki(), kinds:['kavagarten', 'weberin', 'malerin', 'duftoel', 'fale']}   // after the great voyage
 ];
 const peakPop = () => Math.max(stats.peakPop || 0, ...islands.filter(I => I.settled).map(I => I.pop));
-const stageNow = () => STAGES.filter(S => peakPop() >= S.pop).length - 1;
+const stageOk = S => peakPop() >= S.pop && (!S.gate || S.gate());
+const stageNow = () => { let i = 0; while (i + 1 < STAGES.length && stageOk(STAGES[i + 1])) i++; return i; };
+/* Hawaiki. When the first village stands on the Ferne Inseln a new time begins: out there, far from the old islands, the
+   descendants of the Lapita people became the Polynesians of later times. Kava, fine mats, painted tapa, scented oil and
+   the chief's house are known only from these later times, so they come with it, on every island of the clan; until then
+   no clan offers or asks for them either. */
+const LATE_GOODS = ['kava', 'feinmatten', 'bemtapa', 'duftoel'];
+const hawaiki = () => !!stats.hawaiki || islands.some(I => I.settled && I.center.x > FAR_X);
+const early = ks => hawaiki() ? ks : ks.filter(k => !LATE_GOODS.includes(k));
+const clanMakes = C => early(C.makes), clanWants = C => early(C.wants);
 const stageOfKind = k => STAGES.findIndex(S => S.kinds.includes(k));
 function unlocked(kind){
   if (KINDS[kind] && KINDS[kind].life && LIFE[KINDS[kind].life].from) return lifeKnown(KINDS[kind].life);   // bananas come with another people, not with a stage
@@ -123,16 +133,19 @@ function unlocked(kind){
 }
 /* a new stage reached: a card says what is new, and the new buildings get their dot */
 function stageTick(){
-  const p = peakPop(); if (p <= (stats.peakPop || 0)) return;
-  const before = STAGES.filter(S => (stats.peakPop || 0) >= S.pop).length - 1; stats.peakPop = p; const now = stageNow();
+  const p = peakPop(); if (p > (stats.peakPop || 0)) stats.peakPop = p;
+  if (!stats.hawaiki && hawaiki()){ stats.hawaiki = 1;   // once begun, the new time stays; every village has kava cuttings from then on
+    for (const I of islands) if (I.settled && !lifeOf(I).includes('kava')) I.life = [...lifeOf(I), 'kava']; }
+  const now = stageNow(), before = stats.stage ?? now; stats.stage = now;   // a game saved before this counts from here
+  if (now <= before) return;
   for (let k = before + 1; k <= now; k++){
     const S = STAGES[k], ks = S.kinds.filter(q => KINDS[q] || SHIPS[q]);
     for (const q of ks) newKinds.add(q);
     mana += 2; for (const I of islands) if (I.settled && I.id === active) for (let h = 0; h < 5; h++) heartAt(I);   // the village celebrates
-    if (!awayQuiet) toast(`Ansehen +2. Neu bei ${S.pop} Menschen: ${S.n}. ${andList(ks.slice(0, 5).map(unlockName))}${ks.length > 5 ? ' und mehr' : ''}.`, 6000);
-    note(`Neue Stufe: ${S.n}. Jetzt zu bauen: ${andList(ks.map(unlockName))}.`);
+    if (!awayQuiet) toast(`Ansehen +2. ${S.gate ? `Eine neue Zeit beginnt: ${S.n}.` : `Neu bei ${S.pop} Menschen: ${S.n}.`} ${andList(ks.slice(0, 5).map(unlockName))}${ks.length > 5 ? ' und mehr' : ''}.`, 6000);
+    note(`${S.gate ? 'Neue Zeit' : 'Neue Stufe'}: ${S.n}. Jetzt zu bauen: ${andList(ks.map(unlockName))}.`);
   }
-  if (now > before) renderBuildBar();
+  renderBuildBar();
 }
 const giftText = g => Object.entries(g).map(([k, v]) => amount(k, v)).join(' und ');
 function checkQuest(){
@@ -186,13 +199,13 @@ function adviceOf(I, urgentOnly = false){
       if (w && (w.build || w.fleet)) return {t:`Für ${u.T.n}: ${needName(k)}`, d:w.text, build:w.build && w.build !== 'haus' ? w.build : null, fleet:w.fleet, goto:w.build || w.fleet ? null : hb.id}; } }
   if (nd.full && !nd.atMax && !emptyHome(I)) return {t:'Mehr Hütten', d:'Alle Hütten sind belegt. Eine leere Hütte zieht eine Familie von weit her an.', build:'haus'};
   if (I.pop >= 8 && kinState(I) !== 'ok') return {t:'Neues Blut', d:kinText(I).help, needs:true};
-  const nextS = STAGES[stageNow() + 1]; if (nextS && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:'haus'};
+  const nextS = STAGES[stageNow() + 1]; if (nextS && !nextS.gate && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:'haus'};
   const miss = MASTER_GOODS.find(k => !(I.stock[k] > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Meisterfamilien`, d:p ? `Baue ${KINDS[p].n}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
   // the fine goods of the chief's family: some grow only on islands with the right ground
   if (chiefFam(I)){ const k = CHIEF_GOODS.find(q => !(I.stock[q] > 0)); if (k){ const p = producerOf(I, k), isles = specIslesFor(k) || [];
     const sp = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]);
     return {t:`${GN[k]} für die Häuptlingsfamilie`, d:p ? `Baue ${KINDS[p].n}.` : sp ? `${KINDS[sp].n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[sp]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}. Besiedle sie oder handle.` : `${GN[k]} kommt per Kanu von anderswo.`, build:p, fleet:!p}; } }
-  const step = I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
+  const step = hawaiki() && I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
   if (nd.atMax) return {t:'Neues Land besiedeln', d:'Die Insel ist voll. Schicke Familien im Kanu aus.', fleet:true};
   if (korCanThrow()) return {t:'Knöchelwurf', d:'Heute ist noch nicht geworfen.', koruru:true};
   return {t:'Erkunden und handeln', d:'Fahre mit dem Doppelkanu in den Nebel oder bring Gaben zu den Clans.', fleet:true};

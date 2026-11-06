@@ -89,7 +89,7 @@ function genCell(seed, cx, cy, start, used){
   const pool = NAMES[kind], base = pool[Math.floor(r() * pool.length)];
   let name = base; for (let i = 1; used.has(name) && i < NUMBER.length; i++) name = base + NUMBER[i];
   if (used.has(name)) name = base + ' ' + (cx * 10 + cy);
-  // a clan, further out: on a volcano with obsidian, on an atoll, or in a kava grove on a high island
+  // a clan, further out: on a volcano with obsidian, on an atoll, or in a grove of paper mulberry on a high island
   const clanRoll = r();
   if (dc >= 2 && clanRoll < .3){ const t = kind === 'vulkan' ? 'feuer' : kind === 'atoll' ? 'riff' : 'hain'; if (t !== 'feuer' || I.deco.some(d => d.t === 'obsidian')) I.clan = {id:t, ...CLANS[t]}; }
   Object.assign(I, {id:`c${cx}_${cy}`, name, discovered:false, settled:false, stock:{}, pop:0, buildings:[], canoe:false, lvl:1, cell:[cx, cy], trees0:(I.trees || []).length});

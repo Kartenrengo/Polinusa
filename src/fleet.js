@@ -291,7 +291,7 @@ function arriveShip(s){
   // a cord grows between where it came from and here, if here is ours or a clan
   if (from && from !== T && (T.settled || T.clan) && routeIndex(from.id, T.id) < 0){
     routes.push({a:from.id, b:T.id, knots:T.clan ? 0 : 1, lastGift:tick, plan:{a:{}, b:{}}}); invalidate();
-    if (T.clan){ const C = T.clan; toast(`Erster Besuch ${clanBeim(C)}. Sie machen ${C.makes.map(k => GN[k]).join(' und ')} und schätzen ${C.wants.map(k => GN[k]).join(', ')}. Übergib eine Gabe.`, 6000); if (C.culture && !awayQuiet) openSheet('clan', {id:T.id}); }
+    if (T.clan){ const C = T.clan; toast(`Erster Besuch ${clanBeim(C)}. Sie machen ${clanMakes(C).map(k => GN[k]).join(' und ')} und schätzen ${clanWants(C).map(k => GN[k]).join(', ')}. Übergib eine Gabe.`, 6000); if (C.culture && !awayQuiet) openSheet('clan', {id:T.id}); }
   }
   if ((T.settled || T.clan) && from && from !== T && s.cargo.toepfe > 0) bringMotifs(from, T);   // where pots come, their patterns come
   if (T.settled){ s.last = T.id; s.hungry = false; landLife(T, s); }   // plants and pigs aboard take root in a village of ours

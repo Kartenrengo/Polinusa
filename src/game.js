@@ -292,7 +292,7 @@ const voyageDay = () => Math.round(VOYAGE_DAY * (navLore().lvl >= 3 ? 1.4 : 1));
 /* ---------- the brought world. Taro, breadfruit, paper mulberry, kava and pigs live on an island only where people have
    brought them in a canoe; the home island and the clans have them all, and so do villages from older saves. */
 const lifeOf = I => I.life || (I.clan ? LIFE_IDS : I.settled ? LIFE_BASE : []);
-const lifeKnown = id => !LIFE[id].from || islands.some(J => J.settled && (J.life || LIFE_BASE).includes(id));   // bananas only once another people has given them
+const lifeKnown = id => LIFE[id].late ? hawaiki() : !LIFE[id].from || islands.some(J => J.settled && (J.life || LIFE_BASE).includes(id));   // bananas only once another people has given them, kava with Hawaiki
 const hasLife = (I, kind) => { const l = KINDS[kind].life; return !l || lifeOf(I).includes(l); };
 const lifeFits = (I, id) => LIFE[id].kinds.some(k => KINDS[k].on.includes(I.type));   // would it grow here at all
 const lifeMissing = (I, kind) => { const L = LIFE[KINDS[kind].life]; return `Auf ${I.name} gibt es ${L.no}. Bring ${L.s} im Kanu mit.`; };
@@ -1169,6 +1169,7 @@ function needsOf(I){
 function chiefSteps(I, nd){
   const f = chiefFam(I), lack = f ? famNeeds(I, f, nd.list).filter(n => n.state === 'out').map(n => n.k === 'dach' ? 'Dach' : GN[n.k]) : [];
   return [
+    {t:'Die große Fahrt: ein Dorf auf den Fernen Inseln', ok:hawaiki(), now:hawaiki() ? 'ja' : 'noch nicht'},
     {t:`Eine große hohe Insel, die ${CHIEF.isle} Menschen trägt`, ok:I.type === 'hoch' && islandMax(I) >= CHIEF.isle, now:`${islandMax(I)}`},
     {t:'Ein Häuptlingshaus', ok:I.buildings.some(b => b.kind === 'fale' && !b.bt), now:I.buildings.some(b => b.kind === 'fale' && !b.bt) ? 'steht' : I.buildings.some(b => b.kind === 'fale') ? 'im Bau' : 'fehlt'},
     {t:'Die Häuptlingsfamilie hat alles', ok:!!f && !lack.length, now:f ? (lack.length ? `es fehlt ${andList(lack)}` : 'ja') : 'noch keine'},

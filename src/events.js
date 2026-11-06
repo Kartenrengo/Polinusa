@@ -38,11 +38,11 @@ const EVENTS = [
     when:() => seasonOf().id === 'mager' && pickOf(villages().filter(I => I.buildings.some(b => (b.kind === 'taro' || b.kind === 'pulaka') && !b.bt))),
     text:I => `Seit Wochen fällt kein Regen auf ${I.name}. Die Taroblätter hängen schlaff.`,
     choices:[
-      {n:'Regenzeremonie mit Kava', cost:{kava:2}, text:'Die Ältesten bitten die Ahnen um Regen.', go:() => { mana += 2; return 'Am nächsten Morgen ziehen Wolken auf. Ansehen +2.'; }},
+      {n:'Regenzeremonie mit Kava', cost:{kava:2}, late:true, text:'Die Ältesten bitten die Ahnen um Regen.', go:() => { mana += 2; return 'Am nächsten Morgen ziehen Wolken auf. Ansehen +2.'; }},
       {n:'Wasser in Töpfen tragen', cost:{toepfe:2}, text:'Ein halber Mond mit halber Ernte.', go:I => { I.drought = tick + MOON / 2; return `Die Felder auf ${I.name} tragen einen halben Mond lang nur halb so viel.`; }},
       {n:'Durchhalten', text:'Ein ganzer Mond mit halber Ernte.', go:I => { I.drought = tick + MOON; return `Die Felder auf ${I.name} tragen einen Mond lang nur halb so viel.`; }}]},
   {id:'bitte', t:'Eine Bitte',
-    when:() => { const r = pickOf(routes.filter(q => (isl(q.a).clan || isl(q.b).clan) && q.knots >= 1)); if (!r) return false; const C = (isl(r.a).clan ? isl(r.a) : isl(r.b)), k = C.clan.wants.find(k => richest(k, 3)); return k ? {I:richest(k, 3), C, k, r} : false; },
+    when:() => { const r = pickOf(routes.filter(q => (isl(q.a).clan || isl(q.b).clan) && q.knots >= 1)); if (!r) return false; const C = (isl(r.a).clan ? isl(r.a) : isl(r.b)), k = clanWants(C.clan).find(k => richest(k, 3)); return k ? {I:richest(k, 3), C, k, r} : false; },
     text:o => `Boten ${clanVom(o.C.clan)} kommen nach ${o.I.name}. Sie bereiten ein Totenfest vor und bitten um ${amount(o.k, 3)}.`,
     cost:o => ({[o.k]:3}), place:o => o.I,
     choices:[
@@ -140,9 +140,11 @@ function eventMarkup(){
   const {E, o} = eventNow, I = E.place ? E.place(o) : o;
   let h = head(E.t, `Auf ${I.name}`);
   h += `<p>${E.text(o)}</p><ul class="list needs">`;
+  let first = true;
   E.choices.forEach((ch, i) => {
-    const cost = ch.ask ? E.cost(o) : ch.cost, ok = !cost || canPay(I, cost);
-    h += `<li class="${ok ? '' : 'need'}"><span class="nm">${ch.n}<small>${[ch.text, cost ? `Kostet ${costText(cost)}.` : ''].filter(Boolean).join(' ')}${ok ? '' : ` Es fehlt ${lacking(I, cost)}.`}</small></span><button class="btn${i ? '' : ' primary'}" type="button" data-act="choose" data-i="${i}" ${ok ? '' : 'disabled'}>Wählen</button></li>`;
+    if (ch.late && !hawaiki()) return;   // a kava ceremony only in the later time
+    const cost = ch.ask ? E.cost(o) : ch.cost, ok = !cost || canPay(I, cost), lead = first; first = false;
+    h += `<li class="${ok ? '' : 'need'}"><span class="nm">${ch.n}<small>${[ch.text, cost ? `Kostet ${costText(cost)}.` : ''].filter(Boolean).join(' ')}${ok ? '' : ` Es fehlt ${lacking(I, cost)}.`}</small></span><button class="btn${lead ? ' primary' : ''}" type="button" data-act="choose" data-i="${i}" ${ok ? '' : 'disabled'}>Wählen</button></li>`;
   });
   return h + '</ul>';
 }
@@ -151,7 +153,7 @@ function eventAct(act, btn){
   if (act === 'close'){ eventNow = null; closeSheet(); return true; }
   if (act !== 'choose') return false;
   const {E, o} = eventNow, I = E.place ? E.place(o) : o, ch = E.choices[+btn.dataset.i], cost = ch.ask ? E.cost(o) : ch.cost;
-  if (cost && !canPay(I, cost)) return true;
+  if ((cost && !canPay(I, cost)) || (ch.late && !hawaiki())) return true;
   if (cost) pay(I, cost);
   const msg = ch.go(o); eventNow = null; closeSheet(); updateHUD(); save(); checkQuest(); toast(msg, 5200);
   return true;
@@ -191,7 +193,7 @@ const CHRONIK = [
   {id:'flotte', t:'Eine Flotte', d:'6 Kanus.', test:() => own().length >= 6, mana:3},
   {id:'inseln', t:'Zehn Inseln', d:'10 Inseln entdeckt.', test:() => islands.filter(I => I.discovered).length >= 10, mana:4},
   {id:'doerfer', t:'Fünf Dörfer', d:'5 eigene Dörfer.', test:() => villages().length >= 5, mana:4},
-  {id:'clans', t:'Alle drei Clans', d:'Schnüre zum Feuerberg, zum Riff und zum Kavahain.', test:() => new Set(routes.map(r => (isl(r.a).clan || isl(r.b).clan || {}).id).filter(Boolean)).size >= 3, mana:5},
+  {id:'clans', t:'Alle drei Clans', d:'Schnüre zum Feuerberg, zum Riff und zum Maulbeerhain.', test:() => new Set(routes.map(r => (isl(r.a).clan || isl(r.b).clan || {}).id).filter(Boolean)).size >= 3, mana:5},
   {id:'knoten', t:'Ein dichtes Netz', d:'30 Knoten auf allen Schnüren zusammen.', test:() => routes.reduce((t, r) => t + r.knots, 0) >= 30, mana:5},
   {id:'volk', t:'Ein Volk', d:'150 Menschen in allen Dörfern.', test:() => allPop() >= 150, mana:6},
   {id:'schatzinsel', t:'Eine Schatzinsel', d:'Eine der Schatzinseln gefunden.', test:() => islands.some(I => I.treasure && I.discovered), mana:3},

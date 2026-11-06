@@ -296,7 +296,7 @@ function needWay(I, k){
   if (!K.on.includes(I.type)) return {text:`${GN[k]} gibt es nur auf ${K.on.includes('atoll') ? 'Atollen' : 'hohen Inseln'}: Besiedelt eine oder tauscht im Kanu`, fleet:true, outside:true};
   if (SPEC_OF_KIND[any] && specOf(I) !== SPEC_OF_KIND[any]){ const isles = specIslesFor(k); return {text:`${K.n} geht nur auf Inseln mit ${SPECS[SPEC_OF_KIND[any]].n}${isles.length ? `, etwa ${isles[0].name}` : ''}: Besiedelt sie oder tauscht`, fleet:true, outside:true}; }
   if (!hasLife(I, any)) return {text:lifeMissing(I, any), fleet:true, outside:true};
-  if (!unlocked(any)){ const st = STAGES[stageOfKind(any)]; return {text:`${K.n} kommt ab ${st.pop} Menschen`}; }
+  if (!unlocked(any)){ const st = STAGES[stageOfKind(any)]; return {text:st.gate ? `${K.n} kommt nach der großen Fahrt, mit ${st.n}` : `${K.n} kommt ab ${st.pop} Menschen`}; }
   return {text:`Baue ${K.n}`, build:any};
 }
 const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">Bauen</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
@@ -319,11 +319,13 @@ function knotCord(I, f, t, nd, ahead = true){
   const ok = cur.filter(n => n.state !== 'out').length;   // a loose knot still holds
   return cordOf([...cur.map(n => ({k:n.k, st:n.state})), ...(nxt.length ? [{bead:true}] : []), ...nxt.map(k => ({k, st:'next'}))], `${ok}/${cur.length}`);
 }
-/* The long way, as one cord: every age of the village a knot, the great voyage the last. Tied knots are behind you,
-   the loose one is next (with the number of people it takes), the faint ones lie ahead. */
-const EPOCH_IC = ['einbaum', 'setzling', 'schnur', 'toepfe', 'haus', 'plejaden', 'mana'];
+/* The long way, as one cord: every age of the village a knot, then the great voyage, and after it Hawaiki, the later
+   time. Tied knots are behind you, the loose one is next (with the number of people it takes), the faint ones lie ahead. */
+const EPOCH_IC = ['einbaum', 'setzling', 'schnur', 'toepfe', 'haus', 'plejaden', 'kava'];
 function epochCord(){
-  const now = stageNow(), done = quest >= QUESTS.length, steps = [...STAGES.map((S, i) => ({n:S.n, ic:EPOCH_IC[i], st:i <= now ? 'ok' : i === now + 1 ? 'low' : 'next', pop:S.pop})), {n:'Die große Fahrt', ic:'insel', st:done ? 'ok' : now >= STAGES.length - 2 ? 'low' : 'next'}];
+  const now = stageNow(), g = STAGES.findIndex(S => S.gate), far = hawaiki();
+  const steps = STAGES.map((S, i) => ({n:S.n, ic:EPOCH_IC[i], st:i <= now ? 'ok' : i === now + 1 && (!S.gate || far) ? 'low' : 'next', pop:S.gate ? 0 : S.pop}));
+  steps.splice(g, 0, {n:'Die große Fahrt', ic:'insel', st:far ? 'ok' : now >= g - 1 ? 'low' : 'next'});
   return `<div class="cord epochs" role="list" aria-label="Der Weg des Dorfes">${steps.map(q => `<span class="knot ${q.st}" role="listitem" aria-label="${q.n}${q.st === 'ok' ? ': erreicht' : q.pop ? `: ab ${q.pop} Menschen` : ''}"><svg class="kg" viewBox="0 0 24 20" aria-hidden="true"><use href="#kn-${q.st}"/></svg>${icon(q.ic)}${q.st === 'low' && q.pop ? `<small>${q.pop}</small>` : ''}</span>`).join('')}</div>`;
 }
 /* The way to a good this island cannot make, as a chain of pictures: canoe house, canoe, an island that has it, a
@@ -409,7 +411,7 @@ function villageGoal(I, nd){
   if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
     return w && w.outside ? {cls:'far', t:`Für ${next.T.n}: ${GN[k]}`, d:'', chain:outsideChain(I, k)} : {cls:'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w && !wayChip(w) ? w.text : '', btn:wayChip(w) || wayBtn(w)}; }
   if (nd.atMax) return {cls:'far', t:'Die Insel ist voll', d:`${I.name} trägt höchstens ${islandMax(I)} Menschen. Gründet ein Dorf auf einer anderen Insel.`, btn:wayBtn({fleet:true})};
-  const st = STAGES[stageNow() + 1]; if (st && I.pop < st.pop) return {cls:'low', t:`Ab ${st.pop} Menschen: ${st.n}`, d:'Baut Hütten, dann kommen Familien. In Familienhäusern kommen Kinder.', btn:wayBtn({build:'haus'})};
+  const st = STAGES[stageNow() + 1]; if (st && !st.gate && I.pop < st.pop) return {cls:'low', t:`Ab ${st.pop} Menschen: ${st.n}`, d:'Baut Hütten, dann kommen Familien. In Familienhäusern kommen Kinder.', btn:wayBtn({build:'haus'})};
   return null;
 }
 function needsMarkup(I){
@@ -530,7 +532,7 @@ function clanMarkup(T){
   const C = T.clan, ri = routes.findIndex(r => r.a === T.id || r.b === T.id), r = routes[ri], icons = ks => ks.map(k => `<svg class="ic inline" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>${GN[k]}`).join(', ');
   let h = head(C.name, `Auf ${T.name}, etwa ${C.pop} Menschen.${C.culture ? ' Eine andere Kultur.' : ''}`);
   if (C.culture) h += `<p>${C.text}</p><p class="sub"><b>Was sie euch geben können:</b> ${C.gift}${C.teach === 'nav' && stats.nordLehre ? ' Das haben sie schon getan.' : C.life && lifeKnown(C.life) ? ' Das haben sie schon getan.' : ''}</p>`;
-  h += `<p>Sie machen ${icons(C.makes)}.<br>Sie schätzen ${icons(C.wants)}.</p>`;
+  h += `<p>Sie machen ${icons(clanMakes(C))}.<br>Sie schätzen ${icons(clanWants(C))}.</p>`;
   h += `<p class="sub">${C.culture ? 'Auch bei ihnen' : 'Bei diesem Clan'} gibt es keine Preise. Ihr schickt eine Gabe, und sie antworten später mit dem, was sie machen. Je mehr Knoten die Schnur hat, desto reicher fällt die Gegengabe aus. Muschelschmuck knüpft einen Knoten extra. Kommt lange nichts, löst sich ein Knoten.</p>`;
   h += C.motif ? `<p class="sub">${motifIcon(C.motif, 'inline')}Ihr Muster: ${MOTIFS[C.motif].n}. ${kin(T) ? 'Sie stempeln auch euer Muster, ihr seid verwandt: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann werden sie euch verwandt, und eure Gaben zählen mehr.'}</p>` : `<p class="sub">Sie töpfern nicht. ${kin(T) ? 'Aber eure Töpfe mit eurem Muster schätzen sie: Eure Gaben zählen bei ihnen ein Fünftel mehr.' : 'Bringt ihnen Töpfe mit eurem Muster, dann zählen eure Gaben mehr.'}</p>`;
   // marriage: who is married to them, who went to live with them, and a wedding to arrange
