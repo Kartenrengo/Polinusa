@@ -36,6 +36,9 @@ const {PAGE} = require('./lib');
       { const ids0 = (staffOf(J).crewP.get(e) || []).join(); let flips = 0; for (let t = 0; t < 30; t++){ run(1); if ((staffOf(J).crewP.get(e) || []).join() !== ids0) flips++; } if (flips) bad.push(`called workplace changed its people ${flips} times`); }
       setPrio(J, J.buildings.find(q => q.kind === 'fisch'), true); setPrio(J, J.buildings.find(q => q.kind === 'quelle'), true); if (J.buildings.filter(q => q.prio).length > 2) bad.push('more than two calls');
       select(J.buildings.find(q => q.kind === 'quelle')); if (!/data-act="prio"/.test($('sheetBody').innerHTML)) bad.push('no conch button'); closeSheet(); }
+    // 3. a jetty's dugout gets a carver (a jetty has no crew of its own) and is finished
+    { const {I, put} = setup(202); for (let i = 0; i < 6; i++) I.people.push(Object.assign(person(I, 25), {h:famsOf(I)[0].id})); I.pop = I.people.length; syncPeople(I);
+      const st = put('steg', false); if (st){ st.boat = KINDS.steg.canoe; I.staff = null; syncWalkers(); run(60); out.push(`jetty dugout left ${st.boat || 0}`); if (st.boat > 0) bad.push('the dugout of the jetty is never carved'); } }
     return {out, bad};
   });
   console.log(r.out.join('\n')); console.log('BAD: ' + (r.bad.concat(errs).join('; ') || 'none')); await b.close();

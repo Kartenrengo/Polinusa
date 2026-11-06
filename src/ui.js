@@ -251,6 +251,9 @@ function openSheet(kind, data){
   const el = $('sheet'); if (el.hidden && !reduced){ el.classList.add('opening'); clearTimeout(el._op); el._op = setTimeout(() => el.classList.remove('opening'), 700); }
   el.hidden = false; renderSheet(); measure();
 }
+/* the meter strip (see meterTick) */
+function showMeter(){ let el = $('meter'); if (!el){ el = document.createElement('div'); el.id = 'meter'; el.setAttribute('aria-hidden', 'true'); $('app').appendChild(el); } el.hidden = !opts.meter; if (opts.meter) el.textContent = 'misst …'; }
+addEventListener("load", showMeter);   // after all scripts, when the options are read
 /* a tap on any button sends rings out, as a pebble dropped in the lagoon */
 document.addEventListener('pointerdown', e => {
   const bt = e.target.closest && e.target.closest('button'); if (bt && !bt.disabled) sfx('tap');
@@ -574,7 +577,7 @@ function crewMarkup(I, b, horn = ''){
   // building sites and the canoe house are worked by whoever is free, or by those called from their work
   if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}<span class="grow"></span>${horn}</div>`;
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
-  const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < K.crew ? '' : 'disabled'}>+</button></span>`;
+  const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < crewOf(b) ? '' : 'disabled'}>+</button></span>`;
   return `<div class="crew">${chips}${ctl.replace('<span class="grow"></span>', `<span class="grow"></span>${horn}`)}</div><p class="sub crewnote">${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
 }
 /* A family on its own sheet: its house and step, what it has and lacks, its people by name, where it works */
@@ -651,7 +654,7 @@ function infoMarkup(I, b){
     'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
   // the conch, in the row of the people: blown, people come at once; it calls attention when nobody is there
-  const lonely = !crewAt(I, b) && ((b.bt && !K.plant) || K.crew), horn = (b.bt && !K.plant) || (!b.bt && K.crew) ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
+  const lonely = !crewAt(I, b) && ((b.bt && !K.plant) || crewOf(b)), horn = (b.bt && !K.plant) || (!b.bt && crewOf(b)) ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
   { const sb = b.idle && b.idle.site && findB(b.idle.site);   // the place whose people build: a button to their site instead of a sentence
     if (why && b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau')) why = sb ? `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>` : ''; }
   return [(line ? `<div class="stat">${line}</div>` : '') + bar + crewMarkup(I, b, horn) + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
@@ -755,7 +758,7 @@ function renderSheet(){
       `<p class="sec">Spielstand</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
       (backups().length ? `<div class="chips copies">${backups().map(b => `<button class="chip" type="button" data-act="backup" data-i="${b.i}">Kopie ${ago(b.at)}</button>`).join('')}</div>` : '') +
       `<details class="more"><summary>Als Text</summary><textarea id="saveText" class="savetext" rows="3" spellcheck="false" aria-label="Spielstand als Text"></textarea><div class="rowx"><span class="chips"><button class="chip" type="button" data-act="showtext">Zeigen</button><button class="chip" type="button" data-act="loadtext">Aus Text laden</button></span></div></details>` +
-      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
+      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();
 }
@@ -849,6 +852,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'chronik'){ openSheet('chronik'); return; }
     if (act === 'sound'){ setSound(!opts.sound); renderSheet(); return; }
     if (act === 'night'){ opts.night = !opts.night; saveOpts(); requestDraw(); renderSheet(); return; }
+    if (act === 'meter'){ opts.meter = !opts.meter; saveOpts(); showMeter(); renderSheet(); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
     // the game as a file to keep, and back again; or as text where files cannot be saved
     if (act === 'export'){ exportGame(); return; }

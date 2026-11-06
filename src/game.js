@@ -459,6 +459,7 @@ function spawnFig(I, homes, role, at, p){
   walkers.push(w); return w;
 }
 function setJob(I, w, j){
+  if (w.play) endPlay(w);   // new work ends free time: the walk to the work must not be overwritten when the game is over
   if (w.mate && w.mate.ride === w){ w.mate.ride = null; w.mate.boat = false; }
   Object.assign(w, {job:j, role:'work', carry:null, bout:false, busy:null, fx:null, rest:false, sit:false, boat:false, fishing:0, glean:0, under:0, catch:[], wait:0, forage:0, ride:null, mate:null});
   if (initSync){ w.on = true; w.leg = 'work'; w.wait = Math.random() * 1500; return; }   // already at work
@@ -732,7 +733,7 @@ function nextLeg(w){
   }
   if (w.job){
     if (w.play && !OFF_OK.has(w.job.type)){ endPlay(w); if (w.leg !== 'go'){ w.on = false; w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } }   // sent to other work meanwhile: go there now
-    if (w.play){ if (playLeg(I, w)) return; if (offNow(I, w, w.job.type) && startPlay(I, w)){ w.play.off = true; return; } w.leg = 'back'; w.bout = false; }
+    if (w.play){ if (playLeg(I, w)) return; if (offNow(I, w, w.job.type) && startPlay(I, w)){ w.play.off = true; return; } if (!w.on){ w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } w.leg = 'back'; w.bout = false; }
     jobLeg(I, w, w.job); return;
   }
   if (w.play && playLeg(I, w)) return;
@@ -775,6 +776,8 @@ const BOUT = {chop:[2400, 1200], pull:[2600, 1400], climb:[5600, 2200], wade:[26
 function jobLeg(I, w, j){
   const T = j.type;
   if (w.leg === 'go'){ w.on = true; w.leg = 'work'; w.bout = false; }
+  // whoever is at work counts as there; someone who lost the way to it walks there first
+  else if (!w.on && !w.boat && !w.ride){ if (Math.hypot(w.x - j.x, w.y - j.y) < 16) w.on = true; else { w.leg = 'go'; goTo(I, w, j.x, j.y); return; } }
   if (BUILD_JOBS.has(T)){
     const W = workOf(I, j);
     if (w.leg !== 'fetch' && w.leg !== 'bring' && w.leg !== 'work'){ w.on = false; w.leg = 'go'; goTo(I, w, j.x + rnd(4), j.y + rnd(2)); return; }   // not yet at the site: walk there first
@@ -1496,8 +1499,21 @@ function frame(now){
   const dt = Math.min(64, now - last); last = now;
   stepCam(now); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
-  if (needDraw || stale(now) || (animating() && now - lastDraw > (quality ? 32 : 48)) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; }
+  let drew = false;
+  if (needDraw || stale(now) || (animating() && now - lastDraw > (quality ? 32 : 48)) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; drew = true; }
+  if (opts.meter) meterTick(now, drew);
   requestAnimationFrame(frame);
+}
+/* the meter, switched on in the menu: how many pictures a second this device really draws, the longest gap between two,
+   the quality step and the pixel density. For checking the game on a phone. */
+let mN = 0, mT = 0, mMax = 0, mLast = 0;
+function meterTick(now, drew){
+  const el = $('meter'); if (!el) return;
+  if (mLast && now - mLast < 2000) mMax = Math.max(mMax, now - mLast); mLast = now; if (drew) mN++;
+  if (now - mT < 1000) return;
+  const fps = mT ? Math.round(mN * 1000 / (now - mT)) : 0;
+  el.textContent = `${fps} Bilder/s · längstes ${Math.round(mMax)} ms · Stufe ${quality} · ${DPR}× · ${walkers.length} Figuren`;
+  mN = 0; mMax = 0; mT = now;
 }
 /* the frame governor: when the device cannot keep up (frames come slower than about 18 a second for a while), the picture
    gets simpler; after half a minute of easy frames it gets finer again */

@@ -213,6 +213,8 @@ const MEN_WORK = new Set(['fisch', 'taucher', 'faeller', 'beil', 'klingen', 'ern
 const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null; return w ? ad.slice().sort((p, q) => (q.s === w) - (p.s === w)) : ad; };
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
 const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow);
+/* how many work at a place: its crew, or one who carves the dugout of a jetty (a jetty has no crew of its own) */
+const crewOf = b => KINDS[b.kind].crew || (b.boat > 0 ? 1 : 0);
 const autoWork = I => !I.handWork;
 const prodOfB = b => prodOf(b) || KINDS[b.kind].prod || '';
 /* how much a place is needed now: 0 its good is short, 1 as usual, 2 its store is nearly full */
@@ -239,7 +241,7 @@ function autoAssign(I, places, at, adults){
   const open = places.slice().sort((a, b) => (b.prio ? 1 : 0) - (a.prio ? 1 : 0) || need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);   // a called place first
   for (const b of open){
     const l = at.get(b) || []; at.set(b, l);
-    while (l.length < KINDS[b.kind].crew && free.length){
+    while (l.length < crewOf(b) && free.length){
       if (need(b) === 2 && l.length) break;   // a full store does not need more hands
       const p = pickWorker(I, b, free, l); free.splice(free.indexOf(p), 1); p.job = b.id; l.push(p);
     }
@@ -248,7 +250,7 @@ function autoAssign(I, places, at, adults){
   for (const b of open){
     if (need(b) > 0) continue;
     const l = at.get(b);
-    while (l.length < KINDS[b.kind].crew){
+    while (l.length < crewOf(b)){
       const take = places.filter(q => q !== b && !q.prio && (at.get(q) || []).length && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
       if (!take) break;
       const p = at.get(take).pop(); p.job = b.id; l.push(p);
@@ -275,14 +277,14 @@ function staff(I){
   for (const p of I.people){
     if (!isAdult(p)){ p.job = 0; continue; }
     const b = p.job && pmap.get(p.job); if (!b){ p.job = 0; continue; }
-    const l = at.get(b) || []; if (l.length >= KINDS[b.kind].crew){ p.job = 0; continue; } l.push(p); at.set(b, l);
+    const l = at.get(b) || []; if (l.length >= crewOf(b)){ p.job = 0; continue; } l.push(p); at.set(b, l);
   }
   if (autoWork(I)) autoAssign(I, places, at, adults);
   // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
   { const need = needOf(I, places);
     for (const b of places.filter(q => q.prio)){
       const l = at.get(b) || []; at.set(b, l);
-      while (l.length < KINDS[b.kind].crew){
+      while (l.length < crewOf(b)){
         const free = adults.find(p => !p.job);
         if (free){ free.job = b.id; l.push(free); continue; }
         const from = places.filter(q => q !== b && !q.prio && (at.get(q) || []).length).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
@@ -343,7 +345,7 @@ function staff(I){
 const handNote = I => { if (autoWork(I)){ I.handWork = true; toast('Die Arbeit wird jetzt von Hand verteilt. In der Übersicht geht es zurück auf Automatisch.', 3600, false); } };
 function workAdd(I, b){
   const K = KINDS[b.kind], here = (I.people || []).filter(p => p.job === b.id);
-  if (here.length >= K.crew){ toast(`${K.n} hat Platz für ${K.crew}. Alle Plätze sind besetzt.`, 2600, false); return false; }
+  if (here.length >= crewOf(b)){ toast(`${K.n} hat Platz für ${crewOf(b)}. Alle Plätze sind besetzt.`, 2600, false); return false; }
   const free = (I.people || []).filter(p => isAdult(p) && !p.job);
   if (!free.length){ toast('Niemand ist frei. Ruf jemanden woanders mit − ab, oder baut Hütten: Dann kommen Familien von weit her.', 3600, false); return false; }
   handNote(I); const p = pickWorker(I, b, free, here); p.job = b.id; I.staff = null; syncWalkers(); return p;

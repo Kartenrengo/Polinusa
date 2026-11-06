@@ -4,8 +4,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const dir = path.dirname(fileURLToPath(import.meta.url)), long = process.argv.includes('--long');
-const tests = [['smoke'], ['rules'], ['build'], ['play'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? [] : ['101'])]];
+const tests = [['data'], ['smoke'], ['rules'], ['build'], ['play'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? ['--min=90'] : ['101'])]];
 let failed = 0;
+// first: does every script parse? A broken line stops the whole game, long before any test could say why
+{ const src = path.join(dir, '..', 'src'), fs = await import('node:fs'), bad = [];
+  for (const f of fs.readdirSync(src).filter(f => f.endsWith('.js'))){ const r = spawnSync(process.execPath, ['--check', path.join(src, f)], {encoding:'utf8'}); if (r.status !== 0) bad.push(f + ': ' + (r.stderr || '').split('\n').slice(0, 4).join(' ')); }
+  console.log(`${bad.length ? 'FEHLER' : 'OK    '} syntax`); if (bad.length){ console.log(bad.join('\n')); process.exit(1); } }
 for (const [name, ...args] of tests){
   const t0 = Date.now(), r = spawnSync(process.execPath, [path.join(dir, name + '.test.js'), ...args], {encoding:'utf8', timeout:15 * 60 * 1000});
   const out = (r.stdout || '') + (r.stderr || '');

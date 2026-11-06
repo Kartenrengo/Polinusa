@@ -4,6 +4,11 @@ Aufbauspiel fürs Handy. Zeit: die Lapita-Phase der Austronesier, um 1500 v. Chr
 Häuser mit ihren Bedürfnissen wachsen; alles andere ist Ozeanien (siehe „Eigene Handschrift“).
 Ein Clan fährt los, findet leere Inseln, siedelt dort und treibt Handel über das offene Meer.
 
+**Inhalt:** [Starten und Tests](#starten) · [Anfang](#anfang) · [Oberfläche](#die-oberfläche) · [Haushalte und Ausbau](#haushalte-und-familien) ·
+[Zuzug](#zuzug-familien-aus-der-ferne) · [Bauen und Vorrang](#bauen) · [Arbeit](#arbeit-nach-händen) · [Freizeit](#freizeit) ·
+[Die große Fahrt](#die-große-fahrt) · [Klang](#tag-nacht-und-klang) · [Was belegt ist und was nicht](#was-belegt-ist-und-was-später) ·
+[Quellen](#quellen)
+
 ## Starten
 
 `index.html` im Browser öffnen. Es gibt keinen Build-Schritt, das Spiel läuft auch direkt von der Festplatte.
@@ -27,11 +32,23 @@ Die Tests spielen das Spiel in einem Browser ohne Fenster (Playwright mit Chromi
 node tests/run.mjs
 ```
 
-Sie sagen je Test „OK“ oder „FEHLER“: `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln),
+Zuerst prüft es, ob jede Datei fehlerfrei lesbar ist (eine kaputte Zeile hält das ganze Spiel an). Dann sagen die
+Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, ist da; jede Aufgabe und Stufe nennt Gebäude, die
+es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln),
 `build` (sechs Baustellen zugleich werden fertig, Vorrang, Felder werden gegraben), `play` (Freizeit, Feierabend,
 jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
 (vierfach langsame CPU, kleiner und großer Bildschirm, Knopfgrößen), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
-Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer statt einem.
+Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer je anderthalb Stunden.
+
+Der Bot hat **Wächter** für das, was ein Spieler sehen würde: eine Baustelle, die mit Bauleuten drei Minuten nicht
+vorankommt; Bauleute, die mehr als dreimal wechseln; ein Platz, der zehn Minuten leer bleibt, während jemand frei ist;
+eine Figur, die auf dem Weg zur Arbeit anderthalb Minuten nicht vorankommt; jemand, der arbeitet, aber nicht als
+anwesend zählt. Dazu schreibt er **Meilensteine** auf: wann die erste Familie aus der Ferne kommt, das erste
+Familienhaus steht, 20 und 30 Menschen da sind, das erste Kanu fährt.
+
+**Messwerte:** Im Menü zeigt „Messwerte“ unten links, wie viele Bilder pro Sekunde das Gerät wirklich zeichnet, die
+längste Lücke zwischen zwei Bildern, die Qualitätsstufe (2 alles, 1 ohne Wiegen, 0 weniger Pixel), die Pixeldichte und
+die Zahl der Figuren. Damit lässt sich das Spiel auf einem echten Handy prüfen.
 
 ### Spielstand
 
@@ -980,7 +997,8 @@ Erwachsene frei sind, Erwachsene zuerst. Wer geht, nimmt seine Linie mit. Die H�
 ## Freizeit
 
 Wer gerade nichts zu tun hat, Kinder, Alte, Leute ohne Arbeit und am Abend die Arbeiter, tut, was man auf den Inseln immer
-getan hat. Man sieht immer wieder etwas anderes:
+getan hat. Man sieht immer wieder etwas anderes. (Die meisten dieser Spiele kennt man erst aus späteren Berichten,
+siehe [Was belegt ist](#was-belegt-ist-und-was-später).)
 
 - **Surfen:** Mit dem Brett unter dem Arm zum Strand, liegend hinauspaddeln, auf dem Brett sitzen und auf die Welle
   warten, dann stehend hereinreiten, die Knie gebeugt, die Arme ausgestreckt, hinter sich die weiße Gischt. Surfen ist
@@ -1149,6 +1167,27 @@ Häusern, die Alten sitzen oft auf Matten. Bauleute tragen Holz zu den Baustelle
 Baum, Pflanzer tragen Setzlinge, Fischer fahren zu zweit hinaus und waten übers Riff.
 Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unterwegs.
 
+## Was belegt ist und was später
+
+Polinusa spielt in der Lapita-Zeit. Manches, was im Spiel zu sehen ist, ist für diese Zeit **durch Funde belegt**, anderes
+kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des 18. bis 20. Jahrhunderts, mündliche
+Überlieferung), und das Spiel nimmt an, dass die Vorfahren Ähnliches kannten.
+
+| Im Spiel | Belegt für die Lapita-Zeit? |
+| --- | --- |
+| Töpfe mit Zahnstempel-Mustern, Obsidian, Muschelringe und -beile, Steinbeile | ja, durch Funde |
+| Pfahlhäuser über der Lagune (Talepakemalai, Mussau) | ja, durch Funde |
+| Schwein, Hund, Huhn, Taro, Brotfrucht, Kokos, Pandanus im Kanu mitgebracht | ja, durch Funde und Genetik |
+| Fischfang im Riff und in der Lagune, Muschelsammeln, kleiner werdende Muscheln | ja, durch Muschelhaufen |
+| Auslegerkanus, Fahrten über offenes Meer | ja, erschlossen aus der Besiedlung; die Kanus selbst sind nicht erhalten |
+| Grabstock, Kokosfaser, Sennit, Mattenflechten | wahrscheinlich; Werkzeuge und Fasern selten erhalten |
+| Muschelhorn (pū) zum Rufen | Tritonshörner sind im Pazifik alt; für Lapita selbst nicht sicher |
+| Surfen auf Brettern | erst später belegt (Hawaiʻi, Tahiti, Berichte ab 1777) |
+| Drachen aus Blättern, Fadenspiele, Jonglieren (hiko) | erst später belegt (Melanesien und Polynesien, 19. und 20. Jh.) |
+| Geknotete Ahnenschnüre (taʻo mata) als Vorbild der Knotenschnur | erst später belegt (Marquesas, in Museen) |
+| Schlitztrommel (lali, pātē), Kava, Tapa | erst später belegt; Tapa-Schlegel aus Stein sind älter, aber nicht lapitazeitlich sicher |
+| Wörter wie rāhui, tufunga, taravana, fale | spätere polynesische Wörter, im Spiel als Namen genutzt |
+
 ## Quellen
 
 - Kirch, P. V. (1988), Long-distance exchange and island colonization: the Lapita case; Summerhayes, G. (2004) zu
@@ -1164,6 +1203,9 @@ Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unter
 - Passatwolken: Lebensdauer von Dutzenden Minuten, Wachsen, Reife mit Regen, Auflösung (Witte et al. 2014; Seelig et al.
   2023).
 - Talepakemalai, Mussau: Pfahlhäuser über der Lagune, 1300 bis 1100 v. Chr. (Kirch 2001, 2024).
+- Kirch, P. V. (2017), On the Road of the Winds: An Archaeological History of the Pacific Islands, 2. Auflage.
+- Finney, B. und Houston, J. D. (1996), Surfing: A History of the Ancient Hawaiian Sport.
+- Handy, E. S. C. (1923), The Native Culture in the Marquesas (Ahnen, Überlieferung).
 
 ## Nächste Schritte
 

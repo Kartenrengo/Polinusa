@@ -2,13 +2,13 @@
 // It builds where the game proposes, keeps errors and broken invariants, and reports how far each village gets.
 const {chromium}=require('playwright');
 const {PAGE} = require('./lib');
-const seeds = process.argv.slice(2).map(Number).filter(Boolean); if (!seeds.length) seeds.push(101, 202, 303);
+const args = process.argv.slice(2), MIN = +((args.find(a => a.startsWith('--min=')) || '--min=60').slice(6)), seeds = args.map(Number).filter(Boolean); if (!seeds.length) seeds.push(101, 202, 303);
 (async()=>{const b=await chromium.launch();
 for (const SEED of seeds){
 const p=await b.newPage({viewport:{width:390,height:844}});
 const errs=[];p.on('pageerror',e=>errs.push('PAGE '+e.message+' '+(e.stack||'').split('\n').slice(1,3).join(' ')));
 await p.goto(PAGE);await p.waitForTimeout(1500);
-const r = await p.evaluate(async (SEED)=>{
+const r = await p.evaluate(async ([SEED, MIN])=>{
   window.save = () => {}; const log = [], bad = [];
   newGame(SEED); landHome(isl(SEED % 2 ? 'wahl' : 'heimat')); closeSheet(); renderAll();
   const Hm = () => isl('heimat');
@@ -23,9 +23,34 @@ const r = await p.evaluate(async (SEED)=>{
     } };
   const answer = () => { if (eventNow){ const {E, o} = eventNow, I = E.place ? E.place(o) : o; const i = E.choices.findIndex(ch => { const c = ch.ask ? E.cost(o) : ch.cost; return !c || canPay(I, c); }); try { eventAct('choice', {dataset:{i:String(Math.max(0, i))}}); } catch (e){} if (sheetKind === 'event') closeSheet(); } };
   const tried = {}, stuck = []; let lastAdvice = '', same = 0;
-  for (let minute = 0; minute < 60; minute++){
+  // watchers for what a player would see go wrong: a site that does not move although people are there, a crew that keeps
+  // changing, a place left empty while people are free, a figure that cannot get where it is going
+  const W = {site:new Map(), stuck:new Set(), waitLong:new Set(), empty:new Map(), fig:new Map(), figStuck:new Set(), ms:{}};
+  const mark = (k, m) => { if (W.ms[k] == null) W.ms[k] = m; };
+  const watch = minute => {
+    const I = Hm(), sf = staffOf(I);
+    for (const s of I.buildings){
+      if (!s.bt || KINDS[s.kind].plant) continue;
+      const o = W.site.get(s.id) || {bt:s.bt, at:tick, born:tick, crew:'', changes:0}; W.site.set(s.id, o);
+      if (s.bt < o.bt - .01 || !crewAt(I, s)){ o.bt = s.bt; o.at = tick; }   // the clock runs only while it has builders
+      const c = (sf.crewP.get(s) || []).join(); if (c && o.crew && c !== o.crew) o.changes++; if (c) o.crew = c;
+      if (crewAt(I, s) && tick - o.at > 90 && !W.stuck.has(s.id)){ W.stuck.add(s.id); bad.push(`min ${minute}: ${s.kind}#${s.id} has builders but has not moved for 3 min (` + walkers.filter(w => w.job && w.job.b === s).map(w => w.leg + (w.on ? '' : '/off')).join(',') + ')'); }
+      if (!crewAt(I, s) && tick - o.born > 450 && !W.waitLong.has(s.id)){ W.waitLong.add(s.id); log.push(`  note min ${minute}: ${s.kind}#${s.id} waits in line for 15 min`); }
+    }
+    for (const [id, o] of W.site) if (!findB(id) || !findB(id).bt){ if (o.changes > 3) bad.push(`${(findB(id) || {}).kind}#${id}: builders changed ${o.changes} times`); W.site.delete(id); }
+    if (autoWork(I) && sf.free > 0) for (const b of placesOf(I)){ if (crewAt(I, b) || b.idle && ['use', 'near', 'trees', 'dep', 'full', 'storm', 'rahui', 'fallow'].includes(b.idle.why)) { W.empty.delete(b.id); continue; } const t0 = W.empty.get(b.id) ?? tick; W.empty.set(b.id, t0); if (tick - t0 === 60) log.push(`  note min ${minute}: ${b.kind} empty for 2 min while ${sf.free} free (${b.idle ? b.idle.why : 'no reason'})`); if (tick - t0 === 300) bad.push(`min ${minute}: ${b.kind} empty for 10 min while ${sf.free} are free`); }
+    // someone at work who does not count as there: the place would make less than it shows
+    for (const w of walkers) if (w.isl === I.id && w.job && !w.on && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 && !W.figStuck.has('on' + w.name)){ W.figStuck.add('on' + w.name); bad.push(`min ${minute}: ${w.name} works at ${KINDS[w.job.b.kind].n} (${w.job.type}, leg ${w.leg}, fx ${w.fx}${w.play ? ', play ' + w.play.k : ''}) but does not count as there`); }
+    for (const w of walkers){ if (w.isl !== I.id || !w.job || w.on || w.boat) { W.fig.delete(w); continue; }
+      const o = W.fig.get(w) || {x:w.x, y:w.y, at:tick}; W.fig.set(w, o); if (Math.hypot(w.x - o.x, w.y - o.y) > 3){ o.x = w.x; o.y = w.y; o.at = tick; }
+      else if (tick - o.at > 45 && !W.figStuck.has(w)){ W.figStuck.add(w); bad.push(`min ${minute}: ${w.name} on the way to ${KINDS[w.job.b.kind].n} has not moved for 90 s (leg ${w.leg}, at ${w.x | 0},${w.y | 0} to ${w.tx | 0},${w.ty | 0})`); } }
+    if (homesOf(I).some(b => tierOf(b) >= 2)) mark('Familienhaus', minute); if (homesOf(I).some(b => tierOf(b) >= 3)) mark('Meisterhaus', minute);
+    if (famsOf(I).length > 1) mark('erste Familie aus der Ferne', minute); if (ships.some(q => q.own)) mark('erstes eigenes Kanu', minute);
+    if (I.pop >= 20) mark('20 Menschen', minute); if (I.pop >= 30) mark('30 Menschen', minute); if (islands.filter(J => J.settled).length > 1) mark('zweites Dorf', minute);
+  };
+  for (let minute = 0; minute < MIN; minute++){
     for (let t = 0; t < 30; t++){
-      for (let k = 0; k < 40; k++){ stepWalkers(50); stepShips(performance.now(), 50); } walkAt = performance.now(); econ(); answer(); for (const s of ships.slice()) if (s.immig && s.state === 'moored') immigAnswer(s, true);
+      for (let k = 0; k < 40; k++){ stepWalkers(50); stepShips(performance.now(), 50); } walkAt = performance.now(); econ(); answer(); watch(minute); for (const s of ships.slice()) if (s.immig && s.state === 'moored') immigAnswer(s, true);
       if (sheetKind && sheetKind !== 'event') closeSheet();
     }
     for (const hb of readyHomes(Hm())) upgradeHouse(Hm(), hb);   // the player lets the houses rise
@@ -40,10 +65,11 @@ const r = await p.evaluate(async (SEED)=>{
     if (minute % 5 === 4){ check('min ' + (minute + 1)); log.push(`min ${minute + 1}: pop ${Hm().pop} fams ${famsOf(Hm()).length} roofless ${roofless(Hm())} stage ${STAGES[stageNow()].n} quest ${QUESTS[quest] ? QUESTS[quest].id : 'done'} advice "${A.t || '-'}" t2 ${tier2Pop(Hm())} lines ${linesOf(Hm()).length} kin ${kinState(Hm())} work ${staffOf(Hm()).total - staffOf(Hm()).free} free ${staffOf(Hm()).free} houses ${homesOf(Hm()).map(tierOf).join('')} stock ${['nahrung','wasser','holz','dach','faser','schnur'].map(k => k[0] + (Hm().stock[k] || 0)).join(' ')}`); }
   }
   log.push('places: ' + placesOf(Hm()).map(b => KINDS[b.kind].s + (famsOf(Hm()).find(f => f.job === b.id) ? '+' : '-') + (b.idle ? '(' + b.idle.why + (b.idle.k ? ':' + b.idle.k : '') + ')' : '')).join(' ') + ' fiber ' + (Hm().stock.faser || 0) + ' kokos ' + (Hm().stock.kokos || 0));
-  if (Hm().pop < 8) bad.push(`village collapsed: ${Hm().pop} people after an hour`);   // a calm builder game must not empty out
+  if (Hm().pop < 8) bad.push(`village collapsed: ${Hm().pop} people after an hour`);
+  log.push('milestones: ' + (Object.entries(W.ms).map(([k, m]) => `${k} min ${m}`).join(', ') || 'none'));   // a calm builder game must not empty out
   const sv = serialize(); if (!restore(sv)) bad.push('restore'); renderAll();
   return {log, bad:bad.slice(0, 12), stuck, built:Object.entries(tried).map(([k, v]) => k + ':' + v).join(' ')};
-}, SEED);
+}, [SEED, MIN]);
 console.log(`== seed ${SEED}\n${r.log.join('\n')}\nstuck: ${r.stuck.join(' | ') || 'none'}\nbuilt tries: ${r.built}\nBAD: ${r.bad.join('; ') || 'none'}\nerrors ${JSON.stringify(errs.slice(0, 5))}`);
 await p.close();
 }
