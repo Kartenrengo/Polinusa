@@ -1740,19 +1740,35 @@ document.addEventListener('visibilitychange', () => {
   if (el > 60000 && missing > 60000){ const R = catchUp(missing); if (R) welcomeBack(R); }
 });
 addEventListener('pagehide', () => save());
+/* a new game opens close to the landing place, a saved one shows home and the first atoll */
+function homeView(ok){
+  const b = boxOf(ok ? [isl('heimat'), isl('tochter')] : islands.filter(I => I.start)), bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+  const z = clampZ(Math.min((vw - 50) / bw, (vh - topH - botH - 40) / bh, ok ? 1 : 1.4));
+  camAnim = null; Object.assign(cam, camFor((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z)); clampCam(); applyCam();
+}
+/* Play the other slot, or begin one anew. The game you leave is kept; the other one has gone on while you were away, as
+   when the page opens. An empty slot, or one begun anew, starts with the canoe at sea. The copies of a slot begun anew
+   stay in the menu for a while, so a slip can be undone. */
+function switchSlot(n, fresh){
+  if (!fresh && n === curSlot) return;
+  save(); closeSheet(); endSteer(); if (mode === 'place' || mode === 'move') endPlace(); setBar(null);
+  curSlot = n; try { localStorage.setItem('polinusa-slot', String(n)); if (fresh) localStorage.removeItem(slotKey(n)); } catch (e){}
+  let ok = false, raw = null; try { raw = fresh ? null : localStorage.getItem(slotKey(n)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); } catch (e){ ok = false; }
+  if (!ok){ newGame(); beginLanding(); toast(`Spielstand ${n}: ein neues Spiel mit neuen Inseln.`, 3000, false); return; }
+  landing = null; document.body.classList.remove('landing');
+  const away = savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
+  invalidate(true); renderAll(); updateHUD(); homeView(true); toast(`Spielstand ${n}: ${isl('heimat').name}.`, 2400, false);
+  if (away && away.ms >= 3 * 60000) welcomeBack(away);
+}
 function start(data){
   injectDefs();
   let ok = false;
-  try { const raw = (data && data.save) || localStorage.getItem(SAVE_KEY); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); } catch (e){}   // a broken save: the newest copy
+  try { const raw = (data && data.save) || localStorage.getItem(slotKey(curSlot)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); } catch (e){}   // a broken save: the newest copy
   // a game from the old rules is not carried over: the island economy works differently now
   let oldGame = false; try { for (const k of OLD_KEYS) if (localStorage.getItem(k)){ oldGame = true; localStorage.removeItem(k); } } catch (e){}
   if (!ok) newGame();
   const away = ok && savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
-  renderAll(); measure();
-  // a new game opens close to the landing place, a saved one shows home and the first atoll
-  const b = boxOf(ok ? [isl('heimat'), isl('tochter')] : islands.filter(I => I.start)), bw = b.x1 - b.x0, bh = b.y1 - b.y0;
-  const z = clampZ(Math.min((vw - 50) / bw, (vh - topH - botH - 40) / bh, ok ? 1 : 1.4));
-  Object.assign(cam, camFor((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z)); clampCam(); applyCam();
+  renderAll(); measure(); homeView(ok);
   // fonts, patterns and the first bitmaps load before the first frame, so nothing pops in
   const fonts = document.fonts ? Promise.all([document.fonts.load(NAME_FONT), document.fonts.load(SUB_FONT)]).catch(() => {}) : null;
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });

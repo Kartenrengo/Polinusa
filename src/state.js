@@ -141,7 +141,7 @@ const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1
 const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk, tt]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, job:job || 0, ln:ln || 0, ...(wk ? {wk} : {}), ...(tt ? {tt} : {}), ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
-  return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:3, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
+  return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), sum:saveSum(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:3, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0,
@@ -196,10 +196,17 @@ const liveLines = () => { const used = new Set(); for (const I of islands) for (
 /* Saves name the current task by id */
 // a game saved before Hawaiki came after the great voyage stood at the chief's village before the voyage: it goes on with the voyage
 const questFromSave = s => { const old = s.qo || 0, id = s.qid === 'chief' && !old ? 'tauchen' : (s.qid === 'kultur' || s.qid === 'done') && old < 3 ? 'sterne' : s.qid; return id === 'done' ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === id)); };   // and those past the chief's village go on with the long pause
-function save(){ if (landing) return; try { const raw = serialize(); localStorage.setItem(SAVE_KEY, raw); backupTick(raw); } catch (e){} }   // nothing to keep before the clan has landed
+/* Two games side by side. Each slot keeps its own save and its own copies; slot 1 is the save from before there were
+   slots. The slot in play is remembered. A save carries a short summary for the menu (sum). */
+const SLOTS = 2;
+let curSlot = (() => { try { return clamp(Math.round(+localStorage.getItem('polinusa-slot')) || 1, 1, SLOTS); } catch (e){ return 1; } })();
+const slotKey = n => n === 1 ? SAVE_KEY : `${SAVE_KEY}-s${n}`;
+const saveSum = () => { const vs = islands.filter(I => I.settled), H0 = islands.find(I => I.id === 'heimat'); return {n:H0 ? H0.name : '', p:vs.reduce((t, I) => t + I.pop, 0), d:vs.length, y:yearOf() + 1}; };
+function slotInfo(n){ try { const raw = localStorage.getItem(slotKey(n)); if (!raw) return null; const s = JSON.parse(raw); return {at:+s.at || 0, sum:s.sum || null}; } catch (e){ return {at:0, sum:null}; } }
+function save(){ if (landing) return; try { const raw = serialize(); localStorage.setItem(slotKey(curSlot), raw); backupTick(raw); } catch (e){} }   // nothing to keep before the clan has landed
 /* Copies: every five minutes the game is also kept in one of three slots, the oldest overwritten. If the save itself is
    ever broken, the newest copy that loads is used. From the menu the game can be saved to a file and loaded again. */
-const BACKUP_EVERY = 5 * 60 * 1000, BACKUPS = 3, backupKey = i => `${SAVE_KEY}-b${i}`;
+const BACKUP_EVERY = 5 * 60 * 1000, BACKUPS = 3, backupKey = i => `${slotKey(curSlot)}-b${i}`;
 function backups(){ const out = []; try { for (let i = 0; i < BACKUPS; i++){ const b = JSON.parse(localStorage.getItem(backupKey(i)) || 'null'); if (b && b.raw) out.push({i, at:b.at, raw:b.raw}); } } catch (e){} return out.sort((a, b) => b.at - a.at); }
 function backupTick(raw){
   const list = backups(); if (list.length && Date.now() - list[0].at < BACKUP_EVERY) return;

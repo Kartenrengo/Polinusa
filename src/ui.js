@@ -144,7 +144,15 @@ function toast(msg, ms = 2600, keep = true){
 function foldToast(){ const t = $('toast'); t.classList.remove('open'); clearTimeout(toastT); toastT = setTimeout(() => { if (!t.classList.contains('open')) t.hidden = true; }, 420); }
 const newsOpen = () => !$('newsList').hidden;
 function newsBadge(){ const n = $('newsNum'); n.hidden = !unread; n.textContent = unread > 9 ? '9+' : unread; $('newsBtn').setAttribute('aria-label', unread ? `Nachrichten, ${unread} neu` : 'Nachrichten'); }
-const ago = at => { const s = (Date.now() - at) / 1000; return s < 60 ? 'eben' : s < 3600 ? `vor ${Math.floor(s / 60)} Min` : `vor ${Math.floor(s / 3600)} Std`; };
+const ago = at => { const s = (Date.now() - at) / 1000; return s < 60 ? 'eben' : s < 3600 ? `vor ${Math.floor(s / 60)} Min` : s < 172800 ? `vor ${Math.floor(s / 3600)} Std` : `vor ${Math.floor(s / 86400)} Tagen`; };
+/* a slot in the menu: what is in it, and the buttons to play it or begin it anew */
+function slotRow(n){
+  const me = n === curSlot, info = me ? {at:Date.now(), sum:landing ? null : saveSum()} : slotInfo(n), s = info && info.sum;
+  const what = me && landing ? 'Das Kanu sucht noch Land' : s ? `${s.n} · ${s.p} Menschen${s.d > 1 ? ` in ${s.d} Dörfern` : ''} · ${s.y}. Jahr` : info ? 'Ein Spiel' : 'Leer';
+  return `<li class="${me ? 'okk' : ''}">${icon('insel')}<span class="nm">Spielstand ${n}<small>${what}${!me && info && info.at ? ` · ${ago(info.at)}` : ''}</small></span>` +
+    (me ? chipS('ok', 'jetzt') : `<button class="btn small primary" type="button" data-act="slot" data-n="${n}">${info ? 'Spielen' : 'Beginnen'}</button>`) +
+    (me || info ? `<button class="chip" type="button" data-act="${me ? 'askreset' : 'askslot'}" data-n="${n}">Neu</button>` : '') + '</li>';
+}
 const esc = t => t.replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'})[c]);
 function renderNews(){ $('newsList').innerHTML = `<p class="cap">Nachrichten</p>` + (news.length ? `<ul>${news.map(n => `<li><small>${ago(n.at)}</small>${esc(n.msg)}</li>`).join('')}</ul>` : '<p class="empty">Noch ist nichts geschehen.</p>'); }
 function openNews(){
@@ -801,13 +809,15 @@ function renderSheet(){
   } else if (sheetKind === 'finale'){
     h += finaleMarkup();
   } else if (sheetKind === 'menu'){
-    h += head('Menü', `Welt Nr. ${seed}`);
-    if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Alles von vorn, mit neuen Inseln?</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu anfangen</button></span></div>`;
+    h += head('Menü', `Spielstand ${curSlot} · Welt Nr. ${seed}`);
+    if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Spielstand ${curSlot} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu beginnen</button></span></div>`;
+    else if (sheetData && sheetData.slotNew) h += `<div class="rowx"><span>Spielstand ${sheetData.slotNew} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="slotnew" data-n="${sheetData.slotNew}">Neu beginnen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
-      `<p class="sec">Spielstand</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
+      `<p class="sec">Spielstände</p><ul class="list needs slots">${Array.from({length:SLOTS}, (_, i) => slotRow(i + 1)).join('')}</ul>` +
+      `<p class="sec">Als Datei</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
       (backups().length ? `<div class="chips copies">${backups().map(b => `<button class="chip" type="button" data-act="backup" data-i="${b.i}">Kopie ${ago(b.at)}</button>`).join('')}</div>` : '') +
       `<details class="more"><summary>Als Text</summary><textarea id="saveText" class="savetext" rows="3" spellcheck="false" aria-label="Spielstand als Text"></textarea><div class="rowx"><span class="chips"><button class="chip" type="button" data-act="showtext">Zeigen</button><button class="chip" type="button" data-act="loadtext">Aus Text laden</button></span></div></details>` +
-      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span><button class="btn" type="button" data-act="askreset">Neu anfangen</button></div>`;
+      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();
 }
@@ -914,7 +924,10 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'backup'){ const b = backups().find(q => q.i === +btn.dataset.i); if (b) loadRaw(b.raw); return; }
     if (act === 'showtext'){ const t = $('saveText'); save(); t.value = serialize(); t.focus(); t.select(); return; }
     if (act === 'loadtext'){ loadRaw($('saveText').value.trim()); return; }
-    if (act === 'reset'){ try { localStorage.removeItem(SAVE_KEY); } catch (err){} newGame(); beginLanding(); toast('Neues Spiel, neue Inseln.', 2600, false); return; }
+    if (act === 'reset'){ switchSlot(curSlot, true); return; }
+    if (act === 'slot'){ switchSlot(+btn.dataset.n); return; }
+    if (act === 'askslot'){ sheetData = {slotNew:+btn.dataset.n}; renderSheet(); return; }
+    if (act === 'slotnew'){ switchSlot(+btn.dataset.n, true); return; }
   }
 });
 /* the game as a file: inside the claude.ai viewer through its downloads capability (the viewer confirms), in a plain

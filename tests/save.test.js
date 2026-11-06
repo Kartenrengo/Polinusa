@@ -1,4 +1,5 @@
-// Saving: the game survives a reload; a broken save falls back to the newest copy; a game saved as text loads again.
+// Saving: the game survives a reload; a broken save falls back to the newest copy; a game saved as text loads again;
+// two slots keep two games apart, each can be begun anew.
 const {chromium} = require('playwright');
 const {PAGE} = require('./lib');
 (async () => {
@@ -19,5 +20,19 @@ const {PAGE} = require('./lib');
   // as text: save, change, load the text again
   const r3 = await p.evaluate(() => { closeSheet(); const raw = serialize(); isl('heimat').stock.holz = 3; loadRaw(raw); const ok = isl('heimat').stock.holz; loadRaw('kein Spiel'); return {ok, after:isl('heimat').stock.holz}; });
   if (r3.ok !== 17 || r3.after !== 17) bad.push('text load: ' + JSON.stringify(r3));
-  console.log(JSON.stringify({a, r1, r2, r3})); console.log('BAD: ' + (bad.concat(errs).join('; ') || 'none')); await b.close();
+  // two slots: the second begins with the landing, the first stays as it was; each comes back; "Neu" begins one anew
+  const r4 = await p.evaluate(() => {
+    const seed1 = seed; switchSlot(2); const fresh2 = !!landing && curSlot === 2; landHome(isl('heimat')); closeSheet(); isl('heimat').stock.holz = 5; save(); const seed2 = seed;
+    switchSlot(1); const back1 = !landing && seed === seed1 && isl('heimat').stock.holz === 17;
+    openSheet('menu'); const rows = $('sheetBody').querySelectorAll('.slots li').length, says = /Spielstand 2/.test($('sheetBody').textContent); closeSheet();
+    switchSlot(2); const back2 = seed === seed2 && isl('heimat').stock.holz === 5;
+    switchSlot(2, true); const anew = !!landing && seed !== seed2; switchSlot(1); const still1 = seed === seed1;
+    return {fresh2, back1, rows, says, back2, anew, still1, slot:curSlot};
+  });
+  if (!r4.fresh2 || !r4.back1 || r4.rows !== 2 || !r4.says || !r4.back2 || !r4.anew || !r4.still1) bad.push('two slots: ' + JSON.stringify(r4));
+  // the slot in play is kept over a reload
+  await p.evaluate(() => switchSlot(2)); await p.reload(); await p.waitForTimeout(2500);
+  const r5 = await p.evaluate(() => ({slot:curSlot}));
+  if (r5.slot !== 2) bad.push('slot not kept over a reload: ' + JSON.stringify(r5));
+  console.log(JSON.stringify({a, r1, r2, r3, r4, r5})); console.log('BAD: ' + (bad.concat(errs).join('; ') || 'none')); await b.close();
 })();

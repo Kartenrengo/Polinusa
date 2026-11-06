@@ -39,7 +39,7 @@ Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, is
 es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki),
 `build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
 Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
-jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text), `phone`
+jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text, zwei Spielstände), `phone`
 (vierfach langsame CPU, drei Bildschirme von 320×568 bis 390×844, Knopfgrößen, die Hausansicht scrollt nicht, auch nicht bei einem vollen Haus), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
 Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer je anderthalb Stunden.
 
@@ -55,8 +55,15 @@ die Zahl der Figuren. Damit lässt sich das Spiel auf einem echten Handy prüfen
 
 ### Spielstand
 
-Das Spiel speichert im Browser. Alle fünf Minuten legt es zusätzlich eine Kopie an, drei werden aufbewahrt; ist der
-Spielstand einmal kaputt, lädt es die neueste Kopie. Im Menü unter „Spielstand“: **Sichern** lädt eine Datei herunter,
+Das Spiel speichert im Browser. Es gibt **zwei Spielstände**. Im Menü unter „Spielstände“ steht jeder mit der
+Heimatinsel, der Zahl der Menschen, dem Jahr und wann zuletzt gespielt. **Spielen** wechselt: Das laufende Spiel bleibt
+gespeichert, das andere ist inzwischen weitergelaufen, wie nach einer Pause. Ein leerer Spielstand beginnt mit dem Kanu
+auf See. **Neu** beginnt einen Spielstand neu, mit neuen Inseln, nach einer Rückfrage; das gilt auch für den, der gerade
+läuft. Welcher Spielstand zuletzt lief, merkt sich das Spiel. Der bisherige Spielstand ist Spielstand 1.
+
+Alle fünf Minuten legt das Spiel zusätzlich eine Kopie an, drei je Spielstand werden aufbewahrt; ist der
+Spielstand einmal kaputt, lädt es die neueste Kopie. Auch nach „Neu“ bleiben die Kopien des alten Spiels eine Weile im
+Menü, so lässt sich ein Versehen zurücknehmen. Im Menü unter „Als Datei“: **Sichern** lädt eine Datei herunter,
 **Laden** liest sie wieder ein (im claude.ai-Artefakt fragt der Betrachter vorher, ob er die Datei speichern will), die Kopien lassen sich antippen, und „Als Text“ zeigt den Spielstand zum Kopieren und
 Einfügen, wo Dateien nicht gehen.
 

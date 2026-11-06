@@ -7,7 +7,7 @@ p.on('console', m => { if (m.type() === 'error' && !/ERR_TUNNEL|fonts|Failed to 
 await p.goto(PAGE);await p.waitForTimeout(2000);
 const res = await p.evaluate(async ()=>{
   window.save = () => {}; const log = []; let clicks = 0; const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const pressAll = async (tag, skip = /reset|askreset/) => {
+  const pressAll = async (tag, skip = /reset|slot/) => {
     // press each button of the open sheet once, re-opening the sheet as it was after each press
     const kind = sheetKind, data = sheetData && JSON.parse(JSON.stringify(sheetData, (k, v) => k === 'R' ? undefined : v));
     if (!kind) return;
@@ -36,7 +36,7 @@ const res = await p.evaluate(async ()=>{
     tapRandom(40); closeSheet();
   };
   // 1. at sea
-  tapRandom(30); try { openSheet('landing', {}); } catch (e){ log.push('landing ' + e.message); } await pressAll('landing', /found|reset|askreset/); closeSheet();
+  tapRandom(30); try { openSheet('landing', {}); } catch (e){ log.push('landing ' + e.message); } await pressAll('landing', /found|reset|slot/); closeSheet();
   // 2. landed, early
   landHome(isl('wahl')); closeSheet(); for (let i = 0; i < 20; i++) econ(); await sweep('early');
   // 3. a grown game: many buildings, canoes, routes, a clan, a culture, an event
@@ -60,7 +60,7 @@ const res = await p.evaluate(async ()=>{
   // 6. a new game from the menu, then sweep in the landing state again
   openSheet('menu'); const rb = [...document.querySelectorAll('#sheetBody button')].find(b => b.dataset.act === 'askreset'); if (rb){ rb.click(); const r2 = [...document.querySelectorAll('#sheetBody button')].find(b => b.dataset.act === 'reset'); if (r2) r2.click(); }
   log.push('after reset landing ' + !!landing + ' sheet ' + sheetKind);
-  tapRandom(20); await pressAll('landing2', /found|reset|askreset/);
+  tapRandom(20); await pressAll('landing2', /found|reset|slot/);
   return {log, clicks};
 });
 await p.waitForTimeout(3000);
