@@ -1,6 +1,6 @@
 // Like a phone: a slow CPU (four times slower, as a mid-range phone), the screen of a small and a big phone. Measures the
 // frame time close up over the village and the forest, and looks for things that stick out of the screen or are too
-// small to tap.
+// small to tap, and for a house sheet that has to be scrolled.
 const {chromium} = require('playwright');
 const {PAGE} = require('./lib');
 (async () => {
@@ -25,13 +25,16 @@ const {PAGE} = require('./lib');
       const out = [], I = isl('heimat'), sheets = [['needs'], ['store'], ['calendar'], ['menu'], ['finale'], ['info', {id:I.buildings.find(q => q.kind === 'ernte').id}], ['info', {id:homesOf(I)[0].id}]];
       for (const [k, d] of sheets){ closeSheet(); openSheet(k, d);
         const body = $('sheetBody'); if (body.scrollWidth > body.clientWidth + 2) out.push(`${k}: ${body.scrollWidth - body.clientWidth}px too wide`);
+        // a house shows all of itself without scrolling, also a family house on its way to a master's house
+        if (d && HOME_KINDS.has(findB(d.id).kind)) for (const t of [1, 2]){ const hb = findB(d.id); hb.t = t; renderSheet(); $('sheet').classList.remove('opening');
+          if (body.scrollHeight > body.clientHeight + 2) out.push(`house step ${t}: sheet scrolls ${body.scrollHeight - body.clientHeight}px`); hb.t = 1; }
         for (const el of body.querySelectorAll('button')){ const r = el.getBoundingClientRect(); if (r.width && (r.width < 28 || r.height < 26)) out.push(`${k}: small button "${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 18)}" ${r.width | 0}x${r.height | 0}`); }
       }
       closeSheet(); const top = $('top').getBoundingClientRect(); if ($('top').scrollWidth > innerWidth + 2) out.push('top band too wide');
       return out;
     });
     if (ui.length) log.push('  ' + ui.slice(0, 12).join('\n  '));
-    bad.push(...errs, ...ui.filter(x => /too wide/.test(x)));
+    bad.push(...errs, ...ui.filter(x => /too wide|scrolls/.test(x)).map(x => `${w}x${h} ${x}`));
     // the headless browser draws without a graphics card, and how fast it is depends on the machine: only a picture that
     // nearly stands still counts as a failure
     if (avg > 160) bad.push(`${w}x${h}: frames too slow (${avg.toFixed(0)} ms on average)`);

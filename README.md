@@ -207,12 +207,16 @@ Einfach und nach Bedeutung geordnet:
   Kanu kommt. Antippen öffnet die Übersicht.
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.
-- **Ein Haus antippen** zeigt fast nur Bilder: die Stufe als Punkte, die Plätze (besetzt, frei, noch zu), die Leute mit
-  Namen, Alter und Arbeit, dann **die Schnur der Familie** (siehe unten). Darunter steht nur, was knapp ist oder fehlt,
-  jeweils mit einem Knopf, auf dem das Gebäude abgebildet ist, das hilft („Quelle“, „Kanus“). Ganz unten das
-  **Ausbau** in Bildern: das Haus jetzt → das Haus danach, die Plätze („4→6“), ein Kind, wenn dort Kinder kommen, und
-  „+“ mit den Bildern dessen, was die Familie dann dazu will; darunter jedes Material als Bild mit „hat/braucht“, grün
-  oder rot; ein rotes antippen zeigt, wo es herkommt. Daneben der Knopf „Ausbauen“.
+- **Ein Haus antippen** zeigt alles auf einem Blatt, **ohne Scrollen**, auch auf kleinen Handys (320×568 bis 390×844
+  werden im Handy-Test gemessen). Oben der Name der Familie, darunter die Stufe als Punkte, der Name des Hauses und die
+  Plätze (frei, noch zu, „4/6“, ein Kind, wo Kinder kommen). Dann die Leute in einer Zeile: Name, Alter und das Bild des
+  Gebäudes, an dem sie arbeiten (gestrichelt, wenn sie es bauen). Dann **die Schnur der Familie** mit den Knoten dieser
+  Stufe (siehe unten). Für jeden losen oder fehlenden Knoten ein Knopf: Knoten, Bedürfnis, dann das Gebäude, das hilft
+  („Erdofen“, „Kanus“). Der **Ausbau** in einem Kasten: Haus jetzt → Haus danach mit Namen, die Plätze („6→8“), „+“ mit
+  dem, was die Familie dann dazu will; darunter jedes Material einmal als Bild mit „hat/braucht“ (wird ein Gut für den
+  Ausbau gebraucht und muss danach im Lager liegen, steht es nur einmal da), grün oder rot, und daneben der Knopf
+  „Ausbauen“. Muss etwas von außen kommen, steht neben dem Knopf die Bildkette dorthin. Unten die Linie der Familie und
+  „Versetzen“, „Entfernen“.
 - **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
   holen sollen.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:

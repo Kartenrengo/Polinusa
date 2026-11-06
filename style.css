@@ -482,8 +482,6 @@ button:active:not(:disabled){scale:.93}
 .cord .bead{position:relative;z-index:1;flex:none;width:9px;height:13px;margin:5px 3px 0;border-radius:50%;background:#F7F1E3;box-shadow:inset 0 0 0 1.2px #2B1D14;}
 .cord .bead::after{content:"";position:absolute;left:4px;top:3px;bottom:3px;width:1px;background:#2B1D14}
 .cord .cnt{position:relative;z-index:1;align-self:center;margin:0 0 6px auto;padding:1px 7px;font:800 13px/1.3 var(--font-ui);background:var(--cloth);border-radius:8px;box-shadow:0 0 0 1.5px var(--brown);font-variant-numeric:tabular-nums}
-/* what is short, with the building that helps */
-.lacks li{min-height:38px}
 .chip.way{display:inline-flex;align-items:center;gap:3px;padding:0 9px 0 4px;white-space:nowrap}
 .chip.way .bi{width:28px;height:24px;flex:none}
 .chip.way .ic{width:18px;height:18px}
@@ -493,17 +491,12 @@ button:active:not(:disabled){scale:.93}
 .pips i.on{background:var(--ochre)}
 .seats .kids .ic{width:20px;height:20px;margin-left:6px}
 .rise{display:flex;flex-direction:column;gap:7px;margin:4px 0;padding:9px 11px 11px;background:var(--e1) no-repeat 0 0/100% 100%}
-.rise-head{display:flex;align-items:center;gap:6px;font:800 16px/1.1 var(--font-name)}
-.rise-head > .ic{width:22px;height:22px}
-.rise-head .room{margin-left:auto;display:inline-flex;align-items:center;gap:2px;font:800 14px/1 var(--font-ui)}
-.rise-head .room .ic{width:18px;height:18px}
 .costs{display:flex;flex-wrap:wrap;gap:6px}
 .cost{display:inline-flex;align-items:center;gap:3px;min-height:32px;padding:0 9px 0 5px;border:0;border-radius:16px;font:800 13.5px/1 var(--font-ui);color:var(--ink);font-variant-numeric:tabular-nums;background:#E4EED6;box-shadow:inset 0 0 0 2px var(--ok)}
 .cost .ic{width:19px;height:19px}
 .cost.out{background:#F6E3C4;box-shadow:inset 0 0 0 2px var(--ochre);color:var(--ochre)}
 button.cost{cursor:pointer}
 button.cost::after{content:"+";margin-left:3px;font-weight:800}
-.rise .btn{align-self:flex-end}
 .sub.line{font-size:12px}
 .tier-head small{display:inline-flex;align-items:center;gap:2px}
 .tier-head small .ic{width:15px;height:15px;margin-left:4px}
@@ -612,11 +605,8 @@ button.cost::after{content:"+";margin-left:3px;font-weight:800}
 .copies{margin:4px 0}
 .btn .ic{display:inline-block}
 /* the build-out: house now → house then, the room, children, the new needs */
-.rise .sec{margin:0}
 .rise-pic{display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap}
 .rise-pic .tp{display:flex;flex-direction:column;align-items:center;gap:0}
-.rise-pic .tp small{font:700 11px/1.1 var(--font-ui);color:var(--muted)}
-.rise-pic .tp.next small{color:var(--ink)}
 .tierpic{width:56px;height:50px;display:block}
 .rise-pic .tp:not(.next) .tierpic{width:46px;height:41px;opacity:.85}
 .arr2{width:22px;height:12px;margin-bottom:22px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 12'%3E%3Cpath d='M1 6Q6 3 11 6T19 6' fill='none' stroke='%23A84A2C' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M15 2.4L20.4 6L15 9.6' fill='none' stroke='%23A84A2C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
@@ -629,3 +619,69 @@ button.cost::after{content:"+";margin-left:3px;font-weight:800}
 .yamyear{display:inline-flex;align-items:center;gap:3px;font:800 13px/1 var(--font-ui)}
 .yamyear .ic{width:18px;height:18px}
 .yamyear .arr2{width:18px;height:10px;margin:0}
+/* ---------- a house on one sheet, without scrolling: the people with their work and the free places in one row, the
+   cord, what is short as buttons to the building that helps, the build-out with its button beside what it takes */
+.folk.home{align-items:center;gap:4px;margin:0}
+.folk.home .who{gap:2px;padding:2px 4px 2px 6px;min-height:30px;font-size:13px}
+.folk.home .who small{margin-left:1px;font-size:11px}
+.folk.home .who .bi{width:21px;height:18px;flex:none;margin:-2px -1px -2px 1px}
+.folk.home .who .ic{width:16px;height:16px;margin-left:1px}
+.folk.home .wk.site{display:inline-flex;border-bottom:2px dashed var(--ochre)}
+.sheet-head p.sub:has(.tn0){display:flex;align-items:center;flex-wrap:wrap;gap:3px 6px;margin-top:2px}
+.sheet-head .seats{margin:0;gap:0}
+.sheet-head .seat .ic{width:18px;height:18px}
+.sheet-head .seats b{margin-left:4px;font-size:14px;color:var(--ink)}
+.sheet-head .seats .kids .ic{width:17px;height:17px;margin-left:4px}
+.fixes{display:flex;flex-wrap:wrap;gap:6px}
+.fix{display:inline-flex;align-items:center;gap:2px;min-height:32px;padding:0 8px 0 4px;border:0;border-radius:16px;font:700 12.5px/1 var(--font-ui);color:var(--ink);background:var(--cloth-hi);box-shadow:inset 0 0 0 2px #C99A3A;white-space:nowrap}
+.fix .kg{width:19px;height:16px;flex:none;margin-right:-3px}
+.fix.low{box-shadow:inset 0 0 0 2px #C99A3A;background:#FBF1D9}
+.fix.out{background:#F6E3C4;box-shadow:inset 0 0 0 2px var(--ochre)}
+.fix .ic{width:18px;height:18px;flex:none}
+.fix .bi{width:24px;height:21px;flex:none}
+.fix .arr{flex:none;width:8px;height:4px;margin:0 1px;background:repeating-linear-gradient(90deg,#8C6440 0 3px,transparent 3px 5px)}
+.fix small{white-space:normal;font:600 11.5px/1.2 var(--font-ui);color:var(--muted);margin-left:2px;padding:3px 0}
+button.fix{cursor:pointer}
+.rise{gap:6px;margin:0;padding:7px 10px 9px}
+.rise-pic{align-items:center;gap:4px}
+.rise-pic .tierpic{width:37px;height:33px}
+.rise-pic .tp:not(.next) .tierpic{width:29px;height:26px}
+.rise-pic .arr2{width:18px}
+.rise-pic .arr2{margin:0}
+.rise-pic .tn{font:800 13.5px/1.1 var(--font-name);margin-left:1px}
+.rise-pic .gain .ic{width:18px;height:18px}
+.rise-pic .gain{gap:4px}
+.rise-pic .wants{padding:2px 5px 2px 4px}
+.rise .cost::after{content:none}
+.rise .costs .btn{min-height:34px}
+.rise .chain{margin:0}
+.rise .chain .arr{width:6px}
+.rise .costs .btn{padding:0 10px}
+.fix > span{position:relative;top:1px}
+}
+.sheet.tall{max-height:68%}
+@media (max-height:620px){.sheet.tall{max-height:80%}}
+.rise .step-ic{width:32px;height:32px}
+.rise .step-ic .ic{width:18px;height:18px}
+.rise .step-ic .bi{width:26px;height:22px}
+.rise-pic .gain{margin:0 0 0 auto}
+.costs{gap:5px;align-items:center}
+.cost{min-height:30px;padding:0 8px 0 4px;font-size:13px}
+.costs .btn{margin-left:auto}
+.rowx.foot{flex-wrap:nowrap}
+.rowx.foot .chips{margin-left:auto;flex:none}
+.rowx.foot .line{min-width:0}
+/* the smallest phones: the house before the build-out goes, the steps and their chips get smaller */
+@media (max-width:340px){
+.rise-pic .tp:not(.next){display:none}
+.rise-pic .arr2{width:15px}
+.rise-pic .tn{font-size:12.5px}
+.rise-pic .gain .ic{width:16px;height:16px}
+.cost{padding:0 6px 0 3px;gap:2px;font-size:12.5px}
+.cost .ic{width:16px;height:16px}
+.rise .step-ic{width:28px;height:28px}
+.rise .step-ic .bi{width:23px;height:20px}
+.rise .step-ic .ic{width:16px;height:16px}
+.rise .costs .btn{padding:0 9px;font-size:13.5px}
+.rise .costs .btn .ic{display:none}
+.rise .cost.kn{display:none}

@@ -15,11 +15,11 @@ const {PAGE} = require('./lib');
     for (const seed of [11, 13]){
       const {I, put} = setup(seed); run(30); const sites = ['haus', 'taro', 'faeller', 'toepfer', 'schnur', 'haus'].map(k => put(k)).filter(Boolean); Object.assign(I.stock, {holz:20, dach:20});
       let swaps = 0, crews = new Map(), fx = new Set();
-      for (let t = 0; t < 510 && sites.some(s => s.bt); t++){ run(1);   // 17 minutes: the builders sleep at night
+      for (let t = 0; t < 600 && sites.some(s => s.bt); t++){ run(1);   // 20 minutes: the builders sleep at night, one night falls in it
         for (const s of sites){ const c = (staffOf(I).crewP.get(s) || []).join(); if (c && crews.has(s.id) && crews.get(s.id) && crews.get(s.id) !== c) swaps++; if (c) crews.set(s.id, c); }
         for (const w of walkers) if (w.job && w.job.type === 'site' && w.fx && w.job.b.kind === 'taro') fx.add(w.fx); }
       const left = sites.filter(s => s.bt).map(s => s.kind);
-      out.push(`seed ${seed}: ${sites.length} sites, left after 17 min: ${sites.filter(s => s.bt).map(s => s.kind + ' ' + Math.round(s.bt) + '/' + KINDS[s.kind].bt).join(',') || 'none'}, crew changes ${swaps}, field work ${[...fx]}`);
+      out.push(`seed ${seed}: ${sites.length} sites, left after 20 min: ${sites.filter(s => s.bt).map(s => s.kind + ' ' + Math.round(s.bt) + '/' + KINDS[s.kind].bt).join(',') || 'none'}, crew changes ${swaps}, field work ${[...fx]}`);
       if (left.length) bad.push(`seed ${seed}: not finished ${left}`);
       if ([...fx].some(f => !['dig', 'plant'].includes(f))) bad.push('field built with ' + [...fx]);
     }

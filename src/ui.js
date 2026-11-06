@@ -314,8 +314,8 @@ function cordOf(knots, count){
   });
   return h + (count ? `<b class="cnt">${count}</b>` : '') + '</div>';
 }
-function knotCord(I, f, t, nd){
-  const cur = famNeeds(I, f, nd.list), nxt = t < 3 ? TIERS[t + 1].needs.filter(k => !TIERS[t].needs.includes(k)) : [];
+function knotCord(I, f, t, nd, ahead = true){
+  const cur = famNeeds(I, f, nd.list), nxt = ahead && t < 3 ? TIERS[t + 1].needs.filter(k => !TIERS[t].needs.includes(k)) : [];
   const ok = cur.filter(n => n.state !== 'out').length;   // a loose knot still holds
   return cordOf([...cur.map(n => ({k:n.k, st:n.state})), ...(nxt.length ? [{bead:true}] : []), ...nxt.map(k => ({k, st:'next'}))], `${ok}/${cur.length}`);
 }
@@ -349,38 +349,54 @@ const tierPic = t => `<svg class="tierpic" viewBox="-17 -26 34 30" aria-hidden="
 const knotIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knot"/></svg>';
 /* ---------- a house: who lives here, the cord of its needs, and what it takes to rise */
 const seatIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-pop"/></svg>';
+/* what a person does, as the picture of the place: the building they work at (dashed when they build it), a child, or idle */
+function workPic(I, p){
+  if (!isAdult(p)) return stageOf(p) === 'kid' ? icon('kind') : '';
+  const site = [...staffOf(I).crewP].find(([q, ids]) => (q.bt || (q.kind === 'werft' && I.yard)) && ids.includes(p.id));
+  if (site) return `<span class="wk site">${bIcon(site[0].kind)}</span>`;
+  const b = p.job && findB(p.job); return b ? bIcon(b.kind) : icon('idle');
+}
+/* One sheet without scrolling: the family and its step; the people with their work and the free places in one row; the
+   cord of today's needs; what is short as one button each to the building that helps; the build-out as house → house,
+   what it brings and what it takes, with the button beside it. */
 function houseMarkup(I, b){
   const f = famOfHome(I, b), t = tierOf(b), T = TIERS[t], nd = needsOf(I), top = b.kind === 'fale' ? 4 : 3;
   const pips = `<span class="pips" role="img" aria-label="Stufe ${t} von ${top}">${Array.from({length:top}, (_, i) => `<i class="${i < t ? 'on' : ''}"></i>`).join('')}</span>`;
-  let h = head(`${T.n}${f ? ` · ${famName(f)}` : ''}`, pips);
-  if (!f){ const imm = immigFor(I); return h + `<div class="seats">${Array.from({length:T.cap}, () => `<span class="seat free">${seatIc}</span>`).join('')}</div><p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>`; }
+  if (!f){ const imm = immigFor(I); return head(T.n, `${pips}<span class="seats">${Array.from({length:T.cap}, () => `<span class="seat free">${seatIc}</span>`).join('')}</span>`) + `<p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>`; }
   const m = membersOf(I, f), cap = homeCap(I, b), max = homeCapMax(I, b);
-  // the places: who lives here, free places, and places that open when every knot is tied; children only from step 2
-  h += `<div class="seats">${Array.from({length:max}, (_, i) => `<span class="seat ${i < m.length ? 'on' : i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length}/${cap}</b>${t >= 2 ? `<span class="kids" title="Hier kommen Kinder">${icon('kind')}</span>` : ''}</div>`;
-  h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? '' : stageOf(p) === 'old' ? '' : ` · ${personWork(I, p)}`}</small></button>`).join('')}</div>`;
-  // the cord, and under it only what needs doing, each with the building that helps
+  // under the name: the step, then the room: free places, and places that open when every knot is tied; children from step 2
+  const room = `<span class="seats" role="img" aria-label="${m.length} von ${cap} Plätzen${cap < max ? `, ${max} wenn alle Knoten fest sind` : ''}${t >= 2 ? ', hier kommen Kinder' : ''}">${Array.from({length:Math.max(0, max - m.length)}, (_, i) => `<span class="seat ${m.length + i < cap ? 'free' : 'lock'}">${seatIc}</span>`).join('')}<b>${m.length}/${cap}</b>${t >= 2 ? `<span class="kids">${icon('kind')}</span>` : ''}</span>`;
+  let h = head(famName(f), `${pips}<span class="tn0">${T.n}</span>${room}`);
+  // the people, each with the picture of their work
+  h += `<div class="folk home">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}">${p.n}<small>${Math.floor(ageOf(p))}</small>${workPic(I, p)}</button>`).join('')}</div>`;
+  // the cord of this step, and for each loose or missing knot one button: the need, then the building that helps
+  h += knotCord(I, f, t, nd, false);
   const lack = famNeeds(I, f, nd.list).filter(n => n.state !== 'ok');
-  h += knotCord(I, f, t, nd);
-  if (lack.length) h += `<ul class="list needs lacks">${lack.map(n => { const w = needWay(I, n.k), btn = wayChip(w);
-    return `<li class="need">${icon(needIcon(n.k))}<span class="nm">${needName(n.k)}${btn ? '' : `<small>${w.text}</small>`}</span>${chipS(n.state, n.state === 'low' ? 'knapp' : 'fehlt')}${btn}</li>`; }).join('')}</ul>`;
-  // rising: the next step, its room, and what it takes, each as a picture with have and need
+  if (lack.length) h += `<div class="fixes">${lack.map(n => { const w = needWay(I, n.k), st = n.state === 'low' ? 'knapp' : 'fehlt', lead = `<svg class="kg" viewBox="0 0 24 20" aria-hidden="true"><use href="#kn-${n.state}"/></svg>${icon(needIcon(n.k))}`;
+    const act = w.build ? `data-act="hint" data-k="${w.build}"` : w.fleet ? 'data-act="fleetbar"' : '';
+    return act ? `<button class="fix ${n.state}" type="button" ${act} aria-label="${needName(n.k)} ${st}: ${w.build ? KINDS[w.build].n : 'Kanus'}">${lead}<i class="arr" aria-hidden="true"></i>${w.build ? `${bIcon(w.build)}<span>${KINDS[w.build].n}</span>` : `${icon('einbaum')}<span>Kanus</span>`}</button>`
+      : `<span class="fix ${n.state}" role="img" aria-label="${needName(n.k)} ${st}">${lead}<small>${w.text}</small></span>`; }).join('')}</div>`;
+  // the build-out: the house now and then, what it brings, and what it takes, a good once even when it is wanted twice
   const u = upgradeSteps(I, b, nd.list);
   if (u){
-    const chip = q => { const k = q.k === 'needs' ? 'knot' : q.k, w = q.ok ? null : q.k === 'needs' ? (q.miss[0] ? needWay(I, q.miss[0]) : null) : needWay(I, q.k);
-      const n = q.k === 'needs' ? `${famNeeds(I, f, nd.list).filter(x => x.state !== 'out').length}/${TIERS[t].needs.length}` : `${Math.min(q.have, q.need)}/${q.need}`;
-      const label = q.k === 'needs' ? 'Alle Knoten fest' : `${GN[q.k]}: ${q.have} von ${q.need}`;
-      return w && (w.build || w.fleet) ? `<button class="cost out" type="button" ${w.build ? `data-act="hint" data-k="${w.build}"` : 'data-act="fleetbar"'} aria-label="${label}">${icon(k)}<b>${n}</b></button>` : `<span class="cost ${q.ok ? 'ok' : 'out'}" role="img" aria-label="${label}">${icon(k)}<b>${n}</b></span>`; };
+    const need = new Map(); for (const q of u.steps) if (q.k !== 'needs') need.set(q.k, Math.max(need.get(q.k) || 0, q.need));
+    const chip = (k, have, n, ok, label, w) => w && !ok && (w.build || w.fleet) ? `<button class="cost out${k === 'knot' ? ' kn' : ''}" type="button" ${w.build ? `data-act="hint" data-k="${w.build}"` : 'data-act="fleetbar"'} aria-label="${label}">${icon(k)}<b>${n}</b></button>` : `<span class="cost ${ok ? 'ok' : 'out'}${k === 'knot' ? ' kn' : ''}" role="img" aria-label="${label}">${icon(k)}<b>${n}</b></span>`;
+    const nq = u.steps[0], fn = famNeeds(I, f, nd.list);
+    let costs = chip('knot', 0, `${fn.filter(x => x.state !== 'out').length}/${fn.length}`, nq.ok, nq.ok ? 'Alle Knoten fest' : nq.t, nq.miss[0] ? needWay(I, nq.miss[0]) : null);
+    for (const [k, v] of need){ const have = I.stock[k] || 0; costs += chip(k, have, `${Math.min(have, v)}/${v}`, have >= v, `${GN[k]}: ${have} von ${v}`, needWay(I, k)); }
     const add = TIERS[u.t].needs.filter(k => !TIERS[t].needs.includes(k));
-    h += `<div class="rise"><p class="sec">Ausbau</p><div class="rise-pic" role="img" aria-label="${T.n} wird ${u.T.n}: Platz für ${u.T.cap}${u.t === 2 ? ', Kinder kommen' : ''}, will dazu ${andList(add.map(k => GN[k]))}">` +
-      `<span class="tp">${tierPic(t)}<small>${T.n}</small></span><i class="arr2" aria-hidden="true"></i><span class="tp next">${tierPic(u.t)}<small>${u.T.n}</small></span>` +
-      `<span class="gain"><span>${seatIc}<b>${homeCapMax(I, b)}→${u.T.cap}</b></span>${u.t === 2 ? `<span>${icon('kind')}</span>` : ''}<span class="wants">+${add.map(k => icon(k)).join('')}</span></span></div>`;
-    h += `<div class="costs">${u.steps.map(chip).join('')}</div>`;
-    { const ks = u.steps.filter(q => !q.ok).flatMap(q => q.k === 'needs' ? q.miss : [q.k]), far = ks.find(k => k !== 'dach' && needWay(I, k).outside); if (far) h += outsideChain(I, far); }
-    h += `<button class="btn primary big${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Ausbauen</button></div>`;
+    h += `<div class="rise"><div class="rise-pic" role="img" aria-label="Ausbau: ${T.n} wird ${u.T.n}, Platz für ${u.T.cap}${u.t === 2 ? ', Kinder kommen' : ''}, will dazu ${andList(add.map(k => GN[k]))}">` +
+      `<span class="tp">${tierPic(t)}</span><i class="arr2" aria-hidden="true"></i><span class="tp next">${tierPic(u.t)}</span><b class="tn">${u.T.n}</b>` +
+      `<span class="gain"><span>${seatIc}<b>${max}→${u.T.cap}</b></span>${u.t === 2 ? `<span>${icon('kind')}</span>` : ''}<span class="wants">+${add.map(k => icon(k)).join('')}</span></span></div>`;
+    // the button sits beside the chain to a good from outside when there is one, else beside what it takes
+    const ks = u.steps.filter(q => !q.ok).flatMap(q => q.k === 'needs' ? q.miss : [q.k]), far = ks.find(k => k !== 'dach' && needWay(I, k).outside);
+    const go = `<button class="btn primary${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>${knotIc}Ausbauen</button>`;
+    h += far ? `<div class="costs">${costs}</div><div class="costs">${outsideChain(I, far)}${go}</div></div>` : `<div class="costs">${costs}${go}</div></div>`;
   }
-  { const ln = m[0] && m[0].ln; h += `<p class="sub line">Linie ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</p>`; }
   return h;
 }
+/* the line of a house, for the last row of its sheet beside Versetzen and Entfernen */
+function houseLine(I, b){ const f = famOfHome(I, b), p = f && membersOf(I, f)[0]; if (!p) return ''; const ln = p.ln; return `<span class="sub line">Linie ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</span>`; }
 /* ---------- the overview: Bewohner as in Anno (the houses by step and their needs), Arbeit, Insel */
 /* what keeps the village from going on, in one line, with the button that helps */
 function villageGoal(I, nd){
@@ -679,6 +695,7 @@ function renderSheet(){
   if (sliding) return;
   const body = $('sheetBody'); let h = '';
   if (sheetGone()){ closeSheet(); return; }
+  { const b = sheetKind === 'info' && findB(sheetData.id); $('sheet').classList.toggle('tall', !!b && HOME_KINDS.has(b.kind) && !b.bt); }   // a house gets the room to show all of itself
   if (sheetKind === 'ship'){
     const sh = ships.find(q => q.id === sheetData.id); if (!sh){ closeSheet(); return; }
     h += shipMarkup(sh);
@@ -708,7 +725,8 @@ function renderSheet(){
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
     h += more;
     if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
-    else if (!K.fixed) h += `<div class="rowx"><span class="chips">${FELL_WOOD[b.kind] && !b.bt ? `<button class="btn" type="button" data-act="fell">Fällen: ${FELL_WOOD[b.kind]} Holz</button>` : ''}<button class="btn" type="button" data-act="move">Versetzen</button><button class="btn" type="button" data-act="askkill">Entfernen</button></span></div>`;
+    else if (!K.fixed){ const bt = home ? 'chip' : 'btn';
+      h += `<div class="rowx${home ? ' foot' : ''}">${home ? houseLine(I, b) : ''}<span class="chips">${FELL_WOOD[b.kind] && !b.bt ? `<button class="btn" type="button" data-act="fell">Fällen: ${FELL_WOOD[b.kind]} Holz</button>` : ''}<button class="${bt}" type="button" data-act="move">Versetzen</button><button class="${bt}" type="button" data-act="askkill">Entfernen</button></span></div>`; }
   } else if (sheetKind === 'away'){
     // while you were away: one row for each thing that happened
     const {R, lines, years} = sheetData;
