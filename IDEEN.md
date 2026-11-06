@@ -11,6 +11,16 @@ Spieler es wählt.
 - **Hauswerk bei den Clans:** In den Dörfern der Clans gibt es noch eigene Werkstätten. Sie könnten auch Matten vor den
   Häusern zeigen.
 
+## Offen aus der Runde „Alter und Stände“ (Version 64)
+
+- **Wasser im langen Lauf:** Im Probelauf über 50 Jahre fehlte von Jahr 12 bis 26 oft Wasser, und es kamen keine
+  Kinder. Der Bot konnte kein zweites Erntehaus stellen. Prüfen, ob ein Mensch hier auch hängen bleibt; vielleicht ein
+  zweiter Wasserweg (Regenfang auf Pfahlhäusern, wie es belegt ist).
+- **Meisterfamilien im Spiel prüfen:** Der Bot kommt nie bis zum Meisterhaus (Matten fehlen auf hohen Inseln). Die
+  Regel „Meister nicht aufs Feld“ ist nur im Regeltest geprüft.
+- **Längere Ketten:** Jetzt sind die Ketten sichtbar. Eine echte dritte Stufe in der Mitte des Spiels fehlt noch,
+  etwa Kokosfasern → Schnur → Netze für die Fischer.
+
 ## Offen aus der Runde „Helfer und Namen“ (Version 63)
 
 - **Auf einem echten Handy prüfen:** die kleinen Namen unter den Waren oben. Im Test-Browser passen sie ab 320 Pixel.

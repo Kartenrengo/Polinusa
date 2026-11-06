@@ -192,6 +192,8 @@ const producerOf = (I, k) => ORDER.find(q => KINDS[q] && !KINDS[q].fixed && (KIN
 /* where a good can be made that cannot be made here: the islands with the right ground */
 const specIslesFor = k => { const kind = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]); if (!kind) return []; return islands.filter(J => J.discovered && specOf(J) === SPEC_OF_KIND[kind]); };
 /* grown-ups without work while no place has room: more people do not help, only more places */
+/* what makes more food here, the way the elders would say it */
+const foodBuild = I => { const h = I.buildings, has = k => h.some(b => b.kind === k); return !has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : I.type === 'hoch' && unlocked('taro') ? 'taro' : I.type === 'atoll' && unlocked('pulaka') ? 'pulaka' : 'fisch'; };
 const freeHands = I => { const sf = staffOf(I); return sf.free > 0 && !placesOf(I).some(b => (crewAt(I, b) || 0) < crewOf(b) && !sf.pulled.has(b)) ? sf.free : 0; };
 function adviceOf(I, urgentOnly = false){
   if (!I || !I.settled) return null;
@@ -208,6 +210,9 @@ function adviceOf(I, urgentOnly = false){
   const stillB = placesOf(I).find(b => b.idle && ['near', 'dep', 'trees', 'use'].includes(b.idle.why) && prodOfB(b) && (I.stock[prodOfB(b)] || 0) < 5);
   if (stillB) return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze den Platz dorthin.' : ''), goto:stillB.id};
   const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
+  // a master family with free hands and no craft of its own: it wants its work
+  { const M = masterSet(I), idle = sf.freeP.filter(id => M.has(id)), p = idle.length && I.people.find(q => q.id === idle[0]), f = p && famOf(I, p.h), h = f && f.home && findB(f.home);
+    if (h && !craftOf(I, h) && !sf.rest) return {t:'Meisterfamilie ohne Werk', d:`${famName(f)} geht nicht mehr aufs Feld. Gib ihrem Haus ein Hauswerk: Meister arbeiten dort ein Viertel schneller.`, goto:h.id}; }
   if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
   // houses whose needs are met and whose material lies ready rise, as in Anno, when you say so
   { const r = I.autoUp ? [] : readyHomes(I, nd.list); if (r.length) return {t:'Ausbau', d:`${r.length} ${r.length === 1 ? 'Haus ist' : 'Häuser sind'} bereit: Tippe drauf, dann „Ausbauen“.`, goto:r[0].id}; }
@@ -218,9 +223,15 @@ function adviceOf(I, urgentOnly = false){
   { const g = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => [b, upgradeSteps(I, b, nd.list)]).find(([, u]) => u && !u.ready);
     if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
       if (w && (w.build || w.fleet)) return {t:`Für ${u.T.n}: ${needName(k)}`, d:w.text, build:w.build && w.build !== 'haus' ? w.build : null, fleet:w.fleet, goto:w.build || w.fleet ? null : hb.id}; } }
+  // growing needs more than the village eats: houses do not help while food or water only just reach
+  { const m = !nd.atMax && I.pop >= 6 ? surplusMiss(I, nd.list) : ''; if (m){ const n = nd.list.find(q => q.k === m), gap = n ? Math.max(0, (n.use + n.work) * 1.15 - n.make) : 0;
+      return {t:m === 'essen' ? 'Mehr Essen als gebraucht' : 'Mehr Wasser als gebraucht', d:`Zum Wachsen braucht das Dorf mehr, als es ${m === 'essen' ? 'isst' : 'trinkt'}: noch etwa +${perMin(gap)} pro Minute. Sonst kommen kaum Kinder und keine Familien. Hütten helfen erst danach.`, build:m === 'essen' ? foodBuild(I) : 'ernte'}; } }
+  // no child for years: say why, before the grown-ups grow old with nobody after them
+  { const y = yearsNoChild(I), why = y >= 3 && I.pop >= 8 ? birthWhy(I, nd.list) : ''; if (why){ const A = ageMix(I);
+      return {t:`Seit ${Math.floor(y)} Jahren kein Kind`, d:`${why}${A.soon ? ` ${A.soon} ${A.soon === 1 ? 'wird' : 'werden'} in fünf Jahren alt.` : ''}`, needs:true, tab:'arbeit'}; } }
   if (nd.full && !nd.atMax && !emptyHome(I)) return {t:'Mehr Hütten', d:'Alle Hütten sind belegt. Eine leere Hütte zieht eine Familie von weit her an.', build:'haus'};
   if (I.pop >= 8 && kinState(I) !== 'ok') return {t:'Neues Blut', d:kinText(I).help, needs:true};
-  const nextS = STAGES[stageNow() + 1]; if (nextS && !nextS.gate && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:'haus'};
+  const nextS = STAGES[stageNow() + 1]; if (nextS && !nextS.gate && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:nd.full && !emptyHome(I) ? 'haus' : null, needs:!(nd.full && !emptyHome(I))};   // a hut only where all are full
   const miss = MASTER_GOODS.find(k => !(haveOf(I, k) > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Meisterfamilien`, d:p ? `${doIt(p)}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
   // the fine goods of the chief's family: some grow only on islands with the right ground
   if (chiefFam(I)){ const k = CHIEF_GOODS.find(q => !(I.stock[q] > 0)); if (k){ const p = producerOf(I, k), isles = specIslesFor(k) || [];
@@ -240,7 +251,7 @@ function followAdvice(A){
   if (!A) return; closeSheet();
   if (A.koruru){ if (!kor || kor.state === 'done') korNew(); openSheet('koruru', {}); return; }
   if (A.immig){ const s = ships.find(q => q.id === A.immig); if (s){ flyTo(s.x, s.y, Math.max(cam.z, 2)); openSheet('immig', {ship:s.id}); } return; }
-  if (A.needs){ openSheet('needs'); return; }
+  if (A.needs){ openSheet('needs', A.tab ? {tab:A.tab} : undefined); return; }
   if (A.goto){ const b = findB(A.goto); if (b){ select(b); flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
   if (A.fleet){ setBar('fleet'); return; }
   if (A.build) hintBuild(A.build);

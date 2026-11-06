@@ -90,6 +90,29 @@ const r = await p.evaluate(()=>{
     want(teamF(KINDS.faeller, KINDS.faeller.crew + 1) > 1 && teamF(KINDS.faeller, 9 * KINDS.faeller.crew) <= 1.5, 'helpers: team factor');
     H.zeal = 0; H.staff = null; const sr = staffOf(H); updateHUD(); want(!sr.help.size && sr.rest && $('idleNum').textContent === '0', 'free time: the free are shown as jobless');
     H.zeal = 1; H.people = H.people.filter(p => !extra.includes(p)); H.staff = null; }
+  // the old sit at the household craft at half strength; children come seldom without a surplus; the elders say why none come
+  { const H = isl('heimat'); H.handWork = false; const hh = homesOf(H).find(h => famOfHome(H, h)), f = famOfHome(H, hh);
+    const o = Object.assign(person(H, 47), {h:f.id, l:Math.round(80 * YEAR)}); H.people.push(o); H.pop++; setCraft(H, hh, 'schnur'); const c = craftOf(H, hh); H.staff = null;
+    const sf = staffOf(H); want(c && (sf.crewP.get(c) || []).includes(o.id) && sf.oldAt.get(c) === 1, 'old: not at the craft of their house');
+    want(c && workSpeed(H, c, 1) < workSpeed(H, {...c, at:0}, 1) * .6, 'old: not at half strength');
+    syncWalkers(); const w = walkers.find(q => q.pid === o.id); want(w && w.old && w.job && w.job.b === c, 'old: figure does not walk to the craft');
+    want(/Hauswerk|Sennit/.test(personWork(H, o)) || personWork(H, o).startsWith('alt,'), 'old: work not named');
+    setCraft(H, hh, null); H.people = H.people.filter(p => p !== o); H.pop--; H.staff = null;
+    const nd = needsOf(H); out.push(`births: surplus ${surplus(H, nd.list)} lean target ${!!growTarget(H, nd.list, true)} why "${birthWhy(H, nd.list)}"`);
+    want(LEAN_BIRTH > 0 && LEAN_BIRTH < 1, 'births: no lean rate');
+    H.lastBirth = tick - 4 * YEAR; const A = adviceOf(H); out.push(`advice after 4 years without a child: ${A && A.t}`);
+    const am = ageMix(H); want(am.kid + am.adult + am.old === H.people.length, 'age mix does not add up');
+    H.lastBirth = tick;
+    // the masters: their grown-ups leave the fields, the sea and the forest; a craft of theirs works a quarter faster
+    const mh = homesOf(H).find(h => famOfHome(H, h) && famAdults(H, famOfHome(H, h)).length), mf = famOfHome(H, mh), t0 = mh.t; mh.t = 3; H.staff = null;
+    const sm = staffOf(H), low = [...sm.crewP].filter(([b, ids]) => !b.bt && !b.at && rankOf(b) < 3 && ids.some(id => famAdults(H, mf).some(p => p.id === id)));
+    want(!low.length || haveOf(H, 'essen') <= 0, 'master: still in the fields');
+    setCraft(H, mh, 'schnur'); const mc = craftOf(H, mh); want(mc && masterF(mc) === 1.25, 'master: craft not faster');
+    setCraft(H, mh, null); mh.t = t0; H.staff = null;
+    // ratios and the chain
+    const fe = H.buildings.find(b => b.kind === 'ernte' && !b.bt); want(!fe || fullRate(H, fe) > 0, 'ratio: no full rate');
+    const ch = chainMarkup(H, 'schnur'); want(/Kokosfasern/.test(ch) && /Familienhaus|Ausleger|Fischer|→/.test(ch), 'chain: sennit chain incomplete ' + ch.replace(/<[^>]+>/g, ''));
+    out.push('chain: ' + ch.replace(/<svg.*?<\/svg>/g, '').replace(/<[^>]+>/g, '')); }
   // the year: canoes fast in the trade wind, pots slow in the rain, feasts count more after the yam harvest
   { const H = isl('heimat'), t0 = tick, tp = {kind:'toepfer'}, at = id => { while (seasonOf().id !== id) tick++; }, F = FEASTS.find(q => q.id === 'gross');
     at('sturm'); const wet = [seasonOf().sea, seasonalEvery(H, tp, KINDS.toepfer)]; at('passat'); const dry = [seasonOf().sea, seasonalEvery(H, tp, KINDS.toepfer)];

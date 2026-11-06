@@ -253,6 +253,21 @@ frei ist, sonst sammeln sie Wild, und das wird weniger. Ein Arbeiter im Feld ern
 Minute, jeder isst 1,2), einer an der Quelle tränkt etwa 10. Der Rat sagt es jetzt: „3 sind frei, doch jeder Platz für
 Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.“
 
+**Arbeit nach Stand, wie bei Anno.** Die Erwachsenen einer **Meisterfamilie** gehen nicht mehr aufs Feld, aufs Meer
+oder in den Wald. Sie arbeiten im Hauswerk, im Handwerk, im Kanuhaus und auf Baustellen. Ihr eigenes Hauswerk geht ein
+Viertel schneller. Wer Meister macht, braucht also weiter einfache Familien für Essen, Wasser und Holz. Fehlt Essen oder
+Wasser ganz, packen alle wieder mit an. Hat eine Meisterfamilie freie Hände und kein Hauswerk, sagt der Rat
+„Meisterfamilie ohne Werk“ und zeigt das Haus.
+
+**Verhältnisse und Ketten.** Die Tafel eines Arbeitsplatzes zeigt „≈3,1“ mit dem Bild für Menschen: so viele versorgt der
+Platz, voll besetzt. Darunter in Worten, etwa „Voll besetzt 3,8 Nahrung pro Minute: genug für etwa 3,1 Menschen. Jeder
+braucht 1,2 pro Minute.“ Das Blatt einer Ware zeigt ihre Kette in Bildern: was hineingeht, die Ware, wohin sie weiter
+geht, zum Beispiel „Kokosfasern → Schnur → Fischerhütte schneller · Ausbau Familienhaus“.
+
+**Der Rat und das Wachsen.** Reicht Essen oder Wasser nur gerade, rät der Rat nicht mehr zu Hütten, sondern
+„Mehr Essen als gebraucht“, mit dem, was noch fehlt, etwa „+9 pro Minute“. Der Rat „Auf 40 Menschen wachsen“ baut nur
+noch eine Hütte, wenn alle Häuser voll sind, sonst öffnet er die Übersicht.
+
 **Helfer statt Herumstehen.** Bleiben nach allen Plätzen und Baustellen Leute übrig, gehen sie von selbst als **Helfer**
 an einen Platz: zuerst dorthin, wo eine Ware knapp ist, dann, wo das Lager noch Platz hat; nie ins Hauswerk, an Fischer-
 und Taucherfahrten, den Yamsgarten oder einen Platz mit vollem Lager. Ein Platz nimmt höchstens so viele Helfer, wie er
@@ -596,10 +611,20 @@ Die Inseln leben weiter, wenn das Spiel geschlossen ist oder im Hintergrund lieg
 
 Jeder Bewohner ist ein Mensch mit Namen, Geburt und Lebensspanne, und jede Figur im Dorf ist genau dieser Mensch.
 
-- **Lebenslauf:** Kinder wachsen in sechs Jahren heran und arbeiten dann. Ab vierzig sind die Leute alt und arbeiten
-  nicht mehr. Zwischen 44 und 58 sterben sie und gehen zu den Ahnen. Ein Jahr auf den Inseln dauert zwölf Minuten:
+- **Lebenslauf:** Kinder wachsen in sechs Jahren heran und arbeiten dann. Ab vierzig sind die Leute alt und gehen
+  nicht mehr aufs Feld, aufs Meer oder in den Wald. Sie sitzen aber noch beim **Hauswerk** vor dem Haus ihrer Familie,
+  halb so schnell wie die Jüngeren; das Hauswerk nimmt zuerst die Alten des Hauses. Zwischen 44 und 58 sterben sie und gehen zu den Ahnen. Ein Jahr auf den Inseln dauert zwölf Minuten:
   nah dran sieht man Kinder groß werden, und wer nach einem Tag wiederkommt, findet eine neue Generation.
 - **Neue Menschen:** Wächst das Dorf, ziehen Leute zu, und ab zehn Bewohnern wird gut jedes dritte Kind im Dorf geboren.
+  Am schnellsten kommen Kinder, wenn mehr Essen und Wasser da ist, als gebraucht wird (15 % darüber, oder volle Lager).
+  Reicht es nur gerade, kommen sie trotzdem, aber seltener (30 %). Nur wenn Essen oder Wasser ganz fehlt, kommt keines.
+  Früher blieben Kinder ohne Überschuss ganz aus. Ein Probelauf über 50 Spieljahre zeigte das Ende: ab Jahr 12 kein
+  Kind mehr, das Dorf wurde alt, in Jahr 50 lebte noch einer. Mit der neuen Regel lebten im selben Lauf durchgehend
+  27 bis 39 Menschen.
+- **Warnung und Altersleiste:** Kam drei Jahre lang kein Kind, sagt der Rat „Seit 4 Jahren kein Kind“ und warum: kein
+  Familienhaus, kein junges Paar, Häuser voll, zu nah verwandt, Essen fehlt. Dazu, wie viele in fünf Jahren alt werden.
+  In der Übersicht, Reiter Arbeit, zeigt ein Balken Kinder, Erwachsene und Alte, wie viele Alte im Hauswerk sitzen und
+  wann das letzte Kind kam.
   Kinder bekommen oft den Namen eines Ahnen, wie es in Polynesien üblich ist.
 - **Siedler** gehen mit ihrem Namen an Bord und gründen das neue Dorf selbst.
 - **Häuptlinge:** Im Häuptlingsdorf führt der Älteste, der kein Kind mehr ist. Stirbt er, folgt der nächste. Die Reihe

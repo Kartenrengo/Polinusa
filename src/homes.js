@@ -124,13 +124,16 @@ function syncFamilies(I){
    needs met (homeCap), so without cooked food a family house has no room for a child. Nobody is born while food or
    water have run out. */
 const surplus = (I, list) => ['essen', 'wasser'].every(k => { const n = list.find(q => q.k === k); return !n || n.make >= (n.use + n.work) * 1.15 || n.stock >= storeCap(I) * .6; });
-function growTarget(I, list){
+/* which of food and water does not reach the surplus children and newcomers need ('' when both do) */
+const surplusMiss = (I, list) => ['essen', 'wasser'].find(k => !surplus(I, list.filter(n => n.k === k))) || '';
+function growTarget(I, list, lean = false){
   if (!I.settled || I.pop >= islandMax(I)) return null;
   const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));
   if (out.has('essen') || out.has('wasser') || haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0) return null;
-  // children come where there is more than enough: the harvest covers what everyone eats and drinks with some to spare,
-  // or the stores are well filled
-  if (!surplus(I, list)) return null;
+  // children come fastest where there is more than enough: the harvest covers what everyone eats and drinks with some to
+  // spare, or the stores are well filled. Without that they still come, seldom (lean), so a village never dies out
+  // only because it eats what it grows.
+  if (!lean && !surplus(I, list)) return null;
   let best = null, room = 0;
   for (const b of homesOf(I)){
     const t = tierOf(b), f = t >= 2 && famOfHome(I, b); if (!f) continue;
@@ -140,16 +143,37 @@ function growTarget(I, list){
   return best;
 }
 /* Children are born now and then where there is room, more seldom where the families are close kin (see kinFactor) */
-const BIRTH_EVERY = 60;   // ticks between births on an island where all is well
+const BIRTH_EVERY = 60, LEAN_BIRTH = .3;   // ticks between births on an island where all is well; without a surplus, this share
 function birthTick(I, ticks = 1){
-  const nd = needsOf(I); if (!growTarget(I, nd.list)){ I.birthAcc = Math.min(I.birthAcc || 0, BIRTH_EVERY / 2); return 0; }
-  I.birthAcc = (I.birthAcc || 0) + ticks * kinFactor(I) * (I.joyUntil > tick ? 2 : 1) * zealOf(I).birth;
+  if (I.lastBirth == null) I.lastBirth = tick;
+  const nd = needsOf(I); if (!growTarget(I, nd.list, true)){ I.birthAcc = Math.min(I.birthAcc || 0, BIRTH_EVERY / 2); return 0; }
+  I.birthAcc = (I.birthAcc || 0) + ticks * kinFactor(I) * (I.joyUntil > tick ? 2 : 1) * zealOf(I).birth * (surplus(I, nd.list) ? 1 : LEAN_BIRTH);
   let n = 0;
   while (I.birthAcc >= BIRTH_EVERY){
-    I.birthAcc -= BIRTH_EVERY; const b = growTarget(I, needsOf(I).list); if (!b) break;
-    I._growTo = b.id; I._birth = true; I.pop++; syncPeople(I); I._growTo = 0; I._birth = false; if (!awayQuiet) heartAt(I, b); n++;
+    I.birthAcc -= BIRTH_EVERY; const b = growTarget(I, needsOf(I).list, true); if (!b) break;
+    I._growTo = b.id; I._birth = true; I.pop++; syncPeople(I); I._growTo = 0; I._birth = false; if (!awayQuiet) heartAt(I, b); n++; I.lastBirth = tick;
   }
   return n;
+}
+/* why no child comes ('' when one can): what the player can do about it */
+function birthWhy(I, list){
+  list = list || needsOf(I).list;
+  if (I.pop >= islandMax(I)) return '';
+  const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));
+  if (out.has('essen') || out.has('wasser')) return `${out.has('essen') ? 'Essen' : 'Wasser'} fehlt. Dann kommen keine Kinder.`;
+  const fh = homesOf(I).filter(b => tierOf(b) >= 2 && famOfHome(I, b));
+  if (!fh.length) return 'Kinder kommen nur im Familienhaus. Baut eine Hütte aus.';
+  const pair = b => { const m = membersOf(I, famOfHome(I, b)); return m.some(p => p.s === 'f' && isAdult(p) && ageOf(p) >= 16 && ageOf(p) < 42) && m.some(p => p.s === 'm' && isAdult(p) && ageOf(p) >= 16); };
+  const withPair = fh.filter(pair); if (!withPair.length) return 'In keinem Familienhaus lebt ein junges Paar. Familien von weit her bringen junge Leute.';
+  if (!withPair.some(b => homeCap(I, b) - membersOf(I, famOfHome(I, b)).length > 0)) return 'Die Familienhäuser sind voll. Erfüllt mehr Bedürfnisse, dann ist Platz, oder baut mehr Hütten aus.';
+  if (kinFactor(I) < .5) return 'Die Familien sind zu nah verwandt. Neues Blut hilft.';
+  return '';
+}
+const yearsNoChild = I => I.lastBirth == null ? 0 : (tick - I.lastBirth) / YEAR;
+/* the people by age: children, grown-ups, the old, and how many grown-ups turn old within five years */
+function ageMix(I){
+  const P = I.people || [], st = q => P.filter(p => stageOf(p) === q).length;
+  return {kid:st('kid'), adult:st('adult'), old:st('old'), soon:P.filter(p => isAdult(p) && ageOf(p) >= OLD_Y - 5).length, oldWork:P.filter(p => stageOf(p) === 'old' && p.job).length};
 }
 /* What a family has and lacks, by the needs of its step */
 function famNeeds(I, f, list){
@@ -237,14 +261,23 @@ function pickWorker(I, b, free, here){
   const score = p => { const f = famOf(I, p.h), h = f && f.home && findB(f.home); return (own && p.h === own.id ? 300 : 0) + (fams.has(p.h) ? 100 : 0) + (w && p.s === w ? 50 : 0) - (h ? Math.hypot(h.x - b.x, h.y - b.y) : 200) / 10; };
   return free.reduce((m, p) => score(p) > score(m) ? p : m, free[0]);
 }
-function autoAssign(I, places, at, adults){
+/* Work by standing, as in Anno: the grown-ups of a master family no longer go to the fields, the sea or the forest; they
+   work at crafts, canoes and on building sites. Only when food or water have run out does everyone go out again. */
+const masterSet = I => new Set((I.people || []).filter(p => { const f = famOf(I, p.h); return f && famTier(I, f) >= 3; }).map(p => p.id));
+const lowWork = b => !b.at && rankOf(b) < 3;
+function fitOf(I){
+  const M = masterSet(I), hunger = haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0;
+  return (p, b) => hunger || !M.has(p.id) || !lowWork(b);
+}
+function autoAssign(I, places, at, adults, fit = () => true){
   const free = adults.filter(p => !p.job), need = needOf(I, places);
   const open = places.slice().sort((a, b) => (b.prio ? 1 : 0) - (a.prio ? 1 : 0) || need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);   // a called place first
   for (const b of open){
     const l = at.get(b) || []; at.set(b, l);
     while (l.length < crewOf(b) && free.length){
       if (need(b) === 2 && l.length) break;   // a full store does not need more hands
-      const p = pickWorker(I, b, free, l); free.splice(free.indexOf(p), 1); p.job = b.id; l.push(p);
+      const cand = free.filter(p => fit(p, b)); if (!cand.length) break;
+      const p = pickWorker(I, b, cand, l); free.splice(free.indexOf(p), 1); p.job = b.id; l.push(p);
     }
   }
   // a place whose good is short and is not fully worked takes people from a place whose store is full, or from crafts and canoes
@@ -252,9 +285,9 @@ function autoAssign(I, places, at, adults){
     if (need(b) > 0) continue;
     const l = at.get(b);
     while (l.length < crewOf(b)){
-      const take = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).length && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
+      const take = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).some(p => fit(p, b)) && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
       if (!take) break;
-      const p = at.get(take).pop(); p.job = b.id; l.push(p);
+      const tl = at.get(take), p = tl.filter(p => fit(p, b)).pop(); tl.splice(tl.indexOf(p), 1); p.job = b.id; l.push(p);
     }
   }
 }
@@ -279,8 +312,10 @@ function craftFirst(I, places, at, adults){
     const l = at.get(b) || []; at.set(b, l);
     while (l.length < crewOf(b)){
       const hb = findB(b.at), own = hb ? famOfHome(I, hb) : null, fam = own ? adults.filter(p => p.h === own.id && p.job !== b.id) : [];
+      const old = (I.people || []).filter(p => stageOf(p) === 'old' && !p.job), oldFam = own ? old.filter(p => p.h === own.id) : [];
       const from = p => p.job && pmap.get(p.job), ok = p => { const q = from(p); return !q || (!q.prio && !q.at); };
-      const p = fam.filter(p => !p.job)[0] || fam.filter(ok).sort((x, y) => need(from(y)) - need(from(x)))[0] || (adults.some(p => !p.job) ? pickWorker(I, b, adults.filter(p => !p.job), l) : null);
+      // the old of the house first: they no longer go to the fields, but they still plait and roll sennit
+      const p = oldFam[0] || fam.filter(p => !p.job)[0] || fam.filter(ok).sort((x, y) => need(from(y)) - need(from(x)))[0] || old[0] || (adults.some(p => !p.job) ? pickWorker(I, b, adults.filter(p => !p.job), l) : null);
       if (!p) break;
       const q = from(p); if (q){ const m = at.get(q); if (m) m.splice(m.indexOf(p), 1); }
       p.job = b.id; l.push(p);
@@ -291,18 +326,18 @@ function craftFirst(I, places, at, adults){
    short, then where the store has room. A place takes up to as many helpers as its crew; they make it faster, though not
    as much as a full crew. A full store sends its helpers away again. */
 const helpOk = (I, b, need) => !b.at && !(b.boat > 0) && !KINDS[b.kind].trip && !KINDS[b.kind].yam && KINDS[b.kind].crew > 0 && need(b) < 2;
-function addHelpers(I, places, at, pool){
+function addHelpers(I, places, at, pool, fit = () => true){
   const help = new Map(); if (!pool.length) return help;
   const need = needOf(I, places), open = places.filter(b => helpOk(I, b, need) && (at.get(b) || []).length >= crewOf(b)).sort((a, b) => need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);
   if (!open.length) return help;
   const room = b => (at.get(b) || []).length < 2 * crewOf(b), put = (p, b) => { pool.splice(pool.indexOf(p), 1); p.job = b.id; at.get(b).push(p); help.set(b, (help.get(b) || 0) + 1); };
   // who helped somewhere before stays there
-  for (const p of pool.slice()){ const b = p._was && open.find(q => q.id === p._was); if (b && room(b)) put(p, b); }
+  for (const p of pool.slice()){ const b = p._was && open.find(q => q.id === p._was); if (b && room(b) && fit(p, b)) put(p, b); }
   for (const lvl of [0, 1]){
     let go = true;
     while (pool.length && go){
       go = false;
-      for (const b of open){ if (!pool.length) break; if (need(b) !== lvl || !room(b)) continue; put(p0(I, b, pool, at), b); go = true; }
+      for (const b of open){ if (!pool.length) break; if (need(b) !== lvl || !room(b)) continue; const c = pool.filter(p => fit(p, b)); if (!c.length) continue; put(p0(I, b, c, at), b); go = true; }
     }
   }
   return help;
@@ -311,25 +346,26 @@ const p0 = (I, b, pool, at) => pickWorker(I, b, pool, at.get(b) || []);
 const makesK = (kind, k) => { const K = KINDS[kind] || {}, m = q => K.prod === q || !!(K.picks && K.picks[q]); return k === 'essen' ? FOODS.some(m) : m(k); };
 function staff(I){
   const crew = new Map(), crewP = new Map(), sites = [], boats = [], staffed = new Set(), pulled = new Map();
-  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], help:new Map(), rest:false, total:workers(I), build:0, short:0, queue:[]};
-  const places = placesOf(I), pmap = new Map(places.map(b => [b.id, b])), at = new Map(), adults = I.people.filter(isAdult);
+  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], help:new Map(), rest:false, oldAt:new Map(), total:workers(I), build:0, short:0, queue:[]};
+  const places = placesOf(I), pmap = new Map(places.map(b => [b.id, b])), at = new Map(), adults = I.people.filter(isAdult), fit = fitOf(I);
   for (const p of I.people){
-    if (!isAdult(p)){ p.job = 0; continue; }
-    const b = p.job && pmap.get(p.job); if (!b){ p.job = 0; continue; }
+    const b = p.job && pmap.get(p.job);
+    if (!isAdult(p) && !(b && b.at && stageOf(p) === 'old')){ p.job = 0; continue; }   // the old still sit at the household craft
+    if (!b || !fit(p, b)){ p.job = 0; continue; }
     const l = at.get(b) || []; if (l.length >= crewOf(b)){ p._was = b.id; p.job = 0; continue; } l.push(p); at.set(b, l);
   }
   craftFirst(I, places, at, adults);
-  if (autoWork(I)) autoAssign(I, places, at, adults); else autoAssign(I, places.filter(b => b.at), at, adults);   // a household craft finds its hands even when the rest is given by hand
+  if (autoWork(I)) autoAssign(I, places, at, adults, fit); else autoAssign(I, places.filter(b => b.at), at, adults, fit);   // a household craft finds its hands even when the rest is given by hand
   // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
   { const need = needOf(I, places);
     for (const b of places.filter(q => q.prio)){
       const l = at.get(b) || []; at.set(b, l);
       while (l.length < crewOf(b)){
-        const free = adults.find(p => !p.job);
+        const free = adults.find(p => !p.job && fit(p, b));
         if (free){ free.job = b.id; l.push(free); continue; }
-        const from = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).length).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
+        const from = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).some(p => fit(p, b))).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
         if (!from) break;
-        const p = at.get(from).pop(); p.job = b.id; l.push(p);
+        const fl = at.get(from), p = fl.filter(p => fit(p, b)).pop(); fl.splice(fl.indexOf(p), 1); p.job = b.id; l.push(p);
       }
     } }
   const pool = adults.filter(p => !p.job);
@@ -372,22 +408,24 @@ function staff(I){
       crew.set(s, use.length); crewP.set(s, use.map(p => p.id)); if (s === yardB) yard = use.length; else sites.push(s);
     }
   }
-  const rest = zealOf(I) === ZEAL[0], help = autoWork(I) && !rest ? addHelpers(I, places, at, pool) : new Map();   // with much free time, who has no place rests instead of helping
+  const rest = zealOf(I) === ZEAL[0], help = autoWork(I) && !rest ? addHelpers(I, places, at, pool, fit) : new Map();   // with much free time, who has no place rests instead of helping
   for (const b of places){
     const l = at.get(b) || []; if (!l.length) continue;
     const ord = workOrder(b, l); crew.set(b, ord.length); crewP.set(b, ord.map(p => p.id));
     if (b.boat > 0) boats.push(b); else staffed.add(b);
   }
+  const oldAt = new Map(); for (const b of places){ const n = (at.get(b) || []).filter(p => stageOf(p) === 'old').length; if (n) oldAt.set(b, n); }
   const build = sites.reduce((t, b) => t + crew.get(b), 0) + yard;
   const short = places.filter(b => !crew.get(b)).length;
-  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), help, rest, total:adults.length, build, short, queue:all.map(b => b.id)};
+  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), help, rest, oldAt, total:adults.length, build, short, queue:all.map(b => b.id)};
 }
 /* The player sends one more person to a place, or calls one away; then the island is worked by hand */
 const handNote = I => { if (autoWork(I)){ I.handWork = true; toast('Die Arbeit wird jetzt von Hand verteilt. In der Übersicht geht es zurück auf Automatisch.', 3600, false); } };
 function workAdd(I, b){
   const K = KINDS[b.kind], here = (I.people || []).filter(p => p.job === b.id);
   if (here.length >= crewOf(b)){ toast(`${K.n} hat Platz für ${crewOf(b)}. Alle Plätze sind besetzt.`, 2600, false); return false; }
-  const free = (I.people || []).filter(p => isAdult(p) && !p.job);
+  const fit = fitOf(I), all = (I.people || []).filter(p => isAdult(p) && !p.job), free = all.filter(p => fit(p, b));
+  if (all.length && !free.length){ toast('Frei sind nur Leute aus Meisterfamilien. Sie arbeiten im Handwerk, nicht auf Feld, Meer oder im Wald.', 3600, false); return false; }
   if (!free.length){ toast('Niemand ist frei. Ruf jemanden woanders mit − ab, oder baut Hütten: Dann kommen Familien von weit her.', 3600, false); return false; }
   handNote(I); const p = pickWorker(I, b, free, here); p.job = b.id; I.staff = null; syncWalkers(); return p;
 }
@@ -398,7 +436,7 @@ function workDel(I, b){
 }
 /* where someone works, in words */
 function personWork(I, p){
-  if (!isAdult(p)) return stageOf(p) === 'kid' ? 'Kind' : 'alt';
+  if (!isAdult(p)){ if (stageOf(p) === 'kid') return 'Kind'; const c = p.job && findB(p.job); return c && c.at ? `alt, ${placeName(c)}` : 'alt'; }
   const sf = staffOf(I), site = [...sf.crewP].find(([q, ids]) => (q.bt || (q.kind === 'werft' && I.yard)) && ids.includes(p.id));
   if (site) return `baut: ${site[0].bt ? KINDS[site[0].kind].n : SHIPS[I.yard.kind].n}`;
   const b = p.job && findB(p.job); if (b) return placeName(b);

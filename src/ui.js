@@ -479,7 +479,7 @@ function personMarkup(){
   const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
   let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
   h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.</p>`;
-  h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', 'Spielt und lernt. Mit sechs Jahren arbeitet es mit.') : st === 'old' ? rowS('pop', 'Alt', 'Arbeitet nicht mehr, erzählt den Jüngeren von den Ahnen.') :
+  h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', 'Spielt und lernt. Mit sechs Jahren arbeitet es mit.') : st === 'old' ? job ? rowS('pop', `Alt · ${placeName(job)}`, 'Sitzt beim Hauswerk vor dem Haus, halb so schnell wie die Jüngeren, und erzählt dabei von den Ahnen.', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) : rowS('pop', 'Alt', 'Geht nicht mehr aufs Feld. Ein Hauswerk im Haus ihrer Familie gibt ihr noch Arbeit.') :
     job ? rowS('', `Arbeit: ${placeName(job)}`, staffOf(I).crewP.get(job) ? `${crewAt(I, job) || 0} von ${crewOf(job)} sind dort${(staffOf(I).help.get(job) || 0) ? `, dazu ${staffOf(I).help.get(job)} als Helfer` : ''}.` : '', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) :
     rowS('idle', staffOf(I).rest ? 'Freizeit' : 'Ohne Arbeit', staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.')}</ul>`;
   if (st === 'adult') h += `<div class="daybar" role="img" aria-label="Der Tag: Arbeit ${pc(D.work)} %, Freizeit ${pc(D.free)} %, Schlaf ${pc(D.sleep)} %"><i class="w" style="width:${pc(D.work)}%"></i><i class="f" style="width:${pc(D.free)}%"></i><i class="s" style="width:${pc(D.sleep)}%"></i></div>` +
@@ -488,10 +488,18 @@ function personMarkup(){
   if (f && f.home) h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button></div>`;
   return h;
 }
+/* children, grown-ups and the old as one bar: who works now, and who will after them */
+function ageMarkup(I){
+  const A = ageMix(I), n = Math.max(1, A.kid + A.adult + A.old), pc = x => Math.round(x / n * 100), y = yearsNoChild(I), why = y >= 3 ? birthWhy(I) : '';
+  return `<div class="agebar" role="img" aria-label="${A.kid} Kinder, ${A.adult} Erwachsene, ${A.old} Alte"><i class="k" style="width:${pc(A.kid)}%"></i><i class="a" style="width:${pc(A.adult)}%"></i><i class="o" style="width:${pc(A.old)}%"></i></div>` +
+    `<div class="daylegend agelegend"><span class="k">${A.kid} Kinder</span><span class="a">${A.adult} Erwachsene</span><span class="o">${A.old} Alte${A.oldWork ? `, ${A.oldWork} im Hauswerk` : ''}</span></div>` +
+    `<p class="sub">${A.soon ? `In fünf Jahren ${A.soon === 1 ? 'wird einer' : `werden ${A.soon}`} alt. ` : ''}${I.lastBirth != null ? (y < 1 ? 'Das letzte Kind kam dieses Jahr.' : `Das letzte Kind kam vor ${Math.floor(y)} ${Math.floor(y) === 1 ? 'Jahr' : 'Jahren'}.`) : ''}${why ? ` <b>${why}</b>` : ''}</p>`;
+}
 function workTab(I, nd){
   const sf = staffOf(I), P = I.people || [], freeP = sf.freeP.map(id => P.find(p => p.id === id)).filter(Boolean), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   let h = zealMarkup(I) + `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
   const nh = [...sf.help.values()].reduce((t, n) => t + n, 0);
+  h += ageMarkup(I);
   h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} ${sf.rest ? 'in Freizeit' : 'frei'}`, freeP.length ? `${sf.rest ? 'Freizeit' : 'Frei'}: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. ${sf.rest ? 'Alle Plätze sind besetzt; sie ruhen und sammeln nebenbei.' : 'Wer frei ist, sammelt im Wald und am Strand.'}` : nh ? `${nh} ${nh === 1 ? 'hilft' : 'helfen'} mit, wo es knapp ist. Helfer machen einen Platz schneller.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
   if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${placeName(b)} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
   { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => placeName(b))), '', chipS('low', 'bauen')); }
@@ -661,6 +669,22 @@ function famMarkup(I, f, withHead = true){
   { const ln = m[0] && m[0].ln; h += `<div class="rowx"><span class="sub">Linie: ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</span>${f.home && !withHead ? '' : f.home ? `<button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button>` : ''}</div>`; }
   return h;
 }
+/* Ratios, as Anno shows them: what one place makes with its whole crew, and for how many people that is enough */
+const fullRate = (I, b) => { const K = KINDS[b.kind]; return outOf(b) * PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, K.crew || 1); };
+const needOfGood = k => NEEDS.find(N => needGoods(N.k).includes(k)) || null;
+const feedsText = (N, n) => `${n >= 10 ? Math.round(n) : perMin(Math.round(n * 10) / 10)} ${N.lvl === 1 ? 'Menschen' : `Bewohner im ${TIERS[N.lvl].n}`}`;
+/* the chain of a good: what goes in, what it is, where it goes on */
+function chainMarkup(I, k){
+  const kinds = ORDER.filter(q => KINDS[q] && KINDS[q].on && KINDS[q].on.includes(I.type) && (KINDS[q].prod === k || (KINDS[q].picks && KINDS[q].picks[k])));
+  const ins = [...new Set(kinds.flatMap(q => Object.keys(KINDS[q].use || {})))].map(q => `${icon(GROUPS[q] ? groupNext(I, q) : q)}${GN[q] || q}`);
+  const onKinds = ORDER.filter(q => KINDS[q] && KINDS[q].use && KINDS[q].prod && Object.keys(KINDS[q].use).some(u => u === k || (GROUPS[u] || []).includes(k)));
+  const outs = [...new Set(onKinds.map(q => KINDS[q].prod))].map(q => `${icon(q)}${GN[q]}`), N = needOfGood(k);
+  for (const q of ORDER.filter(q => KINDS[q] && KINDS[q].boost && KINDS[q].boost.k === k && KINDS[q].prod)) outs.push(`${icon(KINDS[q].prod)}${KINDS[q].craft || KINDS[q].n} schneller`);
+  for (const [t, T] of Object.entries(TIERS)) if (T.cost && T.cost[k]) outs.push(`${icon('haus')}Ausbau ${T.n}`);
+  if (N) outs.push(`${icon('haus')}${N.lvl === 1 ? 'alle' : TIERS[N.lvl].n}`);
+  if (!ins.length && !outs.length) return '';
+  return `<p class="wchain">${ins.length ? ins.join(' + ') + '<span class="to">→</span>' : ''}<b>${icon(k)}${GN[k]}</b>${outs.length ? '<span class="to">→</span>' + outs.join(' · ') : ''}</p>`;
+}
 /* A good on its own sheet: who makes it, where, and who uses it */
 function wareMarkup(I, k){
   const by = I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (prodOf(b) === k || (byOf(b) || {})[k] || (KINDS[b.kind].picks && KINDS[b.kind].picks[k])));
@@ -669,6 +693,8 @@ function wareMarkup(I, k){
   const line = b => { const ids = sf.crewP.get(b) || [], w = b.idle || workState(I, b);
     return `<li>${icon(prodOf(b) || k)}<span class="nm">${KINDS[b.kind].n}<small>${ids.map(id => { const p = I.people.find(q => q.id === id); return p ? `<button class="link" type="button" data-act="who" data-p="${id}">${p.n}</button>` : ''; }).join(', ') || (KINDS[b.kind].crew ? 'niemand' : 'arbeitet von selbst')}${w ? ` · ${shortWhy(w)}` : ''}</small></span><button class="chip" type="button" data-act="goto" data-b="${b.id}">Hin</button></li>`; };
   let h = head(GN[k], `${I.name}: ${I.stock[k] || 0} im Lager, +${perMin(makeRate(I, k))} −${perMin(workUse(I, k) + (need ? need.use : 0))} pro Minute`);
+  h += chainMarkup(I, k);
+  { const N = needOfGood(k), b = by.find(q => prodOf(q) === k); if (N && b){ const r = fullRate(I, b); if (r > 0) h += `<p class="sub">Ein ${KINDS[b.kind].craft || KINDS[b.kind].n}, voll besetzt: ${perMin(r)} pro Minute. Das reicht für etwa ${feedsText(N, r / N.rate)}.</p>`; } }
   h += `<p class="sec">Wer macht es</p>` + (by.length ? `<ul class="list needs">${by.map(line).join('')}</ul>` : `<p class="sub">Niemand auf ${I.name}.</p>`);
   if (use.length) h += `<p class="sec">Wer braucht es</p><ul class="list needs">${use.map(line).join('')}</ul>`;
   if (need) h += `<p class="sub">Die Familien brauchen ${perMin(need.use)} pro Minute.</p>`;
@@ -707,6 +733,7 @@ function infoMarkup(I, b){
     const w = b.idle || workState(I, b), rate = PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, K.crew ? crewAt(I, b) || 0 : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(groupNext(I, k))}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
     const by = byOf(b) ? Object.entries(byOf(b)).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') : '';
     line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(prodOf(b))}${perMin(rate * outOf(b))}${by}<small>/min</small></span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
+    { const N = K.prod && !b.at && needOfGood(prodOf(b)), fr = N ? fullRate(I, b) : 0; if (N && fr > 0){ line += `<span aria-label="reicht für">≈${Math.round(fr / N.rate * 10) / 10}${icon('pop')}</span>`; more.splice(1, 0, `Voll besetzt ${perMin(fr)} ${GN[prodOf(b)]} pro Minute: genug für etwa ${feedsText(N, fr / N.rate)}. Jeder braucht ${perMin(N.rate)} pro Minute.`); } }
     // the Erntehaus and the fishers get what is needed most, or what you hold them to
     if (K.picks){ const pk = b.v && K.picks[b.v.pick] ? b.v.pick : '';
       const cur = choiceOf(b);

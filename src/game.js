@@ -510,18 +510,18 @@ function syncFolk(I, homes, mine){
   // a very big village: some stay in their houses, the old first, then children, then those without work
   const stage = new Map(I.people.map(p => [p.id, stageOf(p)])), order = I.people.slice().sort((a, b) => ({adult:0, kid:1, old:2})[stage.get(a.id)] - ({adult:0, kid:1, old:2})[stage.get(b.id)]);
   const shown = new Set(order.slice(0, MAX_FIG).map(p => p.id)); I.inside = I.people.length - shown.size;
-  const byPid = new Map(), keep = new Set();
+  const byPid = new Map(), keep = new Set(), pidJob = new Map();
+  for (const [b, ids] of sf.crewP || []) ids.forEach((id, i) => pidJob.set(id, jobFor(I, b, i)));
   for (const w of mine){ if (w.pid && shown.has(w.pid) && !byPid.has(w.pid)) byPid.set(w.pid, w); }
   for (const p of I.people){
     if (!shown.has(p.id)) continue;
     const st = stage.get(p.id), w = byPid.get(p.id) || spawnFig(I, homes, st === 'adult' ? 'idle' : st, null, p);
     w.name = p.n; keep.add(w);
-    if (st !== 'adult'){ if (w.job || w.role !== st) freeFig(w); w.role = st; w.child = st === 'kid'; w.old = st === 'old'; }
-    else { w.child = w.old = false; if (w.role === 'kid' || w.role === 'old') freeFig(w); }
+    if (st === 'kid' || (st === 'old' && !pidJob.has(p.id))){ if (w.job || w.role !== st) freeFig(w); w.role = st; w.child = st === 'kid'; w.old = st === 'old'; }
+    else { w.child = false; w.old = st === 'old'; if (w.role === 'kid' || w.role === 'old') freeFig(w); }   // an old one at the household craft walks there like the rest
   }
   // each place is worked by the people of the family sent there: the figure of each person walks to their own place
-  const adults = [...keep].filter(w => !w.child && !w.old), pidJob = new Map();
-  for (const [b, ids] of sf.crewP || []) ids.forEach((id, i) => pidJob.set(id, jobFor(I, b, i)));
+  const adults = [...keep].filter(w => !w.child && (!w.old || pidJob.has(w.pid)));
   for (const w of adults){
     const j = pidJob.get(w.pid);
     if (!j){ if (w.job || w.role !== 'idle') freeFig(w); continue; }
@@ -539,7 +539,7 @@ function whatDoes(w){
   if (w.asleep || w.toBed) return w.asleep ? 'schläft' : 'geht schlafen';
   if (j && w.play) return `${KINDS[j.b.kind].n} · Feierabend, ${PLAY[w.play.k].n}`;
   const pl = w.play && !j ? ' · ' + PLAY[w.play.k].n : '';
-  if (w.child) return 'Kind' + pl; if (w.old) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
+  if (w.child) return 'Kind' + pl; if (w.old && !j) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
   const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
@@ -1129,7 +1129,9 @@ function dayShares(I, p){
   if (free == null) return {sleep, free:1 - sleep, work:0};
   return {sleep, free, work:1 - sleep - free};
 }
-const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * palmF(I, b) / wayF(I, b) * zealOf(I).work; };
+const oldF = (I, b, n) => { const o = b.at ? (staffOf(I).oldAt.get(b) || 0) : 0; return o && n ? 1 - .5 * Math.min(o, n) / n : 1; };   // the old work at half strength
+const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a master family works its craft faster
+const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work; };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
    A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
