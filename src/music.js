@@ -29,7 +29,7 @@ function musicMood(S){
   if (S.season === 'mager'){ M.mel *= .6; M.tubes *= .7; }
   M.hum = clamp(M.hum + (S.pop >= 30 ? 1 : 0) + (S.pop >= 50 ? 1 : 0), 1, 4);
   if (S.hawaiki && part !== 'night') M.flute = true;
-  if (S.voyage){ Object.assign(M, {mode:'voyage', scale:'lydian', bpm:60, pulse:.15, tubes:0, rattle:0, mel:.3, hum:Math.max(2, M.hum - 1), level:.9, flute:S.hawaiki}); }
+  if (S.voyage){ Object.assign(M, {mode:'voyage', scale:'lydian', bpm:60, pulse:.15, tubes:0, rattle:0, mel:.3, hum:Math.max(2, M.hum - 1), level:.6, flute:S.hawaiki}); }
   if (S.rainDance){ Object.assign(M, {mode:'rain', scale:'minor', bpm:96, pulse:.8, tubes:1, rattle:.7, mel:.15, level:1, flute:false}); }
   if (S.feast){ Object.assign(M, {mode:'feast', scale:'major', bpm:112, pulse:1, tubes:.8, rattle:1, mel:.8, hum:Math.min(4, M.hum + 1), level:1.1, flute:false}); }
   if (S.storm){ Object.assign(M, {mode:'storm', scale:'minor', bpm:48, pulse:.7, tubes:0, rattle:0, mel:0, hum:0, drone:1, level:1, flute:false}); }
@@ -52,21 +52,21 @@ function musicBar(M, bar, rnd, st){
   if (M.pulse > .05){ const pat = M.mode === 'feast' || M.mode === 'rain' ? DRUMPAT.feast : M.mode === 'storm' ? DRUMPAT.storm : M.mode === 'voyage' ? DRUMPAT.voyage : DRUMPAT.base;
     pat.forEach((a, i) => { if (a && (a > .9 || hit(M.pulse + .2))) ev.push({at:slot(i), k:'drum', f:a > .8 ? 118 : 178, v:.2 * a * M.pulse * V, d:.4}); }); }
   // bamboo tubes stamped on the ground, low notes of the scale
-  if (M.tubes > .05) TUBEPAT.forEach((a, i) => { if (a && hit(M.tubes)){ ev.push({at:slot(i), k:'tube', f:freqOf(noteOf(R - 12, sc, i % 3 === 0 ? 0 : -2)), v:.15 * a * V, d:.3}); } });
+  if (M.tubes > .05) TUBEPAT.forEach((a, i) => { if (a && hit(M.tubes)){ ev.push({at:slot(i), k:'tube', f:freqOf(noteOf(R, sc, i % 3 === 0 ? 0 : -2)), v:.2 * a * V, d:.3}); } });
   // rattles of seed pods on the off-beats, at a feast on every slot
   if (M.rattle > .05) for (let i = 0; i < 8; i++){ if ((i % 2 || M.mode === 'feast') && hit(M.rattle * (M.mode === 'feast' ? .85 : .6))) ev.push({at:slot(i), k:'rattle', f:5200, v:.045 * V, d:.06}); }
   // the humming voices: a chord for two bars, a voice more for each step the village has grown
   if (M.hum > 0 && bar % 2 === 0){ const deg = CHORDS[(bar / 2 | 0) % CHORDS.length];
-    for (let j = 0; j < M.hum; j++) ev.push({at:0, k:'hum', f:freqOf(noteOf(R, sc, deg + [0, 2, 4, 7][j]) - (j > 2 ? 12 : 0)), v:.05 * V / Math.sqrt(M.hum), d:MUSIC_BEATS * 2}); }
+    for (let j = 0; j < M.hum; j++) ev.push({at:0, k:'hum', f:freqOf(noteOf(R + 12, sc, deg + [0, 2, 4, 7][j]) - (j > 2 ? 12 : 0)), v:.09 * V / Math.sqrt(M.hum), d:MUSIC_BEATS * 2}); }
   // the drone before a storm
   if (M.drone && bar % 2 === 0) ev.push({at:0, k:'drone', f:freqOf(R - 24), v:.16 * V, d:MUSIC_BEATS * 2});
   // a melody that wanders over the scale: few notes, mostly steps
   if (M.mel > .03){ const n = Math.round(M.mel * 5 * (.6 + rnd() * .8)), used = new Set();
     for (let k = 0; k < n; k++){ let i = Math.floor(rnd() * 8); if (used.has(i)) continue; used.add(i);
       st.deg = clamp(st.deg + (rnd() < .5 ? -1 : 1) * (rnd() < .3 ? 2 : 1), 2, 11);
-      ev.push({at:slot(i), k:M.mode === 'voyage' ? 'hum' : 'mel', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.07 * V, d:M.mode === 'voyage' ? 3 : .8}); } }
+      ev.push({at:slot(i), k:M.mode === 'voyage' ? 'hum' : 'mel', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.14 * V, d:M.mode === 'voyage' ? 3 : .8}); } }
   // the nose flute of the later time: one long, soft note now and then
-  if (M.flute && hit(.55)){ st.deg = clamp(st.deg + (rnd() < .5 ? -2 : 1), 3, 10); ev.push({at:slot(Math.floor(rnd() * 4)), k:'flute', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.06 * V, d:3}); }
+  if (M.flute && hit(.55)){ st.deg = clamp(st.deg + (rnd() < .5 ? -2 : 1), 3, 10); ev.push({at:slot(Math.floor(rnd() * 4)), k:'flute', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.1 * V, d:3}); }
   return ev.sort((a, b) => a.at - b.at);
 }
 
@@ -75,10 +75,12 @@ let mout = null, musicAt = 0, musicBarNo = 0, musicSt = {deg:5}, musicBuf = null
 const MUSVOL = [.5, 1, 1.5];
 function musicInit(){
   if (mout || !actx) return;
-  mout = actx.createGain(); mout.gain.value = 0; mout.connect(out);
+  // a soft limiter keeps the loud setting from clipping when a feast and a voyage swell
+  const lim = actx.createDynamicsCompressor(); lim.threshold.value = -16; lim.knee.value = 12; lim.ratio.value = 6; lim.attack.value = .01; lim.release.value = .25; lim.connect(out);
+  mout = actx.createGain(); mout.gain.value = 0; mout.connect(lim);
   const n = actx.sampleRate, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; musicBuf = b;
 }
-const musicLevel = () => opts.music === false ? 0 : .7 * MUSVOL[clamp(opts.mvol == null ? 1 : opts.mvol, 0, 2)];
+const musicLevel = () => opts.music === false ? 0 : 1.1 * MUSVOL[clamp(opts.mvol == null ? 1 : opts.mvol, 0, 2)];
 function setMusic(on){ opts.music = on; saveOpts(); if (mout) mout.gain.setTargetAtTime(musicLevel(), actx.currentTime, .4); }
 function cycleMusicVol(){ opts.mvol = ((opts.mvol == null ? 1 : opts.mvol) + 1) % 3; saveOpts(); if (mout) mout.gain.setTargetAtTime(musicLevel(), actx.currentTime, .2); }
 const MVOL_WORD = ['leise', 'mittel', 'laut'];
@@ -101,13 +103,13 @@ function mpad(f, t, peak, dur, type = 'sine', cut = 800){
 function musicPlay(e, t, beat){
   const d = e.d * beat;
   switch (e.k){
-    case 'drum': mt(e.f, t, e.v, .3, 'sine', e.f * .7); mn(t, .03, e.v * .25, 'bandpass', 1400, 3); break;   // a hollow log struck
+    case 'drum': mt(e.f, t, e.v, .3, 'sine', e.f * .7); mn(t, .04, e.v * .6, 'bandpass', 900, 2); mt(e.f * 2.1, t, e.v * .25, .12); break;   // a hollow log struck
     case 'tube': mt(e.f, t, e.v, .24, 'sine', e.f * .97); mt(e.f * 2.76, t, e.v * .3, .08); mn(t, .05, e.v * .3, 'bandpass', e.f * 3, 4); break;   // bamboo stamped on the ground
     case 'rattle': mn(t, .05, e.v, 'highpass', e.f, 1); mn(t + .045, .04, e.v * .7, 'highpass', e.f * 1.1, 1); break;
     case 'hum': { const lp = mpad(e.f, t, e.v, d, 'sine', 700); const o = actx.createOscillator(); o.type = 'triangle'; o.frequency.value = e.f * 2; const g = actx.createGain(); g.gain.value = .35; o.connect(g); g.connect(lp); o.start(t); o.stop(t + d + .1); break; }
     case 'mel': mt(e.f, t, e.v, .9); mt(e.f * 4, t, e.v * .22, .1); break;   // a wooden note like a marimba
     case 'flute': mpad(e.f, t, e.v, d, 'sine', 2400); mn(t, d, e.v * .12, 'bandpass', e.f * 2, 2, .15); break;   // breath on a soft tone
-    case 'drone': { const lp = mpad(e.f, t, e.v, d, 'sawtooth', 160); mn(t, d, e.v * .5, 'lowpass', 110, 1, 1); break; }
+    case 'drone': { const lp = mpad(e.f, t, e.v, d, 'sawtooth', 320); mpad(e.f * 2, t, e.v * .5, d, 'sine', 600); mn(t, d, e.v * .5, 'lowpass', 110, 1, 1); break; }
   }
 }
 /* the state of the game, for the music */

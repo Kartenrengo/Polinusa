@@ -17,7 +17,7 @@ const {PAGE} = require('./lib');
       // every note is sane, in every state
       for (const season of ['plejaden', 'sturm', 'passat', 'mager']) for (const phase of [.1, .35, .55, .8]) for (const extra of [{}, {feast:true}, {rainDance:true}, {storm:true}, {voyage:true}, {hawaiki:true}, {pop:60}]){
         const {M, ev} = run({...S0, season, phase, ...extra});
-        for (const e of ev){ if (!KINDS_OK.has(e.k) || !(e.f > 25 && e.f < 8000) || !(e.v > 0 && e.v < .35) || !(e.at >= 0 && e.at < 4) || !(e.d > 0)){ bad.push(`bad note ${JSON.stringify(e)} in ${season} ${phase} ${JSON.stringify(extra)}`); break; } }
+        for (const e of ev){ if (!KINDS_OK.has(e.k) || !(e.f > 25 && e.f < 8000) || !(e.v > 0 && e.v < .5) || !(e.at >= 0 && e.at < 4) || !(e.d > 0)){ bad.push(`bad note ${JSON.stringify(e)} in ${season} ${phase} ${JSON.stringify(extra)}`); break; } }
         want(M.bpm >= 30 && M.bpm <= 130, `tempo ${M.bpm}`);
       }
       // the mood follows the life of the village

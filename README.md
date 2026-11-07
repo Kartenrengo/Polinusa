@@ -1478,8 +1478,8 @@ Die Musik entsteht wie der Klang im Browser, ohne Tondateien (Datei `src/music.j
 - **Das Dorf:** Je größer es ist, desto mehr Stimmen summen den Akkord: eine bis vier.
 - **Technik:** Die Töne eines Takts kommen aus einer reinen Funktion (`musicBar`), die der Test prüft, ohne dass man etwas
   hören muss: jeder Ton liegt im Bereich, die Nacht ist leiser als der Tag, das Fest lauter, die Flöte erst in Hawaiki. Dann
-  stellt der Test die echten Klangknoten für viele Minuten ein. Der Pegel ist gemessen (Spitze unter 0,15, Nacht fast
-  still). Pause, wenn das Spiel nicht zu sehen ist.
+  stellt der Test die echten Klangknoten für viele Minuten ein. Der Pegel ist gemessen (im Mittel etwa −23 dB, die Spitzen fängt ein weicher Begrenzer;
+  Nacht fast still). Töne und Akkorde liegen eher hoch, weil Handylautsprecher unter 200 Hz kaum etwas wiedergeben. Pause, wenn das Spiel nicht zu sehen ist.
 - **Belegt?** Musik der Lapita-Zeit ist nicht überliefert. Die Instrumente (Trommeln, Bambusstampfer, Rasseln, Muschelhorn,
   Gesang) kennt man aus Melanesien und Polynesien, aus viel späteren Berichten; die Nasenflöte ist ein Instrument des
   späteren Polynesiens und darum erst in Hawaiki dabei.
