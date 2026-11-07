@@ -62,6 +62,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     const A = adviceOf(Hm(), !!QUESTS[quest]) || adviceOf(Hm()) || {}, Q = QUESTS[quest], qb = Q && Q.show && Q.show.build, want = (A.urgent && A.build) || (qb && unlocked(qb) ? qb : null) || A.build || 'haus';
     const res = tryBuild(want); tried[want + '/' + res] = (tried[want + '/' + res] || 0) + 1;
     if (A.needs && !Hm().handWork) {} // automatic families
+    if (A.rain) rainDance(Hm());   // the elders advise the rain dance: the bot dances
     if (A.build && A.build !== want) tryBuild(A.build); if (A.goto){ const gb = findB(A.goto); if (gb && gb.idle && gb.idle.why !== 'use'){ const q = startSpot(Hm(), KINDS[gb.kind]); const s2 = findSpot(Hm(), gb.kind, q); if (s2){ gb.x = s2.x; gb.y = s2.y; } } }
     if (Hm().stock.holz < 4) tryBuild('faeller');
     // like a player, it sets the Erntehaus on fronds when the elders say so, and lets it choose again once there are enough

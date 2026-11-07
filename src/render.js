@@ -148,6 +148,33 @@ function putShadow(c, x, y, s, m, rot, key, art, sh){
   c.save(); c.translate(x, y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (rot) c.rotate(rot); c.scale(s * m, s); blitShadow(c, key, art, sh.alpha); c.restore();
 }
 const craftArt = k => `<ellipse cx="0" cy="1.6" rx="9" ry="3.6" fill="#D8BF86" stroke="#2B1D14" stroke-width=".55"/><path d="M-6.4 .5H6.4M-7.6 1.7H7.6M-6.4 2.9H6.4" stroke="#A8864E" stroke-width=".4" stroke-dasharray="1.2 .8"/><use href="#ic-${KINDS[k].prod}" transform="translate(.5 -6) scale(.44)"/>`;
+/* the village centre: a carved post beside the house with a streamer of bark cloth that flies with the wind (painted
+   with the ground layer, so it does not flutter, but it turns with the wind) */
+function drawCenterMark(c, b){
+  const K = KINDS[b.kind], s = (b.v && b.v.scale) || 1, x = b.x + (K.r + 3) * s * (b.v && b.v.mirror ? -1 : 1), y = b.y + 3, h = K.hy * s + 9, W = wind(), fl = Math.sin(b.id * 1.7) * .8;
+  stroke(c, new Path2D(`M${x} ${y}L${x} ${y - h}`), '#2B1D14', 1.9, null, 'round'); stroke(c, new Path2D(`M${x} ${y}L${x} ${y - h}`), '#8C5C36', 1.1, null, 'round');
+  for (let k = 0; k < 3; k++) stroke(c, new Path2D(`M${x - .9} ${y - h * .3 - k * 2.2}h1.8`), '#2B1D14', .45);   // the carving
+  const d = W.tx < 0 ? -1 : 1, T = new Path2D(`M${x} ${y - h + .6}Q${x + d * 4} ${y - h - .4 + fl} ${x + d * 8} ${y - h + 1.2 + fl}L${x + d * 7} ${y - h + 3.2 + fl * .6}Q${x + d * 3.6} ${y - h + 3.6} ${x} ${y - h + 4}Z`);
+  c.fillStyle = '#A84A2C'; c.fill(T); stroke(c, T, '#2B1D14', .5, null, 'round');
+  stroke(c, new Path2D(`M${x + d * 1.6} ${y - h + 1.4}L${x + d * 1.4} ${y - h + 3.6}M${x + d * 4} ${y - h + 1}L${x + d * 3.8} ${y - h + 3.4}`), '#F3D9A0', .45);
+}
+/* rain called by the dance: a big grey cloud over the village, rain slanting from it, rings on the ground and the water */
+function drawRainCall(c, v, now){
+  if (reduced) return;
+  for (const I of islands){
+    if (!I.settled || !(I.rainUntil > tick) || tick < (I.rainAt || 0) + RAIN.dance - 1) continue;
+    const ctr = centerOf(I) || I.anchor; if (!ctr || !ptIn(ctr.x, ctr.y, grow(v, 200))) continue;
+    const left = (I.rainUntil - tick) / RAIN.len, a = clamp(Math.min(1 - left + .25, left * 3), 0, 1), x = ctr.x + 6, y = ctr.y - 56, W = wind(), t = now / 1000, shape = cloudShape(7);
+    const p = new Path2D(), sl = W.tx * 3;
+    for (let i = 0; i < 40; i++){ const qx = x + ((i * .618) % 1 - .5) * 110, f = (t * 1.3 + i * .37) % 1, qy = y + 3 + f * 58; p.moveTo(qx + sl * f * 2, qy); p.lineTo(qx + sl * f * 2 + sl, qy + 5); }
+    c.save(); c.globalAlpha = .5 * a; c.strokeStyle = '#2B1D14'; c.lineWidth = .6; c.lineCap = 'round'; c.stroke(p); c.restore();
+    for (let i = 0; i < 8; i++){ const f2 = (t * .8 + i / 8) % 1, rx = x + ((i * .73) % 1 - .5) * 120, ry = ctr.y + ((i * .41) % 1 - .5) * 40;
+      c.globalAlpha = (1 - f2) * .6 * a; c.strokeStyle = '#F4ECD8'; c.lineWidth = .5; c.beginPath(); c.ellipse(rx, ry, .6 + f2 * 3, (.6 + f2 * 3) * .4, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; }
+    c.save(); c.translate(x, y); c.scale(1.15, 1.15); c.globalAlpha = .9 * a; c.fillStyle = '#C9CBC3'; c.fill(shape.P);
+    c.save(); c.clip(shape.P); c.fillStyle = '#9DA29D'; c.fillRect(-60, -9, 120, 12); c.restore();
+    c.strokeStyle = '#2B1D14'; c.lineWidth = 1.1 / 1.15; c.lineJoin = 'round'; c.stroke(shape.P); c.globalAlpha = .55 * a; c.stroke(shape.inner); c.restore(); c.globalAlpha = 1;
+  }
+}
 function drawBuilding(c, b, I, alpha = 1, sh = null){
   if (b.at){ if (!sh) put(c, b.x, b.y, 1, 1, 0, 'craft|' + b.kind, craftArt(b.kind), alpha); return; }
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
@@ -164,7 +191,7 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
   else if (b._sk && b._sk !== key && sprites.has(b._sk)){ if (!sh) put(c, b.x, b.y, sc, t.m, t.rot, key, art, 0); const old = sprites.get(b._sk); key = b._sk; art = old.art; }
   if (sh){ if (!site && K.hy > 3) putShadow(c, b.x, b.y, sc, t.m, t.rot, key, art, sh); return; }   // flat things like fields and paths cast none
-  if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); return; }
+  if (!site){ put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha); if (I && alpha >= 1 && HOME_KINDS.has(b.kind) && centerOf(I) === b) drawCenterMark(c, b); return; }
   // a field, a pit or a plaza: no frame of posts; the ground is dug row by row and the picture comes up out of it
   if (FLAT.has(b.kind) || K.soil){ drawStakes(c, b, K, f, alpha, I); put(c, b.x, b.y, sc, t.m, t.rot, key, art, alpha * (.18 + .82 * f)); drawFurrows(c, b, K, f, alpha); return; }
   drawStakes(c, b, K, f, alpha, I);
@@ -504,6 +531,7 @@ function drawAnim(c, now){
   if (cam.z > PEOPLE_Z){ drawPeople(c, v, now); if (falls.length) drawFalls(c, v, now); }
   drawWork(c, v);
   if (!reduced) drawWeather(c, v, now);
+  drawRainCall(c, v, now);
   if (lod !== 'far') drawNeeds(c, v, now);
   if (placing) drawGhost(c);
 }
@@ -1561,10 +1589,11 @@ function slotsOf(I, b, sf, on){
   if (b.bt){ if (K.plant) return null; n = open = SITE_CREW; }
   else if (b.kind === 'werft'){ if (!I.yard) return null; n = open = YARD_CREW; }
   else if (b.boat > 0) n = open = 1;
-  else if (K.crew){ n = Math.max(K.crew, sf.crew.get(b) || 0); open = Math.max(capOf(b), sf.crew.get(b) || 0); }   // helpers get a mark of their own
+  else if (K.crew){ n = K.crew; open = capOf(b); }
   else return null;
-  const crew = sf.crew.get(b) || 0, here = Math.min(crew, on.get(b) || 0);
-  return Array.from({length:n}, (_, i) => i < here ? 'on' : i < crew ? 'way' : i < open ? 'free' : 'off');
+  // the fixed places first; helpers after them, smaller and with a plus, so a place always shows the same number of places
+  const crew = sf.crew.get(b) || 0, here = Math.min(crew, on.get(b) || 0), hp = !b.bt && K.crew ? Math.max(0, crew - K.crew) : 0;
+  return Array.from({length:n}, (_, i) => i < Math.min(here, n) ? 'on' : i < Math.min(crew, n) ? 'way' : i < open ? 'free' : 'off').concat(Array.from({length:hp}, (_, j) => n + j < here ? 'aid' : 'aidway'));
 }
 function drawWork(c, v){
   if (lod === 'far') return;

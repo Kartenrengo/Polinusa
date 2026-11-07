@@ -499,6 +499,16 @@ function setCraft(I, h, k){
   if (k && !(old && old.kind === k) && !craftWhy(I, h, k)){ const b = addB(I, k, craftSpot(h), {}, tick); b.at = h.id; }
   I.staff = null; syncWalkers(); invalidate();
 }
+/* The village centre: the house by the plaza, the first one of the village. The family that founded the village lives in
+   it, and there the village keeps its stores, holds its feasts, dances for rain and throws the knucklebones. Moved away
+   or gone, the house next to the plaza takes its place. */
+function centerOf(I){
+  if (!I || !I.settled) return null;
+  if (I._cz && I._cz.t === tick && I._cz.n === I.buildings.length) return I._cz.b;
+  const pz = I.buildings.find(b => b.kind === 'platz'), hs = I.buildings.filter(b => HOME_KINDS.has(b.kind) && !b.bt);
+  const b = !hs.length ? null : pz ? hs.reduce((m, q) => Math.hypot(q.x - pz.x, q.y - pz.y) < Math.hypot(m.x - pz.x, m.y - pz.y) ? q : m) : hs.reduce((m, q) => q.id < m.id ? q : m);
+  I._cz = {t:tick, n:I.buildings.length, b}; return b;
+}
 /* a craft goes with its house: moved with it, gone with it */
 function cleanCrafts(I){ if (I.buildings.some(b => b.at && !I.buildings.some(h => h.id === b.at))){ I.buildings = I.buildings.filter(b => !b.at || I.buildings.some(h => h.id === b.at)); I.staff = null; } }
 /* What a family makes at home has no workshop of its own any more: an old workshop from an earlier game moves into the

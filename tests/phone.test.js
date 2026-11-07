@@ -29,8 +29,11 @@ const {PAGE} = require('./lib');
         if (d && HOME_KINDS.has(findB(d.id).kind)) for (const t of [1, 2, 'full']){ const hb = findB(d.id), f = famOfHome(I, hb), keep = I.people.slice(), st = {...I.stock};
           hb.t = t === 'full' ? 2 : t;
           if (t === 'full'){ for (let i = 0; i < 2; i++) I.people.push(Object.assign(person(I, 22 + i), {h:f.id})); I.stock.wasser = 0; I.stock.speisen = 0; }   // six people, much missing
-          renderSheet(); $('sheet').classList.remove('opening');
-          if (body.scrollHeight > body.clientHeight + 2) out.push(`house step ${t}: sheet scrolls ${body.scrollHeight - body.clientHeight}px`);
+          // the village centre shows the village first; its family tab must fit as well
+          for (const tab of centerOf(I) === hb ? ['dorf', 'haus'] : [null]){ if (tab) sheetData = {...sheetData, tab};
+            renderSheet(); $('sheet').classList.remove('opening');
+            if (body.scrollHeight > body.clientHeight + 2) out.push(`house step ${t}${tab ? ' ' + tab : ''}: sheet scrolls ${body.scrollHeight - body.clientHeight}px`); }
+          if (centerOf(I) === hb) sheetData = {...sheetData, tab:'dorf'};
           hb.t = 1; I.people = keep; I.stock = st; }
         for (const el of body.querySelectorAll('button')){ const r = el.getBoundingClientRect(); if (r.width && (r.width < 28 || r.height < 26)) out.push(`${k}: small button "${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 18)}" ${r.width | 0}x${r.height | 0}`); }
       }

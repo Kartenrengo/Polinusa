@@ -11,6 +11,13 @@ Spieler es wählt.
 - **Hauswerk bei den Clans:** In den Dörfern der Clans gibt es noch eigene Werkstätten. Sie könnten auch Matten vor den
   Häusern zeigen.
 
+## Offen aus der Runde „Dorfzentrum und einfache Hausansicht“ (Version 66)
+
+- **Auf einem echten Handy ansehen:** die neue Hausansicht mit Kacheln und Wörtern, die Reiter des Dorfzentrums.
+- **Übersicht ebenso einfach machen:** Im Reiter „Bewohner“ der Übersicht steht noch die Knotenschnur je Hausstufe.
+  Dort könnten auch Kacheln mit Wörtern stehen.
+- **Regentanz zeigen:** Die Leute versammeln sich zum Tanz am Platz. Eigene Tanzschritte für den Regen gibt es noch nicht.
+
 ## Offen aus der Runde „Bewegungen“ (Version 65)
 
 - **Auf einem echten Handy ansehen:** Die neuen Bewegungen sind klein. Bisher nur im Test-Browser und nah gezoomt geprüft.

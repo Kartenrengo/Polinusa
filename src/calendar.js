@@ -45,9 +45,11 @@ const SEASON_FX = {
   passat:[['einbaum', 1, 'Ruhige See, Kanus schneller; nach Osten gegen den Wind'], ['toepfe', 1, 'Töpfe, Tapa und Öl trocknen gut']],
   mager:[['nahrung', -1, 'Keine Brotfrucht'], ['nahrung', 1, 'Yamsernte'], ['mana', 1, 'Nach der Ernte bringen Feste mehr Ansehen']]
 };
+const FIELD_RAIN = new Set(['taro', 'pulaka', 'yams', 'kurkumagarten', 'kavagarten', 'bananen', 'garten']);
 function seasonalEvery(I, b, K){
   if (K.rain){ const id = seasonOf().id; return Math.round(K.every * (id === 'sturm' ? .6 : id === 'mager' ? 2.4 : 1)); }   // rain comes with the storms
   const dry = I.drought > tick && (b.kind === 'taro' || b.kind === 'pulaka' || b.kind === 'baum') ? 2 : 1;   // a drought halves what the fields give
+  if (raining(I) && FIELD_RAIN.has(b.kind)) return Math.max(1, Math.round(K.every * .75));   // called rain: the fields drink
   if (b.kind === 'baum'){ const m = seasonOf().baum; return m ? Math.round(K.every * dry / m) : 0; }
   if (dry > 1) return K.every * 2;
   if (SEA_KINDS.has(b.kind)){

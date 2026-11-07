@@ -70,8 +70,8 @@ const QUESTS = [
     n:() => newLand(), of:1, show:{ship:'dc'}, unlock:['garten', 'klopf', 'pferch', 'klingen', 'schmuck', 'trommel', 'tanzplatz'], gift:{}},
   {id:'heirat', t:'Eine Hochzeit', d:'Verheirate jemanden mit einem Clan oder einem anderen Volk.', why:'Mit Brautgaben aus Matten und einem Schwein geht jemand von euch eine Ehe ein, und der Partner zieht zu euch: eine neue Linie, und die Schnur zu ihnen löst sich nicht mehr. Dazu braucht es 3 Knoten Vertrauen.',
     n:() => stats.heirat ? 1 : 0, of:1, show:{fleet:true}, unlock:[], gift:{}},
-  {id:'fest', t:'Ein Fest', d:'Feiere ein Fest im Versammlungshaus.', why:'Feste bringen Ansehen. Ansehen holt Siedler.',
-    n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:['ahnenhaus'], gift:{}},
+  {id:'fest', t:'Ein Fest', d:'Feiere ein Fest am Dorfzentrum.', why:'Feste bringen Ansehen. Ansehen holt Siedler. Das Dorfzentrum ist das erste Haus am Dorfplatz, mit der Fahne.',
+    n:() => islands.some(I => I.feastAt > 0) ? 1 : 0, of:1, show:{center:true}, unlock:['ahnenhaus'], gift:{}},
   {id:'plejaden', t:'Das Fest der Plejaden', d:() => festivalTime() ? 'Jetzt ist Festzeit. Feiere das Fest der ersten Früchte.' : `Feiere das Fest der ersten Früchte. Die Plejaden erscheinen in etwa ${minutes(untilFestival())} Minuten.`,
     why:'Mit den Plejaden beginnt das Jahr. Tanz, Salbung mit Öl und Kanurennen machen das Fest größer.',
     n:() => islands.some(I => I.festYear != null) ? 1 : 0, of:1, show:{sheet:'halle'}, unlock:[], gift:{}},
@@ -202,6 +202,7 @@ function adviceOf(I, urgentOnly = false){
   const wsrc = 'ernte';   // the spring is there by itself where a stream flows; more water comes only from green nuts
   if (nd.roofless && !sites) return {t:'Hütten bauen', d:`${nd.roofless} ${nd.roofless === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach. Eine Hütte braucht Holz und Palmwedel.`, build:'haus', urgent:true};
   const goes = (I.hunger || 0) >= 10 && leaverOf(I) && famsOf(I).length > 1 ? ` Sonst fährt ${famName(leaverOf(I))} fort.` : '';
+  { const cz = centerOf(I); if (cz && (I.stock.wasser || 0) < 4 && low('wasser') && !rainState(I)) return {t:'Regentanz', d:'Das Wasser geht aus. Am Dorfzentrum tanzt das Dorf und ruft den Regen: eine Weile Wasser für alle.', goto:cz.id, rain:true, urgent:true}; }
   if ((I.stock.wasser || 0) < 8 && low('wasser')) return {t:has(wsrc) || has('ernte') ? 'Mehr Wasser' : 'Wasser holen', d:goes + (freeHands(I) ? `${freeHands(I)} ${freeHands(I) === 1 ? 'ist' : 'sind'} frei, doch jeder Platz ist besetzt: ` : '') + (I.river ? 'Die Quelle am Bach reicht nicht mehr: Ein Erntehaus mehr holt grüne Nüsse zum Trinken.' : 'Hier fließt kein Bach: Das Erntehaus holt grüne Nüsse zum Trinken. Ein zweites hilft.'), build:'ernte', urgent:true};
   if (out('essen') || haveOf(I, 'essen') < 6 && low('essen')) return {t:'Mehr Essen', d:goes + (freeHands(I) ? `${freeHands(I)} ${freeHands(I) === 1 ? 'ist' : 'sind'} frei, doch jeder Platz für Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.` : 'Die Nahrung geht aus. Erntehaus, Fischerhütte und Gärten helfen, wer frei ist, sammelt.'), build:!has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : producerOf(I, 'nahrung') || 'fisch', urgent:true};
   { const s = immigFor(I); if (s && s.state === 'moored' && s.immig) return {t:'Ein Kanu fragt', d:`Familie ${s.immig.n} ${s.immig.from} möchte auf ${I.name} bleiben.`, immig:s.id, urgent:true}; }
@@ -240,9 +241,9 @@ function adviceOf(I, urgentOnly = false){
   const step = hawaiki() && I.type === 'hoch' && islandMax(I) >= CHIEF.isle ? chiefSteps(I, nd).find(s => !s.ok) : null; if (step) return {t:'Weg zum Häuptlingsdorf', d:`Nächster Schritt: ${step.t} (${step.now}).`, needs:true};
   if (nd.atMax) return {t:'Neues Land besiedeln', d:'Die Insel ist voll. Schicke Familien im Kanu aus.', fleet:true};
   if (ratRate(I) >= .75 && unlocked('speicher') && !I.buildings.some(b => b.kind === 'speicher' && b.bt)) return {t:'Ratten im Vorrat', d:`Sie fressen etwa ${perMin(ratRate(I))} Feldfrüchte pro Minute. Ein Speicher auf Pfosten hält sie fern.`, build:'speicher'};
-  { const hl = I.buildings.find(b => b.kind === 'halle' && !b.bt), T = FEASTS.find(q => q.id === 'tatau'), yo = youthsOf(I).length;
+  { const hl = I.buildings.find(b => b.kind === 'halle' && !b.bt) || centerOf(I), T = FEASTS.find(q => q.id === 'tatau'), yo = youthsOf(I).length;
     if (hl && feastsOpen() && yo >= 3 && !feastState(I, T)) return {t:'Tatau', d:`${yo} junge Leute tragen noch kein Muster. Ansehen +${feastMana(I, T)}.`, goto:hl.id}; }
-  { const hl = afterHarvest(I) && I.buildings.find(b => b.kind === 'halle' && !b.bt), F = hl && FEASTS.find(q => q.id !== 'schatz' && !feastState(I, q)); if (F) return {t:'Fest nach der Yamsernte', d:`${F.n}: jetzt Ansehen +${feastMana(I, F)}.`, goto:hl.id}; }
+  { const hl = afterHarvest(I) && (I.buildings.find(b => b.kind === 'halle' && !b.bt) || centerOf(I)), F = hl && FEASTS.find(q => q.id !== 'schatz' && !feastState(I, q)); if (F) return {t:'Fest nach der Yamsernte', d:`${F.n}: jetzt Ansehen +${feastMana(I, F)}.`, goto:hl.id}; }
   if (korCanThrow()) return {t:'Knöchelwurf', d:'Heute ist noch nicht geworfen.', koruru:true};
   return {t:'Erkunden und handeln', d:'Fahre mit dem Doppelkanu in den Nebel oder bring Gaben zu den Clans.', fleet:true};
 }
@@ -297,6 +298,7 @@ function showQuest(){
   const s = Q.show, id = s.island || 'heimat', I = isl(id);
   closeSheet();
   if (s.ship){ const sh = own().find(q => q.kind === s.ship) || (s.ship === 'vaka' ? null : own()[0]); if (sh){ steerShip(sh); return; } }
+  if (s.center){ const b = centerOf(isl('heimat')); if (b){ flyTo(b.x, b.y, Math.max(cam.z, 1.8)); select(b); return; } }
   if (s.sheet || s.ship){ const b = isl('heimat').buildings.find(x => x.kind === (s.sheet || 'werft')) || islands.filter(J => J.settled).flatMap(J => J.buildings).find(x => x.kind === (s.sheet || 'werft')); if (b){ flyTo(b.x, b.y, Math.max(cam.z, 1.8)); select(b); return; } }
   if (s.needs){ openSheet('needs'); return; }
   if (s.fleet){ openSheet('fleet'); return; }
@@ -319,7 +321,7 @@ function hintBuild(kind){
 function showCraft(k){
   const I = isl(active), K = KINDS[k], ok = homesOf(I).filter(h => !craftWhy(I, h, k)).sort((a, b) => !famOfHome(I, a) - !famOfHome(I, b));
   const h = ok.find(q => !craftOf(I, q)) || ok.find(q => craftOf(I, q).kind === k) || ok[0];
-  if (h){ closeSheet(); flyTo(h.x, h.y, Math.max(cam.z, 2.2)); select(h); return; }
+  if (h){ closeSheet(); flyTo(h.x, h.y, Math.max(cam.z, 2.2)); select(h); if (sheetKind === 'info'){ sheetData = {...sheetData, tab:'haus', crafts:true}; renderSheet(); } return; }   // the choice of crafts open, also in the village centre
   const why = craftIsle(I, k); if (why){ toast(`${K.craft}: ${why}.`, 3200, false); return; }
   toast(`${K.craft} geht ${K.dep ? `nur nah am ${DEPOSITS[K.dep].n}` : `nur nah bei ${NEAR_PL[K.near.kind]}`}. Baue dort eine Hütte, die Familie macht es dann.`, 4200, false);
   const p = craftPlace(I, k); setBuildOpen(true); if (!p || !canPay(I, costOf('haus', I))){ hintBuild('haus'); return; }

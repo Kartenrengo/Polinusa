@@ -715,6 +715,68 @@ button.fix{cursor:pointer}
 .agebar .a,.agelegend .a::before{background:#4f8f6b}
 .agebar .o,.agelegend .o::before{background:#9a8a7a}
 .agelegend span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:0}
+/* the house at a glance: the people with their work under the name, the needs as tiles with a word, the next step in one
+   line, the build-out with each good named */
+.who.pers{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-height:34px;padding:3px 9px 3px 8px}
+.who.pers .nm{font:700 13.5px/1.1 var(--font-ui)}
+.who.pers .nm small{font:600 11px var(--font-ui);color:var(--muted);margin-left:3px}
+.who.pers .job{font:600 10.5px/1.1 var(--font-ui);color:var(--muted);max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.needtiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:2px 0 6px}
+.ntile{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px 3px;border:0;border-radius:10px;background:#E4EED6;box-shadow:inset 0 0 0 2px var(--ok);color:var(--ink);cursor:pointer;font:inherit;min-width:0}
+.ntile .ic{width:21px;height:21px}
+.ntile small{font:700 11px/1.1 var(--font-ui);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ntile b{font:800 10px/1.15 var(--font-ui);text-transform:uppercase;letter-spacing:.05em;color:var(--ok)}
+.ntile.low{background:#FBF0D2;box-shadow:inset 0 0 0 2px #C9962E}
+.ntile.low b{color:#8A5F12}
+.ntile.out{background:#F6E3C4;box-shadow:inset 0 0 0 2px var(--ochre)}
+.ntile.out b{color:var(--ochre)}
+.nextline{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:0 0 6px;font:600 13px/1.25 var(--font-ui)}
+.nextline .what b{font-weight:800}
+.nextline.out .what b{color:var(--ochre)}
+.nextline .to{margin-left:6px;font-weight:800;color:var(--muted)}
+.rise2{display:flex;flex-direction:column;gap:5px;margin:2px 0 4px;padding:7px 10px 9px;background:var(--e1) no-repeat 0 0/100% 100%}
+.rise2 .rhead{display:flex;align-items:center;gap:8px}
+.rise2 .rhead .rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.rise2 .rhead .btn{flex:none}
+.rise2 .rhead b{font:800 14.5px/1.15 var(--font-ui)}
+.rise2 .rhead .sub{font-size:12px;line-height:1.2}
+.rtiles{display:flex;flex-wrap:wrap;gap:5px;align-items:stretch}
+.rtile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:48px;padding:3px 5px 3px;border:0;border-radius:10px;font:inherit;color:var(--ink);background:#E4EED6;box-shadow:inset 0 0 0 2px var(--ok)}
+.rtile .ic{width:19px;height:19px}
+.rtile small{font:700 10.5px/1.1 var(--font-ui)}
+.rtile b{font:800 12.5px/1.1 var(--font-ui);font-variant-numeric:tabular-nums}
+.rtile.out{background:#F6E3C4;box-shadow:inset 0 0 0 2px var(--ochre);cursor:pointer}
+.rtile.out b{color:var(--ochre)}
+.rtile.far::after{content:"Kanu";position:absolute;top:-6px;right:-4px;padding:0 3px;border-radius:5px;font:800 8.5px/1.4 var(--font-ui);background:var(--sea);color:var(--cream)}
+/* small phones: the tiles a little tighter */
+.sheet.tall.center{max-height:78%}
+@media (max-height:700px){.sheet.tall.center{max-height:82%}.sec.needsec{display:none}.nextline .chip.way{min-height:30px}}
+@media (max-height:620px){.sheet.tall.center{max-height:84%}}
+.sheet.center .tabs{margin:0 0 6px}
+.sheet.center .tab{min-height:30px}
+@media (max-height:640px){.sec.needsec{display:none}.ntile{padding:3px 2px 2px}.ntile .ic{width:18px;height:18px}.rtile{padding:2px 4px}.rtile .ic{width:16px;height:16px}.hubrow{padding:3px 0}.who.pers{min-height:30px;padding:2px 8px}}
+/* the household craft as a tile among the people */
+.who.pers.hw{background-image:var(--efree)}
+.who.pers.hw.on{background-image:var(--e1)}
+.who.pers.hw.idle{box-shadow:0 0 0 2px var(--ochre)}
+.who.pers.hw .nm{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--muted)}
+.who.pers.hw .nm .ic{width:15px;height:15px}
+.who.pers.hw .job{color:var(--ink);font-weight:700}
+.folk.home .cost{min-height:26px;padding:0 5px;align-self:center}
+/* the household crafts carry the name of their good */
+.chip.craft small{font:700 11px/1 var(--font-ui);color:var(--muted)}
+.chip.craft[aria-pressed="true"] small{color:inherit}
+/* the store: the name of each good under its number */
+.tile .nm{font:700 10px/1.05 var(--font-ui);color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the village centre: one row each for a feast, the rain dance and the knucklebones */
+.hubrow{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed rgba(62,36,22,.25)}
+.hubrow .hub-ic .ic{width:24px;height:24px}
+.hubrow .hub-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.hubrow .hub-t b{font:800 14px/1.15 var(--font-ui)}
+.hubrow .hub-t small{font:600 11.5px/1.2 var(--font-ui);color:var(--muted)}
+.hubrow .btn{flex:none}
+/* a helper at a workplace */
+.who.aid small,.who.aidway small{font:600 10.5px var(--font-ui);color:var(--muted);margin-left:3px}
 /* the smallest phones: the house before the build-out goes, the steps and their chips get smaller */
 @media (max-width:340px){
 .rise-pic .tp:not(.next){display:none}

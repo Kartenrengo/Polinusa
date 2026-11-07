@@ -68,7 +68,7 @@ const r = await p.evaluate(()=>{
   { stats.peakPop = Math.max(stats.peakPop || 0, 25); stageTick(); const H = isl('heimat'), hh = homesOf(H)[0]; renderBuildBar();
     want(!CRAFT_KINDS.some(k => $('buildList').querySelector(`[data-kind="${k}"]`)), 'craft: a workshop still in the build bar');
     setCraft(H, hh, 'schnur'); const c = craftOf(H, hh); want(c && c.kind === 'schnur' && placesOf(H).includes(c), 'craft: not taken up (' + craftWhy(H, hh, 'schnur') + ')');
-    if (c) select(c); want(sheetKind === 'info' && findB(sheetData.id) === hh && /data-act="craft"/.test($('sheetBody').innerHTML), 'craft: the sheet of a craft is not its house'); closeSheet();
+    if (c) select(c); want(sheetKind === 'info' && findB(sheetData.id) === hh && /data-act="craft/.test($('sheetBody').innerHTML), 'craft: the sheet of a craft is not its house'); closeSheet();
     restore(serialize()); const H2 = isl('heimat'), h2 = findB(hh.id); want(craftOf(H2, h2) && craftOf(H2, h2).kind === 'schnur', 'craft: lost on load');
     H2.buildings = H2.buildings.filter(b => b !== h2); cleanCrafts(H2); want(!H2.buildings.some(b => b.at === hh.id), 'craft: stays without its house');
     out.push(`craft: ${CRAFT_KINDS.length} household crafts, ${craftsHere(H2).length} here`); }
@@ -90,6 +90,30 @@ const r = await p.evaluate(()=>{
     want(teamF(KINDS.faeller, KINDS.faeller.crew + 1) > 1 && teamF(KINDS.faeller, 9 * KINDS.faeller.crew) <= 1.5, 'helpers: team factor');
     H.zeal = 0; H.staff = null; const sr = staffOf(H); updateHUD(); want(!sr.help.size && sr.rest && $('idleNum').textContent === '0', 'free time: the free are shown as jobless');
     H.zeal = 1; H.people = H.people.filter(p => !extra.includes(p)); H.staff = null; }
+  // the village centre: the house by the plaza; its sheet shows the village, the store and the family; the rain dance
+  { const H = isl('heimat'), cz = centerOf(H), pz = H.buildings.find(b => b.kind === 'platz');
+    want(cz && pz && homesOf(H).every(h => Math.hypot(h.x - pz.x, h.y - pz.y) >= Math.hypot(cz.x - pz.x, cz.y - pz.y)), 'centre: not the house by the plaza');
+    select(cz); const body = () => $('sheetBody').innerHTML;
+    want(/Dorfzentrum/.test(body()) && /data-act="rain"/.test(body()) && /data-act="koruru"/.test(body()), 'centre: the village tab lacks the rain dance or the knucklebones');
+    sheetData = {...sheetData, tab:'lager'}; renderSheet(); want(/class="nm"/.test(body()), 'centre: the store has no names');
+    sheetData = {...sheetData, tab:'haus'}; renderSheet(); want(/needtiles/.test(body()) && !/class="cord"/.test(body()), 'house: still the knot cord');
+    closeSheet();
+    // feasts at the centre, without a meeting house
+    const halls = H.buildings.filter(b => b.kind === 'halle'); H.buildings = H.buildings.filter(b => b.kind !== 'halle');
+    want(!/Versammlungshaus|Dorfzentrum/.test(feastState(H, FEASTS[0])), 'feasts: still need the meeting house'); H.buildings.push(...halls);
+    // the rain dance: fed dancers, the drought ends, water while it rains, once a moon
+    const keepS = {...H.stock}, t0 = tick; while (seasonOf().id === 'sturm') tick++;
+    Object.assign(H.stock, {nahrung:20, wasser:0}); H.drought = tick + 99; H.rainAt = 0; H.rainUntil = 0;
+    want(!rainState(H), 'rain: cannot dance (' + rainState(H) + ')'); rainDance(H);
+    want(H.drought === 0 && (H.stock.nahrung || 0) === 14 && /tanzt/.test(rainState(H)), 'rain: dance does not pay or end the drought');
+    for (let i = 0; i < RAIN.dance + 4; i++) econ();
+    out.push(`rain dance: water after ${RAIN.dance + 4} ticks ${H.stock.wasser}, state "${rainState(H)}"`); want(raining(H) && H.stock.wasser > 0, 'rain: no water from the rain');
+    tick = H.rainUntil + 1; want(/Wieder in/.test(rainState(H)), 'rain: can dance again at once');
+    tick = t0; H.rainAt = 0; H.rainUntil = 0; H.drought = 0; Object.assign(H.stock, keepS); }
+  // a workplace always shows its fixed places; helpers get marks of their own after them
+  { const H = isl('heimat'), e = H.buildings.find(b => b.kind === 'ernte' && !b.bt), sf = staffOf(H);
+    if (e){ const fake = {crew:new Map([[e, KINDS.ernte.crew + 2]])}, sl = slotsOf(H, e, {...sf, crew:fake.crew}, new Map([[e, 9]]));
+      want(sl.filter(k => !k.startsWith('aid')).length === KINDS.ernte.crew && sl.filter(k => k.startsWith('aid')).length === 2, 'helpers: marks mixed with the places ' + sl); } }
   // the old sit at the household craft at half strength; children come seldom without a surplus; the elders say why none come
   { const H = isl('heimat'); H.handWork = false; const hh = homesOf(H).find(h => famOfHome(H, h)), f = famOfHome(H, hh);
     const o = Object.assign(person(H, 47), {h:f.id, l:Math.round(80 * YEAR)}); H.people.push(o); H.pop++; setCraft(H, hh, 'schnur'); const c = craftOf(H, hh); H.staff = null;

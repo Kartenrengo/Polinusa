@@ -1274,10 +1274,10 @@ const chiefGoods = I => CHIEF_GOODS.every(k => (I.stock[k] || 0) > 0);
 /* who has come of age and carries no pattern yet */
 const youthsOf = I => (I.people || []).filter(p => isAdult(p) && ageOf(p) < 20 && !p.tt);
 function feastState(I, F){
-  if (!I.buildings.some(b => b.kind === 'halle')) return 'Feste feiert man im Versammlungshaus.';
+  if (!centerOf(I) && !I.buildings.some(b => b.kind === 'halle')) return 'Feste feiert man am Dorfzentrum.';
   if (F.per && !youthsOf(I).length) return 'Niemand ist gerade erwachsen geworden.';
   const wait = (I.feastAt || -FEAST_PAUSE) + FEAST_PAUSE - tick; if (I.feastAt && wait > 0) return `Das nächste Fest geht in ${Math.ceil(wait * TICK / 1000)} Sekunden.`;
-  if (!canPay(I, F.cost)) return `Es fehlt ${lacking(I, F.cost)}.`;
+  if (!canPay(I, F.cost)) return `Fehlt: ${lacking(I, F.cost)}.`;
   return '';
 }
 function holdFeast(I, F){
@@ -1290,6 +1290,28 @@ function holdFeast(I, F){
   updateHUD(); if (sheetKind) renderSheet(); save(); checkQuest();
   toast(young.length ? `Tatau auf ${I.name}: ${andList(young.map(p => p.n))} ${young.length === 1 ? 'trägt' : 'tragen'} jetzt ${young.length === 1 ? 'ihr Muster' : 'ihre Muster'}. Ansehen +${gain}.` : `${F.n} auf ${I.name}. Ansehen +${gain}${afterHarvest(I) ? ', nach der Yamsernte' : ''}.`, 4200);
 }
+/* The rain dance: in the dry time the village dances on the plaza by the village centre and calls the rain, as people on
+   the islands asked the gods and the ancestors for rain (known from later accounts). Once a moon; the dancers are fed.
+   After the dance a rain cloud stands over the village: the water vessels fill, a drought ends, the fields drink. */
+const RAIN = {cost:{roh:6}, dance:8, len:24, water:1};
+const raining = I => I.rainUntil > tick && tick >= (I.rainAt || 0) + RAIN.dance;
+function rainState(I){
+  if (!centerOf(I)) return 'Getanzt wird am Dorfzentrum.';
+  if (I.rainUntil > tick) return raining(I) ? 'Es regnet.' : 'Das Dorf tanzt.';
+  if (seasonOf().id === 'sturm' && !(I.drought > tick)) return 'In der Sturmzeit regnet es von selbst.';
+  const wait = (I.rainUntil || 0) + MOON - tick; if (I.rainUntil && wait > 0) return `Wieder in ${Math.ceil(wait * TICK / 1000)} Sekunden.`;   // a moon after the rain
+  if (!canPay(I, RAIN.cost)) return 'Fehlt: Essen für die Tänzer.';
+  return '';
+}
+function rainDance(I){
+  const no = rainState(I); if (no){ toast(no, 2400, false); return false; }
+  pay(I, RAIN.cost); I.rainAt = tick; I.rainUntil = tick + RAIN.dance + RAIN.len; I.feastEnd = Math.max(I.feastEnd || 0, tick + RAIN.dance); I.drought = 0;
+  for (const w of walkers) if (w.isl === I.id){ nextLeg(w); w.wait = 0; }
+  stats.regentanz = (stats.regentanz || 0) + 1;
+  updateHUD(); if (sheetKind) renderSheet(); save();
+  if (I.id === active) toast(`${I.name} tanzt am Dorfplatz und ruft den Regen.`, 3600);
+  return true;
+}
 let hearts = [], sunKey = '';   // a heart rises over a house when someone moves in
 function econ(){
   if (landing){ lastEconAt = performance.now(); requestDraw(); return; }   // time begins when the clan has landed
@@ -1298,6 +1320,7 @@ function econ(){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
+    if (raining(I)){ add('wasser', RAIN.water); if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){

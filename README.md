@@ -335,17 +335,24 @@ Einfach und nach Bedeutung geordnet:
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.
 - **Ein Haus antippen** zeigt alles auf einem Blatt, **ohne Scrollen**, auch auf kleinen Handys (320×568 bis 390×844
-  werden im Handy-Test gemessen). Oben der Name der Familie, darunter die Stufe als Punkte, der Name des Hauses und die
-  Plätze (frei, noch zu, „4/6“, ein Kind, wo Kinder kommen). Dann die Leute in einer Zeile: Name, Alter und das Bild des
-  Gebäudes, an dem sie arbeiten (gestrichelt, wenn sie es bauen). Dann **die Schnur der Familie** mit den Knoten dieser
-  Stufe (siehe unten). Für jeden losen oder fehlenden Knoten ein Knopf: Knoten, Bedürfnis, dann das Gebäude, das hilft
-  („Erdofen“, „Kanus“). Der **Ausbau** in einem Kasten: Haus jetzt → Haus danach mit Namen, die Plätze („6→8“), „+“ mit
-  dem, was die Familie dann dazu will; darunter jedes Material einmal als Bild mit „hat/braucht“ (wird ein Gut für den
-  Ausbau gebraucht und muss danach im Lager liegen, steht es nur einmal da), grün oder rot, und daneben der Knopf
-  „Ausbauen“. Muss etwas von außen kommen, steht neben dem Knopf die Bildkette dorthin. Unten die Linie der Familie und
-  „Versetzen“, „Entfernen“.
+  werden im Handy-Test gemessen), und **in Worten statt Zeichen** (seit Version 66):
+  - Oben der Name der Familie, darunter in einer Zeile „Familienhaus · 4 von 6 Plätzen“.
+  - Die Leute als Kacheln: Name und Alter, darunter, was sie tun („Erntehaus“, „Sennit drehen“, „baut“, „Kind“). Am
+    Ende die Kachel **Hauswerk**: das gewählte Hauswerk mit seinen Händen („Sennit drehen 1/1“) oder „Hauswerk wählen“.
+    Ein Tippen öffnet die Auswahl mit Namen; was hier nicht geht, ist blass und sagt beim Tippen, warum.
+  - **Was die Familie braucht:** eine Kachel je Bedürfnis mit Bild, Namen und einem Wort: **da** (grün), **knapp**
+    (gelb), **fehlt** (rot). Ein Tippen zeigt, woher es kommt.
+  - **Eine Zeile „Als Nächstes“:** das Erste, was fehlt (sonst knapp ist), mit dem Gebäude, das hilft: „Essen knapp →
+    Tarofeld“, oder in Worten: „Gekochtes fehlt: Erdofen kommt ab 12 Menschen.“
+  - **Ausbau:** „Ausbau: Meisterhaus“, darunter „Platz für 8 · will dann auch Töpfe, Matten und Öl“, daneben der Knopf
+    „Ausbauen“. Darunter jede Bedingung als Kachel mit Namen und „hat/braucht“: Bedarf 3/4, Töpfe 0/1, Matten 0/2, Öl
+    0/1, Holz 2/2, grün oder rot. Muss etwas per Kanu kommen, trägt die Kachel ein kleines „Kanu“ und führt zu den Kanus.
+  - Unten die Linie der Familie und „Versetzen“, „Entfernen“.
+  Die Knotenschnur und die Bildkette sind aus dem Haus verschwunden: Sie waren schön, aber man musste sie erst lernen.
 - **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
-  holen sollen.
+  holen sollen. Erst die **festen Plätze** (das Erntehaus hat immer 2), dann die **Helfer**, kleiner, mit einem Plus und
+  „hilft“; darunter in Worten „2 feste Plätze, dazu 2 Helfer“. Auch die Marken über dem Gebäude zeigen erst die festen
+  Plätze, dann die Helfer mit Plus. So sieht ein Platz nicht mal nach 2, mal nach 4 Plätzen aus.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
     sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
@@ -356,7 +363,8 @@ Einfach und nach Bedeutung geordnet:
 - **Wenig Text:** Bilder statt Sätze. Meldungen sind kurz („Familie Hiva zieht ein, mit 3 Feldfrüchten. Neue Linie.“).
   Mehr steht unter „Mehr dazu“.
 
-- **Lager:** Jede Ware eine Kachel: Bild, Zahl, ein Balken, wie voll es ist, und ▲ oder ▼ pro Minute, grün oder rot.
+- **Lager:** Jede Ware eine Kachel: Bild, Zahl, **darunter ihr Name** (Feldfrüchte, Wildbeute, Kokosfasern …), ein Balken,
+  wie voll es ist, und ▲ oder ▼ pro Minute, grün oder rot.
   Antippen zeigt, wer sie macht. Was stillsteht, steht darunter als Knöpfe mit dem Gebäude.
 - **Kalender:** Zwölf Monde als Kreise in den Farben der vier Zeiten, der jetzige hervorgehoben; darunter die Zeiten als
   Bilder und wann das Fest kommt.
@@ -370,11 +378,9 @@ Einfach und nach Bedeutung geordnet:
 
 Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
 
-- **Die Schnur der Familie statt Balken:** Die Bedürfnisse eines Hauses sind Knoten auf einer Schnur aus Sennit, nach den
-  geknoteten Ahnenschnüren der Marquesas (taʻo mata). Ein fest gezogener Knoten ist erfüllt, eine lose Schlaufe ist
-  knapp, eine ausgefranste Lücke fehlt. Nach einer Muschelperle folgen hell die Knoten, die die nächste Stufe will. Ist
-  das Blatt offen, ziehen sich die Knoten nacheinander fest. Jeder Knoten ist ein Knopf: antippen zeigt, woher es kommt.
-  Rechts steht, wie viele Knoten halten („2/3“).
+- **Die Schnur der Familie:** In der Übersicht sind die Bedürfnisse einer Hausstufe Knoten auf einer Schnur aus Sennit,
+  nach den geknoteten Ahnenschnüren der Marquesas (taʻo mata): fest gezogen erfüllt, eine lose Schlaufe knapp, eine
+  ausgefranste Lücke fehlt. Im Haus selbst stehen seit Version 66 Kacheln mit Wörtern (siehe oben).
 - **Ein Knoten statt Pfeil:** Über einem Haus, das ausgebaut werden kann, schwebt ein Knoten mit einer Tiare-Blüte und
   wiegt sich. Auch der Knopf „Ausbauen“ trägt ihn; ist alles bereit, zieht der Knoten sich im Takt zusammen und ein
   gestrichelter Ring legt sich um den Knopf.
@@ -445,8 +451,7 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
   frühen Lapita lebten wohl dort, wo die Familie der Frau lebte.
 - **Hütte:** Pfosten und ein Dach aus Palmwedeln, ohne Nägel. Sie ist das Zuhause einer Familie, bis 4 Menschen. In einer
   Hütte kommen **keine Kinder** zur Welt.
-- **Ausbau:** Ein Haus kann eine Stufe höher, wenn **alle Knoten seiner Schnur fest** sind, also alle Bedürfnisse der
-  Familie erfüllt, und das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da sein.
+- **Ausbau:** Ein Haus kann eine Stufe höher, wenn **alle Bedürfnisse da** sind und das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da sein.
   Dann schwebt ein Knoten mit Blüte über dem Haus, oben steht „Ausbau“, und auf der Tafel des Hauses ist der Knopf
   „Ausbauen“ frei. Beim Ausbau regnen Blüten aufs Dach. In der Übersicht baut „Alle ausbauen“ alle bereiten Häuser auf
   einmal aus. Wer will, schaltet dort „Von selbst ausbauen“ ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
@@ -1260,9 +1265,33 @@ Belegt sind davon für die Lapita-Zeit vor allem: Zahnstempel und Paddel-und-Amb
 mit Korallenfeilen, Erdöfen mit Kochsteinen, Ausbrennen und Behauen beim Kanubau. Sennitzöpfe, Tapa mit Musterbrett und
 Tanz kennt man aus späteren Berichten.
 
+## Das Dorfzentrum
+
+Seit Version 66 ist **das erste Haus das Dorfzentrum**: das Haus am Dorfplatz, in dem die Familie wohnt, die das Dorf
+gegründet hat. Man erkennt es an einem geschnitzten Pfosten mit einem roten Tapa-Wimpel, der mit dem Wind weht. Wird es
+versetzt oder entfernt, wird das nächste Haus am Platz zum Dorfzentrum; jedes Dorf hat seines. Ein Tippen öffnet drei
+Reiter:
+
+- **Dorf:** die **Feste** (Kleines Fest und Tatau immer, das Große Fest, sobald es Schweine und Tapa gibt, das Fest der
+  Schätze, sobald ein Schatz gesehen ist), jeweils mit dem, was es kostet oder was noch fehlt, und „Feiern“. Darunter
+  der **Regentanz** und der **Knöchelwurf** (einmal am Tag).
+- **Lager:** alle Waren als Kacheln mit Namen, wie im Lager oben.
+- **Familie:** das Haus der Gründerfamilie, wie jedes andere Haus.
+
+**Feste** brauchen kein Versammlungshaus mehr: Sie gehen am Dorfzentrum, die Aufgabe „Ein Fest“ zeigt dorthin. Das
+Versammlungshaus bleibt für das Fest der Plejaden, den Kava am Abend und als Schlafplatz für Familien ohne Dach.
+
+**Regentanz.** Außerhalb der Sturmzeit, oder bei einer Dürre, tanzt das Dorf am Dorfplatz und ruft den Regen. Die Tänzer
+essen 6 vom Vorrat (Feldfrüchte, Fisch, Meeresfrüchte oder Wild). Alle kommen zum Platz und tanzen (8 Takte), dann
+steht eine große graue Wolke über dem Dorf und es regnet 24 Takte lang: jeden Takt 1 Wasser, eine Dürre ist vorbei, und
+Felder, Gärten und Bananen tragen ein Viertel schneller. Danach geht es erst nach einem Mond wieder. Geht das Wasser aus
+(weniger als 4) und ein Tanz ist möglich, rät der Rat zum Regentanz. Belegt ist das so nicht für die Lapita-Zeit:
+Zeremonien um Regen kennt man aus späteren Berichten von vielen Inseln, auch die Ereigniskarte „Dürre“ hat eine
+Regenzeremonie mit Kava.
+
 ## Ansehen
 
-Das Ansehen des Clans wächst mit Festen im Versammlungshaus (Kleines Fest: 10 Feldfrüchte, 4 Fisch und 2 Töpfe, +5;
+Das Ansehen des Clans wächst mit Festen am Dorfzentrum (Kleines Fest: 10 Feldfrüchte, 4 Fisch und 2 Töpfe, +5;
 Großes Fest: 4 Schweine, 12 Feldfrüchte, 4 Meeresfrüchte und 2 Tapa, +15), mit dem Fest der Plejaden, mit Gaben an andere Clans und mit einem
 schönen Dorf. Es sinkt um etwa 1 pro Minute.
 
@@ -1272,7 +1301,7 @@ Versammlungshaus: 8 Feldfrüchte, 4 Gekochtes und 1 Obsidianklinge, Ansehen +3 u
 Figuren ein Zickzack und eine Reihe Punkte auf der Brust, wie die Bänder auf den Töpfen; wer sie antippt, liest „mit
 Tatau“. Sind es drei oder mehr, sagen es die Ältesten. Das Muster bleibt beim Speichern.
 Gebraucht wird es für jede weitere Siedlungsfahrt (8 mehr pro Siedlung nach den ersten beiden) und für ein Häuptlingsdorf.
-Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus.
+Beim Fest versammelt sich das Dorf am Feuer vor dem Versammlungshaus, oder am Dorfplatz, solange es keines gibt.
 
 ## Fremde Clans
 
