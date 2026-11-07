@@ -31,7 +31,7 @@ Regelverstoß. Vier Stellen hängen aber:
 **Nächste Schritte, nach langlebigem Spielspaß:** Was trägt ein Spiel über Wochen? Ein Grundgefühl von Wachsen statt
 Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen man hängt, und Ziele, die locken.
 
-1. **Wachsen statt Mangel.** Weniger Essen pro Kopf (etwa 1,0 statt 1,2) oder mehr Ertrag je Hand, und das Erntehaus
+1. ~~**Wachsen statt Mangel.**~~ **erledigt in Version 69:** Essen 1,0 statt 1,2 pro Kopf, beim Nüsse-Pflücken fällt ein halber Wedel mit herunter. Der Bot kommt nach 90 Minuten im Schnitt auf etwa 63 Menschen (vorher 40). Bleibt zu beobachten, ob es jetzt zu leicht wird. Vorher stand hier: Weniger Essen pro Kopf (etwa 1,0 statt 1,2) oder mehr Ertrag je Hand, und das Erntehaus
    entlasten: Einer klettert nach Nüssen, die andere schneidet zugleich Wedel. Maß: höchstens die Hälfte der Hände für
    Essen, „Mehr Essen“ in weniger als einem Drittel der Zeit, der Bot im Schnitt über 50 Menschen. Ohne das hört man
    auf, bevor das Mittelspiel beginnt.

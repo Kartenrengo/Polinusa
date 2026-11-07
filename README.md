@@ -253,7 +253,7 @@ das ganze Dorf**, auch oben im Reiter „Arbeit“ der Übersicht:
 **Warum Mangel trotz vieler Bewohner?** Gemessen: Wer einen Arbeitsplatz hat, ist dort 98 % der Zeit, Freizeit kostet
 also kaum etwas. Ein Mangel kommt fast immer daher, dass jeder Platz besetzt ist: Freie Leute arbeiten nur, wo ein Platz
 frei ist, sonst sammeln sie Wild, und das wird weniger. Ein Arbeiter im Feld ernährt etwa 3 Menschen (Feldfrüchte 3,75 pro
-Minute, jeder isst 1,2), einer an der Quelle tränkt etwa 10. Der Rat sagt es jetzt: „3 sind frei, doch jeder Platz für
+Minute, jeder isst 1,0), einer an der Quelle tränkt etwa 10. Der Rat sagt es jetzt: „3 sind frei, doch jeder Platz für
 Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.“
 
 **Arbeit nach Stand, wie bei Anno.** Die Erwachsenen einer **Meisterfamilie** gehen nicht mehr aufs Feld, aufs Meer
@@ -264,7 +264,7 @@ Wasser ganz, packen alle wieder mit an. Hat eine Meisterfamilie freie Hände und
 
 **Verhältnisse und Ketten.** Die Tafel eines Arbeitsplatzes zeigt „≈3,1“ mit dem Bild für Menschen: so viele versorgt der
 Platz, voll besetzt. Darunter in Worten, etwa „Voll besetzt 3,8 Nahrung pro Minute: genug für etwa 3,1 Menschen. Jeder
-braucht 1,2 pro Minute.“ Das Blatt einer Ware zeigt ihre Kette in Bildern: was hineingeht, die Ware, wohin sie weiter
+braucht 1,0 pro Minute.“ Das Blatt einer Ware zeigt ihre Kette in Bildern: was hineingeht, die Ware, wohin sie weiter
 geht, zum Beispiel „Kokosfasern → Schnur → Fischerhütte schneller · Ausbau Familienhaus“.
 
 **Der Rat und das Wachsen.** Reicht Essen oder Wasser nur gerade, rät der Rat nicht mehr zu Hütten, sondern
@@ -415,7 +415,7 @@ Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
 ## Essen
 
 Alles Essen zählt als **Nahrung**. Oben steht nur eine Zahl, in der Übersicht und im Lager darunter jede Sorte. Jeder
-Bewohner isst 1,2 pro Minute, und die Leute essen das, wovon am meisten da ist.
+Bewohner isst 1,0 pro Minute (bis Version 68 waren es 1,2), und die Leute essen das, wovon am meisten da ist.
 
 | Sorte | Woher |
 | --- | --- |
@@ -1098,7 +1098,7 @@ oder einmal fällen.
 
 | Quelle | Wer nutzt sie | Was entsteht |
 | --- | --- | --- |
-| Kokospalme | Erntehaus | reife Nüsse (Nahrung) mit Kokosfasern und Kokosschalen, grüne Nüsse (Wasser), Palmwedel (Dach), alte Stämme (Holz) |
+| Kokospalme | Erntehaus | reife Nüsse (Nahrung) mit Kokosfasern, Kokosschalen und einem halben Wedel (der fällt beim Klettern mit herunter), grüne Nüsse (Wasser), Palmwedel (Dach), alte Stämme (Holz) |
 | Kokosfasern | Sennit drehen | Sennit, die Schnur für Häuser, Kanus und Netze |
 | Kokosschalen | Herdfeuer, Erdofen, Töpfern | Brennstoff: erst die Schalen, dann Holz. Jede reife Nuss gibt eine Schale (seit Version 67, vorher eine halbe) |
 | Kokosnüsse | Öl pressen | Kokosöl, 2 Nüsse je Öl |
@@ -1165,7 +1165,7 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 
 | Stufe | Ab | Wer braucht was (pro Kopf und Minute) |
 | --- | --- | --- |
-| Weiler | Anfang | alle: Dach, Nahrung 1,2 (jede Sorte zählt), Wasser 0,5; Familienhäuser dazu Gekochtes 0,3 |
+| Weiler | Anfang | alle: Dach, Nahrung 1,0 (jede Sorte zählt), Wasser 0,5; Familienhäuser dazu Gekochtes 0,3 |
 | Dorf | 30 Bewohner | Meisterfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04 |
 | Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
