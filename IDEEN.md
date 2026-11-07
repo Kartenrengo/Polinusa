@@ -28,28 +28,38 @@ Regelverstoß. Vier Stellen hängen aber:
 4. **Die Tests sehen das späte Spiel nicht.** Der Bot kann nicht segeln. Ob Meisterhaus, Häuptlingsdorf und die große
    Fahrt aufgehen, ist ungeprüft.
 
-**Nächste Schritte, nach Wichtigkeit:**
+**Nächste Schritte, nach langlebigem Spielspaß:** Was trägt ein Spiel über Wochen? Ein Grundgefühl von Wachsen statt
+Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen man hängt, und Ziele, die locken.
 
-1. **Bot lernt segeln und handeln.** Erkunden, ein Atoll besiedeln oder einen Clan finden, eine Handelskette setzen.
-   Erst dann lassen sich die nächsten Schritte messen. Ziel: das Meisterhaus in 90 Minuten in mindestens der Hälfte der
-   Läufe.
-2. **Essen entspannen.** Weniger Essen pro Kopf (etwa 1,0 statt 1,2) oder mehr Ertrag je Hand. Maß: höchstens die
-   Hälfte der Hände für Essen, „Mehr Essen“ in weniger als einem Drittel der Zeit, der Bot im Schnitt über 50 Menschen.
-3. **Erntehaus entlasten.** Die zwei Leute holen Verschiedenes zugleich: Einer klettert nach Nüssen, die andere schneidet
-   Wedel. Oder der Rat schlägt ein zweites Erntehaus vor, sobald Wasser und Wedel sich streiten.
-4. **Der Weg zu den Matten mit einem Tipp.** Fehlen dem Meisterhaus Matten und ist ein Atoll bekannt, schlägt der Rat die
-   Handelskette vor und setzt sie auf Tipp: Töpfe oder Holz hin, Matten zurück.
-5. **Überfluss belohnen.** Sind die Lager voll, ein Erntefest: Ansehen, öfter Kinder. Ein Vorrat für die magere Zeit als
-   sichtbares Ziel mit Haken.
-6. **Erfolge feiern.** Erstes Familienhaus, 20, 30 und 50 Menschen, die erste Handelsfahrt, das erste Meisterhaus: ein
-   kurzes Fest auf dem Platz, Blüten, Trommeln und ein kleines Geschenk.
-7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel und grün,
+1. **Wachsen statt Mangel.** Weniger Essen pro Kopf (etwa 1,0 statt 1,2) oder mehr Ertrag je Hand, und das Erntehaus
+   entlasten: Einer klettert nach Nüssen, die andere schneidet zugleich Wedel. Maß: höchstens die Hälfte der Hände für
+   Essen, „Mehr Essen“ in weniger als einem Drittel der Zeit, der Bot im Schnitt über 50 Menschen. Ohne das hört man
+   auf, bevor das Mittelspiel beginnt.
+2. **Ein Mittelspiel mit Tiefe.** Jedes Dorf wählt eine Stärke (Töpfer, Fischer, Weberinnen, Navigatoren) mit einem
+   Bonus, und der Handel zwischen den eigenen Dörfern wird der Kern. Fehlen dem Meisterhaus Matten und ist ein Atoll
+   bekannt, schlägt der Rat die Handelskette vor und setzt sie auf Tipp. Vorarbeit dafür: **Der Bot lernt segeln und
+   handeln**, sonst lässt sich das Mittelspiel nicht messen. Ziel: das Meisterhaus in 90 Minuten in mindestens der
+   Hälfte der Läufe.
+3. **Soundtrack.** Musik, die das Spiel trägt und nie nervt, ohne Dateien im Spiel erzeugt (das Spiel bleibt eine
+   Datei):
+   - Klänge der Inseln: tiefe Holztrommel, Bambus-Stampfrohre, Rasseln aus Samenkapseln, Muschelhorn, Summen und Gesang
+     einer Gruppe. Erst nach der großen Fahrt, in Hawaiki, kommt die Nasenflöte dazu.
+   - Die Musik folgt dem Leben: ruhig am Morgen, ein Arbeitsrhythmus am Tag, langsam am Abend, nachts fast still, bei
+     Festen schnelle Trommeln, beim Regentanz Stampfen, vor dem Sturm ein tiefes Dröhnen, auf der großen Fahrt ein
+     weites Thema.
+   - Die Jahreszeit ändert Tonart und Tempo; je größer das Dorf, desto mehr Stimmen.
+   - Musik und Geräusche getrennt an und aus, eigene Lautstärke. Wenig Rechenlast auf dem Handy, Pause, wenn das
+     Spiel nicht zu sehen ist.
+   - Im README unter „Was belegt ist“: Musik der Lapita-Zeit ist nicht überliefert. Die Instrumente kennt man aus dem
+     späteren Melanesien und Polynesien.
+4. **Geschichten der Menschen.** Auf der Personentafel ein paar Lebensereignisse: der erste Fang, die Hochzeit, das
+   Tatau, wird Navigatorin, ein Sturm überstanden. So erkennt man Leute wieder und hängt an ihnen.
+5. **Feste für Erfolge und Überfluss.** Erstes Familienhaus, 20, 30 und 50 Menschen, die erste Handelsfahrt, das erste
+   Meisterhaus: ein kurzes Fest auf dem Platz mit Blüten, Trommeln und einem kleinen Geschenk. Volle Lager bringen ein
+   Erntefest mit Ansehen und öfter Kindern; ein Vorrat für die magere Zeit wird ein sichtbares Ziel.
+6. **Sammelbuch.** Muster, Ahnen, Schätze und seltene Treibgut-Funde in einem Album mit Lücken, die locken.
+7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
-8. **Dörfer mit Gesicht.** Jedes Dorf wählt eine Stärke (Töpfer, Fischer, Weberinnen, Navigatoren) mit einem Bonus. Der
-   Handel zwischen den eigenen Dörfern wird der Kern des Mittelspiels.
-9. **Geschichten der Menschen.** Auf der Personentafel ein paar Lebensereignisse: der erste Fang, die Hochzeit, das
-   Tatau, wird Navigatorin. So erkennt man Leute wieder und hängt an ihnen.
-10. **Sammelbuch.** Muster, Ahnen, Schätze und seltene Treibgut-Funde in einem Album mit Lücken, die locken.
 
 ## Offen aus der Runde „Stammplatz, Sturm und Treibgut“ (Version 67)
 
