@@ -14,6 +14,7 @@ const {PAGE} = require('./lib');
     for (const [k, a] of Object.entries(LOADS)) refs(a, 'load ' + k);
     for (const [k, a] of Object.entries(TOOLS)) refs(a, 'tool ' + k);
     for (const k of [...GOODS, ...Object.keys(GN)]) if (!has('ic-' + k) && !GROUPS[k]) bad.push(`no picture for good ${k}`);
+    for (const [k, S] of Object.entries(STRENGTHS)){ if (!has('ic-' + S.ic)) bad.push(`no picture for strength ${k}`); for (const q of S.kinds) if (!KINDS[q]) bad.push(`strength ${k}: unknown building ${q}`); }
     for (const t of Object.values(TIERS)) for (const k of t.needs) if (!has('ic-' + needIcon(k))) bad.push(`no picture for need ${k}`);
     for (const K of Object.values(KINDS)) for (const k of Object.keys(K.picks || {})) if (!has('ic-' + k)) bad.push(`no picture for pick ${k}`);
     for (const S of SEASONS) if (!has('ic-' + S.id)) bad.push(`no picture for season ${S.id}`);

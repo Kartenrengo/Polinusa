@@ -470,8 +470,9 @@ function houseMarkup(I, b, withHead = true){
 function centerMarkup(I, b){
   const f = famOfHome(I, b), tab = (sheetData && sheetData.tab) || 'dorf';
   let h = head('Dorfzentrum', `${I.name}${f ? ` · hier wohnt ${famName(f)}` : ''}`);
-  h += `<div class="tabs" role="tablist">${[['dorf', 'Dorf'], ['lager', 'Lager'], ['haus', 'Familie']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="ctab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
+  h += `<div class="tabs" role="tablist">${[['dorf', 'Dorf'], ['lager', 'Lager'], ['staerke', 'Stärke'], ['haus', 'Familie']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="ctab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
   if (tab === 'haus') return h + houseMarkup(I, b, false);
+  if (tab === 'staerke') return h + strengthMarkup(I);
   if (tab === 'lager') return h + storeTiles(I) + `<div class="rowx"><span class="sub">Platz für ${storeCap(I)} je Ware. Antippen zeigt, woher sie kommt.</span></div>`;
   return h + villageMarkup(I, b);
 }
@@ -568,6 +569,7 @@ function personMarkup(){
   if (st === 'adult' && sheetData.pick) h += jobPicker(I, p);
   if (st === 'adult') h += `<div class="daybar" role="img" aria-label="Der Tag: Arbeit ${pc(D.work)} %, Freizeit ${pc(D.free)} %, Schlaf ${pc(D.sleep)} %"><i class="w" style="width:${pc(D.work)}%"></i><i class="f" style="width:${pc(D.free)}%"></i><i class="s" style="width:${pc(D.sleep)}%"></i></div>` +
     `<div class="daylegend"><span class="w">Arbeit ${pc(D.work)} %</span><span class="f">Freizeit ${pc(D.free)} %</span><span class="s">Schlaf ${pc(D.sleep)} %</span></div>`;
+  { const st = storyOf(p); if (st.length) h += `<p class="sec">Lebensgeschichte</p><ul class="list needs story">${st.slice().reverse().map(e => `<li><span class="nm">${p.n} ${e.text}<small>Jahr ${e.year}</small></span></li>`).join('')}</ul>`; }
   h += `<p class="sec">Arbeit und Freizeit auf ${I.name}</p>` + zealMarkup(I);
   if (f && f.home) h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button></div>`;
   return h;
@@ -996,7 +998,7 @@ function renderSheet(){
       `<p class="sec">Als Datei</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
       (backups().length ? `<div class="chips copies">${backups().map(b => `<button class="chip" type="button" data-act="backup" data-i="${b.i}">Kopie ${ago(b.at)}</button>`).join('')}</div>` : '') +
       `<details class="more"><summary>Als Text</summary><textarea id="saveText" class="savetext" rows="3" spellcheck="false" aria-label="Spielstand als Text"></textarea><div class="rowx"><span class="chips"><button class="chip" type="button" data-act="showtext">Zeigen</button><button class="chip" type="button" data-act="loadtext">Aus Text laden</button></span></div></details>` +
-      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span></div>`;
+      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="music" aria-pressed="${opts.music !== false}">Musik</button><button class="chip" type="button" data-act="mvol" aria-label="Lautstärke der Musik: ${MVOL_WORD[opts.mvol == null ? 1 : opts.mvol]}">Musik ${MVOL_WORD[opts.mvol == null ? 1 : opts.mvol]}</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span></div>`;
   }
   body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();
 }
@@ -1072,6 +1074,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'roof'){ const h = findB(+btn.dataset.b) || b; toast(HOME_KINDS.has(h.kind) ? `${roofText(islOfB(h.id), h)}.` : 'Eine Hütte für jede Familie.', 4200, false); return; }
     if (act === 'tieall'){ tieRoofs(islOfB(b.id)); renderSheet(); return; }
     if (act === 'talisman'){ cutTalisman(islOfB(b.id)); renderSheet(); return; }
+    if (act === 'strength'){ setStrength(islOfB(b.id), btn.dataset.k); renderSheet(); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (act === 'skipq'){ closeSheet(); skipTutorial(); return; }
@@ -1110,6 +1113,8 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'finale'){ openSheet('finale'); return; }
     if (act === 'chronik'){ openSheet('chronik'); return; }
     if (act === 'sound'){ setSound(!opts.sound); renderSheet(); return; }
+    if (act === 'music'){ setMusic(opts.music === false); renderSheet(); return; }
+    if (act === 'mvol'){ cycleMusicVol(); renderSheet(); return; }
     if (act === 'night'){ opts.night = !opts.night; saveOpts(); requestDraw(); renderSheet(); return; }
     if (act === 'meter'){ opts.meter = !opts.meter; saveOpts(); showMeter(); renderSheet(); return; }
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }

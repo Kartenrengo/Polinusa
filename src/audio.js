@@ -5,7 +5,7 @@
    - slit drums while a village feasts on screen
    - a conch horn when something happens, soft wooden notes for tasks and the chronicle,
      a knock when a building is finished, a splash when a canoe is launched, rattling shells for a clan's gift
-   Sound starts with the first tap (browsers want that) and can be switched off in the menu. */
+   Sound starts with the first tap (browsers want that) and can be switched off in the menu. The music is in music.js. */
 
 let opts = loadOpts(), actx = null, out = null, seaVol = null, windVol = null, lastSfx = {}, nextBird = 0, nextCricket = 0, drumAt = 0, drumStep = 0, lastAudio = 0;
 function loadOpts(){ try { return {sound:true, night:true, ...JSON.parse(localStorage.getItem('polinusa-opts') || '{}')}; } catch (e){ return {sound:true, night:true}; } }
@@ -103,6 +103,7 @@ function audioTick(now){
   if (dark && lod !== 'far' && now > nextCricket){ nextCricket = now + 700 + Math.random() * 900; cricket(t + .05); }
   windVol.gain.setTargetAtTime((.025 + wind().str * .1) * (lod === 'far' ? .7 : 1) * (.75 + Math.random() * .5), t, 1.2);   // gusts
   // the feast's drums, or in the evening the slit drum of someone on the plaza, when it is on screen
+  musicSchedule(t);   // the soundtrack (music.js)
   const feast = islands.some(I => I.feastEnd > tick && boxIn(I.box, v)), evening = !feast && cam.z > PEOPLE_Z && walkers.some(w => w.play && w.play.k === 'drum' && w.play.ph === 'do' && ptIn(w.x, w.y, v));
   if (feast || evening){ if (drumAt < t) drumAt = t + .05; while (drumAt < t + .45){ drum(drumAt, DRUM[drumStep++ % DRUM.length] * (feast ? 1 : .45)); drumAt += feast ? .21 : .26; } }
 }

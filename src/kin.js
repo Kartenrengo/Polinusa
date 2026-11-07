@@ -122,3 +122,27 @@ function kinText(I){
   return {d, st, line:`${L.length} ${L.length === 1 ? 'Linie' : 'Linien'}: ${names}${L.length > 4 ? ' …' : ''}`,
     soft:!kids && st !== 'ok', help:st === 'ok' ? 'Genug Linien: Die Kinder kommen gesund zur Welt.' : !kids ? 'Für gesunde Kinder braucht es später Familien aus anderen Linien. Leere Hütten ziehen sie an.' : st === 'low' ? 'Eng verwandt: Kinder kommen seltener. Familien von weit her (eine leere Hütte zieht sie an) oder eine Hochzeit mit einem Clan bringen neues Blut.' : 'Zu nah verwandt: Kaum Kinder, und manche sind schwach. Baut Hütten für Familien von weit her, holt Leute von euren anderen Inseln oder verheiratet jemanden mit einem Clan.'};
 }
+
+/* ---------- the stories of people. A few things in a life are written down: p.ev is a list of [tick, what, detail], newest
+   last, at most twelve; the first one (birth, arrival) is always kept. They show on the person's sheet, so you know the
+   people again and care about them. */
+const STORY_MAX = 12, STORY_ONCE = new Set(['geb', 'kam', 'arb', 'tat', 'alt', 'haupt']);
+function lifeEvent(p, what, detail = ''){
+  if (!p) return;
+  const ev = p.ev || (p.ev = []);
+  if (STORY_ONCE.has(what) && ev.some(e => e[1] === what)) return;
+  if (what === 'sturm' && ev.filter(e => e[1] === 'sturm').length >= 2) ev.splice(ev.findIndex(e => e[1] === 'sturm'), 1);   // the two latest storms
+  ev.push([tick, what, detail]); if (ev.length > STORY_MAX) ev.splice(1, ev.length - STORY_MAX);
+}
+const STORY_TEXT = {
+  geb:() => 'wird geboren', kam:d => `kommt mit dem Kanu ${d}`, kind:d => `bekommt ein Kind: ${d}`, arb:d => `fängt bei ${d} an zu arbeiten`, tat:() => 'bekommt das Tatau',
+  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', alt:() => 'wird alt und sitzt jetzt vor dem Haus'
+};
+const storyOf = p => (p.ev || []).filter(e => STORY_TEXT[e[1]]).map(e => ({year:yearOf(e[0]) + 1, text:STORY_TEXT[e[1]](e[2])}));
+/* once in a while: who has started to work, who has grown old */
+function storyTick(I){
+  for (const p of I.people || []){
+    if (isAdult(p) && p.job && !(p.ev || []).some(e => e[1] === 'arb')){ const b = findB(p.job); if (b) lifeEvent(p, 'arb', placeName(b)); }
+    if (stageOf(p) === 'old' && (p.ev || []).length && !p.ev.some(e => e[1] === 'alt')) lifeEvent(p, 'alt');
+  }
+}

@@ -1309,8 +1309,8 @@ Tanz kennt man aus späteren Berichten.
 
 Seit Version 66 ist **das erste Haus das Dorfzentrum**: das Haus am Dorfplatz, in dem die Familie wohnt, die das Dorf
 gegründet hat. Man erkennt es an einem geschnitzten Pfosten mit einem roten Tapa-Wimpel, der mit dem Wind weht. Wird es
-versetzt oder entfernt, wird das nächste Haus am Platz zum Dorfzentrum; jedes Dorf hat seines. Ein Tippen öffnet drei
-Reiter:
+versetzt oder entfernt, wird das nächste Haus am Platz zum Dorfzentrum; jedes Dorf hat seines. Ein Tippen öffnet vier
+Reiter (Dorf, Lager, Stärke, Familie):
 
 - **Dorf:** die **Feste** (Kleines Fest und Tatau immer, das Große Fest, sobald es Schweine und Tapa gibt, das Fest der
   Schätze, sobald ein Schatz gesehen ist), jeweils mit dem, was es kostet oder was noch fehlt, und „Feiern“. Darunter
@@ -1319,6 +1319,7 @@ Reiter:
   Kauri-Harz und 1 Schnur einen Talisman. Ansehen +3. Liegt ein Talisman im Lager, hält er **einen** Sturm von allen
   Dächern ab und ist dann verbraucht.
 - **Lager:** alle Waren als Kacheln mit Namen, wie im Lager oben.
+- **Stärke:** die Stärke des Dorfes (siehe unten, bei „Menschen“).
 - **Familie:** das Haus der Gründerfamilie, wie jedes andere Haus.
 
 **Feste** brauchen kein Versammlungshaus mehr: Sie gehen am Dorfzentrum, die Aufgabe „Ein Fest“ zeigt dorthin. Das
@@ -1457,7 +1458,31 @@ vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle
   rasselnde Muscheln, wenn ein Haus ausgebaut wird; ein knarrender Stamm und ein dumpfer Schlag, wenn ein Baum fällt; ein
   Platschen, wenn ein Kind ins Wasser springt oder ein Taucher abtaucht; abends die Schlitztrommel vom Dorfplatz, leiser
   als beim Fest; drei fallende Töne, wenn eine Familie fortfährt.
-- Klang und Tag und Nacht lassen sich im Menü ausschalten.
+- Klang, Musik und Tag und Nacht lassen sich im Menü einzeln ausschalten; die Musik hat dazu eine eigene Lautstärke
+  (leise, mittel, laut).
+
+### Der Soundtrack (seit Version 70)
+
+Die Musik entsteht wie der Klang im Browser, ohne Tondateien (Datei `src/music.js`). Sie folgt dem Leben des Dorfes:
+
+- **Instrumente:** eine hohle Holztrommel, Bambusrohre, die auf den Boden gestampft werden, Rasseln aus Samenkapseln,
+  summende Stimmen, ein Holzspiel (wie eine Marimba). Erst nach der großen Fahrt, in Hawaiki, kommt die Nasenflöte dazu,
+  ein langer, hauchiger Ton.
+- **Der Tag:** morgens ruhig und langsam (58 Schläge), tagsüber ein Arbeitsrhythmus (74), abends langsam (54), nachts
+  fast still (nur ein leiser Summton). Mit „Tag und Nacht“ aus bleibt es beim Tag.
+- **Der Anlass:** beim Fest schnelle Trommeln (112) mit Rasseln auf jedem Schlag, beim Regentanz Stampfen (96), vor dem
+  Sturm ein tiefes Dröhnen und langsame, schwere Trommelschläge, auf einer Fahrt ein weiter, offener Klang (eine Tonleiter
+  mit gehobener Quarte) mit langen Tönen.
+- **Das Jahr:** Die Tonart wechselt mit der Zeit: Plejaden und Passat in Dur (hell), Sturmzeit und magere Zeit in Moll
+  (dunkler, in der mageren Zeit spärlicher). Fünf Töne wie bei den Pentatoniken, die man von den Inseln kennt.
+- **Das Dorf:** Je größer es ist, desto mehr Stimmen summen den Akkord: eine bis vier.
+- **Technik:** Die Töne eines Takts kommen aus einer reinen Funktion (`musicBar`), die der Test prüft, ohne dass man etwas
+  hören muss: jeder Ton liegt im Bereich, die Nacht ist leiser als der Tag, das Fest lauter, die Flöte erst in Hawaiki. Dann
+  stellt der Test die echten Klangknoten für viele Minuten ein. Der Pegel ist gemessen (Spitze unter 0,15, Nacht fast
+  still). Pause, wenn das Spiel nicht zu sehen ist.
+- **Belegt?** Musik der Lapita-Zeit ist nicht überliefert. Die Instrumente (Trommeln, Bambusstampfer, Rasseln, Muschelhorn,
+  Gesang) kennt man aus Melanesien und Polynesien, aus viel späteren Berichten; die Nasenflöte ist ein Instrument des
+  späteren Polynesiens und darum erst in Hawaiki dabei.
 - **Langsame Geräte:** Das Spiel misst, wie schnell die Bilder kommen. Kommen sie eine Weile zu langsam, stehen erst
   Bäume und Gras still, dann zeichnet es mit weniger Pixeln. Läuft es eine halbe Minute leicht, wird es wieder feiner.
 
@@ -1517,6 +1542,24 @@ Häusern, die Alten sitzen oft auf Matten. Bauleute tragen Holz zu den Baustelle
 Baum, Pflanzer tragen Setzlinge, Fischer fahren zu zweit hinaus und waten übers Riff.
 Die Figuren haben zwei Augen. Auch in den Dörfern der Clans sind Menschen unterwegs.
 
+**Lebensgeschichten** (seit Version 70). Auf der Tafel einer Person steht unter „Lebensgeschichte“, was in ihrem Leben
+geschehen ist, mit dem Jahr: wann sie kam oder geboren wurde, wo sie zu arbeiten anfing, das Tatau, die Hochzeit, ein Kind,
+das erste Navigatorwissen, ein überstandener Sturm (die letzten beiden), wann sie Häuptling wurde und wann sie alt wurde. Es
+bleiben höchstens zwölf Zeilen, die erste (Ankunft oder Geburt) immer. So erkennt man Leute wieder, und die Tafel erzählt,
+warum man an ihnen hängt. Die Geschichten stehen im Spielstand.
+
+**Stärke des Dorfes** (seit Version 70). Am Dorfzentrum, im Reiter „Stärke“, wählt jedes Dorf eine Stärke: Töpfer (Töpferei, Beil, Klingen,
+Kalk), Fischer (Fischerhütte, Tauchplatz, Haken), Pflanzer (Erntehaus und Felder), Weberinnen (Flechten, Seil, Weben,
+Klopfen) oder Navigatoren (lernen anderthalbmal so schnell). Was zur Stärke gehört, arbeitet ein Viertel schneller. Wechseln
+geht alle zwei Jahre (24 Minuten); jede Wahl bringt 1 Ansehen. Ab 12 Menschen rät der Rat dazu. Damit bekommt jedes Dorf
+ein Gesicht, und die Dörfer haben einander etwas zu bieten.
+
+**Handel auf einen Tipp.** Fehlt einem Haus für den nächsten Schritt eine Ware, die ein anderes Dorf von dir hat oder macht
+(die Matten des Meisterhauses kommen von den Atollen), schlägt der Rat vor: „Handel: Matten aus Motu“. Ein Tipp richtet die
+Kette ein: Das Kanu im Hafen fährt hin, holt die Ware und bringt dafür mit, was das Dorf im Überfluss hat und das andere
+nicht (bis zu zwei Waren, je vier). Gab es noch keine Schnur zwischen den Dörfern, fährt das Kanu erst einmal hin, knüpft sie
+und richtet die Kette am Ziel ein. Ohne Kanu im Hafen verweist der Rat auf das Kanuhaus.
+
 ## Was belegt ist und was später
 
 Polinusa spielt in der Lapita-Zeit. Manches, was im Spiel zu sehen ist, ist für diese Zeit **durch Funde belegt**, anderes
@@ -1550,6 +1593,9 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Schlitztrommel (lali, pātē), Tapa | erst später belegt; Tapa-Schlegel aus Stein sind älter, aber nicht lapitazeitlich sicher |
 | Kava, feine Matten, bemalte Tapa, Duftöl, Häuptlingshaus | erst aus dem späteren Polynesien bekannt; im Spiel darum erst ab **Hawaiki**, nach der großen Fahrt |
 | Wörter wie rāhui, tufunga, taravana, fale | spätere polynesische Wörter, im Spiel als Namen genutzt |
+| Musik: Holztrommel, Bambusstampfer, Rasseln, Gesang, Muschelhorn | aus späteren Berichten (Melanesien, Polynesien); Lapita-Musik ist nicht überliefert |
+| Nasenflöte | spätes Polynesien, im Spiel erst in Hawaiki |
+| Dörfer mit besonderer Stärke (Töpfer, Fischer, Weberinnen) | Lapita-Orte tauschten Töpfe, Obsidian und Muscheln über weite Strecken; die Spezialisierung einzelner Dörfer ist erschlossen, die Boni sind Spielregeln |
 | Palmdächer halten einige Jahre und werden neu gedeckt | aus späteren Berichten (Buck); die Dächer selbst sind nicht erhalten; im Spiel vier Jahre |
 | Vor einem Wirbelsturm die Dächer festbinden | aus späteren Berichten und dem Wissen der Inseln heute; für die Lapita-Zeit angenommen |
 | Kinder und Alte sammeln Brennholz | aus späteren Berichten weit verbreitet; für die Lapita-Zeit angenommen |

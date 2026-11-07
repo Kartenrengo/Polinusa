@@ -274,6 +274,30 @@ const r = await p.evaluate(()=>{
     want((H.stock.reisig || 0) > r0, `firewood: nothing gathered in ten minutes: ${H.stock.reisig}`);
     out.push(`firewood: ${gatherers(H)} gather, +${perMin(gatherRate(H))} a minute`);
     H.people = H.people.filter(q => q !== kid); H.pop--; hh.t = t0; H.staff = null; syncWalkers(); }
+  // the stories of people: births, work, tatau, storms are written down, shown on the sheet and saved
+  { const H = isl('heimat'), a = H.people.find(isAdult); a.ev = []; lifeEvent(a, 'kam', 'der Ahnen'); lifeEvent(a, 'arb', 'Erntehaus'); lifeEvent(a, 'tat'); lifeEvent(a, 'tat');
+    for (let i = 0; i < 20; i++) lifeEvent(a, 'sturm', 'übersteht einen Sturm ' + i);
+    want(a.ev.length <= STORY_MAX && a.ev[0][1] === 'kam', 'story: too long, or the first line lost'); want(a.ev.filter(e => e[1] === 'sturm').length === 2 && a.ev.filter(e => e[1] === 'tat').length === 1, 'story: a storm twice at most, a tatau once');
+    openSheet('person', {id:H.id, p:a.id}); want(/Lebensgeschichte/.test($('sheetBody').textContent) && /bekommt das Tatau/.test($('sheetBody').textContent), 'story: not on the sheet'); closeSheet();
+    const back = unpackP(packP(a)); want(back.ev && back.ev.length === a.ev.length, 'story: lost in saving');
+    const hh = homesOf(H).find(h => famOfHome(H, h)), t0 = hh.t; hh.t = 2; H.stock.nahrung = 30; H.stock.wasser = 30; const kids = H.people.length; let mother = null;
+    for (const q of H.people) if (q.s === 'f' && isAdult(q) && q.h === famOfHome(H, hh).id) mother = q;
+    if (mother){ H._growTo = hh.id; H._birth = true; const c = newcomer(H); H._growTo = 0; H._birth = false; want(c.ev && c.ev[0][1] === 'geb' && mother.ev.some(e => e[1] === 'kind' && e[2] === c.n), 'story: a birth is not written down'); }
+    hh.t = t0; H.people = H.people.slice(0, kids); stormWarn(H, false); tick = H.storm.at; stormTick(H); want(H.people.some(q => isAdult(q) && (q.ev || []).some(e => e[1] === 'sturm')), 'story: the storm is not written down'); }
+  // the middle game: a strength speeds up its kind of work; a trade chain with another village brings what is missing
+  { const H = isl('heimat'); H.str = null; const e = H.buildings.find(q => q.kind === 'ernte') || (() => { const q = findSpot(H, 'ernte', startSpot(H, KINDS.ernte)); return addB(H, 'ernte', q, variant('ernte'), tick); })();
+    const w0 = workSpeed(H, e, 2); H.str = 'pflanzer'; H.strAt = tick; want(Math.abs(workSpeed(H, e, 2) / w0 - STRENGTH_BONUS) < 1e-6, 'strength: the planters are not faster at the Erntehaus');
+    H.str = 'toepfer'; want(workSpeed(H, e, 2) === w0, 'strength: potters speed up the Erntehaus'); want(!setStrength(H, 'fischer'), 'strength: changed again at once'); H.strAt = tick - STRENGTH_PAUSE - 1; want(setStrength(H, 'fischer') && H.str === 'fischer', 'strength: no change after the pause');
+    { const cz = centerOf(H); if (cz){ openSheet('info', {id:cz.id}); sheetData = {...sheetData, tab:'staerke'}; renderSheet(); want(/Stärke des Dorfes/.test($('sheetBody').textContent), 'strength: not offered at the centre'); closeSheet(); } } H.str = null;
+    const T = islands.find(J => !J.settled && !J.clan && J.type === 'atoll') || islands.find(J => !J.settled && !J.clan);
+    if (T){ discover(T); exploreAt(T.center.x, T.center.y, 400); settle(T, H, {pop:6, stock:{matten:12, nahrung:10, wasser:10}, folk:[], life:[]});
+      const s = makeShip('dc', H); H.stock.holz = 30; H.stock.schnur = 20; H.stock.matten = 0;
+      want(tradeIdea(H, 'matten') === T && tradeShip(H, T) === s, 'trade: the other village is not found'); want(startTrade(H, 'matten', T), 'trade: not started');
+      const ri = routeIndex(H.id, T.id); want(ri >= 0 && s.route === ri && routes[ri].plan[routes[ri].a === T.id ? 'a' : 'b'].matten > 0, 'trade: no chain with mats on it');
+      let n = 0; for (let i = 0; i < 20000 && !(H.stock.matten > 0); i++){ stepShips(performance.now(), 50); if (i % 20 === 0) tick++; n++; }
+      want(H.stock.matten > 0, `trade: no mats arrived after ${n} steps`); out.push(`trade: mats at home after ${n} steps`);
+      want(followAdvice === undefined || typeof followAdvice === 'function', 'trade: no advice handler'); }
+    else out.push('trade: no island to trade with'); }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

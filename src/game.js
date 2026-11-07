@@ -194,12 +194,12 @@ function newcomer(I){
   if (I._birth && f){
     const mother = membersOf(I, f).filter(p => p.s === 'f' && isAdult(p)).sort((a, b) => b.b - a.b)[0] || membersOf(I, f)[0];
     const anc = I.ahnen || [], name = anc.length && Math.random() < .4 ? anc[Math.floor(Math.random() * anc.length)][0] : null;
-    const p = person(I, 0, name); p.ln = mother ? mother.ln : 0; weakBirth(I, p);
+    const p = person(I, 0, name); p.ln = mother ? mother.ln : 0; weakBirth(I, p); lifeEvent(p, 'geb'); lifeEvent(mother, 'kind', p.n);
     if (lifeLog) lifeLog.born++; else if (I.id === active && !p.wk) note(`${famName(f)} hat ein Kind bekommen: ${p.n}.`);
     return p;
   }
   if (lifeLog) lifeLog.came++;
-  const p = person(I, 14 + Math.random() * 20); p.ln = newLine(p.n, 'von weit her'); return p;
+  const p = person(I, 14 + Math.random() * 20); p.ln = newLine(p.n, 'von weit her'); lifeEvent(p, 'kam', 'von weit her'); return p;
 }
 /* the number of people is what the economy counts; the records follow it: the newest arrive, those who leave go */
 function syncPeople(I){
@@ -241,7 +241,7 @@ function lifeTick(I){
   { const f = chiefFam(I), m = f && eldest(I, f, 'f'); I.mat = m ? m.id : 0; }
   if (I.lvl === 3 && !I.people.some(p => p.id === I.chief)){
     const f = chiefFam(I), c = f && (eldest(I, f, 'm') || eldest(I, f, 'f'));
-    if (c){ I.chief = c.id; (I.chiefs = I.chiefs || []).push(c.n); if (lifeLog) lifeLog.chiefs.push(c.n); else toast(`${c.n} ist jetzt Häuptling von ${I.name}.`, 3600); changed = true; }
+    if (c){ lifeEvent(c, 'haupt'); I.chief = c.id; (I.chiefs = I.chiefs || []).push(c.n); if (lifeLog) lifeLog.chiefs.push(c.n); else toast(`${c.n} ist jetzt Häuptling von ${I.name}.`, 3600); changed = true; }
   }
   if (changed){ I.staff = null; if (!lifeLog) syncWalkers(); }
 }
@@ -274,9 +274,10 @@ function navTick(I, n = 1){
   const {p, master, goal} = L, now = p.nv || 0; H.pupil = p.id;
   if (now >= goal) return;
   const lvl0 = Math.floor(now), lore0 = navLore().lvl;
-  p.nv = Math.min(goal, now + n / ((master > lvl0 ? 3 : 6) * YEAR));
+  p.nv = Math.min(goal, now + n * (I.str === 'navigator' ? 1.5 : 1) / ((master > lvl0 ? 3 : 6) * YEAR));
   if (Math.floor(p.nv) > lvl0){
     loreCache = null;
+    lifeEvent(p, 'nav', NAV_N[Math.floor(p.nv)]);
     if (lifeLog){ const t = `${p.n} (${NAV_N[Math.floor(p.nv)]})`, e = lifeLog.nav.find(x => x.id === p.id); if (e) e.t = t; else lifeLog.nav.push({id:p.id, t}); }   // each one once, with the level reached
     else toast(`${p.n} ist jetzt Navigator: ${NAV_N[Math.floor(p.nv)]}.${navLore().lvl > lore0 ? ' ' + navGain(navLore().lvl) : ''}`, 4600);
   }
@@ -460,7 +461,7 @@ function wedClan(T){
   const c = weddingCheck(T); if (!c.ok) return false;
   const {I, p, r} = c, C = T.clan, pool = FOREIGN_NAMES[C.id] || PEOPLE_NAMES.concat(MORE_NAMES), name = pool[Math.floor(Math.random() * pool.length)];
   pay(I, BRIDE_GIFTS);
-  const q = person(I, 18 + Math.random() * 8, name, p.s === 'f' ? 'm' : 'f'); Object.assign(q, {w:T.id, f:T.id, sp:p.n, ln:'c' + T.id}); Object.assign(p, {w:T.id, sp:q.n});   // the partner brings a line of their own
+  const q = person(I, 18 + Math.random() * 8, name, p.s === 'f' ? 'm' : 'f'); Object.assign(q, {w:T.id, f:T.id, sp:p.n, ln:'c' + T.id}); Object.assign(p, {w:T.id, sp:q.n}); lifeEvent(p, 'hoch', q.n); lifeEvent(q, 'kam', clanVom(C)); lifeEvent(q, 'hoch', p.n);   // the partner brings a line of their own
   I.people.push(q); I.pop++; I.staff = null;
   r.knots = Math.min(12, r.knots + 2); r.lastGift = tick; mana += 4; stats.heirat = (stats.heirat || 0) + 1; if (C.culture) stats.fremdheirat = (stats.fremdheirat || 0) + 1;
   if (C.motif) bringMotifs(T, I);   // the pots of the new family's home come along
@@ -1193,7 +1194,7 @@ function dayShares(I, p){
 }
 const oldF = (I, b, n) => { const o = b.at ? (staffOf(I).oldAt.get(b) || 0) : 0; return o && n ? 1 - .5 * Math.min(o, n) / n : 1; };   // the old work at half strength
 const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a master family works its craft faster
-const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work; };
+const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b); };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
    A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
@@ -1308,7 +1309,7 @@ function feastState(I, F){
 function holdFeast(I, F){
   const no = feastState(I, F); if (no){ toast(no, 2600, false); return; }
   const gain = feastMana(I, F), young = F.per ? youthsOf(I) : []; pay(I, F.cost); mana += gain; I.feastAt = tick;
-  for (const p of young){ p.tt = 1; for (const w of walkers) if (w.isl === I.id && w.pid === p.id && !w.look.endsWith('t')) w.look += 't'; }
+  for (const p of young){ p.tt = 1; lifeEvent(p, 'tat'); for (const w of walkers) if (w.isl === I.id && w.pid === p.id && !w.look.endsWith('t')) w.look += 't'; }
   if (young.length) stats.tatau = (stats.tatau || 0) + young.length; I.feastEnd = tick + FEAST_LEN; if (F.joy) I.joyUntil = tick + F.joy; if (F.id === 'schatz') stats.schatzfest = (stats.schatzfest || 0) + 1;
   for (const w of walkers) if (w.isl === I.id){ nextLeg(w); w.wait = 0; }
   for (let i = 0; i < 6; i++) heartAt(I);
@@ -1344,7 +1345,7 @@ function econ(){
   for (const I of islands){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
-    syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
+    syncPeople(I); lifeTick(I); navTick(I); if (tick % 20 === 0) storyTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
     roofTick(I); mendTick(I); stormTick(I); gatherTick(I);
     if (raining(I)){ add('wasser', RAIN.water); if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)

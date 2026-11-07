@@ -63,6 +63,23 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     const res = tryBuild(want); tried[want + '/' + res] = (tried[want + '/' + res] || 0) + 1;
     if (A.needs && !Hm().handWork) {} // automatic families
     if (A.rain) rainDance(Hm());   // the elders advise the rain dance: the bot dances
+    // like a player who wants a second village and the goods of the atolls: a canoe house, a canoe, four settlers and some
+    // food aboard, a voyage to the nearest atoll (which the bot lets itself be shown), and there the village is founded;
+    // later the elders propose a trade chain, and a tap sets it up
+    { const H = Hm(); if ((A.fleet || H.pop >= 14) && !H.buildings.some(b => b.kind === 'werft') && unlocked('werft')){ const r = tryBuild('werft'); tried['werft/' + r] = (tried['werft/' + r] || 0) + 1; }
+      if (H.buildings.some(b => b.kind === 'werft' && !b.bt) && !H.yard && !ships.some(q => q.own)){ for (const k of ['beile', 'harz']) H.stock[k] = Math.max(H.stock[k] || 0, 1);   // the stone adze and the resin come from places the bot does not reach: they are given
+        if (canPay(H, SHIPS.oc.cost)) startYard(H, 'oc'); }
+      const sh = ships.find(q => q.own && q.kind !== 'vaka'), many = islands.filter(J => J.settled).length;
+      if (sh && many === 1 && sh.state !== 'sail'){
+        if (sh.port === H.id && sh.people === 0 && H.pop >= SETTLE.keep + SETTLE.people + 2){
+          sheetKind = 'ship'; sheetData = {id:sh.id}; for (let i = 0; i < SETTLE.people; i++) fleetAct('pp+', {dataset:{}}, true); for (const [k, n] of [['nahrung', 8], ['wasser', 6], ['holz', 4], ['dach', 4]]) for (let i = 0; i < n; i++) fleetAct('cg+', {dataset:{k}}, true); sheetKind = null; sheetData = null;
+          const T = islands.filter(J => !J.settled && !J.clan && J.center.x < FAR_X && (J.id === 'tochter' || J.type === 'atoll')).sort((a, c) => (c.id === 'tochter') - (a.id === 'tochter') || 0).sort((a, c) => Math.hypot(a.center.x - H.center.x, a.center.y - H.center.y) - Math.hypot(c.center.x - H.center.x, c.center.y - H.center.y))[0];
+          if (T){ discover(T); exploreAt(T.center.x, T.center.y, 400); if (!sailTo(sh, {isl:T.id}, true)) sh.people = 0; } }
+        else if (sh.port && !isl(sh.port).settled && sh.people >= SETTLE.people){ settleFrom(sh); mark('Dorf auf dem Atoll gegründet', minute); }
+      }
+      if (A.trade){ const J = isl(A.trade.J), ok = startTrade(H, A.trade.k, J); tried['trade/' + (ok ? 'ok' : 'fail ' + JSON.stringify(ships.filter(q => q.own).map(q => [q.state, q.port, q.route, !!q.diving, q.dest && q.dest.isl])))] = 1; if (ok) mark('Handelskette eingerichtet', minute); }
+      if (A.t === 'Eine Stärke für das Dorf') setStrength(H, ['pflanzer', 'fischer', 'toepfer'][(H.center.x | 0) % 3]);
+      if (homesOf(H).some(b => tierOf(b) === 3)) mark('Meisterhaus', minute); }
     if (A.build && A.build !== want) tryBuild(A.build); if (A.goto){ const gb = findB(A.goto); if (gb && gb.idle && gb.idle.why !== 'use'){ const q = startSpot(Hm(), KINDS[gb.kind]); const s2 = findSpot(Hm(), gb.kind, q); if (s2){ gb.x = s2.x; gb.y = s2.y; } } }
     if (Hm().stock.holz < 4) tryBuild('faeller');
     // like a player, it sets the Erntehaus on fronds when the elders say so, and lets it choose again once there are enough
@@ -73,6 +90,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
   }
   log.push('places: ' + placesOf(Hm()).map(b => KINDS[b.kind].s + (famsOf(Hm()).find(f => f.job === b.id) ? '+' : '-') + (b.idle ? '(' + b.idle.why + (b.idle.k ? ':' + b.idle.k : '') + ')' : '')).join(' ') + ' fiber ' + (Hm().stock.faser || 0) + ' kokos ' + (Hm().stock.kokos || 0));
   if (Hm().pop < 8) bad.push(`village collapsed: ${Hm().pop} people after an hour`);
+  { const H = Hm(); log.push(`canoe: werft ${H.buildings.some(b => b.kind === 'werft') ? (H.buildings.some(b => b.kind === 'werft' && !b.bt) ? 'built' : 'site') : 'none'}, yard ${H.yard ? Math.round((1 - H.yard.left / SHIPS[H.yard.kind].bt) * 100) + ' %' : 'none'}, own canoes ${ships.filter(q => q.own).length}, villages ${islands.filter(J => J.settled).length}, routes ${routes.length}, chains ${stats.handelskette || 0}, strength ${islands.filter(J => J.settled).map(J => J.str || '-').join('/')}`); }
   log.push('milestones: ' + (Object.entries(W.ms).map(([k, m]) => `${k} min ${m}`).join(', ') || 'none'));   // a calm builder game must not empty out
   const sv = serialize(); if (!restore(sv)) bad.push('restore'); renderAll();
   return {log, bad:bad.slice(0, 12), stuck, built:Object.entries(tried).map(([k, v]) => k + ':' + v).join(' ')};

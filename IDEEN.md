@@ -35,12 +35,12 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
    entlasten: Einer klettert nach Nüssen, die andere schneidet zugleich Wedel. Maß: höchstens die Hälfte der Hände für
    Essen, „Mehr Essen“ in weniger als einem Drittel der Zeit, der Bot im Schnitt über 50 Menschen. Ohne das hört man
    auf, bevor das Mittelspiel beginnt.
-2. **Ein Mittelspiel mit Tiefe.** Jedes Dorf wählt eine Stärke (Töpfer, Fischer, Weberinnen, Navigatoren) mit einem
+2. ~~**Ein Mittelspiel mit Tiefe.**~~ **erledigt in Version 70** (Stärken, Handel auf Tipp, der Bot gründet ein zweites Dorf). Vorher stand hier: Jedes Dorf wählt eine Stärke (Töpfer, Fischer, Weberinnen, Navigatoren) mit einem
    Bonus, und der Handel zwischen den eigenen Dörfern wird der Kern. Fehlen dem Meisterhaus Matten und ist ein Atoll
    bekannt, schlägt der Rat die Handelskette vor und setzt sie auf Tipp. Vorarbeit dafür: **Der Bot lernt segeln und
    handeln**, sonst lässt sich das Mittelspiel nicht messen. Ziel: das Meisterhaus in 90 Minuten in mindestens der
    Hälfte der Läufe.
-3. **Soundtrack.** Musik, die das Spiel trägt und nie nervt, ohne Dateien im Spiel erzeugt (das Spiel bleibt eine
+3. ~~**Soundtrack.**~~ **erledigt in Version 70** (siehe README, „Der Soundtrack“). Vorher stand hier: Musik, die das Spiel trägt und nie nervt, ohne Dateien im Spiel erzeugt (das Spiel bleibt eine
    Datei):
    - Klänge der Inseln: tiefe Holztrommel, Bambus-Stampfrohre, Rasseln aus Samenkapseln, Muschelhorn, Summen und Gesang
      einer Gruppe. Erst nach der großen Fahrt, in Hawaiki, kommt die Nasenflöte dazu.
@@ -52,7 +52,7 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
      Spiel nicht zu sehen ist.
    - Im README unter „Was belegt ist“: Musik der Lapita-Zeit ist nicht überliefert. Die Instrumente kennt man aus dem
      späteren Melanesien und Polynesien.
-4. **Geschichten der Menschen.** Auf der Personentafel ein paar Lebensereignisse: der erste Fang, die Hochzeit, das
+4. ~~**Geschichten der Menschen.**~~ **erledigt in Version 70.** Vorher stand hier: Auf der Personentafel ein paar Lebensereignisse: der erste Fang, die Hochzeit, das
    Tatau, wird Navigatorin, ein Sturm überstanden. So erkennt man Leute wieder und hängt an ihnen.
 5. **Feste für Erfolge und Überfluss.** Erstes Familienhaus, 20, 30 und 50 Menschen, die erste Handelsfahrt, das erste
    Meisterhaus: ein kurzes Fest auf dem Platz mit Blüten, Trommeln und einem kleinen Geschenk. Volle Lager bringen ein
@@ -60,6 +60,19 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 6. **Sammelbuch.** Muster, Ahnen, Schätze und seltene Treibgut-Funde in einem Album mit Lücken, die locken.
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
+
+## Offen aus der Runde „Mittelspiel, Soundtrack und Geschichten“ (Version 70)
+
+- **Der Bot kommt nicht zum Meisterhaus.** Er baut jetzt ein Kanu (Beil und Harz bekommt er geschenkt), gründet ein zweites Dorf
+  auf einem Atoll (um Minute 40) und richtet bei Bedarf die Handelskette ein. Danach bleibt er in 160 Minuten bei etwa 37
+  Menschen stehen: Er schafft Töpfe, Öl und Brennstoff nicht, auch wenn die Matten kommen. Ob ein Mensch es schafft, ist
+  offen. Zu prüfen: Sagt der Rat klar genug, was für das Meisterhaus noch fehlt (Töpfe von einem Hauswerk am Ton, Öl aus
+  der Ölhütte)? Die Läufe schwanken stark (15 bis 70 Menschen nach 90 Minuten).
+- **Musik auf einem echten Handy hören:** Lautstärke, ob sie nervt, ob sie bei langsamen Geräten ruckelt. Bisher nur
+  offline gerendert und gemessen (Spitze unter 0,15).
+- **Musik zum Erfolg:** ein kurzer Jubel (Trommeln, Stimmen), wenn ein Haus aufsteigt oder ein Dorf gegründet wird.
+- **Geschichten weitererzählen:** Wenn jemand stirbt, stehen die Ereignisse im Ahnenhaus; Kinder erben den Namen.
+- **Stärken zeigen:** Ein Dorf mit Stärke könnte ein Zeichen über dem Dorfzentrum tragen (ein Topf, ein Fisch).
 
 ## Offen aus der Runde „Stammplatz, Sturm und Treibgut“ (Version 67)
 

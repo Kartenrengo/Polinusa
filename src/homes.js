@@ -72,7 +72,7 @@ function seedFamilies(I, n){
     if (size(i) > 1) fam.push(person(I, 28 + Math.random() * 8, null, 'm'));
     // the rest of the household: half-grown children who already help, and in a big household an elder
     while (fam.length < size(i)) fam.push(fam.length === 4 ? person(I, 41 + Math.random() * 4, null, 'f') : person(I, 9 + Math.random() * 6, null, fam.length === 2 ? 'f' : 'm'));
-    for (const p of fam){ p.h = f.id; p.ln = ln; out.push(p); }
+    for (const p of fam){ p.h = f.id; p.ln = ln; lifeEvent(p, 'kam', first ? 'der Ahnen' : 'zur neuen Insel'); out.push(p); }
   }
   return out;
 }
@@ -291,6 +291,7 @@ function stormStrike(I, S){
   for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt) b.soil = Math.max(.12, (b.soil ?? 1) - .1);
   const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; }   // off a bare slope the earth slides
   invalidate(true);
+  for (const p of I.people || []) if (isAdult(p)) lifeEvent(p, 'sturm', charm ? 'übersteht einen Sturm, der Talisman hielt die Dächer' : loose.length ? 'übersteht einen Sturm, der Dächer abdeckte' : 'übersteht einen Sturm, die Dächer hielten');
   const held = homes.length - loose.length;
   return `Der Sturm fegt über ${I.name}. ${charm ? `Der Harz-Talisman der Matriarchin hält ihn von den Dächern: alle ${homes.length} Dächer halten.` : `${held} von ${homes.length} Dächern ${held === 1 ? 'hielt' : 'hielten'}.`}${loose.length ? ` ${loose.length} ${loose.length === 1 ? 'Dach ist' : 'Dächer sind'} undicht: Die Familien flicken sie mit Palmwedeln.` : ''}${wreck.length ? ` Zerstört: ${wreck.length === 1 ? 'ein Haus' : `${wreck.length} Häuser`}${hit ? ` und ${KINDS[hit.kind].n}` : ''}, das muss neu gebaut werden.` : hit ? ` ${KINDS[hit.kind].n} ist beschädigt.` : ''}${down.length ? ` ${down.length} ${down.length === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden.` : ''}${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
 }

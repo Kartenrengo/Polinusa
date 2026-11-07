@@ -216,7 +216,8 @@ function adviceOf(I, urgentOnly = false){
   if (urgentOnly) return null;
   // a workplace whose good is short stands still for a reason the player can fix
   const stillB = placesOf(I).find(b => b.idle && ['near', 'dep', 'trees', 'use'].includes(b.idle.why) && prodOfB(b) && (I.stock[prodOfB(b)] || 0) < 5);
-  if (stillB) return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze den Platz dorthin.' : ''), goto:stillB.id};
+  if (stillB){ const w = stillB.idle.why === 'use' && stillB.idle.k ? needWay(I, stillB.idle.k) : null;   // what it lacks, and the building that makes it
+    return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze den Platz dorthin.' : w && w.text ? ` ${w.text}.` : ''), goto:w && (w.build || w.fleet) ? null : stillB.id, build:w && w.build, fleet:w && w.fleet}; }
   const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   // a master family with free hands and no craft of its own: it wants its work
   { const M = masterSet(I), idle = sf.freeP.filter(id => M.has(id)), p = idle.length && I.people.find(q => q.id === idle[0]), f = p && famOf(I, p.h), h = f && f.home && findB(f.home);
@@ -233,6 +234,7 @@ function adviceOf(I, urgentOnly = false){
   // the next step up, as the houses show it: what the first house that cannot rise yet still lacks
   { const g = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => [b, upgradeSteps(I, b, nd.list)]).find(([, u]) => u && !u.ready);
     if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? (q.k === 'needs' ? wantWay(I, k, hb) : needWay(I, k)) : null;
+      { const J = w && w.fleet && !w.build && k && k !== 'needs' ? tradeIdea(I, k) : null; if (J && tradeShip(I, J)){ const give = tradeGive(I, J, k); return {t:`Handel: ${GN[k]} aus ${J.name}`, d:`${J.name} hat ${GN[k]}. Ein Kanu fährt von selbst hin und her und bringt es${Object.keys(give).length ? `, ${giftText(give)} fahren dafür mit` : ''}. Tippen richtet die Kette ein.`, trade:{k, J:J.id}, go:'Einrichten ›'}; } }
       if (w && (w.build || w.fleet)) return {t:`Für ${u.T.n}: ${needName(k)}`, d:w.text, build:w.build && w.build !== 'haus' ? w.build : null, fleet:w.fleet, goto:w.build || w.fleet ? null : hb.id}; } }
   // growing needs more than the village eats: houses do not help while food or water only just reach
   { const m = !nd.atMax && I.pop >= 6 ? surplusMiss(I, nd.list) : ''; if (m){ const n = nd.list.find(q => q.k === m), gap = n ? Math.max(0, (n.use + n.work) * 1.15 - n.make) : 0;
@@ -254,6 +256,7 @@ function adviceOf(I, urgentOnly = false){
   { const hl = I.buildings.find(b => b.kind === 'halle' && !b.bt) || centerOf(I), T = FEASTS.find(q => q.id === 'tatau'), yo = youthsOf(I).length;
     if (hl && feastsOpen() && yo >= 3 && !feastState(I, T)) return {t:'Tatau', d:`${yo} junge Leute tragen noch kein Muster. Ansehen +${feastMana(I, T)}.`, goto:hl.id}; }
   { const hl = afterHarvest(I) && (I.buildings.find(b => b.kind === 'halle' && !b.bt) || centerOf(I)), F = hl && FEASTS.find(q => q.id !== 'schatz' && !feastState(I, q)); if (F) return {t:'Fest nach der Yamsernte', d:`${F.n}: jetzt Ansehen +${feastMana(I, F)}.`, goto:hl.id}; }
+  { const cz = centerOf(I); if (cz && !I.str && I.pop >= 12) return {t:'Eine Stärke für das Dorf', d:'Jedes Dorf wird in etwas besonders gut: Töpfer, Fischer, Pflanzer, Weberinnen oder Navigatoren. Wählt am Dorfzentrum, im Reiter „Stärke“. Das Dorf arbeitet dann ein Viertel schneller darin.', goto:cz.id, tab:'staerke'}; }
   if (korCanThrow()) return {t:'Knöchelwurf', d:'Heute ist noch nicht geworfen.', koruru:true};
   return {t:'Erkunden und handeln', d:'Fahre mit dem Doppelkanu in den Nebel oder bring Gaben zu den Clans.', fleet:true};
 }
@@ -262,10 +265,11 @@ function followAdvice(A){
   if (!A) return; closeSheet();
   if (A.koruru){ if (!kor || kor.state === 'done') korNew(); openSheet('koruru', {}); return; }
   if (A.tie){ tieRoofs(isl(active)); updateHUD(); return; }
+  if (A.trade){ startTrade(isl(active), A.trade.k, isl(A.trade.J)); return; }
   if (A.ware){ openSheet('ware', {id:active, k:A.ware}); return; }
   if (A.immig){ const s = ships.find(q => q.id === A.immig); if (s){ flyTo(s.x, s.y, Math.max(cam.z, 2)); openSheet('immig', {ship:s.id}); } return; }
   if (A.needs){ openSheet('needs', A.tab ? {tab:A.tab} : undefined); return; }
-  if (A.goto){ const b = findB(A.goto); if (b){ select(b); flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
+  if (A.goto){ const b = findB(A.goto); if (b){ select(b); if (A.tab && sheetKind === 'info'){ sheetData = {...sheetData, tab:A.tab}; renderSheet(); } flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
   if (A.fleet){ setBar('fleet'); return; }
   if (A.build) hintBuild(A.build);
 }

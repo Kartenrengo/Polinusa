@@ -296,6 +296,7 @@ function arriveShip(s){
   }
   if ((T.settled || T.clan) && from && from !== T && s.cargo.toepfe > 0) bringMotifs(from, T);   // where pots come, their patterns come
   if (T.settled){ s.last = T.id; s.hungry = false; landLife(T, s); }   // plants and pigs aboard take root in a village of ours
+  if (s.tradeWant && tradeArrive(s)) return;   // the chain proposed by the elders is set up
   if (s.route != null){ routeArrive(s); return; }
   if (T.clan) toast(`${s.name} liegt ${clanBeim(T.clan)}.`);
   else if (!T.settled) toast(`${s.name} liegt vor ${T.name}. ${s.people >= SETTLE.people ? 'Tippe das Kanu an und gründe hier ein Dorf.' : `Mit ${SETTLE.people} Siedlern an Bord kann hier ein Dorf entstehen.`}`, 4200);

@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const dir = path.dirname(fileURLToPath(import.meta.url)), long = process.argv.includes('--long');
-const tests = [['data'], ['smoke'], ['rules'], ['build'], ['life'], ['play'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? ['--min=90'] : ['101'])]];
+const tests = [['data'], ['smoke'], ['rules'], ['build'], ['life'], ['play'], ['music'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? ['--min=90'] : ['101'])]];
 let failed = 0;
 // first: does every script parse? A broken line stops the whole game, long before any test could say why
 { const src = path.join(dir, '..', 'src'), fs = await import('node:fs'), bad = [];
@@ -14,7 +14,8 @@ let failed = 0;
     for (const ch of css){ if (ch === '\n') line++; else if (ch === '{') d++; else if (ch === '}' && --d < 0){ bad.push(`style.css: } too many in line ${line}`); d = 0; } }
     if (d) bad.push(`style.css: ${d} { not closed`); }
   // the scripts share one global scope: a function declared twice is silently replaced by the later one
-  { const seen = new Map(); for (const f of fs.readdirSync(src).filter(f => f.endsWith('.js'))) for (const m of fs.readFileSync(path.join(src, f), 'utf8').matchAll(/^(?:async )?function (\w+)\s*\(/gm)){ if (seen.has(m[1])) bad.push(`function ${m[1]} twice: ${seen.get(m[1])} and ${f}`); else seen.set(m[1], f); } }
+  // (the same for a const or let at the top: a second one stops the whole file with "has already been declared")
+  { const seen = new Map(); for (const f of fs.readdirSync(src).filter(f => f.endsWith('.js'))) for (const m of fs.readFileSync(path.join(src, f), 'utf8').matchAll(/^(?:async )?function (\w+)\s*\(|^(?:const|let|class) (\w+)\b/gm)){ const n = m[1] || m[2]; if (seen.has(n)) bad.push(`${n} declared twice: ${seen.get(n)} and ${f}`); else seen.set(n, f); } }
   console.log(`${bad.length ? 'FEHLER' : 'OK    '} syntax`); if (bad.length){ console.log(bad.join('\n')); process.exit(1); } }
 for (const [name, ...args] of tests){
   const t0 = Date.now(), r = spawnSync(process.execPath, [path.join(dir, name + '.test.js'), ...args], {encoding:'utf8', timeout:15 * 60 * 1000});
