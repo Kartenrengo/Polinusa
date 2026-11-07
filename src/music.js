@@ -64,7 +64,7 @@ function musicBar(M, bar, rnd, st){
   if (M.mel > .03){ const n = Math.round(M.mel * 5 * (.6 + rnd() * .8)), used = new Set();
     for (let k = 0; k < n; k++){ let i = Math.floor(rnd() * 8); if (used.has(i)) continue; used.add(i);
       st.deg = clamp(st.deg + (rnd() < .5 ? -1 : 1) * (rnd() < .3 ? 2 : 1), 2, 11);
-      ev.push({at:slot(i), k:M.mode === 'voyage' ? 'flute' : 'mel', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.07 * V, d:M.mode === 'voyage' ? 3 : .8}); } }
+      ev.push({at:slot(i), k:M.mode === 'voyage' ? 'hum' : 'mel', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.07 * V, d:M.mode === 'voyage' ? 3 : .8}); } }
   // the nose flute of the later time: one long, soft note now and then
   if (M.flute && hit(.55)){ st.deg = clamp(st.deg + (rnd() < .5 ? -2 : 1), 3, 10); ev.push({at:slot(Math.floor(rnd() * 4)), k:'flute', f:freqOf(noteOf(R + 12, sc, st.deg)), v:.06 * V, d:3}); }
   return ev.sort((a, b) => a.at - b.at);

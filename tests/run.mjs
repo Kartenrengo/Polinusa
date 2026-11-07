@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const dir = path.dirname(fileURLToPath(import.meta.url)), long = process.argv.includes('--long');
-const tests = [['data'], ['smoke'], ['rules'], ['build'], ['life'], ['play'], ['music'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? ['--min=90'] : ['101'])]];
+const tests = [['data'], ['smoke'], ['rules'], ['build'], ['life'], ['play'], ['music'], ['soak'], ['save'], ['phone'], ['fuzz'], ['bot', ...(long ? ['--min=90'] : ['101'])]];
 let failed = 0;
 // first: does every script parse? A broken line stops the whole game, long before any test could say why
 { const src = path.join(dir, '..', 'src'), fs = await import('node:fs'), bad = [];

@@ -172,6 +172,7 @@ function makeShip(kind, I, o = {}){
   const m = moorSpot(I, s); s.x = m.x; s.y = m.y; ships.push(s); return s;
 }
 function sailTo(s, dest, quiet){
+  if (s.tradeWant && !(dest.isl && dest.isl === s.tradeWant.J)) s.tradeWant = null;   // sent elsewhere: the proposed chain is off
   const goal = dest.isl ? moorSpot(isl(dest.isl), s) : {x:dest.x, y:dest.y};
   // past the Weite See only the double canoe goes; an outrigger is not made for days of open sea
   if (s.own && s.kind === 'oc' && goal.x > FAR_X){ if (!quiet) toast('Über die Weite See zu den Fernen Inseln fährt nur das Doppelkanu.', 3200, false); return false; }

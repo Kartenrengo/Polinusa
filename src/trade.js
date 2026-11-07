@@ -44,7 +44,7 @@ const tradeShip = (I, J) => ships.filter(s => s.own && s.state !== 'sail' && (s.
 /* the chain between two of your villages: what is loaded where */
 function setTradePlan(I, J, k, ri){
   const r = routes[ri], iSide = r.a === I.id ? 'a' : 'b', jSide = iSide === 'a' ? 'b' : 'a', ship = tradeShip(I, J), cap = ship ? SHIPS[ship.kind].cap : 12, give = tradeGive(I, J, k);
-  r.plan[jSide] = {[k]:Math.max(4, Math.min(10, cap - 4))}; r.plan[iSide] = give;   // the plan of a side is what is loaded there
+  r.plan[jSide] = {...r.plan[jSide], [k]:Math.max(4, Math.min(10, cap - 4))}; r.plan[iSide] = {...r.plan[iSide], ...give};   // the plan of a side is what is loaded there; what the player set before stays
   return give;
 }
 function startTrade(I, k, J){
@@ -62,8 +62,8 @@ function startTrade(I, k, J){
 }
 /* the first voyage is over and the cord is there: set up the chain */
 function tradeArrive(s){
-  const w = s.tradeWant; s.tradeWant = null; const I = isl(w.I), J = isl(w.J), ri = routeIndex(I.id, J.id);
-  if (!I || !J || ri < 0 || s.port !== J.id) return false;
+  const w = s.tradeWant; s.tradeWant = null; const I = isl(w.I), J = isl(w.J); if (!I || !J) return false;
+  const ri = routeIndex(I.id, J.id); if (ri < 0 || s.port !== J.id) return false;
   const give = setTradePlan(I, J, w.k, ri); assignRoute(s, ri); stats.handelskette = (stats.handelskette || 0) + 1;
   toast(`${s.name} fährt jetzt zwischen ${I.name} und ${J.name}: bringt ${GN[w.k]}${Object.keys(give).length ? `, nimmt ${giftText(give)} mit` : ''}.`, 4800); return true;
 }

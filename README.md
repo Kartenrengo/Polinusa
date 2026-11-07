@@ -42,7 +42,7 @@ Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, is
 es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki),
 `build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
 Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
-jede Animation), `save` (Neuladen, kaputter Spielstand, Laden aus Text, zwei Spielstände), `phone`
+jede Animation), `music` (die Töne der Musik und echte Klangknoten, siehe „Der Soundtrack“), `soak` (Stürme, Stärken, Stammplätze, Handel, Speichern und Laden, Musik, alles durcheinander 1500 Takte lang), `save` (Neuladen, kaputter Spielstand, Laden aus Text, zwei Spielstände), `phone`
 (vierfach langsame CPU, drei Bildschirme von 320×568 bis 390×844, Knopfgrößen, die Hausansicht scrollt nicht, auch nicht bei einem vollen Haus), `fuzz` (jeder Knopf in jedem Blatt) und `bot` (ein
 Spieler, der nur dem Rat folgt, eine Stunde lang). Mit `--long` spielt der Bot drei Dörfer je anderthalb Stunden.
 

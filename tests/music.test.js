@@ -27,7 +27,7 @@ const {PAGE} = require('./lib');
       want(night < day && day < feast, 'music: night is not quieter than day, or a feast not busier');
       want(musicMood({...S0, storm:true}).drone === 1 && run({...S0, storm:true}).ev.some(e => e.k === 'drone') && !run({...S0, storm:true}).ev.some(e => e.k === 'rattle'), 'music: the storm has no drone, or a rattle');
       want(musicMood({...S0, voyage:true}).scale === 'lydian', 'music: a voyage is not in the wide scale');
-      want(!run(S0).ev.some(e => e.k === 'flute') && run({...S0, hawaiki:true}).ev.some(e => e.k === 'flute'), 'music: the nose flute comes only in Hawaiki');
+      want(!run(S0).ev.some(e => e.k === 'flute') && !run({...S0, voyage:true}).ev.some(e => e.k === 'flute') && run({...S0, hawaiki:true}).ev.some(e => e.k === 'flute'), 'music: the nose flute comes only in Hawaiki');
       want(musicMood({...S0, pop:60}).hum > musicMood({...S0, pop:5}).hum, 'music: a bigger village has no more voices');
       want(musicMood({...S0, season:'sturm'}).scale === 'minor' && musicMood({...S0, season:'passat'}).scale === 'major', 'music: the year does not change the key');
       want(run({...S0, rainDance:true}).M.mode === 'rain' && musicMood({...S0, feast:true, rainDance:true}).mode === 'feast', 'music: the modes are mixed up');
