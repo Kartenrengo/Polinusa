@@ -1589,11 +1589,18 @@ function slotsOf(I, b, sf, on){
   if (b.bt){ if (K.plant) return null; n = open = SITE_CREW; }
   else if (b.kind === 'werft'){ if (!I.yard) return null; n = open = YARD_CREW; }
   else if (b.boat > 0) n = open = 1;
-  else if (K.crew){ n = K.crew; open = capOf(b); }
+  else if (K.crew){
+    // a place always shows its fixed places: its own people at work, its own people away (building, helping elsewhere: they
+    // come back), then guests who help here (smaller, with a plus), then the free places
+    const own = (sf.home && sf.home.get(b)) || [], pres = sf.crewP.get(b) || [], ownIn = own.filter(id => pres.includes(id)).length, ownOut = own.length - ownIn;
+    const guests = Math.max(0, pres.length - ownIn), here = Math.min(pres.length, on.get(b) || 0), cap = capOf(b), marks = [];
+    let g = guests; for (let i = 0; i < K.crew; i++) marks.push(i < ownIn ? (i < here ? 'on' : 'way') : i < ownIn + ownOut ? 'away' : g > 0 ? (g--, 'aid') : i < cap ? 'free' : 'off');
+    for (; g > 0; g--) marks.push('aid');
+    return marks;
+  }
   else return null;
-  // the fixed places first; helpers after them, smaller and with a plus, so a place always shows the same number of places
-  const crew = sf.crew.get(b) || 0, here = Math.min(crew, on.get(b) || 0), hp = !b.bt && K.crew ? Math.max(0, crew - K.crew) : 0;
-  return Array.from({length:n}, (_, i) => i < Math.min(here, n) ? 'on' : i < Math.min(crew, n) ? 'way' : i < open ? 'free' : 'off').concat(Array.from({length:hp}, (_, j) => n + j < here ? 'aid' : 'aidway'));
+  const crew = sf.crew.get(b) || 0, here = Math.min(crew, on.get(b) || 0);
+  return Array.from({length:n}, (_, i) => i < Math.min(here, n) ? 'on' : i < Math.min(crew, n) ? 'way' : i < open ? 'free' : 'off');
 }
 function drawWork(c, v){
   if (lod === 'far') return;
@@ -1630,21 +1637,37 @@ const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
 const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
   w.why === 'wind' || w.why === 'storm' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[[].concat(w.kind)[0]] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[[].concat(w.kind)[0]]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+/* every bubble drawn this frame, so a tap on it leads to what helps (see hitBubble) */
+let bubbleHits = [];
+const hitBubble = p => bubbleHits.filter(q => Math.hypot(p.x - q.x, p.y - q.y) < q.r).sort((a, b) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(p.x - b.x, p.y - b.y))[0] || null;
+/* what a tap on a bubble does: what is missing leads to the building that makes it (or the household craft, or the
+   canoes); a house ready to rise, a place that waits for people, a family that wants to leave open their sheet */
+function needGo(I, k, b){
+  if (k === 'haus'){ closeSheet(); hintBuild('haus'); return; }
+  const w = wantWay(I, k, b && HOME_KINDS.has(b.kind) ? b : null);
+  if (w.build){ closeSheet(); hintBuild(w.build); return; }
+  if (w.fleet){ closeSheet(); setBar('fleet'); return; }
+  if (b) select(b); toast(`${GN[k] || k}: ${w.text}.`, 3600, false);
+}
 function drawNeeds(c, v, now){
-  const s = clamp(1 / cam.z, 1, 1.8);
+  const s = clamp(1 / cam.z, 1, 1.8); bubbleHits = [];
+  const hit = (x, y, go) => bubbleHits.push({x, y:y - 7.5 * s, r:Math.max(8 * s, 12 / cam.z), go});
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
       if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || b.idle.why === 'grow' || b.idle.why === 'yam' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
-      const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8;
-      put(c, b.x, b.y - KINDS[b.kind].hy - 14 + bob, s, 1, 0, key, art);
+      const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, by = b.y - KINDS[b.kind].hy - 14 + bob, w = b.idle;
+      put(c, b.x, by, s, 1, 0, key, art); hit(b.x, by, () => w.why === 'use' && w.k ? needGo(I, w.k, b) : select(b));
     }
-    for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - 14, s, 1, 0, 'need|soil', needBubble('soil'));
-    for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)) put(c, b.x, b.y - KINDS[b.kind].hy - 14, s, 1, 0, 'need|einbaum', needBubble('einbaum'));
+    for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)){ put(c, b.x, b.y - 14, s, 1, 0, 'need|soil', needBubble('soil')); hit(b.x, b.y - 14, () => select(b)); }
+    for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)){ put(c, b.x, b.y - KINDS[b.kind].hy - 14, s, 1, 0, 'need|einbaum', needBubble('einbaum')); hit(b.x, b.y - KINDS[b.kind].hy - 14, () => select(b)); }
     // over each house what its family lacks; over the meeting house a roof, while families sleep there without one
-    const list = needsOf(I).list;
+    const list = needsOf(I).list, S = I.storm && tick < I.storm.at ? I.storm : null;
     for (const b of I.buildings){
       if (!ptIn(b.x, b.y, v)) continue;
+      // a cyclone on the way: over every loose roof a cord, shaking; a tap sends the people to the roofs
+      if (S && homeOk(I, b) && !S.tied.includes(b.id)){ const sc = (b.v && b.v.scale) || 1, by = b.y - KINDS[b.kind].hy * sc - 12 + (reduced ? 0 : Math.sin(now / 150 + b.id) * 1.1), bb = b;
+        put(c, b.x, by, s * 1.1, 1, reduced ? 0 : Math.sin(now / 190 + b.id) * .12, 'need|schnur', needBubble('schnur')); hit(b.x, by, () => S.tie ? select(bb) : tieRoofs(I)); continue; }
       let k = null;
       if ((b.kind === 'halle' && !b.bt || b.kind === 'platz' && !I.buildings.some(q => q.kind === 'halle' && !q.bt)) && roofless(I)) k = 'haus';
       else if (homeOk(I, b)){ const f = famOfHome(I, b); if (f){ const miss = famNeeds(I, f, list).filter(n => n.state === 'out'); if (miss.length) k = miss[Math.floor(now / 2400 + b.id) % miss.length].k; } }
@@ -1652,8 +1675,9 @@ function drawNeeds(c, v, now){
       const up = !k && !I.autoUp && homeOk(I, b) && canUpgrade(I, b, list);
       if (!k && !up) continue;
       const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
-      if (up) put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob * 1.6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), 1, reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE);
-      else put(c, b.x, b.y - KINDS[b.kind].hy * sc - 12 + bob, s, 1, 0, 'need|' + k, needBubble(k));
+      const by = b.y - KINDS[b.kind].hy * sc - 12 + bob;
+      if (up){ put(c, b.x, by + bob * .6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), 1, reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE); hit(b.x, by, () => select(b)); }
+      else { put(c, b.x, by, s, 1, 0, 'need|' + k, needBubble(k)); const kk = k; hit(b.x, by, () => needGo(I, kk, HOME_KINDS.has(b.kind) ? b : null)); }
     }
   }
   // hunger has lasted a while: over the house of the family that would go first, its canoe, rocking
@@ -1661,15 +1685,15 @@ function drawNeeds(c, v, now){
     if (!I.settled || (I.hunger || 0) < HUNGER_GO / 2 || !boxIn(I.box, v)) continue;
     const f = leaverOf(I), b = f && f.home && findB(f.home); if (!b || !ptIn(b.x, b.y, v)) continue;
     const sc = (b.v && b.v.scale) || 1, k = (I.hunger - HUNGER_GO / 2) / (HUNGER_GO / 2), rock = reduced ? 0 : Math.sin(now / (260 - 140 * k)) * (.08 + .12 * k);
-    put(c, b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, s * (1.05 + .15 * k), 1, rock, 'need|leave', LEAVE_BUBBLE);
+    put(c, b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, s * (1.05 + .15 * k), 1, rock, 'need|leave', LEAVE_BUBBLE); hit(b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, () => select(b));
   }
   // a place called with the conch: the horn over it, sounding
   for (const I of islands){ if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){ if (!b.prio || !ptIn(b.x, b.y, v)) continue;
       const sc = (b.v && b.v.scale) || 1, top = b.bt ? KINDS[b.kind].hy * .5 : KINDS[b.kind].hy * sc, pulse = reduced ? 1 : 1 + Math.max(0, Math.sin(now / 260)) * .08;
-      put(c, b.x - 10, b.y - top - 12 + (reduced ? 0 : Math.sin(now / 500 + b.id) * .8), s * pulse, 1, 0, 'need|horn', needBubble('horn')); } }
+      put(c, b.x - 10, b.y - top - 12 + (reduced ? 0 : Math.sin(now / 500 + b.id) * .8), s * pulse, 1, 0, 'need|horn', needBubble('horn')); hit(b.x - 10, b.y - top - 12, () => select(b)); } }
   // a canoe from far away waits at the beach: the family asks to stay
-  for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); }
+  for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); const id = sh.id; hit(sh.x, sh.y - 16, () => openSheet('immig', {ship:id})); }
   const t = now;
   // a house newly bound: blossoms rain on its roof, as garlands are laid on a new house at its blessing
   for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings){
@@ -1897,4 +1921,4 @@ function draw(now){
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => !!cyclone || !!selShip || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => !!cyclone || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));

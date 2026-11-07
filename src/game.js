@@ -58,7 +58,7 @@ const WORK_FX = {hakenmacher:['drill', 'file'], schnitzer:['hollow', 'polish'], 
   flecht:['weave', 'strip'], schnur:['cord', 'braid'], klopf:['beat', 'peel'], schmuck:['drill', 'polish'], pferch:['feed', 'herd'], gaergrube:['leaf', 'wrap'],
   pansammler:['pick', 'gather'], pflanzer:['plant', 'tamp']};
 /* the looks of the other kinds of work: in the forest, up the palm, in the shallows, at the fishers' hut, after a dive */
-const JOB_FX = {chop:['chop', 'wedge'], pull:['pull', 'coil'], climb:['climb', 'twist'], wade:['scoop', 'grope']};
+const JOB_FX = {chop:['chop', 'wedge'], pull:['pull', 'coil'], climb:['climb', 'twist'], wade:['scoop', 'grope'], tie:['thatch', 'lash']};
 const FISH_FX = {net:['net', 'gut'], spear:['spear', 'stalk'], hang:['hang', 'turn']}, DIVE_FX = ['wring', 'coil'];
 const CLIMB_FX = new Set(['climb', 'twist']);
 /* one look after the other, now and then one skipped, so neighbours do not move in step */
@@ -79,6 +79,7 @@ const rnd = r => (Math.random() - .5) * 2 * r;
    go out together, everyone else works at the place and carries what it makes to the store now and then. */
 function jobFor(I, b, i){
   const K = KINDS[b.kind], side = i % 2 ? -1 : 1, job = (type, x, y, more) => ({key:type + ':' + b.id + '#' + i, type, b, i, x, y, ...more});
+  if (HOME_KINDS.has(b.kind) && !b.bt) return job('tie', b.x + side * (K.r * .6), b.y + 4, {});   // a storm is coming: the roof tied down
   if (b.bt) return job('site', b.x + 6 * side, b.y + 5, {tool:groundSite(b.kind) ? 'ko' : 'toki'});   // a field is dug with the digging stick, a house built with the adze
   if (b.kind === 'werft' && I.yard){ const h = yardSpot(b); return job('yard', h.x + (i - 1) * 7, h.y + 3, {tool:'toki'}); }
   if (b.boat > 0){ const h = dugSpot(b); return job('carve', h.x + 3 - i * 6, h.y + 2, {tool:'toki'}); }
@@ -661,7 +662,7 @@ const TALK_FX = {halle:['kava', 'chat'], umu:['eat', 'chat'], mat:['chat', 'fan'
    the canoe, under a load. */
 const LOOKS = () => ({
   ...Object.fromEntries(Object.entries(WORK_FX).map(([k, v]) => [KINDS[k].craft || KINDS[k].n, v])),
-  'Holz fällen':JOB_FX.chop, 'Stamm ziehen':JOB_FX.pull, 'Palme ernten':JOB_FX.climb, 'Riff absuchen':JOB_FX.wade,
+  'Dächer festbinden':JOB_FX.tie, 'Holz fällen':JOB_FX.chop, 'Stamm ziehen':JOB_FX.pull, 'Palme ernten':JOB_FX.climb, 'Riff absuchen':JOB_FX.wade,
   'Fischer an Land':FISH_FX.net, 'Speerfischen':FISH_FX.spear, 'Fang aufhängen':FISH_FX.hang, 'Fischen im Kanu':['~line', '~castnet'], 'Auf dem Riff sammeln':['~scoop', '~poke'],
   'Taucher an Land':DIVE_FX, 'Tauchen':['~clam', '~octopus'],
   'Bauen':SITE_FX, 'Feld anlegen':GROUND_FX('taro'), 'Platz anlegen':GROUND_FX('platz'), 'Kanu bauen':YARD_FX, 'Baumaterial holen':['~shoulder', '~drag'], 'Tragen':['~head', '~pole'],
@@ -787,7 +788,7 @@ function nextLeg(w){
     if (h){ goTo(I, w, h.x + (Math.random() - .5) * 40, h.y + 14 + Math.random() * 16, 700 + Math.random() * 1400); w.cheer = true; w.fx = lookOf(DANCE_FX, w); return; }
   }
   // night: to bed; morning: back to work
-  if (I.settled && sleepTime() && !(I.feastEnd > tick) && !w.boat && !w.ride && !w.swim && !(w.job && w.job.type === 'fish')){ if (w.play) endPlay(w); w.carry = null; sleepLeg(I, w); return; }
+  if (I.settled && sleepTime() && !(I.feastEnd > tick) && !w.boat && !w.ride && !w.swim && !(w.job && (w.job.type === 'fish' || w.job.type === 'tie'))){ if (w.play) endPlay(w); w.carry = null; sleepLeg(I, w); return; }
   if (w.asleep || w.toBed){ w.asleep = false; w.toBed = false; if (w.job){ w.leg = 'back'; w.bout = false; } }
   if (w.job){
     if (w.play && !OFF_OK.has(w.job.type)){ endPlay(w); if (w.leg !== 'go'){ w.on = false; w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } }   // sent to other work meanwhile: go there now
@@ -874,7 +875,7 @@ function jobLeg(I, w, j){
     // a craftswoman holds up what she has made, the potter her pot, the weaver her mat
     else if (T === 'carry' && j.load && WORK_FX[j.b.kind] && Math.random() < .16){ w.rest = true; w.bout = true; w.fx = 'show'; w.show = j.load; w.busy = {x:w.x, y:w.y}; w.sit = false; w.wait = 1500 + Math.random() * 600; w.boutT = w.wait; return; }
     else if (T !== 'wait' && T !== 'plant' && Math.random() < .1){ w.rest = true; w.bout = true; w.fx = REST_FX[Math.floor(Math.random() * REST_FX.length)]; w.busy = {x:w.x, y:w.y}; w.sit = w.fx === 'drink' && Math.random() < .5; w.wait = 1800 + Math.random() * 1400; w.boutT = w.wait; return; }
-    if (T === 'wait' || T === 'learn'){ goTo(I, w, j.x + rnd(T === 'learn' ? 3 : 8), j.y + rnd(T === 'learn' ? 2 : 4)); return; }
+    if (T === 'wait' || T === 'learn' || T === 'tie'){ goTo(I, w, j.x + rnd(T === 'learn' ? 3 : T === 'tie' ? 2 : 8), j.y + rnd(T === 'learn' ? 2 : T === 'tie' ? 1 : 4)); return; }
     // at a craft or with the rope they work a few rounds before a load goes to the store; a felled piece goes at once
     if (T === 'carry' || T === 'pull'){ w.nb = (w.nb || 0) + 1; if (w.nb < (T === 'pull' ? 3 : 2) || !j.load){ w.wait = 200 + Math.random() * 500; if (!j.load) w.nb = 0; return; } w.nb = 0; }
     if (T === 'climb'){ j.b._pi = (j.b._pi || 0) + 1; w.carry = j.load; w.pole = !w.pole; w.leg = 'store'; goTo(I, w, j.drop.x + rnd(3), j.drop.y + rnd(2)); return; }   // the nuts down to the house, then the next palm
@@ -1075,7 +1076,7 @@ function workState(I, b){
   if (b.kind === 'ernte' && prodOf(b) === 'holz' && palmsNear(I, b).length <= K.near.n + 3) return {why:'near', kind:'palme', text:`Zum Fällen braucht es mehr als ${K.near.n + 3} Palmen in der Nähe: Es bleiben immer genug stehen.`};
   if (K.prod && (I.stock[prodOf(b)] || 0) >= storeCap(I) && !(K.picks && !(b.v && b.v.pick) && Object.keys(K.picks).some(k => (I.stock[k] || 0) < storeCap(I)))) return {why:'full', text:'Das Lager ist voll. Baue einen Speicher oder schick Waren weg.'};
   if (K.feed === .6 && groupHave(I, 'futter') <= 0) return {why:'use', k:'reste', text:'Die Hühner haben kein Futter: Reste, Kokos oder Feldfrüchte.'};
-  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => groupHave(I, q) < K.use[q]); return {why:'use', k:groupNext(I, k), text:`Kein Vorrat an ${GN[k]}.`}; }
+  if (K.use && !canPay(I, K.use)){ const k = Object.keys(K.use).find(q => groupHave(I, q) < K.use[q]); return {why:'use', k:groupNext(I, k), text:`Es fehlt: ${GN[k]}. Ohne das steht die Arbeit still.`}; }
   return null;
 }
 /* Every island with a stream has its spring where the stream comes closest to the village; it is part of the island and
@@ -1230,7 +1231,9 @@ const eaters = I => (I.people || []).reduce((n, p) => n + (stageOf(p) === 'kid' 
 const needPop = (I, N) => N.lvl === 1 ? eaters(I) : popTier(I, N.lvl);
 /* Food is everything people eat; any other need is one good */
 /* the goods that meet a need: food of every kind; pots, and from Hawaiki on wooden bowls as well */
-const needGoods = k => k === 'essen' ? FOODS : k === 'toepfe' && stats.hawaiki ? ['toepfe', 'kumete'] : [k];
+const needGoods = k => k === 'essen' ? FOODS : k === 'brenn' ? GROUPS.brenn : k === 'toepfe' && stats.hawaiki ? ['toepfe', 'kumete'] : [k];
+/* the hearth fire takes the coconut shells first, which are left over anyway, and only then wood, which is built with */
+const burnFirst = (k, st) => k === 'brenn' ? GROUPS.brenn.find(q => (st[q] || 0) > 0) : null;
 const ofNeed = (k, f) => needGoods(k).reduce((t, q) => t + f(q), 0);
 const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
 function needsOf(I){
@@ -1320,6 +1323,7 @@ function econ(){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
+    roofTick(I); stormTick(I);
     if (raining(I)){ add('wasser', RAIN.water); if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
@@ -1371,8 +1375,8 @@ function econ(){
       I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate / PER_MIN;
       const take = Math.floor(I.owe[N.k]); if (take <= 0) continue; I.owe[N.k] -= take;
       const ks = needGoods(N.k); if (ks.length < 2){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
-      // people eat what there is most of, and use the bowl or the pot there is more of
-      for (let i = 0; i < take; i++){ const k = ks.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
+      // people eat what there is most of, and use the bowl or the pot there is more of; the hearth burns shells before wood
+      for (let i = 0; i < take; i++){ const k = burnFirst(N.k, st) || ks.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
     }
     feedAnimals(I, 1); ratTick(I);
     let nd = needsOf(I);
@@ -1506,10 +1510,14 @@ function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) 
 function onTap(p){
   if (landing && !landing.found){ landingTap(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
+  // a bubble over a house or a workplace: what it lacks, and where that comes from
+  { const q = hitBubble(p); if (q){ q.go(); return; } }
   const sh = hitShip(p);
   if (sh && !sh.own && (sh.immig || sh.leaving)){ if (sh.immig && sh.state === 'moored') openSheet('immig', {ship:sh.id}); else toast(sh.immig ? `Ein Kanu ${sh.immig.from}: Familie ${sh.immig.n} sucht ein Zuhause auf ${isl(sh.to).name}.` : 'Das Kanu fährt weiter, zurück übers Meer.', 3400, false); return; }
   if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu ${clanVom(C)}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
   if (sh){ if (sh === selShip){ closeSheet(); return; } closeSheet(); selectShip(sh); return; }
+  // something floating by the shore: somebody paddles out for it (while steering, the canoe goes there instead)
+  if (mode !== 'steer'){ const d = hitDrift(p); if (d){ collectDrift(d); return; } }
   if (mode === 'steer'){ steerTap(p); return; }
   // a tap on someone: who it is and what they do, and their workplace opens
   const w = hitWalker(p);
@@ -1696,6 +1704,7 @@ function govern(dt){
    happened. The village is reckoned in whole minutes, the sea tick by tick, so canoes still find their way. */
 const AWAY_MAX = 8 * 3600 * 1000;
 function awayMinute(I, R){
+  roofTick(I, 30); stormTick(I);
   const sf = staff(I), st = I.stock, cap = storeCap(I);
   // building sites and canoes: the builders work as if they were there
   for (const b of I.buildings){
@@ -1739,8 +1748,8 @@ function awayMinute(I, R){
   for (const N of NEEDS){
     if (!needActive(I, N)) continue;
     I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate; const take = Math.floor(I.owe[N.k]); I.owe[N.k] -= take;
-    if (N.k !== 'essen'){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
-    for (let i = 0; i < take; i++){ const k = FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
+    const ks = needGoods(N.k); if (ks.length < 2){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
+    for (let i = 0; i < take; i++){ const k = burnFirst(N.k, st) || ks.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
   }
   let nd = needsOf(I); updateLevel(I, nd); nd = needsOf(I);
   feedAnimals(I, 30);

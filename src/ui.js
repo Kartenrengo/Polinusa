@@ -118,7 +118,7 @@ function showWind(){
   C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
 /* the name under each good in the top row: short, so it fits under its icon */
-const SHORT_GN = {essen:'Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
+const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', bernstein:'Bernst.', talisman:'Talisman', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
 const shortGN = k => SHORT_GN[k] || (GN[k] && GN[k].length <= 8 ? GN[k] : (GN[k] || k).slice(0, 7) + '.');
 /* The idle button: one after the other, the people without work */
 let idleNo = 0;
@@ -294,7 +294,6 @@ const motifHelp = I => `${I.motif ? '' : I.type === 'hoch' ? 'Mit den ersten Tö
    to come from outside, from another island or a clan */
 function makersOf(I, k){ const ks = needGoods(k); return I.buildings.filter(b => !b.bt && KINDS[b.kind].prod && (ks.includes(prodOf(b)) || ks.some(q => (KINDS[b.kind].picks || {})[q] || (byOf(b) || {})[q]))); }
 function needWay(I, k){
-  if (k === 'dach') return {text:'Eine Hütte für jede Familie', build:'haus'};
   const names = [...new Set(makersOf(I, k).map(b => placeName(b)))];
   const makes = q => { const K = KINDS[q]; return needGoods(k).includes(K.prod) || K.prod === k || (K.by || {})[k] || Object.entries(K.picks || {}).some(([pk, P]) => pk === k || (P.by || {})[k]); };
   const kinds = k === 'essen' ? ['ernte', 'fisch', 'taro', 'pulaka', 'pansammler', 'bananen'] : ORDER.filter(q => KINDS[q] && !KINDS[q].plant && makes(q));
@@ -311,8 +310,25 @@ function needWay(I, k){
   if (!unlocked(any)){ const st = STAGES[stageOfKind(any)], n = K.craft || K.n; return {text:st.gate ? `${n} kommt nach der großen Fahrt, mit ${st.n}` : `${n} kommt ab ${st.pop} Menschen`}; }
   return {text:`Baue ${K.n}`, build:any};
 }
+/* the roof as a need: a hut for a family without one; a worn roof wants palm fronds again, a family house a piece of wood */
+function roofWay(I, b){
+  if (!b) return {text:'Eine Hütte für jede Familie', build:'haus'};
+  if (roofState(b) === 'ok') return {text:roofText(I, b)};
+  const c = roofCost(b), miss = Object.keys(c).find(q => groupHave(I, q) < c[q]);
+  if (!miss) return {text:'Die Familie deckt das Dach gleich neu'};
+  const w = needWay(I, miss); return {...w, text:`Zum Neudecken fehlen ${GN[miss]}. ${w.text}`};
+}
+const wantWay = (I, k, b) => k === 'dach' ? roofWay(I, b) : needWay(I, k);
+/* how long a roof holds and what it takes to cover it anew */
+function roofText(I, b){
+  const c = costText(roofCost(b)), st = roofState(b), w = b.rw || 0;
+  if (st === 'out') return `Das Dach ist kaputt, es regnet hinein. Neu decken: ${c}`;
+  if (st === 'low') return `Das Dach ist undicht. Neu decken: ${c}`;
+  if (w >= ROOF.mend) return `Das Dach ist alt. Die Familie deckt es neu, sobald ${c} im Lager sind und ein paar Palmwedel übrig bleiben`;
+  return `Das Dach hält noch etwa ${Math.max(1, Math.round((ROOF.mend - w) * ROOF.life / MOON))} Monde. Dann deckt die Familie es selbst neu: ${c}`;
+}
 const wayBtn = w => w && w.build ? `<button class="chip" type="button" data-act="hint" data-k="${w.build}">${KINDS[w.build].craft ? 'Im Haus' : 'Bauen'}</button>` : w && w.fleet ? `<button class="chip" type="button" data-act="fleetbar">Kanus</button>` : '';
-const needName = k => k === 'dach' ? 'Dach' : k === 'toepfe' && stats.hawaiki ? 'Töpfe oder Holzschalen' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
+const needName = k => k === 'dach' ? 'Dach' : k === 'brenn' ? 'Herdfeuer' : k === 'toepfe' && stats.hawaiki ? 'Töpfe oder Holzschalen' : GN[k], needIcon = k => k === 'dach' ? 'haus' : k;
 /* Needs as knots on a cord of sennit, after the knotted cords on which the Marquesans kept their genealogies (taʻo mata):
    a knot tied tight is a need met, a loose loop one that runs short, a frayed gap one that is missing, a faint ring one
    that comes with the next step. Each knot can be tapped: it shows where the thing comes from. */
@@ -396,16 +412,30 @@ function craftRow(I, h){
    tile each with its name and a plain word (da, knapp, fehlt); the one thing to do next; and what the next step of the
    house takes, each good with its name and how much of it is there. */
 const NEED_WORD = {ok:'da', low:'knapp', out:'fehlt'};
-const needShort = k => k === 'dach' ? 'Dach' : k === 'essen' ? 'Essen' : k === 'speisen' ? 'Gekochtes' : shortGN(k);
-function needTile(I, n){
-  const w = n.state === 'ok' ? null : needWay(I, n.k);
-  const act = n.k === 'dach' ? 'data-act="hint" data-k="haus"' : w && w.build ? `data-act="hint" data-k="${w.build}"` : w && w.fleet ? 'data-act="fleetbar"' : `data-act="${n.k === 'essen' ? 'store' : 'ware'}" data-k="${n.k}"`;
-  return `<button class="ntile ${n.state}" type="button" ${act} aria-label="${needName(n.k)}: ${NEED_WORD[n.state]}">${icon(needIcon(n.k))}<small>${needShort(n.k)}</small><b>${NEED_WORD[n.state]}</b></button>`;
+// the roof in its own words: it holds, it leaks, it is broken; a family without a house has none at all
+function needWord(n, b){
+  if (n.k !== 'dach') return NEED_WORD[n.state];
+  if (n.state === 'low') return 'undicht';
+  if (n.state === 'out') return b ? 'kaputt' : 'fehlt';
+  const S = b && islOfB(b.id).storm; return S && S.tied.includes(b.id) ? 'fest' : 'hält';
+}
+const needShort = k => k === 'dach' ? 'Dach' : k === 'essen' ? 'Essen' : k === 'brenn' ? 'Feuer' : k === 'speisen' ? 'Gekochtes' : shortGN(k);
+function needTile(I, n, b){
+  const w = n.state === 'ok' ? null : wantWay(I, n.k, b);
+  const act = n.k === 'dach' && b && !w ? `data-act="roof" data-b="${b.id}"` : w && w.build ? `data-act="hint" data-k="${w.build}"` : w && w.fleet ? 'data-act="fleetbar"' : n.k === 'dach' ? `data-act="roof" data-b="${b ? b.id : 0}"` : `data-act="${n.k === 'essen' ? 'store' : 'ware'}" data-k="${n.k}"`;
+  return `<button class="ntile ${n.state}" type="button" ${act} aria-label="${needName(n.k)}: ${needWord(n, b)}">${icon(needIcon(n.k))}<small>${needShort(n.k)}</small><b>${needWord(n, b)}</b></button>`;
+}
+/* a cyclone on the way: is this roof tied down, and a button to send people to the roofs */
+function stormLine(I, b){
+  const S = I.storm; if (!S || tick >= S.at || !b) return '';
+  const tied = S.tied.includes(b.id), secs = Math.ceil((S.at - tick) * TICK / 1000), lack = !tieCost(I);
+  const what = tied ? 'Das Dach ist festgebunden.' : !S.tie ? 'Das Dach ist lose.' : lack ? 'Es fehlt Schnur oder Kokosfasern zum Festbinden.' : 'Gleich bindet es jemand fest.';
+  return `<div class="nextline storm ${tied ? 'ok' : 'out'}"><span class="what">${icon('sturm')}<b>Sturm in ${secs} s</b> ${what}</span>${!tied && !S.tie ? '<button class="chip way" type="button" data-act="tieall">Dächer festbinden</button>' : ''}</div>`;
 }
 /* the one thing to do next: what is missing first, else what runs short, and the building that helps */
-function nextStep(I, n){
-  const w = needWay(I, n.k), btn = w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${buildPic(w.build)}${buildName(w.build)}</button>` : w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
-  return `<div class="nextline ${n.state}"><span class="what"><b>${needShort(n.k)} ${NEED_WORD[n.state]}</b>${btn ? '<span class="to" aria-hidden="true">→</span>' : `: ${w.text}.`}</span>${btn}</div>`;
+function nextStep(I, n, b){
+  const w = wantWay(I, n.k, b), btn = w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${buildPic(w.build)}${buildName(w.build)}</button>` : w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
+  return `<div class="nextline ${n.state}"><span class="what"><b>${needShort(n.k)} ${needWord(n, b)}</b>${btn ? '<span class="to" aria-hidden="true">→</span>' : `: ${w.text}.`}</span>${btn}</div>`;
 }
 /* what the next step of the house takes: the needs met, then each good with its name and how much is there */
 function riseBlock(I, b, u, t, fn){
@@ -430,8 +460,8 @@ function houseMarkup(I, b, withHead = true){
   if (picking) return h + craftRow(I, b);   // while a craft is chosen, the choice stands in the place of the rest
   // what the family needs, one tile each; then the one thing to do next
   const fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out').concat(fn.filter(n => n.state === 'low'));
-  h += `<p class="sec needsec">Was die Familie braucht</p><div class="needtiles">${fn.map(n => needTile(I, n)).join('')}</div>`;
-  if (lack.length) h += nextStep(I, lack[0]);
+  h += `<p class="sec needsec">Was die Familie braucht</p><div class="needtiles n${fn.length}">${fn.map(n => needTile(I, n, b)).join('')}</div>`;
+  const sl = stormLine(I, b); if (sl) h += sl; else if (lack.length) h += nextStep(I, lack[0], b);
   const u = upgradeSteps(I, b, nd.list); if (u) h += riseBlock(I, b, u, t, fn);
   return h;
 }
@@ -455,6 +485,9 @@ function villageMarkup(I, b){
   h += `<p class="sec">Rund um den Platz</p>`;
   const rs = rainState(I);
   h += row(icon('sturm'), 'Regentanz', rs || `Die Tänzer essen ${RAIN.cost.roh} vom Vorrat. Dann regnet es: Wasser für alle, die Felder trinken.`, `<button class="btn${rs ? '' : ' primary'}" type="button" data-act="rain" ${rs ? 'disabled' : ''}>Tanzen</button>`);
+  // once amber has been found: the matriarch cuts a talisman from it
+  if (stats.bernstein || (I.stock.bernstein || 0) > 0 || (I.stock.talisman || 0) > 0){ const ts = talismanState(I), m = matriarchOf(I), have = I.stock.talisman || 0;
+    h += row(icon('talisman'), 'Talisman der Matriarchin', `${ts || `${m.n} schnitzt ihn aus ${costText(TALISMAN.cost)}. Ansehen +${TALISMAN.mana}.`} ${have ? `${have} im Lager, hält${have > 1 ? ' je' : ''} einen Sturm ab.` : 'Hält einen Sturm von den Dächern.'}`, `<button class="btn${ts ? '' : ' primary'}" type="button" data-act="talisman" ${ts ? 'disabled' : ''}>Schnitzen</button>`); }
   h += row(KNOCHEN_IC, 'Knöchelwurf', korCanThrow() ? 'Einmal am Tag. Was fällt, bringt Glück.' : 'Für heute geworfen. Morgen wieder.', `<button class="btn" type="button" data-act="koruru">Werfen</button>`);
   return h;
 }
@@ -475,8 +508,8 @@ function villageGoal(I, nd){
   const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:wayChip(w) ? '' : w.text, btn:wayChip(w) || wayBtn(w)}; }
   if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus' : 'Häuser'} zum Ausbau bereit`, d:'', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle ausbauen</button>`};
   // the next step up: what the first house that cannot rise yet still lacks
-  const next = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => upgradeSteps(I, b, nd.list)).find(Boolean);
-  if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
+  const nb = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).find(b => upgradeSteps(I, b, nd.list)), next = nb && upgradeSteps(I, nb, nd.list);
+  if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? (q.k === 'needs' ? wantWay(I, k, nb) : needWay(I, k)) : null;
     return w && w.outside ? {cls:'far', t:`Für ${next.T.n}: ${GN[k]}`, d:'', chain:outsideChain(I, k)} : {cls:'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w && !wayChip(w) ? w.text : '', btn:wayChip(w) || wayBtn(w)}; }
   if (nd.atMax) return {cls:'far', t:'Die Insel ist voll', d:`${I.name} trägt höchstens ${islandMax(I)} Menschen. Gründet ein Dorf auf einer anderen Insel.`, btn:wayBtn({fleet:true})};
   const st = STAGES[stageNow() + 1]; if (st && !st.gate && I.pop < st.pop) return {cls:'low', t:`Ab ${st.pop} Menschen: ${st.n}`, d:'Baut Hütten, dann kommen Familien. In Familienhäusern kommen Kinder.', btn:wayBtn({build:'haus'})};
@@ -688,16 +721,20 @@ function finaleMarkup(){
 /* ---------- a building: who works there, one line on how it goes, the rest folded away */
 const pipH = k => `<svg class="pip" viewBox="-2.7 -6.5 5.4 7" aria-hidden="true">${PIP[k]}</svg>`;
 const SHORT = {grow:'wächst', yam:'wartet auf die Pflanzzeit', storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Kanu entsteht', space:'kein Platz', bau:'Leute bauen'};
-const shortWhy = w => w.why === 'use' ? `kein ${G1[w.k]}` : w.why === 'near' ? `zu wenig ${NEAR_PL[w.kind]}` : SHORT[w.why] || 'steht still';
+const shortWhy = w => w.why === 'use' ? `fehlt: ${GN[w.k]}` : w.why === 'near' ? `zu wenig ${NEAR_PL[w.kind]}` : SHORT[w.why] || 'steht still';
 const secsText = s => s < 90 ? `${Math.max(1, Math.ceil(s))} s` : `${Math.round(s / 60)} min`;
 function crewMarkup(I, b, horn = ''){
   const sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl) return '';
-  const K = KINDS[b.kind], ids = (staffOf(I).crewP.get(b) || []), people = ids.map(id => I.people.find(p => p.id === id)).filter(Boolean);
-  const chips = sl.map((k, i) => { const p = people[i]; return p ? `<button class="who ${k}" type="button" data-act="who" data-p="${p.id}">${pipH(k)}${p.n}${k.startsWith('aid') ? '<small>hilft</small>' : ''}</button>` : `<span class="who ${k}">${pipH(k)}${k === 'off' ? 'zu' : 'frei'}</span>`; }).join('');
+  const K = KINDS[b.kind], sf = staffOf(I), ids = (sf.crewP.get(b) || []), byId = id => I.people.find(p => p.id === id);
+  // the order of the marks: own people here, own people away, guests; the people in the same order
+  const own = (sf.home && sf.home.get(b)) || [], site = b.bt || (b.kind === 'werft' && I.yard);
+  const people = site ? ids.map(byId).filter(Boolean) : [...own.filter(id => ids.includes(id)), ...own.filter(id => !ids.includes(id)), ...ids.filter(id => !own.includes(id))].map(byId).filter(Boolean);
+  const chips = sl.map((k, i) => { const p = people[i]; return p ? `<button class="who ${k}" type="button" data-act="who" data-p="${p.id}">${pipH(k)}${p.n}${k.startsWith('aid') ? '<small>hilft</small>' : k === 'away' ? `<small>${loanWord(I, p) || restWord(I, b)}</small>` : ''}</button>` : `<span class="who ${k}">${pipH(k)}${k === 'off' ? 'zu' : 'frei'}</span>`; }).join('');
   const nh = sl.filter(k => k.startsWith('aid')).length;
   // building sites and the canoe house are worked by whoever is free, or by those called from their work
   if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}<span class="grow"></span>${horn}</div>`;
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
+  horn += `<button class="chip keep" type="button" data-act="keep" aria-pressed="${!!b.keep}" aria-label="Bleiben: von hier wird niemand ausgeliehen">Bleiben</button>`;
   const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < crewOf(b) ? '' : 'disabled'}>+</button></span>`;
   return `<div class="crew">${chips}${ctl.replace('<span class="grow"></span>', `<span class="grow"></span>${horn}`)}</div><p class="sub crewnote">${K.crew ? `${K.crew} ${K.crew === 1 ? 'fester Platz' : 'feste Plätze'}${nh ? `, dazu ${nh} ${nh === 1 ? 'Helfer' : 'Helfer'}: Wer frei ist, hilft, wo etwas knapp ist` : ''}. ` : ''}${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
 }
@@ -732,6 +769,28 @@ function chainMarkup(I, k){
   if (N) outs.push(`${icon('haus')}${N.lvl === 1 ? 'alle' : TIERS[N.lvl].n}`);
   if (!ins.length && !outs.length) return '';
   return `<p class="wchain">${ins.length ? ins.join(' + ') + '<span class="to">→</span>' : ''}<b>${icon(k)}${GN[k]}</b>${outs.length ? '<span class="to">→</span>' + outs.join(' · ') : ''}</p>`;
+}
+/* What a workplace takes and makes, the same at every place: each good it uses is a tile with its name, how much it takes
+   a minute and what lies in store, green when there is enough for the next piece, red when it is missing (a tap leads to
+   where it comes from); a tool that speeds the work beside it; an arrow; what it makes a minute, and for a good the
+   families need, for how many people that is enough. */
+const tileName = k => GN[k] && GN[k].length <= 11 ? GN[k] : shortGN(k);
+function flowMarkup(I, b, K, rate){
+  const ins = Object.entries(K.use || {}).map(([k, v]) => { const have = Math.floor(groupHave(I, k)), ok = have >= v, ic = GROUPS[k] ? groupNext(I, k) : k, w = ok ? null : needWay(I, ic);
+    const act = w && w.build ? `data-act="hint" data-k="${w.build}"` : `data-act="ware" data-k="${ic}"`;
+    return `<button class="ftile ${ok ? 'ok' : 'out'}" type="button" ${act} aria-label="${GN[k]}: ${perMin(rate * v)} pro Minute, ${have} im Lager${ok ? '' : ', fehlt'}">${icon(ic)}<small>${tileName(k)}</small><b>${perMin(rate * v)}/min</b><i>${ok ? `Lager ${have}` : 'fehlt'}</i></button>`; });
+  const tool = K.boost ? (k => { const have = Math.floor(I.stock[k] || 0); return `<span class="ftile tool ${have > 0 ? 'ok' : 'off'}" role="img" aria-label="Schneller mit ${GN[k]}${have > 0 ? `, ${have} da` : ', keine da'}">${icon(k)}<small>${tileName(k)}</small><i>${have > 0 ? 'macht schneller' : 'wäre schneller'}</i></span>`; })(K.boost.k) : '';
+  const prod = prodOf(b), N = !b.at && needOfGood(prod), fr = N ? fullRate(I, b) : 0;
+  const outs = [`<button class="ftile made" type="button" data-act="ware" data-k="${prod}" aria-label="macht ${GN[prod]}: ${perMin(rate * outOf(b))} pro Minute">${icon(prod)}<small>${tileName(prod)}</small><b>${perMin(rate * outOf(b))}/min</b><i>${N && fr > 0 ? `reicht für ${Math.round(fr / N.rate)}` : `Lager ${Math.floor(I.stock[prod] || 0)}`}</i></button>`];
+  for (const [k, v] of Object.entries(byOf(b) || {})) outs.push(`<span class="ftile made by" role="img" aria-label="dazu ${GN[k]}: ${perMin(rate * v)} pro Minute">${icon(k)}<small>${tileName(k)}</small><b>${perMin(rate * v)}/min</b><i>dazu</i></span>`);
+  const left = ins.length || tool ? `<div class="fcol"><span class="flbl">Braucht</span><div class="frow">${ins.join('')}${tool}</div></div><span class="farr" aria-hidden="true">→</span>` : '';
+  return `<div class="flow3">${left}<div class="fcol"><span class="flbl">Macht</span><div class="frow">${outs.join('')}</div></div></div>`;
+}
+/* what something takes, as tiles with the name of each good and how much is there, green or red; a red one leads to where
+   the good comes from (canoes, feasts) */
+function costTiles(I, cost){
+  return `<div class="rtiles">${Object.entries(cost).map(([k, v]) => { const have = Math.floor(groupHave(I, k)), ok = have >= v, ic = GROUPS[k] ? groupNext(I, k) : k, w = ok ? null : needWay(I, ic), act = w && w.build ? `data-act="hint" data-k="${w.build}"` : w && w.fleet ? 'data-act="fleetbar"' : '';
+    return `<${act ? 'button' : 'span'} class="rtile ${ok ? 'ok' : 'out'}" ${act ? `type="button" ${act}` : 'role="img"'} aria-label="${GN[k]}: ${have} von ${v}">${icon(ic)}<small>${tileName(k)}</small><b>${Math.min(have, v)}/${v}</b></${act ? 'button' : 'span'}>`; }).join('')}</div>`;
 }
 /* A good on its own sheet: who makes it, where, and who uses it */
 function wareMarkup(I, k){
@@ -780,8 +839,9 @@ function infoMarkup(I, b){
   } else if (K.prod || K.plants){
     const w = b.idle || workState(I, b), rate = PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, K.crew ? crewAt(I, b) || 0 : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(groupNext(I, k))}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
     const by = byOf(b) ? Object.entries(byOf(b)).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') : '';
-    line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? `<span>${uses}${icon(prodOf(b))}${perMin(rate * outOf(b))}${by}<small>/min</small></span>` : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
-    { const N = K.prod && !b.at && needOfGood(prodOf(b)), fr = N ? fullRate(I, b) : 0; if (N && fr > 0){ line += `<span aria-label="reicht für">≈${Math.round(fr / N.rate * 10) / 10}${icon('pop')}</span>`; more.splice(1, 0, `Voll besetzt ${perMin(fr)} ${GN[prodOf(b)]} pro Minute: genug für etwa ${feedsText(N, fr / N.rate)}. Jeder braucht ${perMin(N.rate)} pro Minute.`); } }
+    line = `${w ? st('out', shortWhy(w)) : st('ok', 'arbeitet')}${K.prod ? '' : `<span>${icon('sapling')}alle ${K.every * TICK / 1000} s</span>`}`;
+    if (K.prod) bar = flowMarkup(I, b, K, rate) + bar;   // what it takes and makes, each good by name, green or red
+    { const N = K.prod && !b.at && needOfGood(prodOf(b)), fr = N ? fullRate(I, b) : 0; if (N && fr > 0) more.splice(1, 0, `Voll besetzt ${perMin(fr)} ${GN[prodOf(b)]} pro Minute: genug für etwa ${feedsText(N, fr / N.rate)}. Jeder braucht ${perMin(N.rate)} pro Minute.`); }
     // the Erntehaus and the fishers get what is needed most, or what you hold them to
     if (K.picks){ const pk = b.v && K.picks[b.v.pick] ? b.v.pick : '';
       const cur = choiceOf(b);
@@ -975,6 +1035,7 @@ $('sheetBody').addEventListener('click', e => {
     const b = findB(sheetData.id); if (!b) return;
     if (act === 'move'){ startMove(b); return; }
     if (act === 'prio'){ setPrio(islOfB(b.id), b, !b.prio); updateHUD(); renderSheet(); save(); return; }
+    if (act === 'keep'){ b.keep = !b.keep; islOfB(b.id).staff = null; syncWalkers(); toast(b.keep ? `${placeName(b)}: Die Leute bleiben hier. Niemand wird ausgeliehen.` : `${placeName(b)}: Die Leute dürfen wieder aushelfen.`, 2600, false); renderSheet(); save(); return; }
     if (act === 'pick'){ const I = islOfB(b.id), v = btn.dataset.v; b.v = {...(b.v || {})}; if (v) b.v.pick = v; else delete b.v.pick; b._by = null; b.idle = null; if (!v) choosePick(I, b); syncWalkers(); updateHUD(); renderSheet(); save(); return; }
     if (act === 'fell'){ const I = islOfB(b.id), n = FELL_WOOD[b.kind] || 0; I.stock.holz = Math.min(storeCap(I), (I.stock.holz || 0) + n); stats.gefaellt = (stats.gefaellt || 0) + 1; I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} gefällt: ${n} Holz. Was sie trug, ist fort.`, 2800, false); return; }
     if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
@@ -991,6 +1052,9 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'ctab'){ sheetData = {...sheetData, tab:btn.dataset.v, crafts:false}; renderSheet(); return; }   // the tabs of the village centre
     if (act === 'craftpick'){ sheetData = {...sheetData, crafts:!sheetData.crafts}; renderSheet(); return; }
     if (act === 'rain'){ rainDance(islOfB(b.id)); renderSheet(); return; }
+    if (act === 'roof'){ const h = findB(+btn.dataset.b) || b; toast(HOME_KINDS.has(h.kind) ? `${roofText(islOfB(h.id), h)}.` : 'Eine Hütte für jede Familie.', 4200, false); return; }
+    if (act === 'tieall'){ tieRoofs(islOfB(b.id)); renderSheet(); return; }
+    if (act === 'talisman'){ cutTalisman(islOfB(b.id)); renderSheet(); return; }
   }
   if (sheetKind === 'quest' && act === 'showq'){ showQuest(); return; }
   if (act === 'skipq'){ closeSheet(); skipTutorial(); return; }

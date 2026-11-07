@@ -111,9 +111,20 @@ const r = await p.evaluate(()=>{
     tick = H.rainUntil + 1; want(/Wieder in/.test(rainState(H)), 'rain: can dance again at once');
     tick = t0; H.rainAt = 0; H.rainUntil = 0; H.drought = 0; Object.assign(H.stock, keepS); }
   // a workplace always shows its fixed places; helpers get marks of their own after them
-  { const H = isl('heimat'), e = H.buildings.find(b => b.kind === 'ernte' && !b.bt), sf = staffOf(H);
-    if (e){ const fake = {crew:new Map([[e, KINDS.ernte.crew + 2]])}, sl = slotsOf(H, e, {...sf, crew:fake.crew}, new Map([[e, 9]]));
-      want(sl.filter(k => !k.startsWith('aid')).length === KINDS.ernte.crew && sl.filter(k => k.startsWith('aid')).length === 2, 'helpers: marks mixed with the places ' + sl); } }
+  { const H = isl('heimat'); H.handWork = false; H.zeal = 1; const extra = []; for (let i = 0; i < 6; i++){ const q = {...H.people.find(isAdult)}; q.id = 910000 + i; q.job = 0; q.loan = 0; q.n = 'Gast' + i; extra.push(q); H.people.push(q); }
+    H.staff = null; const sf = staffOf(H), on = presentAt(H); let checked = 0;
+    for (const [b, n] of sf.help){ const sl = slotsOf(H, b, sf, on); checked++;
+      want(sl.filter(k => k.startsWith('aid')).length >= n && sl.length >= KINDS[b.kind].crew, `helpers: marks of ${b.kind} do not show them: ${sl}`); }
+    want(checked > 0, 'helpers: none to check');
+    // the own place is kept: a borrowed worker comes back, and the place keeps a mark for them
+    const pl = placesOf(H).find(b => !b.at && (sf.home.get(b) || []).length), pid = pl && sf.home.get(pl)[0], who = pid && H.people.find(p => p.id === pid);
+    if (who){ who.loan = 0; const s = H.buildings.find(b => b.bt) || (() => { const q = findSpot(H, 'haus', startSpot(H, KINDS.haus)); const nb = addB(H, 'haus', q, variant('haus'), tick); nb.bt = KINDS.haus.bt; return nb; })();
+      H.siteCrew = {[s.id]:[pid]}; H.staff = null; const s2 = staffOf(H);
+      want(who.job === pl.id, 'Stammplatz: lost while building');
+      if (s2.loan.get(pid) === s.id) want(slotsOf(H, pl, s2, presentAt(H)).includes('away'), 'Stammplatz: no mark for the one away');
+      H.buildings = H.buildings.filter(b => b !== s); H.siteCrew = {}; H.staff = null; const s3 = staffOf(H);
+      want(who.job === pl.id && (s3.crewP.get(pl) || []).includes(pid), 'Stammplatz: not back after building'); }
+    H.people = H.people.filter(p => !extra.includes(p)); H.staff = null; }
   // the old sit at the household craft at half strength; children come seldom without a surplus; the elders say why none come
   { const H = isl('heimat'); H.handWork = false; const hh = homesOf(H).find(h => famOfHome(H, h)), f = famOfHome(H, hh);
     const o = Object.assign(person(H, 47), {h:f.id, l:Math.round(80 * YEAR)}); H.people.push(o); H.pop++; setCraft(H, hh, 'schnur'); const c = craftOf(H, hh); H.staff = null;
@@ -195,6 +206,52 @@ const r = await p.evaluate(()=>{
     const pp = H0.people.find(isAdult), nv = pp.nv; pp.nv = 3.2; loreCache = null; stageTick(); const after = unlocked('vaka') && stats.pause;
     pp.nv = nv; loreCache = null; want(!before && after && unlocked('vaka'), `pause: vaka before ${before}, after ${after}, after the navigator ${unlocked('vaka')}`);
     stats.hawaiki = h0; out.push(`pause: ${morn} morning islands, no clans there; the voyaging canoe opens with the star path`); }
+  // roofs wear and the family covers them anew with palm fronds (a family house with wood as well); without fronds they leak
+  { const H = isl('heimat'), hh = homesOf(H).find(h => famOfHome(H, h)), keepS = {...H.stock}, t1 = hh.t;
+    hh.t = 1; hh.rw = ROOF.mend + .01; H.stock.dach = 10; H.stock.holz = 10; roofTick(H);
+    want(hh.rw < .01 && H.stock.dach === 8 && H.stock.holz === 10, `roof: hut not covered anew: ${hh.rw.toFixed(2)}, fronds ${H.stock.dach}`);
+    hh.t = 2; hh.rw = ROOF.mend + .01; roofTick(H); want(hh.rw < .01 && H.stock.dach === 6 && H.stock.holz === 9, 'roof: a family house takes fronds and wood');
+    hh.rw = ROOF.mend + .01; H.stock.dach = 3; roofTick(H); want(hh.rw > ROOF.mend, 'roof: a tight roof waits while fronds are few');
+    hh.rw = ROOF.leak + .01; H.stock.dach = 0; roofTick(H); want(roofState(hh) === 'low', 'roof: no leak without fronds');
+    select(hh); sheetData = {...sheetData, tab:'haus'}; renderSheet();
+    want(/undicht/.test($('sheetBody').textContent), 'roof: the house does not say its roof leaks'); closeSheet();
+    const cap0 = (hh.rw = 0, homeCap(H, hh)); hh.rw = ROOF.broken + .01; want(roofState(hh) === 'out' && homeCap(H, hh) === cap0 - 1, 'roof: a broken roof keeps its room');
+    want(/kaputt/.test(roofText(H, hh)), 'roof: no word for a broken roof'); hh.rw = 0;
+    // the hearth fire of a family house burns shells or wood
+    H.staff = null; want(needsOf(H).list.some(n => n.k === 'brenn'), 'fire: a family house needs no fire');
+    H.stock.schalen = 100; H.stock.holz = 0; H.owe = {...(H.owe || {}), brenn:50}; run(1); want(H.stock.schalen <= 55, `fire: shells not burned: ${H.stock.schalen}`);
+    select(hh); sheetData = {...sheetData, tab:'haus'}; renderSheet(); want(/Feuer/.test($('sheetBody').textContent), 'fire: no tile for the fire'); closeSheet();
+    // a cyclone: announced, the elders say so, a cord bubble over each loose roof; then people go to the roofs and tie them
+    Object.assign(H.stock, {schnur:20, faser:20, dach:20, holz:20}); stormWarn(H, false); const S = H.storm;
+    want(S && S.at === tick + STORM.warn, 'storm: no warning');
+    const A = adviceOf(H); want(A && A.urgent && A.tie && /Sturm/.test(A.t), `storm: no urgent advice: ${A && A.t}`);
+    cam.x = hh.x; cam.y = hh.y; cam.z = 2.4; applyCam(); draw(performance.now());
+    const bub = bubbleHits.find(q => Math.hypot(q.x - hh.x, q.y - hh.y) < 60); want(!!bub, 'storm: no cord bubble over a loose roof');
+    if (bub) bub.go(); want(H.storm.tie, 'storm: a tap on the bubble does not send people to the roofs');
+    H.staff = null; const sf = staffOf(H), roofers = [...sf.loan.values()].filter(id => { const b = findB(id); return b && HOME_KINDS.has(b.kind); });
+    want(roofers.length > 0, 'storm: nobody goes to the roofs');
+    for (let i = 0; i < STORM.warn + 2 && H.storm; i++) run(1, false);
+    const tied = S.tied.length, homes = homesOf(H).filter(h => !h.bt);
+    out.push(`storm: ${tied} of ${homes.length} roofs tied, ${homes.filter(h => roofState(h) === 'low').length} leak after it`);
+    want(!H.storm && tied > 0, 'storm: no roof tied before it came');
+    want(homesOf(H).every(h => h.bt || !S.tied.includes(h.id) || roofState(h) === 'ok'), 'storm: a tied roof tore');
+    want(homesOf(H).every(h => h.bt || S.tied.includes(h.id) || roofState(h) !== 'ok' || h.rw === 0), 'storm: a loose roof held');
+    for (const h of H.buildings) if (HOME_KINDS.has(h.kind)){ h.rw = 0; delete h.bt; } hh.t = t1; Object.assign(H.stock, keepS); H.staff = null; syncWalkers(); }
+  // drift by the shore: a tap brings it in; amber is cut into a talisman at the centre, and it keeps one storm off the roofs
+  { const H = isl('heimat'), keepS = {...H.stock}; setActive(H.id); drift = drift.filter(d => !d.shore);
+    for (let i = 0; i < 150 && !drift.some(d => d.shore === H.id); i++){ tick++; driftTick(); } want(drift.some(d => d.shore === H.id), "drift: nothing floats by the shore");
+    const pt = shorePoint(H); drift.push({id:nextDrift++, k:'bernstein', x:pt.x, y:pt.y, t0:tick, shore:H.id}); H.stock.bernstein = 0;
+    cam.z = 2.4; applyCam(); const d = hitDrift(pt); want(d && d.k === 'bernstein', 'drift: a tap does not find the amber');
+    if (d) collectDrift(d); want(H.stock.bernstein === 1 && !drift.includes(d), 'drift: the amber is not in the store');
+    const wm = matriarchOf(H) ? null : Object.assign(person(H, 44), {s:'f', h:famsOf(H)[0].id}); if (wm){ H.people.push(wm); H.pop++; }   // a woman to cut it
+    H.stock.schnur = 2; want(!talismanState(H), `talisman: ${talismanState(H)}`); const m0 = mana; cutTalisman(H);
+    want(H.stock.talisman === 1 && H.stock.bernstein === 0 && mana === m0 + TALISMAN.mana, 'talisman: not cut');
+    select(centerOf(H)); sheetData = {...sheetData, tab:'dorf'}; renderSheet(); want(/Talisman der Matriarchin/.test($('sheetBody').textContent), 'talisman: no row at the centre'); closeSheet();
+    for (const h of homesOf(H)) h.rw = 0; stormWarn(H, false); tick = H.storm.at; stormTick(H);
+    want(!H.stock.talisman && homesOf(H).every(h => roofState(h) === 'ok'), 'talisman: the roofs tore all the same');
+    out.push(`drift: ${drift.filter(q => q.shore).length} by the shore, amber taken, talisman cut and used in the storm`);
+    if (wm){ H.people = H.people.filter(q => q !== wm); H.pop--; }
+    Object.assign(H.stock, keepS); for (const h of H.buildings) delete h.bt; H.staff = null; syncWalkers(); }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

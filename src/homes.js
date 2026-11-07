@@ -9,9 +9,9 @@
 const HOME_KINDS = new Set(['haus', 'pfahl', 'fale']);
 const TIERS = {
   1:{n:'Hütte', fam:'Familie', cap:4, needs:['dach', 'essen', 'wasser']},
-  2:{n:'Familienhaus', fam:'Familie', cap:6, needs:['dach', 'essen', 'wasser', 'speisen'], cost:{holz:2, faser:3, schnur:2}},
-  3:{n:'Meisterhaus', fam:'Meisterfamilie', cap:8, needs:['dach', 'essen', 'wasser', 'speisen', 'toepfe', 'matten', 'oel'], cost:{holz:2, matten:2}},
-  4:{n:'Häuptlingshaus', fam:'Häuptlingsfamilie', cap:10, needs:['dach', 'essen', 'wasser', 'speisen', 'toepfe', 'matten', 'oel', 'tapa', 'schweine', 'kava', 'schmuck', 'feinmatten', 'bemtapa', 'duftoel']}
+  2:{n:'Familienhaus', fam:'Familie', cap:6, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen'], cost:{holz:2, faser:3, schnur:2}},
+  3:{n:'Meisterhaus', fam:'Meisterfamilie', cap:8, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen', 'toepfe', 'matten', 'oel'], cost:{holz:2, matten:2}},
+  4:{n:'Häuptlingshaus', fam:'Häuptlingsfamilie', cap:10, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen', 'toepfe', 'matten', 'oel', 'tapa', 'schweine', 'kava', 'schmuck', 'feinmatten', 'bemtapa', 'duftoel']}
 };
 const MASTER_GOODS = ['toepfe', 'matten', 'oel'];
 const UPGRADE_KEEP = {schnur:2};   // what stays in store when huts are bound anew by themselves: sennit for nets and canoes
@@ -31,9 +31,10 @@ const homeCapMax = (I, b) => TIERS[tierOf(b)].cap;
 const DRY_GRACE = 15;   // ticks a good may be gone before the houses lose the room it gives
 function homeCap(I, b){
   const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE, basic = ['essen', 'wasser'].filter(have).length;
-  if (t === 1) return Math.min(max, 2 + basic);
+  const leak = roofState(b) === 'out' ? 1 : 0;   // under a broken roof one fewer finds a dry place
+  if (t === 1) return Math.min(max, 2 + basic) - leak;
   const extra = TIERS[t].needs.filter(k => !['dach', 'essen', 'wasser'].includes(k)), share = extra.filter(have).length / extra.length;
-  return Math.min(max, 2 + basic + Math.round(share * (max - 4)));
+  return Math.min(max, 2 + basic + Math.round(share * (max - 4))) - leak;
 }
 /* a house fuller than its room: every half minute one of its people moves away */
 function crowdTick(I, force = false){
@@ -178,7 +179,7 @@ function ageMix(I){
 /* What a family has and lacks, by the needs of its step */
 function famNeeds(I, f, list){
   const t = famTier(I, f), by = new Map(list.map(n => [n.k, n]));
-  return TIERS[t].needs.map(k => k === 'dach' ? {k, state:f.home ? 'ok' : 'out'} : {k, state:(by.get(k) || {state:'ok'}).state});
+  return TIERS[t].needs.map(k => k === 'dach' ? {k, state:f.home ? roofState(findB(f.home)) : 'out'} : {k, state:(by.get(k) || {state:'ok'}).state});
 }
 /* Rising, as in Anno. A house can rise one step when every need of its family is met and the material for the next step
    lies in store; for a master's house its new goods must be there too. You tap the house and "Aufsteigen" (or let houses
@@ -198,7 +199,7 @@ const canUpgrade = (I, b, list) => { const u = upgradeSteps(I, b, list); return 
 const readyHomes = (I, list) => homesOf(I).filter(b => canUpgrade(I, b, list));
 function upgradeHouse(I, b){
   const t = tierOf(b) + 1, f = famOfHome(I, b); if (t > 3 || !f) return false;
-  pay(I, TIERS[t].cost); b.t = t; b.miss = 0; b.blessAt = typeof performance !== 'undefined' ? performance.now() : 0; invalidate(); I.staff = null;
+  pay(I, TIERS[t].cost); b.t = t; b.miss = 0; b.rw = 0; b.rf = tick; b.blessAt = typeof performance !== 'undefined' ? performance.now() : 0; invalidate(); I.staff = null;
   if (t === 2) stats.ausbau = (stats.ausbau || 0) + 1; else stats.tufunga = (stats.tufunga || 0) + 1;
   if (!awayQuiet && I.id === active) sfx('rise');
   if (!awayQuiet && I.id === active) toast(t === 2 ? `${famName(f)}: Familienhaus. Jetzt können Kinder kommen.` : `${famName(f)}: Meisterhaus.`, 2800);
@@ -216,6 +217,71 @@ function tierTick(I, list, force = false){
   if (!I.autoUp) return;
   const b = homesOf(I).sort((a, q) => tierOf(a) - tierOf(q) || a.born - q.born).find(q => canUpgrade(I, q, list) && (tierOf(q) > 1 || (I.stock.schnur || 0) >= TIERS[2].cost.schnur + UPGRADE_KEEP.schnur));
   if (b) upgradeHouse(I, b);
+}
+/* Roofs wear. Palm thatch lasts a few years on the islands (here four years of the game, 48 minutes). A worn roof
+   is mended by the family itself with palm fronds from the store, a family house also takes a piece of wood for the posts.
+   A roof nobody mends leaks (Dach undicht), and at last lets the rain in (Dach kaputt): then the family lacks its roof. */
+const ROOF = {life:4 * YEAR, mend:.75, leak:1, broken:1.3, keep:4};
+const roofCost = b => tierOf(b) >= 2 ? {dach:2, holz:1} : {dach:2};
+const roofState = b => !b ? 'out' : (b.rw || 0) >= ROOF.broken ? 'out' : (b.rw || 0) >= ROOF.leak ? 'low' : 'ok';
+function roofTick(I, n = 1){
+  for (const b of homesOf(I)){
+    if (b.bt) continue;
+    b.rw = (b.rw || 0) + n / ROOF.life;
+    if (b.rw < ROOF.mend || !famOfHome(I, b)) continue;
+    const c = roofCost(b); if (!canPay(I, c) || (b.rw < ROOF.leak && (I.stock.dach || 0) < c.dach + ROOF.keep)) continue;   // a roof still tight waits while fronds are few, for building
+    const was = b.rw >= ROOF.leak; pay(I, c); b.rw = 0; b.rf = tick; invalidate();
+    if (was && I.id === active && !awayQuiet) note(`${famName(famOfHome(I, b))} hat das Dach neu gedeckt: ${costText(c)}.`);
+  }
+}
+/* A cyclone is announced by the elders, and there is about a minute to tie the roofs down: one person to a house, borrowed
+   from their work (the nearest houses first, four at a time), a few moments and one cord of sennit (or two of coconut
+   fibre) each. When it comes, tied roofs hold; loose ones tear and leak, one or two houses may be wrecked, a workplace
+   too when most roofs were loose. A talisman of amber, cut by the matriarch, keeps the storm off the roofs once. */
+const STORM = {warn:30, work:3, crew:4};
+const tieCost = I => (I.stock.schnur || 0) >= 1 ? {schnur:1} : (I.stock.faser || 0) >= 2 ? {faser:2} : null;
+const stormNear = I => !!I.storm && tick < I.storm.at;
+function stormWarn(I, tie){
+  if (!I) return; stats.stuerme = (stats.stuerme || 0) + 1;
+  I.storm = {at:tick + STORM.warn, tie:!!tie, tied:[], p:{}}; I.staff = null; syncWalkers(); invalidate();
+}
+/* "Alle an die Dächer!" also later, after waiting first */
+function tieRoofs(I){
+  const S = I && I.storm; if (!S || tick >= S.at || S.tie) return;
+  S.tie = true; I.staff = null; syncWalkers(); invalidate();
+  if (!awayQuiet) toast(tieCost(I) ? `Die Leute von ${I.name} laufen zu den Dächern.` : `Zum Festbinden fehlt Schnur oder Kokosfasern.`, 3000, false);
+}
+function stormTick(I){
+  const S = I.storm; if (!S) return;
+  if (tick < S.at){
+    if (!S.tie) return;
+    if (awayQuiet){ for (const h of homesOf(I)){ if (h.bt || S.tied.includes(h.id)) continue; const c = tieCost(I); if (!c) break; pay(I, c); S.tied.push(h.id); } return; }   // while you are away they tie what they can
+    const on = presentAt(I);
+    for (const h of homesOf(I)){
+      if (h.bt || S.tied.includes(h.id) || !(on.get(h) > 0)) continue;
+      S.p[h.id] = (S.p[h.id] || 0) + 1;
+      if (S.p[h.id] >= STORM.work){ const c = tieCost(I); if (c){ pay(I, c); S.tied.push(h.id); I.staff = null; syncWalkers(); } }
+    }
+    return;
+  }
+  I.storm = null; I.staff = null;
+  const msg = stormStrike(I, S); cycloneStart(I, 10); syncWalkers();
+  if (I.id === active && !awayQuiet){ toast(msg, 6000); sfx && sfx('horn'); } else note(msg);
+}
+function stormStrike(I, S){
+  const homes = homesOf(I).filter(h => !h.bt), pick = (list, n) => list.slice().sort(() => Math.random() - .5).slice(0, n);
+  let loose = homes.filter(h => !S.tied.includes(h.id)), charm = false;
+  if (loose.length && (I.stock.talisman || 0) > 0){ I.stock.talisman--; charm = true; loose = []; }
+  for (const h of loose){ h.rw = Math.max(h.rw || 0, ROOF.leak); h.rf = tick - AGE_FULL; }
+  const wreck = loose.filter(() => Math.random() < .15).slice(0, 2); for (const h of wreck){ h.bt = Math.ceil(KINDS[h.kind].bt / 2); h.rw = 0; }   // built anew, with a new roof
+  const hit = loose.length > homes.length / 2 && pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !b.at)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
+  const down = pick(I.trees.filter(t => t.st === 0), Math.round(I.trees.filter(t => t.st === 0).length * .06)); for (const t of down){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; }
+  if (down.length) treesChanged(I);
+  for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt) b.soil = Math.max(.12, (b.soil ?? 1) - .1);
+  const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; }   // off a bare slope the earth slides
+  invalidate(true);
+  const held = homes.length - loose.length;
+  return `Der Sturm fegt über ${I.name}. ${charm ? `Der Bernstein-Talisman der Matriarchin hält ihn von den Dächern: alle ${homes.length} Dächer halten.` : `${held} von ${homes.length} Dächern ${held === 1 ? 'hielt' : 'hielten'}.`}${loose.length ? ` ${loose.length} ${loose.length === 1 ? 'Dach ist' : 'Dächer sind'} undicht: Die Familien flicken sie mit Palmwedeln.` : ''}${wreck.length ? ` Zerstört: ${wreck.length === 1 ? 'ein Haus' : `${wreck.length} Häuser`}${hit ? ` und ${KINDS[hit.kind].n}` : ''}, das muss neu gebaut werden.` : hit ? ` ${KINDS[hit.kind].n} ist beschädigt.` : ''}${down.length ? ` ${down.length} ${down.length === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden.` : ''}${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
 }
 /* A family without a roof waits by the plaza; when no house is being built for a long while, one of them leaves */
 function rooflessTick(I){
@@ -269,7 +335,7 @@ function fitOf(I){
   const M = masterSet(I), hunger = haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0;
   return (p, b) => hunger || !M.has(p.id) || !lowWork(b);
 }
-function autoAssign(I, places, at, adults, fit = () => true){
+function autoAssign(I, places, at, adults, fit = () => true, away = []){
   const free = adults.filter(p => !p.job), need = needOf(I, places);
   const open = places.slice().sort((a, b) => (b.prio ? 1 : 0) - (a.prio ? 1 : 0) || need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);   // a called place first
   for (const b of open){
@@ -280,17 +346,33 @@ function autoAssign(I, places, at, adults, fit = () => true){
       const p = pickWorker(I, b, cand, l); free.splice(free.indexOf(p), 1); p.job = b.id; l.push(p);
     }
   }
-  // a place whose good is short and is not fully worked takes people from a place whose store is full, or from crafts and canoes
+  // whose own place rests (a garden growing, a field lying fallow) fills a place still open meanwhile, as a loan: they keep
+  // their own place and go back to it when it works again
+  const idle = away.filter(p => !p.loan);
   for (const b of open){
-    if (need(b) > 0) continue;
+    const l = at.get(b);
+    while (l.length < crewOf(b) && idle.length){
+      if (need(b) === 2 && l.length) break;
+      const cand = idle.filter(p => fit(p, b)); if (!cand.length) break;
+      const p = cand.find(q => q.loanPrev === b.id) || pickWorker(I, b, cand, l); idle.splice(idle.indexOf(p), 1); p.loan = b.id; l.push(p);
+    }
+  }
+  // a place whose good is short (or was a moment ago, so nobody walks to and fro) borrows people from a place whose store
+  // is full, or from crafts and canoes. They keep their own place and go back when the shortage is over. A place set to
+  // "Bleiben" lends nobody.
+  for (const b of open){
+    if (!shortish(b, need)) continue;
     const l = at.get(b);
     while (l.length < crewOf(b)){
-      const take = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).some(p => fit(p, b)) && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
+      const can = p => fit(p, b) && !p.loan;
+      const take = places.filter(q => q !== b && !q.prio && !q.keep && !q.at && (at.get(q) || []).some(can) && need(q) > 0 && (need(q) === 2 || rankOf(q) >= 3) && rankOf(q) >= rankOf(b)).sort((a, q) => need(q) - need(a) || rankOf(q) - rankOf(a))[0];
       if (!take) break;
-      const tl = at.get(take), p = tl.filter(p => fit(p, b)).pop(); tl.splice(tl.indexOf(p), 1); p.job = b.id; l.push(p);
+      const tl = at.get(take), c = tl.filter(can), p = c.find(q => q.loanPrev === b.id) || c[c.length - 1]; tl.splice(tl.indexOf(p), 1); p.loan = b.id; l.push(p);
     }
   }
 }
+/* short now, or short in the last twenty seconds */
+const shortish = (b, need) => need(b) === 0 ? (b._short = tick + 10, true) : (b._short || 0) > tick;
 /* The conch (pū): blown at a place, its people come at once. At most two places at a time; a third call takes the oldest
    back. A site's call ends when it is built, a workplace's when its store is well filled again. */
 const PRIO_MAX = 2;
@@ -330,9 +412,9 @@ function addHelpers(I, places, at, pool, fit = () => true){
   const help = new Map(); if (!pool.length) return help;
   const need = needOf(I, places), open = places.filter(b => helpOk(I, b, need) && (at.get(b) || []).length >= crewOf(b)).sort((a, b) => need(a) - need(b) || rankOf(a) - rankOf(b) || a.born - b.born);
   if (!open.length) return help;
-  const room = b => (at.get(b) || []).length < 2 * crewOf(b), put = (p, b) => { pool.splice(pool.indexOf(p), 1); p.job = b.id; at.get(b).push(p); help.set(b, (help.get(b) || 0) + 1); };
+  const room = b => (at.get(b) || []).length < 2 * crewOf(b), put = (p, b) => { pool.splice(pool.indexOf(p), 1); p.loan = b.id; at.get(b).push(p); help.set(b, (help.get(b) || 0) + 1); };
   // who helped somewhere before stays there
-  for (const p of pool.slice()){ const b = p._was && open.find(q => q.id === p._was); if (b && room(b) && fit(p, b)) put(p, b); }
+  for (const p of pool.slice()){ const b = p.loanPrev && open.find(q => q.id === p.loanPrev); if (b && room(b) && fit(p, b)) put(p, b); }
   for (const lvl of [0, 1]){
     let go = true;
     while (pool.length && go){
@@ -346,16 +428,24 @@ const p0 = (I, b, pool, at) => pickWorker(I, b, pool, at.get(b) || []);
 const makesK = (kind, k) => { const K = KINDS[kind] || {}, m = q => K.prod === q || !!(K.picks && K.picks[q]); return k === 'essen' ? FOODS.some(m) : m(k); };
 function staff(I){
   const crew = new Map(), crewP = new Map(), sites = [], boats = [], staffed = new Set(), pulled = new Map();
-  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], help:new Map(), rest:false, oldAt:new Map(), total:workers(I), build:0, short:0, queue:[]};
+  if (!I.people) return I.staff = {key:staffKey(I), crew, crewP, sites, yard:0, boats, staffed, pulled, free:0, freeP:[], restP:[], home:new Map(), loan:new Map(), help:new Map(), rest:false, oldAt:new Map(), total:workers(I), build:0, short:0, queue:[]};
   const places = placesOf(I), pmap = new Map(places.map(b => [b.id, b])), at = new Map(), adults = I.people.filter(isAdult), fit = fitOf(I);
+  // Everyone keeps their own place (p.job) until the player moves them, the place is gone, or life changes them (grown old,
+  // a master family, the craft of their house). Where the place rests for a while (a garden growing, a field lying fallow,
+  // the yams out of season) they keep it and help elsewhere meanwhile; building, helping out and the conch only borrow
+  // people (p.loan), and they come back by themselves.
+  const bmap = new Map(I.buildings.map(b => [b.id, b])), count = new Map(), away = [];
+  const workplace = b => !b.bt && (KINDS[b.kind].crew > 0 || b.boat > 0) && !(b.at && !bmap.has(b.at));
   for (const p of I.people){
-    const b = p.job && pmap.get(p.job);
+    p.loanPrev = p.loan || 0; p.loan = 0;
+    const b = p.job && bmap.get(p.job);
     if (!isAdult(p) && !(b && b.at && stageOf(p) === 'old')){ p.job = 0; continue; }   // the old still sit at the household craft
-    if (!b || !fit(p, b)){ p.job = 0; continue; }
-    const l = at.get(b) || []; if (l.length >= crewOf(b)){ p._was = b.id; p.job = 0; continue; } l.push(p); at.set(b, l);
+    if (!b || !workplace(b) || !fit(p, b)){ p.job = 0; continue; }
+    const n = count.get(b) || 0; if (n >= crewOf(b)){ p.job = 0; continue; } count.set(b, n + 1);
+    if (pmap.has(b.id)){ const l = at.get(b) || []; l.push(p); at.set(b, l); } else away.push(p);
   }
   craftFirst(I, places, at, adults);
-  if (autoWork(I)) autoAssign(I, places, at, adults, fit); else autoAssign(I, places.filter(b => b.at), at, adults, fit);   // a household craft finds its hands even when the rest is given by hand
+  if (autoWork(I)) autoAssign(I, places, at, adults, fit, away); else autoAssign(I, places.filter(b => b.at), at, adults, fit);   // a household craft finds its hands even when the rest is given by hand
   // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
   { const need = needOf(I, places);
     for (const b of places.filter(q => q.prio)){
@@ -363,12 +453,12 @@ function staff(I){
       while (l.length < crewOf(b)){
         const free = adults.find(p => !p.job && fit(p, b));
         if (free){ free.job = b.id; l.push(free); continue; }
-        const from = places.filter(q => q !== b && !q.prio && !q.at && (at.get(q) || []).some(p => fit(p, b))).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
+        const can = p => fit(p, b) && !p.loan, from = places.filter(q => q !== b && !q.prio && !q.keep && !q.at && (at.get(q) || []).some(can)).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
         if (!from) break;
-        const fl = at.get(from), p = fl.filter(p => fit(p, b)).pop(); fl.splice(fl.indexOf(p), 1); p.job = b.id; l.push(p);
+        const fl = at.get(from), p = fl.filter(can).pop(); fl.splice(fl.indexOf(p), 1); p.loan = b.id; l.push(p);   // borrowed: back home when the call ends
       }
     } }
-  const pool = adults.filter(p => !p.job);
+  const pool = away.filter(p => !p.loan).concat(adults.filter(p => !p.job && !p.loan));   // whose place rests first, then who has none
   // the building sites and the canoe house: first who has no work, then the people of the place needed least
   // a site that will make what is running out (water, food) goes first, then huts for those without a roof, then in order
   const shortK = ['wasser', 'essen'].filter(k => haveOf(I, k) < 6), urgent = b => shortK.some(k => makesK(b.kind, k)), roofNeed = roofless(I);
@@ -382,7 +472,7 @@ function staff(I){
     // whose work can wait best: a full store first, then a good in plenty, crafts before wood, wood before food and water
     const need = needOf(I, places), cap = storeCap(I), plenty = b => (I.stock[prodOfB(b)] || 0) / cap, pull = b => need(b) * 10 + plenty(b) * 5 + rankOf(b);
     // nobody leaves water or food that is running out
-    const order = places.filter(b => !b.at && (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
+    const order = places.filter(b => !b.at && !b.keep && (at.get(b) || []).length && !(need(b) === 0 && rankOf(b) === 0)).sort((a, b) => pull(b) - pull(a) || b.born - a.born);
     // a site keeps its builders until it is done: the same people carry the wood and build it to the end. Before, the
     // crew could change with every count, and whoever was carrying a load dropped it on the way.
     const mem = I.siteCrew || (I.siteCrew = {}); for (const id of Object.keys(mem)) if (!want.some(([w]) => w.id === +id)) delete mem[id];
@@ -392,20 +482,33 @@ function staff(I){
       for (const pid of mem[s.id] || []){
         if (use.length >= n) break; const p = adults.find(q => q.id === pid); if (!p || taken.has(p)) continue;
         const i = pool.indexOf(p); if (i >= 0){ pool.splice(i, 1); use.push(p); continue; }
-        const b = p.job && pmap.get(p.job), l = b && at.get(b); if (l && l.includes(p) && !b.prio){ l.splice(l.indexOf(p), 1); use.push(p); pulled.set(b, s); }
+        const b = [...at.keys()].find(q => at.get(q).includes(p)), l = b && at.get(b); if (l && !b.prio && !b.at && !b.keep){ l.splice(l.indexOf(p), 1); use.push(p); pulled.set(b, s); }
       }
       use.push(...pool.splice(0, n - use.length));
       // for a site that ends the shortage, or one called with the conch, even a place of a short good gives hands, never one
       // making the same good, never a place called itself
-      let from = urgent(s) || s.prio ? places.filter(b => !b.at && (at.get(b) || []).length && !b.prio && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order.filter(b => !b.prio);
+      let from = urgent(s) || s.prio ? places.filter(b => !b.at && !b.keep && (at.get(b) || []).length && !b.prio && !shortK.some(k => makesK(b.kind, k) && makesK(s.kind, k))).sort((a, b) => pull(b) - pull(a) || b.born - a.born) : order.filter(b => !b.prio);
       while (use.length < n){
         const b = from.find(q => (at.get(q) || []).length); if (!b) break;
         const l = at.get(b); use.push(...l.splice(Math.max(0, l.length - (n - use.length)))); pulled.set(b, s);
       }
-      for (const p of use) taken.add(p);
+      for (const p of use){ taken.add(p); p.loan = s.id; }   // builders are borrowed: back to their own place when it is built
       mem[s.id] = use.map(p => p.id);
       if (!use.length) continue;
       crew.set(s, use.length); crewP.set(s, use.map(p => p.id)); if (s === yardB) yard = use.length; else sites.push(s);
+    }
+  }
+  // a storm is coming: the roofs are tied down, one person to a house, the nearest houses first, borrowed from anywhere but
+  // a place set to stay; they go back to their work when it is done
+  if (I.storm && I.storm.tie && tick < I.storm.at){
+    const ctr = centerOf(I) || I.anchor || I.center, needS = needOf(I, places);
+    const todo = homesOf(I).filter(h => !h.bt && !I.storm.tied.includes(h.id)).sort((a, b) => Math.hypot(a.x - ctr.x, a.y - ctr.y) - Math.hypot(b.x - ctr.x, b.y - ctr.y)).slice(0, STORM.crew);
+    for (const h of todo){
+      let p = pool.shift();
+      if (!p){ const from = places.filter(b => !b.keep && !b.prio && (at.get(b) || []).some(isAdult)).sort((x, y) => needS(y) - needS(x) || rankOf(y) - rankOf(x))[0];
+        if (from){ const l = at.get(from); p = l.filter(isAdult).pop(); l.splice(l.indexOf(p), 1); pulled.set(from, h); } }
+      if (!p) break;
+      p.loan = h.id; crew.set(h, 1); crewP.set(h, [p.id]);
     }
   }
   const rest = zealOf(I) === ZEAL[0], help = autoWork(I) && !rest ? addHelpers(I, places, at, pool, fit) : new Map();   // with much free time, who has no place rests instead of helping
@@ -417,7 +520,10 @@ function staff(I){
   const oldAt = new Map(); for (const b of places){ const n = (at.get(b) || []).filter(p => stageOf(p) === 'old').length; if (n) oldAt.set(b, n); }
   const build = sites.reduce((t, b) => t + crew.get(b), 0) + yard;
   const short = places.filter(b => !crew.get(b)).length;
-  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:pool.length, freeP:pool.map(p => p.id), help, rest, oldAt, total:adults.length, build, short, queue:all.map(b => b.id)};
+  const home = new Map(); for (const p of I.people) if (p.job){ const b = bmap.get(p.job); if (b){ const l = home.get(b) || []; l.push(p.id); home.set(b, l); } }
+  const loan = new Map(); for (const p of adults) if (p.loan) loan.set(p.id, p.loan);
+  const freeL = pool.filter(p => !p.job);
+  return I.staff = {key:staffKey(I), crew, crewP, sites, yard, boats, staffed, pulled, free:freeL.length, freeP:freeL.map(p => p.id), restP:pool.filter(p => p.job).map(p => p.id), home, loan, help, rest, oldAt, total:adults.length, build, short, queue:all.map(b => b.id)};
 }
 /* The player sends one more person to a place, or calls one away; then the island is worked by hand */
 const handNote = I => { if (autoWork(I)){ I.handWork = true; toast('Die Arbeit wird jetzt von Hand verteilt. In der Übersicht geht es zurück auf Automatisch.', 3600, false); } };
@@ -437,11 +543,20 @@ function workDel(I, b){
 /* where someone works, in words */
 function personWork(I, p){
   if (!isAdult(p)){ if (stageOf(p) === 'kid') return 'Kind'; const c = p.job && findB(p.job); return c && c.at ? `alt, ${placeName(c)}` : 'alt'; }
-  const sf = staffOf(I), site = [...sf.crewP].find(([q, ids]) => (q.bt || (q.kind === 'werft' && I.yard)) && ids.includes(p.id));
-  if (site) return `baut: ${site[0].bt ? KINDS[site[0].kind].n : SHIPS[I.yard.kind].n}`;
-  const b = p.job && findB(p.job); if (b) return placeName(b);
-  return 'frei';
+  const sf = staffOf(I), b = p.job && findB(p.job), away = loanWord(I, p);
+  if (b) return away ? `${placeName(b)} · ${away}` : (sf.restP || []).includes(p.id) ? `${placeName(b)} · ${restWord(I, b)}` : placeName(b);
+  return away || 'frei';
 }
+/* where someone is borrowed to, in a word or two: building, helping out, called by the conch */
+function loanWord(I, p){
+  const t = p.loan && findB(p.loan); if (!t) return '';
+  if (HOME_KINDS.has(t.kind) && !t.bt) return 'bindet ein Dach fest';
+  if (t.bt) return `baut ${KINDS[t.kind].n}`;
+  if (t.kind === 'werft' && I.yard) return `baut ${SHIPS[I.yard.kind].n}`;
+  return `hilft bei ${placeName(t)}`;
+}
+/* why a place rests for a while, so its people do something else meanwhile */
+const restWord = (I, b) => b.grow > 0 ? 'wächst noch' : b.fallow ? 'Feld ruht' : KINDS[b.kind].yam && b.ys !== 1 ? 'Pflanzzeit kommt' : unserved(I, b) ? 'wartet aufs Kanu' : 'Pause';
 function famWork(I, f){
   const ad = famAdults(I, f); if (!ad.length) return 'ohne Erwachsene';
   const by = new Map(); for (const p of ad){ const w = personWork(I, p); by.set(w, (by.get(w) || 0) + 1); }

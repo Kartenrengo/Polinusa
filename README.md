@@ -341,7 +341,10 @@ Einfach und nach Bedeutung geordnet:
     Ende die Kachel **Hauswerk**: das gewählte Hauswerk mit seinen Händen („Sennit drehen 1/1“) oder „Hauswerk wählen“.
     Ein Tippen öffnet die Auswahl mit Namen; was hier nicht geht, ist blass und sagt beim Tippen, warum.
   - **Was die Familie braucht:** eine Kachel je Bedürfnis mit Bild, Namen und einem Wort: **da** (grün), **knapp**
-    (gelb), **fehlt** (rot). Ein Tippen zeigt, woher es kommt.
+    (gelb), **fehlt** (rot). Ein Tippen zeigt, woher es kommt. Das Dach hat eigene Wörter: **hält**, **undicht**,
+    **kaputt**, im Sturm **fest**. Ab dem Familienhaus kommt **Feuer** dazu (siehe „Dächer, Sturm und Herdfeuer“); bei
+    fünf Bedürfnissen stehen fünf Kacheln in einer Reihe. Kommt ein Sturm, steht statt „Als Nächstes“ die Zeile „Sturm in
+    40 s: Das Dach ist lose“ mit „Dächer festbinden“.
   - **Eine Zeile „Als Nächstes“:** das Erste, was fehlt (sonst knapp ist), mit dem Gebäude, das hilft: „Essen knapp →
     Tarofeld“, oder in Worten: „Gekochtes fehlt: Erdofen kommt ab 12 Menschen.“
   - **Ausbau:** „Ausbau: Meisterhaus“, darunter „Platz für 8 · will dann auch Töpfe, Matten und Öl“, daneben der Knopf
@@ -349,10 +352,20 @@ Einfach und nach Bedeutung geordnet:
     0/1, Holz 2/2, grün oder rot. Muss etwas per Kanu kommen, trägt die Kachel ein kleines „Kanu“ und führt zu den Kanus.
   - Unten die Linie der Familie und „Versetzen“, „Entfernen“.
   Die Knotenschnur und die Bildkette sind aus dem Haus verschwunden: Sie waren schön, aber man musste sie erst lernen.
-- **Ein Arbeitsplatz** zeigt oben, ob er arbeitet und was er pro Minute macht, darunter die Leute mit − und +, und was sie
+- **Ein Arbeitsplatz** zeigt oben, ob er arbeitet, darunter **„Braucht“ und „Macht“ als Kacheln** (seit Version 67): jede
+  Ware mit Bild, **Namen**, wie viel pro Minute und wie viel im Lager ist. **Grün**, was da ist, **rot**, was fehlt. Am
+  Erdofen etwa: Braucht Rohes Essen, Brennstoff und Blätter, jedes mit „pro Minute“ und „Lager 14“ oder „fehlt“; Macht
+  Gekochtes. Ein Werkzeug, das schneller macht, steht als eigene Kachel dabei („macht schneller“ oder „wäre schneller“).
+  Eine rote Kachel führt beim Tippen zu dem, was die Ware macht. So sieht jede Werkstatt, jedes Feld und jedes Haus mit
+  Hauswerk gleich aus. Die alte Bildreihe mit Pfeilen und „≈“ ist weg. Auch **die Kanus im Kanuhaus** zeigen ihre Kosten
+  so: Holz 6/6 grün, Schnur 1/3 rot. Darunter die Leute mit − und +, und was sie
   holen sollen. Erst die **festen Plätze** (das Erntehaus hat immer 2), dann die **Helfer**, kleiner, mit einem Plus und
   „hilft“; darunter in Worten „2 feste Plätze, dazu 2 Helfer“. Auch die Marken über dem Gebäude zeigen erst die festen
   Plätze, dann die Helfer mit Plus. So sieht ein Platz nicht mal nach 2, mal nach 4 Plätzen aus.
+- **Blasen auf der Karte antippen** (seit Version 67): Jede Sprechblase über einem Haus oder Ort führt zu dem, was hilft.
+  Fehlt einem Haus Wasser, öffnet ein Tipp das Bauen mit dem Erntehaus; fehlt einem Ort eine Ware, kommt das Gebäude,
+  das sie macht, das Hauswerk oder die Kanus. Ein Haus zum Ausbau, ein Ort ohne Leute, das Muschelhorn, eine Familie,
+  die fortwill, und ein Kanu mit Zuzug öffnen ihr Blatt.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
     sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
@@ -519,6 +532,18 @@ Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht
 - **Automatisch:** Ohne dein Zutun gehen die Leute dorthin, wo sie gebraucht werden: was fehlt zuerst, dann Essen und
   Wasser, das Meer, Holz, Handwerk und Kanus. Ein Ort bekommt erst seine ganze Mannschaft, dann der nächste, damit die
   Arbeit zu zweit auch zwei hat. Wer aus derselben Familie kommt, arbeitet gern zusammen.
+- **Jeder hat seinen Stammplatz** (seit Version 67): Wer einmal an einem Ort arbeitet, gehört dorthin und bleibt. Früher
+  rechnete das Spiel die Plätze jeden Takt neu aus; wuchs ein Feld noch, lag es brach oder war keine Pflanzzeit, liefen
+  die Leute weg, und man musste sie von Hand zurückholen. Jetzt gilt:
+  - **Ausleihen statt umziehen:** Eine Baustelle, ein Kanu, das Muschelhorn, ein Helfer anderswo oder ein Dach im Sturm
+    leiht sich jemanden aus. Der Platz bleibt ihm, und ist die Arbeit getan, geht er von selbst zurück.
+  - **Ruht sein Ort,** etwa weil das Feld wächst oder brach liegt, behält er den Platz und hilft solange woanders. Auf
+    der Tafel steht dann „Tarofeld · wächst noch“ oder „Fischerhütte · baut Hütte“. Über dem Ort zeigt eine gestrichelte
+    Marke mit Pfeil, dass er wiederkommt.
+  - **Ausgeliehen wird mit Ruhe:** Erst wer frei ist oder wessen Ort ruht, dann vom Ort, der am ehesten warten kann. Ein
+    kurzer Mangel zieht niemanden sofort ab; erst wenn er 20 Sekunden anhält.
+  - **„Bleiben“:** Auf der Tafel eines Arbeitsplatzes hält ein Schalter die Leute dort fest. Von diesem Ort wird
+    niemand ausgeliehen.
 - **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, wer dort arbeitet, mit Namen. Mit „+“ schickst du einen Freien
   hin, mit „−“ rufst du einen ab. Das geht für **jeden** Freien, auch wenn seine Familie schon woanders arbeitet. Dann wird
   die Insel von Hand verteilt; in der Übersicht schaltet „Automatisch“ zurück.
@@ -820,6 +845,12 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
   das Mattensegel des Doppelkanus bläht sich im Wind.
 - **Treibgut:** Stämme, Kokosnüsse und Wrackteile treiben mit dem Wind und versinken nach einer Weile. Ein Kanu, das daran
   vorbeifährt, fischt sie auf, so weit Platz an Bord ist: Holz, Kokosnüsse, Holz und Schnur.
+- **Treibgut am Ufer antippen** (seit Version 67, für ruhige Minuten): Vor dem Dorf, das du ansiehst, treibt immer
+  wieder etwas, höchstens drei Stück zugleich. Ein langsamer Ring geht davon aus. Ein Tipp, und jemand paddelt hinaus:
+  Es spritzt, die Ware steigt auf und kommt ins Lager (ein Stamm 3 Holz, Nüsse 4 Kokosnüsse, ein Wrackteil 2 Holz und
+  1 Schnur). Was den Strand erreicht oder vier Minuten treibt, ist fort. **Ganz selten (etwa jedes 16. Stück) ist es
+  Bernstein:** ein warmes, schimmerndes Stück mit goldenem Ring. Daraus schnitzt die Matriarchin einen Talisman (siehe
+  „Das Dorfzentrum“).
 - **Tauchplätze:** Wo Vögel über dem offenen Meer kreisen, liegt etwas am Grund: oft unter einem Wrackteil, manchmal vor
   einem Dorf, reich nach einem Knöchelwurf mit fünf gleichen. Ein Kanu fährt hin und hält an, dann „Tauchen lassen“. Alle
   sechs Sekunden ein Tauchgang: meist Meeresfrüchte und Muschelschalen, manchmal Perlmutt oder Schmuck, selten ein Walzahn.
@@ -1060,7 +1091,7 @@ oder einmal fällen.
 | --- | --- | --- |
 | Kokospalme | Erntehaus | reife Nüsse (Nahrung) mit Kokosfasern und Kokosschalen, grüne Nüsse (Wasser), Palmwedel (Dach), alte Stämme (Holz) |
 | Kokosfasern | Sennit drehen | Sennit, die Schnur für Häuser, Kanus und Netze |
-| Kokosschalen | Töpfern | Brennstoff: erst die Schalen, dann Holz |
+| Kokosschalen | Herdfeuer, Erdofen, Töpfern | Brennstoff: erst die Schalen, dann Holz. Jede reife Nuss gibt eine Schale (seit Version 67, vorher eine halbe) |
 | Kokosnüsse | Öl pressen | Kokosöl, 2 Nüsse je Öl |
 | Pandanus | Matten flechten, Pandanussammlerin | Matten und Segel; Früchte als Nahrung (Atoll) |
 | Brotfruchtbaum | Gärgrube, Harzsammler | Proviant; Milchsaft, mit dem Kanus abgedichtet werden |
@@ -1274,7 +1305,10 @@ Reiter:
 
 - **Dorf:** die **Feste** (Kleines Fest und Tatau immer, das Große Fest, sobald es Schweine und Tapa gibt, das Fest der
   Schätze, sobald ein Schatz gesehen ist), jeweils mit dem, was es kostet oder was noch fehlt, und „Feiern“. Darunter
-  der **Regentanz** und der **Knöchelwurf** (einmal am Tag).
+  der **Regentanz** und der **Knöchelwurf** (einmal am Tag). Ist einmal Bernstein gefunden, steht dort auch der
+  **Talisman der Matriarchin**: Die älteste Frau der Gründerfamilie (sonst die älteste Frau im Dorf) schnitzt aus 1
+  Bernstein und 1 Schnur einen Talisman. Ansehen +3. Liegt ein Talisman im Lager, hält er **einen** Sturm von allen
+  Dächern ab und ist dann verbraucht.
 - **Lager:** alle Waren als Kacheln mit Namen, wie im Lager oben.
 - **Familie:** das Haus der Gründerfamilie, wie jedes andere Haus.
 
@@ -1288,6 +1322,41 @@ Felder, Gärten und Bananen tragen ein Viertel schneller. Danach geht es erst na
 (weniger als 4) und ein Tanz ist möglich, rät der Rat zum Regentanz. Belegt ist das so nicht für die Lapita-Zeit:
 Zeremonien um Regen kennt man aus späteren Berichten von vielen Inseln, auch die Ereigniskarte „Dürre“ hat eine
 Regenzeremonie mit Kava.
+
+## Dächer, Sturm und Herdfeuer
+
+Seit Version 67 müssen die Häuser in Schuss gehalten werden, Stürme kündigen sich an, und ab dem Familienhaus brennt ein
+Herdfeuer.
+
+**Wie die Häuser in Schuss bleiben.** Vorher gar nicht: Ein Dach war einfach da, nur ein Sturm machte es alt oder riss
+ein Haus um. Jetzt nutzt sich jedes Dach ab. Ein Dach aus Palmwedeln hält einige Jahre (vier Spieljahre, 48
+Minuten). Dann deckt die Familie es selbst neu: **2 Palmwedel**, ein Familienhaus oder höher dazu **1 Holz** für die
+Pfosten. Das geschieht von allein, sobald es im Lager liegt; ein Dach, das noch dicht ist, wartet, bis ein paar Wedel für
+das Bauen übrig bleiben. Fehlen Wedel zu lange, wird das Dach **undicht**, und später **kaputt**: Dann regnet es hinein,
+die Familie hat kein Dach mehr (die Hauskachel wird rot, kein Ausbau), und es ist ein Platz weniger im Haus. Ein Tipp auf
+die Dachkachel sagt, wie lange es noch hält und was es braucht; ist es undicht, führt er zu dem, was Wedel bringt (das Erntehaus).
+
+**Der Sturm.** In der Sturmzeit sehen die Alten den Himmel gelb werden. Die Karte „Ein Wirbelsturm zieht auf“ lässt
+wählen:
+
+- **„Alle an die Dächer!“** In einer Minute ist er da. Je Haus läuft ein Mensch hin, die nächsten Häuser am Dorfzentrum
+  zuerst, vier zugleich, und **bindet das Dach fest**: ein paar Augenblicke Arbeit (Wedel stopfen, Seile über das Dach
+  werfen und anziehen) und **1 Schnur oder 2 Kokosfasern** je Dach. Die Leute werden dafür kurz von ihrer Arbeit
+  ausgeliehen und gehen danach zurück.
+- **„Abwarten“:** Die Dächer bleiben lose. Festbinden geht auch später noch: mit dem Rat unten („Festbinden ›“), mit der
+  Zeile im Haus oder mit einem Tipp auf das zitternde Seil über einem losen Dach.
+
+Bis er kommt, bleibt der Himmel dunkel, die Kanus bleiben an Land, und unten zählt der Rat herunter: „Sturm in 40 s! 3
+von 5 Dächern fest.“ Fehlen Schnur und Fasern, sagt er es. Dann kommt der Sturm: **Festgebundene Dächer halten.** Lose
+Dächer werden undicht und brauchen neue Wedel; jedes lose Haus kann einstürzen (höchstens zwei), und waren die meisten
+Dächer lose, trifft es auch einen Arbeitsplatz. Bäume fallen, die Felder werden ausgewaschen, von kahlen Hängen rutscht
+Erde. Ein **Talisman der Matriarchin** im Lager hält einmal alle Dächer.
+
+**Herdfeuer und Holzwirtschaft.** Ab dem Familienhaus will jede Familie ein Feuer im Herd: das neue Bedürfnis
+**Feuer**. Es brennt mit **Brennstoff**: Kokosschalen (jede reife Nuss aus dem Erntehaus gibt eine) oder Holz (vom Holzfäller, auf Atollen
+aus Treibholz und Palmholz). Erst brennen die Schalen, die ohnehin übrig sind, dann Holz. So zieht der Wald jetzt dreifach: Holz zum Bauen, Holz
+für die Dächer der Familienhäuser, Holz und Schalen für Herd, Erdofen und Töpferei. Fehlt Brennstoff, ist die Kachel
+„Feuer“ rot, und das Familienhaus hat weniger Platz.
 
 ## Ansehen
 
@@ -1464,6 +1533,10 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Schlitztrommel (lali, pātē), Tapa | erst später belegt; Tapa-Schlegel aus Stein sind älter, aber nicht lapitazeitlich sicher |
 | Kava, feine Matten, bemalte Tapa, Duftöl, Häuptlingshaus | erst aus dem späteren Polynesien bekannt; im Spiel darum erst ab **Hawaiki**, nach der großen Fahrt |
 | Wörter wie rāhui, tufunga, taravana, fale | spätere polynesische Wörter, im Spiel als Namen genutzt |
+| Palmdächer halten einige Jahre und werden neu gedeckt | aus späteren Berichten (Buck); die Dächer selbst sind nicht erhalten; im Spiel vier Jahre |
+| Vor einem Wirbelsturm die Dächer festbinden | aus späteren Berichten und dem Wissen der Inseln heute; für die Lapita-Zeit angenommen |
+| Herdfeuer und Erdöfen mit Holz und Kokosschalen | Feuerstellen und Erdöfen sind an Lapita-Orten gefunden; Kokosschalen als Brennstoff kennt man aus späterer Zeit |
+| Bernstein im Treibgut, Talisman der Matriarchin | **erfunden**, eine Spielidee. Aus Lapita-Fundstellen ist kein Bernstein bekannt. Harz von Kauri-Bäumen (Agathis) gibt es in Melanesien und Fidschi; Kauri-Gummi aus Aotearoa ist viel später. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
 
 ## Quellen
 

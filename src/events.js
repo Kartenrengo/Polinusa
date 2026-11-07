@@ -19,8 +19,8 @@ const EVENTS = [
     when:() => seasonOf().id === 'sturm' && pickOf(villages().filter(I => I.buildings.some(b => KINDS[b.kind].crew && !b.bt))),
     text:I => `Die Alten sehen den Himmel über ${I.name} gelb werden, die Vögel fliegen landeinwärts. Ein Wirbelsturm kommt.`,
     choices:[
-      {n:'Dächer festbinden', cost:{schnur:2, holz:4}, text:'Alle binden die Dächer mit Schnur fest und ziehen die Kanus an Land.', go:I => { stats.stuerme++; cycloneStart(I, 10); return `Der Sturm tobt eine Nacht lang über ${I.name}. Alles hält.`; }},
-      {n:'Abwarten', text:'Hoffen, dass er vorbeizieht.', go:I => { cycloneStart(I, 10); return stormHits(I); }}]},
+      {n:'Alle an die Dächer!', text:I => `In einer Minute ist er da. Wer kann, bindet die Dächer fest: je Dach eine Schnur oder zwei Kokosfasern. Im Lager: ${I.stock.schnur || 0} Schnur, ${I.stock.faser || 0} Fasern.`, go:I => { stormWarn(I, true); return `Die Leute laufen zu den Häusern von ${I.name}. Jedes Dach braucht eine Schnur.`; }},
+      {n:'Abwarten', text:I => I.stock.talisman > 0 ? 'Der Talisman der Matriarchin hält ihn von den Dächern.' : 'Die Dächer bleiben lose. Festbinden geht auch später noch.', go:I => { stormWarn(I, false); return `Der Sturm kommt in einer Minute über ${I.name}.`; }}]},
   {id:'treibgut', t:'Schiffbrüchige',
     when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:6}))),
     text:I => `Ein fremdes Kanu treibt mit erschöpften Menschen auf den Strand von ${I.name}. Sie haben ihr Ziel auf dem Meer verfehlt.`,
@@ -108,21 +108,8 @@ function cycloneLevel(){
 function cycloneTick(){
   if (!cyclone) return;
   if (eventNow && eventNow.E.id === 'sturm') cyclone.end = Math.max(cyclone.end, tick + 4);   // it rages while the people decide
+  { const S = isl(cyclone.isl) && isl(cyclone.isl).storm; if (S && tick < S.at) cyclone.end = Math.max(cyclone.end, S.at + 2); }   // and the sky stays dark until it strikes
   if (tick >= cyclone.end || !isl(cyclone.isl)){ cyclone = null; invalidate(true); }
-}
-function stormHits(I){
-  stats.stuerme++;
-  const pick = (list, n) => list.sort(() => Math.random() - .5).slice(0, n);
-  for (const b of pick(I.buildings.filter(b => KINDS[b.kind].roof && !b.bt && !b.at), 3)) b.born = tick - AGE_FULL;
-  const hit = pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !b.at)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
-  const homes = pick(I.buildings.filter(b => (b.kind === 'haus' || b.kind === 'pfahl') && !b.bt), 1 + (Math.random() < .5 ? 1 : 0)); for (const b of homes) b.bt = Math.ceil(KINDS[b.kind].bt / 2);
-  const down = pick(I.trees.filter(t => t.st === 0), Math.round(I.trees.filter(t => t.st === 0).length * .08)); for (const t of down){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; }
-  if (down.length) treesChanged(I);
-  for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt) b.soil = Math.max(.12, (b.soil ?? 1) - .15);
-  const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; }
-  invalidate(true); syncWalkers();
-  const parts = [hit && KINDS[hit.kind].n, homes.length && (homes.length > 1 ? `${homes.length} Häuser` : '1 Haus')].filter(Boolean), n = down.length;
-  return `Der Sturm hat Dächer zerzaust.${parts.length ? ` Zerstört: ${parts.join(', ')}. Das muss neu gebaut werden.` : ''} ${n} ${n === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden, die Felder sind ausgewaschen.${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
 }
 function eventTick(){
   if (eventNow || tick < nextEvent || tick < YEAR || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;   // the first year is calm
@@ -144,7 +131,7 @@ function eventMarkup(){
   E.choices.forEach((ch, i) => {
     if (ch.late && !hawaiki()) return;   // a kava ceremony only in the later time
     const cost = ch.ask ? E.cost(o) : ch.cost, ok = !cost || canPay(I, cost), lead = first; first = false;
-    h += `<li class="${ok ? '' : 'need'}"><span class="nm">${ch.n}<small>${[ch.text, cost ? `Kostet ${costText(cost)}.` : ''].filter(Boolean).join(' ')}${ok ? '' : ` Es fehlt ${lacking(I, cost)}.`}</small></span><button class="btn${lead ? ' primary' : ''}" type="button" data-act="choose" data-i="${i}" ${ok ? '' : 'disabled'}>Wählen</button></li>`;
+    h += `<li class="${ok ? '' : 'need'}"><span class="nm">${ch.n}<small>${[typeof ch.text === 'function' ? ch.text(I) : ch.text, cost ? `Kostet ${costText(cost)}.` : ''].filter(Boolean).join(' ')}${ok ? '' : ` Es fehlt ${lacking(I, cost)}.`}</small></span><button class="btn${lead ? ' primary' : ''}" type="button" data-act="choose" data-i="${i}" ${ok ? '' : 'disabled'}>Wählen</button></li>`;
   });
   return h + '</ul>';
 }

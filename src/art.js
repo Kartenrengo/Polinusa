@@ -91,6 +91,10 @@ const SYM = {
   "ic-oel": '<path d="M3 9.5H17Q16.5 15.6 10 16Q3.5 15.6 3 9.5Z" fill="#6B4428" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><ellipse cx="10" cy="9.5" rx="7" ry="1.7" fill="#E8C25A" stroke="#2B1D14" stroke-width=".8"/><path d="M7 9.2Q9 8.6 11 9.1" stroke="#FFF1B8" stroke-width=".6" fill="none"/><path d="M10 2.6Q12 5.6 10 7Q8 5.6 10 2.6Z" fill="#E8C25A" stroke="#2B1D14" stroke-width=".7"/>',
   "ic-kava": '<path d="M3 9H17Q16.5 15 10 15.5Q3.5 15 3 9Z" fill="#8C5C36" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><ellipse cx="10" cy="9" rx="7" ry="1.6" fill="#C9B07A" stroke="#2B1D14" stroke-width=".7"/><path d="M6 15.2L5 17.2M14 15.2L15 17.2M10 15.5V17.6" stroke="#2B1D14" stroke-width="1" stroke-linecap="round"/><path d="M11.5 6.4Q13.6 3.6 16 4.6M12.8 5.2L13.6 3.4" stroke="#6B4428" stroke-width="1.2" fill="none" stroke-linecap="round"/>',
   "ic-plejaden": '<g fill="#F3D9A0" stroke="#2B1D14" stroke-width=".6"><circle cx="6" cy="7" r="1.6"/><circle cx="10.5" cy="5" r="1.9"/><circle cx="14.5" cy="7.6" r="1.5"/><circle cx="8.4" cy="11" r="1.7"/><circle cx="12.8" cy="12" r="1.4"/><circle cx="5.4" cy="14" r="1.2"/><circle cx="15.6" cy="15" r="1.1"/></g>',
+  /* a lump of amber, as the sea gives it: warm, clear, with a light inside */
+  "ic-bernstein": '<path d="M4.4 11.6Q3.6 7 7.4 4.8Q11.4 3 14.6 5.6Q17.2 8.4 15.8 12.6Q14 16.2 9.8 16Q5.6 15.6 4.4 11.6Z" fill="#D98E2B" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M6.6 10.6Q6.8 7.6 9.4 6.6" fill="none" stroke="#F7D27A" stroke-width="1.3" stroke-linecap="round"/><path d="M11.6 12.8Q13.4 12 13.8 10.2" fill="none" stroke="#A8601A" stroke-width=".9" stroke-linecap="round"/><circle cx="12.2" cy="7.6" r=".9" fill="#FBE7B0"/>',
+  /* the talisman: the amber cut to a drop, a spiral cut into it, on a cord of sennit */
+  "ic-talisman": '<path d="M6.2 3.2Q10 6.4 13.8 3.2" fill="none" stroke="#8C6440" stroke-width="1.2" stroke-linecap="round"/><path d="M10 5.6Q14.8 9.6 14.2 13.2Q13.4 16.8 10 16.8Q6.6 16.8 5.8 13.2Q5.2 9.6 10 5.6Z" fill="#D98E2B" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M10 13.4Q8.6 13.2 8.8 11.9Q9.2 10.8 10.4 11.1Q11.5 11.6 11.1 12.9Q10.5 14.4 8.7 14.1" fill="none" stroke="#7A3E12" stroke-width=".8" stroke-linecap="round"/><path d="M7.4 10.4Q8 8.6 9.4 7.8" fill="none" stroke="#F7D27A" stroke-width="1" stroke-linecap="round"/>',
   "ic-knochen": '<path d="M3.4 6.2Q5.6 4.3 8.2 5.7Q10 6.4 11.8 5.7Q14.4 4.3 16.6 6.2Q18.2 9.8 16.6 13.4Q14.4 15.3 11.8 13.9Q10 13.2 8.2 13.9Q5.6 15.3 3.4 13.4Q1.8 9.8 3.4 6.2Z" fill="#F1E6CC" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><circle cx="10" cy="9.8" r="1.3" fill="#A84A2C"/>',
   "ic-sturm": '<path d="M4 11Q2 11 2.4 8.6Q3 6.6 5.2 7Q6 3.6 9.6 4Q12.6 4.4 13 7Q16.6 6.6 17.4 9.4Q17.6 11.6 15 11.6Z" fill="#9FB7C0" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M6 13.4L5 16.4M10 13.4L9 16.4M14 13.4L13 16.4" stroke="#2F5F73" stroke-width="1.2" stroke-linecap="round"/>',
   "ic-passat": '<path d="M2.5 7H12Q15 7 15 4.6Q15 2.8 13 3M2.5 11H16Q18.4 11 18.4 13.2Q18.4 15.4 16 15M2.5 15H9" fill="none" stroke="#2B1D14" stroke-width="1.5" stroke-linecap="round"/><path d="M2.5 7H12Q15 7 15 4.6Q15 2.8 13 3M2.5 11H16Q18.4 11 18.4 13.2Q18.4 15.4 16 15M2.5 15H9" fill="none" stroke="#F3D9A0" stroke-width=".6" stroke-linecap="round"/>',
@@ -349,7 +353,7 @@ function iconMarkup(kind){ const a = artOf(kind); return kind === 'pfahl' ? `<g 
 
 /* Roofs go from golden to grey with age. Eight steps are enough to see it and keep the bitmaps few. */
 const mixHex = (a, b, t) => { const h = x => [1, 3, 5].map(i => parseInt(x.slice(i, i + 2), 16)); const A = h(a), B = h(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
-const roofAge = b => clamp((tick - b.born) / AGE_FULL, 0, 1);
+const roofAge = b => clamp((tick - (b.rf ?? b.born)) / AGE_FULL, 0, 1);   // rf: when the roof was last thatched
 function roofColor(b){ const f = Math.round(roofAge(b) * 8) / 8, base = mixHex(ROOF_NEW, ROOF_OLD, f); return b.v && b.v.tint ? mixHex(base, '#C8893A', .25) : base; }
 
 /* ---------- people: little carved figures without arms and legs, in tapa wraps, carrying their work.
@@ -390,6 +394,8 @@ const PIP = {
   free:`<circle cx=".1" cy="-4.75" r="1.3" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".5" stroke-linejoin="round"/>`,
   off:`<g opacity=".4"><circle cx=".1" cy="-4.75" r="1.3" fill="none" stroke="#2B1D14" stroke-width=".5"/><path d="${PIP_BODY}" fill="none" stroke="#2B1D14" stroke-width=".5"/></g><path d="M-2.3-.6L2.4-5.9" stroke="#A84A2C" stroke-width=".8" stroke-linecap="round"/>`
 };
+/* one of the place's own people, away for a while (building, helping elsewhere): a dashed outline with a small arrow back */
+PIP.away = `<g opacity=".75"><circle cx=".1" cy="-4.75" r="1.3" fill="none" stroke="#2B1D14" stroke-width=".5" stroke-dasharray=".7 .5"/><path d="${PIP_BODY}" fill="none" stroke="#2B1D14" stroke-width=".5" stroke-dasharray=".7 .5"/></g><path d="M2.4-1.2L3.5-2.3L2.4-3.4" fill="none" stroke="#A84A2C" stroke-width=".6" stroke-linecap="round" stroke-linejoin="round"/>`;
 /* a helper: smaller, a plus beside the head; on the way, yellow */
 PIP.aid = `<g transform="translate(-.4 .3) scale(.8)" opacity=".85">${PIP.on}</g><path d="M1.5-6.2h2.2M2.6-7.3v2.2" stroke="#2B1D14" stroke-width=".75" stroke-linecap="round"/>`;
 PIP.aidway = `<g transform="translate(-.4 .3) scale(.8)">${PIP.way}</g><path d="M1.5-6.2h2.2M2.6-7.3v2.2" stroke="#2B1D14" stroke-width=".75" stroke-linecap="round"/>`;

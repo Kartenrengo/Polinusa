@@ -200,6 +200,13 @@ function adviceOf(I, urgentOnly = false){
   const nd = needsOf(I), out = k => nd.list.some(n => n.k === k && n.state === 'out'), low = k => nd.list.some(n => n.k === k && n.state !== 'ok');
   const sites = I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)), has = k => I.buildings.some(b => b.kind === k), done = k => I.buildings.some(b => b.kind === k && !b.bt);
   const wsrc = 'ernte';   // the spring is there by itself where a stream flows; more water comes only from green nuts
+  // a cyclone on the way comes before everything: about a minute to tie the roofs down
+  { const S = I.storm; if (S && tick < S.at){ const hs = homesOf(I).filter(h => !h.bt), n = hs.filter(h => S.tied.includes(h.id)).length, secs = Math.ceil((S.at - tick) * TICK / 1000);
+    const t = `Sturm in ${secs} s!`;
+    if (!S.tie && n < hs.length) return {t, key:'sturm', d:`${hs.length - n} ${hs.length - n === 1 ? 'Dach ist' : 'Dächer sind'} lose. Alle an die Dächer: je Dach eine Schnur oder zwei Kokosfasern.`, tie:true, go:'Festbinden ›', urgent:true};
+    if (n < hs.length && !tieCost(I)) return {t, key:'sturm', d:`${n} von ${hs.length} Dächern fest. Es fehlt Schnur oder Kokosfasern.`, ware:'schnur', urgent:true};
+    if (n < hs.length) return {t, key:'sturm', d:`${n} von ${hs.length} Dächern fest. Die Leute binden.`, goto:(hs.find(h => !S.tied.includes(h.id)) || hs[0]).id, urgent:true};
+  } }
   if (nd.roofless && !sites) return {t:'Hütten bauen', d:`${nd.roofless} ${nd.roofless === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach. Eine Hütte braucht Holz und Palmwedel.`, build:'haus', urgent:true};
   const goes = (I.hunger || 0) >= 10 && leaverOf(I) && famsOf(I).length > 1 ? ` Sonst fährt ${famName(leaverOf(I))} fort.` : '';
   { const cz = centerOf(I); if (cz && (I.stock.wasser || 0) < 4 && low('wasser') && !rainState(I)) return {t:'Regentanz', d:'Das Wasser geht aus. Am Dorfzentrum tanzt das Dorf und ruft den Regen: eine Weile Wasser für alle.', goto:cz.id, rain:true, urgent:true}; }
@@ -217,12 +224,15 @@ function adviceOf(I, urgentOnly = false){
   if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
   // houses whose needs are met and whose material lies ready rise, as in Anno, when you say so
   { const r = I.autoUp ? [] : readyHomes(I, nd.list); if (r.length) return {t:'Ausbau', d:`${r.length} ${r.length === 1 ? 'Haus ist' : 'Häuser sind'} bereit: Tippe drauf, dann „Ausbauen“.`, goto:r[0].id}; }
+  // leaking roofs: the families need palm fronds to cover them anew
+  { const leaky = homesOf(I).filter(h => famOfHome(I, h) && roofState(h) !== 'ok').length, e = I.buildings.find(b => b.kind === 'ernte' && !b.bt);
+    if (leaky && (I.stock.dach || 0) < 2) return e ? {t:'Dächer undicht', d:`${leaky} ${leaky === 1 ? 'Dach lässt' : 'Dächer lassen'} Regen durch. Die Familien decken neu mit Palmwedeln: Stell das Erntehaus auf Wedel.`, goto:e.id} : {t:'Dächer undicht', d:'Für neue Dächer braucht es Palmwedel. Das Erntehaus holt sie von den Palmen.', build:'ernte'}; }
   // what every building needs: wood and palm fronds
   if ((I.stock.dach || 0) < 3){ const e = I.buildings.find(b => b.kind === 'ernte'); if (!e) return {t:'Palmwedel holen', d:'Jedes Gebäude braucht Palmwedel fürs Dach. Das Erntehaus holt sie von den Palmen.', build:'ernte'}; if (!(e.v && e.v.pick === 'dach') && choiceOf(e) !== 'dach') return {t:'Palmwedel holen', d:'Im Erntehaus kannst du die Leute auf Wedel stellen, bis genug da ist.', goto:e.id}; }
   if ((I.stock.holz || 0) < 3 && I.type === 'hoch' && !has('faeller')) return {t:'Holz schlagen', d:'Jedes Gebäude braucht Holz. Ein Holzfäller am Waldrand, zu zweit.', build:'faeller'};
   // the next step up, as the houses show it: what the first house that cannot rise yet still lacks
   { const g = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => [b, upgradeSteps(I, b, nd.list)]).find(([, u]) => u && !u.ready);
-    if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? needWay(I, k) : null;
+    if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? (q.k === 'needs' ? wantWay(I, k, hb) : needWay(I, k)) : null;
       if (w && (w.build || w.fleet)) return {t:`Für ${u.T.n}: ${needName(k)}`, d:w.text, build:w.build && w.build !== 'haus' ? w.build : null, fleet:w.fleet, goto:w.build || w.fleet ? null : hb.id}; } }
   // growing needs more than the village eats: houses do not help while food or water only just reach
   { const m = !nd.atMax && I.pop >= 6 ? surplusMiss(I, nd.list) : ''; if (m){ const n = nd.list.find(q => q.k === m), gap = n ? Math.max(0, (n.use + n.work) * 1.15 - n.make) : 0;
@@ -251,6 +261,8 @@ let curAdvice = null;
 function followAdvice(A){
   if (!A) return; closeSheet();
   if (A.koruru){ if (!kor || kor.state === 'done') korNew(); openSheet('koruru', {}); return; }
+  if (A.tie){ tieRoofs(isl(active)); updateHUD(); return; }
+  if (A.ware){ openSheet('ware', {id:active, k:A.ware}); return; }
   if (A.immig){ const s = ships.find(q => q.id === A.immig); if (s){ flyTo(s.x, s.y, Math.max(cam.z, 2)); openSheet('immig', {ship:s.id}); } return; }
   if (A.needs){ openSheet('needs', A.tab ? {tab:A.tab} : undefined); return; }
   if (A.goto){ const b = findB(A.goto); if (b){ select(b); flyTo(b.x, b.y, Math.max(cam.z, 2.4)); } return; }
@@ -262,10 +274,10 @@ function renderQuest(){
   const show = (quest < QUESTS.length || A) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;
   el.hidden = !show; curAdvice = A; el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
   // a new task or new advice slides in, so the eye catches that something changed
-  { const key = A ? A.t : 'q' + quest; if (el.dataset.k !== key){ if (el.dataset.k && !reduced){ el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); } el.dataset.k = key; } }
+  { const key = A ? A.key || A.t : 'q' + quest; if (el.dataset.k !== key){ if (el.dataset.k && !reduced){ el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); } el.dataset.k = key; } }
   if (A){
     el.querySelector('.q-n').textContent = A.urgent ? 'Jetzt' : 'Die Alten';
-    el.querySelector('.q-t').textContent = A.t; el.querySelector('.q-d').textContent = A.d; el.querySelector('.q-p').textContent = 'Zeigen ›';
+    el.querySelector('.q-t').textContent = A.t; el.querySelector('.q-d').textContent = A.d; el.querySelector('.q-p').textContent = A.go || 'Zeigen ›';
     el.querySelector('.q-bar i').style.width = '0%'; el.setAttribute('aria-label', `Rat der Ältesten: ${A.t}. ${A.d}`); return;
   }
   const Q = QUESTS[quest], n = clamp(Q.n(), 0, Q.of);

@@ -11,6 +11,23 @@ Spieler es wählt.
 - **Hauswerk bei den Clans:** In den Dörfern der Clans gibt es noch eigene Werkstätten. Sie könnten auch Matten vor den
   Häusern zeigen.
 
+## Offen aus der Runde „Stammplatz, Sturm und Treibgut“ (Version 67)
+
+- **Auf einem echten Handy prüfen:** Treibgut am Ufer antippen (ist es groß genug?), den Sturm-Countdown unten und die
+  fünf Kacheln im Familienhaus.
+- **Neu decken zeigen:** Die Familie deckt ihr Dach bisher ohne eigene Bewegung neu. Es könnte eine kurze Arbeit am Haus
+  werden, wie das Festbinden im Sturm.
+- **Brennholz sammeln:** Dürres Holz und Kokosschalen könnten Kinder und Alte am Waldrand und am Strand sammeln, als
+  eigene kleine Arbeit. Holzkohle aus dem Erdofen für die Töpferei.
+- **Bernstein näher an die Geschichte:** Statt Bernstein könnte das Harz der Kauri-Bäume (Agathis) treiben, das es in
+  Melanesien und Fidschi gibt. Bernstein bleibt vorerst, weil er gewünscht war; im README steht er als erfunden.
+- **Balance im langen Lauf:** Mit Feuer und Dachpflege wuchs der Bot erst langsamer (im Schnitt 27 statt 36 Menschen
+  nach 90 Minuten). Jetzt gibt jede reife Nuss eine ganze Schale, der Herd brennt erst Schalen, und wer seinen ruhenden
+  Platz hat, füllt solange offene Plätze: im Schnitt 40. Bleibt zu prüfen, ob ein Mensch genug Palmwedel holt; im Bot
+  zerfielen in einem von sechs Läufen die Dächer, weil das Erntehaus keine Wedel holte.
+- **Stammplatz von Hand wechseln:** Auf der Personentafel einen neuen Stammplatz wählen. Bisher geht das nur mit − und +
+  an den Orten.
+
 ## Offen aus der Runde „Dorfzentrum und einfache Hausansicht“ (Version 66)
 
 - **Auf einem echten Handy ansehen:** die neue Hausansicht mit Kacheln und Wörtern, die Reiter des Dorfzentrums.
