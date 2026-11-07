@@ -15,24 +15,21 @@ Spieler es wählt.
 
 - **Auf einem echten Handy prüfen:** Treibgut am Ufer antippen (ist es groß genug?), den Sturm-Countdown unten und die
   fünf Kacheln im Familienhaus.
-- **Neu decken zeigen:** Die Familie deckt ihr Dach bisher ohne eigene Bewegung neu. Es könnte eine kurze Arbeit am Haus
-  werden, wie das Festbinden im Sturm.
-- **Brennholz sammeln:** Dürres Holz und Kokosschalen könnten Kinder und Alte am Waldrand und am Strand sammeln, als
-  eigene kleine Arbeit. Holzkohle aus dem Erdofen für die Töpferei.
-- **Bernstein näher an die Geschichte:** Statt Bernstein könnte das Harz der Kauri-Bäume (Agathis) treiben, das es in
-  Melanesien und Fidschi gibt. Bernstein bleibt vorerst, weil er gewünscht war; im README steht er als erfunden.
+- ~~**Neu decken zeigen**~~ **erledigt in Version 68:** Jemand aus der Familie deckt das Dach als kurze Arbeit.
+- ~~**Brennholz sammeln**~~ **erledigt in Version 68:** Kinder ab drei und Alte sammeln Brennholz. Offen: Holzkohle aus
+  dem Erdofen für die Töpferei.
+- ~~**Bernstein näher an die Geschichte**~~ **erledigt in Version 68:** Jetzt treibt Kauri-Harz an.
 - **Balance im langen Lauf:** Mit Feuer und Dachpflege wuchs der Bot erst langsamer (im Schnitt 27 statt 36 Menschen
   nach 90 Minuten). Jetzt gibt jede reife Nuss eine ganze Schale, der Herd brennt erst Schalen, und wer seinen ruhenden
   Platz hat, füllt solange offene Plätze: im Schnitt 40. Bleibt zu prüfen, ob ein Mensch genug Palmwedel holt; im Bot
   zerfielen in einem von sechs Läufen die Dächer, weil das Erntehaus keine Wedel holte.
-- **Stammplatz von Hand wechseln:** Auf der Personentafel einen neuen Stammplatz wählen. Bisher geht das nur mit − und +
-  an den Orten.
+- ~~**Stammplatz von Hand wechseln**~~ **erledigt in Version 68:** Auf der Personentafel „Ändern“; ein voller Platz tauscht.
+- **Auf einem echten Handy prüfen:** die Stammplatz-Kacheln auf der Personentafel und die Kacheln in der Übersicht.
 
 ## Offen aus der Runde „Dorfzentrum und einfache Hausansicht“ (Version 66)
 
 - **Auf einem echten Handy ansehen:** die neue Hausansicht mit Kacheln und Wörtern, die Reiter des Dorfzentrums.
-- **Übersicht ebenso einfach machen:** Im Reiter „Bewohner“ der Übersicht steht noch die Knotenschnur je Hausstufe.
-  Dort könnten auch Kacheln mit Wörtern stehen.
+- ~~**Übersicht ebenso einfach machen**~~ **erledigt in Version 68:** Im Reiter „Bewohner“ stehen Kacheln mit Wörtern.
 - **Regentanz zeigen:** Die Leute versammeln sich zum Tanz am Platz. Eigene Tanzschritte für den Regen gibt es noch nicht.
 
 ## Offen aus der Runde „Bewegungen“ (Version 65)

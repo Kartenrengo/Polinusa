@@ -34,7 +34,10 @@ Die Tests spielen das Spiel in einem Browser ohne Fenster (Playwright mit Chromi
 node tests/run.mjs
 ```
 
-Zuerst prüft es, ob jede Datei fehlerfrei lesbar ist (eine kaputte Zeile hält das ganze Spiel an). Dann sagen die
+Zuerst prüft es, ob jede Datei fehlerfrei lesbar ist (eine kaputte Zeile hält das ganze Spiel an), ob in `style.css`
+jede Klammer zu ist (eine Klammer zu viel ließ den Browser still eine Regel verwerfen, eine zu wenig schluckt alles
+danach) und ob keine Funktion zweimal heißt (die Dateien teilen sich einen Namensraum, die spätere ersetzt still die
+frühere). Dann sagen die
 Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, ist da; jede Aufgabe und Stufe nennt Gebäude, die
 es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki),
 `build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
@@ -369,8 +372,9 @@ Einfach und nach Bedeutung geordnet:
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
     sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
-    voll. Darunter jede Hausstufe mit Häusern und Menschen und ihrer Schnur: dieselben Knoten wie im Haus; ein Tipp auf
-    einen Knoten zeigt, wer die Ware macht. Dazu Zuzug und Kinder und die Verwandtschaft.
+    voll. Darunter jede Hausstufe mit Häusern und Menschen und **Kacheln wie im Haus** (seit Version 68): Bild, Name und
+    ein Wort, da, knapp, fehlt, beim Dach hält, undicht, kaputt. Eine Stufe, die noch kein Haus erreicht hat, zeigt ihre
+    Bedürfnisse blass mit „später“. Ein Tipp führt zu dem, was hilft. Dazu Zuzug und Kinder und die Verwandtschaft.
   - **Arbeit:** automatisch oder von Hand, wer frei ist, welche Plätze Raum haben oder ruhen, alle Familien.
   - **Insel:** Wald, Felder, Wild, Riff, Pflanzen und Tiere, Muster, Navigatoren, der Weg zum Häuptlingsdorf.
 - **Wenig Text:** Bilder statt Sätze. Meldungen sind kurz („Familie Hiva zieht ein, mit 3 Feldfrüchten. Neue Linie.“).
@@ -391,9 +395,9 @@ Einfach und nach Bedeutung geordnet:
 
 Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
 
-- **Die Schnur der Familie:** In der Übersicht sind die Bedürfnisse einer Hausstufe Knoten auf einer Schnur aus Sennit,
-  nach den geknoteten Ahnenschnüren der Marquesas (taʻo mata): fest gezogen erfüllt, eine lose Schlaufe knapp, eine
-  ausgefranste Lücke fehlt. Im Haus selbst stehen seit Version 66 Kacheln mit Wörtern (siehe oben).
+- **Die Knotenschnur:** Der Weg des Dorfes oben in der Übersicht ist eine Schnur aus Sennit mit Knoten, nach den
+  geknoteten Ahnenschnüren der Marquesas (taʻo mata): fest gezogen erreicht, eine lose Schlaufe als Nächstes. Die
+  Bedürfnisse stehen seit Version 66 im Haus und seit Version 68 auch in der Übersicht als Kacheln mit Wörtern.
 - **Ein Knoten statt Pfeil:** Über einem Haus, das ausgebaut werden kann, schwebt ein Knoten mit einer Tiare-Blüte und
   wiegt sich. Auch der Knopf „Ausbauen“ trägt ihn; ist alles bereit, zieht der Knoten sich im Takt zusammen und ein
   gestrichelter Ring legt sich um den Knopf.
@@ -544,6 +548,10 @@ Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht
     kurzer Mangel zieht niemanden sofort ab; erst wenn er 20 Sekunden anhält.
   - **„Bleiben“:** Auf der Tafel eines Arbeitsplatzes hält ein Schalter die Leute dort fest. Von diesem Ort wird
     niemand ausgeliehen.
+  - **Stammplatz wählen** (seit Version 68): Auf der Tafel einer Person steht „Stammplatz: Erntehaus“ mit „Ändern“. Dann
+    stehen alle Arbeitsplätze als Kacheln da, mit Namen und wie viele dort ihren Platz haben. Ist einer voll, tauscht
+    der Letzte dort mit dir: Er bekommt deinen alten Platz. Was nicht passt (eine Meisterfamilie auf dem Feld), ist blass
+    und sagt warum. Die Insel bleibt dabei automatisch.
 - **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, wer dort arbeitet, mit Namen. Mit „+“ schickst du einen Freien
   hin, mit „−“ rufst du einen ab. Das geht für **jeden** Freien, auch wenn seine Familie schon woanders arbeitet. Dann wird
   die Insel von Hand verteilt; in der Übersicht schaltet „Automatisch“ zurück.
@@ -849,8 +857,9 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
   wieder etwas, höchstens drei Stück zugleich. Ein langsamer Ring geht davon aus. Ein Tipp, und jemand paddelt hinaus:
   Es spritzt, die Ware steigt auf und kommt ins Lager (ein Stamm 3 Holz, Nüsse 4 Kokosnüsse, ein Wrackteil 2 Holz und
   1 Schnur). Was den Strand erreicht oder vier Minuten treibt, ist fort. **Ganz selten (etwa jedes 16. Stück) ist es
-  Bernstein:** ein warmes, schimmerndes Stück mit goldenem Ring. Daraus schnitzt die Matriarchin einen Talisman (siehe
-  „Das Dorfzentrum“).
+  ein Klumpen Kauri-Harz** (seit Version 68, vorher Bernstein): golden, ein wenig trüb, mit schimmerndem Ring. Es stammt
+  von den Kauri-Bäumen (Agathis) der großen Inseln. Daraus schnitzt die Matriarchin einen Talisman (siehe „Das
+  Dorfzentrum“).
 - **Tauchplätze:** Wo Vögel über dem offenen Meer kreisen, liegt etwas am Grund: oft unter einem Wrackteil, manchmal vor
   einem Dorf, reich nach einem Knöchelwurf mit fünf gleichen. Ein Kanu fährt hin und hält an, dann „Tauchen lassen“. Alle
   sechs Sekunden ein Tauchgang: meist Meeresfrüchte und Muschelschalen, manchmal Perlmutt oder Schmuck, selten ein Walzahn.
@@ -1305,9 +1314,9 @@ Reiter:
 
 - **Dorf:** die **Feste** (Kleines Fest und Tatau immer, das Große Fest, sobald es Schweine und Tapa gibt, das Fest der
   Schätze, sobald ein Schatz gesehen ist), jeweils mit dem, was es kostet oder was noch fehlt, und „Feiern“. Darunter
-  der **Regentanz** und der **Knöchelwurf** (einmal am Tag). Ist einmal Bernstein gefunden, steht dort auch der
+  der **Regentanz** und der **Knöchelwurf** (einmal am Tag). Ist einmal Kauri-Harz gefunden, steht dort auch der
   **Talisman der Matriarchin**: Die älteste Frau der Gründerfamilie (sonst die älteste Frau im Dorf) schnitzt aus 1
-  Bernstein und 1 Schnur einen Talisman. Ansehen +3. Liegt ein Talisman im Lager, hält er **einen** Sturm von allen
+  Kauri-Harz und 1 Schnur einen Talisman. Ansehen +3. Liegt ein Talisman im Lager, hält er **einen** Sturm von allen
   Dächern ab und ist dann verbraucht.
 - **Lager:** alle Waren als Kacheln mit Namen, wie im Lager oben.
 - **Familie:** das Haus der Gründerfamilie, wie jedes andere Haus.
@@ -1331,8 +1340,10 @@ Herdfeuer.
 **Wie die Häuser in Schuss bleiben.** Vorher gar nicht: Ein Dach war einfach da, nur ein Sturm machte es alt oder riss
 ein Haus um. Jetzt nutzt sich jedes Dach ab. Ein Dach aus Palmwedeln hält einige Jahre (vier Spieljahre, 48
 Minuten). Dann deckt die Familie es selbst neu: **2 Palmwedel**, ein Familienhaus oder höher dazu **1 Holz** für die
-Pfosten. Das geschieht von allein, sobald es im Lager liegt; ein Dach, das noch dicht ist, wartet, bis ein paar Wedel für
-das Bauen übrig bleiben. Fehlen Wedel zu lange, wird das Dach **undicht**, und später **kaputt**: Dann regnet es hinein,
+Pfosten. Seit Version 68 sieht man es: Jemand aus der Familie, die darunter wohnt, legt seine Arbeit kurz nieder, flicht
+am Haus Wedel zu Matten und bindet sie Reihe um Reihe aufs Dach; nach ein paar Augenblicken geht er zurück an seinen
+Platz. Höchstens zwei Dächer zugleich, das älteste zuerst. Ein Dach, das noch dicht ist, wartet, bis ein paar Wedel für
+das Bauen übrig bleiben. Während ihr fort wart, geschieht es einfach. Fehlen Wedel zu lange, wird das Dach **undicht**, und später **kaputt**: Dann regnet es hinein,
 die Familie hat kein Dach mehr (die Hauskachel wird rot, kein Ausbau), und es ist ein Platz weniger im Haus. Ein Tipp auf
 die Dachkachel sagt, wie lange es noch hält und was es braucht; ist es undicht, führt er zu dem, was Wedel bringt (das Erntehaus).
 
@@ -1354,9 +1365,15 @@ Erde. Ein **Talisman der Matriarchin** im Lager hält einmal alle Dächer.
 
 **Herdfeuer und Holzwirtschaft.** Ab dem Familienhaus will jede Familie ein Feuer im Herd: das neue Bedürfnis
 **Feuer**. Es brennt mit **Brennstoff**: Kokosschalen (jede reife Nuss aus dem Erntehaus gibt eine) oder Holz (vom Holzfäller, auf Atollen
-aus Treibholz und Palmholz). Erst brennen die Schalen, die ohnehin übrig sind, dann Holz. So zieht der Wald jetzt dreifach: Holz zum Bauen, Holz
-für die Dächer der Familienhäuser, Holz und Schalen für Herd, Erdofen und Töpferei. Fehlt Brennstoff, ist die Kachel
-„Feuer“ rot, und das Familienhaus hat weniger Platz.
+aus Treibholz und Palmholz). Erst brennen die Schalen, die ohnehin übrig sind, dann Brennholz, zuletzt Holz. So zieht
+der Wald jetzt dreifach: Holz zum Bauen, Holz für die Dächer der Familienhäuser, Holz und Schalen für Herd, Erdofen und
+Töpferei. Fehlt Brennstoff, ist die Kachel „Feuer“ rot, und das Familienhaus hat weniger Platz.
+
+**Brennholz sammeln** (seit Version 68). Kinder ab drei Jahren und Alte ohne Hauswerk gehen an den Waldrand (auf
+einem Atoll den Strand entlang), heben dürre Äste auf, brechen sie übers Knie und tragen ein Bündel heim. Das gibt die
+neue Ware **Brennholz**, je Sammler etwa 0,12 pro Minute (auf Atollen etwas weniger). Gesammelt wird erst, wenn es
+einen Herd gibt (ein Familienhaus) oder einen Erdofen oder eine Töpferei. So bleibt das Bauholz des Holzfällers für
+Häuser und Kanus. In der Übersicht unter „Arbeit“ steht, wie viele sammeln.
 
 ## Ansehen
 
@@ -1535,8 +1552,9 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Wörter wie rāhui, tufunga, taravana, fale | spätere polynesische Wörter, im Spiel als Namen genutzt |
 | Palmdächer halten einige Jahre und werden neu gedeckt | aus späteren Berichten (Buck); die Dächer selbst sind nicht erhalten; im Spiel vier Jahre |
 | Vor einem Wirbelsturm die Dächer festbinden | aus späteren Berichten und dem Wissen der Inseln heute; für die Lapita-Zeit angenommen |
+| Kinder und Alte sammeln Brennholz | aus späteren Berichten weit verbreitet; für die Lapita-Zeit angenommen |
 | Herdfeuer und Erdöfen mit Holz und Kokosschalen | Feuerstellen und Erdöfen sind an Lapita-Orten gefunden; Kokosschalen als Brennstoff kennt man aus späterer Zeit |
-| Bernstein im Treibgut, Talisman der Matriarchin | **erfunden**, eine Spielidee. Aus Lapita-Fundstellen ist kein Bernstein bekannt. Harz von Kauri-Bäumen (Agathis) gibt es in Melanesien und Fidschi; Kauri-Gummi aus Aotearoa ist viel später. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
+| Kauri-Harz im Treibgut, Talisman der Matriarchin | Kauri-Bäume (Agathis) wachsen in Melanesien und Fidschi, ihr Harz gab es also in der Region; in Fidschi überzog man Töpfe später mit dem Harz des Dakua-Baums. Dass es am Strand antreibt und ein Talisman gegen den Sturm daraus wird, ist **erfunden**, eine Spielidee. Bernstein (Version 67) war ganz erfunden: Aus Lapita-Fundstellen ist keiner bekannt. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
 
 ## Quellen
 

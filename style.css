@@ -658,8 +658,6 @@ button.fix{cursor:pointer}
 .rise .chain .arr{width:6px}
 .rise .costs .btn{padding:0 10px}
 .fix > span{position:relative;top:1px}
-}
-.sheet.tall{max-height:72%}
 @media (max-height:700px){.sheet.tall{max-height:78%}}
 @media (max-height:620px){.sheet.tall{max-height:80%}}
 .rise .step-ic{width:32px;height:32px}
@@ -736,6 +734,10 @@ button.fix{cursor:pointer}
 .nextline.ok .what b{color:var(--ok)}
 .nextline.storm .what .ic{display:inline-block;width:17px;height:17px;vertical-align:-3px;margin-right:4px}
 .needtiles.n5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.ntile.none{background:transparent;box-shadow:inset 0 0 0 2px #D8CBB0;cursor:default}
+.ntile.none .ic{opacity:.55}
+.ntile.none b{color:var(--muted)}
+.tier .needtiles{margin:4px 0 2px}
 .nextline .to{margin-left:6px;font-weight:800;color:var(--muted)}
 .rise2{display:flex;flex-direction:column;gap:5px;margin:2px 0 4px;padding:7px 10px 9px;background:var(--e1) no-repeat 0 0/100% 100%}
 .rise2 .rhead{display:flex;align-items:center;gap:8px}
@@ -813,3 +815,15 @@ button.fix{cursor:pointer}
 .rise .costs .btn{padding:0 9px;font-size:13.5px}
 .rise .costs .btn .ic{display:none}
 .rise .cost.kn{display:none}
+}
+
+/* the Stammplatz picker on a person's sheet: every place as a chip with its name and how many have it as theirs */
+.jobpick{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 10px}
+.chip.jp{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:66px;max-width:31%;padding:4px 6px 3px;border-radius:12px}
+.chip.jp .ic{width:20px;height:20px}
+.chip.jp .bi{width:30px;height:24px;flex:none}
+.chip.jp[aria-pressed=true]{background:#E4EED6;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ok)}
+.chip.jp small{font:700 11px/1.1 var(--font-ui);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.jp b{font:800 10px/1.1 var(--font-ui);color:var(--muted)}
+.chip.jp.on{box-shadow:inset 0 0 0 2px var(--ok);background:#E4EED6}
+.chip.jp.no{opacity:.5}

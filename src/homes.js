@@ -221,23 +221,34 @@ function tierTick(I, list, force = false){
 /* Roofs wear. Palm thatch lasts a few years on the islands (here four years of the game, 48 minutes). A worn roof
    is mended by the family itself with palm fronds from the store, a family house also takes a piece of wood for the posts.
    A roof nobody mends leaks (Dach undicht), and at last lets the rain in (Dach kaputt): then the family lacks its roof. */
-const ROOF = {life:4 * YEAR, mend:.75, leak:1, broken:1.3, keep:4};
+const ROOF = {life:4 * YEAR, mend:.75, leak:1, broken:1.3, keep:4, work:4, crew:2};
 const roofCost = b => tierOf(b) >= 2 ? {dach:2, holz:1} : {dach:2};
 const roofState = b => !b ? 'out' : (b.rw || 0) >= ROOF.broken ? 'out' : (b.rw || 0) >= ROOF.leak ? 'low' : 'ok';
+const roofDue = (I, b) => (b.rw || 0) >= ROOF.mend && !!famOfHome(I, b) && canPay(I, roofCost(b)) && (b.rw >= ROOF.leak || (I.stock.dach || 0) >= roofCost(b).dach + ROOF.keep);   // a roof still tight waits while fronds are few, for building
 function roofTick(I, n = 1){
   for (const b of homesOf(I)){
     if (b.bt) continue;
     b.rw = (b.rw || 0) + n / ROOF.life;
-    if (b.rw < ROOF.mend || !famOfHome(I, b)) continue;
-    const c = roofCost(b); if (!canPay(I, c) || (b.rw < ROOF.leak && (I.stock.dach || 0) < c.dach + ROOF.keep)) continue;   // a roof still tight waits while fronds are few, for building
-    const was = b.rw >= ROOF.leak; pay(I, c); b.rw = 0; b.rf = tick; invalidate();
-    if (was && I.id === active && !awayQuiet) note(`${famName(famOfHome(I, b))} hat das Dach neu gedeckt: ${costText(c)}.`);
+    if (awayQuiet && roofDue(I, b)){ pay(I, roofCost(b)); b.rw = 0; b.rf = tick; }   // while you are away it simply happens
+  }
+}
+/* the roofs to be covered anew now, the worst first; someone of the family goes up for a few moments (see staff) */
+const roofTodo = I => homesOf(I).filter(b => !b.bt && roofDue(I, b)).sort((a, b) => b.rw - a.rw);
+function mendTick(I){
+  if (I.storm && I.storm.tie && tick < I.storm.at) return;   // in a storm the roofs are tied, not covered
+  const on = presentAt(I);
+  for (const b of homesOf(I)){
+    if (!(on.get(b) > 0) || (b.rw || 0) < ROOF.mend) continue;
+    b.rp = (b.rp || 0) + 1; if (b.rp < ROOF.work) continue;
+    b.rp = 0; const c = roofCost(b), f = famOfHome(I, b); if (!canPay(I, c)) continue;
+    const was = b.rw >= ROOF.leak; pay(I, c); b.rw = 0; b.rf = tick; I.staff = null; syncWalkers(); invalidate();
+    if (I.id === active && !awayQuiet && f) note(`${famName(f)} hat das Dach neu gedeckt${was ? ', es war undicht' : ''}: ${costText(c)}.`);
   }
 }
 /* A cyclone is announced by the elders, and there is about a minute to tie the roofs down: one person to a house, borrowed
    from their work (the nearest houses first, four at a time), a few moments and one cord of sennit (or two of coconut
    fibre) each. When it comes, tied roofs hold; loose ones tear and leak, one or two houses may be wrecked, a workplace
-   too when most roofs were loose. A talisman of amber, cut by the matriarch, keeps the storm off the roofs once. */
+   too when most roofs were loose. A talisman of kauri resin, cut by the matriarch, keeps the storm off the roofs once. */
 const STORM = {warn:30, work:3, crew:4};
 const tieCost = I => (I.stock.schnur || 0) >= 1 ? {schnur:1} : (I.stock.faser || 0) >= 2 ? {faser:2} : null;
 const stormNear = I => !!I.storm && tick < I.storm.at;
@@ -281,7 +292,7 @@ function stormStrike(I, S){
   const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; }   // off a bare slope the earth slides
   invalidate(true);
   const held = homes.length - loose.length;
-  return `Der Sturm fegt über ${I.name}. ${charm ? `Der Bernstein-Talisman der Matriarchin hält ihn von den Dächern: alle ${homes.length} Dächer halten.` : `${held} von ${homes.length} Dächern ${held === 1 ? 'hielt' : 'hielten'}.`}${loose.length ? ` ${loose.length} ${loose.length === 1 ? 'Dach ist' : 'Dächer sind'} undicht: Die Familien flicken sie mit Palmwedeln.` : ''}${wreck.length ? ` Zerstört: ${wreck.length === 1 ? 'ein Haus' : `${wreck.length} Häuser`}${hit ? ` und ${KINDS[hit.kind].n}` : ''}, das muss neu gebaut werden.` : hit ? ` ${KINDS[hit.kind].n} ist beschädigt.` : ''}${down.length ? ` ${down.length} ${down.length === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden.` : ''}${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
+  return `Der Sturm fegt über ${I.name}. ${charm ? `Der Harz-Talisman der Matriarchin hält ihn von den Dächern: alle ${homes.length} Dächer halten.` : `${held} von ${homes.length} Dächern ${held === 1 ? 'hielt' : 'hielten'}.`}${loose.length ? ` ${loose.length} ${loose.length === 1 ? 'Dach ist' : 'Dächer sind'} undicht: Die Familien flicken sie mit Palmwedeln.` : ''}${wreck.length ? ` Zerstört: ${wreck.length === 1 ? 'ein Haus' : `${wreck.length} Häuser`}${hit ? ` und ${KINDS[hit.kind].n}` : ''}, das muss neu gebaut werden.` : hit ? ` ${KINDS[hit.kind].n} ist beschädigt.` : ''}${down.length ? ` ${down.length} ${down.length === 1 ? 'Baum liegt' : 'Bäume liegen'} am Boden.` : ''}${slide ? ` Vom kahlen Hang ist Erde über ${slide.kind === 'pulaka' ? 'eine Pulakagrube' : `ein ${KINDS[slide.kind].n}`} gerutscht.` : ''}`;
 }
 /* A family without a roof waits by the plaza; when no house is being built for a long while, one of them leaves */
 function rooflessTick(I){
@@ -511,6 +522,14 @@ function staff(I){
       p.loan = h.id; crew.set(h, 1); crewP.set(h, [p.id]);
     }
   }
+  // a worn roof: someone of the family that lives under it goes up for a few moments, borrowed from their work; two at a time
+  else for (const h of roofTodo(I).slice(0, ROOF.crew)){
+    const f = famOfHome(I, h), mine = q => q.h === f.id && isAdult(q); let p = pool.find(mine) || null;
+    if (p) pool.splice(pool.indexOf(p), 1);
+    else { const e = [...at.entries()].find(([b, l]) => !b.keep && !b.prio && l.some(mine)); if (e){ p = e[1].filter(mine).pop(); e[1].splice(e[1].indexOf(p), 1); } else p = pool.shift() || null; }
+    if (!p) continue;
+    p.loan = h.id; crew.set(h, 1); crewP.set(h, [p.id]);
+  }
   const rest = zealOf(I) === ZEAL[0], help = autoWork(I) && !rest ? addHelpers(I, places, at, pool, fit) : new Map();   // with much free time, who has no place rests instead of helping
   for (const b of places){
     const l = at.get(b) || []; if (!l.length) continue;
@@ -540,6 +559,22 @@ function workDel(I, b){
   handNote(I); const ids = staffOf(I).crewP.get(b) || [], p = here.find(q => q.id === ids[ids.length - 1]) || here[here.length - 1];
   p.job = 0; I.staff = null; syncWalkers(); return p;
 }
+/* The player gives someone a new Stammplatz on their sheet. A full place swaps: the last of its own people takes the
+   old place in exchange (or is free, when it does not suit them). Nothing else changes: the island stays automatic. */
+const jobPlaces = (I, p) => I.buildings.filter(b => !b.bt && KINDS[b.kind].crew > 0 && (!b.at || (findB(b.at) && famOfHome(I, findB(b.at)) && famOfHome(I, findB(b.at)).id === p.h)));
+function jobWhy(I, p, b){
+  if (!fitOf(I)(p, b)) return 'Meisterfamilie: arbeitet im Handwerk, nicht auf Feld, Meer oder im Wald';
+  return '';
+}
+function chooseJob(I, p, b){
+  if (!p || !b || !isAdult(p) || p.job === b.id) return false;
+  const why = jobWhy(I, p, b); if (why){ toast(`${placeName(b)}: ${why}.`, 3000, false); return false; }
+  const old = p.job && findB(p.job), own = (I.people || []).filter(q => q !== p && q.job === b.id);
+  let swap = null;
+  if (own.length >= crewOf(b)){ swap = own[own.length - 1]; swap.job = old && fitOf(I)(swap, old) && !old.bt ? old.id : 0; swap.loan = 0; }
+  p.job = b.id; p.loan = 0; I.staff = null; syncWalkers();
+  return {swap, old};
+}
 /* where someone works, in words */
 function personWork(I, p){
   if (!isAdult(p)){ if (stageOf(p) === 'kid') return 'Kind'; const c = p.job && findB(p.job); return c && c.at ? `alt, ${placeName(c)}` : 'alt'; }
@@ -550,7 +585,7 @@ function personWork(I, p){
 /* where someone is borrowed to, in a word or two: building, helping out, called by the conch */
 function loanWord(I, p){
   const t = p.loan && findB(p.loan); if (!t) return '';
-  if (HOME_KINDS.has(t.kind) && !t.bt) return 'bindet ein Dach fest';
+  if (HOME_KINDS.has(t.kind) && !t.bt) return I.storm && I.storm.tie && tick < I.storm.at ? 'bindet ein Dach fest' : 'deckt das Dach neu';
   if (t.bt) return `baut ${KINDS[t.kind].n}`;
   if (t.kind === 'werft' && I.yard) return `baut ${SHIPS[I.yard.kind].n}`;
   return `hilft bei ${placeName(t)}`;

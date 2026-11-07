@@ -118,7 +118,7 @@ function showWind(){
   C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
 /* the name under each good in the top row: short, so it fits under its icon */
-const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', bernstein:'Bernst.', talisman:'Talisman', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
+const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
 const shortGN = k => SHORT_GN[k] || (GN[k] && GN[k].length <= 8 ? GN[k] : (GN[k] || k).slice(0, 7) + '.');
 /* The idle button: one after the other, the people without work */
 let idleNo = 0;
@@ -485,8 +485,8 @@ function villageMarkup(I, b){
   h += `<p class="sec">Rund um den Platz</p>`;
   const rs = rainState(I);
   h += row(icon('sturm'), 'Regentanz', rs || `Die Tänzer essen ${RAIN.cost.roh} vom Vorrat. Dann regnet es: Wasser für alle, die Felder trinken.`, `<button class="btn${rs ? '' : ' primary'}" type="button" data-act="rain" ${rs ? 'disabled' : ''}>Tanzen</button>`);
-  // once amber has been found: the matriarch cuts a talisman from it
-  if (stats.bernstein || (I.stock.bernstein || 0) > 0 || (I.stock.talisman || 0) > 0){ const ts = talismanState(I), m = matriarchOf(I), have = I.stock.talisman || 0;
+  // once kauri resin has been found: the matriarch cuts a talisman from it
+  if (stats.kauri || (I.stock.kauri || 0) > 0 || (I.stock.talisman || 0) > 0){ const ts = talismanState(I), m = matriarchOf(I), have = I.stock.talisman || 0;
     h += row(icon('talisman'), 'Talisman der Matriarchin', `${ts || `${m.n} schnitzt ihn aus ${costText(TALISMAN.cost)}. Ansehen +${TALISMAN.mana}.`} ${have ? `${have} im Lager, hält${have > 1 ? ' je' : ''} einen Sturm ab.` : 'Hält einen Sturm von den Dächern.'}`, `<button class="btn${ts ? '' : ' primary'}" type="button" data-act="talisman" ${ts ? 'disabled' : ''}>Schnitzen</button>`); }
   h += row(KNOCHEN_IC, 'Knöchelwurf', korCanThrow() ? 'Einmal am Tag. Was fällt, bringt Glück.' : 'Für heute geworfen. Morgen wieder.', `<button class="btn" type="button" data-act="koruru">Werfen</button>`);
   return h;
@@ -534,7 +534,13 @@ function peopleTab(I, nd){
     const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && homesOf(I).some(b => tierOf(b) === 2)); if (!shown) continue;
     const ready = hs.filter(b => canUpgrade(I, b, nd.list)).length;
     h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${TIERS[t].n}</b><small>${icon('haus')}${hs.length} ${seatIc}${people}</small>${ready && !I.autoUp ? `<button class="btn primary small tie" type="button" data-act="upall" data-t="${t}">${knotIc}${ready}</button>` : ''}</div>`;
-    h += cordOf(TIERS[t].needs.map(k => ({k, st:k === 'dach' ? (hs.length ? roof : 'none') : hs.length ? (nd.list.find(n => n.k === k) || {state:'ok'}).state : 'none'}))) + '</div>';
+    // what the families of this step need, one tile each with its name and a word, as in the house; a step not reached yet
+    // shows its needs pale, with "später"
+    const worst = l => l.includes('out') ? 'out' : l.includes('low') ? 'low' : 'ok';
+    const tiles = TIERS[t].needs.map(k => { if (!hs.length) return {k, state:'none'};
+      if (k === 'dach'){ if (t === 1 && roof === 'out') return {k, state:'out', b:null}; const st = worst(hs.map(roofState)); return {k, state:st, b:hs.find(q => roofState(q) === st) || hs[0]}; }
+      return {k, state:(nd.list.find(n => n.k === k) || {state:'ok'}).state}; });
+    h += `<div class="needtiles n${tiles.length}">${tiles.map(n => n.state === 'none' ? `<span class="ntile none" role="img" aria-label="${needName(n.k)}: kommt mit dieser Stufe">${icon(needIcon(n.k))}<small>${needShort(n.k)}</small><b>später</b></span>` : needTile(I, n, n.k === 'dach' ? n.b : null)).join('')}</div></div>`;
   }
   h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">${knotIc}Von selbst ausbauen</button></div>`;
   h += `<ul class="list needs">`;
@@ -556,14 +562,24 @@ function personMarkup(){
   const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
   let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
   h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.</p>`;
-  h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', 'Spielt und lernt. Mit sechs Jahren arbeitet es mit.') : st === 'old' ? job ? rowS('pop', `Alt · ${placeName(job)}`, 'Sitzt beim Hauswerk vor dem Haus, halb so schnell wie die Jüngeren, und erzählt dabei von den Ahnen.', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) : rowS('pop', 'Alt', 'Geht nicht mehr aufs Feld. Ein Hauswerk im Haus ihrer Familie gibt ihr noch Arbeit.') :
-    job ? rowS('', `Arbeit: ${placeName(job)}`, staffOf(I).crewP.get(job) ? `${crewAt(I, job) || 0} von ${crewOf(job)} sind dort${(staffOf(I).help.get(job) || 0) ? `, dazu ${staffOf(I).help.get(job)} als Helfer` : ''}.` : '', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) :
-    rowS('idle', staffOf(I).rest ? 'Freizeit' : 'Ohne Arbeit', staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.')}</ul>`;
+  h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', `Spielt und lernt. ${ageOf(p) >= GATHER.age ? 'Sammelt Brennholz, sobald es einen Herd gibt. ' : 'Ab drei sammelt es Brennholz. '}Mit sechs Jahren arbeitet es mit.`) : st === 'old' ? job ? rowS('pop', `Alt · ${placeName(job)}`, 'Sitzt beim Hauswerk vor dem Haus, halb so schnell wie die Jüngeren, und erzählt dabei von den Ahnen.', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) : rowS('pop', 'Alt', 'Geht nicht mehr aufs Feld. Ein Hauswerk im Haus ihrer Familie gibt ihr noch Arbeit.') :
+    rowS(job ? '' : 'idle', job ? `Stammplatz: ${placeName(job)}` : staffOf(I).rest ? 'Freizeit, ohne Stammplatz' : 'Ohne Stammplatz', job ? `${personWork(I, p).includes('·') ? `Gerade ${personWork(I, p).split(' · ')[1]}. ` : ''}${crewAt(I, job) || 0} von ${crewOf(job)} sind dort.` : staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.', '',
+      `<span class="chips">${job ? `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>` : ''}<button class="chip" type="button" data-act="jobpick" aria-expanded="${!!sheetData.pick}">${sheetData.pick ? 'Fertig' : job ? 'Ändern' : 'Wählen'}</button></span>`)}</ul>`;
+  if (st === 'adult' && sheetData.pick) h += jobPicker(I, p);
   if (st === 'adult') h += `<div class="daybar" role="img" aria-label="Der Tag: Arbeit ${pc(D.work)} %, Freizeit ${pc(D.free)} %, Schlaf ${pc(D.sleep)} %"><i class="w" style="width:${pc(D.work)}%"></i><i class="f" style="width:${pc(D.free)}%"></i><i class="s" style="width:${pc(D.sleep)}%"></i></div>` +
     `<div class="daylegend"><span class="w">Arbeit ${pc(D.work)} %</span><span class="f">Freizeit ${pc(D.free)} %</span><span class="s">Schlaf ${pc(D.sleep)} %</span></div>`;
   h += `<p class="sec">Arbeit und Freizeit auf ${I.name}</p>` + zealMarkup(I);
   if (f && f.home) h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button></div>`;
   return h;
+}
+/* every place someone could have as their own: name, how many have it as theirs, the current one marked; a full place
+   swaps, one that does not suit them is pale and says why */
+function jobPicker(I, p){
+  const ps = jobPlaces(I, p).sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || a.born - b.born);
+  if (!ps.length) return '<p class="sub">Noch keine Arbeitsplätze.</p>';
+  return `<p class="sub">Neuer Stammplatz für ${p.n}. Ist er voll, tauscht der Letzte dort mit ${p.n}.</p><div class="jobpick" role="group" aria-label="Stammplatz wählen">${ps.map(b => {
+    const own = (I.people || []).filter(q => q.job === b.id).length, cur = p.job === b.id, why = jobWhy(I, p, b), full = !cur && own >= crewOf(b);
+    return `<button class="chip jp${cur ? ' on' : ''}${why ? ' no' : ''}" type="button" data-act="setjob" data-b="${b.id}" aria-pressed="${cur}" aria-label="${placeName(b)}, ${own} von ${crewOf(b)}${full ? ', voll: tauscht' : ''}${why ? `: ${why}` : ''}">${buildPic(b.at ? b.kind : b.kind)}<small>${placeName(b)}</small><b>${own}/${crewOf(b)}${full ? ' ⇄' : ''}</b></button>`; }).join('')}</div>`;
 }
 /* children, grown-ups and the old as one bar: who works now, and who will after them */
 function ageMarkup(I){
@@ -577,6 +593,7 @@ function workTab(I, nd){
   let h = zealMarkup(I) + `<div class="rowx"><span class="sub">${autoWork(I) ? 'Die Leute gehen von selbst dorthin, wo sie gebraucht werden.' : 'Du verteilst die Leute mit + und − auf der Tafel eines Arbeitsplatzes.'}</span><span class="chips" role="group" aria-label="Arbeit verteilen"><button class="chip" type="button" data-act="work" data-v="auto" aria-pressed="${autoWork(I)}">Automatisch</button><button class="chip" type="button" data-act="work" data-v="hand" aria-pressed="${!autoWork(I)}">Von Hand</button></span></div><ul class="list needs">`;
   const nh = [...sf.help.values()].reduce((t, n) => t + n, 0);
   h += ageMarkup(I);
+  { const g = gatherers(I); if (g) h += `<ul class="list needs">${rowS('reisig', `${g} ${g === 1 ? 'sammelt' : 'sammeln'} Brennholz`, `Kinder ab drei und Alte ohne Hauswerk, +${perMin(gatherRate(I))} pro Minute. Der Herd brennt erst Schalen, dann Brennholz, dann Holz.`)}</ul>`; }
   h += rowS('pop', `${sf.total - sf.free - sf.build} arbeiten · ${sf.build} bauen · ${sf.free} ${sf.rest ? 'in Freizeit' : 'frei'}`, freeP.length ? `${sf.rest ? 'Freizeit' : 'Frei'}: ${freeP.map(p => `<button class="link" type="button" data-act="who" data-p="${p.id}">${p.n}</button>`).join(', ')}. ${sf.rest ? 'Alle Plätze sind besetzt; sie ruhen und sammeln nebenbei.' : 'Wer frei ist, sammelt im Wald und am Strand.'}` : nh ? `${nh} ${nh === 1 ? 'hilft' : 'helfen'} mit, wo es knapp ist. Helfer machen einen Platz schneller.` : 'Ein neuer Arbeitsplatz braucht neue Leute: Familien kommen in leere Hütten.', '', freeP.length ? chipS('low', `${freeP.length} frei`) : chipS('ok', 'alle'));
   if (open.length) h += rowS('', `${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} Raum`, open.slice(0, 8).map(b => `<button class="link" type="button" data-act="goto" data-b="${b.id}">${placeName(b)} ${crewAt(I, b) || 0}/${KINDS[b.kind].crew}</button>`).join(', '), '', chipS(open.some(b => !crewAt(I, b)) ? 'out' : 'low', open.some(b => !crewAt(I, b)) ? 'leer' : 'halb'), open.some(b => !crewAt(I, b)) ? 'need' : '');
   { const pulled = [...sf.pulled.keys()].filter(b => !crewAt(I, b)); if (pulled.length) h += rowS('beile', `${pulled.length} ${pulled.length === 1 ? 'Platz ruht' : 'Plätze ruhen'}: die Leute bauen`, andList(pulled.map(b => placeName(b))), '', chipS('low', 'bauen')); }
@@ -1075,6 +1092,10 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'immig' && sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); if (sh) immigAnswer(sh, btn.dataset.v === 'yes'); updateHUD(); return; }
   if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
+  if (sheetKind === 'person' && act === 'jobpick'){ sheetData = {...sheetData, pick:!sheetData.pick}; renderSheet(); return; }
+  if (sheetKind === 'person' && act === 'setjob'){ const I = isl(sheetData.id), p = I && (I.people || []).find(q => q.id === sheetData.p), b = findB(+btn.dataset.b), r = chooseJob(I, p, b);
+    if (r){ toast(`${p.n}: Stammplatz ${placeName(b)}.${r.swap ? ` ${r.swap.n} tauscht${r.swap.job && r.old ? ` und geht zu ${placeName(r.old)}` : ' und ist jetzt frei'}.` : ''}`, 3200, false); sheetData = {...sheetData, pick:false}; updateHUD(); renderSheet(); save(); checkQuest(); }
+    return; }
   if (act === 'koruru'){ if (!kor || kor.state === 'done' && korCanThrow()) korNew(); openSheet('koruru', {}); return; }
   if (sheetKind === 'koruru' && act === 'kthrow' && korCanThrow()){ korRoll(false); renderSheet(); return; }
   if (sheetKind === 'koruru' && act === 'kre' && kor.rolls < 2){ korRoll(true); renderSheet(); return; }

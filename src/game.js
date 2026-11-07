@@ -58,7 +58,7 @@ const WORK_FX = {hakenmacher:['drill', 'file'], schnitzer:['hollow', 'polish'], 
   flecht:['weave', 'strip'], schnur:['cord', 'braid'], klopf:['beat', 'peel'], schmuck:['drill', 'polish'], pferch:['feed', 'herd'], gaergrube:['leaf', 'wrap'],
   pansammler:['pick', 'gather'], pflanzer:['plant', 'tamp']};
 /* the looks of the other kinds of work: in the forest, up the palm, in the shallows, at the fishers' hut, after a dive */
-const JOB_FX = {chop:['chop', 'wedge'], pull:['pull', 'coil'], climb:['climb', 'twist'], wade:['scoop', 'grope'], tie:['thatch', 'lash']};
+const JOB_FX = {chop:['chop', 'wedge'], pull:['pull', 'coil'], climb:['climb', 'twist'], wade:['scoop', 'grope'], tie:['thatch', 'lash'], mend:['braid', 'thatch']};
 const FISH_FX = {net:['net', 'gut'], spear:['spear', 'stalk'], hang:['hang', 'turn']}, DIVE_FX = ['wring', 'coil'];
 const CLIMB_FX = new Set(['climb', 'twist']);
 /* one look after the other, now and then one skipped, so neighbours do not move in step */
@@ -79,7 +79,7 @@ const rnd = r => (Math.random() - .5) * 2 * r;
    go out together, everyone else works at the place and carries what it makes to the store now and then. */
 function jobFor(I, b, i){
   const K = KINDS[b.kind], side = i % 2 ? -1 : 1, job = (type, x, y, more) => ({key:type + ':' + b.id + '#' + i, type, b, i, x, y, ...more});
-  if (HOME_KINDS.has(b.kind) && !b.bt) return job('tie', b.x + side * (K.r * .6), b.y + 4, {});   // a storm is coming: the roof tied down
+  if (HOME_KINDS.has(b.kind) && !b.bt) return job(I.storm && I.storm.tie && tick < I.storm.at ? 'tie' : 'mend', b.x + side * (K.r * .6), b.y + 4, {});   // a storm is coming: the roof tied down; else a worn roof covered anew
   if (b.bt) return job('site', b.x + 6 * side, b.y + 5, {tool:groundSite(b.kind) ? 'ko' : 'toki'});   // a field is dug with the digging stick, a house built with the adze
   if (b.kind === 'werft' && I.yard){ const h = yardSpot(b); return job('yard', h.x + (i - 1) * 7, h.y + 3, {tool:'toki'}); }
   if (b.boat > 0){ const h = dugSpot(b); return job('carve', h.x + 3 - i * 6, h.y + 2, {tool:'toki'}); }
@@ -374,6 +374,18 @@ function setTapu(I, on){
   I.tapu = on; I.tapuAway = false; I.staff = null; save();
   toast(on ? `Tapu auf das Wild von ${I.name}: Niemand jagt, das Wild erholt sich.` : `Das Tapu auf ${I.name} ist aufgehoben. Wer keine Arbeit hat, sammelt wieder.`, 4600);
 }
+/* Children from three and the old without a household craft gather dry wood at the forest edge (on an atoll driftwood and
+   dry fronds along the beach) and carry a bundle home: Brennholz for the hearths, once there is a hearth or an earth oven.
+   It burns after the coconut shells and before the wood the woodcutters fell. */
+const GATHER = {rate:.12, age:3, atoll:.7};
+const gatherOn = I => I.settled && (popTier(I, 2) > 0 || I.buildings.some(b => !b.bt && KINDS[b.kind].use && KINDS[b.kind].use.brenn)) && (I.stock.reisig || 0) < storeCap(I);
+const canGather = p => { const st = stageOf(p); return st === 'kid' ? ageOf(p) >= GATHER.age : st === 'old' && !p.job; };
+const gatherers = I => gatherOn(I) ? (I.people || []).filter(canGather).length : 0;
+const gatherRate = I => gatherers(I) * GATHER.rate * (I.type === 'atoll' ? GATHER.atoll : 1);   // per minute
+function gatherTick(I, n = 1){
+  const g = (I._gg || 0) + gatherRate(I) / PER_MIN * n, whole = Math.min(Math.floor(g), Math.max(0, storeCap(I) - (I.stock.reisig || 0)));
+  I._gg = g - Math.floor(g); if (whole > 0) I.stock.reisig = (I.stock.reisig || 0) + whole;
+}
 /* where someone without work goes gathering: into the forest to the nests, or along the shore for eggs and crabs */
 function forageSpot(I, w){
   const L = I.lands[landOf(I, w)]; if (!L) return null;
@@ -485,7 +497,7 @@ function setJob(I, w, j){
   if (initSync){ w.on = true; w.leg = 'work'; w.wait = Math.random() * 1500; return; }   // already at work
   w.on = false; w.leg = 'go'; goTo(I, w, j.x, j.y);
 }
-function freeFig(w){ if (w.mate && w.mate.ride === w){ w.mate.ride = null; w.mate.boat = false; } Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0, glean:0, under:0, catch:[], forage:0, ride:null, mate:null}); }
+function freeFig(w){ if (w.mate && w.mate.ride === w){ w.mate.ride = null; w.mate.boat = false; } Object.assign(w, {job:null, role:'idle', on:false, leg:'free', carry:null, bout:false, busy:null, boat:false, fishing:0, glean:0, under:0, catch:[], forage:0, gather:0, ride:null, mate:null}); }
 function syncWalkers(){
   for (const I of islands){
     const mine = walkers.filter(w => w.isl === I.id);
@@ -554,8 +566,10 @@ function whatDoes(w){
   if (w.asleep || w.toBed) return w.asleep ? 'schläft' : 'geht schlafen';
   if (j && w.play) return `${KINDS[j.b.kind].n} · Feierabend, ${PLAY[w.play.k].n}`;
   const pl = w.play && !j ? ' · ' + PLAY[w.play.k].n : '';
+  if (w.gather) return `${w.child ? 'Kind' : 'alt'} · ${w.gather === 3 ? 'bringt Brennholz heim' : 'sammelt Brennholz'}`;
   if (w.child) return 'Kind' + pl; if (w.old && !j) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
   const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
+  if (j.type === 'tie' || j.type === 'mend') return `${K.n} · ${!w.on ? 'auf dem Weg' : j.type === 'tie' ? 'bindet das Dach fest' : 'deckt das Dach neu'}`;
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
 }
@@ -655,18 +669,18 @@ const onScreen = w => typeof cam !== 'undefined' && cam.z > PEOPLE_Z && ptIn(w.x
 const PLAY_FX = {string:['string', 'stringshow'], hiko:['hiko', 'hiko2'], garland:['garland', 'wear'], story:['story', 'sand'], drum:['drum', 'drum2'], kite:['kite', 'kitepull'], toy:['toy', 'toyline'], nap:['~lie', 'doze'], listen:['nod', 'clap']};
 const STAND_FX = new Set(['hiko', 'hiko2', 'kite', 'kitepull', 'drum2', 'wear']);
 /* gathering without work: grubbing on the ground, a crab caught on the shore, eggs from the nests */
-const FORAGE_FX = ['plant', 'crab', 'eggs'];
+const FORAGE_FX = ['plant', 'crab', 'eggs'], GATHER_FX = ['twigs', 'snap'];
 /* the village sitting together: kava in the evening, a meal by the earth oven, talk and fanning on a mat; and the dance */
 const TALK_FX = {halle:['kava', 'chat'], umu:['eat', 'chat'], mat:['chat', 'fan']}, DANCE_FX = ['siva', 'clapd'], HOP_FX = ['hop', 'clap'];
 /* Every activity and its looks, at least two each (the tests check it). Looks with ~ are drawn elsewhere: in the water, in
    the canoe, under a load. */
 const LOOKS = () => ({
   ...Object.fromEntries(Object.entries(WORK_FX).map(([k, v]) => [KINDS[k].craft || KINDS[k].n, v])),
-  'Dächer festbinden':JOB_FX.tie, 'Holz fällen':JOB_FX.chop, 'Stamm ziehen':JOB_FX.pull, 'Palme ernten':JOB_FX.climb, 'Riff absuchen':JOB_FX.wade,
+  'Dächer festbinden':JOB_FX.tie, 'Dach neu decken':JOB_FX.mend, 'Holz fällen':JOB_FX.chop, 'Stamm ziehen':JOB_FX.pull, 'Palme ernten':JOB_FX.climb, 'Riff absuchen':JOB_FX.wade,
   'Fischer an Land':FISH_FX.net, 'Speerfischen':FISH_FX.spear, 'Fang aufhängen':FISH_FX.hang, 'Fischen im Kanu':['~line', '~castnet'], 'Auf dem Riff sammeln':['~scoop', '~poke'],
   'Taucher an Land':DIVE_FX, 'Tauchen':['~clam', '~octopus'],
   'Bauen':SITE_FX, 'Feld anlegen':GROUND_FX('taro'), 'Platz anlegen':GROUND_FX('platz'), 'Kanu bauen':YARD_FX, 'Baumaterial holen':['~shoulder', '~drag'], 'Tragen':['~head', '~pole'],
-  'Pause':REST_FX, 'Sammeln':FORAGE_FX, 'Surfen':['~paddle', '~wait', '~ride', '~fall'], 'Schwimmen':['~jump', '~crawl', '~duck', '~float'],
+  'Pause':REST_FX, 'Sammeln':FORAGE_FX, 'Brennholz sammeln':GATHER_FX, 'Surfen':['~paddle', '~wait', '~ride', '~fall'], 'Schwimmen':['~jump', '~crawl', '~duck', '~float'],
   ...Object.fromEntries(Object.entries(PLAY_FX).map(([k, v]) => [PLAY[k].n, v])),
   'Kava am Abend':TALK_FX.halle, 'Essen am Erdofen':TALK_FX.umu, 'Auf der Matte':TALK_FX.mat, 'Tanz beim Fest':DANCE_FX, 'Kinder zur Trommel':HOP_FX
 });
@@ -803,8 +817,16 @@ function nextLeg(w){
     if (w.forage === 3){ w.forage = 0; w.carry = null; }
     if (foragers(I) && Math.random() < .55){ const p = forageSpot(I, w); if (p){ w.forage = 1; w.sit = false; goTo(I, w, p.x, p.y, 300); return; } }
   } else if (w.forage){ w.forage = 0; if (w.carry === 'eier') w.carry = null; }
+  // children and the old gather dry wood and carry a bundle home (what they bring is counted in gatherTick)
+  if ((w.role === 'kid' || w.role === 'old') && !w.boat){
+    if (w.gather === 1){ w.gather = 2; w.busy = {x:w.x, y:w.y}; w.fx = lookOf(GATHER_FX, w); w.sit = false; w.wait = 2200 + Math.random() * 2000; return; }
+    if (w.gather === 2){ w.gather = 3; w.busy = null; w.fx = null; w.carry = 'reisig'; const st = storeNear(I, w); if (st){ goTo(I, w, st.x + rnd(6), st.y + 5); return; } }
+    if (w.gather === 3){ w.gather = 0; w.carry = null; }
+    const p = personOf(w);
+    if (p && canGather(p) && gatherOn(I) && !(opts.night && dayPhase() > .66) && Math.random() < (w.child ? .3 : .35)){ const q = forageSpot(I, w); if (q){ w.gather = 1; w.sit = false; goTo(I, w, q.x, q.y, 300); return; } }
+  } else if (w.gather){ w.gather = 0; if (w.carry === 'reisig') w.carry = null; }
   // free time: children often, the old and those without work now and then; at night all are at home
-  if (I.settled && !w.boat && !w.forage && !(opts.night && dayPhase() > .66) && Math.random() < (w.child ? .5 : w.old ? .4 : .42) && startPlay(I, w)) return;
+  if (I.settled && !w.boat && !w.forage && !w.gather && !(opts.night && dayPhase() > .66) && Math.random() < (w.child ? .5 : w.old ? .4 : .42) && startPlay(I, w)) return;
   if (I.settled && villageLife(I, w)) return;
   const L = landOf(I, w), sp = I.buildings.filter(b => !KINDS[b.kind].water && b.kind !== 'palme' && b.kind !== 'pandanus' && (!w.old || KINDS[b.kind].roof) && !b.at && landOfB(I, b) === L), t = sp[Math.floor(Math.random() * sp.length)];
   if (t) goTo(I, w, t.x + rnd(w.old ? 8 : 11), t.y + 4 + Math.random() * 8);
@@ -875,7 +897,7 @@ function jobLeg(I, w, j){
     // a craftswoman holds up what she has made, the potter her pot, the weaver her mat
     else if (T === 'carry' && j.load && WORK_FX[j.b.kind] && Math.random() < .16){ w.rest = true; w.bout = true; w.fx = 'show'; w.show = j.load; w.busy = {x:w.x, y:w.y}; w.sit = false; w.wait = 1500 + Math.random() * 600; w.boutT = w.wait; return; }
     else if (T !== 'wait' && T !== 'plant' && Math.random() < .1){ w.rest = true; w.bout = true; w.fx = REST_FX[Math.floor(Math.random() * REST_FX.length)]; w.busy = {x:w.x, y:w.y}; w.sit = w.fx === 'drink' && Math.random() < .5; w.wait = 1800 + Math.random() * 1400; w.boutT = w.wait; return; }
-    if (T === 'wait' || T === 'learn' || T === 'tie'){ goTo(I, w, j.x + rnd(T === 'learn' ? 3 : T === 'tie' ? 2 : 8), j.y + rnd(T === 'learn' ? 2 : T === 'tie' ? 1 : 4)); return; }
+    if (T === 'wait' || T === 'learn' || T === 'tie' || T === 'mend'){ const near = T === 'tie' || T === 'mend'; goTo(I, w, j.x + rnd(T === 'learn' ? 3 : near ? 2 : 8), j.y + rnd(T === 'learn' ? 2 : near ? 1 : 4)); return; }
     // at a craft or with the rope they work a few rounds before a load goes to the store; a felled piece goes at once
     if (T === 'carry' || T === 'pull'){ w.nb = (w.nb || 0) + 1; if (w.nb < (T === 'pull' ? 3 : 2) || !j.load){ w.wait = 200 + Math.random() * 500; if (!j.load) w.nb = 0; return; } w.nb = 0; }
     if (T === 'climb'){ j.b._pi = (j.b._pi || 0) + 1; w.carry = j.load; w.pole = !w.pole; w.leg = 'store'; goTo(I, w, j.drop.x + rnd(3), j.drop.y + rnd(2)); return; }   // the nuts down to the house, then the next palm
@@ -1195,7 +1217,7 @@ function yamTick(I, b, K, n, mult = 1){
   if (!awayQuiet && I.id === active){ toast(`Yamsernte: ${got} Feldfrüchte. Sie halten sich auf dem Gestell am Feld.`, 3200); sfx('rise'); }
 }
 function makeRate(I, k){
-  let m = k === 'wild' ? forageRate(I) : 0;
+  let m = k === 'wild' ? forageRate(I) : k === 'reisig' ? gatherRate(I) : 0;
   for (const b of I.buildings){ const K = KINDS[b.kind]; if (!K.prod || b.bt || b.boat > 0 || (b.idle && b.idle.why !== 'full')) continue;
     if (K.yam) continue;   // the yam field gives once a year (see yamTick)
     const f = prodOf(b) === k ? 1 : (byOf(b) || {})[k] || 0; if (!f) continue;
@@ -1323,7 +1345,7 @@ function econ(){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
-    roofTick(I); stormTick(I);
+    roofTick(I); mendTick(I); stormTick(I); gatherTick(I);
     if (raining(I)){ add('wasser', RAIN.water); if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
@@ -1704,7 +1726,7 @@ function govern(dt){
    happened. The village is reckoned in whole minutes, the sea tick by tick, so canoes still find their way. */
 const AWAY_MAX = 8 * 3600 * 1000;
 function awayMinute(I, R){
-  roofTick(I, 30); stormTick(I);
+  roofTick(I, 30); stormTick(I); gatherTick(I, 30);
   const sf = staff(I), st = I.stock, cap = storeCap(I);
   // building sites and canoes: the builders work as if they were there
   for (const b of I.buildings){

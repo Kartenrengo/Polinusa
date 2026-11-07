@@ -1203,7 +1203,7 @@ const SWING = new Set(['dig', 'chop', 'build', 'carve']);
 const LEAN = {lift:() => .35, mulch:() => .3, eggs:() => .4, gather:() => .4, grope:() => .5, crab:() => .3, stalk:() => .16, mound:t => .28 + Math.sin(t * 4) * .03,
   doze:t => .13 + Math.sin(t * .9) * .07, nod:t => Math.sin(t * 2.2) * .05, siva:t => Math.sin(t * 2.2) * .07, hop:() => 0};
 /* where the hands hold something else, the tool is put down */
-const NOTOOL = new Set(['spear', 'stalk', 'tamp', 'wedge', 'coil', 'lift', 'mound', 'eggs', 'gather', 'mulch', 'grope', 'crab', 'thatch', 'trim', 'herd', 'pour', 'stones', 'fire', 'burn', 'hollow', 'twist']);
+const NOTOOL = new Set(['spear', 'stalk', 'tamp', 'wedge', 'coil', 'lift', 'mound', 'eggs', 'gather', 'twigs', 'snap', 'mulch', 'grope', 'crab', 'thatch', 'trim', 'herd', 'pour', 'stones', 'fire', 'burn', 'hollow', 'twist']);
 function workFx(c, w, now){
   const t = reduced ? .35 : now / 1000 + (w.x % 7), f = (t * 1.3) % 1;
   const dot = (x, y, r, col, a = 1) => { c.globalAlpha = a; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.globalAlpha = 1; };
@@ -1406,6 +1406,16 @@ function workFx(c, w, now){
       line(2.4, -1.5, 7.6, -2.7, '#8C6440', .75);
       const p = (t * .5) % 1; c.strokeStyle = '#E9DCC0'; c.lineWidth = .6; c.lineCap = 'round'; c.beginPath(); c.moveTo(2.8 + p * 4, -1.7 - p * .9); c.quadraticCurveTo(3.6 + p * 4, -4.2 - p, 5 + p * 3, -3.6 - p * .6); c.stroke();
       arm(1.3, -6.9, 5 + p * 3, -3.6 - p * .6); break; }
+    case 'twigs': {   // dry sticks picked up from the ground onto a bundle
+      for (let k = 0; k < 3; k++) line(2.8 + k * 1.3, .3, 5 + k * 1.3, -.3, '#8C6440', .5);
+      line(6.6, -.5, 9.6, -1.7, '#2B1D14', 1.1); line(6.6, -.5, 9.6, -1.7, '#A37A4C', .6); line(6.8, -.1, 9.8, -1.1, '#2B1D14', 1.1); line(6.8, -.1, 9.8, -1.1, '#A37A4C', .6);
+      const g = (t * .8) % 1, x = 3.4 + g * 4.4, y = -.3 - Math.sin(g * Math.PI) * 2.4; line(x - .9, y + .3, x + .9, y - .3, '#9C7246', .55);
+      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, x, y); break; }
+    case 'snap': {   // a dry branch broken in two over the knee; a splinter springs off
+      const u = Math.abs(Math.sin(t * 2.4)), b = u * 1.3;
+      line(1.8, -4.4, 4, -5 + b, '#2B1D14', 1.1); line(1.8, -4.4, 4, -5 + b, '#9C7246', .6); line(4, -5 + b, 6.2, -4.4, '#2B1D14', 1.1); line(4, -5 + b, 6.2, -4.4, '#9C7246', .6);
+      { const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, 6, -4.5); } { const [sx, sy] = rp(-1.2, -6.8); arm(sx, sy, 2, -4.5); }
+      if (u > .92) dot(4, -5.6 + b, .35, '#E9DCC0'); break; }
     case 'gather': {   // fallen pandanus keys picked from the ground into a basket
       blob(6.8, -.7, 1.4, 1, '#B08048'); dot(6.4, -1.6, .5, '#D9893A'); dot(7.2, -1.5, .45, '#E0A04A');
       for (let k = 0; k < 2; k++) blob(3.4 + k * 1.4, .1, .55, .4, '#D9893A');
