@@ -11,6 +11,46 @@ Spieler es wählt.
 - **Hauswerk bei den Clans:** In den Dörfern der Clans gibt es noch eigene Werkstätten. Sie könnten auch Matten vor den
   Häusern zeigen.
 
+## Nächste Schritte: Prüfung nach Version 68
+
+**Geht die Spielmechanik auf?** Im Großen ja. Jede Ware hat eine Quelle und einen Verbrauch, nichts endet in einer
+Sackgasse. Stammplatz, Dächer, Feuer, Sturm und Brennholz greifen ineinander. Der Bot spielt 90 Minuten ohne
+Regelverstoß. Vier Stellen hängen aber:
+
+1. **Essen bindet zu viele Hände.** Jeder Mensch isst 1,2 pro Minute, Kinder die Hälfte. Ein Arbeiter am Erntehaus, in
+   der Fischerhütte oder auf dem Tarofeld schafft bei voller Kraft 3 bis 4 pro Minute, im Alltag mit Schlaf, Freizeit
+   und Wegen etwa 2. So arbeiten rund zwei Drittel aller Hände nur für Essen. Der Rat sagt fast immer „Mehr Essen“, und
+   der Bot bleibt bei etwa 40 Menschen stehen (sechs Läufe, Version 68).
+2. **Das Erntehaus macht vier Dinge** (Nüsse, Wasser, Wedel, Palmholz) und kann nur eins zugleich. Wasser und Wedel
+   kommen sich in die Quere. In einem von sechs Läufen zerfielen die Dächer, weil keine Wedel kamen.
+3. **Ab dem Familienhaus stockt es.** Das Meisterhaus braucht Matten, die es nur auf Atollen gibt. Dafür braucht es eine
+   erste Fahrt von Hand, dann eine Handelskette. Der Weg dahin ist schwer zu finden; der Bot kommt nie darüber hinaus.
+4. **Die Tests sehen das späte Spiel nicht.** Der Bot kann nicht segeln. Ob Meisterhaus, Häuptlingsdorf und die große
+   Fahrt aufgehen, ist ungeprüft.
+
+**Nächste Schritte, nach Wichtigkeit:**
+
+1. **Bot lernt segeln und handeln.** Erkunden, ein Atoll besiedeln oder einen Clan finden, eine Handelskette setzen.
+   Erst dann lassen sich die nächsten Schritte messen. Ziel: das Meisterhaus in 90 Minuten in mindestens der Hälfte der
+   Läufe.
+2. **Essen entspannen.** Weniger Essen pro Kopf (etwa 1,0 statt 1,2) oder mehr Ertrag je Hand. Maß: höchstens die
+   Hälfte der Hände für Essen, „Mehr Essen“ in weniger als einem Drittel der Zeit, der Bot im Schnitt über 50 Menschen.
+3. **Erntehaus entlasten.** Die zwei Leute holen Verschiedenes zugleich: Einer klettert nach Nüssen, die andere schneidet
+   Wedel. Oder der Rat schlägt ein zweites Erntehaus vor, sobald Wasser und Wedel sich streiten.
+4. **Der Weg zu den Matten mit einem Tipp.** Fehlen dem Meisterhaus Matten und ist ein Atoll bekannt, schlägt der Rat die
+   Handelskette vor und setzt sie auf Tipp: Töpfe oder Holz hin, Matten zurück.
+5. **Überfluss belohnen.** Sind die Lager voll, ein Erntefest: Ansehen, öfter Kinder. Ein Vorrat für die magere Zeit als
+   sichtbares Ziel mit Haken.
+6. **Erfolge feiern.** Erstes Familienhaus, 20, 30 und 50 Menschen, die erste Handelsfahrt, das erste Meisterhaus: ein
+   kurzes Fest auf dem Platz, Blüten, Trommeln und ein kleines Geschenk.
+7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel und grün,
+   was gerade gut läuft.
+8. **Dörfer mit Gesicht.** Jedes Dorf wählt eine Stärke (Töpfer, Fischer, Weberinnen, Navigatoren) mit einem Bonus. Der
+   Handel zwischen den eigenen Dörfern wird der Kern des Mittelspiels.
+9. **Geschichten der Menschen.** Auf der Personentafel ein paar Lebensereignisse: der erste Fang, die Hochzeit, das
+   Tatau, wird Navigatorin. So erkennt man Leute wieder und hängt an ihnen.
+10. **Sammelbuch.** Muster, Ahnen, Schätze und seltene Treibgut-Funde in einem Album mit Lücken, die locken.
+
 ## Offen aus der Runde „Stammplatz, Sturm und Treibgut“ (Version 67)
 
 - **Auf einem echten Handy prüfen:** Treibgut am Ufer antippen (ist es groß genug?), den Sturm-Countdown unten und die
