@@ -115,7 +115,15 @@ function showWind(){
   vaneAt = vaneAt == null ? W.from : vaneAt + ((W.from - vaneAt + 540) % 360 - 180);
   v.style.transform = `rotate(${vaneAt.toFixed(1)}deg)`;
   C.style.setProperty('--amp', (3 + W.str * 11).toFixed(1) + 'deg'); C.style.setProperty('--gust', (1.7 - W.str * 1.3).toFixed(2) + 's');
+  dayRing();
   C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
+}
+/* the ray round the bar: where in the day we are, and in words for the label (a day is six minutes) */
+function dayRing(){
+  const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); if (!opts.night) return;
+  const p = dayPhase(), night = p >= .66, left = Math.max(0, ((night ? 1 : .66) - p) * DAY_TICKS * TICK / 1000 / gameSpeed);
+  H.style.setProperty('--ph', p.toFixed(3)); H.dataset.day = night ? 'nacht' : 'tag';
+  H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}, noch etwa ${Math.round(left / 10) * 10} Sekunden. Wind, Kalender, Nachrichten und Menü`);
 }
 /* the name under each good in the top row: short, so it fits under its icon */
 const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
@@ -739,10 +747,11 @@ function finaleMarkup(){
 }
 /* ---------- a building: who works there, one line on how it goes, the rest folded away */
 const pipH = k => `<svg class="pip" viewBox="-2.7 -6.5 5.4 7" aria-hidden="true">${PIP[k]}</svg>`;
-const SHORT = {grow:'wächst', yam:'wartet auf die Pflanzzeit', storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Kanu entsteht', space:'kein Platz', bau:'Leute bauen'};
+const SHORT = {nuts:'Palmen abgeerntet', grow:'wächst', yam:'wartet auf die Pflanzzeit', storm:'Sturm', crew:'keine Leute', way:'Leute auf dem Weg', trees:'keine Bäume', full:'Lager voll', boat:'kein Einbaum', carving:'Kanu entsteht', space:'kein Platz', bau:'Leute bauen'};
 const shortWhy = w => w.why === 'use' ? `fehlt: ${GN[w.k]}` : w.why === 'near' ? `zu wenig ${NEAR_PL[w.kind]}` : SHORT[w.why] || 'steht still';
 const secsText = s => s < 90 ? `${Math.max(1, Math.ceil(s))} s` : `${Math.round(s / 60)} min`;
-function crewMarkup(I, b, horn = ''){
+const keepBtn = b => `<button class="chip keep" type="button" data-act="keep" aria-pressed="${!!b.keep}" aria-label="Bleiben: von hier wird niemand ausgeliehen">Bleiben</button>`;
+function crewMarkup(I, b, horn = '', bare = false){
   const sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl) return '';
   const K = KINDS[b.kind], sf = staffOf(I), ids = (sf.crewP.get(b) || []), byId = id => I.people.find(p => p.id === id);
   // the order of the marks: own people here, own people away, guests; the people in the same order
@@ -753,7 +762,7 @@ function crewMarkup(I, b, horn = ''){
   // building sites and the canoe house are worked by whoever is free, or by those called from their work
   if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}<span class="grow"></span>${horn}</div>`;
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
-  horn += `<button class="chip keep" type="button" data-act="keep" aria-pressed="${!!b.keep}" aria-label="Bleiben: von hier wird niemand ausgeliehen">Bleiben</button>`;
+  if (!bare) horn += keepBtn(b);
   const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < crewOf(b) ? '' : 'disabled'}>+</button></span>`;
   return `<div class="crew">${chips}${ctl.replace('<span class="grow"></span>', `<span class="grow"></span>${horn}`)}</div><p class="sub crewnote">${K.crew ? `${K.crew} ${K.crew === 1 ? 'fester Platz' : 'feste Plätze'}${nh ? `, dazu ${nh} ${nh === 1 ? 'Helfer' : 'Helfer'}: Wer frei ist, hilft, wo etwas knapp ist` : ''}. ` : ''}${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
 }
@@ -865,7 +874,7 @@ function infoMarkup(I, b){
     if (K.picks){ const pk = b.v && K.picks[b.v.pick] ? b.v.pick : '';
       const cur = choiceOf(b);
       why += `<div class="chips picks" role="group" aria-label="Was sie holen"><button class="chip" type="button" data-act="pick" data-v="" aria-pressed="${!pk}">${icon('crew')}Von selbst</button>${Object.entries(K.picks).map(([k, P]) => `<button class="chip pickc${!pk && cur === k ? ' auto' : ''}" type="button" data-act="pick" data-v="${k}" aria-pressed="${pk === k}" aria-label="${P.n}${!pk && cur === k ? ', holen sie gerade' : ''}">${icon(k)}${P.n}</button>`).join('')}</div>`; }
-    if (b.kind === 'ernte') more.push(`${palmsNear(I, b).length} Palmen in Reichweite. Je mehr Palmen, desto mehr Ernte, bis 8. Für Holz fällen sie eine alte Palme und setzen an ihre Stelle eine keimende Nuss; dafür müssen mehr als ${K.near.n + 3} stehen.`);
+    if (b.kind === 'ernte') more.push(`${palmsNear(I, b).length} Palmen in Reichweite, ${Math.floor(nutsOf(I, b))} reife Nüsse. Jede Palme trägt etwa eine Nuss pro Minute, mehr gibt das Erntehaus nicht her (jetzt bis ${perMin(nutRate(I, b))} pro Minute); teilen sich zwei Erntehäuser einen Hain, teilen sie die Nüsse. Für Holz fällen sie eine alte Palme und setzen an ihre Stelle eine keimende Nuss; dafür müssen mehr als ${K.near.n + 3} stehen.`);
     if (b.kind === 'fisch') more.push(`Das Riff: ${(I.reefLife ?? 1) > .55 ? 'reich' : (I.reefLife ?? 1) > .3 ? 'abgesammelt, es gibt weniger' : 'leer gesammelt, kaum noch etwas'}. Es erholt sich langsam, unter einem Rāhui schneller.`);
     if (K.trees) line += `<span>${icon('holz')}${treesNear(I, b.x, b.y, K.trees.r).length} Bäume</span>`;
     // divers: whether the water allows diving, and how divers really worked
@@ -890,7 +899,9 @@ function infoMarkup(I, b){
   const lonely = working && !crewAt(I, b), horn = working ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
   { const sb = b.idle && b.idle.site && findB(b.idle.site);   // the place whose people build: a button to their site instead of a sentence
     if (why && b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau')) why = sb ? `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>` : ''; }
-  return [(line ? `<div class="stat">${line}</div>` : '') + bar + (working || b.boat > 0 ? crewMarkup(I, b, horn) : '') + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
+  // one tight block: the state with the conch and "Bleiben" on its line, then what it takes and makes beside its people
+  const site = b.bt || (b.kind === 'werft' && I.yard), crewed = working || b.boat > 0, tight = crewed && !site && KINDS[b.kind].crew > 0;
+  return [(line || tight ? `<div class="stat">${line}${tight ? `<span class="grow"></span>${horn}${keepBtn(b)}` : ''}</div>` : '') + `<div class="workgrid">${bar}${crewed ? `<div class="crewbox">${crewMarkup(I, b, tight ? '' : horn, tight)}</div>` : ''}</div>` + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 /* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
@@ -998,7 +1009,8 @@ function renderSheet(){
       `<p class="sec">Als Datei</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
       (backups().length ? `<div class="chips copies">${backups().map(b => `<button class="chip" type="button" data-act="backup" data-i="${b.i}">Kopie ${ago(b.at)}</button>`).join('')}</div>` : '') +
       `<details class="more"><summary>Als Text</summary><textarea id="saveText" class="savetext" rows="3" spellcheck="false" aria-label="Spielstand als Text"></textarea><div class="rowx"><span class="chips"><button class="chip" type="button" data-act="showtext">Zeigen</button><button class="chip" type="button" data-act="loadtext">Aus Text laden</button></span></div></details>` +
-      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang</button><button class="chip" type="button" data-act="music" aria-pressed="${opts.music !== false}">Musik</button><button class="chip" type="button" data-act="mvol" aria-label="Lautstärke der Musik: ${MVOL_WORD[opts.mvol == null ? 1 : opts.mvol]}">Musik ${MVOL_WORD[opts.mvol == null ? 1 : opts.mvol]}</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span></div>`;
+      `<div class="rowx"><span class="chips"><button class="chip" type="button" data-act="sound" aria-pressed="${opts.sound}">Klang: ${soundWord()}</button><button class="chip" type="button" data-act="music" aria-pressed="${opts.music !== false}">Musik</button><button class="chip" type="button" data-act="mvol" aria-label="Lautstärke der Musik: ${MVOL_WORD[opts.mvol == null ? 1 : opts.mvol]}">Musik ${MVOL_WORD[opts.mvol == null ? 1 : opts.mvol]}</button><button class="chip" type="button" data-act="night" aria-pressed="${opts.night}">Tag und Nacht</button><button class="chip" type="button" data-act="meter" aria-pressed="${!!opts.meter}">Messwerte</button></span></div>` +
+      (e => e ? `<details class="more"><summary>Letzter Fehler${errN ? ` (${errN})` : ''}</summary><p class="sub errtxt">${String(e).replace(/[<>&]/g, '')}</p><p class="sub">Das Spiel läuft trotzdem weiter. Schick diesen Text, dann lässt sich der Fehler finden.</p></details>` : '')(lastErr || (() => { try { return localStorage.getItem('polinusa-err'); } catch (x){ return ''; } })());
   }
   body.innerHTML = h; lastSig = sheetSig(); if (sheetKind === 'koruru') koruruMount();
 }

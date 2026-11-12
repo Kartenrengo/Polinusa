@@ -1087,6 +1087,7 @@ const NEAR_PL_ONE = {pandanus:'Pandanus', palme:'Kokospalmen', baum:'Brotfruchtb
 const NEAR_PL = new Proxy(NEAR_PL_ONE, {get:(t, k) => String(k).includes(',') ? String(k).split(',').map(q => t[q]).join(' oder ') : t[k]});
 function workState(I, b){
   const K = KINDS[b.kind];
+  if (b.kind === 'ernte' && NUT_PICKS.has(prodOf(b)) && nutsOf(I, b) < 1) return {why:'nuts', kind:'palme', text:`Die Palmen ringsum sind abgeerntet. Jede Palme trägt etwa eine Nuss pro Minute: Pflanzt mehr Palmen, oder holt Essen vom Meer und vom Feld.`};
   if (SEA_KINDS.has(b.kind) && cycloneOver(I)) return {why:'storm', text:'Sturm: Niemand fährt hinaus, die Kanus liegen an Land.'};
   if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Ein Kanusteg bringt die Leute hin, jeder Steg für bis zu 4 Plätze.'};
   if (K.crew && I.settled && !crewAt(I, b)){
@@ -1162,6 +1163,7 @@ function pickScores(I, b){
     else if (k === 'muschel') v = has('schmuck') ? (.4 + workUse(I, 'muschel')) / (st('muschel') / 3 + 1) : .02;
     else if (k === 'steine') v = has('umu') ? (.3 + workUse(I, 'steine')) / (st('steine') / 3 + 1) : -1;
     if (st(k) >= cap) v = -1;
+    if (b.kind === 'ernte' && NUT_PICKS.has(k) && nutsOf(I, b) < 1 && v > 0) v *= .05;   // picked clean: fronds meanwhile
     sc[k] = v;
   }
   return sc;
@@ -1173,6 +1175,14 @@ function choosePick(I, b){
   if (!K.picks[b.want] || sc[best] > (sc[b.want] ?? -1) * 1.25 + .01){ if (b.want && b.want !== best) b._by = null; b.want = best; }
 }
 /* the Erntehaus does more with more palms around it, and the work is slower when the store is far away */
+/* Palms bear only so many nuts: each palm ripens about one a minute, ripe or green. An Erntehaus takes them from the palms
+   around it and shares them with every other Erntehaus that reaches the same grove; when they are picked clean it waits
+   (or cuts fronds meanwhile). So a palm feeds about one person, and more people want more palms, or fish and fields. */
+const NUTS = {every:30, keep:3}, NUT_PICKS = new Set(['kokos', 'wasser']);
+const nutPalms = (I, b) => { const P = palmsNear(I, b).length, sh = I.buildings.filter(q => q.kind === 'ernte' && !q.bt && Math.hypot(q.x - b.x, q.y - b.y) < KINDS.ernte.near.r).length || 1; return P / sh; };
+const nutsOf = (I, b) => b.nuts == null ? nutPalms(I, b) * NUTS.keep : b.nuts;
+function nutTick(I, n = 1){ for (const b of I.buildings) if (b.kind === 'ernte' && !b.bt){ const p = nutPalms(I, b); b.nuts = Math.min(p * NUTS.keep, nutsOf(I, b) + n * p / NUTS.every); } }
+const nutRate = (I, b) => nutPalms(I, b) * PER_MIN / NUTS.every;   // nuts a minute this house can count on
 const palmF = (I, b) => b.kind === 'ernte' ? clamp(palmsNear(I, b).length / 6, .5, 1.25) : 1;
 function wayF(I, b){
   if (b._way && b._way.t > tick - 30) return b._way.v;
@@ -1222,7 +1232,9 @@ function makeRate(I, k){
   for (const b of I.buildings){ const K = KINDS[b.kind]; if (!K.prod || b.bt || b.boat > 0 || (b.idle && b.idle.why !== 'full')) continue;
     if (K.yam) continue;   // the yam field gives once a year (see yamTick)
     const f = prodOf(b) === k ? 1 : (byOf(b) || {})[k] || 0; if (!f) continue;
-    m += f * (prodOf(b) === k ? outOf(b) : 1) * PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, crewAt(I, b)); }
+    let r = PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, crewAt(I, b));
+    if (b.kind === 'ernte' && NUT_PICKS.has(prodOf(b))) r = Math.min(r, nutRate(I, b));   // no more than the palms bear
+    m += f * (prodOf(b) === k ? outOf(b) : 1) * r; }
   return m;
 }
 /* one piece made: the good, and the bits that fall off, which add up until a whole one is there */
@@ -1346,7 +1358,7 @@ function econ(){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); if (tick % 20 === 0) storyTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
-    roofTick(I); mendTick(I); stormTick(I); gatherTick(I);
+    roofTick(I); mendTick(I); stormTick(I); gatherTick(I); nutTick(I);
     if (raining(I)){ add('wasser', RAIN.water); if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
@@ -1388,6 +1400,7 @@ function econ(){
       if (prodOf(b) === 'fisch') stats.fisch++;
       if (K.soil) drainSoil(I, b);
       if (K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; st[K.boost.k]--; }   // the net tears, the adze breaks
+      if (b.kind === 'ernte' && NUT_PICKS.has(prodOf(b))) b.nuts = Math.max(0, nutsOf(I, b) - 1);
       makePiece(I, b, add);
     }
     growTrees(I); stepWear(I); wildTick(I); I.reefLife = Math.min(1, (I.reefLife ?? 1) + .0012 * (I.rahui ? 3 : 1));
@@ -1682,7 +1695,7 @@ let last = performance.now(), lastDraw = 0;
 let gameSpeed = 1, clockAt = 0, clockAcc = 0;
 function gameClock(){
   const now = performance.now(); clockAcc += Math.min(10000, now - (clockAt || now)) * gameSpeed; clockAt = now;
-  let n = 0; while (clockAcc >= TICK && n < 4){ clockAcc -= TICK; econ(); n++; }
+  let n = 0; while (clockAcc >= TICK && n < 4){ clockAcc -= TICK; try { econ(); } catch (e){ frameErr(e, 'econ'); } n++; }
   if (n === 4) clockAcc = Math.min(clockAcc, TICK);
 }
 function setSpeed(v){
@@ -1690,14 +1703,32 @@ function setSpeed(v){
   toast(v > 1 ? 'Doppelte Geschwindigkeit.' : 'Normale Geschwindigkeit.', 1400, false); $('speedMark').hidden = sideOpen || v === 1;
 }
 $('speedBtn').addEventListener('click', () => { setSpeed(gameSpeed > 1 ? 1 : 2); setSideOpen(false); });   // folded again; a mark shows double speed
+/* One picture. Whatever goes wrong inside, the next picture is asked for all the same: before, one error in drawing or in
+   the sound stopped the game for good, with only the sea left on screen. The error is kept for the menu (lastErr), the
+   layers are painted anew, and a camera that has lost its place goes back to the village. */
+let lastErr = '', errN = 0;
+function frameErr(e, where){
+  errN++; lastErr = `${where}: ${e && e.message || e} ${((e && e.stack) || '').split('\n').slice(1, 3).join(' ').replace(/file:\S*\//g, '')}`.slice(0, 300);
+  try { localStorage.setItem('polinusa-err', `${new Date().toISOString()} ${lastErr}`); } catch (x){}
+  try { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.setLineDash([]); invalidate(true); } catch (x){}
+}
+function camGuard(){
+  if (cam.x === cam.x && cam.y === cam.y && cam.z > 0 && isFinite(cam.z)) return;
+  const I = isl(active) || islands.find(J => J.settled), c = I ? I.center : {x:W / 2, y:H / 2};
+  cam.x = c.x; cam.y = c.y; cam.z = 1.4; camAnim = null; applyCam(); frameErr('Kamera ohne Ort', 'cam');
+}
 function frame(now){
+  requestAnimationFrame(frame);
+  try { frameBody(now); } catch (e){ frameErr(e, 'frame'); }
+}
+function frameBody(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed); audioTick(now);
+  stepCam(now); camGuard(); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
+  try { audioTick(now); } catch (e){ frameErr(e, 'audio'); }
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
   let drew = false;
   if (needDraw || stale(now) || (animating() && now - lastDraw > (quality ? 32 : 48)) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; drew = true; }
   if (opts.meter) meterTick(now, drew);
-  requestAnimationFrame(frame);
 }
 /* the meter, switched on in the menu: how many pictures a second this device really draws, the longest gap between two,
    the quality step and the pixel density. For checking the game on a phone. */
@@ -1727,7 +1758,7 @@ function govern(dt){
    happened. The village is reckoned in whole minutes, the sea tick by tick, so canoes still find their way. */
 const AWAY_MAX = 8 * 3600 * 1000;
 function awayMinute(I, R){
-  roofTick(I, 30); stormTick(I); gatherTick(I, 30);
+  roofTick(I, 30); stormTick(I); gatherTick(I, 30); nutTick(I, 30);
   const sf = staff(I), st = I.stock, cap = storeCap(I);
   // building sites and canoes: the builders work as if they were there
   for (const b of I.buildings){
@@ -1748,6 +1779,7 @@ function awayMinute(I, R){
     const w = workState(I, b); if (w) continue;
     b._away = (b._away || 0) + 30 / ev / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, n);
     let whole = Math.floor(b._away); b._away -= whole;
+    if (b.kind === 'ernte' && NUT_PICKS.has(prodOf(b))){ whole = Math.min(whole, Math.floor(nutsOf(I, b))); b.nuts = nutsOf(I, b) - whole; }
     if (K.plants){ while (whole-- > 0 && plantTree(I, b)); continue; }
     for (; whole > 0 && (st[prodOf(b)] || 0) < cap; whole--){
       if (K.use){ if (!canPay(I, K.use)) break; pay(I, K.use); }

@@ -33,8 +33,8 @@ function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t = topH + 8; $('compass').style.top = t + 'px';
-  $('sidectl').style.top = t + 'px'; $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  const t0 = topH + 8, t = t0 + $('hudbar').offsetHeight + 6; $('hudbar').style.top = t0 + 'px';   // the toast and the news hang under the bar
+  $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -1646,7 +1646,7 @@ const needBubble = k => bubbleArt(`<use href="#ic-${k}" transform="translate(-4.
 const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
 const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
-  w.why === 'wind' || w.why === 'storm' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[[].concat(w.kind)[0]] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[[].concat(w.kind)[0]]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+  w.why === 'wind' || w.why === 'storm' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'nuts' ? ['idle|palme', bubbleArt('<use href="#palm" transform="translate(0 -3.2) scale(.36)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[[].concat(w.kind)[0]] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[[].concat(w.kind)[0]]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
 /* every bubble drawn this frame, so a tap on it leads to what helps (see hitBubble) */
 let bubbleHits = [];
 const hitBubble = p => bubbleHits.filter(q => Math.hypot(p.x - q.x, p.y - q.y) < q.r).sort((a, b) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(p.x - b.x, p.y - b.y))[0] || null;
@@ -1707,14 +1707,33 @@ function drawNeeds(c, v, now){
   const t = now;
   // a house newly bound: blossoms rain on its roof, as garlands are laid on a new house at its blessing
   for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings){
-    const f = b.blessAt ? (t - b.blessAt) / 5200 : 9; if (f < 0 || f >= 1 || !ptIn(b.x, b.y, v)) continue;
+    const f = b.blessAt ? (t - b.blessAt) / 8000 : 9; if (f < 0 || f >= 1 || !ptIn(b.x, b.y, v)) continue;
     const top = b.y - KINDS[b.kind].hy * ((b.v && b.v.scale) || 1);
+    // first the work: a scaffold of bamboo against the house, bundles of fibre drawn up on a cord, the new binding hammered
+    // and pulled tight, dust at the posts; then the scaffold comes down and the blossoms fall
+    if (f < .55){ const g = f / .55, r = KINDS[b.kind].r, a = g < .12 ? g / .12 : g > .85 ? (1 - g) / .15 : 1, tt = t / 1000;
+      c.save(); c.globalAlpha = a; c.lineCap = 'round';
+      for (const sx of [-1, 1]){ const x0 = b.x + sx * (r + 3), x1 = b.x + sx * (r - 2);
+        c.strokeStyle = '#2B1D14'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x0, b.y + 3); c.lineTo(x1, top - 5); c.stroke();
+        c.strokeStyle = '#C9A35A'; c.lineWidth = .8; c.beginPath(); c.moveTo(x0, b.y + 3); c.lineTo(x1, top - 5); c.stroke();
+        for (let k = 1; k < 4; k++){ const q = k / 4, yy = b.y + 3 + (top - 8 - b.y) * q, xa = x0 + (x1 - x0) * q; c.strokeStyle = '#8C6440'; c.lineWidth = .7; c.beginPath(); c.moveTo(xa - sx * 3.4, yy); c.lineTo(xa + sx * 1.2, yy); c.stroke(); } }
+      c.strokeStyle = '#8C6440'; c.lineWidth = .8; c.beginPath(); c.moveTo(b.x - r + 2, top - 5); c.lineTo(b.x + r - 2, top - 5); c.stroke();
+      // a bundle goes up on its cord, again and again
+      { const u = (tt * .9 + b.id) % 1, bx = b.x + r - 3, by = b.y + 2 + (top - 4 - b.y) * u; c.strokeStyle = '#6B4428'; c.lineWidth = .4; c.beginPath(); c.moveTo(bx, top - 5); c.lineTo(bx, by); c.stroke();
+        c.fillStyle = '#D8BF86'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.ellipse(bx, by, 1.9, 1.2, 0, 0, TAU); c.fill(); c.stroke(); }
+      // the binding grows round the house, and chips fly where the adze strikes
+      c.strokeStyle = '#E9DCC0'; c.lineWidth = 1; c.setLineDash([1.2, 1.6]); c.beginPath(); c.moveTo(b.x - r * .7, (b.y + top) / 2 + 2); c.lineTo(b.x - r * .7 + r * 1.4 * g, (b.y + top) / 2 + 2); c.stroke(); c.setLineDash([]);
+      for (let k = 0; k < 5; k++){ const u = (tt * 2.2 + k * .2) % 1, sx = k % 2 ? 1 : -1; c.globalAlpha = a * (1 - u); c.fillStyle = k % 2 ? '#D9B27A' : '#B89A62'; c.beginPath(); c.arc(b.x + sx * (r * .5 + u * 5), b.y - 1 - Math.sin(u * Math.PI) * 5 - k, .7, 0, TAU); c.fill(); }
+      c.restore(); c.globalAlpha = 1;
+      if (!reduced && Math.floor(tt * 3) !== b._knk){ b._knk = Math.floor(tt * 3); if (b._knk % 2 === 0) sfx('knock'); }
+      continue; }
+    const fb = (f - .55) / .45;   // the blessing, once the work is done
     for (let k = 0; k < 18; k++){
-      const q = (f * 1.6 + hsh(k, b.id) * .9) % 1, x = b.x + (hsh(k + 3, b.id) - .5) * 30 + Math.sin(q * 6 + k) * 3, y = top - 14 + q * 30, al = (1 - f) * (q < .1 ? q * 10 : 1);
+      const q = (fb * 1.6 + hsh(k, b.id) * .9) % 1, x = b.x + (hsh(k + 3, b.id) - .5) * 30 + Math.sin(q * 6 + k) * 3, y = top - 14 + q * 30, al = (1 - fb) * (q < .1 ? q * 10 : 1);
       c.save(); c.translate(x, y); c.rotate(q * 5 + k); c.globalAlpha = al; c.fillStyle = ['#E86A8A', '#F7F1E3', '#F3D9A0', '#D9472B'][k % 4]; c.beginPath(); c.ellipse(0, 0, 1.3 * s, .7 * s, 0, 0, TAU); c.fill(); c.restore();
     }
     c.globalAlpha = 1;
-    if (f < .5){ const r = 6 + f * 50; stroke(c, ellipse(b.x, b.y + 2, r, r * .4), '#F7F1E3', 1.2, [.5, 1.6], 'round', (.5 - f) * 1.6); }   // the voices go out over the village
+    if (fb < .5){ const r = 6 + fb * 50; stroke(c, ellipse(b.x, b.y + 2, r, r * .4), '#F7F1E3', 1.2, [.5, 1.6], 'round', (.5 - fb) * 1.6); }   // the voices go out over the village
   }
   hearts = hearts.filter(h => t - h.t0 < 1600);
   for (const h of hearts){

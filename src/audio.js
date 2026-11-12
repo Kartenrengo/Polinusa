@@ -13,7 +13,10 @@ function saveOpts(){ try { localStorage.setItem('polinusa-opts', JSON.stringify(
 
 function audioStart(){
   if (!opts.sound) return;
-  if (actx){ if (actx.state === 'suspended' && !document.hidden) actx.resume(); return; }
+  // an iPhone lets sound begin only inside a finished touch (touchend, click), and it stops the sound whenever a call or
+  // another app takes it ("interrupted"); so every touch asks again until it runs
+  if (actx){ if (actx.state !== 'running' && !document.hidden){ try { const p = actx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e){} } return; }
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e){}   // so the mute switch of an iPhone does not silence the game
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
   try { actx = new AC(); } catch (e){ actx = null; return; }
   out = actx.createGain(); out.gain.value = .6; out.connect(actx.destination);
@@ -36,9 +39,11 @@ function audioStart(){
   const wl = actx.createOscillator(), wdp = actx.createGain(); wl.frequency.value = .13; wdp.gain.value = 220; wl.connect(wdp); wdp.connect(bp.frequency);
   windVol = actx.createGain(); windVol.gain.value = 0; ws.connect(bp); bp.connect(windVol); windVol.connect(out); ws.start(); wl.start();
 }
-addEventListener('pointerdown', audioStart); addEventListener('keydown', audioStart);
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) addEventListener(ev, audioStart, {capture:true, passive:true});
 document.addEventListener('visibilitychange', () => { if (!actx) return; if (document.hidden) actx.suspend(); else if (opts.sound) actx.resume(); });
 function setSound(on){ opts.sound = on; saveOpts(); if (on) audioStart(); else if (actx) actx.suspend(); }
+/* what the menu says about the sound: running, or waiting for a touch */
+const soundWord = () => !opts.sound ? 'aus' : !actx ? 'wartet auf ein Tippen' : actx.state === 'running' ? 'läuft' : 'angehalten, tippe einmal';
 
 /* ---------- small instruments */
 const now0 = () => actx.currentTime;

@@ -70,14 +70,14 @@ function koruruMarkup(){
   if (!kor) korNew();
   const can = korCanThrow(), S = kor.state === 'rolled' ? korScore() : null, picks = kor.bones.filter(b => b.pick).length;
   const step = kor.state === 'start' ? 1 : kor.state === 'rolled' ? (kor.rolls < 2 ? 2 : 3) : 4;
-  let h = head('Knöchelwurf', 'Fünf Knöchelchen, einmal am Tag. Solche Spiele kannte der ganze Pazifik; die Māori nannten es viel später Kōruru.');
-  h += `<ol class="kor-steps">${['Werfen', 'Knochen antippen und neu werfen (einmal, wenn du willst)', 'Nehmen'].map((t, i) => `<li class="${step === i + 1 ? 'now' : step > i + 1 ? 'done' : ''}">${t}</li>`).join('')}</ol>`;
+  let h = head('Knöchelwurf', 'Fünf Knöchelchen, einmal am Tag.');
+  h += `<ol class="kor-steps">${['Werfen', 'Antippen, neu werfen', 'Nehmen'].map((t, i) => `<li class="${step === i + 1 ? 'now' : step > i + 1 ? 'done' : ''}">${t}</li>`).join('')}</ol>`;
   h += `<canvas id="korC" class="kor" width="340" height="230" aria-label="Die Matte mit den Knochen"></canvas>`;
   if (!can && kor.state !== 'done') h += `<p class="sub">Heute ist schon geworfen. Morgen wieder.</p>`;
-  else if (kor.state === 'start') h += `<div class="rowx"><span class="sub">Jeder Knochen fällt mit einem von vier Zeichen nach oben: Punkt, Kreuz, Ring oder Striche.</span><button class="btn primary big" type="button" data-act="kthrow">Werfen</button></div>`;
+  else if (kor.state === 'start') h += `<div class="rowx"><span class="sub">Vier Zeichen: Punkt, Kreuz, Ring, Striche. Gleiche zählen.</span><button class="btn primary big" type="button" data-act="kthrow">Werfen</button></div>`;
   else if (kor.state === 'rolled') h += `<div class="kor-result"><b>${S.t}</b><span>bringt ${korGain(S)}</span></div><div class="rowx"><span class="sub">${kor.rolls < 2 ? (picks ? `${picks} markiert. Die werden neu geworfen.` : 'Tippe auf Knochen, die du neu werfen willst. Gold umrandet: die zählen gerade.') : 'Das war dein zweiter Wurf.'}</span><span class="chips">${kor.rolls < 2 ? `<button class="btn" type="button" data-act="kre"${picks ? '' : ' disabled'}>Neu werfen</button>` : ''}<button class="btn primary" type="button" data-act="ktake">Nehmen</button></span></div>`;
   else h += `<div class="kor-result"><b>${kor.msg}</b><span>Morgen wieder.</span></div>`;
-  h += `<details class="more"><summary>Was bringt was?</summary><ul class="kor-table">${KOR_TABLE.map(([a, b]) => `<li><b>${a}</b><span>${b}</span></li>`).join('')}</ul><p class="sub">Die Gaben wachsen mit dem Dorf.</p></details>`;
+  h += `<details class="more"><summary>Was bringt was?</summary><ul class="kor-table">${KOR_TABLE.map(([a, b]) => `<li><b>${a}</b><span>${b}</span></li>`).join('')}</ul><p class="sub">Die Gaben wachsen mit dem Dorf. Solche Spiele kannte der ganze Pazifik; die Māori nannten es viel später Kōruru.</p></details>`;
   return h;
 }
 function koruruMount(){

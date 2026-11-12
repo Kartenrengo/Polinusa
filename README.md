@@ -429,6 +429,12 @@ Fehlt Nahrung oder Wasser lange, packt eine Familie ihre Sachen und fährt im Ka
 Familie bleibt immer. Unter Rāhui ruht das Riff, nach dem Fest fangen die Fischer dreimal so viel. In der Palolo-Nacht
 gibt es Meeresfrüchte für alle.
 
+**Palmen tragen nicht endlos** (seit Version 73). Jede Palme reift etwa eine Nuss pro Minute, reif oder grün. Ein
+Erntehaus bekommt nur, was die Palmen in seiner Reichweite tragen, und teilt sie mit jedem anderen Erntehaus am selben Hain.
+Sind sie abgeerntet, wartet es („Palmen abgeerntet“) und schneidet solange Wedel. Eine Palme nährt also etwa einen
+Menschen: Wer wachsen will, pflanzt Palmen oder holt Essen vom Meer und vom Feld. Vorher konnten Erntehäuser allein ein
+ganzes Dorf ernähren; der Fischer war kaum nötig. Der Bot kommt damit nach 90 Minuten auf etwa 37 Menschen (vorher 63).
+
 ## Fischfang: die Fischerhütte
 
 Fischgestell und Riffsammler sind eins: die **Fischerhütte** am Strand. Zwei Leute arbeiten dort, und sie fahren **immer zu
@@ -1305,6 +1311,25 @@ Belegt sind davon für die Lapita-Zeit vor allem: Zahnstempel und Paddel-und-Amb
 mit Korallenfeilen, Erdöfen mit Kochsteinen, Ausbrennen und Behauen beim Kanubau. Sennitzöpfe, Tapa mit Musterbrett und
 Tanz kennt man aus späteren Berichten.
 
+## Eine Leiste, um die der Tag läuft (seit Version 73)
+
+Wind und Mond, die Muschel mit den Nachrichten und das Menü waren drei Kästchen. Jetzt sind sie **eine Leiste** oben links;
+Meldungen und Nachrichten hängen darunter und haben die ganze Breite. **Um ihren Rand läuft der Tag:** der Rand ist golden
+für den Tag, orange zum Abend und blau für die Nacht, und ein heller Strahl steht dort, wo die Sonne (oder der Mond) gerade
+ist. So sieht man, wie lange Tag oder Nacht noch dauern (ein Tag sind sechs Minuten). Ohne „Tag und Nacht“ ist der Rand
+einfach braun.
+
+**Weniger leerer Platz:** Die Tafel eines Arbeitsplatzes zeigt den Zustand, „Vorrang“ und „Bleiben“ in einer Zeile, darunter
+links „Braucht“ und „Macht“ und rechts daneben die Leute mit − und +. Der Knöchelwurf passt mit flacher Matte und kurzen
+Schritten auf ein Blatt, ohne Scrollen.
+
+**Der Ausbau eines Hauses ist zu sehen:** Ein Gerüst aus Bambus lehnt am Haus, ein Bündel Fasern fährt an einer Schnur
+hinauf, die neue Bindung wächst um das Haus, Späne fliegen, es klopft. Dann fällt das Gerüst, und die Blüten regnen.
+
+**Wenn etwas schiefgeht, läuft das Spiel weiter.** Früher hielt ein einziger Fehler beim Zeichnen oder im Klang das Spiel
+für immer an; man sah nur noch das Meer. Jetzt wird das nächste Bild trotzdem gezeichnet, die Karte neu aufgebaut, und eine
+Kamera ohne Ort springt zurück ins Dorf. Den letzten Fehler zeigt das Menü unter „Letzter Fehler“, damit man ihn melden kann.
+
 ## Das Dorfzentrum
 
 Seit Version 66 ist **das erste Haus das Dorfzentrum**: das Haus am Dorfplatz, in dem die Familie wohnt, die das Dorf
@@ -1460,6 +1485,20 @@ vom ersten Dach bis zu fünf Jahren auf den Inseln, darunter fünf Dörfer, alle
   als beim Fest; drei fallende Töne, wenn eine Familie fortfährt.
 - Klang, Musik und Tag und Nacht lassen sich im Menü einzeln ausschalten; die Musik hat dazu eine eigene Lautstärke
   (leise, mittel, laut).
+
+### Brandung statt Trommeln (seit Version 73)
+
+Die Musik des Alltags ist jetzt **die Brandung**: Jede Welle zieht an (ein tiefes Rauschen, das ein paar Sekunden
+anschwillt), bricht (ein kurzes helles Zischen) und läuft den Sand hinauf aus. Keine zwei Wellen sind gleich, sie kommen
+alle 7 bis 12 Sekunden, in der Sturmzeit und vor einem Sturm schwerer und dichter. Darunter summt leise eine Stimme, ab und
+zu fällt ein einzelner Holzton; nachts hört man nur das Meer. Trommeln, Rohre und Rasseln gibt es nur noch beim Fest und
+beim Regentanz. Was unten über Tageszeit, Jahr und Tonart steht, gilt weiter, nur leiser und langsamer (36 bis 44
+Schläge).
+
+**Klang auf dem iPhone.** Ein iPhone lässt Klang nur in einer fertigen Berührung beginnen und hält ihn an, wenn ein Anruf
+oder eine andere App dazwischenkommt. Bisher fragte das Spiel nur beim Aufsetzen des Fingers; darum lief die Musik oft
+nicht. Jetzt fragt es bei jeder Berührung (auch beim Loslassen und beim Klick), bis der Klang läuft, und stellt ihn so, dass
+der Stummschalter ihn nicht abstellt (wo das Gerät es erlaubt). Im Menü steht hinter „Klang“, ob er läuft.
 
 ### Der Soundtrack (seit Version 70)
 

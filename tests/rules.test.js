@@ -298,6 +298,17 @@ const r = await p.evaluate(()=>{
       want(H.stock.matten > 0, `trade: no mats arrived after ${n} steps`); out.push(`trade: mats at home after ${n} steps`);
       want(followAdvice === undefined || typeof followAdvice === 'function', 'trade: no advice handler'); }
     else out.push('trade: no island to trade with'); }
+  // palms bear only so many nuts; one bar with the day running round it; a picture that fails does not stop the game
+  { const H = isl('heimat'), e = H.buildings.find(q => q.kind === 'ernte' && !q.bt);
+    if (e){ const pk = e.v && e.v.pick; e.v = {...e.v, pick:'kokos'}; e.nuts = 0; const w = workState(H, e); want(w && w.why === 'nuts', 'nuts: a grove picked clean still gives');
+      nutTick(H, NUTS.every * 3); want(e.nuts > 0 && e.nuts <= nutPalms(H, e) * NUTS.keep + 1e-6, `nuts: do not ripen again: ${e.nuts}`); want(nutRate(H, e) > 0 && makeRate(H, 'kokos') <= H.buildings.filter(q => q.kind === 'ernte').reduce((t, q) => t + nutRate(H, q), 0) + 1e-6, 'nuts: more promised than the palms bear');
+      e.v = {...e.v}; if (pk) e.v.pick = pk; else delete e.v.pick; }
+    want($('hudbar') && $('hudbar').contains($('compass')) && $('hudbar').contains($('menuBtn')) && $('hudbar').contains($('newsBtn')), 'bar: wind, news and menu are not one');
+    opts.night = true; dayRing(); want(/^(Tag|Nacht), noch etwa \d+ Sekunden/.test($('hudbar').getAttribute('aria-label')) && $('hudbar').style.getPropertyValue('--ph') !== '', 'bar: the day does not run round it');
+    const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
+    draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
+    want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}
+    cam.x = NaN; camGuard(); want(cam.x === cam.x, 'camera: lost for good'); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){} }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

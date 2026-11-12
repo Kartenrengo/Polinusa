@@ -37,8 +37,9 @@ const {PAGE} = require('./lib');
       audioStart(); want(!!actx, 'audio: no context'); 
       if (actx){
         let t = actx.currentTime, total = 0;
-        for (const extra of [{}, {feast:true}, {storm:true}, {voyage:true, hawaiki:true}, {rainDance:true}]){ musicAt = 0; for (let k = 0; k < 40; k++){ total += musicSchedule(t, {...S0, ...extra}, rnd); t += 1.2; } }
-        out.push(`scheduled ${total} notes, context ${actx.state}`); want(total > 400, `audio: only ${total} notes scheduled`);
+        for (const extra of [{}, {feast:true}, {storm:true}, {voyage:true, hawaiki:true}, {rainDance:true}]){ musicAt = 0; waveAt = 0; for (let k = 0; k < 40; k++){ total += musicSchedule(t, {...S0, ...extra}, rnd); t += 1.2; } }
+        out.push(`scheduled ${total} notes, context ${actx.state}`); want(total > 150, `audio: only ${total} notes scheduled`);
+        { const M = musicMood(S0), Ws = Array.from({length:50}, () => waveOf(M, rnd)); want(Ws.every(W => W.gap >= 5 && W.gap <= 14 && W.v > 0 && W.v < .4 && W.rise > 1 && W.wash > 3), 'surf: a wave out of range'); want(waveOf(musicMood({...S0, storm:true}), () => .5).v > waveOf(M, () => .5).v, 'surf: no heavier sea in a storm'); want(musicMood(S0).pulse === 0 && musicMood({...S0, feast:true}).pulse > 0, 'music: drums outside a feast'); }
         setMusic(false); want(musicSchedule(t, S0, rnd) === 0, 'audio: music off still schedules'); setMusic(true);
         cycleMusicVol(); cycleMusicVol(); cycleMusicVol(); want((opts.mvol ?? 1) === 1, 'audio: the volume does not come round');
         openSheet('menu'); want(/Musik/.test($('sheetBody').textContent), 'menu: no music switch'); closeSheet();

@@ -215,7 +215,7 @@ function adviceOf(I, urgentOnly = false){
   { const s = immigFor(I); if (s && s.state === 'moored' && s.immig) return {t:'Ein Kanu fragt', d:`Familie ${s.immig.n} ${s.immig.from} möchte auf ${I.name} bleiben.`, immig:s.id, urgent:true}; }
   if (urgentOnly) return null;
   // a workplace whose good is short stands still for a reason the player can fix
-  const stillB = placesOf(I).find(b => b.idle && ['near', 'dep', 'trees', 'use'].includes(b.idle.why) && prodOfB(b) && (I.stock[prodOfB(b)] || 0) < 5);
+  const stillB = placesOf(I).find(b => b.idle && ['near', 'dep', 'trees', 'use', 'nuts'].includes(b.idle.why) && prodOfB(b) && (I.stock[prodOfB(b)] || 0) < 5);
   if (stillB){ const w = stillB.idle.why === 'use' && stillB.idle.k ? needWay(I, stillB.idle.k) : null;   // what it lacks, and the building that makes it
     return {t:`${KINDS[stillB.kind].n} steht still`, d:stillB.idle.text + (stillB.idle.why === 'near' || stillB.idle.why === 'trees' ? ' Versetze den Platz dorthin.' : w && w.text ? ` ${w.text}.` : ''), goto:w && (w.build || w.fleet) ? null : stillB.id, build:w && w.build, fleet:w && w.fleet}; }
   const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));

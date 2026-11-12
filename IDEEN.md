@@ -61,6 +61,16 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
 
+## Offen aus der Runde „Brandung, eine Leiste, Palmen“ (Version 73)
+
+- **Absturz „nur noch Meer“:** Die Ursache ist nicht gefunden (im Dauertest mit Zeichnen trat nichts auf). Das Spiel fängt
+  Fehler jetzt ab und zeigt den letzten im Menü. Kommt es wieder vor: den Text unter „Letzter Fehler“ schicken.
+- **Holz:** Die Frage „Hütten mit weniger Holz bauen, als man hat“ ist noch nicht verstanden. Holz ist meist bis zum Rand
+  voll; vielleicht braucht es mehr, wofür man Holz ausgibt, oder teurere Häuser.
+- **Die zwei Links** (Reddit, itch.io „Nightshoal“) waren von hier aus gesperrt. Ihre Mechaniken sind nicht eingeflossen.
+- **Musik hören:** Brandung und iPhone-Start sind nur gemessen und im Test-Browser geprüft, nicht auf einem iPhone gehört.
+- **Nüsse an den Palmen zeigen:** abgeerntete Palmen könnten ohne Nüsse gezeichnet sein.
+
 ## Offen aus der Runde „Mittelspiel, Soundtrack und Geschichten“ (Version 70)
 
 - **Der Bot kommt nicht zum Meisterhaus.** Er baut jetzt ein Kanu (Beil und Harz bekommt er geschenkt), gründet ein zweites Dorf
