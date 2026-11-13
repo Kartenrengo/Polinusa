@@ -374,13 +374,18 @@ function figureArt(look, old, part){
   const low = `<ellipse cy=".2" rx="2.8" ry=".85" fill="#1F140D" opacity=".25"/>` +
     `<path d="M-1.5-3.9H1.5L2.4-.5Q0 .2-2.4-.5Z" fill="${w0}" ${ink}/>` +
     `<path d="M-1.95-2Q0-1.5 1.95-2" fill="none" stroke="${w1}" stroke-width=".7"/><path d="M-1.2-1.15h.01M0-1h.01M1.2-1.15h.01" stroke="${w1}" stroke-width=".5" stroke-linecap="round"/>`;
-  if (part === 'low') return low;
+  if (part === 'lowx') return low;       // without the hem fringe: close up it is drawn by hand (render.js hemFringe)
+  const fringe = `<path d="M-1.7-.35v.55M-.85-.2v.66M0-.15v.55M.85-.2v.66M1.7-.35v.55" stroke="${w1}" stroke-width=".38" stroke-linecap="round"/>`;
+  if (part === 'low') return low + fringe;
   const up = `<path d="M-1.5-3.9L-1.95-6.5Q-2-7.3-1.1-7.4H1.1Q2-7.3 1.95-6.5L1.5-3.9Z" fill="${skin}" ${ink}/>` +
     `<path d="M.3-7.3Q1.8-7.2 1.85-6.4L1.45-4" fill="none" stroke="#2B1D14" stroke-opacity=".18" stroke-width=".8"/>` +
     `<path d="M-1.1-7Q0-5.9 1.1-7" fill="none" stroke="#F1EBD9" stroke-width=".45" stroke-dasharray=".1 .55" stroke-linecap="round"/>` +
     `${look[3] === 't' ? '<path d="M-1.5-5.7L-1-6.2L-.5-5.7L0-6.2L.5-5.7L1-6.2L1.5-5.7" fill="none" stroke="#2B1D14" stroke-width=".32" stroke-linejoin="round"/><path d="M-1.25-4.75h.01M-.42-4.65h.01M.42-4.65h.01M1.25-4.75h.01" stroke="#2B1D14" stroke-width=".42" stroke-linecap="round"/>' : ''}<circle cy="-8.9" r="1.6" fill="${skin}" ${ink}/><circle cx="-.38" cy="-8.85" r=".23" fill="#2B1D14"/><circle cx=".78" cy="-8.85" r=".23" fill="#2B1D14"/>` +
-    `<path d="M-1.62-8.8Q-1.7-10.6 0-10.6Q1.5-10.6 1.62-9.3Q.9-9.9.1-9.8Q-.9-9.7-1.62-8.8Z" fill="${hair}" stroke="${old ? '#2B1D14' : 'none'}" stroke-width=".25"/>` + HAIR[+look[2]].replace(/#1E1410/g, hair);
-  return part === 'up' ? up : low + up;
+    `<path d="M-1.62-8.8Q-1.7-10.6 0-10.6Q1.5-10.6 1.62-9.3Q.9-9.9.1-9.8Q-.9-9.7-1.62-8.8Z" fill="${hair}" stroke="${old ? '#2B1D14' : 'none'}" stroke-width=".25"/>`;
+  const acc = HAIR[+look[2]].replace(/#1E1410/g, hair);
+  if (part === 'upn') return up;      // body and head without the hair knot, flower or long hair: close up they hang apart and swing (render.js, secondary motion)
+  if (part === 'acc') return acc;     // only that
+  return part === 'up' ? up + acc : low + fringe + up + acc;
 }
 /* closed eyes: a short skin line over the two dots */
 const blinkArt = look => `<path d="M-.7-8.85H1.05" stroke="${SKINS[+look[0]]}" stroke-width=".56" stroke-linecap="round"/>`;

@@ -776,6 +776,7 @@ function lightsOf(v, now){
       else if (b.kind === 'toepfer') L.push({x:b.x - 11, y:b.y + 2, r:16 * fl(b.id), c:'255,130,50'});
     }
     for (const w of walkers) if (w.isl === I.id && w.boat && w.job && w.job.type === 'fish' && ptIn(w.x, w.y, grow(v, 40))) L.push({x:w.x + (w.left ? -5 : 5), y:w.y - 7, r:24 * fl(w.x | 0), c:'255,165,70'});   // torch fishing
+    torchLights(I, v, L, now, fl);   // and the fishers who walk with a torch
   }
   return L;
 }
@@ -1183,22 +1184,27 @@ function drawPeople(c, v, now){
     // across the lagoon they paddle a dugout
     if (w.boat || (w.paddle && !landAt(isl(w.isl), w))){ drawBoatFig(c, w, now); continue; }
     if (w.swim && swimming(isl(w.isl), w, now)){ drawSwimmer(c, w, now); continue; }
-    // a nap in the shade: lying on a mat, breathing slowly
+    // a nap in the shade: lying down on a mat takes a moment, then slow breathing, closed eyes
+    const lk = lieOf(w, now), le = smooth01(lk), sk = sitOf(w, now), se = smooth01(sk);
     if (w.lie && !w.moving){
-      c.save(); c.translate(w.x, w.y); if (w.left) c.scale(-1, 1); c.fillStyle = '#DCC48C'; c.fill(MAT_L); stroke(c, MAT_L, '#2B1D14', .35);
+      c.save(); c.translate(w.x, w.y); if (w.left) c.scale(-1, 1); const ga = c.globalAlpha; c.globalAlpha = ga * Math.min(1, le * 1.8); c.fillStyle = '#DCC48C'; c.fill(MAT_L); stroke(c, MAT_L, '#2B1D14', .35); c.globalAlpha = ga;
       if (w.child) c.scale(.7, .7);
-      c.save(); c.translate(4.6, -1.3); c.rotate(-Math.PI / 2); c.scale(.8, 1 + (reduced ? 0 : Math.sin(now / 1100 + w.phase) * .025)); figOf(c, w); c.restore();
-      if (!reduced){ const q = ((now / 2600) + w.x * .1) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2.2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', -4.6 + q * 2, -3 - q * 6); c.globalAlpha = 1; }
+      c.save(); c.translate(4.6 * le, -1.3 * le); c.rotate(-Math.PI / 2 * le); c.scale(1 - .2 * le + (reduced ? 0 : Math.sin(now / 1700 + w.phase) * .03 * le), 1 + (reduced ? 0 : Math.sin(now / 1700 + w.phase) * .012 * le)); figOf(c, w);
+      if (le > .85 && !reduced && quality >= 2 && cam.z >= BODY_Z) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
+      c.restore();
+      if (!reduced && le > .9){ const q = ((now / 2600) + w.x * .1) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2.2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', -4.6 + q * 2, -3 - q * 6); c.globalAlpha = 1; }
       c.restore(); continue;
     }
+    restMat(c, w, sk, lk);   // the mat stays where it was while somebody gets up
     const up = CLIMB_FX.has(w.fx) && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
     const P = walkerPose(w, now, up), dir = w.left ? -1 : 1;
     const gg = w._g ?? (w.moving ? 1 : 0), bob = P ? P.bob : gg > .02 && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) * gg : 0, rot = P ? P.rot + P.lean * dir : gg > .02 && !reduced && !up ? Math.sin(w.phase) * .05 * gg : 0;
     // up at the crown a nut drops now and then
     if (up > 12 && !reduced){ const f = (now / 900 + w.x) % 1; c.fillStyle = '#7A5434'; c.beginPath(); c.arc(w.x + 3, w.y - up - 2 + f * (up + 1), .9, 0, TAU); c.fill(); }
     c.save(); c.translate(w.x + (w._fa < 1 && !reduced ? (w.asleep ? 1 : -1) * dir * (1 - w._fa) * 2.4 : 0), w.y + bob - up + (w._fa < 1 && !reduced ? (1 - w._fa) * .8 : 0)); if (rot) c.rotate(rot); if (P ? P.sx !== 1 : w.left) c.scale(P ? P.sx : -1, 1);
-    // someone sitting on a mat in front of a house; children are smaller
-    if (w.sit && (!w.moving || w.busy)){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
+    // someone sitting on a mat in front of a house (restMat): sitting down and getting up are eased; children are smaller
+    if (le > .01){ c.translate(4.6 * le, -1.3 * le); c.rotate(-Math.PI / 2 * le); }
+    if (se > .005) c.scale(1, 1 - .22 * se - .045 * Math.sin(se * Math.PI) * (w.sit && (!w.moving || w.busy) ? 1 : -1));
     if (w.child) c.scale(.7, .7);
     // a load: on the head or the shoulder, or two baskets on a carrying pole; builders drag a log behind them
     const drag = w.carry === 'holz' && w.pole && w.job && BUILD_JOBS.has(w.job.type), pole = !drag && w.pole && POLE_LOADS.has(w.carry);
@@ -1208,14 +1214,15 @@ function drawPeople(c, v, now){
     w._sq = 0; const ln = show && LEAN[w.fx] ? LEAN[w.fx](reduced ? .35 : now / 1000 + (w.x % 7), w, now) : 0; w._ln = ln;
     if (ln){ c.save(); c.rotate(ln); if (w._sq) c.scale(1, w._sq); }
     if (P) drawWalkerBody(c, w, P); else blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
-    const tool = w.old ? 'stab' : !w.carry && w.job && !(at && NOTOOL.has(w.fx)) && w.job.tool;
+    const torch = w.job && w.job.type === 'fish' && torchOn(w), tool = w.old ? 'stab' : !torch && !w.carry && w.job && !(at && NOTOOL.has(w.fx)) && w.job.tool;
     // at work the adze and the digging stick swing with the stroke (workBeat); the old one's staff swings with the step
     const stab = P && tool === 'stab' && P.stab; if (stab){ c.save(); c.translate(1.9, -7.4); c.rotate(stab); c.translate(-1.9, 7.4); }
     if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? workBeat(w, now).sw * .4 : 0; if (sw){ c.save(); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
     if (stab) c.restore();
+    if (torch) torchHeld(c, w, now, at, P);
     if (ln) c.restore();
     if (show) workFx(c, w, now);
-    if (pole) poleLoads(c, w, P ? P.swing : 0); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag){ if (P) headLoad(c, w, P); else blit(c, 'load|' + w.carry, LOADS[w.carry]); }
+    if (pole) poleLoads(c, w, P ? P.swing : 0, P ? P.pole : 0); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag){ if (P) headLoad(c, w, P); else blit(c, 'load|' + w.carry, LOADS[w.carry]); }
     if (w.busy && w.job && w.job.type === 'wade'){ c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); }
     // who works at the selected place, or the one you tapped: a small mark over the head
     if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
@@ -1329,6 +1336,154 @@ const POLE_LOADS = new Set(['taro', 'frucht', 'nuss', 'eier', 'muschel', 'stein'
    whole figure is one bitmap as before. */
 const BODY_Z = 1.6, WAIST = 3.9, FINE_MAX = [0, 14, 28];   // how many people a frame get the fine body, by drawing quality
 let fineFrame = -1, finePeople = 0;
+/* ---------- more life in the people (version 77). All of it is fine detail: it needs the fine body (walkerPose), so it is only
+   there close up, for the first FINE_MAX people of a frame (by drawing quality), and never with reduced motion.
+   - secondary motion: hair knot, flower or long hair, the shell on the necklace, the hem fringe and a load on the head
+     follow the body on a soft spring: they lag behind a quick move and settle after it
+   - at work the hips shift with the stroke: gathering, strike (the knees take it), a small rebound that settles
+   - carrying: the load bounces against the step; heavy loads (stone, obsidian, logs) bend the walker down and slow the step
+   - head and shoulders turn to a neighbour when people chat or listen; children spin; the old lean on the stick
+   - faces: a mouth that opens for talking, singing, shouting and chewing; eyes closed when dozing or in song
+   - sitting down and getting up (and lying down on a mat) are short eased motions
+   - at night fishers on foot carry a torch whose flickering light warms their face */
+const HEAVY_LOADS = new Set(['stein', 'obsidian', 'holz']);
+const MOUTH_FX = {chat:'talk', story:'talk', kava:'talk', stringshow:'talk', siva:'sing', clapd:'sing', clap:'sing', hop:'shout', eat:'chew'};
+const HAIR_PIVOT = [[-.3, -10.4, -1], [-1.4, -9.9, -1], [-1.6, -9.2, 1]];   // hair knot, flower, long hair: the point they hang from, and which way they swing against the lean
+const HEM_X = [-1.7, -.85, 0, .85, 1.7], HEM_Y = [-.35, -.2, -.15, -.2, -.35];
+/* a damped spring: the position follows the target; the lag (target - position) is what moves the loose things */
+function springLag(S, k, target, dt, w0, z){
+  let s = S[k]; if (!s) s = S[k] = {a:target, v:0};
+  const n = Math.max(1, Math.ceil(dt / 12)), h = dt / 1000 / n;
+  for (let i = 0; i < n; i++){ s.v += (w0 * w0 * (target - s.a) - 2 * z * w0 * s.v) * h; s.a += s.v * h; }
+  return clamp(target - s.a, -.4, .4);
+}
+const torchOn = w => !w.boat && !w.ride && w.job && w.job.type === 'fish' && nightLevel() > .15;
+const talkGate = (w, now) => Math.sin(now / 830 + w._sd * 40) > -.25;
+function mouthOf(w, now){
+  const k = MOUTH_FX[w.fx], sd = w._sd; if (!k) return 0;
+  if (k === 'talk') return talkGate(w, now) ? (.12 + .88 * Math.abs(Math.sin(now / 110 + sd * 77))) * (.7 + .3 * Math.sin(now / 370)) : 0;
+  if (k === 'sing') return Math.sin(now / 2400 + sd * 5) > -.7 ? .5 + .5 * Math.sin(now / 310 + sd * 9) : 0;
+  if (k === 'shout') return Math.sin(now / 260 + sd * 3) > .2 ? .9 : .1;
+  return Math.sin(now / 1900 + sd * 11) > -.3 ? .3 * Math.abs(Math.sin(now / 170 + sd * 8)) : 0;   // chewing
+}
+/* who is next to somebody who sits or stands about: the nearest other person, looked up now and then */
+function neighbourOf(w, now){
+  if (now - (w._nbAt || -1e9) < 700) return w._nb;
+  w._nbAt = now; let best = null, bd = 20 * 20;
+  for (const o of walkers){ if (o === w || o.isl !== w.isl || o.boat || o.ride || o.asleep) continue; const dx = o.x - w.x, dy = (o.y - w.y) * 2, d = dx * dx + dy * dy; if (d < bd){ bd = d; best = o; } }
+  return w._nb = best;
+}
+/* everything the fine body adds to the pose P of walkerPose. mv: moving, gt: how far the step has eased in */
+function fineExtras(w, P, now, mv, gt, at){
+  const sd = w._sd, kid = w.child, old = w.old, q2 = quality >= 2;
+  const dt = Math.min(64, now - (w._xAt || now)); if (now - (w._xAt || 0) > 300 || !w._spg) w._spg = {}; w._xAt = now;
+  P.upDx = 0; P.ldDy = 0; P.pole = 0; P.hs = 1; P.mouth = 0; P.speak = false; P.shut = false; P.fire = 0; P.lagU = 0; P.lagH = 0; P.lagY = 0;
+  const ph = w.phase * (old ? .8 : 1), WK = at && !w.dance && !w.hop && WORK[w.fx], B = WK ? workBeat(w, now) : null;
+  if (WK){
+    // the hips shift with the stroke: gathering (a small crouch), the strike (the knees take it), a rebound that settles
+    P.bob = P.rot = 0;
+    const D = WK;
+    if (D.m === 'hit'){
+      const sw = B.pz ? 0 : B.sw, side = (B.nn & 1) ? 1 : -1;
+      P.upDx = sw * .22 + side * .06; P.skew = -sw * .09;
+      P.upDy += .3 * Math.max(0, -sw) ** 2;
+      if (!B.pz){ if (B.age < 150) P.upDy += .5 * Math.sin(B.age / 150 * Math.PI); P.upRot -= .05 * Math.exp(-B.age / 190) * Math.sin(B.age / 55); }
+    } else if (D.m === 'rub'){ P.upDx = B.r * .2; P.skew = -B.r * .06; P.upRot += B.r * .012; }
+    else if (D.m === 'nod'){ P.upDx = Math.sin(B.p * TAU) * .1; P.skew = -Math.sin(B.p * TAU) * .03; }
+    else { P.upDx = -(B.ls - D.bs) * 1.1; }
+  } else if (at && !w.dance && !w.hop){ P.bob *= .3; P.rot *= .3; }
+  // standing: the weight goes from one hip to the other, slowly
+  if (!mv || (at && !WK)){ const s = Math.sin(now / 2300 + sd * 30); P.upDx += .14 * s; P.skew += -.02 * s; }
+  if (old && !mv){   // the old lean on the stick, and now and then breathe deeply
+    const k = 1 - gt; P.lean += .07 * k; P.upRot += .03 * k; P.stab = -P.lean;
+    const bs = (Math.sin(now / 5200 + sd * 20) - .93) / .07; if (bs > 0){ P.upDy -= .3 * bs; P.breath += .02 * bs; }
+  }
+  // carrying
+  if (w.carry){
+    const heavy = HEAVY_LOADS.has(w.carry), g = mv ? gt : 0;
+    if (heavy && g){ P.bob *= 1 - .4 * g; P.upDy += .35 * g; P.upRot += .05 * g; P.rot *= 1 - .4 * g; }
+    P.ldDy = (heavy ? .5 : .32) * Math.abs(Math.sin(ph - .55)) * g;          // the load comes down as the body rises
+    P.pole = -.45 * Math.cos(2 * ph - .8) * g * (heavy ? 1.2 : 1);        // and the pole flexes
+  }
+  // children spin now and then, in play or on the way
+  if (kid && ((w.hop && w.fx) || w.dance || (mv && gt > .9 && !w.carry))){
+    const cyc = w.hop || w.dance ? 2600 + sd * 800 : 4600 + sd * 1200, u = (now + sd * 3000) / cyc, n = Math.floor(u), q = (u - n) * cyc / 520;
+    if (q < 1 && (w.hop || w.dance || hash01(n, sd * 99) < .55)){ const a = q * TAU, x = Math.cos(a); P.sx *= Math.abs(x) < .12 ? (x < 0 ? -.12 : .12) : x; P.bob -= Math.sin(q * Math.PI) * .8; }
+  }
+  // head and shoulders turn to the neighbour while people sit or stand about
+  const idle = !mv && !WK && w.busy, nb = idle ? neighbourOf(w, now) : null;
+  const tg = nb && !(nb.moving && !nb.busy) && Math.abs(nb.x - w.x) > 1.5 ? ((nb.x > w.x) === !w.left ? 1 : -1) : 1;
+  if (w._hs === undefined || now - (w._hsAt || 0) > 400) w._hs = 1;
+  w._hsAt = now; if (w._hs !== tg){ const st = dt / 240 * 2; w._hs = Math.abs(tg - w._hs) < st ? tg : w._hs + Math.sign(tg - w._hs) * st; fxLive = true; }
+  P.hs = w._hs; if (Math.abs(P.hs) < .12) P.hs = P.hs < 0 ? -.12 : .12;
+  // the loose things: they lag behind the body and settle
+  const S = w._spg, drive = P.upRot + P.rot + (w._ln || 0) + P.upDx * .25;
+  P.lagU = springLag(S, 'u', drive, dt, 14, .3);
+  P.lagY = springLag(S, 'y', P.bob + P.upDy, dt, 18, .3);
+  if (q2) P.lagH = springLag(S, 'h', P.skew * 3.9, dt, 12, .28);
+  // faces
+  if (q2){
+    const sp = (at || w.dance || w.hop || w.cheer) && w.fx;
+    if (sp && MOUTH_FX[w.fx]){ P.speak = true; P.mouth = mouthOf(w, now); if (MOUTH_FX[w.fx] === 'sing' && Math.sin(now / 1700 + sd * 9) > .55) P.shut = true; }
+    if (w.fx === 'doze' && at) P.shut = true;
+  }
+  if (torchOn(w)){ P.fire = .6 + .22 * Math.sin(now / 83 + sd * 9) + .14 * Math.sin(now / 37 + sd * 5) + .08 * Math.sin(now / 19); }
+}
+/* the fringe at the hem hangs from the wrap and swings against its sway */
+function hemFringe(c, w, P){
+  const wc = WRAPS[+w.look[1]][1], a = clamp(P.lagH * .9, -.35, .35), sn = Math.sin(a), cs = Math.cos(a);
+  c.strokeStyle = wc; c.lineWidth = .38; c.lineCap = 'round'; c.beginPath();
+  for (let i = 0; i < 5; i++){ const x = HEM_X[i], y = HEM_Y[i], k = 1 + (i % 2) * .2; c.moveTo(x, y); c.lineTo(x - sn * .55 * k, y + cs * .55 * k); }
+  c.stroke();
+}
+/* hair and the shell on the necklace, in the frame of the upper body */
+function hairSwing(c, w, P){
+  const H = HAIR_PIVOT[+w.look[2]], a = P.lagU * 3.2 * H[2];
+  c.save(); c.translate(H[0], H[1]); c.rotate(clamp(a, -.6, .6)); c.translate(-H[0], -H[1]); blit(c, 'acc|' + w.look[2] + (w.old ? 'o' : ''), () => figureArt(w.look, w.old, 'acc')); c.restore();
+}
+function shellSwing(c, P){
+  const a = clamp(P.lagU * 3, -.7, .7), x = -Math.sin(a) * .7, y = -6.45 + Math.cos(a) * .7;
+  c.strokeStyle = '#F1EBD9'; c.lineWidth = .22; c.beginPath(); c.moveTo(0, -6.45); c.lineTo(x, y); c.stroke();
+  c.fillStyle = '#F3E9CE'; c.beginPath(); c.ellipse(x, y + .12, .26, .34, a, 0, TAU); c.fill(); c.strokeStyle = '#2B1D14'; c.lineWidth = .18; c.stroke();
+}
+/* the face: closed eyes, a mouth, and the warm light of a torch */
+function faceFx(c, w, P){
+  if (P.shut || P.blink) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
+  if (P.speak){   // a closed mouth is a short line, an open one a dark oval
+    const o = P.mouth; c.save(); c.globalAlpha *= o > .05 ? 1 : .55; c.fillStyle = '#3A1812'; c.beginPath(); c.ellipse(.52, -7.95, .22 + .1 * o, .05 + .17 * o, 0, 0, TAU); c.fill(); c.restore();
+  }
+  if (P.fire){
+    c.save(); c.beginPath(); c.arc(0, -8.9, 1.55, 0, TAU); c.clip();
+    const d = w._tdir || 1; c.fillStyle = `rgba(255,176,82,${Math.min(.6, P.fire * .5)})`; c.beginPath(); c.arc(d * 2.6, -9, 2.6, 0, TAU); c.fill(); c.restore();
+  }
+}
+/* the torch a fisher carries on foot at night; on the spot of the spear fishing it stands planted in the sand */
+function torchHeld(c, w, now, at, P){
+  const planted = at && NOTOOL.has(w.fx), x0 = planted ? -3.6 : 2.1, y0 = planted ? .2 : -3.8, x1 = planted ? -3.9 : 3, y1 = planted ? -6.6 : -8.4;
+  w._tdir = planted ? -1 : 1;
+  stroke(c, new Path2D(`M${x0} ${y0}L${x1} ${y1}`), '#2B1D14', 1, null, 'round'); stroke(c, new Path2D(`M${x0} ${y0}L${x1} ${y1}`), '#9C7246', .45, null, 'round');
+  const f = reduced ? 1 : 1 + Math.sin(now / 70 + w.x) * .12 + Math.sin(now / 33 + w.x * 2) * .08, s = reduced ? 0 : Math.sin(now / 150 + w.x) * .12;
+  c.save(); c.translate(x1, y1 + .2); c.rotate(s); c.scale(.3 * f, .3 * f); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore();
+  if (!reduced && quality){ const q = ((now / 700) + w.x * .3) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#F3B35A'; c.beginPath(); c.arc(x1 + Math.sin(q * 6 + w.x) * .6, y1 - 1.2 - q * 2.4, .16, 0, TAU); c.fill(); c.globalAlpha = 1; }
+}
+/* light for the lamps of the night layer (lightsOf) */
+function torchLights(I, v, L, now, fl){
+  for (const w of walkers) if (w.isl === I.id && !w.asleep && ptIn(w.x, w.y, grow(v, 40)) && torchOn(w)) L.push({x:w.x + (w._tdir === -1 ? -3.6 : (w.left ? -3 : 3)), y:w.y - 8, r:19 * fl((w.x | 0) + 7), c:'255,165,70'});
+}
+/* sitting down and getting up, lying down on a mat and rising: eased, not a jump. 0 stands .. 1 sits / lies */
+function restEase(w, now, key, tg, secIn, secOut){
+  const k = '_' + key, at = k + 'At', dt = Math.min(80, now - (w[at] || now)), cold = now - (w[at] || 0) > 600; w[at] = now;
+  if (w[k] === undefined || cold || reduced) w[k] = tg;
+  else if (w[k] !== tg){ w[k] = tg > w[k] ? Math.min(1, w[k] + dt / secIn) : Math.max(0, w[k] - dt / secOut); fxLive = true; }
+  return w[k];
+}
+function sitOf(w, now){ const tg = w.sit && (!w.moving || w.busy) ? 1 : 0; if (tg){ w._skx = w.x; w._sky = w.y; } return restEase(w, now, 'sk', tg, 380, 300); }
+function lieOf(w, now){ const tg = w.lie && !w.moving ? 1 : 0; if (tg){ w._lkx = w.x; w._lky = w.y; } return restEase(w, now, 'lk', tg, 600, 450); }
+/* the mat stays where the person sat or lay while they get up */
+function restMat(c, w, sk, lk){
+  if (sk > .01 && w._skx !== undefined){ c.save(); c.translate(w._skx, w._sky); c.globalAlpha *= Math.min(1, sk * 1.8); c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.restore(); }
+  if (lk > .01 && w._lkx !== undefined){ c.save(); c.translate(w._lkx, w._lky); c.globalAlpha *= Math.min(1, lk * 1.8); c.fillStyle = '#DCC48C'; c.fill(MAT_L); stroke(c, MAT_L, '#2B1D14', .35); c.restore(); }
+}
 function walkerPose(w, now, up){
   if (reduced || cam.z < BODY_Z || up || !quality) return null;   // quality 0 is a slow device: one bitmap per person as before
   if (fineFrame !== frameNo){ fineFrame = frameNo; finePeople = 0; }
@@ -1366,24 +1521,31 @@ function walkerPose(w, now, up){
   }
   const sq = w._stopAt ? (now - w._stopAt) / 280 : 1;
   if (sq < 1 && !mv) P.upDy += .45 * Math.sin(Math.PI * sq);
+  fineExtras(w, P, now, mv, gt, at);
   return P;
 }
 function drawWalkerBody(c, w, P){
-  const K = w.look + (w.old ? 'o' : '');
+  const K = w.look + (w.old ? 'o' : ''), q2 = quality >= 2;
   c.save(); if (P.skew){ c.translate(0, -WAIST); c.transform(1, 0, P.skew, 1, 0, 0); c.translate(0, WAIST); }   // the wrap sways around the waist
-  blit(c, 'figl|' + K, () => figureArt(w.look, w.old, 'low')); c.restore();
-  c.save(); c.translate(0, -WAIST); if (P.upRot) c.rotate(P.upRot); if (P.breath !== 1) c.scale(1, P.breath); c.translate(0, WAIST + P.upDy);
-  blit(c, 'figu|' + K, () => figureArt(w.look, w.old, 'up'));
-  if (P.blink) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
+  if (q2){ blit(c, 'figlx|' + K, () => figureArt(w.look, w.old, 'lowx')); hemFringe(c, w, P); }   // the hem fringe swings on its own
+  else blit(c, 'figl|' + K, () => figureArt(w.look, w.old, 'low'));
+  c.restore();
+  c.save(); c.translate(0, -WAIST); if (P.upRot) c.rotate(P.upRot); if (P.breath !== 1) c.scale(1, P.breath); c.translate(P.upDx, WAIST + P.upDy);
+  if (P.hs !== 1) c.scale(P.hs, 1);   // head and shoulders turn to a neighbour
+  blit(c, 'figun|' + K, () => figureArt(w.look, w.old, 'upn'));   // without the hair knot, flower or long hair: they swing apart
+  if (q2){ if (+w.look[1] % 2) shellSwing(c, P); faceFx(c, w, P); } else if (P.blink) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
+  hairSwing(c, w, P);
   c.restore();
 }
 /* a load on the head follows the upper body and sways against the step */
 function headLoad(c, w, P){
-  c.save(); c.translate(0, -WAIST); c.rotate(P.upRot + P.ldRot); c.translate(0, WAIST + P.upDy); blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore();
+  c.save(); c.translate(0, -WAIST); c.rotate(P.upRot + P.ldRot); c.translate(P.upDx, WAIST + P.upDy + P.ldDy);
+  if (P.lagU){ c.translate(0, -10.4); c.rotate(-P.lagU * 2.4); c.translate(0, 10.4); }   // the load lags behind a quick move and settles
+  blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore();
 }
-function poleLoads(c, w, sw = 0){
+function poleLoads(c, w, sw = 0, bn = 0){
   stroke(c, new Path2D('M-5.2-7.9L5.2-7.3'), '#2B1D14', 1, null, 'round'); stroke(c, new Path2D('M-5.2-7.9L5.2-7.3'), '#9C7246', .5, null, 'round');
-  for (const dx of [-4.4, 4.4]){ stroke(c, new Path2D(`M${dx}-7.6L${dx}-5.4`), '#6B4428', .3); c.save(); if (sw){ c.translate(dx, -7.6); c.rotate(sw); c.translate(-dx, 7.6); } c.translate(dx, 4.36); c.scale(.8, .8); blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore(); }
+  for (const dx of [-4.4, 4.4]){ stroke(c, new Path2D(`M${dx}-7.6L${dx}-5.4`), '#6B4428', .3); c.save(); if (sw){ c.translate(dx, -7.6); c.rotate(sw); c.translate(-dx, 7.6); } c.translate(dx, 4.36 + bn); c.scale(.8, .8); blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore(); }
 }
 function dragLog(c, w, now){
   stroke(c, new Path2D('M-1.2-4.4L-3.6-3.4'), '#B08048', .35);   // the rope
