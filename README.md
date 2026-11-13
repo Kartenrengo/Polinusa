@@ -337,6 +337,15 @@ Einfach und nach Bedeutung geordnet:
   Kanu kommt. Antippen öffnet die Übersicht.
 - **Unten:** der nächste Schritt in einer Zeile, rot, wenn es dringend ist. Antippen zeigt den Weg. Daneben „Bauen“ und
   „Flotte“.
+- **Die Leiste mit Wind, Muschel und Menü** (seit Version 74): Um ihren Rand läuft der Tag. Was vorbei ist, ist blass; was
+  kommt, ist golden für den Tag und blau für die Nacht; eine Sonne oder ein Mond wandert mit. Darunter steht „Tag noch
+  2:43“ oder „Nacht noch 0:51“ (bei doppelter Geschwindigkeit halb so lang). Jede Nachricht rollt kurz aus, schrumpft
+  dann und fliegt in die Muschel, die nickt. Dort bleiben die letzten 120, auch nach dem Schließen des Spiels, mit Jahr,
+  Mond und wie oft sie kam.
+- **Bauen:** Wer etwas zum Bauen wählt, sieht unten neben den Kosten eine Reihe Kacheln: **Braucht** (grün, wenn im Lager,
+  rot, wenn nicht) → **Macht**, und wie viele dort arbeiten. In der Übersicht zeigt der Reiter **Werk** jede Werkstätte in
+  einer Zeile: was sie braucht, was sie macht und ob sie läuft („läuft“, „fehlt Holz“, „Lager voll“, „keine Leute“).
+  Antippen führt hin.
 - **Ein Haus antippen** zeigt alles auf einem Blatt, **ohne Scrollen**, auch auf kleinen Handys (320×568 bis 390×844
   werden im Handy-Test gemessen), und **in Worten statt Zeichen** (seit Version 66):
   - Oben der Name der Familie, darunter in einer Zeile „Familienhaus · 4 von 6 Plätzen“.
@@ -414,8 +423,32 @@ Neben Anno gestellt, sieht und fühlt sich Polinusa anders an:
 
 ## Essen
 
-Alles Essen zählt als **Nahrung**. Oben steht nur eine Zahl, in der Übersicht und im Lager darunter jede Sorte. Jeder
-Bewohner isst 1,0 pro Minute (bis Version 68 waren es 1,2), und die Leute essen das, wovon am meisten da ist.
+Alles Essen zählt als **Nahrung**. Oben steht nur eine Zahl, in der Übersicht und im Lager darunter jede Sorte.
+
+**Das Morgenmahl** (seit Version 74). Bei Tagesanbruch isst und trinkt **jeder Mensch eine Portion**, auch die Kinder,
+und dann nichts mehr bis zum nächsten Morgen. Wer im Familienhaus oder besser wohnt, bekommt Gekochtes aus dem Erdofen,
+solange es reicht; die anderen essen, wovon am meisten da ist. Zuerst die Kinder und die Alten, dann die Familien nach der
+Zeit, die sie schon hier leben. Wer leer ausgeht, **arbeitet an dem Tag langsamer**: ohne Essen oder ohne Wasser mit drei
+Vierteln der Kraft, ohne beides mit gut der Hälfte (auch beim Bauen). Fehlt es drei Morgen hintereinander, fährt die
+Familie fort, die zuletzt kam; die letzte bleibt immer, und während ihr fort seid, geht niemand.
+- **Sehen:** Oben werden Essen oder Wasser **rot**, wenn es am nächsten Morgen nicht für alle reicht (der Vorrat und was
+  bis dahin noch dazukommt). Im Lager steht „Morgenmahl: 14 Menschen … bis dahin etwa 18 Essen und 12 Wasser“. Bei
+  Tagesanbruch steigt über jedem Haus eine Schale auf: voll, mit Dampf, oder leer mit rotem Kreuz. Auf der Personentafel
+  steht „Heute früh ohne Wasser: arbeitet langsamer“, und die Muschel meldet „Morgenmahl auf Panua: 3 ohne Wasser“.
+- **Im Tagestakt:** Weil eine Portion für einen ganzen Tag reicht, kommt Essen langsamer herein: Felder, Fischer, Bäume,
+  Hühner, Wild und Erdofen bringen ein Sechstel, Quelle und Regen ein Drittel von vorher. Eine Palme reift **eine Nuss am
+  Tag**; grüne Nüsse geben je 4 Wasser. Das Verhältnis bleibt: ein Feld ernährt etwa 4, eine Palme einen Menschen, ein
+  Wasserträger an der Quelle etwa 10. An der Quelle tragen jetzt **zwei**. Was nebenbei abfällt (Fasern, Schalen und
+  Wedel von den Nüssen, Proviant von den Kanarinüssen), kommt so schnell wie zuvor. Ölhütte, Gärgrube und Pferch machen
+  aus einer Nuss oder Feldfrucht sechsmal so viel wie vorher, die Feste kosten weniger Portionen.
+- **Der Speicher zählt:** Wasser ist eine einzige Ware, und ins Lager passen 20 je Ware (+10 je Speicher). Mehr als
+  16 Menschen brauchen darum einen Speicher; der Rat sagt rechtzeitig „Speicher bauen“.
+- **Wachsen:** Familien ziehen zu und Kinder kommen nur, wenn das Morgenmahl heute für alle reichte und am nächsten Morgen
+  genug für alle und eine Familie mehr da ist. Reicht es nicht, holt ein leerer Platz, der Wasser oder Essen macht, Hände
+  von einem Platz, der warten kann (einmal in der Minute geprüft, damit niemand hin und her läuft). Ein Erntehaus, dessen
+  Palmen leer sind, ruht, und seine Leute helfen woanders, bis wieder ein paar Nüsse reif sind.
+- **Der Bot** (der nur dem Rat folgt) kommt nach 90 Minuten auf 26 bis 47 Menschen, im Mittel 35 (vorher 29 bis 36, im
+  Mittel 31). Wasser und Platz im Lager sind die neuen Engpässe.
 
 | Sorte | Woher |
 | --- | --- |
@@ -429,7 +462,7 @@ Fehlt Nahrung oder Wasser lange, packt eine Familie ihre Sachen und fährt im Ka
 Familie bleibt immer. Unter Rāhui ruht das Riff, nach dem Fest fangen die Fischer dreimal so viel. In der Palolo-Nacht
 gibt es Meeresfrüchte für alle.
 
-**Palmen tragen nicht endlos** (seit Version 73). Jede Palme reift etwa eine Nuss pro Minute, reif oder grün. Ein
+**Palmen tragen nicht endlos** (seit Version 73). Jede Palme reift etwa eine Nuss am Tag (bis Version 73 eine pro Minute), reif oder grün. Ein
 Erntehaus bekommt nur, was die Palmen in seiner Reichweite tragen, und teilt sie mit jedem anderen Erntehaus am selben Hain.
 Sind sie abgeerntet, wartet es („Palmen abgeerntet“) und schneidet solange Wedel. Eine Palme nährt also etwa einen
 Menschen: Wer wachsen will, pflanzt Palmen oder holt Essen vom Meer und vom Feld. Vorher konnten Erntehäuser allein ein
@@ -458,6 +491,11 @@ dem Einbaum vom Kanusteg. Ein Steg hat einen Einbaum, der bis zu 4 Plätze anfä
 das auch für Arbeitsplätze auf einem Motu, auf dem niemand wohnt. Ohne Einbaum zählt ein Pfahlhaus nicht als Wohnraum, und der
 Arbeitsplatz bleibt leer. Über ihm schwebt dann ein Einbaum in der Sprechblase. Die Einbäume paddeln sichtbar hin und her.
 Der Steg zeigt beim Bauen von selbst zum Wasser.
+
+**Ins Atoll erst mit Steg und Einbaum** (seit Version 74). Die Pässe durchs Riff sind flach. Kanus fahren zu einem Atoll,
+auf dem ihr noch nicht lebt, und in seine Lagune erst, wenn irgendwo ein Kanusteg mit fertigem Einbaum steht; vorher sagt
+eine Nachricht, warum nicht. Handelsketten zu solchen Atollen gehen erst dann, das Doppelkanu erkundet dort erst dann, und
+die Aufgabe „Hinüber nach Motu“ zeigt zuerst den Steg. Wo ihr schon wohnt, fahrt ihr immer hin.
 
 ## Haushalte und Familien
 
@@ -953,6 +991,12 @@ farbiger Punkt sagt grün: in einer Kette, gelb: unterwegs, rot: ohne Proviant),
 auf einen Blick. Beim Beladen und in den Handelsketten zieht man Schieberegler statt Plus und Minus zu tippen; die Zahl
 daneben ist, was wirklich an Bord ging.
 
+**Volles Lager drüben** (seit Version 74). Ein Kanu lädt nur so viel aus, wie ins Lager passt; der Rest **bleibt an Bord**
+und geht beim nächsten Mal von Bord, statt zu verschwinden. Was ein Hafen selbst verschickt, wird dort nicht wieder
+ausgeladen. Die Ladung zählt dann mit: Es wird nur bis zur Menge der Kette nachgeladen. Einmal meldet die Muschel „Lager auf
+Motu voll: 5 Holz bleiben an Bord“, und auf der Tafel des Kanus steht dasselbe. Auch „Ausladen“ und das Heimkehren der
+Erkunder werfen nichts mehr weg.
+
 ## Kanus entstehen
 
 - **Erst das Kanu, dann das Wasser:** Ist eine Fischerhütte gebaut, schnitzen die Fischer zuerst ihr Kanu, etwa eine Minute.
@@ -1317,7 +1361,8 @@ Wind und Mond, die Muschel mit den Nachrichten und das Menü waren drei Kästche
 Meldungen und Nachrichten hängen darunter und haben die ganze Breite. **Um ihren Rand läuft der Tag:** der Rand ist golden
 für den Tag, orange zum Abend und blau für die Nacht, und ein heller Strahl steht dort, wo die Sonne (oder der Mond) gerade
 ist. So sieht man, wie lange Tag oder Nacht noch dauern (ein Tag sind sechs Minuten). Ohne „Tag und Nacht“ ist der Rand
-einfach braun.
+einfach braun. Seit Version 74 läuft der Rand sichtbar mit (zweimal in der Sekunde neu gezeichnet): was vorbei ist, wird
+blass, eine kleine Sonne oder ein Mond wandert um die Leiste, und darunter steht die Restzeit in Minuten und Sekunden.
 
 **Weniger leerer Platz:** Die Tafel eines Arbeitsplatzes zeigt den Zustand, „Vorrang“ und „Bleiben“ in einer Zeile, darunter
 links „Braucht“ und „Macht“ und rechts daneben die Leute mit − und +. Der Knöchelwurf passt mit flacher Matte und kurzen
@@ -1638,6 +1683,8 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Palmdächer halten einige Jahre und werden neu gedeckt | aus späteren Berichten (Buck); die Dächer selbst sind nicht erhalten; im Spiel vier Jahre |
 | Vor einem Wirbelsturm die Dächer festbinden | aus späteren Berichten und dem Wissen der Inseln heute; für die Lapita-Zeit angenommen |
 | Kinder und Alte sammeln Brennholz | aus späteren Berichten weit verbreitet; für die Lapita-Zeit angenommen |
+| Ein Mahl am Morgen, eine Portion für jeden | **Spielregel.** Aus späteren Berichten kennt man meist ein bis zwei Mahlzeiten am Tag, die Hauptmahlzeit aus dem Erdofen oft am Nachmittag oder Abend; Reste am Morgen. Das Spiel legt das Essen auf den Morgen, damit man sieht, ob es für alle reicht |
+| Ins Atoll nur mit Kanusteg und Einbaum | erschlossen: Riffpässe sind flach und schmal, Einbäume fahren in der Lagune; als Regel für die Zeit angenommen |
 | Herdfeuer und Erdöfen mit Holz und Kokosschalen | Feuerstellen und Erdöfen sind an Lapita-Orten gefunden; Kokosschalen als Brennstoff kennt man aus späterer Zeit |
 | Kauri-Harz im Treibgut, Talisman der Matriarchin | Kauri-Bäume (Agathis) wachsen in Melanesien und Fidschi, ihr Harz gab es also in der Region; in Fidschi überzog man Töpfe später mit dem Harz des Dakua-Baums. Dass es am Strand antreibt und ein Talisman gegen den Sturm daraus wird, ist **erfunden**, eine Spielidee. Bernstein (Version 67) war ganz erfunden: Aus Lapita-Fundstellen ist keiner bekannt. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
 

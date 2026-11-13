@@ -336,7 +336,7 @@ function needOf(I, places){
   if ((I.stock.dach || 0) < 4) short.add('dach');
   if ((I.stock.holz || 0) < 4) short.add('holz');
   const full = b => KINDS[b.kind].picks ? Object.keys(KINDS[b.kind].picks).every(k => (I.stock[k] || 0) >= cap * .75) : (I.stock[prodOfB(b)] || 0) >= cap * .75;
-  return b => b.boat > 0 || outs(b).some(k => short.has(k)) ? 0 : full(b) ? 2 : 1;
+  return b => !b ? 1 : b.boat > 0 || outs(b).some(k => short.has(k)) ? 0 : full(b) ? 2 : 1;   // (a resting place is not in the list: as usual)
 }
 const rankOf = b => PLACE_RANK[catOf(b)] ?? 3;
 /* is water or food short for the next morning meal? On below everyone and a family more, off again from three families
