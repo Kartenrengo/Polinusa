@@ -621,6 +621,9 @@ function paddleStroke(c, x, y, s, now, ph){
   stroke(c, p, '#2B1D14', .8 * s, null, 'round'); stroke(c, p, '#9C7246', .36 * s, null, 'round');
   c.fillStyle = '#9C7246'; const bl = ellipse(bx, by + .2 * s, .55 * s, 1.15 * s); c.fill(bl); stroke(c, bl, '#2B1D14', .3 * s);
   if (!reduced && a > .55) stroke(c, ellipse(bx - .6 * s, by + 1.2 * s, 1.4 * s, .45 * s), '#F4FBFA', .4 * s, [.4, .7], 'round', .85);   // the water swirls behind the blade
+  if (!reduced && a < -.3 && lod === 'near'){ const q = (-a - .3) / .7; c.fillStyle = '#F4FBFA';   // drops run off the blade as it comes out of the water
+    for (let k = 0; k < 3; k++){ c.globalAlpha = (1 - q) * .9; c.beginPath(); c.arc(bx - (.5 + k * .7 + q * 1.4) * s, by + (-.6 - k * .25 + q * q * 2.2) * s, (.3 - k * .06) * s, 0, TAU); c.fill(); }
+    c.globalAlpha = 1; }
 }
 function drawDugout(c, x, y, left, rock, look, old, now, ph, paddling){
   c.save(); c.translate(x, y); if (left) c.scale(-1, 1); if (rock) c.rotate(rock);
