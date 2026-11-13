@@ -81,6 +81,7 @@ Einfügen, wo Dateien nicht gehen.
 | `src/world.js` | Inseln aus Startwert und Meeresfeld erzeugen, Bauregeln |
 | `src/state.js` | Spielstand, Startdörfer, Speichern und Laden |
 | `src/render.js` | Zeichnen auf Canvas |
+| `src/worldmotion.js` | Bewegte Welt: Segel, Dünung, Leinen, Tiere, Rauch, Regen, Fahnen, Festfeuer |
 | `src/ui.js` | Bedienung, Bauen, Tafeln |
 | `src/quests.js` | Aufgaben für den Anfang, was sie freischalten |
 | `src/fleet.js` | Kanus: Wege um Land herum, Nebel lichten, Handelsketten, Kanuhaus, Proviant |
@@ -1750,6 +1751,16 @@ die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was d
   alte. Bauplätze wachsen aus dem Boden, fertige und ausgebaute Häuser setzen sich mit Federn, Staub und Spänen. Leute
   gleiten aus dem Haus und hinein, setzen beim Gehen weich an und halten weich an. Kanus reffen vor dem Anlegen das Segel
   und setzen es nach dem Ablegen.
+- **Noch feiner (Version 84):** Bei den Menschen schwingen Haarknoten, Blume, Muschelkette und die Fransen am Rocksaum
+  nach. Bei der Arbeit ducken sie sich beim Ausholen, die Hüfte geht im Schlag mit, die Knie federn beim Aufprall. Lasten
+  auf dem Kopf und an der Stange federn gegen den Schritt; schwere Lasten machen den Gang tiefer und langsamer. Wer
+  plaudert, dreht sich zum Nachbarn, und ein kleiner Mund öffnet sich beim Reden und Singen; Hinsetzen, Aufstehen und
+  Hinlegen sind weiche Bewegungen. Fischer zu Fuß tragen nachts eine flackernde Fackel. In der Welt füllen sich die
+  Segel mit dem Wind oder schlagen, ein Wimpel weht, Kanus nicken mit der Dünung und ziehen am Anlegeplatz an der Leine.
+  Hunde traben, sitzen und kratzen sich, Schweine wühlen, Hühner picken und hüpfen, Krabben huschen am Strand, in der
+  Lagune taucht eine Schildkröte auf. Rauch kringelt sich aus dem Dachfirst und legt sich im Wind, Regen fällt schräg und
+  macht Ringe auf dem Wasser, Regenwolken rollen, Wolkenschatten sind weich. Am Versammlungshaus flattern Fahnen, beim
+  Fest hängt eine Wimpelkette, das Festfeuer flammt auf und sprüht Funken.
 - **Sparsam:** Feines nur nah herangezoomt und bei guter Bildrate; das Spiel senkt die Bildqualität von selbst, wenn das
   Handy nicht nachkommt. Mit „weniger Bewegung“ bleibt alles ruhig, ohne „Tag und Nacht“ bleibt der flache Look.
 

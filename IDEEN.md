@@ -82,6 +82,14 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 5. **Das Netz als Ziel.** Teils erledigt in Version 82 (jedes Kanu zwischen den Dörfern: Ansehen +0,5). Offen:  Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
    Erst ab Hawaiki: ein oberster Häuptling über mehrere Inseln.
 
+## Offen aus der Runde „Noch feiner“ (Version 84)
+
+- **Hunde** sehen im Sitzen und Kratzen noch eckig aus; Schweineköpfe etwas groß.
+- **Schildkröte in der Lagune** ist im Bild noch nicht gesehen worden.
+- **Schläfer vor den Häusern** gibt es nicht (sie gehen ins Haus); sichtbares Schlafen wäre eine Spieländerung.
+- **Kosten:** Bei höchster Qualität zeichnet das Spiel wieder etwas mehr (etwa 10 bis 13 %); die Bildraten-Steuerung fängt
+  es ab. Auf einem echten Handy ansehen.
+
 ## Offen aus der Runde „Kulturen und Lichtwal“ (Version 83)
 
 - **Mehr Lehren:** Bisher je Volk eine Lehre ab 6 Knoten. Denkbar: Obsidian-Tausch mit dem Großen Land, Heiraten mit den
