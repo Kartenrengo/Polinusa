@@ -304,7 +304,14 @@ const r = await p.evaluate(()=>{
       nutTick(H, NUTS.every * 3); want(e.nuts > 0 && e.nuts <= nutPalms(H, e) * NUTS.keep + 1e-6, `nuts: do not ripen again: ${e.nuts}`); want(nutRate(H, e) > 0 && makeRate(H, 'kokos') <= H.buildings.filter(q => q.kind === 'ernte').reduce((t, q) => t + nutRate(H, q), 0) + 1e-6, 'nuts: more promised than the palms bear');
       e.v = {...e.v}; if (pk) e.v.pick = pk; else delete e.v.pick; }
     want($('hudbar') && $('hudbar').contains($('compass')) && $('hudbar').contains($('menuBtn')) && $('hudbar').contains($('newsBtn')), 'bar: wind, news and menu are not one');
-    opts.night = true; dayRing(); want(/^(Tag|Nacht), noch etwa \d+ Sekunden/.test($('hudbar').getAttribute('aria-label')) && $('hudbar').style.getPropertyValue('--ph') !== '', 'bar: the day does not run round it');
+    opts.night = true; dayRing(); want(/^(Tag|Nacht) noch \d+:\d\d$/.test($('dayTxt').textContent) && !$('dayTxt').hidden && /conic-gradient/.test($('hudbar').style.background), 'bar: the day does not run round it');
+    { const t0 = tick; tick = Math.floor(tick / DAY_TICKS) * DAY_TICKS + 10; dayRing(); const a = $('dayTxt').textContent, m0 = $('dayMark').style.left + $('dayMark').style.top;
+      tick += 60; dayRing(); const b = $('dayTxt').textContent, m1 = $('dayMark').style.left + $('dayMark').style.top;
+      tick = Math.floor(tick / DAY_TICKS) * DAY_TICKS + 120; dayRing(); const c = $('dayTxt').textContent; tick = t0; dayRing();
+      want(a !== b && m0 !== m1 && /^Tag/.test(a) && /^Nacht/.test(c) && $('dayMark').className !== '', 'bar: the sun does not move on, or day and night are not told apart'); }
+    { const keep = news.slice(); news.length = 0; newsAdd('Probe: ein Kanu kommt.'); newsAdd('Probe: ein Kanu kommt.'); news.length = 0; loadNews();
+      want(news[0] && news[0].msg === 'Probe: ein Kanu kommt.' && news[0].n === 2 && news[0].y >= 1, 'conch: a message is not kept, or a repeat is not counted');
+      news.length = 0; news.push(...keep); }
     const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
     want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}

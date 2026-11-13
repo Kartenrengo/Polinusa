@@ -877,3 +877,21 @@ canvas.kor{width:auto;height:min(168px,24vh);max-width:100%;margin:4px auto}
 .kor-steps li{padding:3px 6px;font-size:11px}
 .kor-result{padding:3px 10px;flex-direction:row;justify-content:center;gap:8px;flex-wrap:wrap}
 .kor-result b{font-size:15px}
+
+/* the day on the rim of the bar: set by the game twice a second (see dayRing); a sun or a moon rides on it */
+#hudbar{padding:5px;transition:none}
+#dayMark{position:absolute;z-index:2;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;box-shadow:0 0 0 1.5px #2B1D14,0 0 6px 2px rgba(255,240,170,.9);pointer-events:none}
+#dayMark.sun{background:radial-gradient(circle at 40% 40%,#FFF6C0,#F2B632)}
+#dayMark.moon{background:radial-gradient(circle at 35% 35%,#FFFFFF,#C9D3EA);box-shadow:0 0 0 1.5px #2B1D14,0 0 6px 2px rgba(190,205,255,.8)}
+#hudbar #compass #dayTxt{display:block;font:800 11.5px/1.15 var(--font-ui);font-style:normal;font-variant-numeric:tabular-nums;margin-top:1px}
+#dayTxt.day{color:#8A5F12}
+#dayTxt.night{color:#2E3E6C}
+#dayTxt[hidden]{display:none!important}
+/* a message flies into the conch, and the conch nods */
+#toast{transform-origin:50% 50%}
+#toast.open{animation:toastIn .45s cubic-bezier(.2,1.2,.4,1) both}
+#toast.fly{transition:transform .5s cubic-bezier(.5,0,.8,.4),opacity .5s ease-in,clip-path 0s!important;clip-path:none!important;opacity:0}
+@keyframes toastIn{0%{transform:translateY(-14px) scale(.92);opacity:0}100%{transform:none;opacity:1}}
+#newsBtn.nod{animation:nod .6s ease-out .35s both}
+@keyframes nod{0%{transform:scale(1)}35%{transform:scale(1.28) rotate(-10deg)}70%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){#toast.open,#newsBtn.nod{animation:none}}

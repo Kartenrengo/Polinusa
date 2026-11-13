@@ -1725,6 +1725,7 @@ function frameBody(now){
   const dt = Math.min(64, now - last); last = now;
   stepCam(now); camGuard(); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
   try { audioTick(now); } catch (e){ frameErr(e, 'audio'); }
+  if (now - ringAt > 500){ ringAt = now; dayRing(); }   // the day moves round the bar twice a second
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
   let drew = false;
   if (needDraw || stale(now) || (animating() && now - lastDraw > (quality ? 32 : 48)) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; drew = true; }

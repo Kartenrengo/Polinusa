@@ -19,6 +19,7 @@ const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>>
    where the player chooses (foundHome). */
 function newGame(s = newSeed()){
   seed = s; worldV = 4; homeSwap = 0; nextPid = 1; nextFam = 1; nextLine = 1; LINES = {}; drift = []; diveSpots = []; nextDrift = 1; home0 = makeWorld(seed, worldV); resetCaches();
+  try { localStorage.removeItem(newsKey()); } catch (e){}   // a new game begins with an empty conch
   islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
   stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0}; chronik = {}; nextEvent = 300; lastEvent = ''; eventNow = null;
   resetGrid(); for (const I of islands) markLand(I);
@@ -156,7 +157,7 @@ function serialize(){
 function restore(raw){
   try {
     const s = JSON.parse(raw); if (!s || s.v !== 5 || !s.seed) return false;
-    seed = s.seed >>> 0; worldV = s.wv || 1; homeSwap = s.hs ? 1 : 0; home0 = makeWorld(seed, worldV, homeSwap); resetCaches(); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
+    seed = s.seed >>> 0; worldV = s.wv || 1; homeSwap = s.hs ? 1 : 0; home0 = makeWorld(seed, worldV, homeSwap); resetCaches(); loadNews(); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
     home0.cultures = s.cu ? s.cu.filter(c => CULTURES[c[0]]).map(([k, cx, cy]) => ({k, cx, cy})) : placeCultures(home0.cultures, new Set(s.cells || []));
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
     savedAt = +s.at || 0; nextPid = s.np || 1; nextFam = s.nf || 1; nextLine = s.nl || 1; LINES = s.ln || {}; nextDrift = s.nd || 1; drift = (s.dr || []).filter(d => DRIFT[d[1]]).map(([id, k, x, y, t0]) => ({id, k, x, y, t0})); diveSpots = (s.dv || []).map(([id, x, y, rich, left, via]) => ({id, x, y, rich, left, via})); tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;

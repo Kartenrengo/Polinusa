@@ -119,11 +119,23 @@ function showWind(){
   C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
 /* the ray round the bar: where in the day we are, and in words for the label (a day is six minutes) */
+const DAY_END = .66;   // the share of a day that is light
+let ringAt = 0;
 function dayRing(){
-  const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); if (!opts.night) return;
-  const p = dayPhase(), night = p >= .66, left = Math.max(0, ((night ? 1 : .66) - p) * DAY_TICKS * TICK / 1000 / gameSpeed);
-  H.style.setProperty('--ph', p.toFixed(3)); H.dataset.day = night ? 'nacht' : 'tag';
-  H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}, noch etwa ${Math.round(left / 10) * 10} Sekunden. Wind, Kalender, Nachrichten und Menü`);
+  const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); const T = $('dayTxt'), M = $('dayMark');
+  if (!opts.night){ H.style.background = ''; if (T) T.hidden = true; if (M) M.hidden = true; return; }
+  const p = dayPhase(), night = p >= DAY_END, left = Math.max(0, ((night ? 1 : DAY_END) - p) * DAY_TICKS * TICK / 1000 / gameSpeed), deg = p * 360;
+  // the rim: what is behind us is spent (pale), what is still to come shows its colour, gold for the day and blue for the night
+  const col = q => q < DAY_END - .08 ? '#F0C24A' : q < DAY_END ? '#E38B3E' : '#2E3E6C', stops = [];
+  for (const q of [0, DAY_END - .08, DAY_END, 1]) if (q > p) stops.push(`${col(Math.max(p, q - .0001))} ${(q * 360).toFixed(1)}deg`, `${col(q)} ${(q * 360).toFixed(1)}deg`);
+  H.style.background = `conic-gradient(from 0deg, #D9CDB0 0deg, #D9CDB0 ${deg.toFixed(1)}deg, #FFFBE0 ${deg.toFixed(1)}deg, ${col(p)} ${(deg + 5).toFixed(1)}deg, ${stops.join(', ')})`;
+  // the sun or the moon rides on the rim, where the ray of the gradient meets it
+  if (M){ const r = H.getBoundingClientRect(), w = r.width, h = r.height, a = (deg - 90) * Math.PI / 180, cx = Math.cos(a), cy = Math.sin(a), k = Math.min(cx ? (w / 2) / Math.abs(cx) : 1e9, cy ? (h / 2) / Math.abs(cy) : 1e9);
+    M.hidden = false; M.style.left = (w / 2 + cx * k).toFixed(1) + 'px'; M.style.top = (h / 2 + cy * k).toFixed(1) + 'px'; M.className = night ? 'moon' : 'sun'; }
+  const mm = Math.floor(left / 60), ss = String(Math.floor(left % 60)).padStart(2, '0');
+  if (T){ T.hidden = false; T.textContent = `${night ? 'Nacht' : 'Tag'} noch ${mm}:${ss}`; T.className = night ? 'night' : 'day'; }
+  H.dataset.day = night ? 'nacht' : 'tag';
+  H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}, noch ${mm} Minuten ${+ss} Sekunden. Wind, Kalender, Nachrichten und Menü`);
 }
 /* the name under each good in the top row: short, so it fits under its icon */
 const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
@@ -144,15 +156,31 @@ function setActive(id){ if (active === id || !isl(id).settled) return; active = 
 /* ---------- messages: they unroll from the conch shell on the right like a strip of bark cloth and roll up again.
    What happens in the world is kept, and the shell unfolds the last ones. Quick answers to a tap are not kept. */
 let toastT = 0, news = [], unread = 0;
+/* Every message unrolls under the bar, stays a moment, and then flies into the conch, where it is kept: the conch holds
+   the last 120 messages of this game, also after the game was closed (they lie beside the save, not in it). */
+const NEWS_MAX = 120, newsKey = () => `polinusa-news-${curSlot}`;
+function newsAdd(msg){
+  if (news[0] && news[0].msg === msg){ news[0].at = Date.now(); news[0].n = (news[0].n || 1) + 1; }
+  else { news.unshift({msg, at:Date.now(), y:yearOf() + 1, m:moonOf() + 1}); if (news.length > NEWS_MAX) news.length = NEWS_MAX; }
+  try { localStorage.setItem(newsKey(), JSON.stringify(news)); } catch (e){}
+}
+function loadNews(){ try { const l = JSON.parse(localStorage.getItem(newsKey()) || '[]'); news.length = 0; if (Array.isArray(l)) news.push(...l.filter(n => n && typeof n.msg === 'string').slice(0, NEWS_MAX)); } catch (e){} }
 function toast(msg, ms = 2600, keep = true){
   if (awayQuiet) return;
-  if (keep){ news.unshift({msg, at:Date.now()}); if (news.length > 40) news.length = 40; }
-  if (newsOpen()){ if (keep){ renderNews(); return; } }
+  newsAdd(msg);
+  if (newsOpen()){ renderNews(); if (keep) return; }
   else if (keep){ unread++; newsBadge(); }
-  const t = $('toast'); t.textContent = msg; t.hidden = false; t.classList.remove('open'); void t.offsetWidth; t.classList.add('open');
+  const t = $('toast'); t.textContent = msg; t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
   clearTimeout(toastT); toastT = setTimeout(foldToast, ms + 600);
 }
-function foldToast(){ const t = $('toast'); t.classList.remove('open'); clearTimeout(toastT); toastT = setTimeout(() => { if (!t.classList.contains('open')) t.hidden = true; }, 420); }
+function foldToast(){
+  const t = $('toast'), c = $('newsBtn'); clearTimeout(toastT); if (t.hidden || !t.classList.contains('open')){ t.classList.remove('open'); t.hidden = true; return; }
+  // it shrinks and flies into the conch, and the conch nods
+  const a = t.getBoundingClientRect(), b = c.getBoundingClientRect();
+  if (!reduced && a.width && b.width){ t.style.transform = `translate(${(b.left + b.width / 2 - a.left - a.width / 2).toFixed(1)}px, ${(b.top + b.height / 2 - a.top - a.height / 2).toFixed(1)}px) scale(.08)`; t.classList.add('fly'); c.classList.remove('nod'); void c.offsetWidth; c.classList.add('nod'); }
+  t.classList.remove('open');
+  toastT = setTimeout(() => { if (!t.classList.contains('open')){ t.hidden = true; t.classList.remove('fly'); t.style.transform = ''; } }, 520);
+}
 const newsOpen = () => !$('newsList').hidden;
 function newsBadge(){ const n = $('newsNum'); n.hidden = !unread; n.textContent = unread > 9 ? '9+' : unread; $('newsBtn').setAttribute('aria-label', unread ? `Nachrichten, ${unread} neu` : 'Nachrichten'); }
 const ago = at => { const s = (Date.now() - at) / 1000; return s < 60 ? 'eben' : s < 3600 ? `vor ${Math.floor(s / 60)} Min` : s < 172800 ? `vor ${Math.floor(s / 3600)} Std` : `vor ${Math.floor(s / 86400)} Tagen`; };
@@ -165,7 +193,7 @@ function slotRow(n){
     (me || info ? `<button class="chip" type="button" data-act="${me ? 'askreset' : 'askslot'}" data-n="${n}">Neu</button>` : '') + '</li>';
 }
 const esc = t => t.replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'})[c]);
-function renderNews(){ $('newsList').innerHTML = `<p class="cap">Nachrichten</p>` + (news.length ? `<ul>${news.map(n => `<li><small>${ago(n.at)}</small>${esc(n.msg)}</li>`).join('')}</ul>` : '<p class="empty">Noch ist nichts geschehen.</p>'); }
+function renderNews(){ $('newsList').innerHTML = `<p class="cap">Nachrichten</p>` + (news.length ? `<ul>${news.map(n => `<li><small>${n.y ? `Jahr ${n.y}, ${n.m}. Mond · ` : ''}${ago(n.at)}${n.n > 1 ? ` · ${n.n}-mal` : ''}</small>${esc(n.msg)}</li>`).join('')}</ul>` : '<p class="empty">Noch ist nichts geschehen.</p>'); }
 function openNews(){
   const L = $('newsList'); unread = 0; newsBadge(); foldToast(); renderNews(); L.scrollTop = 0;
   L.hidden = false; void L.offsetWidth; L.classList.add('open'); $('newsBtn').setAttribute('aria-expanded', 'true');
