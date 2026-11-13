@@ -757,7 +757,7 @@ function lightsOf(v, now){
       if (b.bt || !ptIn(b.x, b.y, grow(v, 60))) continue;
       if (b.kind === 'fackel') L.push({x:b.x, y:b.y - 12, r:34 * fl(b.id), c:'255,170,70'});
       else if (b.kind === 'halle') L.push({x:b.x, y:b.y + 18, r:(I.feastEnd > tick ? 62 : 30) * fl(b.id), c:'255,150,60'});
-      else if (b.kind === 'haus' && b.id % 2 === 0) L.push({x:b.x, y:b.y - 2, r:13 * fl(b.id), c:'255,180,90'});
+      else if (HOME_KINDS.has(b.kind) && b.fire !== false && famOfHome(I, b)) L.push({x:b.x, y:b.y - 2, r:14 * fl(b.id), c:'255,180,90'});   // the night fire (fireTick); a cold house stays dark
       else if (b.kind === 'toepfer') L.push({x:b.x - 11, y:b.y + 2, r:16 * fl(b.id), c:'255,130,50'});
     }
     for (const w of walkers) if (w.isl === I.id && w.boat && w.job && w.job.type === 'fish' && ptIn(w.x, w.y, grow(v, 40))) L.push({x:w.x + (w.left ? -5 : 5), y:w.y - 7, r:24 * fl(w.x | 0), c:'255,165,70'});   // torch fishing

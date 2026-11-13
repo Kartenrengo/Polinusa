@@ -88,7 +88,7 @@ const r = await p.evaluate(()=>{
     out.push(`helpers: ${nh}, still free ${sf.free}, team with one helper ${teamF(KINDS.faeller, KINDS.faeller.crew + 1).toFixed(2)}`);
     want(nh > 0 && [...sf.help].every(([b, n]) => n <= crewOf(b) && (sf.crew.get(b) || 0) <= 2 * crewOf(b)), 'helpers: none, or too many at one place');
     want(teamF(KINDS.faeller, KINDS.faeller.crew + 1) > 1 && teamF(KINDS.faeller, 9 * KINDS.faeller.crew) <= 1.5, 'helpers: team factor');
-    H.zeal = 0; H.staff = null; const sr = staffOf(H); updateHUD(); want(!sr.help.size && sr.rest && $('idleNum').textContent === '0', 'free time: the free are shown as jobless');
+    H.zeal = 0; H.staff = null; const sr = staffOf(H); updateHUD(); want(!sr.help.size && sr.rest && /^\d+$/.test($('satNum').textContent), 'free time: no contentment shown');
     H.zeal = 1; H.people = H.people.filter(p => !extra.includes(p)); H.staff = null; }
   // the village centre: the house by the plaza; its sheet shows the village, the store and the family; the rain dance
   { const H = isl('heimat'), cz = centerOf(H), pz = H.buildings.find(b => b.kind === 'platz');

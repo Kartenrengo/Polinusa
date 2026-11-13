@@ -380,7 +380,7 @@ function setTapu(I, on){
    dry fronds along the beach) and carry a bundle home: Brennholz for the hearths, once there is a hearth or an earth oven.
    It burns after the coconut shells and before the wood the woodcutters fell. */
 const GATHER = {rate:.12, age:3, atoll:.7};
-const gatherOn = I => I.settled && (popTier(I, 2) > 0 || I.buildings.some(b => !b.bt && KINDS[b.kind].use && KINDS[b.kind].use.brenn)) && (I.stock.reisig || 0) < storeCap(I);
+const gatherOn = I => I.settled && (I.stock.reisig || 0) < storeCap(I);   // every house burns a fire at night (fireTick)
 const canGather = p => { const st = stageOf(p); return st === 'kid' ? ageOf(p) >= GATHER.age : st === 'old' && !p.job; };
 const gatherers = I => gatherOn(I) ? (I.people || []).filter(canGather).length : 0;
 const gatherRate = I => gatherers(I) * GATHER.rate * (I.type === 'atoll' ? GATHER.atoll : 1);   // per minute
@@ -1279,7 +1279,7 @@ function workUse(I, k){
 const needActive = (I, N) => N.lvl === 1 || popTier(I, N.lvl) > 0;
 // at the morning meal everyone eats and drinks one portion, children too
 const eaters = I => (I.people || []).length || I.pop;
-const needPop = (I, N) => N.lvl === 1 ? eaters(I) : popTier(I, N.lvl);
+const needPop = (I, N) => N.k === 'brenn' ? fireHomes(I).length : N.lvl === 1 ? eaters(I) : popTier(I, N.lvl);   // the fire is counted by houses
 /* Food is everything people eat; any other need is one good */
 /* the goods that meet a need: food of every kind; pots, and from Hawaiki on wooden bowls as well */
 const needGoods = k => k === 'essen' ? FOODS : k === 'brenn' ? GROUPS.brenn : k === 'toepfe' && stats.hawaiki ? ['toepfe', 'kumete'] : [k];
@@ -1301,7 +1301,7 @@ function needsOf(I){
    most of. The children and the old are served first, then the families by how long they have lived here. Whoever gets
    nothing works slower that day (MEAL); is it too little on HUNGER_GO mornings in a row, the family that came last packs
    up and leaves, never the last one (and never while you are away). */
-const MEAL = {slow:.75, both:.55}, MEAL_NEEDS = new Set(['essen', 'wasser', 'speisen']);
+const MEAL = {slow:.75, both:.55}, MEAL_NEEDS = new Set(['essen', 'wasser', 'speisen', 'brenn']);   // eaten at the morning meal; the fuel burns at the night fire
 const mealFx = [];   // bowls over the houses at dawn, for the eye (render.js)
 const RAW_FOODS = FOODS.filter(k => k !== 'speisen');
 function mealTick(I){
@@ -1330,7 +1330,10 @@ function mealTick(I){
   toast(`Morgenmahl auf ${I.name}: ${what}. Sie arbeiten heute langsamer.${warn}`, 4200);
 }
 /* how fast someone works after the morning meal: 1 fed, slower hungry or thirsty, slower still both */
-const mealOf = (I, id) => { if (!I._mf){ I._mf = new Map(); for (const p of I.people || []) if (p.meal) I._mf.set(p.id, p.meal === 3 ? MEAL.both : MEAL.slow); } return I._mf.get(id) ?? 1; };
+const mealOf = (I, id) => { if (!I._mf){ I._mf = new Map(); const S = I._sat;
+    for (const p of I.people || []){ let f = p.meal === 3 ? MEAL.both : p.meal ? MEAL.slow : 1; if (p.cold) f *= FIRE.slow;
+      const v = S && S.by.get(p.id); if (v != null) f *= v < SAT.low ? .9 : v >= SAT.high ? 1.05 : 1; if (f !== 1) I._mf.set(p.id, f); } }
+  return I._mf.get(id) ?? 1; };
 const mealF = (I, b) => { const ids = staffOf(I).crewP.get(b); if (!ids || !ids.length) return 1; let t = 0; for (const id of ids) t += mealOf(I, id); return t / ids.length; };
 /* the next morning: what there will be by then (the store now and what is made until dawn, as far as the store holds
    it) against one portion for everyone */
@@ -1346,6 +1349,58 @@ function mealFore(I){
     return (I._fore = {t:tick, v:{n, left, food:Math.floor(FOODS.reduce((t, k) => t + by(k), 0)), water:Math.floor(by('wasser'))}}).v;
   } finally { I._foreBusy = false; }
 }
+/* ---------- the night fire. At dusk every house where a family lives lights its hearth for the night: light, warmth,
+   smoke against the mosquitoes. It burns one piece of fuel: coconut shells first, which are left over anyway, then twigs
+   the children and the old gather, then wood (burnFirst). The families who came first light first; where nothing is
+   left, the house stays dark, the family sleeps cold and works slower the next day (FIRE.slow). */
+const FIRE = {slow:.85}, DUSK_AT = Math.round(.66 * DAY_TICKS);   // .66: where the night begins (DAY_END in ui.js)
+const fireHomes = I => homesOf(I).filter(b => !b.bt && famOfHome(I, b));
+function fireTick(I){
+  const H = fireHomes(I).sort((a, b) => famOfHome(I, a).id - famOfHome(I, b).id), coldFam = new Set();
+  for (const b of H){ const k = burnFirst('brenn', I.stock); if (k){ I.stock[k]--; b.fire = true; } else { b.fire = false; coldFam.add(famOfHome(I, b).id); } }
+  for (const p of I.people || []) p.cold = coldFam.has(p.h);
+  I._mf = null; I.fire = {at:tick, n:H.length, cold:coldFam.size};
+  if (awayQuiet || I.id !== active) return;
+  if (!coldFam.size){ if (!stats.fire){ stats.fire = 1; toast('Nachtfeuer: Jedes Haus brennt nachts ein Feuer, aus Kokosschalen, Reisig oder Holz. Ohne Feuer frieren die Leute und arbeiten am Tag darauf langsamer.', 6500); } return; }
+  stats.fire = 1; toast(`Nachtfeuer auf ${I.name}: ${coldFam.size === 1 ? 'Ein Haus bleibt' : `${coldFam.size} Häuser bleiben`} ohne Feuer. Dort frieren die Leute und arbeiten morgen langsamer.`, 4200);
+}
+/* the coming night: fuel by dusk (the store and what comes in until then) against one fire for every house */
+function fireFore(I){
+  const p = ((tick + 30) % DAY_TICKS), left = ((DUSK_AT - p + DAY_TICKS) % DAY_TICKS || DAY_TICKS) / PER_MIN, cap = storeCap(I);
+  const fuel = GROUPS.brenn.reduce((t, k) => t + Math.min(cap, (I.stock[k] || 0) + Math.max(0, makeRate(I, k) - workUse(I, k)) * left), 0);
+  return {n:fireHomes(I).length, fuel:Math.floor(fuel), left};
+}
+/* ---------- contentment. Every person has a value from 0 to 100: what they had this morning and tonight, the roof over
+   them, what their house step wants, room, the village's share of work and free time, a feast, a beautiful village.
+   Very content people work a little faster, discontent ones slower (mealOf). The top bar shows the village's average;
+   a tap shows the least content person, why, and what helps. */
+const SAT = {base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8};
+const ZEAL_SAT_TXT = ['viel Freizeit', '', 'viel Arbeit'];
+function satOf(I, p, nd){
+  const why = []; let v = SAT.base; const add = (k, d, t) => { if (!d) return; v += d; why.push({k, d, t}); };
+  if (p.meal & 1) add('essen', SAT.hungry, 'ohne Essen');
+  if (p.meal & 2) add('wasser', SAT.thirsty, 'ohne Wasser');
+  if (p.cold) add('feuer', SAT.cold, 'friert nachts');
+  const f = famOf(I, p.h), h = f && f.home && findB(f.home);
+  if (!h) add('dach', SAT.roofless, 'ohne Dach');
+  else {
+    const r = roofState(h); if (r === 'out') add('dach', SAT.broken, 'Dach kaputt'); else if (r === 'low') add('dach', SAT.leak, 'Dach undicht');
+    for (const n of famNeeds(I, f, nd.list)) if (!['dach', 'essen', 'wasser', 'brenn'].includes(n.k)){ if (n.state === 'out') add(n.k, SAT.needOut, `${GN[n.k]} fehlt`); else if (n.state === 'low') add(n.k, SAT.needLow, `${GN[n.k]} knapp`); }
+    if (membersOf(I, f).length > homeCap(I, h)) add('enge', SAT.crowded, 'zu eng');
+  }
+  const z = I.zeal != null ? I.zeal : 1, a = stageOf(p); if (a !== 'kid' && z !== 1) add('zeit', a === 'old' ? Math.round(SAT.zeal[z] / 2) : SAT.zeal[z], ZEAL_SAT_TXT[z]);
+  if (I.joyUntil > tick) add('fest', SAT.feast, 'Fest');
+  add('schoen', Math.round(clamp(beautyOf(I) / Math.max(4, I.pop) * 2, 0, 1) * SAT.beauty), 'schönes Dorf');
+  return {v:clamp(Math.round(v), 0, 100), why};
+}
+function satTick(I){
+  syncPeople(I); const nd = needsOf(I), by = new Map(), all = [];
+  for (const p of I.people || []){ const s = satOf(I, p, nd); by.set(p.id, s.v); all.push([p, s]); }
+  all.sort((x, y) => x[1].v - y[1].v);
+  I._sat = {t:tick, by, all, avg:all.length ? Math.round(all.reduce((t, x) => t + x[1].v, 0) / all.length) : 0}; I._mf = null;
+  return I._sat;
+}
+const satOfIsle = I => I._sat && tick - I._sat.t < 15 ? I._sat : satTick(I);
 /* Levels: a hamlet, a village from thirty, and a chief's village. That needs a big high island, the chief's house with
    its family, everything that family wants, people, standing and beauty. It stays one while the chief's family lacks nothing. */
 function chiefSteps(I, nd){
@@ -1473,6 +1528,8 @@ function econ(){
     // use up what people need; fractions carry over so small villages use little. Food and water are eaten only at
     // the morning meal (mealTick); the fire, the pots, the mats and the rest are used all day.
     if ((tick + 30) % DAY_TICKS === 0) mealTick(I);
+    if ((tick + 30) % DAY_TICKS === DUSK_AT) fireTick(I);
+    if (tick % 15 === 0) satTick(I);
     I.owe = I.owe || {};
     for (const N of NEEDS){
       if (!needActive(I, N) || MEAL_NEEDS.has(N.k)) continue;
@@ -1690,7 +1747,7 @@ $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbt
   newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
 $('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
-$('idleBtn').addEventListener('click', showIdle);
+$('satBtn').addEventListener('click', () => openSheet('sat', {id:active}));
 $('isleName').addEventListener('click', () => { if (landing){ if (!landing.found) openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
 $('tradeBtn').addEventListener('click', () => { closeSheet(); setBar(barMode === 'fleet' ? null : 'fleet'); });
@@ -1886,6 +1943,7 @@ function catchUp(ms){
   try {
     for (let i = 1; i <= n; i++){
       tick++; if ((tick + 30) % DAY_TICKS === 0) for (const I of islands) if (I.settled) mealTick(I);
+      if ((tick + 30) % DAY_TICKS === DUSK_AT) for (const I of islands) if (I.settled) fireTick(I);
       if (ships.length){ stepShips(performance.now(), TICK); driftTouch(); } driftTick();
       feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
       if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I); }

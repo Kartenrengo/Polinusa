@@ -160,7 +160,7 @@ const NEEDS = [
   {k:'essen', lvl:1, rate:1 / 6, hint:{hoch:'Das Erntehaus bringt Kokosnüsse, die Fischerhütte Fisch und Meeresfrüchte, später Tarofelder und Brotfrucht.', atoll:'Das Erntehaus bringt Kokosnüsse, die Fischerhütte Fisch und Meeresfrüchte, später Pulakagruben.'}},
   {k:'wasser', lvl:1, rate:1 / 6, hint:{hoch:'Baue eine Quelle am Bach. Grüne Kokosnüsse vom Erntehaus geben auch Wasser.', atoll:'Baue einen Brunnen in der Mitte des Motus. Grüne Kokosnüsse vom Erntehaus geben auch Wasser.'}},
   // the hearth fire of a family house: wood from the forest, or the shells of the coconuts
-  {k:'brenn', lvl:2, rate:.06, hint:{hoch:'Kokosschalen vom Erntehaus, Brennholz, das Kinder und Alte sammeln, und Holz vom Holzfäller brennen im Herd.', atoll:'Kokosschalen vom Erntehaus und Treibholz, das Kinder und Alte sammeln, brennen im Herd.'}},
+  {k:'brenn', lvl:1, rate:1 / 6, hint:{hoch:'Kokosschalen vom Erntehaus, Brennholz, das Kinder und Alte sammeln, und Holz vom Holzfäller brennen im Herd.', atoll:'Kokosschalen vom Erntehaus und Treibholz, das Kinder und Alte sammeln, brennen im Herd.'}},
   {k:'speisen', lvl:2, rate:1 / 6, hint:{hoch:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.', atoll:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.'}},
   {k:'toepfe', lvl:3, rate:.07, hint:{hoch:'Lass eine Familie am Ton töpfern.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
   {k:'matten', lvl:3, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Lass eine Familie bei den Pandanus Matten flechten.'}},

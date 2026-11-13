@@ -241,8 +241,8 @@ details.more p{margin:2px 0}
 .tab[aria-pressed="true"]{color:var(--ink);background:var(--eturm) no-repeat 0 0/100% 100%}
 .tab.new::after{content:"";position:absolute;right:1px;top:0;width:7px;height:7px;background:var(--ochre);border-radius:62% 38% 55% 45%/48% 58% 42% 52%}
 /* the idle button next to the people count */
-.pop.idle{margin-right:2px}
-.pop.idle.zero{opacity:.45}
+.pop.sat{margin-right:2px}
+.pop.sat[data-m=schlecht] b{color:#B3261E}
 /* double speed: the patch turns yellow while it runs fast */
 #sidectl .round:nth-child(3){background-image:var(--e3);transform:rotate(-2deg)}
 .round.speed[aria-pressed="true"]{background-image:var(--eturm)}
@@ -933,3 +933,27 @@ canvas.kor{width:auto;height:min(168px,24vh);max-width:100%;margin:4px auto}
   .folk.home .who.pers .job{font-size:10.5px}
   .folk.home .who.pers small{display:none}
 }
+/* contentment: the band of the village, the least content person, what pulls down and what helps */
+.satbar{display:flex;flex:none;height:12px;border-radius:7px;overflow:hidden;box-shadow:inset 0 0 0 2px var(--ink);margin:4px 0 3px;background:#E9DCC0}
+.satbar i{display:block;height:100%}
+.satbar .g{background:#7FA65A}.satbar .m{background:#E0B252}.satbar .s{background:#C8573E}
+.satleg{display:flex;gap:10px;flex-wrap:wrap;font:600 12px var(--font-ui);color:var(--muted);margin-bottom:6px}
+.satleg span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.satleg .g::before{background:#7FA65A}.satleg .m::before{background:#E0B252}.satleg .s::before{background:#C8573E}
+.satlow{display:flex;align-items:center;gap:10px;margin:2px 0 6px}
+.satv{display:inline-flex;align-items:center;gap:3px;font:800 20px var(--font-ui)}
+.satv .ic{width:24px;height:24px}
+.satv.schlecht b{color:#B3261E}
+.sattiles{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 6px}
+.sattile{display:inline-flex;align-items:center;gap:3px;padding:3px 7px 3px 4px;border-radius:9px;background:#E4EED6;box-shadow:inset 0 0 0 2px var(--ok)}
+.sattile.out{background:#F4DCD3;box-shadow:inset 0 0 0 2px #C8573E}
+.sattile .ic{width:17px;height:17px}
+.sattile small{font:700 12px var(--font-ui)}
+.sattile b{font:800 12px var(--font-ui);color:var(--muted)}
+.satacts{margin:0 0 6px}
+.satnext{gap:0}
+.satnext li{display:flex;align-items:center;gap:8px;min-height:32px;padding:1px 4px;background-image:none!important;box-shadow:inset 0 -1px 0 rgba(62,36,22,.22)}
+.satnext li:last-child{box-shadow:none}
+.satnext li b.schlecht{color:#B3261E}
+.satnext li .sub{flex:1;margin:0}
+.satnext li b{font:800 14px var(--font-ui)}

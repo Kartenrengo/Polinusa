@@ -40,7 +40,10 @@ function updateHUD(){
   $('seasonBtn').setAttribute('aria-label', `${S.n}, ${moonOf() + 1}. Mond. ${festivalTime() ? 'Festzeit.' : `Fest der Plejaden in etwa ${minutes(untilFestival())} Minuten.`} Tippen zeigt den Kalender.`);
   $('popNum').textContent = I.pop; $('popCap').textContent = '/' + popCap(I);
   showWind();
-  const sf0 = staffOf(I), free = sf0.rest ? 0 : sf0.free; $('idleNum').textContent = free; $('idleBtn').classList.toggle('zero', !free); $('idleBtn').setAttribute('aria-label', `${free} ohne Arbeit. Tippen zeigt sie nacheinander.`);
+  // contentment instead of the jobless (everyone without a place helps anyway): a face and the village's average
+  { const S = satOfIsle(I), v = S.avg, m = satBand(v), lo = S.all[0];
+    $('satNum').textContent = v; $('satBtn').dataset.m = m; $('satMouth').setAttribute('d', SAT_FACE[m][0]); $('satFace').setAttribute('fill', SAT_FACE[m][1]);
+    $('satBtn').setAttribute('aria-label', `Zufriedenheit ${v} von 100${lo ? `. Am wenigsten zufrieden: ${lo[0].n}, ${lo[1].v}` : ''}. Tippen zeigt warum.`); }
   // the dot next to the people count: green while the village grows, yellow when the houses are full, red when something is missing
   const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
   $('popDot').className = 'dot ' + st;
@@ -142,14 +145,6 @@ function dayRing(){
 /* the name under each good in the top row: short, so it fits under its icon */
 const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
 const shortGN = k => SHORT_GN[k] || (GN[k] && GN[k].length <= 8 ? GN[k] : (GN[k] || k).slice(0, 7) + '.');
-/* The idle button: one after the other, the people without work */
-let idleNo = 0;
-function showIdle(){
-  const I = isl(active), sf = staffOf(I), list = sf.rest ? [] : walkers.filter(w => w.isl === I.id && w.role === 'idle' && !w.play && !w.asleep && !w.toBed);
-  if (!list.length){ toast(sf.rest && sf.free ? `Alle Plätze sind besetzt. ${sf.free === 1 ? 'Eine Person hat' : sf.free + ' Leute haben'} Freizeit.` : 'Alle, die arbeiten können, haben Arbeit.', 2600, false); return; }
-  const n = idleNo++ % list.length, w = list[n]; markW = w; markUntil = performance.now() + 6000; flyTo(w.x, w.y, Math.max(cam.z, 2.2));
-  toast(`${whoIs(w)} hat keine Arbeit, ${n + 1} von ${list.length}. ${foragers(I) ? 'Solange sammelt sie oder er Wild. ' : ''}Ein neuer Arbeitsplatz gibt Arbeit, oder mehr Plätze in einem Gebäude.`, 3600, false);
-}
 function villageCenter(I){
   const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) return I.anchor || I.center;
   return {x:hs.reduce((t, b) => t + b.x, 0) / hs.length, y:hs.reduce((t, b) => t + b.y, 0) / hs.length};
@@ -622,6 +617,41 @@ function zealMarkup(I){
   const z = I.zeal != null ? I.zeal : 1;
   return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><p class="sub">${ZEAL_TEXT[z]}</p></div>`;
 }
+/* Contentment (satOf): the village's average, how many are content, so-so or not, and the least content person, with
+   what pulls them down and what helps: the share of work and free time for everyone, their house, food, water, fuel */
+const SAT_BANDS = ['gut', 'mittel', 'schlecht'], satBand = v => v >= 70 ? 'gut' : v >= 45 ? 'mittel' : 'schlecht';
+const SAT_FACE = {gut:['M6.6 11.8Q10 15 13.4 11.8', '#F3D98A'], mittel:['M6.8 12.9H13.2', '#E9DCC0'], schlecht:['M6.6 14Q10 11.2 13.4 14', '#E8A88A']};
+const SAT_ICON = {essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen'};
+function satHelp(I, p, w){
+  const f = famOf(I, p.h), h = f && f.home && findB(f.home);
+  if (w.k === 'essen') return {a:'ware', k:'nahrung', t:'Mehr Essen'};
+  if (w.k === 'wasser') return {a:'ware', k:'wasser', t:'Mehr Wasser'};
+  if (w.k === 'feuer') return {a:'ware', k:'holz', t:'Brennholz'};
+  if (w.k === 'dach') return h ? {a:'goto', b:h.id, t:'Zum Haus'} : {a:'hint', k:'haus', t:'Hütte bauen'};
+  if (w.k === 'enge') return {a:'hint', k:'haus', t:'Hütte bauen'};
+  if (GN[w.k]) return {a:'ware', k:w.k, t:GN[w.k]};
+  return null;
+}
+function satMarkup(I){
+  const S = satTick(I), n = S.all.length, band = [0, 0, 0], pc = x => n ? Math.round(x / n * 100) : 0;
+  for (const [, t] of S.all) band[SAT_BANDS.indexOf(satBand(t.v))]++;
+  let h = head('Zufriedenheit', `${I.name}: im Mittel ${S.avg} von 100 · ${n} Menschen`);
+  h += `<div class="satbar" role="img" aria-label="${band[0]} zufrieden, ${band[1]} geht so, ${band[2]} unzufrieden"><i class="g" style="width:${pc(band[0])}%"></i><i class="m" style="width:${pc(band[1])}%"></i><i class="s" style="width:${pc(band[2])}%"></i></div>`;
+  h += `<div class="satleg"><span class="g">${band[0]} zufrieden</span><span class="m">${band[1]} geht so</span><span class="s">${band[2]} unzufrieden</span></div>`;
+  const lo = S.all[0]; if (!lo) return h;
+  const [p, t] = lo, f = famOf(I, p.h), minus = t.why.filter(w => w.d < 0).sort((a, b) => a.d - b.d), plus = t.why.filter(w => w.d > 0);
+  const m = satBand(t.v);
+  h += `<p class="sec">Am wenigsten zufrieden</p><div class="satlow"><button class="who chip pers" type="button" data-act="who" data-p="${p.id}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${f ? famName(f) : ''}</span></button>`
+    + `<span class="satv ${m}" aria-label="${t.v} von 100"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.8" fill="${SAT_FACE[m][1]}" stroke="#2B1D14" stroke-width="1.6"/><circle cx="7.3" cy="8.6" r="1.05" fill="#2B1D14"/><circle cx="12.7" cy="8.6" r="1.05" fill="#2B1D14"/><path d="${SAT_FACE[m][0]}" fill="none" stroke="#2B1D14" stroke-width="1.5" stroke-linecap="round"/></svg><b>${t.v}</b></span></div>`;
+  const tile = (w, cls) => `<span class="sattile ${cls}">${icon(SAT_ICON[w.k] || w.k)}<small>${w.t}</small><b>${w.d > 0 ? '+' : ''}${w.d}</b></span>`;
+  h += `<div class="sattiles">${minus.map(w => tile(w, 'out')).join('')}${plus.map(w => tile(w, 'ok')).join('')}${!minus.length ? '<span class="sub">Nichts fehlt. Mehr Freizeit, ein Fest oder ein schönes Dorf machen noch zufriedener.</span>' : ''}</div>`;
+  const acts = []; for (const w of minus){ const a = satHelp(I, p, w); if (a && !acts.some(x => x.t === a.t)) acts.push(a); }
+  if (acts.length) h += `<div class="chips satacts">${acts.slice(0, 3).map(a => `<button class="chip" type="button" data-act="${a.a}"${a.k ? ` data-k="${a.k}"` : ''}${a.b ? ` data-b="${a.b}"` : ''}>${a.t}</button>`).join('')}</div>`;
+  h += `<p class="sec">Arbeit und Freizeit für alle</p>` + zealMarkup(I);
+  const next = S.all.slice(1, 5); if (next.length) h += `<p class="sec">Danach</p><ul class="list satnext">${next.map(([q, u]) => { const w = u.why.filter(x => x.d < 0).sort((a, b) => a.d - b.d)[0];
+    return `<li><button class="link" type="button" data-act="who" data-p="${q.id}">${q.n}</button><span class="sub">${w ? w.t : 'zufrieden'}</span><b class="${satBand(u.v)}">${u.v}</b></li>`; }).join('')}</ul>`;
+  return h;
+}
 /* A person: who, what they do now, where they work, how their day is shared, and the village's slider */
 /* on a person's tile in the house: the short name of the place (Fischer, not Fischerhütte), so four fit in a row */
 const jobShort = (I, p) => { const b = p.job && findB(p.job); return isAdult(p) && b && !b.at && !loanWord(I, p) && !(staffOf(I).restP || []).includes(p.id) ? KINDS[b.kind].s : personWork(I, p); };
@@ -844,7 +874,7 @@ function famMarkup(I, f, withHead = true){
 /* Ratios, as Anno shows them: what one place makes with its whole crew, and for how many people that is enough */
 const fullRate = (I, b) => { const K = KINDS[b.kind]; return outOf(b) * PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, K.crew || 1); };
 const needOfGood = k => NEEDS.find(N => needGoods(N.k).includes(k)) || null;
-const feedsText = (N, n) => `${n >= 10 ? Math.round(n) : perMin(Math.round(n * 10) / 10)} ${N.lvl === 1 ? 'Menschen' : `Bewohner im ${TIERS[N.lvl].n}`}`;
+const feedsText = (N, n) => `${n >= 10 ? Math.round(n) : perMin(Math.round(n * 10) / 10)} ${N.k === 'brenn' ? 'Häuser' : N.lvl === 1 ? 'Menschen' : `Bewohner im ${TIERS[N.lvl].n}`}`;
 /* the chain of a good: what goes in, what it is, where it goes on */
 function chainMarkup(I, k){
   const kinds = ORDER.filter(q => KINDS[q] && KINDS[q].on && KINDS[q].on.includes(I.type) && (KINDS[q].prod === k || (KINDS[q].picks && KINDS[q].picks[k])));
@@ -982,6 +1012,8 @@ function renderSheet(){
     h += fleetMarkup();
   } else if (sheetKind === 'person'){
     const m = personMarkup(); if (!m){ closeSheet(); return; } h += m;
+  } else if (sheetKind === 'sat'){
+    h += satMarkup(isl((sheetData && sheetData.id) || active));
   } else if (sheetKind === 'calendar'){
     h += calendarMarkup();
   } else if (sheetKind === 'info'){
@@ -1115,7 +1147,7 @@ $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.m
 $('sheetBody').addEventListener('change', e => {
   if (e.target.id !== 'zealIn') return;
   const I = isl(e.target.dataset.i); if (!I) return;
-  I.zeal = clamp(Math.round(+e.target.value), 0, 2); I.staff = null; save(); renderSheet(); toast(`${I.name}: ${ZEAL[I.zeal].n}.`, 2200, false);
+  I.zeal = clamp(Math.round(+e.target.value), 0, 2); I.staff = null; I._sat = null; I._mf = null; save(); renderSheet(); updateHUD(); toast(`${I.name}: ${ZEAL[I.zeal].n}.`, 2200, false);
 });
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;

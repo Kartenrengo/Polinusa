@@ -30,7 +30,9 @@ const CHIEF_GOODS = TIERS[4].needs.filter(k => !TIERS[3].needs.includes(k));
 const homeCapMax = (I, b) => TIERS[tierOf(b)].cap;
 const DRY_GRACE = 15;   // ticks a good may be gone before the houses lose the room it gives
 function homeCap(I, b){
-  const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE, basic = ['essen', 'wasser'].filter(have).length;
+  // a need counts as met while the store has some, or this morning's meal and last night's fire reached everyone
+  const M = I.meal, F = I.fire, met = k => k === 'essen' ? M && !M.hungry : k === 'wasser' ? M && !M.thirsty : k === 'brenn' ? F && !F.cold : false;
+  const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE || met(k), basic = ['essen', 'wasser'].filter(have).length;
   const leak = roofState(b) === 'out' ? 1 : 0;   // under a broken roof one fewer finds a dry place
   if (t === 1) return Math.min(max, 2 + basic) - leak;
   const extra = TIERS[t].needs.filter(k => !['dach', 'essen', 'wasser'].includes(k)), share = extra.filter(have).length / extra.length;
