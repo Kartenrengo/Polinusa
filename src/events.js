@@ -115,7 +115,7 @@ function eventTick(){
   if (eventNow || tick < nextEvent || tick < YEAR || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;   // the first year is calm
   if (sheetKind || placing){ nextEvent = tick + 5; return; }
   const ok = EVENTS.filter(E => E.id !== lastEvent).map(E => [E, E.when()]).filter(([, o]) => o);
-  nextEvent = tick + 150 + Math.floor(Math.random() * 90);
+  nextEvent = tick + 240 + Math.floor(Math.random() * 120);   // every 8 to 12 minutes: time to see what happens
   if (!ok.length) return;
   // in the storm season a cyclone comes more often than anything else
   const storm = ok.find(([E]) => E.id === 'sturm'), [E, o] = storm && Math.random() < .55 ? storm : pickOf(ok); lastEvent = E.id; eventNow = {E, o}; stats.ereignisse++;

@@ -240,7 +240,7 @@ function packTick(I){
 function packArrive(s){
   const P = s.pack, I = isl(P.from), M = isl(s.to); s.pack = null; s.cargo = {};
   const got = I && M ? packGive(I, M, P.g, P.help) : null;
-  if (got && !awayQuiet){ const msg = P.help ? `${I.name} hilft dem jungen Dorf ${M.name}: ${packText(got)}.` : `Ein Kanu aus ${I.name} bringt ${packText(got)}.`; note(msg); if (M.id === active){ toast(msg, 3600); sfx('shells'); updateHUD(); } }
+  if (got && !awayQuiet){ const msg = P.help ? `${I.name} hilft dem jungen Dorf ${M.name}: ${packText(got)}.` : `Ein Kanu aus ${I.name} bringt ${packText(got)}.`; note(msg); if (M.id === active){ sfx('shells'); updateHUD(); } }   // into the conch only: a canoe every morning would be too much
   s.leaving = true; if (!s.home || !sailTo(s, {x:s.home.x, y:s.home.y}, true)){ const i = ships.indexOf(s); if (i >= 0) ships.splice(i, 1); }
   requestDraw();
 }
@@ -342,4 +342,36 @@ function seeWhale(){
   const I = isl(W.isl), p = I && (I.people || []).filter(isAdult)[Math.floor(Math.random() * Math.max(1, (I.people || []).filter(isAdult).length))];
   if (p) lifeEvent(p, 'wal'); sfx('shells');
   toast(`Der Lichtwal zieht an ${I ? I.name : 'der Insel'} vorbei.${p ? ` ${p.n} sah ihn zuerst und erzählt es den Kindern.` : ''} Ansehen +${WHALE.mana}.`, 4600); note('Der Lichtwal kam in der Nacht vorbei.');
+}
+/* ---------- shake a palm: tap it twice quickly and something falls out of the crown, by chance: a ripe nut, a frond, an
+   old shell, a tuft of fibre. A palm gives again only after a while (PALM_SHAKE.rest ticks), so it stays a small joy. */
+const PALM_SHAKE = {rest:45, gap:1500, dbl:420, drops:[['kokos', .5], ['dach', .2], ['schalen', .17], ['faser', .13]]};
+let palmTap = null, palmShakeAt = 0;
+const palmDrops = [];
+function palmDouble(p){
+  const b = hitBuilding(p); if (!b || b.kind !== 'palme' || b.bt || b.grow > 0) { palmTap = null; return false; }
+  const now = performance.now(), dbl = palmTap && palmTap.id === b.id && now - palmTap.t < PALM_SHAKE.dbl;
+  palmTap = dbl ? null : {id:b.id, t:now};
+  if (!dbl) return false;
+  const I = islOfB(b.id); b._shake = now;
+  if (!I || !I.settled || now - palmShakeAt < PALM_SHAKE.gap || (b.shookAt != null && tick - b.shookAt < PALM_SHAKE.rest)){ requestDraw(); return true; }   // it sways, but nothing is left up there
+  palmShakeAt = now; b.shookAt = tick;
+  let r = Math.random(), k = PALM_SHAKE.drops[0][0]; for (const [q, w] of PALM_SHAKE.drops){ if (r < w){ k = q; break; } r -= w; }
+  if ((I.stock[k] || 0) < storeCap(I)) I.stock[k] = (I.stock[k] || 0) + 1;
+  const sc = (b.v && b.v.scale) || 1; palmDrops.push({k, x:b.x + (Math.random() - .5) * 8, y0:b.y - KINDS.palme.hy * sc * 2, y1:b.y + 3, t0:now});
+  sfx('plop'); updateHUD(); requestDraw(); return true;
+}
+/* what falls: it drops from the crown, bounces once on the ground and shows what it is for a moment */
+function drawPalmDrops(now){
+  if (!palmDrops.length) return;
+  const c = ctx; camXform(c);
+  for (let i = palmDrops.length - 1; i >= 0; i--){
+    const d = palmDrops[i], a = (now - d.t0) / 1000; if (a > 2.2){ palmDrops.splice(i, 1); continue; }
+    const fall = Math.min(1, a / .45), y = fall < 1 ? d.y0 + (d.y1 - d.y0) * fall * fall : d.y1 - Math.max(0, Math.sin(Math.min(1, (a - .45) / .3) * Math.PI)) * 4;
+    c.save(); c.globalAlpha = a > 1.7 ? (2.2 - a) / .5 : 1; c.translate(d.x, y); c.rotate(fall < 1 ? a * 6 : 0);
+    put(c, 0, 0, .55, 1, 0, 'ic|' + d.k, `<use href="#ic-${d.k}" transform="translate(-10 -10)"/>`);
+    c.restore();
+    if (a > .5 && a < 1.9){ c.save(); c.globalAlpha = Math.min(1, (a - .5) * 4) * (a > 1.6 ? (1.9 - a) / .3 : 1); c.font = `700 ${(9 / Math.max(1, cam.z * .6)).toFixed(1)}px sans-serif`; c.textAlign = 'center'; c.fillStyle = '#2B1D14'; c.fillText('+1 ' + G1[d.k], d.x, d.y1 - 14 - (a - .5) * 6); c.restore(); }
+  }
+  c.globalAlpha = 1;
 }

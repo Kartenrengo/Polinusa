@@ -161,21 +161,30 @@ function loadNews(){ try { const l = JSON.parse(localStorage.getItem(newsKey()) 
 /* the colour of a message, read from its words: a warning, good news, or plain paper */
 const TOAST_BAD = /fehlt|fehlen|\bohne\b|Sturm|\bfort\b|Hunger|hungert|Durst|verloren|krank|gestorben/i, TOAST_GOOD = /Fest|Kind\b|Chronik|gegründet|geboren/;
 const toastTone = m => TOAST_BAD.test(m) ? 'warn' : TOAST_GOOD.test(m) ? 'good' : '';
+/* Messages slide out of the day bar to the right and draw back into it. One at a time: what comes while one is shown
+   waits its turn (at most two wait; older ones are only kept in the conch). An answer to a tap shows at once. */
+const TOAST = {gap:700, min:2600, wait:2};
+let toastQ = [], toastBusy = false;
 function toast(msg, ms = 2600, keep = true){
   if (awayQuiet) return;
   newsAdd(msg);
   if (newsOpen()){ renderNews(); if (keep) return; }
   else if (keep){ unread++; newsBadge(); }
+  if (keep && toastBusy){ if (!toastQ.some(q => q.msg === msg) && $('toast').textContent !== msg){ toastQ.push({msg, ms}); if (toastQ.length > TOAST.wait) toastQ.shift(); } return; }
+  showToast(msg, ms);
+}
+function showToast(msg, ms){
+  toastBusy = true;
   const t = $('toast'); t.textContent = msg; t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
-  clearTimeout(toastT); toastT = setTimeout(foldToast, ms + 600);
+  clearTimeout(toastT); toastT = setTimeout(foldToast, Math.max(TOAST.min, ms) + Math.min(2400, msg.length * 25));
 }
 function foldToast(){
-  const t = $('toast'), c = $('newsBtn'); clearTimeout(toastT); if (t.hidden || !t.classList.contains('open')){ t.classList.remove('open'); t.hidden = true; return; }
-  // it shrinks and flies into the conch, and the conch nods
-  const a = t.getBoundingClientRect(), b = c.getBoundingClientRect();
-  if (!reduced && a.width && b.width){ t.style.transform = `translate(${(b.left + b.width / 2 - a.left - a.width / 2).toFixed(1)}px, ${(b.top + b.height / 2 - a.top - a.height / 2).toFixed(1)}px) scale(.08)`; t.classList.add('fly'); c.classList.remove('nod'); void c.offsetWidth; c.classList.add('nod'); }
+  const t = $('toast'); clearTimeout(toastT);
+  const next = () => { toastBusy = false; const q = toastQ.shift(); if (q) toastT = setTimeout(() => showToast(q.msg, q.ms), TOAST.gap); };
+  if (t.hidden || !t.classList.contains('open')){ t.classList.remove('open'); t.hidden = true; next(); return; }
+  // it draws back into the day bar, to the left
   t.classList.remove('open');
-  toastT = setTimeout(() => { if (!t.classList.contains('open')){ t.hidden = true; t.classList.remove('fly'); t.style.transform = ''; } }, 520);
+  toastT = setTimeout(() => { if (!t.classList.contains('open')){ t.hidden = true; t.style.transform = ''; } next(); }, reduced ? 0 : 460);
 }
 const newsOpen = () => !$('newsList').hidden;
 function newsBadge(){ const n = $('newsNum'); n.hidden = !unread; n.textContent = unread > 9 ? '9+' : unread; $('newsBtn').setAttribute('aria-label', unread ? `Nachrichten, ${unread} neu` : 'Nachrichten'); }

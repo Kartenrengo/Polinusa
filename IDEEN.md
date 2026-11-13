@@ -84,7 +84,7 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 
 ## Offen aus der Runde „Noch feiner“ (Version 84)
 
-- **Hunde** sehen im Sitzen und Kratzen noch eckig aus; Schweineköpfe etwas groß.
+- ~~**Hunde**~~ **neu gezeichnet in Version 85.** Schweineköpfe sind noch etwas groß.
 - **Schildkröte in der Lagune** ist im Bild noch nicht gesehen worden.
 - **Schläfer vor den Häusern** gibt es nicht (sie gehen ins Haus); sichtbares Schlafen wäre eine Spieländerung.
 - **Kosten:** Bei höchster Qualität zeichnet das Spiel wieder etwas mehr (etwa 10 bis 13 %); die Bildraten-Steuerung fängt

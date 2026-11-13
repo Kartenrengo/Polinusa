@@ -34,7 +34,7 @@ function measure(){
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
   const t0 = topH + 8, t = t0 + $('hudbar').offsetHeight + 6; $('hudbar').style.top = t0 + 'px';   // the toast and the news hang under the bar
-  $('toast').style.top = t + 'px'; $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  $('toast').style.top = (t - 12) + 'px';   // tucked under the day bar, out of which it slides $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -2552,11 +2552,11 @@ function draw(now){
   drawSea(now); ctx.setTransform(1, 0, 0, 1, 0, 0); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
-  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawLightWhale(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
+  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawLightWhale(now); drawPalmDrops(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => fxLive || !!lightWhale || !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => fxLive || !!lightWhale || palmDrops.length > 0 || !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
 
 /* ======================================================================================================================
    Polish of water and nature: calm, slow motion in the same flat ink style. Everything here is a fine effect: it is
@@ -2574,7 +2574,8 @@ function windLean(x, y, now, lag, amp, ripple){
 /* A palm, bush or tree bends in the wind: the trunk (below the cut) leans a little, the crown above it leans more and
    comes a moment later. Two drawings with a clip at the cut, joined so the trunk does not break. */
 function drawBending(c, w, now, near, amp, H){
-  const lean = windLean(w.x, w.y, now, 0, amp * .55), lag = windLean(w.x, w.y, now, .22, amp * 1.25), s = H * .5;
+  const sh = w._shake && now - w._shake < 900 ? Math.sin((now - w._shake) / 55) * .22 * (1 - (now - w._shake) / 900) : 0;   // a palm shaken by a double tap
+  const lean = windLean(w.x, w.y, now, 0, amp * .55) + sh * .4, lag = windLean(w.x, w.y, now, .22, amp * 1.25) + sh, s = H * .5;
   const draw = () => { if (w.kind) drawBuilding(c, w, near); else drawTree(c, w); };
   c.save(); c.translate(w.x, w.y); c.transform(1, 0, -lean, 1, 0, 0); c.beginPath(); c.rect(-90, -s - .8, 180, s + 90); c.clip(); c.translate(-w.x, -w.y); draw(); c.restore();
   c.save(); c.translate(w.x, w.y); c.transform(1, 0, -lag, 1, (lean - lag) * s, 0); c.beginPath(); c.rect(-90, -s - 160, 180, 160); c.clip(); c.translate(-w.x, -w.y); draw(); c.restore();

@@ -1764,6 +1764,20 @@ die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was d
 - **Sparsam:** Feines nur nah herangezoomt und bei guter Bildrate; das Spiel senkt die Bildqualität von selbst, wenn das
   Handy nicht nachkommt. Mit „weniger Bewegung“ bleibt alles ruhig, ohne „Tag und Nacht“ bleibt der flache Look.
 
+## Ruhiger und verspielter (seit Version 85)
+
+- **Nachrichten** gleiten unter der Tagesleiste nach rechts heraus und ziehen sich danach wieder in sie zurück. Es kommt
+  immer nur eine; was währenddessen geschieht, wartet (höchstens zwei), alles Ältere steht nur in der Muschel. Eine
+  Nachricht bleibt mindestens gut zwei Sekunden, lange etwas länger. Antworten auf ein Antippen erscheinen sofort.
+- **Weniger auf einmal:** Ereignisse kommen alle 8 bis 12 Minuten statt alle 5 bis 8. Die Kanus der Tochterdörfer melden
+  sich nur noch in der Muschel, nicht mehr als Nachricht.
+- **Palmen schütteln:** Zweimal schnell auf eine Palme getippt, und sie wackelt: Heraus fällt per Zufall eine Kokosnuss,
+  ein Palmwedel, eine Kokosschale oder Fasern, mit einem kleinen „+1“. Danach braucht die Palme anderthalb Minuten, und
+  zwischen zwei Schütteln vergehen anderthalb Sekunden.
+- **Hunde** sehen aus wie Hunde: Schlappohr, längere Schnauze, tiefer Schwanz; sitzend ruhen sie auf den Hinterbeinen,
+  die Vorderbeine gerade vom Brustkorb, beim Kratzen geht eine Hinterpfote zum Ohr.
+- **Der Dorfplatz bleibt frei:** Hunde, Schweine und Hühner laufen nicht mehr über den Festplatz.
+
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,

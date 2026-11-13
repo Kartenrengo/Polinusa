@@ -598,6 +598,8 @@ function syncCritters(){
   }
   critters = critters.filter(a => { const I = isl(a.isl); return !!I && I.buildings.includes(a.home); });
 }
+// the village square stays free for feasts and dances: animals do not wander over it
+const onPlaza = (I, q) => I.buildings.some(b => b.kind === 'platz' && Math.hypot(b.x - q.x, b.y - q.y) < KINDS.platz.r + 8);
 function stepCritters(dt){
   for (const a of critters){
     const C = CRITTER[a.kind]; a.moving = false;
@@ -607,7 +609,8 @@ function stepCritters(dt){
       const I = isl(a.isl), L = landOf(I, a.home); let p = null;
       // now and then a dog trots after someone
       if (a.kind === 'dog' && Math.random() < .4){ const w = walkers.find(q => q.isl === a.isl && !q.boat && !q.paddle && Math.hypot(q.x - a.x, q.y - a.y) < 70); if (w) p = {x:w.x - 6, y:w.y + 2}; }
-      for (let i = 0; !p && i < 6; i++){ const q = {x:a.home.x + (Math.random() - .5) * 2 * C.r, y:a.home.y + 7 + (Math.random() - .5) * C.r}; if (landOf(I, q) === L) p = q; }
+      if (p && onPlaza(I, p)) p = null;
+      for (let i = 0; !p && i < 8; i++){ const q = {x:a.home.x + (Math.random() - .5) * 2 * C.r, y:a.home.y + 7 + (Math.random() - .5) * C.r}; if (landOf(I, q) === L && !onPlaza(I, q)) p = q; }
       if (p && landOf(I, p) === L){ a.tx = p.x; a.ty = p.y; }
       a.wait = C.wait[0] + Math.random() * (C.wait[1] - C.wait[0]); continue;
     }
@@ -1682,6 +1685,7 @@ function onTap(p){
   // a bubble over a house or a workplace: what it lacks, and where that comes from
   { const q = hitBubble(p); if (q){ q.go(); return; } }
   if (hitWhale(p)){ seeWhale(); return; }
+  if (palmDouble(p)) return;   // a second quick tap on a palm shakes it
   const sh = hitShip(p);
   if (sh && !sh.own && sh.pack){ const F = isl(sh.pack.from); toast(`Ein Kanu aus ${F ? F.name : 'einem Tochterdorf'} bringt ${packText(sh.pack.g)} nach ${isl(sh.to).name}.`, 3400, false); return; }
   if (sh && !sh.own && (sh.immig || sh.leaving)){ if (sh.immig && sh.state === 'moored') openSheet('immig', {ship:sh.id}); else toast(sh.immig ? `Ein Kanu ${sh.immig.from}: Familie ${sh.immig.n} sucht ein Zuhause auf ${isl(sh.to).name}.` : 'Das Kanu fährt weiter, zurück übers Meer.', 3400, false); return; }

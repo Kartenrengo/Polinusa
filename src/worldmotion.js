@@ -263,28 +263,35 @@ function critterLive(c, a, now){
   if (a.kind === 'dog') dogLive(c, now, s, mv, hh); else if (a.kind === 'pig') pigLive(c, now, s, mv, hh); else chickenLive(c, now, s, mv, hh, a);
 }
 function dogLive(c, now, s, mv, hh){
-  const t = now / 1000, TAN = '#B08048', DK = '#8A6440', pose = mv ? 'trot' : hh < .3 ? 'sit' : hh < .48 ? 'scratch' : hh < .76 ? 'sniff' : 'stand', sit = pose === 'sit' || pose === 'scratch';
-  const g = t * 11 + s, bob = pose === 'trot' ? -Math.abs(Math.sin(g)) * .5 : 0, wag = Math.sin(t * (pose === 'trot' ? 15 : pose === 'stand' ? 3.2 : 8.5) + s) * (pose === 'trot' ? .38 : .5);
-  c.fillStyle = 'rgba(31,20,13,.2)'; c.beginPath(); c.ellipse(.4, .4, sit ? 3 : 3.6, .9, 0, 0, TAU); c.fill();
-  const leg = (x, ph, col) => { const sw = pose === 'trot' ? Math.sin(g + ph) * 1.2 : 0, lf = pose === 'trot' ? Math.max(0, Math.cos(g + ph)) * .7 : 0; critLine(c, x, -.9 + bob, x + sw, .55 - lf, col, .75); };
-  if (!sit){ leg(-2.4, Math.PI, DK); leg(2.4, 0, DK); }
-  c.save(); c.translate(0, bob);
-  if (sit){ c.translate(-2.8, -.1); c.scale(.9, .9); c.rotate(-.36); c.translate(2.8, .1); }
-  c.fillStyle = TAN; c.fill(DOG_P.body); stroke(c, DOG_P.body, INKC, .45, null, 'round');
-  // tail: wags
-  c.save(); c.translate(-2.8, -2.2); c.rotate(sit ? .5 : -.6 + wag * .8); c.scale(1.5, 1.5); c.lineWidth = .6; c.strokeStyle = INKC; c.stroke(DOG_P.tail); c.lineWidth = .3; c.strokeStyle = TAN; c.stroke(DOG_P.tail); c.restore();
-  // head: sniffs down, scratches with a tilt, looks about
-  const hd = pose === 'sniff' ? .55 + Math.sin(t * 6 + s) * .1 : pose === 'scratch' ? .1 + Math.sin(t * 20) * .04 : pose === 'trot' ? Math.sin(g * 2) * .06 : (sit ? .45 : 0) + Math.sin(t * 1.3 + s) * .07;
-  c.save(); c.translate(2.6, -2.6); c.rotate(hd); c.translate(-2.6, 2.6);
-  c.fillStyle = TAN; c.fill(DOG_P.head); stroke(c, DOG_P.head, INKC, .45, null, 'round');
-  c.save(); c.translate(3.3, -4.2); c.rotate(pose === 'trot' ? Math.sin(g * 2 + 1) * .35 : pose === 'scratch' ? Math.sin(t * 20) * .3 : Math.sin(t * 2.3 + s) * .06); c.translate(-3.3, 4.2); c.fillStyle = DK; c.fill(DOG_P.ear); stroke(c, DOG_P.ear, INKC, .35, null, 'round'); c.restore();
-  c.fillStyle = INKC; c.beginPath(); c.arc(4.3, -3.6, .28, 0, TAU); c.fill(); c.beginPath(); c.arc(5.2, -3.3, .3, 0, TAU); c.fill();
-  c.restore(); c.restore();
-  if (sit){
-    c.fillStyle = TAN; c.beginPath(); c.ellipse(-2.2, -1.1, 1.7, 1.25, 0, 0, TAU); c.fill(); c.lineWidth = .4; c.strokeStyle = INKC; c.stroke();
-    critLine(c, .5, -2.3, .7, .5, INKC, .9); critLine(c, .5, -2.3, .7, .5, TAN, .45); critLine(c, 1.4, -2.3, 1.6, .5, INKC, .8); critLine(c, 1.4, -2.3, 1.6, .5, DK, .4);
-    if (pose === 'scratch'){ const sx = Math.sin(t * 22) * .8, sy = Math.cos(t * 22) * .5; critLine(c, -1.8, -1.4, -.3 + sx * .3, -3.2 + sy, INKC, 1); critLine(c, -1.8, -1.4, -.3 + sx * .3, -3.2 + sy, TAN, .5); critLine(c, -.3 + sx * .3, -3.2 + sy, .7 + sx, -4.2 - sy * .4, INKC, .8); }
-  } else { leg(-1.4, 0, INKC); leg(1.6, Math.PI, INKC); leg(-2.4, 0, INKC); leg(2.4, Math.PI, INKC); }
+  // a village dog: long body, longer snout, a floppy ear, a low curved tail. Sitting it rests on its haunches, the front
+  // legs straight down from the chest, so nothing floats; scratching, a hind paw goes up to the ear.
+  const t = now / 1000, TAN = '#B08048', DK = '#7E5A38', pose = mv ? 'trot' : hh < .3 ? 'sit' : hh < .44 ? 'scratch' : hh < .74 ? 'sniff' : 'stand', sit = pose === 'sit' || pose === 'scratch';
+  const g = t * 11 + s, bob = pose === 'trot' ? -Math.abs(Math.sin(g)) * .45 : 0, wag = Math.sin(t * (pose === 'trot' ? 14 : pose === 'stand' ? 3 : 7) + s);
+  const ink = (path, w) => { c.lineWidth = w; c.strokeStyle = INKC; c.stroke(path); };
+  c.fillStyle = 'rgba(31,20,13,.2)'; c.beginPath(); c.ellipse(.4, .4, sit ? 2.8 : 3.8, .9, 0, 0, TAU); c.fill();
+  const leg = (x0, y0, x1, y1, col) => { critLine(c, x0, y0, x1, y1, INKC, 1); critLine(c, x0, y0, x1, y1, col, .5); };
+  const trotLeg = (x, ph, col) => { const sw = pose === 'trot' ? Math.sin(g + ph) * 1.1 : 0, lf = pose === 'trot' ? Math.max(0, Math.cos(g + ph)) * .6 : 0; leg(x, -1.6 + bob, x + sw, .5 - lf, col); };
+  if (!sit){ trotLeg(-2.3, Math.PI, DK); trotLeg(2.1, 0, DK); }
+  // body
+  const B = new Path2D(); if (sit) B.ellipse(-.4, -2.4, 2.6, 1.5, -.55, 0, TAU); else B.ellipse(0, -2.3 + bob, 3.4, 1.35, 0, 0, TAU);
+  // tail, low and curved, wagging
+  { const tx = sit ? -2.4 : -3.2, ty = sit ? -.8 : -2.5 + bob, T = new Path2D(); T.moveTo(tx, ty); T.quadraticCurveTo(tx - 1.3, ty - .6 - wag * .5, tx - 1.9, ty - 1.6 - wag * .9);
+    c.lineCap = 'round'; ink(T, 1); c.lineWidth = .5; c.strokeStyle = TAN; c.stroke(T); }
+  if (sit){ c.fillStyle = TAN; c.beginPath(); c.ellipse(-1.9, -1, 1.6, 1.1, 0, 0, TAU); c.fill(); c.lineWidth = .4; c.strokeStyle = INKC; c.stroke(); }   // the haunch
+  c.fillStyle = TAN; c.fill(B); ink(B, .45);
+  if (sit){ leg(.9, -2.9, 1, .5, TAN); leg(1.7, -3, 1.8, .5, DK); }   // front legs from the chest to the ground
+  else { trotLeg(-1.3, 0, TAN); trotLeg(2.9, Math.PI, TAN); }
+  // head: lower when sniffing, up when sitting, a tilt while scratching
+  const hx = sit ? 1.9 : 3.1, hy = sit ? -4.6 : -3.2 + bob, tilt = pose === 'sniff' ? .5 + Math.sin(t * 6 + s) * .1 : pose === 'scratch' ? -.25 + Math.sin(t * 20) * .05 : pose === 'trot' ? Math.sin(g * 2) * .05 : Math.sin(t * 1.3 + s) * .07;
+  c.save(); c.translate(hx, hy); c.rotate(tilt);
+  const H = new Path2D(); H.ellipse(0, 0, 1.35, 1.15, 0, 0, TAU); const N = new Path2D(); N.moveTo(.6, -.6); N.lineTo(2.3, -.25); N.quadraticCurveTo(2.7, .3, 2.2, .55); N.lineTo(.6, .7); N.closePath();
+  c.fillStyle = TAN; c.fill(N); ink(N, .4); c.fill(H); ink(H, .45);
+  c.fillStyle = INKC; c.beginPath(); c.arc(2.45, .1, .32, 0, TAU); c.fill(); c.beginPath(); c.arc(.55, -.35, .24, 0, TAU); c.fill();   // nose, eye
+  const flop = pose === 'trot' ? Math.sin(g * 2 + 1) * .3 : pose === 'scratch' ? Math.sin(t * 20) * .25 : Math.sin(t * 2.1 + s) * .08;
+  c.save(); c.translate(-.4, -.8); c.rotate(.25 + flop); const E = new Path2D(); E.moveTo(0, 0); E.quadraticCurveTo(-1.1, .6, -.7, 2); E.quadraticCurveTo(-.1, 1.6, .5, .3); E.closePath(); c.fillStyle = DK; c.fill(E); ink(E, .35); c.restore();   // the floppy ear
+  c.restore();
+  if (pose === 'scratch'){ const k = Math.sin(t * 22); leg(-1.6, -1.2, .4 + k * .25, -3.6 + k * .3, TAN); }   // a hind paw at the ear
+  else if (sit) leg(-1.2, -.4, -.2, .5, DK);   // the hind paw on the ground
 }
 function pigLive(c, now, s, mv, hh){
   const t = now / 1000, BODY = '#4A3428', SNOUT = '#8C5F6E', pose = mv ? 'trot' : hh < .55 ? 'root' : hh < .8 ? 'stand' : 'ear', g = t * 8 + s;

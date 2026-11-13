@@ -403,6 +403,11 @@ const r = await p.evaluate(()=>{
         want(T.people.some(p => (p.ev || []).some(e => e[1] === 'gru')), 'founders: nobody of the new village has its founding in the story');
         { const k = GOODS.find(q => !canMakeOn(H, q) && !TREASURE_GOODS.includes(q)), m0 = mana; T.stock[k] = 5; H.stock[k] = 0; H.fernAt = null; packGive(T, H, {[k]:3});
           // what other peoples teach stays: half the soil lost with the garden lore; the invented light whale can be seen once
+          // a palm tapped twice quickly drops one thing; right after, nothing more
+          { const P = H.buildings.find(b => b.kind === 'palme' && !b.bt && !(b.grow > 0)); if (P){ const pt = {x:P.x, y:P.y - KINDS.palme.hy * .6}, sum = () => PALM_SHAKE.drops.reduce((t, [k]) => t + (H.stock[k] || 0), 0);
+            for (const [k] of PALM_SHAKE.drops) H.stock[k] = 0; palmTap = null; palmShakeAt = 0; P.shookAt = null; const n0 = palmDrops.length;
+            palmDouble(pt); palmDouble(pt); const one = sum(); palmTap = null; palmDouble(pt); palmDouble(pt);
+            want(one === 1 && sum() === 1 && palmDrops.length === n0 + 1, `palm: a double tap drops ${one}, a second one ${sum() - one}`); palmDrops.length = 0; } }
           { const t0 = stats.teach; stats.teach = ['garten', 'wetter']; want(taught('garten') && taught('wetter') && !taught('x'), 'teach: lessons not remembered'); stats.teach = t0; }
           { const m1 = mana, I0 = isl(active); lightWhale = {x:I0.center.x + 400, y:I0.center.y, hx:1, hy:0, t0:performance.now(), isl:I0.id, seen:false};
             const q = whalePos(lightWhale, performance.now()); want(hitWhale(q), 'whale: cannot be tapped'); seeWhale(); want(mana === m1 + WHALE.mana && lightWhale.seen && !hitWhale(q), 'whale: seeing it gives no standing or can be seen twice'); lightWhale = null; mana = m1; }

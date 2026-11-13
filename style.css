@@ -974,3 +974,10 @@ body #toast[data-tone=good]::after{background-image:url("data:image/svg+xml,%3Cs
 
 /* the gifts of the clan (giftsMarkup) */
 .list.gifts li small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+
+/* version 85: a message slides out of the day bar to the right and draws back into it (toast/foldToast) */
+body #toast{left:calc(20px + env(safe-area-inset-left,0px))!important;right:auto!important;max-width:min(calc(100vw - 36px),380px)!important;z-index:5;transform-origin:0 0;
+  clip-path:inset(0 100% 0 0)!important;opacity:1!important;transform:translate(-10px,-8px);animation:none!important;
+  transition:clip-path .44s cubic-bezier(.25,.9,.3,1),transform .44s cubic-bezier(.25,.9,.3,1)!important}
+body #toast.open{clip-path:inset(-8px -12px -14px -8px)!important;transform:none}
+@media (prefers-reduced-motion:reduce){body #toast{transition:none!important;transform:none}}
