@@ -282,7 +282,7 @@ const r = await p.evaluate(()=>{
     const back = unpackP(packP(a)); want(back.ev && back.ev.length === a.ev.length, 'story: lost in saving');
     const hh = homesOf(H).find(h => famOfHome(H, h)), t0 = hh.t; hh.t = 2; H.stock.nahrung = 30; H.stock.wasser = 30; const kids = H.people.length; let mother = null;
     for (const q of H.people) if (q.s === 'f' && isAdult(q) && q.h === famOfHome(H, hh).id) mother = q;
-    if (mother){ H._growTo = hh.id; H._birth = true; const c = newcomer(H); H._growTo = 0; H._birth = false; want(c.ev && c.ev[0][1] === 'geb' && mother.ev.some(e => e[1] === 'kind' && e[2] === c.n), 'story: a birth is not written down'); }
+    if (mother){ H._growTo = hh.id; H._birth = true; const c = newcomer(H); H._growTo = 0; H._birth = false; want(c.ev && c.ev[0][1] === 'geb' && H.people.some(m => m.h === c.h && m !== c && (m.ev || []).some(e => e[1] === 'kind' && e[2] === c.n)), 'story: a birth is not written down'); }   // whichever woman of the house is the mother
     hh.t = t0; H.people = H.people.slice(0, kids); stormWarn(H, false); tick = H.storm.at; stormTick(H); want(H.people.some(q => isAdult(q) && (q.ev || []).some(e => e[1] === 'sturm')), 'story: the storm is not written down'); }
   // the middle game: a strength speeds up its kind of work; a trade chain with another village brings what is missing
   { const H = isl('heimat'); H.str = null; const e = H.buildings.find(q => q.kind === 'ernte') || (() => { const q = findSpot(H, 'ernte', startSpot(H, KINDS.ernte)); return addB(H, 'ernte', q, variant('ernte'), tick); })();
