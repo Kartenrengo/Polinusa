@@ -1100,12 +1100,12 @@ function drawPeople(c, v, now){
     if (drag) dragLog(c, w, now); else if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
     if (w.play && w.play.k === 'surf'){ c.save(); c.translate(2.4, -4.4); c.rotate(-1.25); c.fillStyle = '#C9A36A'; c.fill(BOARD_S); stroke(c, BOARD_S, '#2B1D14', .4); c.restore(); }   // the board under the arm
     const at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3, show = (at || w.dance || w.hop || w.cheer) && w.fx && w.fx[0] !== '~';
-    const ln = show && LEAN[w.fx] ? LEAN[w.fx](reduced ? .35 : now / 1000 + (w.x % 7)) : 0; w._ln = ln;
-    if (ln){ c.save(); c.rotate(ln); }
+    w._sq = 0; const ln = show && LEAN[w.fx] ? LEAN[w.fx](reduced ? .35 : now / 1000 + (w.x % 7), w, now) : 0; w._ln = ln;
+    if (ln){ c.save(); c.rotate(ln); if (w._sq) c.scale(1, w._sq); }
     blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
     const tool = w.old ? 'stab' : !w.carry && w.job && !(at && NOTOOL.has(w.fx)) && w.job.tool;
     // at work the adze and the digging stick swing
-    if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? Math.sin(now / 95 + w.phase) * .38 : 0; if (sw){ c.save(); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
+    if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? workBeat(w, now).sw * .4 : 0; if (sw){ c.save(); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
     if (ln) c.restore();
     if (show) workFx(c, w, now);
     if (pole) poleLoads(c, w); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag) blit(c, 'load|' + w.carry, LOADS[w.carry]);
@@ -1227,12 +1227,99 @@ function dragLog(c, w, now){
   if (w.moving && !reduced){ const q = (now / 500 + w.x) % 1; c.globalAlpha = (1 - q) * .45; c.fillStyle = '#E6D6B0'; c.beginPath(); c.ellipse(-11 - q * 2, -.4 - q, .8 + q, .5 + q * .5, 0, 0, TAU); c.fill(); c.globalAlpha = 1; }
 }
 /* What each kind of work looks like, small and in front of the worker, who faces right here */
-const SWING = new Set(['dig', 'chop', 'build', 'carve']);
+const SWING = new Set(['dig', 'chop', 'build', 'carve', 'knap']);
+/* One shared work rhythm, so tool, body and effects move together. A stroke: slow wind-up, fast strike, a short hold on impact,
+   recover. m 'hit' = strokes (P ms, lean back / forward / resting lean); 'rub' = back and forth; 'nod' = small steady nod;
+   'dip' = bend and rise. Each worker has their own timing; about one stroke in 8 is a pause (a stretch). */
+const WORK = {dig:{m:'hit', P:760, bk:.1, fw:.22, bs:.12}, chop:{m:'hit', P:680, bk:.12, fw:.22, bs:.04}, build:{m:'hit', P:700, bk:.1, fw:.22, bs:.06},
+  carve:{m:'hit', P:560, bk:.05, fw:.12, bs:.08}, plant:{m:'hit', P:900, bk:.05, fw:.24, bs:.1}, pound:{m:'hit', P:620, bk:.1, fw:.2, bs:.05},
+  beat:{m:'hit', P:560, bk:.08, fw:.18, bs:.06}, tamp:{m:'hit', P:820, bk:.13, fw:.2, bs:.04}, knap:{m:'hit', P:460, bk:.04, fw:.14, bs:.1},
+  wedge:{m:'hit', P:900, bk:.12, fw:.2, bs:.05}, paddle:{m:'hit', P:600, bk:.06, fw:.14, bs:.05},
+  grind:{m:'rub', P:1500, am:.07, bs:.14}, file:{m:'rub', P:1300, am:.06, bs:.1}, polish:{m:'rub', P:1500, am:.05, bs:.1}, rub:{m:'rub', P:1700, am:.05, bs:.1},
+  grate:{m:'rub', P:1100, am:.05, bs:.1}, paint:{m:'rub', P:1800, am:.04, bs:.08},
+  weave:{m:'nod', P:1500, am:.035, bs:.06}, cord:{m:'nod', P:900, am:.04, bs:.08}, net:{m:'nod', P:1300, am:.03, bs:.06}, braid:{m:'nod', P:1100, am:.03, bs:.06},
+  stamp:{m:'nod', P:900, am:.05, bs:.08}, thatch:{m:'nod', P:1000, am:.05, bs:-.05}, hang:{m:'nod', P:1200, am:.05, bs:-.04},
+  scoop:{m:'dip', P:1500, am:.28, bs:.04}, water:{m:'dip', P:1700, am:.24, bs:.04}};
+const hash01 = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
+/* the swing of one stroke, -1 (wound back) .. 1 (struck), impact at p = .56 */
+function swing01(p){
+  if (p < .45) return -smooth01(p / .45);
+  if (p < .56){ const q = (p - .45) / .11; return -1 + 2 * q * q; }
+  if (p < .66) return 1;
+  return 1 - smooth01((p - .66) / .34);
+}
+/* where a worker is in the rhythm now; cached for the frame. n stroke count, p 0..1 in the stroke, pause, sw swing -1..1,
+   age ms since the last impact (nn its stroke, pz = that one was a pause), r rub -1..1, sq body squash, ls lean */
+function workBeat(w, now){
+  if (w._bn === now && w._bf === w.fx) return w._bt;
+  const D = WORK[w.fx] || WORK.dig, off = (w.phase || 0) * 137 + (w.x % 13) * 53, u = (now + off) / D.P, n = Math.floor(u), p = u - n;
+  const pause = hash01(n, w.x) < .125, ip = D.m === 'dip' ? .5 : .56, bell = Math.sin(p * Math.PI), B = {n, p, pause, sw:0, r:0, sq:1, ls:0};
+  B.nn = p >= ip ? n : n - 1; B.pz = hash01(B.nn, w.x) < .125; B.age = ((p - ip + 1) % 1) * D.P;
+  if (pause) B.ls = -.07 * bell, B.sq = 1 + .02 * bell;                       // a short upright stretch
+  else if (D.m === 'hit'){ B.sw = swing01(p); B.ls = D.bs + (B.sw < 0 ? D.bk : D.fw) * B.sw; B.sq = p > .56 && p < .7 ? 1 - .04 * Math.sin((p - .56) / .14 * Math.PI) : 1; }
+  else if (D.m === 'rub'){ B.r = Math.sin(p * TAU * 3); B.ls = D.bs + B.r * D.am; }
+  else if (D.m === 'nod') B.ls = D.bs + Math.sin(p * TAU * 2) * D.am;
+  else B.ls = D.bs + D.am * bell * bell;
+  w._bn = now; w._bf = w.fx; w._bt = B; return B;
+}
+const workLean = (t, w, now) => {
+  const D = WORK[w.fx]; if (reduced) return D ? D.bs || 0 : 0;
+  const B = workBeat(w, now); w._sq = B.sq; return B.ls;
+};
 /* for some work the body bends forward (an angle at the feet), for dozing and dancing it sways */
 const LEAN = {lift:() => .35, mulch:() => .3, eggs:() => .4, gather:() => .4, grope:() => .5, crab:() => .3, stalk:() => .16, mound:t => .28 + Math.sin(t * 4) * .03,
   doze:t => .13 + Math.sin(t * .9) * .07, nod:t => Math.sin(t * 2.2) * .05, siva:t => Math.sin(t * 2.2) * .07, hop:() => 0};
+for (const k in WORK) LEAN[k] = workLean;
 /* where the hands hold something else, the tool is put down */
 const NOTOOL = new Set(['spear', 'stalk', 'tamp', 'wedge', 'coil', 'lift', 'mound', 'eggs', 'gather', 'twigs', 'snap', 'mulch', 'grope', 'crab', 'thatch', 'trim', 'herd', 'pour', 'stones', 'fire', 'burn', 'hollow', 'twist']);
+/* short, small effects at the moment of impact; random but stable per stroke (seed: stroke count and x) */
+function strikeFx(c, w, B, now){
+  const k = w.fx, ms = B.age, s = ms / 1000, r = i => hash01(B.nn * 7.31 + i * 3.7, w.x), fade = q => q < .55 ? 1 : 1 - (q - .55) / .45;
+  const dot = (x, y, rad, col, al) => { c.globalAlpha = al; c.fillStyle = col; c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill(); c.globalAlpha = 1; };
+  const shard = (life, x0, y0, vx, vy, g, col, size, spin) => {   // a chip that spins as it flies
+    if (ms >= life) return; const q = ms / life; c.save(); c.globalAlpha = fade(q); c.translate(x0 + vx * s, y0 + vy * s + g * s * s / 2); c.rotate(spin * s + r(9) * 3);
+    c.fillStyle = col; c.fillRect(-size, -size * .45, size * 2, size * .9); c.restore(); };
+  const clod = (life, x0, y0, vx, vy, g, col, rad) => { if (ms < life){ const q = ms / life; dot(x0 + vx * s, y0 + vy * s + g * s * s / 2, rad * (1 - q * .3), col, fade(q)); } };
+  const curl = (life, x0, y0, vx, vy, col) => {   // a shaving that curls up and drifts off
+    if (ms >= life) return; const q = ms / life; c.save(); c.globalAlpha = fade(q); c.strokeStyle = col; c.lineWidth = .4; c.lineCap = 'round';
+    c.beginPath(); c.arc(x0 + vx * s, y0 + vy * s, .5 + q * .35, q * 2, q * 2 + Math.PI * 1.5); c.stroke(); c.restore(); };
+  const dust = (life, x, y, rad, col, al) => { if (ms < life){ const q = ms / life; c.globalAlpha = (1 - q) * al; c.fillStyle = col; c.beginPath(); c.ellipse(x + q * 1.2, y - q * 1.6, rad * (.6 + q), rad * (.6 + q) * .7, 0, 0, TAU); c.fill(); c.globalAlpha = 1; } };
+  const ring = (life, x, rx) => { if (ms < life){ const q = ms / life; c.globalAlpha = (1 - q) * .6; c.strokeStyle = '#C8B48A'; c.lineWidth = .4; c.beginPath(); c.ellipse(x, 0, 1 + q * rx, (1 + q * rx) * .28, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; } };
+  const spark = (life, x, y, rad) => { if (ms < life){ const q = ms / life; c.save(); c.globalAlpha = 1 - q; c.strokeStyle = '#F4ECD8'; c.lineWidth = .3; c.stroke(glint(x, y, rad * (1 - q * .4))); c.restore(); } };
+  if (!B.pz) switch (k){
+    case 'dig':
+      clod(460, 4.2, -.3, 5 + r(1) * 5, -17 - r(2) * 6, 60, '#6B4A2E', .6); if (r(3) < .5) clod(380, 3.6, -.3, 2 + r(4) * 3, -11 - r(5) * 4, 60, '#7A5434', .4);
+      dust(420, 4.4, -.6, 1.1, '#C8B48A', .5); break;
+    case 'chop':
+      for (let i = 0; i < 2 + (r(1) < .5 ? 1 : 0); i++) shard(480, 5, -4 + r(i + 2), 4 + r(i + 5) * 8, -11 - r(i + 7) * 9, 55, i % 2 ? '#C99A62' : '#D9B27A', .55 - i * .08, (r(i) - .5) * 40);
+      break;
+    case 'build':
+      dust(380, 4.2, -.8, .9, '#B89A62', .55); shard(420, 4, -1, 3 + r(1) * 3, -9 - r(2) * 5, 55, '#D9B27A', .4, 25); curl(480, 4.6, -1.4, 3 + r(3) * 2, -3, '#E0B97E'); break;
+    case 'carve':
+      curl(560, 4, -1.2, 3 + r(1) * 2, -4.5 - r(2) * 2, '#E0B97E'); if (r(3) < .6) curl(480, 4.6, -1, 2 + r(4) * 2, -3.5, '#D9B27A');
+      dot(5 + s * 4, -1.2 - s * 5, .28, '#B89A62', Math.max(0, 1 - ms / 380)); break;
+    case 'knap': case 'flake':
+      for (let i = 0; i < 2 + (r(1) < .4 ? 1 : 0); i++) shard(380, 4.6, -1.6, 4 + r(i + 2) * 8, -9 - r(i + 5) * 8, 50, '#1C1719', .4, 50);
+      spark(200, 5, -2.2, .9); break;
+    case 'grind': if (B.r > .85 || B.r < -.85) spark(260, B.r > 0 ? 6 : 3.4, -1.6, .6);
+      if (Math.abs(B.r) > .5) dot(4.6 + B.r * 2.4, -.4 - (Math.abs(B.r) - .5) * 2, .3, '#C8C4BA', .6); break;
+    case 'pound': case 'beat': ring(460, 4.8, 3.2); dust(380, 6.6, -.4, .8, '#C8B48A', .4); break;
+    case 'tamp': ring(560, 4.6, 4.2); dust(460, 3.4, -.5, 1, '#C8B48A', .5); dust(460, 5.8, -.5, .8, '#C8B48A', .4); break;
+    case 'paddle': dust(300, 3.2, -3.4, .6, '#C8B48A', .4); break;
+    case 'scoop': case 'water':
+      for (let i = 0; i < 3; i++) clod(520, 3.4 + i * .5, -1.6, 2 + r(i + 1) * 5, -9 - r(i + 3) * 5, 40, i === 1 ? '#BFE3EA' : '#F4ECD8', .35); break;
+    case 'plant': {   // the clod falls back and a green leaf bobs up where the shoot was set
+      clod(420, 3.5, -.4, 2 + r(1) * 3, -10 - r(2) * 4, 45, '#6B4A2E', .45);
+      const q = Math.min(1, ms / 600), h = Math.sin(q * Math.PI * 1.5) * (1 - q * .5) * 1.6 + 1.6;
+      c.fillStyle = '#7FA84F'; c.beginPath(); c.ellipse(6.4, -h, .8, .35, -.5, 0, TAU); c.ellipse(5.6, -h * .8, .7, .3, .5, 0, TAU); c.fill();
+      c.strokeStyle = '#5E8A3A'; c.lineWidth = .3; c.beginPath(); c.moveTo(6, .1); c.lineTo(6, -h + .2); c.stroke(); break; }
+  }
+  if (k === 'chop'){   // now and then a leaf drifts down from the crown (its own slow clock, not tied to a stroke)
+    const L = 2300, m = Math.floor(now / L), e = (now % L) / 1100;
+    if (e < 1 && hash01(m, w.x + 3) < .4){ const x = 2 + hash01(m, w.x) * 5 + Math.sin(e * 5) * 1.1, y = -15 + e * 15; c.save(); c.globalAlpha = fade(e); c.translate(x, y); c.rotate(Math.sin(e * 5) * .8);
+      c.fillStyle = '#6E9A3A'; c.beginPath(); c.ellipse(0, 0, .9, .38, 0, 0, TAU); c.fill(); c.restore(); }
+  }
+}
 function workFx(c, w, now){
   const t = reduced ? .35 : now / 1000 + (w.x % 7), f = (t * 1.3) % 1;
   const dot = (x, y, r, col, a = 1) => { c.globalAlpha = a; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.globalAlpha = 1; };
@@ -1248,20 +1335,22 @@ function workFx(c, w, now){
   const unhold = () => { if (held){ held--; c.restore(); } };
   const puff = (x, y, r, a) => { c.globalAlpha = a; c.fillStyle = '#E6E0D4'; c.beginPath(); c.ellipse(x, y, r, r * .7, 0, 0, TAU); c.fill(); c.globalAlpha = 1; };
   const star = (x, y, r) => { c.beginPath(); for (let i = 0; i < 8; i++){ const a = i / 8 * TAU, q = i % 2 ? r * .32 : r; c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); } c.closePath(); };
+  const B = WORK[w.fx] && !reduced ? workBeat(w, now) : null;
+  if (B && cam.z >= 1.6 && (w.fx === 'chop' || (!B.pz && B.age < 900))) strikeFx(c, w, B, now);
   switch (w.fx){
-    case 'dig': arcFly(4, -.3, 4, 3, '#6B4A2E', .6); break;                            // a clod of earth hops off the digging stick
-    case 'chop': arcFly(5, -4, 4, 3, '#D9B27A'); arcFly(4.6, -3.4, 2.6, 4.4, '#C99A62', .4); break;   // chips fly from the trunk
-    case 'build': if (f < .35) dot(4 + f * 4, -.8 - f * 3, .5, '#B89A62', 1 - f * 2); break;      // dust where the adze strikes
-    case 'carve': if (f < .6){ c.strokeStyle = '#E0B97E'; c.lineWidth = .45; c.beginPath(); c.arc(4 + f * 4, -1.2 - f * 2.4, .7, 0, Math.PI * 1.4); c.stroke(); } break;   // curled shavings
-    case 'plant': arcFly(3.5, -.4, 2.4, 1.6, '#6B4A2E', .45); break;
-    case 'scoop': if (f < .5) dot(3 + f * 3, -1.6 - Math.sin(f * 2 * Math.PI) * 2, .45, '#F4ECD8'); break;
+    case 'dig': if (!B) arcFly(4, -.3, 4, 3, '#6B4A2E', .6); break;                            // a clod of earth hops off the digging stick
+    case 'chop': if (!B){ arcFly(5, -4, 4, 3, '#D9B27A'); arcFly(4.6, -3.4, 2.6, 4.4, '#C99A62', .4); } break;   // chips fly from the trunk
+    case 'build': if (!B && f < .35) dot(4 + f * 4, -.8 - f * 3, .5, '#B89A62', 1 - f * 2); break;      // dust where the adze strikes
+    case 'carve': if (!B && f < .6){ c.strokeStyle = '#E0B97E'; c.lineWidth = .45; c.beginPath(); c.arc(4 + f * 4, -1.2 - f * 2.4, .7, 0, Math.PI * 1.4); c.stroke(); } break;   // curled shavings
+    case 'plant': if (!B) arcFly(3.5, -.4, 2.4, 1.6, '#6B4A2E', .45); break;
+    case 'scoop': if (!B && f < .5) dot(3 + f * 3, -1.6 - Math.sin(f * 2 * Math.PI) * 2, .45, '#F4ECD8'); break;
     case 'hang': blob(2.6, -5 + Math.sin(t * 6) * .3, .6, 1.3, '#9FB7C0'); break;
     case 'pot': {   // a pot grows coil by coil under the hands
       blob(4.4, -1.1, 1.8, 1.3, '#B5774A'); line(2.9, -2.2, 5.9, -2.2, '#2B1D14', .45);
       const a = t * 4; line(4.4 + Math.cos(a) * 1.5, -1.6 + Math.sin(a) * .4, 4.4 + Math.cos(a) * 1.5, -.6 + Math.sin(a) * .4, '#E3B08A', .5); break; }
     case 'grind': {   // an adze blade rubbed on a slab of sandstone
-      blob(4.6, -.2, 2.6, .8, '#A7A49C'); const x = 4.6 + Math.sin(t * 7) * 1.1; blob(x, -.9, 1.1, .55, '#5C6066');
-      if (f < .4) dot(6.6 + f * 3, -.5 - f * 2, .35, '#C8C4BA', 1 - f * 2); break; }
+      blob(4.6, -.2, 2.6, .8, '#A7A49C'); const x = 4.6 + (B ? B.r : Math.sin(t * 7)) * 1.1; blob(x, -.9, 1.1, .55, '#5C6066');
+      if (!B && f < .4) dot(6.6 + f * 3, -.5 - f * 2, .35, '#C8C4BA', 1 - f * 2); break; }
     case 'knap': {   // obsidian struck with a hammer stone, flakes spring off
       c.fillStyle = '#1C1719'; c.beginPath(); c.moveTo(3.4, -.2); c.lineTo(4.3, -2); c.lineTo(5.4, -.3); c.closePath(); c.fill();
       const g = (t * 1.8) % 1; if (g < .4){ dot(4.6 + g * 6, -1.6 - g * 4, .35, '#1C1719'); dot(4.4 + g * 4, -2 - g * 6, .25, '#F4ECD8'); } break; }
@@ -1273,10 +1362,10 @@ function workFx(c, w, now){
       const a = t * 5; blob(3.6, -2.4, 1, 1, '#B08048'); line(3.6, -2.4, 3.6 + Math.cos(a) * .9, -2.4 + Math.sin(a) * .9, '#6B4428', .35);
       c.strokeStyle = '#8C6440'; c.lineWidth = .4; c.beginPath(); c.moveTo(4.4, -2); c.quadraticCurveTo(6.2, -1.6 + Math.sin(t * 3) * .6, 6.8, .2); c.stroke(); break; }
     case 'beat': case 'pound': {   // bark beaten thin on a log, or kava root pounded with a stone
-      const up = Math.abs(Math.sin(t * 5.5)), tip = {x:4.8, y:-1.2 - up * 3.2};
+      const up = B ? (1 - B.sw) / 2 : Math.abs(Math.sin(t * 5.5)), tip = {x:4.8, y:-1.2 - up * 3.2};
       c.fillStyle = '#8C5C36'; c.fillRect(3, -.9, 4, 1.1); if (w.fx === 'beat'){ c.fillStyle = '#E9DCC0'; c.fillRect(3.2, -1.2, 3.4, .5); }
       line(1.6, -4.6, tip.x, tip.y, '#2B1D14', .7); blob(tip.x + .2, tip.y, w.fx === 'beat' ? 1 : .8, .55, w.fx === 'beat' ? '#7A5434' : '#8A8A86');
-      if (up < .2){ line(3.4, -2.6, 2.9, -3.3, '#2B1D14', .3); line(6.2, -2.6, 6.7, -3.3, '#2B1D14', .3); } break; }
+      if (!B && up < .2){ line(3.4, -2.6, 2.9, -3.3, '#2B1D14', .3); line(6.2, -2.6, 6.7, -3.3, '#2B1D14', .3); } break; }
     case 'drill': {   // a shell ring bored with a bow drill and an obsidian point
       blob(4.4, -.4, 1.4, .55, '#F3D9A0'); line(4.4, -.6, 4.4, -4, '#7A5434', .45);
       const s = Math.sin(t * 9) * 1.4; line(2.4 + s, -3.1, 6.4 + s, -3.1, '#2B1D14', .4); break; }
@@ -1325,7 +1414,7 @@ function workFx(c, w, now){
     case 'file': {   // the hook shaped with a file of coral, back and forth over the shell
       blob(4.8, -.2, 2, .6, '#A7A49C');
       c.strokeStyle = '#F3D9A0'; c.lineWidth = .6; c.lineCap = 'round'; c.beginPath(); c.moveTo(4.1, -2.4); c.lineTo(4.1, -1.2); c.quadraticCurveTo(4.1, -.5, 4.8, -.6); c.quadraticCurveTo(5.5, -.7, 5.5, -1.4); c.stroke();
-      const s = Math.sin(t * 6) * .9; hold(2.2, -2.9, 1.9, -4.4); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#2B1D14', .9); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#E3D2B0', .5); unhold();
+      const s = (B ? B.r : Math.sin(t * 6)) * .9; hold(2.2, -2.9, 1.9, -4.4); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#2B1D14', .9); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#E3D2B0', .5); unhold();
       if (s > .6) dot(5.8, -1.6, .25, '#F4ECD8', .8); break; }
     case 'polish': {   // rubbed smooth with coral and pumice: a wooden bowl, or a shell for an ornament
       if (w.job && w.job.b.kind === 'schmuck'){ blob(4.6, -.5, 1.7, .8, '#F3D9A0'); blob(4.6, -.5, .55, .25, '#C9B48A'); }
@@ -1452,8 +1541,8 @@ function workFx(c, w, now){
       const g = (t * .9) % 1, x = 3.8 + g * 3, y = -.4 - Math.sin(g * Math.PI) * 2; blob(x, y, .5, .42, '#E0A04A');
       break; }
     case 'tamp': {   // the earth stamped firm with a heavy pole: round a young tree, or over a new floor
-      const u = Math.abs(Math.sin(t * 3.2)); hold(4.4, -5.4, 1.9, -5); line(4.6, -1 - u * 3, 4.6, -6.4 - u * 3, '#7A5434', .8); blob(4.6, -.9 - u * 3, .9, .5, '#8C6440'); unhold();
-      if (u < .18) for (let k = 0; k < 3; k++) dot(3.4 + k * 1.2, -.2, .4, '#C8B48A', .7);
+      const u = B ? (1 - B.sw) / 2 : Math.abs(Math.sin(t * 3.2)); hold(4.4, -5.4, 1.9, -5); line(4.6, -1 - u * 3, 4.6, -6.4 - u * 3, '#7A5434', .8); blob(4.6, -.9 - u * 3, .9, .5, '#8C6440'); unhold();
+      if (!B && u < .18) for (let k = 0; k < 3; k++) dot(3.4 + k * 1.2, -.2, .4, '#C8B48A', .7);
       if (w.job && w.job.type === 'plant'){ line(7, .2, 7, -3.2, '#6B4A2E', .4); dot(6.6, -3.4, .7, '#7FA84F'); dot(7.5, -3.6, .6, '#7FA84F'); } break; }
     case 'wedge': {   // a wedge of hard wood driven into the cut with a club; the trunk creaks
       const Wd = new Path2D('M4.9-3.6L6.2-3.1L4.9-2.6Z'); c.fillStyle = '#C99A62'; c.fill(Wd); stroke(c, Wd, '#2B1D14', .25);
