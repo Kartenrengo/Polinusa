@@ -646,8 +646,8 @@ function drawBoatFig(c, w, now){
     put(c, x, y, 1, w.left ? -1 : 1, rock, 'einbaumE', '<use href="#einbaumE"/>');
     const sx = x + (w.left ? -6.5 : 6.5), hy = y + 3.2, rise = Math.min(1, up * 4) * (up > .8 ? 1 - (up - .8) * 3 : 1);
     c.save(); c.beginPath(); c.rect(sx - 6, hy - 16, 12, 16); c.clip(); c.translate(sx, hy + 7 - rise * 2); if (w.left) c.scale(-1, 1); blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
-    const arm = new Path2D(); arm.moveTo(1.3, -6.9); arm.lineTo(2.3, -9.8); stroke(c, arm, '#2B1D14', .95, null, 'round'); stroke(c, arm, SKINS[+w.look[0]], .5, null, 'round');
-    // what the hand found: a giant clam with its wavy rim, or an octopus that curls round the arm
+    // what was found: a giant clam with its wavy rim, or an octopus that curls round the body; held against the chest
+    c.save(); c.translate(.5, 4.2);
     if (hsh(w.dives || 0, w.x | 0) < .4){
       const O = new Path2D('M2.6-13.6Q4.4-13.6 4.2-11.6Q4-10.4 2.6-10.4Q1.2-10.4 1-11.6Q.8-13.6 2.6-13.6Z'); c.fillStyle = '#B0607A'; c.fill(O); stroke(c, O, '#2B1D14', .35);
       const wv = reduced ? 0 : Math.sin(now / 160); stroke(c, new Path2D(`M1.6-10.6Q.6-9 ${1.4 + wv * .4}-8.2M2.6-10.4Q2.6-8.6 ${3.2 - wv * .4}-8M3.6-10.6Q4.8-9.2 ${4.6 + wv * .4}-8.6`), '#B0607A', .45, null, 'round');
@@ -656,7 +656,7 @@ function drawBoatFig(c, w, now){
       const C = new Path2D('M.2-10.2Q.6-12.6 2.6-13Q4.6-12.6 5-10.2Q2.6-9.4.2-10.2Z'); c.fillStyle = '#E4DCC4'; c.fill(C); stroke(c, C, '#2B1D14', .4);
       const R = new Path2D('M1.4-10.1L2-12.4M2.6-9.9V-12.9M3.8-10.1L3.2-12.4'); stroke(c, R, '#8C8470', .3);
     }
-    c.restore();
+    c.restore(); c.restore();
     stroke(c, ellipse(sx, hy, 3.6, 1.3), '#F4FBFA', .5, [.5, .8], 'round', .8);
     if (up < .35) for (let k = 0; k < 4; k++){ const q = up / .35; c.globalAlpha = 1 - q; c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(sx - 1 + k * .7, hy - 5 - q * 4 - k * .5, .35, 0, TAU); c.fill(); c.globalAlpha = 1; }
     return;
@@ -1115,9 +1115,6 @@ function drawSwimmer(c, w, now){
       if (!reduced) for (let k = 0; k < 4; k++){ const q = (g + k / 4) % 1; drop(-4.5 - q * 5, -.6 - Math.sin(q * Math.PI) * 2.4, .38 * (1 - q) + .1, 1 - q); }
       c.save(); c.scale(s, s); c.fillStyle = '#C9A36A'; c.fill(BOARD); stroke(c, BOARD, '#2B1D14', .45);
       c.translate(0, -.3); c.rotate(lean); c.scale(1, .9); figOf(c, w);
-      // arms out for balance
-      const arm = new Path2D(); arm.moveTo(-1.2, -6.8); arm.lineTo(-4.4, -6 + Math.sin(t / 300) * .6); arm.moveTo(1.2, -6.8); arm.lineTo(4.4, -7.4 - Math.sin(t / 300) * .6);
-      stroke(c, arm, '#2B1D14', .95, null, 'round'); stroke(c, arm, SKINS[+w.look[0]], .5, null, 'round');
       c.restore();
     } else if (P.ph === 'sit'){
       // astride the board, bobbing on the swell, looking out for the next wave
@@ -1158,7 +1155,7 @@ function drawSwimmer(c, w, now){
     // head and shoulders over the water, the arms reach forward in turn
     c.save(); c.beginPath(); c.rect(-6, -14, 12, 14); c.clip(); c.translate(0, 6.4 * s); c.scale(s * dir, s); figOf(c, w); c.restore();
     const a = reduced ? 0 : Math.sin(t / 330 + ph), moving = w.moving;
-    if (moving){ const arm = new Path2D(); arm.moveTo(dir * 1.2, -1); arm.quadraticCurveTo(dir * (2.6 + a), -2.6 - Math.abs(a), dir * (4 + a * 1.2), -.2); stroke(c, arm, '#2B1D14', .9, null, 'round'); stroke(c, arm, SKINS[+w.look[0]], .45, null, 'round'); if (a > .6) drop(dir * 4.6, -.2, .45, .9); }
+    if (moving && a > .6) drop(dir * 4.6, -.2, .45, .9);   // no arms: only the splash of each stroke
     ring(0, .2, 3.4 * s + (reduced ? 0 : (t / 900 + ph) % 1 * 1.4), .75);
     if (moving) stroke(c, ellipse(-dir * 4.5, .3, 2.4, .6), '#F4FBFA', .4, [.4, .7], 'round', .55);   // the wake
   }
@@ -1212,7 +1209,11 @@ function workFx(c, w, now){
   const arcFly = (x0, y0, dx, h, col, r = .5) => { if (f < .7){ const g = f / .7; dot(x0 + dx * g, y0 - Math.sin(g * Math.PI) * h, r, col, 1 - g * .5); } };
   // an arm from the shoulder to the hand; a shoulder follows the body when it bends (w._ln, see LEAN); a puff of smoke
   const sk = SKINS[+w.look[0]] || SKINS[0], L = w._ln || 0, rp = (x, y) => [x * Math.cos(L) - y * Math.sin(L), x * Math.sin(L) + y * Math.cos(L)];
-  const arm = (x0, y0, x1, y1) => { const p = new Path2D(); p.moveTo(x0, y0); p.lineTo(x1, y1); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); };
+  // no arms: what a figure holds sits right at the torso. hold() moves what is drawn next so that its nominal grip (nx, ny)
+  // lands on the torso edge (ax, ay); it leans with the body. unhold() ends that, for what lies on the ground or flies off.
+  let held = 0;
+  const hold = (nx, ny, ax, ay) => { const [px, py] = rp(ax, ay); c.save(); held++; c.translate(px - nx, py - ny); };
+  const unhold = () => { if (held){ held--; c.restore(); } };
   const puff = (x, y, r, a) => { c.globalAlpha = a; c.fillStyle = '#E6E0D4'; c.beginPath(); c.ellipse(x, y, r, r * .7, 0, 0, TAU); c.fill(); c.globalAlpha = 1; };
   const star = (x, y, r) => { c.beginPath(); for (let i = 0; i < 8; i++){ const a = i / 8 * TAU, q = i % 2 ? r * .32 : r; c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); } c.closePath(); };
   switch (w.fx){
@@ -1222,7 +1223,7 @@ function workFx(c, w, now){
     case 'carve': if (f < .6){ c.strokeStyle = '#E0B97E'; c.lineWidth = .45; c.beginPath(); c.arc(4 + f * 4, -1.2 - f * 2.4, .7, 0, Math.PI * 1.4); c.stroke(); } break;   // curled shavings
     case 'plant': arcFly(3.5, -.4, 2.4, 1.6, '#6B4A2E', .45); break;
     case 'scoop': if (f < .5) dot(3 + f * 3, -1.6 - Math.sin(f * 2 * Math.PI) * 2, .45, '#F4ECD8'); break;
-    case 'hang': blob(3.6, -5 + Math.sin(t * 6) * .3, .6, 1.3, '#9FB7C0'); break;
+    case 'hang': blob(2.6, -5 + Math.sin(t * 6) * .3, .6, 1.3, '#9FB7C0'); break;
     case 'pot': {   // a pot grows coil by coil under the hands
       blob(4.4, -1.1, 1.8, 1.3, '#B5774A'); line(2.9, -2.2, 5.9, -2.2, '#2B1D14', .45);
       const a = t * 4; line(4.4 + Math.cos(a) * 1.5, -1.6 + Math.sin(a) * .4, 4.4 + Math.cos(a) * 1.5, -.6 + Math.sin(a) * .4, '#E3B08A', .5); break; }
@@ -1275,213 +1276,209 @@ function workFx(c, w, now){
     case 'lash': {   // a post bound to the beam with sennit, round and round, the cord pulled tight
       line(5, .6, 5, -10, '#7A5434', 1.3); line(2.6, -8.2, 8.4, -8.2, '#7A5434', 1);
       c.strokeStyle = '#C99A62'; c.lineWidth = .4; c.beginPath(); for (let k = 0; k < 4; k++){ const y = -9.2 + k * .55; c.moveTo(4.2, y); c.lineTo(5.8, y + .5); } c.stroke();
-      const a = t * 5; dot(5 + Math.cos(a) * 1.6, -8.4 + Math.sin(a) * .5, .45, SKINS[+w.look[0]]); line(1.3, -6.8, 5 + Math.cos(a) * 1.6, -8.4 + Math.sin(a) * .5, '#2B1D14', .6);
+      const a = t * 5;
       if (Math.cos(a) > .9) line(6.6, -8.2, 8, -7.4, '#C99A62', .4); break; }
     case 'raise': {   // a post set upright: from slanting to standing over the bout, pushed from below
       const p = clamp(1 - w.wait / (w.boutT || 3000), 0, 1), ang = (1 - smooth01(p)) * 1.05, bx = 6, len = 11;
       const tx = bx + Math.sin(ang) * -len * -1, ty = -Math.cos(ang) * len;
       line(bx, .4, tx, ty, '#2B1D14', 1.7); line(bx, .4, tx, ty, '#8C5C36', 1.1);
-      const hx = bx + (tx - bx) * .45, hy = .4 + (ty - .4) * .45; line(1.3, -6.8, hx, hy, '#2B1D14', .75);
+      
       if (p > .92) for (let k = 0; k < 3; k++) dot(bx - 1.5 + k * 1.5, .2, .4, '#C8B48A', .8); break; }
     case 'show': {   // what was made, held up high, a moment of pride
       const up = Math.min(1, (1 - w.wait / (w.boutT || 1500)) * 4), back = LOAD_BACK.has(w.show), sk = SKINS[+w.look[0]];
-      for (const s of [-1, 1]){ const p = new Path2D(); p.moveTo(s * 1.3, -6.9); p.lineTo(s * 1.4, -6.9 - up * 4.2); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); }
-      if (w.show && LOADS[w.show]){ c.save(); c.translate(back ? 1 : 0, -up * 3.6 - (back ? 5 : 0)); blit(c, 'load|' + w.show, LOADS[w.show]); c.restore(); }
+      if (w.show && LOADS[w.show]){ c.save(); c.translate(back ? 1 : 0, -up * 1.4 - (back ? 5 : 0)); blit(c, 'load|' + w.show, LOADS[w.show]); c.restore(); }
       if (up >= 1){ const q = (t * 2) % 1; c.globalAlpha = 1 - q; c.strokeStyle = '#E3B23C'; c.lineWidth = .4; c.beginPath(); for (let k = 0; k < 5; k++){ const a = -Math.PI / 2 + (k - 2) * .55, r0 = 4.5 + q * 1.5; c.moveTo(Math.cos(a) * r0, -14.5 + Math.sin(a) * r0 * .7); c.lineTo(Math.cos(a) * (r0 + 1.4), -14.5 + Math.sin(a) * (r0 + 1.4) * .7); } c.stroke(); c.globalAlpha = 1; }
       break; }
     // ---- the second looks of the crafts and fields: every activity has at least two
     case 'file': {   // the hook shaped with a file of coral, back and forth over the shell
       blob(4.8, -.2, 2, .6, '#A7A49C');
       c.strokeStyle = '#F3D9A0'; c.lineWidth = .6; c.lineCap = 'round'; c.beginPath(); c.moveTo(4.1, -2.4); c.lineTo(4.1, -1.2); c.quadraticCurveTo(4.1, -.5, 4.8, -.6); c.quadraticCurveTo(5.5, -.7, 5.5, -1.4); c.stroke();
-      const s = Math.sin(t * 6) * .9; arm(1.3, -6.9, 2.4 + s, -2.8); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#2B1D14', .9); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#E3D2B0', .5);
+      const s = Math.sin(t * 6) * .9; hold(2.2, -2.9, 1.9, -4.4); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#2B1D14', .9); line(2.2 + s, -2.9, 4.9 + s, -1.9, '#E3D2B0', .5); unhold();
       if (s > .6) dot(5.8, -1.6, .25, '#F4ECD8', .8); break; }
     case 'polish': {   // rubbed smooth with coral and pumice: a wooden bowl, or a shell for an ornament
       if (w.job && w.job.b.kind === 'schmuck'){ blob(4.6, -.5, 1.7, .8, '#F3D9A0'); blob(4.6, -.5, .55, .25, '#C9B48A'); }
       else { const B = new Path2D('M2.4-1.5Q4.6 1.2 6.8-1.5Z'); c.fillStyle = '#8C5C36'; c.fill(B); stroke(c, B, '#2B1D14', .35); line(2.4, -1.5, 6.8, -1.5, '#5A3F22', .4); }
-      const a = t * 4, px = 4.6 + Math.cos(a) * 1.1, py = -1.8 + Math.sin(a) * .3; arm(1.3, -6.9, px - .5, py - .2); blob(px, py, .7, .45, '#C8C4BA');
+      const a = t * 4, px = 4.6 + Math.cos(a) * 1.1, py = -1.8 + Math.sin(a) * .3; hold(4.1, -2, 2.2, -4.4); blob(px, py, .7, .45, '#C8C4BA'); unhold();
       if (Math.cos(a) > .96) stroke(c, glint(6.4, -2.8, .7), '#F4ECD8', .3); break; }
     case 'hollow': {   // a bowl hollowed from a block of wood with the adze, shavings curl off
       blob(5, -.8, 2.6, 1.2, '#9C7246'); blob(5, -1.3, 1.7, .45, '#6B4428');
-      const sw = Math.sin(t * 5), hx = 3.6 + sw * .6, hy = -3.4 - Math.max(0, sw) * 1.6; arm(1.3, -6.9, hx, hy); line(hx - .2, hy, hx + 1.3, hy + .9, '#5C6066', .8);
+      const sw = Math.sin(t * 5), hx = 3.6 + sw * .6, hy = -3.4 - Math.max(0, sw) * 1.6; hold(3.6, -3.8, 1.9, -4.6); line(hx - .2, hy, hx + 1.3, hy + .9, '#5C6066', .8); unhold();
       if (sw < -.6){ c.strokeStyle = '#E0B97E'; c.lineWidth = .4; c.beginPath(); c.arc(6.4, -2.2, .7, 0, Math.PI * 1.4); c.stroke(); } break; }
     case 'mound': {   // earth heaped round the young yam vine and patted firm
       const h = 1.1 + Math.abs(Math.sin(t * 1.5)) * .25; c.fillStyle = '#6B4A2E'; c.beginPath(); c.ellipse(5.2, .1, 2.8, h, 0, Math.PI, TAU); c.fill();
       line(5.2, -h + .1, 5.6, -6.2, '#8C6440', .35); dot(5.8, -4.6, .6, '#5E8A3A'); dot(5, -5.6, .55, '#7E9A3A');
-      const [sx, sy] = rp(1.3, -6.9), pat = Math.abs(Math.sin(t * 4)); arm(sx, sy, 3.8, -h - .2 - pat * .8); arcFly(2.4, -.2, 2.4, 1.6, '#6B4A2E', .45); break; }
+      arcFly(2.4, -.2, 2.4, 1.6, '#6B4A2E', .45); break; }
     case 'lift': {   // a taro corm or a turmeric root pulled up by the leaves, the earth shaken off
       const g = (t * .6) % 1, u = Math.sin(Math.min(1, g * 1.6) * Math.PI / 2) * (g < .85 ? 1 : (1 - g) / .15), y = -u * 3, root = w.job && w.job.b.kind === 'kurkumagarten' ? '#D9A441' : '#8C6A8A';
       blob(5, y - .2, 1.1, .8, root); line(5, y - .8, 4.4, y - 4.2, '#6E9A3A', .35); line(5, y - .8, 5.7, y - 4, '#6E9A3A', .35);
       blob(4.1, y - 4.6, 1.3, .75, '#5E8A3A'); blob(6, y - 4.4, 1.2, .7, '#6E9A3A');
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, 4.6, y - 2.6);
+      
       if (u > .7 && g < .85) for (let k = 0; k < 2; k++) dot(4.4 + k * 1.2, y + .8 + ((t * 3 + k * .5) % 1) * 2.4, .28, '#6B4A2E'); break; }
     case 'mulch': {   // leaves and compost thrown into the pulaka pit, layer on layer
       blob(5.6, .3, 3, 1, '#3E2C20'); blob(4.8, 0, 1, .32, '#5E8A3A'); blob(6.4, .2, .9, .3, '#7E9A3A');
       const g = (t * .9) % 1; if (g < .7){ const q = g / .7; c.save(); c.translate(2.4 + q * 3.2, -4.4 + q * q * 4.4); c.rotate(q * 2.2); blob(0, 0, 1.1, .42, '#7E9A3A'); c.restore(); }
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, 3, -3.6 + Math.max(0, .3 - g) * 3); break; }
+      break; }
     case 'stones': {   // the hot stones of the earth oven lifted with wooden tongs; smoke over the pit
       blob(5, .2, 3.1, 1, '#3A2E2A'); for (let k = 0; k < 3; k++) dot(3.8 + k * 1.2, -.2, .6, k % 2 ? '#B0483A' : '#7A6A60');
-      const u = Math.abs(Math.sin(t * 1.6)), sy = -.6 - u * 3; dot(5.4, sy, .65, '#D0603A'); arm(1.3, -6.9, 1.8, -4.8);
-      line(1.6, -5, 5.2, sy - .4, '#7A5434', .4); line(1.8, -4.6, 5.6, sy + .3, '#7A5434', .4);
+      const u = Math.abs(Math.sin(t * 1.6)), sy = -.6 - u * 3; dot(5.4, sy, .65, '#D0603A');
+      line(1.8, -5, 5.2, sy - .4, '#7A5434', .4); line(1.9, -4.6, 5.6, sy + .3, '#7A5434', .4);
       for (let k = 0; k < 2; k++){ const q = (t * .45 + k * .5) % 1; puff(4.4 + Math.sin(q * 5 + k) * .8, -1.4 - q * 7, .7 + q * 1.1, (1 - q) * .45); } break; }
     case 'wrap': {   // food folded into banana leaves for the oven, or breadfruit paste for the pit, and tied
       const p = (t * .45) % 1, f = Math.min(1, p * 1.6), lift = Math.sin(f * Math.PI) * .8;
       c.fillStyle = '#5E8A3A'; c.fillRect(2.4, -1.1, 4.8, 1.5); line(2.4, -.35, 7.2, -.35, '#B9D08A', .25);
-      if (p < .75){ blob(4.8, -.9, 1, .55, w.job && w.job.b.kind === 'gaergrube' ? '#D8C47A' : '#E3C35A'); blob(2.9 + f * 1.4, -.9 - lift, 1.1, .5, '#6E9A3A'); blob(6.7 - f * 1.4, -.9 - lift, 1.1, .5, '#6E9A3A'); arm(1.3, -6.9, 2.9 + f * 1.4, -1.4 - lift); }
-      else { blob(4.8, -1.1, 1.6, .9, '#6E9A3A'); line(4.8, -2, 4.8, -.2, '#B08048', .4); arm(1.3, -6.9, 3.4, -2); } break; }
+      if (p < .75){ blob(4.8, -.9, 1, .55, w.job && w.job.b.kind === 'gaergrube' ? '#D8C47A' : '#E3C35A'); blob(2.9 + f * 1.4, -.9 - lift, 1.1, .5, '#6E9A3A'); blob(6.7 - f * 1.4, -.9 - lift, 1.1, .5, '#6E9A3A'); }
+      else { blob(4.8, -1.1, 1.6, .9, '#6E9A3A'); line(4.8, -2, 4.8, -.2, '#B08048', .4); } break; }
     case 'fire': {   // the fire under the coral tended with a long stick; sparks go up
       line(3.6, .2, 6.6, -.6, '#5A3F22', .7); line(3.8, -.6, 6.6, .3, '#5A3F22', .7);
       const fl = 1 + Math.sin(t * 9) * .12; c.save(); c.translate(5.2, -.4); c.scale(.42 * fl, .5 * fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore();
-      const pk = Math.sin(t * 2.4); arm(1.3, -6.9, 1.8, -4.4); line(1.6, -4.6, 4.6 + pk * .5, -1 - Math.max(0, pk) * .5, '#6B4428', .45);
+      const pk = Math.sin(t * 2.4); line(1.8, -4.6, 4.6 + pk * .5, -1 - Math.max(0, pk) * .5, '#6B4428', .45);
       for (let k = 0; k < 3; k++){ const q = (t * .9 + k / 3) % 1; dot(5 + Math.sin(q * 7 + k) * .9, -2.4 - q * 6, .22, '#F3B04A', 1 - q); } break; }
     case 'eggs': {   // eggs from the nests into a basket
       blob(6.6, -.7, 1.4, 1, '#B08048'); line(5.3, -1.3, 7.9, -1.3, '#8C6440', .3); dot(6.2, -1.6, .45, '#F4ECD8'); 
       const g = (t * .8) % 1, ex = 3.4 + g * 3.2, ey = -.4 - Math.sin(g * Math.PI) * 2.4; blob(ex, ey, .45, .58, '#F4ECD8');
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, ex - .4, ey + .2); break; }
+      break; }
     case 'herd': {   // the pigs driven back to the pen with a stick, trotting a few steps
       const px = 7 + Math.sin(t * 1.4) * 1.2, bob = Math.abs(Math.sin(t * 6)) * .3;
       blob(px, -1.4 - bob, 2, 1.2, '#5A4636'); blob(px + 1.9, -1.8 - bob, .9, .75, '#5A4636'); blob(px + 2.7, -1.6 - bob, .35, .3, '#8A6A5A');
       for (const dx of [-1.2, 1]) line(px + dx, -.6 - bob, px + dx + Math.sin(t * 6 + dx) * .3, 0, '#2B1D14', .4);
       c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.arc(px - 2.2, -1.8 - bob, .45, 0, Math.PI * 1.5); c.stroke();
-      const sw = Math.sin(t * 3) * .6; arm(1.3, -6.9, 2.4, -4.8); line(2.4, -4.8, 4.4 + sw, -.6, '#8C6440', .45); break; }
+      const sw = Math.sin(t * 3) * .6; line(1.9, -4.8, 4.4 + sw, -.6, '#8C6440', .45); break; }
     case 'strip': {   // a pandanus leaf split into fine strips with a shell; the strips pile up on the lap
       line(2.2, -3.6, 7.6, -1.4, '#C8B06A', .9);
       for (let k = 0; k < 3; k++) line(2.6 + k * .35, -3.4 + k * .15, 2 + k * .5, .2, '#DCC48C', .32);
-      const x = 2.6 + ((t * .7) % 1) * 4.6, y = -3.4 + (x - 2.2) / 5.4 * 2.2; arm(1.3, -6.9, x, y); dot(x, y, .45, sk);
+      const x = 2.6 + ((t * .7) % 1) * 4.6, y = -3.4 + (x - 2.2) / 5.4 * 2.2; 
       line(4.2, .1, 7.4, .1, '#DCC48C', .35); line(4.4, -.2, 7.2, -.2, '#CDB57A', .3); break; }
     case 'rub': {   // bark cloth laid on a carved board and rubbed with dye: the pattern comes through
       c.fillStyle = '#8C5C36'; c.fillRect(2.4, -.6, 5, 1); c.fillStyle = '#E9DCC0'; c.fillRect(2.4, -1.3, 5, .8);
       const p = (t * .22) % 1, x = 2.6 + p * 4.6 + Math.sin(t * 6) * .4; c.fillStyle = '#7A3F22';
       for (let k = 0; k < 6; k++){ const px = 2.7 + k * .8; if (px < 2.6 + p * 4.6) c.fillRect(px, -1.2, .28, .6); }
-      arm(1.3, -6.9, x, -1.8); blob(x, -1.6, .9, .5, '#A84A2C'); break; }
+      blob(2.6 + (x - 2.6) * .3, -2.4, .9, .5, '#A84A2C'); break; }
     case 'squeeze': {   // grated coconut squeezed in a strainer of fibre; the oil drips into the bowl
       blob(4.8, -.3, 1.8, .7, '#6B4A2E'); blob(4.8, -.6, 1.3, .3, w.job && w.job.b.kind === 'duftoel' ? '#E8B07A' : '#E3C35A');
-      const tw = Math.sin(t * 3); c.save(); c.translate(4.8, -4.4); c.rotate(tw * .3); blob(0, 0, 1.6, .8, '#B08048'); line(-1.4, -.3, 1.4, .3, '#8C6440', .3); c.restore();
-      arm(1.3, -6.9, 3.4, -4.6); const q = (t * 1.4) % 1; dot(4.8, -3.4 + q * 2.6, .28, '#E8C25A', 1 - q * .4); break; }
+      const tw = Math.sin(t * 3); c.save(); c.translate(3.6, -4.4); c.rotate(tw * .3); blob(0, 0, 1.6, .8, '#B08048'); line(-1.4, -.3, 1.4, .3, '#8C6440', .3); c.restore();
+      const q = (t * 1.4) % 1; dot(3.8, -3.4 + q * 2.6, .28, '#E8C25A', 1 - q * .4); break; }
     case 'scrape': {   // the dried gum scraped off the bark into a shell
       line(5.6, .4, 5.6, -7.6, '#5C4A33', 1.4); blob(5.1, -4.8, .5, .3, '#E3C35A'); blob(5.1, -3.2, .4, .25, '#E3C35A');
-      const s = Math.sin(t * 4), y = -5 + s; arm(1.3, -6.9, 4.6, y); blob(4.8, y, .6, .4, '#F3D9A0');
+      const s = Math.sin(t * 4), y = -5 + s; hold(4.6, -5, 2.1, -5); blob(4.8, y, .6, .4, '#F3D9A0'); unhold();
       if (s > .5){ const q = (t * 2) % 1; dot(5, y + .8 + q * 3, .28, '#E3C35A', 1 - q); } blob(5, .2, 1, .45, '#B08048'); break; }
     case 'pour': {   // water poured from a coconut shell into a bamboo tube for the house
       line(6.8, .4, 6.8, -4.2, '#B3A15C', 1.1); line(6.2, -4.2, 7.4, -4.2, '#8C7A3A', .35); line(6.2, -2, 7.4, -2, '#8C7A3A', .25);
-      const tip = .5 + .5 * Math.sin(t * 1.3); arm(1.3, -6.9, 4.2, -5.6); c.save(); c.translate(5, -5.4); c.rotate(tip * .9); blob(0, 0, 1.2, .62, '#7A5434'); c.restore();
-      if (tip > .55){ c.strokeStyle = '#BFE3EA'; c.lineWidth = .35; c.beginPath(); c.moveTo(6, -5.1); c.quadraticCurveTo(6.8, -4.9, 6.8, -4); c.stroke(); } break; }
+      const tip = .5 + .5 * Math.sin(t * 1.3); c.save(); c.translate(2.8, -5.2); c.rotate(tip * .9); blob(0, 0, 1.2, .62, '#7A5434'); c.restore();
+      if (tip > .55){ c.strokeStyle = '#BFE3EA'; c.lineWidth = .35; c.beginPath(); c.moveTo(3.9, -4.7); c.quadraticCurveTo(6.4, -4.5, 6.8, -4); c.stroke(); } break; }
     case 'point': {   // the master points to a star rising out of the sea and names it; the pupil follows its path
-      const tw = .7 + .3 * Math.sin(t * 5); arm(1.3, -6.9, 4.6, -11.6);
+      const tw = .7 + .3 * Math.sin(t * 5);
       star(8.4, -17, 1.4 * tw); c.fillStyle = '#F4ECD8'; c.fill(); c.strokeStyle = '#2B1D14'; c.lineWidth = .25; c.stroke();
       c.setLineDash([.4, .7]); c.strokeStyle = '#8E8A80'; c.lineWidth = .3; c.beginPath(); c.arc(8.4, -9, 8, -Math.PI * .5, -Math.PI * .05); c.stroke(); c.setLineDash([]); break; }
     case 'split': {   // a green nut opened with a stone: water to drink
       const g = (t * .5) % 1, u = g < .7 ? Math.abs(Math.sin(t * 3)) : 0;
       if (g < .7) blob(5, -.9, 1.3, 1.1, '#7E9A3A');
       else { blob(4.1, -.6, 1, .75, '#7E9A3A'); blob(6, -.6, 1, .75, '#7E9A3A'); blob(4.2, -1, .6, .35, '#F4ECD8'); blob(5.9, -1, .6, .35, '#F4ECD8'); }
-      const sy = -2.8 - u * 2; arm(1.3, -6.9, 4.2, sy); blob(4.6, sy, .8, .6, '#8A8A86'); break; }
+      const sy = -2.8 - u * 2; hold(4.2, -3.8, 2, -4.8); blob(4.6, sy, .8, .6, '#8A8A86'); unhold(); break; }
     case 'trim': {   // the dry leaves cut from the banana stem; one drifts down
       line(5.8, .4, 5.8, -9, '#7A9A4A', 1.2); blob(7.2, -9.4, 2.1, .7, '#6E9A3A'); blob(4.4, -8.6, 1.6, .55, '#7E9A3A');
       const g = (t * .55) % 1; c.save(); c.translate(6.6 - g * 1.6, -7 + g * 7); c.rotate(g * 1.8); blob(0, 0, 1.8, .45, '#B08A4A'); c.restore();
-      const sw = Math.sin(t * 4) * .5; arm(1.3, -6.9, 4.6 + sw, -7.6 + sw); line(4.6 + sw, -7.6 + sw, 5.6 + sw, -8.3 + sw, '#E9DCC0', .4); break; }
+      const sw = Math.sin(t * 4) * .5; hold(4.6, -7.6, 1.9, -5.6); line(4.6 + sw, -7.6 + sw, 5.6 + sw, -8.3 + sw, '#E9DCC0', .4); unhold(); break; }
     case 'paddle': {   // paddle and anvil: the pot wall beaten thin from outside, a stone held against it inside
       blob(5.6, -1.7, 2.1, 1.8, '#B5774A'); line(4, -3.3, 7.2, -3.3, '#2B1D14', .45);
-      const hit = Math.max(0, Math.sin(t * 6)), px = 2.6 - (1 - hit) * .8; arm(1.3, -6.9, px, -3.8);
-      c.fillStyle = '#8C5C36'; c.fillRect(px - .3, -2.8, .6, 2.2); stroke(c, new Path2D(`M${px - .3} -2.8h.6v2.2h-.6Z`), '#2B1D14', .25);
+      const hit = Math.max(0, Math.sin(t * 6)), px = 2.6 - (1 - hit) * .8; hold(2.2, -3.8, 1.9, -4.4);
+      c.fillStyle = '#8C5C36'; c.fillRect(px - .3, -2.8, .6, 2.2); stroke(c, new Path2D(`M${px - .3} -2.8h.6v2.2h-.6Z`), '#2B1D14', .25); unhold();
       if (hit > .92){ line(3.2, -3.4, 2.7, -3.9, '#2B1D14', .3); line(3.2, -.4, 2.7, .1, '#2B1D14', .3); } break; }
     case 'stamp': {   // dentate stamping, the mark of Lapita: a toothed stamp pressed row by row into the wet clay
       blob(5, -1.6, 2.3, 1.6, '#C08458'); line(3, -3.1, 7, -3.1, '#2B1D14', .4);
       const p = (t * .35) % 1, n = Math.floor(p * 7); c.fillStyle = '#5A3F22';
       for (let k = 0; k < n; k++) for (let d = 0; d < 3; d++) c.fillRect(3.3 + k * .55, -2.5 + d * .38, .2, .2);
-      const tx = 3.3 + n * .55, pr = Math.sin(t * 9) > 0 ? .25 : 0; c.fillStyle = '#7A5434'; c.fillRect(tx - .1, -4.6 + pr, .5, 1.8);
-      arm(1.3, -6.9, tx, -4.4 + pr); break; }
+      const tx = 3.3 + n * .55, pr = Math.sin(t * 9) > 0 ? .25 : 0; c.fillStyle = '#7A5434'; c.fillRect(2.2, -4.6 + pr, .5, 1.8); break; }
     case 'chip': {   // the adze blade roughed out of basalt with a hammer stone; chips spring off
       const B = new Path2D('M3.4-.2L4.4-2.2L6.2-1.9L6.5-.2Z'); c.fillStyle = '#5C6066'; c.fill(B); stroke(c, B, '#2B1D14', .3);
-      const u = Math.abs(Math.sin(t * 4)); arm(1.3, -6.9, 4.6, -2.8 - u * 2.4); blob(5, -2.8 - u * 2.4, .8, .6, '#8A8A86');
+      const u = Math.abs(Math.sin(t * 4)); hold(4.6, -4, 2, -4.8); blob(5, -2.8 - u * 2.4, .8, .6, '#8A8A86'); unhold();
       if (u < .25){ const q = u * 4; dot(6.8 + q, -2.6 - q, .3, '#5C6066'); dot(3.4 - q, -2.8 - q * .6, .25, '#5C6066'); } break; }
     case 'flake': {   // fine flakes pressed off the obsidian edge with a point of bone
-      const O = new Path2D('M3.2-3.4L6-4L5.6-2.5Z'); c.fillStyle = '#1C1719'; c.fill(O);
-      const pr = (t * 1.8) % 1; arm(1.3, -6.9, 3.4, -3.2); arm(-1.3, -6.9, 7, -5.6 + pr * .6); line(7, -5.6 + pr * .6, 5.9, -3.6, '#E9DCC0', .5);
+      hold(3.4, -3.2, 1.9, -4.4); const O = new Path2D('M3.2-3.4L6-4L5.6-2.5Z'); c.fillStyle = '#1C1719'; c.fill(O);
+      const pr = (t * 1.8) % 1; line(6.4, -4.8 + pr * .6, 5.5, -3.4, '#E9DCC0', .5);
       if (pr > .8) dot(5.4 + (pr - .8) * 8, -3 + (pr - .8) * 10, .22, '#1C1719'); break; }
     case 'braid': {   // three strands of sennit plaited; the braid hangs from the big toe and grows
       const Lb = 1.6 + ((t * .25) % 1) * 2.6, top = -4.6, cols = ['#B08048', '#C99A62', '#8C6440'];
       for (let k = 0; k < 6; k++){ const y = top + k * (Lb / 6); line(4.6 + (k % 2 ? .45 : -.45), y, 4.6 + (k % 2 ? -.45 : .45), y + Lb / 6, cols[k % 3], .5); }
       const by = top + Lb; for (let k = -1; k <= 1; k++) line(4.6 + k * .3, by, 4.6 + k * 1.4 + Math.sin(t * 3 + k) * .3, .2, '#C99A62', .35);
-      const a = t * 4; arm(1.3, -6.9, 4.6 + Math.cos(a) * .9, top - .4); dot(4.6 + Math.cos(a) * .9, top - .4, .45, sk); dot(4.6 - Math.cos(a) * .9, top - .2, .45, sk); break; }
+      break; }
     case 'peel': {   // the bark stripped from a stick of paper mulberry; the white inner bark comes off in a long band
       line(2.4, -1.5, 7.6, -2.7, '#8C6440', .75);
       const p = (t * .5) % 1; c.strokeStyle = '#E9DCC0'; c.lineWidth = .6; c.lineCap = 'round'; c.beginPath(); c.moveTo(2.8 + p * 4, -1.7 - p * .9); c.quadraticCurveTo(3.6 + p * 4, -4.2 - p, 5 + p * 3, -3.6 - p * .6); c.stroke();
-      arm(1.3, -6.9, 5 + p * 3, -3.6 - p * .6); break; }
+      break; }
     case 'twigs': {   // dry sticks picked up from the ground onto a bundle
       for (let k = 0; k < 3; k++) line(2.8 + k * 1.3, .3, 5 + k * 1.3, -.3, '#8C6440', .5);
       line(6.6, -.5, 9.6, -1.7, '#2B1D14', 1.1); line(6.6, -.5, 9.6, -1.7, '#A37A4C', .6); line(6.8, -.1, 9.8, -1.1, '#2B1D14', 1.1); line(6.8, -.1, 9.8, -1.1, '#A37A4C', .6);
       const g = (t * .8) % 1, x = 3.4 + g * 4.4, y = -.3 - Math.sin(g * Math.PI) * 2.4; line(x - .9, y + .3, x + .9, y - .3, '#9C7246', .55);
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, x, y); break; }
+      break; }
     case 'snap': {   // a dry branch broken in two over the knee; a splinter springs off
       const u = Math.abs(Math.sin(t * 2.4)), b = u * 1.3;
       line(1.8, -4.4, 4, -5 + b, '#2B1D14', 1.1); line(1.8, -4.4, 4, -5 + b, '#9C7246', .6); line(4, -5 + b, 6.2, -4.4, '#2B1D14', 1.1); line(4, -5 + b, 6.2, -4.4, '#9C7246', .6);
-      { const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, 6, -4.5); } { const [sx, sy] = rp(-1.2, -6.8); arm(sx, sy, 2, -4.5); }
       if (u > .92) dot(4, -5.6 + b, .35, '#E9DCC0'); break; }
     case 'gather': {   // fallen pandanus keys picked from the ground into a basket
       blob(6.8, -.7, 1.4, 1, '#B08048'); dot(6.4, -1.6, .5, '#D9893A'); dot(7.2, -1.5, .45, '#E0A04A');
       for (let k = 0; k < 2; k++) blob(3.4 + k * 1.4, .1, .55, .4, '#D9893A');
       const g = (t * .9) % 1, x = 3.8 + g * 3, y = -.4 - Math.sin(g * Math.PI) * 2; blob(x, y, .5, .42, '#E0A04A');
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, x - .3, y + .2); break; }
+      break; }
     case 'tamp': {   // the earth stamped firm with a heavy pole: round a young tree, or over a new floor
-      const u = Math.abs(Math.sin(t * 3.2)); line(4.6, -1 - u * 3, 4.6, -6.4 - u * 3, '#7A5434', .8); blob(4.6, -.9 - u * 3, .9, .5, '#8C6440');
-      arm(1.3, -6.9, 4.4, -5.4 - u * 3);
+      const u = Math.abs(Math.sin(t * 3.2)); hold(4.4, -5.4, 1.9, -5); line(4.6, -1 - u * 3, 4.6, -6.4 - u * 3, '#7A5434', .8); blob(4.6, -.9 - u * 3, .9, .5, '#8C6440'); unhold();
       if (u < .18) for (let k = 0; k < 3; k++) dot(3.4 + k * 1.2, -.2, .4, '#C8B48A', .7);
       if (w.job && w.job.type === 'plant'){ line(7, .2, 7, -3.2, '#6B4A2E', .4); dot(6.6, -3.4, .7, '#7FA84F'); dot(7.5, -3.6, .6, '#7FA84F'); } break; }
     case 'wedge': {   // a wedge of hard wood driven into the cut with a club; the trunk creaks
       const Wd = new Path2D('M4.9-3.6L6.2-3.1L4.9-2.6Z'); c.fillStyle = '#C99A62'; c.fill(Wd); stroke(c, Wd, '#2B1D14', .25);
-      const u = Math.abs(Math.sin(t * 3.4)), mx = 3.8 - u * 1.4, my = -3.2 - u * 2.8; arm(1.3, -6.9, mx - .4, my + .4); blob(mx, my, .9, .7, '#7A5434');
+      const u = Math.abs(Math.sin(t * 3.4)), mx = 3.8 - u * 1.4, my = -3.2 - u * 2.8; hold(3.4, -2.8, 1.9, -4.8); blob(mx, my, .9, .7, '#7A5434'); unhold();
       if (u < .15){ line(6.6, -4.4, 7.4, -5, '#2B1D14', .3); line(6.6, -2, 7.4, -1.6, '#2B1D14', .3); } break; }
     case 'coil': {   // the rope coiled between hand and elbow, loop over loop
       const a = t * 3, n = 2 + Math.floor(((t * .4) % 1) * 3);
       c.strokeStyle = '#B08048'; c.lineWidth = .4; for (let k = 0; k < n; k++){ c.beginPath(); c.ellipse(3.2 + k * .2, -5, 1.1, 2, .3, 0, TAU); c.stroke(); }
       c.beginPath(); c.moveTo(3.6, -3); c.quadraticCurveTo(6, -1.4 + Math.sin(a) * .5, 8.6, 0); c.stroke();
-      arm(1.3, -6.9, 3.2 + Math.cos(a) * 1.1, -5 + Math.sin(a) * 2); break; }
+      break; }
     case 'twist': {   // up in the crown the nuts twisted off one by one; a dry frond thrown down
       c.strokeStyle = '#B08048'; c.lineWidth = .5; c.beginPath(); c.ellipse(.2, -.6, 1.6, .5, 0, 0, TAU); c.stroke();
-      const H = climbH(w); if (H > 12){ const a = t * 4; blob(3, -10.6, 1.6, 1.2, '#7A5434'); arm(1.3, -6.9, 2.4 + Math.cos(a) * .4, -10 + Math.sin(a) * .4);
+      const H = climbH(w); if (H > 12){ const a = t * 4; blob(3, -10.6, 1.6, 1.2, '#7A5434');
         const g = (t * .4) % 1; c.save(); c.translate(4 + g * 4, -8 + g * (H + 8)); c.rotate(g * 2.6); line(-2.4, 0, 2.4, 0, '#B08A4A', .45); for (let k = -2; k <= 2; k++) line(k, 0, k + .6, .9, '#B08A4A', .25); c.restore(); } break; }
     case 'grope': {   // bent low in the shallows, an arm under a rock: octopus and shellfish hide there
       blob(5.8, .3, 1.7, .7, '#6E6A60'); const q = (t * .8) % 1; stroke(c, ellipse(4.8, .6, 1 + q * 2.6, (1 + q * 2.6) * .4), '#F4FBFA', .35, null, null, 1 - q);
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, 4.6, .2);
+      
       if ((t * .3) % 1 > .72){ c.strokeStyle = '#B0607A'; c.lineWidth = .4; c.beginPath(); c.moveTo(6.6, 0); c.quadraticCurveTo(7.6, -1.4, 8.2, -.4); c.stroke(); } break; }
     case 'gut': {   // the catch cleaned on a board by the hut; the scales flash
       c.fillStyle = '#8C5C36'; c.fillRect(2.6, -.8, 4.8, .9); blob(5, -1.2, 1.8, .55, '#9FB7C0');
       const T = new Path2D('M6.6-1.2L7.6-1.9V-.5Z'); c.fillStyle = '#9FB7C0'; c.fill(T); stroke(c, T, '#2B1D14', .25);
-      const x = 4 + Math.sin(t * 4) * 1.2; arm(1.3, -6.9, x, -3.6); line(x, -3.6, x + .4, -1.5, '#E9DCC0', .45);
+      const x = 4 + Math.sin(t * 4) * 1.2; hold(4, -3.6, 2, -4.6); line(x, -3.6, x + .4, -1.5, '#E9DCC0', .45); unhold();
       if (Math.sin(t * 4) > .8) stroke(c, glint(5.6, -2.4, .6), '#F4FBFA', .25); break; }
     case 'stalk': {   // the spear held low, creeping up on a fish in the clear water
-      c.fillStyle = '#79C6B8'; c.fill(WADE); arm(1.3, -6.9, 2.6, -4.2); line(.6, -4.6, 7.8, -2.8, '#6B4428', .55);
+      c.fillStyle = '#79C6B8'; c.fill(WADE); line(.6, -4.6, 7.8, -2.8, '#6B4428', .55);
       const Tp = new Path2D('M7.8-2.8L8.8-2.5L7.7-2.4Z'); c.fillStyle = '#2B1D14'; c.fill(Tp);
       const fx = 9 + Math.sin(t * .9) * 2; c.globalAlpha = .45; c.fillStyle = '#2F5F73'; c.beginPath(); c.ellipse(fx, 1.2, 1, .35, 0, 0, TAU); c.fill(); c.globalAlpha = 1;
       const q = (t * .6) % 1; stroke(c, ellipse(0, .4, 3 + q * 2, (3 + q * 2) * .35), '#F4FBFA', .3, null, null, 1 - q); break; }
     case 'turn': {   // the fish on the drying rack turned to the sun
       line(2.6, .4, 2.6, -6.6, '#7A5434', .5); line(7.6, .4, 7.6, -6.6, '#7A5434', .5); line(2.2, -6.2, 8, -6.2, '#7A5434', .55);
       for (let k = 0; k < 3; k++){ const r = k === 1 ? Math.sin(t * 3) : 1; c.save(); c.translate(3.8 + k * 1.7, -6.1); c.scale(Math.max(.25, Math.abs(r)), 1); blob(0, 1.3, .5, 1.2, '#9FB7C0'); c.restore(); }
-      arm(1.3, -6.9, 5.3, -5.2); break; }
+      break; }
     case 'burn': {   // the hull hollowed with fire: embers glow along the log, the charcoal scraped out after
       blob(5, -.6, 3.6, 1.2, '#7A5434'); blob(5, -1.1, 2.3, .45, '#2B1D14');
       for (let k = 0; k < 3; k++) dot(4 + k, -1.2, .35, ['#D0603A', '#E0803A', '#F3D9A0'][k], .6 + .4 * Math.sin(t * 5 + k));
       for (let k = 0; k < 2; k++){ const q = (t * .4 + k * .5) % 1; puff(5 + Math.sin(q * 4 + k), -2 - q * 7, .6 + q, (1 - q) * .4); }
-      const s = Math.sin(t * 2); arm(1.3, -6.9, 3.2 + s * .6, -2.6); line(3.2 + s * .6, -2.6, 4.4 + s * .6, -1.4, '#5C6066', .5); break; }
+      const s = Math.sin(t * 2); hold(3.2, -2.6, 1.9, -4.4); line(3.2 + s * .6, -2.6, 4.4 + s * .6, -1.4, '#5C6066', .5); unhold(); break; }
     case 'wring': {   // back from the dive: the hair wrung out, the drops fall
-      const tw = Math.sin(t * 4); arm(1.3, -6.9, -.6 + tw * .3, -10); arm(-1.3, -6.9, -2 - tw * .3, -9.4);
+      
       for (let k = 0; k < 3; k++){ const q = (t * 1.3 + k / 3) % 1; dot(-1.6 + k * .4, -8 + q * 8, .25, '#BFE3EA', 1 - q); } break; }
     case 'thatch': {   // the thatch tied on in rows, from the eaves upward
       line(2.4, -12.6, 9.4, -8.6, '#7A5434', .7);
       for (let k = 0; k < 5; k++){ const x = 3 + k * 1.4, y = -12.2 + k * .8; line(x, y, x - .3, y + 2.6, '#B9A35A', .5); }
-      const a = t * 4, hx = 5 + Math.cos(a) * .8, hy = -10.8 + Math.sin(a) * .5; arm(1.3, -6.9, hx, hy);
-      if (Math.cos(a) > .9) line(hx, hy, hx + 1.4, hy - .6, '#C99A62', .35); break; }
+      const a = t * 4, hx = 5 + Math.cos(a) * .8, hy = -10.8 + Math.sin(a) * .5;
+      if (Math.cos(a) > .9){ hold(hx, hy, 1.9, -6); line(hx, hy, hx + 1.4, hy - .6, '#C99A62', .35); unhold(); } break; }
     case 'crab': {   // gathering on the shore: a crab chased and caught by a leg
-      const g = (t * .5) % 1, run = g < .6, x = run ? 7 - g * 4 : 4.4, y = run ? .2 : -2.4 - Math.sin((g - .6) * 10) * .3;
+      const g = (t * .5) % 1, run = g < .6, x = run ? 7 - g * 4 : 3, y = run ? .2 : -4.4 - Math.sin((g - .6) * 10) * .3;
       c.save(); c.translate(x, y); blob(0, 0, .9, .6, '#D0603A'); for (const s of [-1, 1]) for (let k = 0; k < 3; k++) line(s * .6, k * .12, s * 1.4, .5 + k * .25 - (run ? Math.sin(t * 20 + k) * .2 : 0), '#2B1D14', .2);
       dot(-.4, -.5, .15, '#2B1D14'); dot(.4, -.5, .15, '#2B1D14'); c.restore();
-      const [sx, sy] = rp(1.3, -6.9); arm(sx, sy, run ? 4.4 : x - .2, run ? -1.6 : y - .6); break; }
+      break; }
     // ---- free time and short rests
     case 'kite': {   // a kite of pandanus leaf on a cord of coconut fibre, off downwind, dancing in the gusts
       const kx = 15 + Math.sin(t * .9) * 1.6, ky = -25 + Math.cos(t * 1.3) * 2.2, rot = Math.sin(t * 1.7) * .25;
-      c.strokeStyle = '#6B4428'; c.lineWidth = .3; c.beginPath(); c.moveTo(1.6, -6.6); c.quadraticCurveTo(kx * .55, ky * .3, kx, ky + 2); c.stroke();
+      c.strokeStyle = '#6B4428'; c.lineWidth = .3; c.beginPath(); c.moveTo(1.9, -5.4); c.quadraticCurveTo(kx * .55, ky * .3, kx, ky + 2); c.stroke();
       c.save(); c.translate(kx, ky); c.rotate(rot); const K = new Path2D('M0-3.6Q2.6-1.4 0 3.2Q-2.6-1.4 0-3.6Z'); c.fillStyle = '#D9C27A'; c.fill(K); stroke(c, K, '#2B1D14', .4); line(0, -3.2, 0, 3, '#8C6440', .3);
       c.strokeStyle = '#B03A2E'; c.lineWidth = .35; c.beginPath(); c.moveTo(0, 3.2); for (let k = 1; k <= 4; k++) c.lineTo(Math.sin(t * 3 + k) * 1.2, 3.2 + k * 1.6); c.stroke(); c.restore();
-      line(1.2, -6.8, 2.2, -8.6, '#2B1D14', .7); break; }
+      break; }
     case 'toy': {   // a toy outrigger with a crab-claw sail goes round in the shallows
       c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9);
       const a = t * .9, x = 6 + Math.cos(a) * 3, y = 1.2 + Math.sin(a) * 1.1, d = Math.cos(a + Math.PI / 2) < 0 ? -1 : 1;
@@ -1489,24 +1486,23 @@ function workFx(c, w, now){
       const S = new Path2D('M0-.2L-1.4-3.8Q-.2-2.6 .3-3.6Q.2-1.6 0-.2Z'); c.fillStyle = '#E9DCC0'; c.fill(S); stroke(c, S, '#2B1D14', .25); c.restore();
       if (Math.sin(a * 3) > .7) dot(x - 2, y + .3, .3, '#F4FBFA'); break; }
     case 'string': {   // a string figure between the hands, a new one every few breaths
-      const k = Math.floor(t / 1.6) % 3, x0 = 1.2, x1 = 4.6, y = -5.6;
+      const k = Math.floor(t / 1.6) % 3, x0 = 1.9, x1 = 5.4, y = -5.4;
       c.strokeStyle = '#B03A2E'; c.lineWidth = .3; c.beginPath();
       if (k === 0){ c.moveTo(x0, y - 1); c.lineTo(x1, y + 1); c.moveTo(x0, y + 1); c.lineTo(x1, y - 1); c.moveTo(x0, y - 1); c.lineTo(x1, y - 1); c.moveTo(x0, y + 1); c.lineTo(x1, y + 1); }
       else if (k === 1){ for (let i = 0; i < 3; i++){ const a = x0 + i * 1.13; c.moveTo(a, y - 1); c.lineTo(a + .57, y + 1); c.lineTo(a + 1.13, y - 1); } c.moveTo(x0, y + 1); c.lineTo(x1, y + 1); }
       else { c.moveTo(x0, y); c.lineTo((x0 + x1) / 2, y - 1.4); c.lineTo(x1, y); c.lineTo((x0 + x1) / 2, y + 1.4); c.closePath(); c.moveTo(x0, y - 1); c.lineTo(x1, y + 1); }
-      c.stroke(); dot(x0, y, .5, SKINS[+w.look[0]]); dot(x1, y, .5, SKINS[+w.look[0]]); break; }
+      c.stroke(); break; }
     case 'hiko': {   // three candlenuts in a loop over the head, caught and thrown, never one on the ground
       for (let k = 0; k < 3; k++){ const a = (t * 1.2 + k / 3) * TAU, y = -14.2 + Math.sin(a) * 2.6 - (Math.sin(a) < 0 ? 1.6 : 0); blob(.6 + Math.cos(a) * 2.6, y, .75, .75, k === 1 ? '#A0703E' : '#7A5434'); }
-      const h = Math.sin(t * 1.2 * TAU) * .8, sk = SKINS[+w.look[0]];
-      for (const [x0, x1, d] of [[-1.3, -2, h], [1.3, 2.6, -h]]){ const p = new Path2D(); p.moveTo(x0, -6.9); p.lineTo(x1, -10.4 + d); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); } break; }
+      
+      break; }
     case 'garland': {   // blossoms threaded on a strip of hibiscus bast, one after the other
       c.strokeStyle = '#7E9A3A'; c.lineWidth = .35; c.beginPath(); c.moveTo(2, -1.2); c.quadraticCurveTo(4.6, .6, 7.2, -1.2); c.stroke();
       const n = 1 + Math.floor((t * .6) % 5), col = ['#E86A8A', '#F4ECD8', '#F3D9A0', '#E86A8A', '#F4ECD8'];
       for (let k = 0; k < n; k++){ const q = k / 4; dot(2 + q * 5.2, -1.2 + Math.sin(q * Math.PI) * 1.4, .6, col[k]); }
-      line(3.4 + n * .9, -3.4, 2.4 + n * 1.1, -1.2, '#2B1D14', .4); break; }
+      line(1.9, -4.4, 2.4 + n * 1.1, -1.2, '#2B1D14', .3); break; }
     case 'story': {   // the hand moves with the words; over it what the story is about: turtle, canoe, star, shark, fish
       const g = Math.floor(t / 2.6), k = (g + (w.x | 0)) % 5, pop = Math.min(1, (t / 2.6 - g) * 5);
-      line(1.2, -6.6, 3.2 + Math.sin(t * 2.2) * .9, -8.4 + Math.cos(t * 1.7) * .6, '#2B1D14', .7);
       c.save(); c.translate(4.6, -15.4); c.scale(pop, pop); const B = loopPath(0, 0, 3.4, 2.7, 7 + k, .06, 11); c.globalAlpha = .95; c.fillStyle = '#F4ECD8'; c.fill(B); c.globalAlpha = 1; stroke(c, B, '#3E2416', .4);
       c.fillStyle = '#2B1D14'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35;
       if (k === 0){ c.beginPath(); c.ellipse(0, 0, 1.5, 1, 0, 0, TAU); c.fill(); for (const [x, y] of [[-1.4, -1], [1.4, -1], [-1.4, 1], [1.4, 1]]){ c.beginPath(); c.arc(x, y, .4, 0, TAU); c.fill(); } c.beginPath(); c.arc(1.9, 0, .45, 0, TAU); c.fill(); }
@@ -1518,77 +1514,77 @@ function workFx(c, w, now){
     case 'drum': {   // the slit drum (lali, pātē): a hollowed log, beaten with two sticks; the sound goes out in rings
       blob(5.2, -.6, 3.4, 1.2, '#6B4428'); line(3.2, -1.1, 7.2, -1.1, '#1F140D', .45);
       const a = Math.sin(t * 7), b = Math.sin(t * 7 + Math.PI);
-      line(1.2, -5.4, 4.2, -2 - Math.max(0, a) * 2.4, '#8C6440', .5); line(1.8, -5, 6.2, -2 - Math.max(0, b) * 2.4, '#8C6440', .5);
+      line(1.9, -5.2, 4.2, -2 - Math.max(0, a) * 2.4, '#8C6440', .5); line(1.9, -4.7, 6.2, -2 - Math.max(0, b) * 2.4, '#8C6440', .5);
       const q = (t * 1.2) % 1; c.globalAlpha = 1 - q; c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.arc(5.2, -2, 2 + q * 5, -2.4, -.7); c.stroke(); c.globalAlpha = 1; break; }
     // ---- the second looks of free time, and the village sitting and dancing together
     case 'kitepull': {   // a bird kite (manu) that swoops and climbs again; the line pulled in hand over hand
       const a = t * 1.1, kx = 14 + Math.cos(a) * 4, ky = -24 + Math.sin(a * 2) * 4, rot = Math.cos(a) * .9, h = Math.sin(t * 5);
-      c.strokeStyle = '#6B4428'; c.lineWidth = .3; c.beginPath(); c.moveTo(2.4, -9 + h); c.quadraticCurveTo(kx * .5, ky * .25, kx, ky + 1.4); c.stroke();
+      c.strokeStyle = '#6B4428'; c.lineWidth = .3; c.beginPath(); c.moveTo(1.9, -5.6 + h * .4); c.quadraticCurveTo(kx * .5, ky * .25, kx, ky + 1.4); c.stroke();
       c.save(); c.translate(kx, ky); c.rotate(rot); const M = new Path2D('M0-1L-4.2-2.6Q-2.2 0-.6 1.2L0 3L.6 1.2Q2.2 0 4.2-2.6Z'); c.fillStyle = '#E9DCC0'; c.fill(M); stroke(c, M, '#2B1D14', .35);
       line(-1.6, -1.2, -.4, .6, '#B03A2E', .3); line(1.6, -1.2, .4, .6, '#B03A2E', .3); c.restore();
-      arm(1.3, -6.9, 2.4, -9 + h); arm(-1.3, -6.9, 1, -7.6 - h); break; }
+      break; }
     case 'stringshow': {   // the finished figure held up high and turned, for the others to guess what it is
-      const up = .7 + .3 * Math.sin(t * 1.6), y = -11 - up * 2, x0 = -1.4, x1 = 2.8, mx = (x0 + x1) / 2;
-      arm(-1.3, -6.9, x0, y); arm(1.3, -6.9, x1, y);
+      const up = .7 + .3 * Math.sin(t * 1.6), y = -6 - up * .8, x0 = 1.9, x1 = 6, mx = (x0 + x1) / 2;
       c.strokeStyle = '#B03A2E'; c.lineWidth = .3; c.beginPath(); c.moveTo(x0, y); c.lineTo(mx, y - 1.6); c.lineTo(x1, y); c.lineTo(mx, y + 1.6); c.closePath(); c.moveTo(x0, y); c.lineTo(x1, y); c.moveTo(mx, y - 1.6); c.lineTo(mx, y + 1.6); c.stroke(); break; }
     case 'hiko2': {   // two nuts round and round in one hand, the third thrown high from the other now and then
       for (let k = 0; k < 2; k++){ const a = (t * 1.6 + k / 2) * TAU; blob(2.2 + Math.cos(a) * 1.1, -11.6 + Math.sin(a) * 1.8, .7, .7, '#7A5434'); }
       const g = (t * .35) % 1; blob(-1.6, -9 - Math.sin(g * Math.PI) * 9, .7, .7, '#A0703E');
-      arm(1.3, -6.9, 2.4, -9.6 + Math.sin(t * 1.6 * TAU) * .6); arm(-1.3, -6.9, -1.8, -9.4); break; }
+      break; }
     case 'doze': {   // sitting against a trunk, the head nods, sleep comes
       const q = (t * .4) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', 1.6 + q * 2, -11 - q * 5); c.globalAlpha = 1;
-      arm(1.3, -6.9, 2.6, -4); break; }
+      break; }
     case 'drum2': {   // standing at the big drum: one heavy beater, slow strokes that carry far
       blob(5.6, -1, 3.8, 1.5, '#5A3B24'); line(3.2, -1.8, 8, -1.8, '#1F140D', .5);
-      const u = Math.max(0, Math.sin(t * 3.2)), hx = 4.6 - u * .6, hy = -2.6 - u * 3.4; arm(1.3, -6.9, hx - .6, hy + .8); line(hx - .6, hy + .8, hx + .6, hy, '#8C6440', .7); blob(hx + .7, hy, .55, .55, '#6B4428');
+      const u = Math.max(0, Math.sin(t * 3.2)), hx = 4.6 - u * .6, hy = -2.6 - u * 3.4; hold(4, -2.2, 1.9, -4.4); line(hx - .6, hy + .8, hx + .6, hy, '#8C6440', .7); blob(hx + .7, hy, .55, .55, '#6B4428'); unhold();
       const q = (t * .51) % 1; c.globalAlpha = 1 - q; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.arc(5.6, -2.4, 2.6 + q * 7, -2.5, -.6); c.stroke(); c.globalAlpha = 1; break; }
     case 'toyline': {   // wading, the toy outrigger pulled behind on a cord; it rides the ripples
       c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9);
-      const x = -7 + Math.sin(t * 1.2) * .8, y = 1.2 + Math.sin(t * 2.4) * .3; arm(-1.3, -6.9, -1.6, -4); line(-1.6, -4, x + 1, y, '#6B4428', .25);
+      const x = -7 + Math.sin(t * 1.2) * .8, y = 1.2 + Math.sin(t * 2.4) * .3; line(-1.5, -4.2, x + 1, y, '#6B4428', .25);
       c.save(); c.translate(x, y); blob(0, 0, 1.6, .45, '#8C5C36'); line(-.4, -.1, -.4, 1, '#6B4428', .25); line(-1, 1.1, 1.2, 1.1, '#6B4428', .35);
       const S = new Path2D('M0-.2L-1.4-3.8Q-.2-2.6 .3-3.6Q.2-1.6 0-.2Z'); c.fillStyle = '#E9DCC0'; c.fill(S); stroke(c, S, '#2B1D14', .25); c.restore();
       dot(x + 2, y + .3, .3, '#F4FBFA', .7); break; }
     case 'wear': {   // the finished garland put on: up over the head, then worn, a moment to be admired
       const p = (t * .3) % 1, y = p < .5 ? -4 - p * 2 * 6.2 : -10.2, col = ['#E86A8A', '#F4ECD8', '#F3D9A0'];
       for (let k = 0; k < 8; k++){ const a = k / 8 * TAU; dot(Math.cos(a) * 1.9, y + Math.sin(a) * .55, .5, col[k % 3]); }
-      if (p < .5){ arm(1.3, -6.9, 1.9, y + .3); arm(-1.3, -6.9, -1.9, y + .3); } break; }
+      break; }
     case 'sand': {   // the old one draws in the sand with a stick while telling: a turtle takes shape
       const p = (t * .18) % 1, n = Math.floor(p * 12), P = [[3, -.6], [4, -1.4], [5, -.6], [6, -1.4], [7, -.6], [7.6, .2], [6.4, .6], [5, .6], [3.6, .6], [3, -.6], [4.2, 0], [5.8, 0]];
       c.strokeStyle = '#8C7A5A'; c.lineWidth = .3; c.beginPath(); c.moveTo(P[0][0], P[0][1]); for (let k = 1; k <= n && k < P.length; k++) c.lineTo(P[k][0], P[k][1]); c.stroke();
-      const e = P[Math.min(n, P.length - 1)]; arm(1.3, -6.9, 2.2, -3.8); line(2.2, -3.8, e[0], e[1], '#8A6040', .4); break; }
+      const e = P[Math.min(n, P.length - 1)]; line(1.9, -4.4, e[0], e[1], '#8A6040', .4); break; }
     case 'nod': {   // listening, the chin on the hand, nodding along
-      arm(1.3, -6.9, 1.6, -8.2); break; }
+      break; }
     case 'clap': {   // clapping along: the hands meet before the chest
-      const k = Math.abs(Math.sin(t * 5)); arm(1.3, -6.9, 2 + k * .9, -8); arm(-1.3, -6.9, 2 - k * .9, -8.2);
+      const k = Math.abs(Math.sin(t * 5));
       if (k < .2){ c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.arc(2.2, -8.1, 1.6, -1.2, -.2); c.stroke(); } break; }
     case 'kava': {   // kava in the evening: from the wooden bowl in a half coconut shell, drunk in one go
       blob(5.4, -.4, 2, .7, '#7A5434'); blob(5.4, -.7, 1.5, .35, '#B8A27A');
-      const p = (t * .35) % 1, up = p < .5 ? Math.sin(p * 2 * Math.PI) : 0, cx = 3.6 - up * 1.6, cy = -3 - up * 4.4;
-      arm(1.3, -6.9, cx, cy + .3); blob(cx + .4, cy, .9, .55, '#6B4428'); break; }
+      const p = (t * .35) % 1, up = p < .5 ? Math.sin(p * 2 * Math.PI) : 0, cx = 2.9 - up * .5, cy = -5 - up * 3;
+      blob(cx, cy, .9, .55, '#6B4428'); break; }
     case 'chat': {   // talking with the hands; the words go out in little arcs
-      const a = Math.sin(t * 2.4), b = Math.sin(t * 1.7 + 1); arm(1.3, -6.9, 3 + a * .7, -7.6 + b * 1.2);
+      
       const q = (t * .7) % 1; if (q < .6){ c.globalAlpha = 1 - q / .6; c.strokeStyle = '#2B1D14'; c.lineWidth = .3; for (let k = 0; k < 2; k++){ c.beginPath(); c.arc(2.6, -9.4, 1.4 + k * .9 + q, -1, -.2); c.stroke(); } c.globalAlpha = 1; } break; }
     case 'eat': {   // a meal from the earth oven on a leaf, hand to mouth
       blob(4.6, -.2, 2, .55, '#5E8A3A'); blob(4.2, -.5, .7, .45, '#E3C35A'); blob(5.2, -.5, .6, .4, '#B58A5A');
-      const p = (t * .5) % 1, up = Math.sin(Math.min(1, p * 2) * Math.PI); arm(1.3, -6.9, 3.8 - up * 2.4, -1 - up * 7.2); break; }
+      const p = (t * .5) % 1, up = Math.sin(Math.min(1, p * 2) * Math.PI); if (p < .5) blob(2.6 - up * .8, -4.8 - up * 3.4, .5, .4, '#E3C35A'); break; }
     case 'fan': {   // fanning in the heat with a fan of plaited palm leaf
-      const a = Math.sin(t * 6) * .5; arm(1.3, -6.9, 2.4, -8.4); c.save(); c.translate(2.4, -8.4); c.rotate(a - .4); const F = new Path2D('M0 0L-.6-2.6Q.9-3.6 2.4-2.4Z'); c.fillStyle = '#DCC48C'; c.fill(F); stroke(c, F, '#2B1D14', .3); c.restore(); break; }
+      const a = Math.sin(t * 6) * .5; c.save(); c.translate(2.3, -5.6); c.rotate(a - .4); const F = new Path2D('M0 0L-.6-2.6Q.9-3.6 2.4-2.4Z'); c.fillStyle = '#DCC48C'; c.fill(F); stroke(c, F, '#2B1D14', .3); c.restore(); break; }
     case 'siva': {   // the dance: knees bent, the hands tell the story in soft waves
-      const a = Math.sin(t * 2.2); arm(1.3, -6.9, 3.6, -7.6 + a * 1.2); arm(-1.3, -6.9, -3.4, -7.4 - a * 1.2); dot(3.6, -7.6 + a * 1.2, .4, sk); dot(-3.4, -7.4 - a * 1.2, .4, sk); break; }
+      break; }
     case 'clapd': {   // in the ring they clap above the head to the drum
-      const k = Math.abs(Math.sin(t * 4)); arm(1.3, -6.9, .8 + k * 1.2, -11.6); arm(-1.3, -6.9, .4 - k * 1.2, -11.4);
+      const k = Math.abs(Math.sin(t * 4));
       if (k < .2){ c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.arc(.6, -11.6, 1.8, -2.4, -.7); c.stroke(); } break; }
     case 'hop': {   // children jumping to the drum, the arms flung up
-      const u = Math.abs(Math.sin(t * 5)); arm(1.3, -6.9, 3 + u, -10 - u); arm(-1.3, -6.9, -3 - u, -10 - u); break; }
+      break; }
     case 'drink': {   // a green coconut tipped to the mouth
       const up = .5 + .5 * Math.sin(t * 1.4), x = 1.6 - up * .2, y = -7.6 - up * 1.2;
-      line(1.2, -6.8, x, y, '#2B1D14', .75); blob(x + .6, y, 1.2, 1.05, '#7E9A3A'); if (up > .8) dot(x - .2, y + .6, .25, '#F4FBFA'); break; }
+      blob(x + .8, y + 1.2, 1.2, 1.05, '#7E9A3A'); if (up > .8) dot(x - .2, y + .6, .25, '#F4FBFA'); break; }
     case 'stretch': {   // arms up, a long breath
       const u = Math.min(1, Math.sin(Math.min(1, (1 - w.wait / (w.boutT || 2400))) * Math.PI) * 1.6), sk = SKINS[+w.look[0]];
-      for (const s of [-1, 1]){ const p = new Path2D(); p.moveTo(s * 1.3, -6.9); p.lineTo(s * (1.6 + u * .6), -6.9 - u * 4.4); stroke(c, p, '#2B1D14', .95, null, 'round'); stroke(c, p, sk, .5, null, 'round'); } break; }
+      void u; break; }
     case 'wipe': {   // the back of the hand across the brow, a drop runs down
-      const x = .2 + Math.sin(t * 3) * .9; line(1.3, -6.8, x, -9.6, '#2B1D14', .75); const q = (t * .8) % 1; dot(-1.4, -9 + q * 4, .25, '#BFE3EA', 1 - q); break; }
+      const q = (t * .8) % 1; dot(-1.4, -9 + q * 4, .25, '#BFE3EA', 1 - q); break; }
   }
+  while (held) unhold();
 }
 /* how high a climber is up the palm: up, a while at the crown, down again */
 const climbH = w => { const p = clamp(1 - w.wait / (w.boutT || 5600), 0, 1); return 15 * (p < .3 ? smooth01(p / .3) : p > .78 ? smooth01((1 - p) / .22) : 1); };

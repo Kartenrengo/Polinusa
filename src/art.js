@@ -383,9 +383,9 @@ function figureArt(look, old){
    the digging stick, fishers the spear, the old a walking staff */
 const TOOLS = {
   toki:'<path d="M1.3-4.2L3.6-7.9" stroke="#2B1D14" stroke-width="1" stroke-linecap="round"/><path d="M1.3-4.2L3.6-7.9" stroke="#9C7246" stroke-width=".45" stroke-linecap="round"/><path d="M3.1-8.4L5.3-7.5L5-6.8L3.4-7.3Z" fill="#5C6066" stroke="#2B1D14" stroke-width=".35" stroke-linejoin="round"/>',
-  ko:'<path d="M2.7-9.4L1.6.3" stroke="#2B1D14" stroke-width=".95" stroke-linecap="round"/><path d="M2.7-9.4L1.6.3" stroke="#B08048" stroke-width=".4" stroke-linecap="round"/>',
-  speer:'<path d="M2-.3L3.3-12.4" stroke="#2B1D14" stroke-width=".8" stroke-linecap="round"/><path d="M2-.3L3.3-12.4" stroke="#C99A62" stroke-width=".32"/><path d="M3.05-12.3L3.25-14.4L3.75-12.25Z" fill="#2B1D14"/>',
-  stab:'<path d="M2.5-7.4Q2.2-3.6 2.1.3" fill="none" stroke="#2B1D14" stroke-width=".95" stroke-linecap="round"/><path d="M2.5-7.4Q2.2-3.6 2.1.3" fill="none" stroke="#8A6040" stroke-width=".4" stroke-linecap="round"/>'
+  ko:'<path d="M2.25-9.4L1.15.3" stroke="#2B1D14" stroke-width=".95" stroke-linecap="round"/><path d="M2.25-9.4L1.15.3" stroke="#B08048" stroke-width=".4" stroke-linecap="round"/>',
+  speer:'<path d="M1.2-.3L2.5-12.4" stroke="#2B1D14" stroke-width=".8" stroke-linecap="round"/><path d="M1.2-.3L2.5-12.4" stroke="#C99A62" stroke-width=".32"/><path d="M2.25-12.3L2.45-14.4L2.95-12.25Z" fill="#2B1D14"/>',
+  stab:'<path d="M1.9-7.4Q1.6-3.6 1.5.3" fill="none" stroke="#2B1D14" stroke-width=".95" stroke-linecap="round"/><path d="M1.9-7.4Q1.6-3.6 1.5.3" fill="none" stroke="#8A6040" stroke-width=".4" stroke-linecap="round"/>'
 };
 /* A mark for each place of work: dark for someone at work, yellow for someone on the way, empty for a free place,
    struck out where the work is held back */

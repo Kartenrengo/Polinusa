@@ -1037,7 +1037,10 @@ Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der hal
   keine anderen Waren; die folgen, wenn Land gefunden ist. Die Mannschaft isst jeden Reisetag (10 Sekunden) 1 Proviant.
   Die Tafel des Kanus sagt, ob es bereit zum Erkunden ist und wie lange der Proviant reicht. Geht er aus, kehrt die
   Mannschaft langsam zur nächsten eigenen Insel zurück.
-- **Siedeln:** Mit 4 Siedlern an Bord vor einer leeren Insel „Dorf gründen“. Mitgebrachtes Holz und Essen kommt ins Lager.
+- **Siedeln:** Mit 4 Siedlern an Bord vor einer leeren Insel „Dorf gründen“. Das erste Haus wird aus dem gebaut, was im
+  Kanu liegt (seit Version 75): auf einer hohen Insel 4 Holz und 4 Palmwedel, auf einem Atoll 3 Holz und 5 Palmwedel.
+  Fehlt es, sagt die Kanutafel, was fehlt, und „Dorf gründen“ bleibt aus. Vorher stand das Haus auch ohne Holz. Der Rest
+  der Ladung kommt ins Lager. Ein Auslegerkanu fasst 12: Haus zuerst, dann Essen und Wasser für die ersten Morgen.
 - **Wind:** Er folgt dem Jahr wie im Südwestpazifik: zur Zeit der Plejaden leicht aus Ost, in der Sturmzeit böig aus
   Nordwest, in der Passatzeit beständig aus Südost, in der mageren Zeit mäßig aus Ostsüdost. Innerhalb einer Zeit dreht
   und frischt er langsam, von einer Zeit zur nächsten geht er sacht über. Mit dem Wind fahren Kanus schneller, gegen ihn
@@ -1432,7 +1435,9 @@ Bis er kommt, bleibt der Himmel dunkel, die Kanus bleiben an Land, und unten zä
 von 5 Dächern fest.“ Fehlen Schnur und Fasern, sagt er es. Dann kommt der Sturm: **Festgebundene Dächer halten.** Lose
 Dächer werden undicht und brauchen neue Wedel; jedes lose Haus kann einstürzen (höchstens zwei), und waren die meisten
 Dächer lose, trifft es auch einen Arbeitsplatz. Bäume fallen, die Felder werden ausgewaschen, von kahlen Hängen rutscht
-Erde. Ein **Talisman der Matriarchin** im Lager hält einmal alle Dächer.
+Erde. Ein **Talisman der Matriarchin** im Lager hält einmal alle Dächer. Was einstürzt, wird **mit der Hälfte seines Holzes
+und seiner Wedel aus dem Lager** neu gebaut (seit Version 75; vorher gratis). Fehlt das, wartet die Baustelle: Auf ihrer
+Tafel steht „wartet auf Holz und Wedel“ mit den Kacheln, und niemand baut, bis es im Lager ist.
 
 **Herdfeuer und Holzwirtschaft.** Ab dem Familienhaus will jede Familie ein Feuer im Herd: das neue Bedürfnis
 **Feuer**. Es brennt mit **Brennstoff**: Kokosschalen (jede reife Nuss aus dem Erntehaus gibt eine) oder Holz (vom Holzfäller, auf Atollen
@@ -1619,7 +1624,9 @@ weniger Bewegung wünscht.
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,
-drei Hauttöne, Alte mit grauem Haar und Stock. Jeder Bewohner ist zu sehen und hat einen Namen. Wer Arbeit hat, trägt sie sichtbar
+drei Hauttöne, Alte mit grauem Haar und Stock. Seit Version 75 auch bei der Arbeit ohne Arme: Beil, Grabstock, Speer,
+Schale, Korb oder Muschel sitzen direkt am Oberkörper und schwingen von dort aus (die dünnen Strich-Arme sahen zu wenig
+nach Armen aus; eine Zeichnung mit drei Arm-Varianten liegt für später bereit). Jeder Bewohner ist zu sehen und hat einen Namen. Wer Arbeit hat, trägt sie sichtbar
 vom Feld, der Werkstatt oder dem Waldrand zum Speicher: Taro oder Brotfrucht im Korb auf dem Kopf, Töpfe,
 Steine, Obsidian, Muscheln, Schnur, Tapa, Proviant, Holz, Fisch an der Stange, Matten. Die anderen schlendern zwischen den
 Häusern, die Alten sitzen oft auf Matten. Bauleute tragen Holz zu den Baustellen und hämmern dort, Holzfäller schlagen am

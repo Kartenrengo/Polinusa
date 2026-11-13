@@ -63,9 +63,9 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 
 ## Offen aus der Runde „Morgenmahl, Werk, Atoll“ (Version 74)
 
-- **Arme der Figuren:** Die Zeichnung zeigt drei Wege im Figurenstil (A Ellenbogen und Hand, B Arme immer da, C kräftig).
-  Die Wahl steht noch aus; empfohlen ist B. Danach: `arm()` in `workFx` mit Ellenbogen und Hand, beim Stehen und Gehen
-  zwei Arme.
+- ~~**Arme der Figuren**~~ **entschieden in Version 75:** Die Figuren haben vorerst gar keine Arme; Werkzeuge und was
+  sie tragen sitzen direkt am Oberkörper. Die Zeichnung mit drei Wegen (A Ellenbogen und Hand, B Arme immer da, C kräftig)
+  liegt für später bereit.
 - **Morgenmahl beobachten:** Der Bot wächst etwa wie vorher (90 Minuten: im Mittel 35 Menschen). Ob es Menschen zu schwer
   oder zu leicht fällt, zeigt erst das Spielen. Stellschrauben: `DAILY` (Tagestakt), `MEAL` (wie viel langsamer Hungrige
   arbeiten), `MEAL_SPARE` (Reserve für Zuzug), `HUNGER_GO` (Morgen bis zum Fortgehen).
@@ -75,14 +75,18 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
   (Kalebassen, Bambus) als eigene Lagerung.
 - **Atolle anderer Clans:** Auch Gaben zu einem Clan auf einem Atoll brauchen jetzt den Steg. Prüfen, ob das stört.
 - **Werk-Reiter:** zeigt keine Mengen pro Minute; bei Plätzen mit Wahl (Erntehaus, Fischer) nur die gewählte Ware.
+- **Bot-Wächter, einmal gesehen (Version 75):** „Fischerhütte 10 Minuten leer, während 7 frei sind“ im langen Lauf; in den
+  nächsten drei Läufen nicht wieder. Vermutung: Die Freien waren Meisterfamilien, die nicht fischen gehen, solange das
+  Morgenmahl reicht. Beim nächsten Mal den Grund aus der Notiz „leer seit 2 Minuten“ ansehen.
 
 ## Offen aus der Runde „Brandung, eine Leiste, Palmen“ (Version 73)
 
 - **Absturz „nur noch Meer“:** Die Ursache ist nicht gefunden (im Dauertest mit Zeichnen trat nichts auf). Das Spiel fängt
   Fehler jetzt ab und zeigt den letzten im Menü. Kommt es wieder vor: den Text unter „Letzter Fehler“ schicken.
-- **Holz:** Die Frage „Hütten mit weniger Holz bauen, als man hat“ ist noch nicht verstanden. Geprüft in Version 74: Eine
-  Baustelle zahlt ihr Holz sofort ganz, ohne genug Holz geht sie nicht. Holz ist im Bot oft voll; vielleicht braucht es
-  mehr, wofür man Holz ausgibt, oder teurere Häuser.
+- ~~**Holz:**~~ **gelöst in Version 75:** „Man konnte Gebäude bauen, ohne genug Holz zu haben.“ Zwei Wege bauten gratis:
+  das erste Haus eines neuen Dorfs (jetzt aus Holz und Wedeln im Kanu) und der Wiederaufbau nach dem Sturm (jetzt die Hälfte
+  aus dem Lager, sonst wartet die Baustelle). Offen: Holz ist im Bot später oft voll; vielleicht braucht es mehr, wofür
+  man Holz ausgibt.
 - **Die zwei Links** (Reddit, itch.io „Nightshoal“) waren von hier aus gesperrt. Ihre Mechaniken sind nicht eingeflossen.
 - **Musik hören:** Brandung und iPhone-Start sind nur gemessen und im Test-Browser geprüft, nicht auf einem iPhone gehört.
 - **Nüsse an den Palmen zeigen:** abgeerntete Palmen könnten ohne Nüsse gezeichnet sein.
