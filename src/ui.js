@@ -715,7 +715,7 @@ function workTab(I, nd){
   return h + `</ul></details>`;
 }
 function isleTab(I, nd){
-  let h = ratMarkup(I) + giftsMarkup() + `<ul class="list needs">`;
+  let h = ratMarkup(I) + giftsMarkup() + teachMarkup() + `<ul class="list needs">`;
   if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
     h += rowS('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', barS(f / .6), e ? chipS(e > 1 ? 'out' : 'low', 'Erosion') : chipS('ok', 'hält'), e ? 'need' : ''); }
   { const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;

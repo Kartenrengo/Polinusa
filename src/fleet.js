@@ -435,7 +435,7 @@ function feedCrews(){
 const SQUALL = {chance:.16, read:.07, lose:2};
 function squall(s){
   if (seasonOf().id !== 'sturm' || Math.random() >= (navLore().lvl >= 2 ? SQUALL.read : SQUALL.chance)) return 0;
-  const n = Math.min(SQUALL.lose, s.cargo.proviant || 0); if (!n) return 0;
+  const n = Math.min(taught('wetter') ? Math.ceil(SQUALL.lose / 2) : SQUALL.lose, s.cargo.proviant || 0); if (!n) return 0;   // weather signs from the north
   s.cargo.proviant -= n; stats.boeen = (stats.boeen || 0) + 1;
   if (!awayQuiet) toast(`Böen auf See: ${s.name || 'Das Doppelkanu'} verliert ${n} Proviant. In der Sturmzeit ist das Meer rau.`, 4200);
   return n;

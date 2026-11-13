@@ -29,7 +29,7 @@ const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 
 function receiveGift(T, cargo, from, r){
   const C = T.clan, worth = giftWorth(T, cargo);
   T.debt = (T.debt || 0) + worth * returnRate(r.knots);
-  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++;
+  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++; teachTick();
   T.lastFrom = from; if (!(T.returnAt > tick)) T.returnAt = tick + 15 + Math.round(Math.random() * 10);
   mana += Math.min(4, Math.round(worth / 4)) + 1; invalidate();
   toast(`${clanDer(C)} ${C.culture ? 'nehmen' : 'nimmt'} eure Gabe an. Die Gegengabe kommt später. ${r.knots} Knoten Vertrauen.`, 4200);
@@ -1241,7 +1241,7 @@ function yamTick(I, b, K, n, mult = 1){
   if (S !== Y.harvest) return;
   const got = Math.round(Y.out * (b.sown || 1) * Math.max(.4, b.soil ?? 1) / DAILY.food);
   b.kept = (b.kept || 0) + got; stats.yams = (stats.yams || 0) + got; if (got > 0) I.yamAt = tick;
-  b.ys = 0; b.sown = 0; b.soil = Math.max(0, (b.soil ?? 1) - .22); b.idle = null; if (b.soil < .3){ b.fallow = true; } I.staff = null; invalidate();
+  b.ys = 0; b.sown = 0; b.soil = Math.max(0, (b.soil ?? 1) - .22 * (taught('garten') ? .5 : 1)); b.idle = null; if (b.soil < .3){ b.fallow = true; } I.staff = null; invalidate();
   if (!awayQuiet && I.id === active){ toast(`Yamsernte: ${got} Feldfrüchte. Sie halten sich auf dem Gestell am Feld.`, 3200); sfx('rise'); }
 }
 function makeRate(I, k){
@@ -1541,6 +1541,7 @@ function econ(){
     if ((tick + 30) % DAY_TICKS === 0){ mealTick(I); packTick(I); }
     if ((tick + 30) % DAY_TICKS === DUSK_AT) fireTick(I);
     if (tick % 15 === 0) satTick(I);
+    if (I.id === active) whaleTick();
     eldersTick(I);   // a daughter village led by its elders
     I.owe = I.owe || {};
     for (const N of NEEDS){
@@ -1592,7 +1593,7 @@ function sheltered(I, b){
   return (b._agro = {t:tick, v:n >= 2}).v;
 }
 function drainSoil(I, b){
-  const before = b.soil ?? 1; b.soil = Math.max(.12, before - .005 * [1, 1.6, 2.6][erosionOf(I)] * (sheltered(I, b) ? .5 : 1));
+  const before = b.soil ?? 1; b.soil = Math.max(.12, before - .005 * [1, 1.6, 2.6][erosionOf(I)] * (sheltered(I, b) ? .5 : 1) * (taught('garten') ? .5 : 1));
   if ((before >= .45) !== (b.soil >= .45)) invalidate();   // the field turns pale
 }
 const forestShare = I => I.type === 'hoch' && I.trees0 >= 25 ? I.trees.filter(t => t.st === 0).length / I.trees0 : 1;
@@ -1680,6 +1681,7 @@ function onTap(p){
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   // a bubble over a house or a workplace: what it lacks, and where that comes from
   { const q = hitBubble(p); if (q){ q.go(); return; } }
+  if (hitWhale(p)){ seeWhale(); return; }
   const sh = hitShip(p);
   if (sh && !sh.own && sh.pack){ const F = isl(sh.pack.from); toast(`Ein Kanu aus ${F ? F.name : 'einem Tochterdorf'} bringt ${packText(sh.pack.g)} nach ${isl(sh.to).name}.`, 3400, false); return; }
   if (sh && !sh.own && (sh.immig || sh.leaving)){ if (sh.immig && sh.state === 'moored') openSheet('immig', {ship:sh.id}); else toast(sh.immig ? `Ein Kanu ${sh.immig.from}: Familie ${sh.immig.n} sucht ein Zuhause auf ${isl(sh.to).name}.` : 'Das Kanu fährt weiter, zurück übers Meer.', 3400, false); return; }

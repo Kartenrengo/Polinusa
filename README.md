@@ -822,6 +822,19 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
 - Die letzte Aufgabe „Andere Menschen“ verlangt, ein solches Volk zu finden und ihm eine Gabe zu bringen. Die Chronik kennt
   „Andere Menschen“, „Bananen vom Großen Land“ und „Sternwege vom Nordmeer“.
 - In Spielständen von vorher wohnen sie in einem Feld am Rand, das noch kein Kanu gesehen hat.
+- **Was sie lehren** (seit Version 83). Die Lapita-Kultur ist aus Begegnungen entstanden; das soll das Spiel zeigen. Außer
+  der ersten Gegengabe lehrt jedes Volk dem Clan bei viel Vertrauen (6 Knoten) etwas, das für immer bleibt:
+  **Gartenwissen vom Großen Land** (Felder laugen halb so schnell aus) und **Wetterzeichen vom Nordmeer** (Böen auf See
+  kosten nur halb so viel Proviant). Jede Lehre bringt Ansehen 3. In der Übersicht unter „Insel“ steht „Was andere Völker
+  lehrten“, mit Herkunft und wie weit das Vertrauen schon reicht.
+
+## Raum für Fantasie: der Lichtwal (seit Version 83)
+
+Nicht alles im Spiel ist Geschichte. In manchen Nächten zieht **ein Wal aus weichem Licht** an einem Dorf vorbei, weit
+draußen auf dem offenen Wasser, mit einer Reihe Punkte auf dem Rücken wie auf den Töpfen. Wer ihn antippt, dem bringt er
+Ansehen 2, und einer aus dem Dorf hat ihn in seiner Lebensgeschichte („sieht in der Nacht den Lichtwal“). Der Lichtwal ist
+**erfunden**: eine Gestalt dieses Spiels, keine Überlieferung eines wirklichen Volkes. Heilige Gestalten lebender Kulturen
+(Götter, Ahnen, Helden aus Sagen) nimmt das Spiel bewusst nicht als Spielfiguren.
 
 ## Knöchelwurf
 
@@ -1370,6 +1383,9 @@ Seit Version 77 ist der Rand einfacher: **ein heller Teil für den Tag, ein dunk
 Eine kleine Sonne läuft den hellen Teil entlang; in der Dämmerung wird sie zum Mond, und der Mond läuft den dunklen Teil
 ab. Am Morgen wird der Mond wieder zur Sonne.
 
+**Kanus lenken** (seit Version 83): Ist ein Kanu unterwegs oder in einer Handelskette, zeigt seine Tafel nur Name, Lage und
+„Mehr“, damit das Meer frei zum Antippen bleibt; „Weniger“ klappt sie wieder ein.
+
 **Weniger leerer Platz:** Die Tafel eines Arbeitsplatzes zeigt den Zustand, „Vorrang“ und „Bleiben“ in einer Zeile, darunter
 links „Braucht“ und „Macht“ und rechts daneben die Leute mit − und +. Der Knöchelwurf passt mit flacher Matte und kurzen
 Schritten auf ein Blatt, ohne Scrollen.
@@ -1816,6 +1832,10 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Segel aus Pandanusmatten | aus späteren Berichten; für Lapita angenommen |
 | Neue Dörfer gründen jüngere Linien, die Gründer werden Ahnen | vermutet (aus späteren Überlieferungen erschlossen) |
 | Die Gaben und ihre Zahlen | **Spielregeln** |
+| Gärten in Neuguinea, Bananen, Taro, Zuckerrohr von dort | ja (Kuk-Sumpf, Bergland von Neuguinea, Tausende Jahre vor Lapita) |
+| Lapita-Leute vermischten sich mit den Menschen, die schon da waren | ja, durch alte DNA (Vorfahren aus Neuguinea und dem Bismarck-Archipel in späteren Generationen) |
+| Gartenwissen und Wetterzeichen als Lehre anderer Völker | Spielregel, angelehnt an das Obige |
+| Der Lichtwal | **erfunden**, keine Überlieferung |
 | Kauri-Harz im Treibgut, Talisman der Matriarchin | Kauri-Bäume (Agathis) wachsen in Melanesien und Fidschi, ihr Harz gab es also in der Region; in Fidschi überzog man Töpfe später mit dem Harz des Dakua-Baums. Dass es am Strand antreibt und ein Talisman gegen den Sturm daraus wird, ist **erfunden**, eine Spielidee. Bernstein (Version 67) war ganz erfunden: Aus Lapita-Fundstellen ist keiner bekannt. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
 
 ## Quellen

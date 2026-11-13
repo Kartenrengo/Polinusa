@@ -2401,11 +2401,11 @@ function draw(now){
   drawSea(now); ctx.setTransform(1, 0, 0, 1, 0, 0); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
-  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
+  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawLightWhale(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => fxLive || !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => fxLive || !!lightWhale || !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
 
 /* ======================================================================================================================
    Polish of water and nature: calm, slow motion in the same flat ink style. Everything here is a fine effect: it is

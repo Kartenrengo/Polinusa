@@ -17,15 +17,18 @@ function shipStatus(s){
 /* The canoe sheet: what it carries, loading in a port of ours, and what it can do where it is */
 function shipMarkup(s){
   const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = roomUsed(s), life = s.life || [];
+  // under way the sheet stays small, so the sea is free to tap; "Mehr" opens all of it
+  const mini = sheetData.mini ?? (s.state === 'sail' || s.state === 'sea' || s.route != null);
+  if (mini) return head(s.name, shipStatus(s)) + `<div class="rowx"><span class="sub">Tippe aufs Meer oder eine Insel.</span><span class="chips">${s.route != null ? '<button class="chip" type="button" data-act="unassign">Aus der Kette</button>' : ''}<button class="chip" type="button" data-act="shipmore">Mehr</button></span></div>`;
   let h = head(s.name, shipStatus(s));
   h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind !== 'oc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
-  h += `<p class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</p>`;
+  h += `<div class="rowx"><span class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</span><button class="chip" type="button" data-act="shipless">Weniger</button></div>`;
   if (S.fog && s.route == null) h += `<div class="rowx"><span class="sub">${s.auto ? 'Es fährt an den Rand des Bekannten, kehrt rechtzeitig um, holt im nächsten eigenen Hafen Proviant und fährt wieder los.' : 'Von selbst erkunden: an den Rand des Bekannten und rechtzeitig zurück, mit Proviant aus dem eigenen Lager.'}</span><button class="btn${s.auto ? '' : ' primary'}" type="button" data-act="auto">${s.auto ? 'Anhalten' : 'Erkunden lassen'}</button></div>`;
   if (S.fog) h += provisionNote(s, P);
   // a treasure island: what the crew can gather here
   if (P && P.treasure){ const T = P.treasure; h += `<div class="stat">${icon(T.k)}<span>${GN[T.k]}: ${T.left} bereit</span><span class="sub">${s.auto ? '' : 'Solange das Kanu hier liegt, sammelt die Mannschaft.'}</span></div>`; }
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
-  if (s.full && cargoLoad(s)) h += `<p class="sub">An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt || 'dem Hafen'} voll.</p>`;
+  if (s.full && cargoLoad(s) && s.route == null) h += `<p class="sub">An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt || 'dem Hafen'} voll.</p>`;   // on a chain the status says it
   h += shipDiveMarkup(s);
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', cargoLoad(s) ? giftText(s.cargo) : '', life.length ? andList(life.map(id => LIFE[id].s)) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
@@ -38,7 +41,7 @@ function shipMarkup(s){
     h += `</ul>` + lifeMarkup(s, P, load) + `${s.people ? `<p class="sub">Siedler an Bord. Nimm auch Holz und Nahrung mit, damit sie am neuen Ort gleich bauen und essen können.</p>` : ''}<div class="rowx"><span class="sub">Ladung ${load} von ${S.cap}, Siedler ${s.people} von ${S.people}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
     const here = routes.map((r, i) => [r, i]).filter(([r]) => r.a === P.id || r.b === P.id);
     if (here.length) h += `<div class="rowx"><span class="sub">In eine Handelskette einsetzen:</span><span class="chips">${here.map(([r, i]) => `<button class="chip" type="button" data-act="assign" data-r="${i}">${isl(r.a === P.id ? r.b : r.a).name}</button>`).join('')}</span></div>`;
-  } else if (load || s.people) h += `<p class="sub">${aboard}</p>`;
+  } else if ((load || s.people) && !(s.route != null && s.full)) h += `<p class="sub">${aboard}</p>`;
   if (s.route != null) h += `<div class="rowx"><span></span><button class="btn" type="button" data-act="unassign">Aus der Kette nehmen</button></div>`;
   if (P && !P.settled && !P.clan){ const hl = hutLack(s, P), hut = !Object.keys(hl).length, ok = s.people >= SETTLE.people && mana >= manaNeeded() && hut;
     h += `<div class="rowx"><span class="sub">${s.people < SETTLE.people ? `Für ein Dorf braucht es ${SETTLE.people} Siedler an Bord.` : !hut ? `Für das erste Haus fehlen an Bord ${giftText(hl)}.` : mana >= manaNeeded() ? 'Hier kann ein Dorf entstehen.' : `Es braucht Ansehen ${manaNeeded()}, jetzt ${Math.floor(mana)}.`}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Dorf gründen</button></div>`; }
@@ -175,6 +178,7 @@ function fleetAct(act, btn, quiet = false){
     else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && roomUsed(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }
     else if (act === 'cg-' && P && s.cargo[k] > 0 && (P.stock[k] || 0) < storeCap(P)){ s.cargo[k]--; if (!s.cargo[k]) delete s.cargo[k]; P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + 1); }
     else if (act === 'unload') unloadAll(s);
+    else if (act === 'shipmore' || act === 'shipless'){ sheetData = {...sheetData, mini:act === 'shipless'}; renderSheet(); measure(); return true; }
     else if (act === 'load' || act === 'fold'){ sheetData.load = act === 'load'; renderSheet(); measure(); return true; }
     else if (act === 'assign'){ assignRoute(s, +btn.dataset.r); }
     else if (act === 'unassign') unassign(s);

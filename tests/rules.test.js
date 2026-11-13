@@ -172,6 +172,7 @@ const r = await p.evaluate(()=>{
     want(before === 0 && after === 5 && !carve0, `bowls: before Hawaiki ${before}, after ${after}, carving early ${carve0}`); stats.hawaiki = h0; H.stock.kumete = 0; }
   // tatau: the young who have come of age get their pattern at a feast in the meeting house; it stays with them
   { const H = isl('heimat'); if (!H.buildings.some(b => b.kind === 'halle')) addB(H, 'halle', findSpot(H, 'halle', startSpot(H, KINDS.halle)) || {x:H.center.x, y:H.center.y}, {}, tick);
+    if (!youthsOf(H).length){ const q = H.people.find(isAdult); if (q){ q.b = tick - 17 * YEAR; q.tt = false; } }   // someone just come of age, whatever the dice said
     const T = FEASTS.find(q => q.id === 'tatau'), young = youthsOf(H); Object.assign(H.stock, {nahrung:20, speisen:10, klingen:2}); H.feastAt = 0; const m0 = mana, gain = feastMana(H, T);
     holdFeast(H, T); want(young.length && young.every(p => p.tt) && mana - m0 === gain && gain >= T.mana + T.per, `tatau: ${young.length} young, gain ${mana - m0} of ${gain}`);
     restore(serialize()); const H2 = isl('heimat'); want(young.every(p => H2.people.find(q => q.id === p.id && q.tt)), 'tatau: pattern lost on load');
@@ -401,6 +402,10 @@ const r = await p.evaluate(()=>{
         // the founders become ancestors; fine things from a daughter make the mother glad; every canoe adds standing
         want(T.people.some(p => (p.ev || []).some(e => e[1] === 'gru')), 'founders: nobody of the new village has its founding in the story');
         { const k = GOODS.find(q => !canMakeOn(H, q) && !TREASURE_GOODS.includes(q)), m0 = mana; T.stock[k] = 5; H.stock[k] = 0; H.fernAt = null; packGive(T, H, {[k]:3});
+          // what other peoples teach stays: half the soil lost with the garden lore; the invented light whale can be seen once
+          { const t0 = stats.teach; stats.teach = ['garten', 'wetter']; want(taught('garten') && taught('wetter') && !taught('x'), 'teach: lessons not remembered'); stats.teach = t0; }
+          { const m1 = mana, I0 = isl(active); lightWhale = {x:I0.center.x + 400, y:I0.center.y, hx:1, hy:0, t0:performance.now(), isl:I0.id, seen:false};
+            const q = whalePos(lightWhale, performance.now()); want(hitWhale(q), 'whale: cannot be tapped'); seeWhale(); want(mana === m1 + WHALE.mana && lightWhale.seen && !hitWhale(q), 'whale: seeing it gives no standing or can be seen twice'); lightWhale = null; mana = m1; }
           const ad = H.people.find(isAdult); want(H.fernAt === tick && satOf(H, ad).why.some(w => w.k === 'fern') && mana > m0, `network: ${k} from afar does not gladden the mother or add standing`); mana = m0; H.fernAt = null; } } } }
     // what a storm wrecked is built anew only with wood and fronds from the store
     { const H = isl('heimat'), keepSt = {...H.stock}, h = homesOf(H).find(q => !q.bt); if (h){ H.stock.holz = 0; H.stock.dach = 0;

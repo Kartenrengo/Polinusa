@@ -136,7 +136,7 @@ function lifeEvent(p, what, detail = ''){
 }
 const STORY_TEXT = {
   geb:() => 'wird geboren', kam:d => `kommt mit dem Kanu ${d}`, kind:d => `bekommt ein Kind: ${d}`, arb:d => `fängt bei ${d} an zu arbeiten`, tat:() => 'bekommt das Tatau',
-  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', gru:d => `gründet das Dorf ${d} und wird ein Ahn des Dorfes`, alt:() => 'wird alt und sitzt jetzt vor dem Haus'
+  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', gru:d => `gründet das Dorf ${d} und wird ein Ahn des Dorfes`, wal:() => 'sieht in der Nacht den Lichtwal', alt:() => 'wird alt und sitzt jetzt vor dem Haus'
 };
 const storyOf = p => (p.ev || []).filter(e => STORY_TEXT[e[1]]).map(e => ({year:yearOf(e[0]) + 1, text:STORY_TEXT[e[1]](e[2])}));
 /* once in a while: who has started to work, who has grown old */
@@ -281,4 +281,65 @@ function giftsMarkup(){
   return `<p class="sec">Gaben des Clans · ${held.size} von ${Object.keys(GIFTS).length}</p><ul class="list gifts">` + Object.entries(GIFTS).map(([g, G]) => {
     const k = known(g), st = held.has(g) ? 'ok' : k.length ? 'low' : '';
     return `<li class="${held.has(g) ? 'okk' : ''}">${icon(G.ic)}<span class="nm">${G.n}<small>${G.does}</small></span>${held.has(g) ? chipS('ok', 'da') : k.length ? chipS('low', k[0].name) : chipS('', '?')}</li>`; }).join('') + '</ul>';
+}
+/* ---------- what the other peoples teach: their rightful influence. Lapita grew out of meetings: the gardens of New Guinea,
+   the obsidian of New Britain, the people of the islands already there. In the game the first gift of each people brings
+   what only they have (bananas, star paths); more trust (knots) brings a lesson that stays with the clan for good. */
+const TEACH = [
+  {id:'garten', c:'alte', knots:6, n:'Gartenwissen vom Großen Land', does:'Felder laugen halb so schnell aus: Mulch und Brache, wie in den Bergen des Großen Landes.'},
+  {id:'wetter', c:'nord', knots:6, n:'Wetterzeichen vom Nordmeer', does:'Böen auf See kosten nur halb so viel Proviant: Sie lesen Wolken und Dünung.'}
+];
+const cultureTrust = id => Math.max(0, ...routes.filter(r => [r.a, r.b].some(x => { const T = isl(x); return T && T.clan && T.clan.culture && T.clan.id === id; })).map(r => r.knots || 0));
+const taught = id => (stats.teach || []).includes(id);
+function teachTick(){
+  for (const L of TEACH) if (!taught(L.id) && cultureTrust(L.c) >= L.knots){
+    stats.teach = [...(stats.teach || []), L.id]; mana += 3;
+    if (!awayQuiet){ const m = `${CULTURES[L.c].name} lehren euch: ${L.n}. ${L.does} Ansehen +3.`; note(m); toast(m, 5200); }
+  }
+}
+/* the overview: what the other peoples gave the clan, with where it came from */
+function teachMarkup(){
+  const met = id => islands.some(T => T.discovered && T.clan && T.clan.culture && T.clan.id === id);
+  const rows = [
+    ['banane', 'Bananen vom Großen Land', 'Der Bananenhain: Nahrung das ganze Jahr.', lifeKnown('banane'), met('alte'), 'erste Gegengabe'],
+    ['passat', 'Sternwege vom Nordmeer', 'Das Wissen der Navigatoren reicht eine Stufe weiter.', !!stats.nordLehre, met('nord'), 'erste Gegengabe'],
+    ...TEACH.map(L => [L.c === 'alte' ? 'soil' : 'sturm', L.n, L.does, taught(L.id), met(L.c), `${Math.min(cultureTrust(L.c), L.knots)} von ${L.knots} Knoten`])];
+  if (!rows.some(r => r[4])) return '';
+  return `<p class="sec">Was andere Völker lehrten</p><ul class="list gifts">` + rows.filter(r => r[4]).map(([ic, n, d, ok, , how]) =>
+    `<li class="${ok ? 'okk' : ''}">${icon(ic)}<span class="nm">${n}<small>${d}</small></span>${ok ? chipS('ok', 'da') : chipS('low', how)}</li>`).join('') + '</ul>';
+}
+
+/* ---------- the light whale. Not from any people's tradition: an invented creature of this game, to leave room for
+   wonder. On some nights a whale of soft light swims past a village on the open water; who taps it, tells of it. */
+let lightWhale = null;
+const WHALE = {chance:1 / 420, life:45000, mana:2};
+function whaleTick(){
+  if (lightWhale || awayQuiet || !opts.night || nightLevel() < .3 || Math.random() > WHALE.chance) return;
+  const I = isl(active); if (!I || !I.settled) return;
+  const R = Math.max(I.box.x1 - I.box.x0, I.box.y1 - I.box.y0) / 2 + 160, a = Math.random() * TAU, dir = Math.random() < .5 ? 1 : -1;
+  const x = I.center.x + Math.cos(a) * R, y = I.center.y + Math.sin(a) * R;
+  if (islands.some(J => J.discovered && Math.hypot(J.center.x - x, J.center.y - y) < 120)) return;
+  lightWhale = {x, y, hx:-Math.sin(a) * dir, hy:Math.cos(a) * dir, t0:performance.now(), isl:I.id, seen:false}; requestDraw();
+}
+const whalePos = (W, now) => { const s = (now - W.t0) / 1000 * 9; return {x:W.x + W.hx * s, y:W.y + W.hy * s}; };
+function drawLightWhale(now){
+  const W = lightWhale; if (!W) return;
+  const age = now - W.t0; if (age > WHALE.life){ lightWhale = null; return; }
+  const f = Math.min(1, age / 4000, (WHALE.life - age) / 4000), q = whalePos(W, now), c = ctx, sw = reduced ? 0 : Math.sin(now / 900);
+  camXform(c); c.save(); c.translate(q.x, q.y); c.rotate(Math.atan2(W.hy, W.hx));
+  const g = c.createRadialGradient(0, 0, 2, 0, 0, 46); g.addColorStop(0, `rgba(170,240,230,${.45 * f})`); g.addColorStop(1, 'rgba(170,240,230,0)');
+  c.fillStyle = g; c.beginPath(); c.ellipse(0, 0, 50, 24, 0, 0, TAU); c.fill();
+  c.globalAlpha = .85 * f; c.fillStyle = '#BFF2EA'; c.strokeStyle = '#2B1D14'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(20, 0); c.quadraticCurveTo(14, -8, -4, -7); c.quadraticCurveTo(-16, -5, -22, sw * 2); c.quadraticCurveTo(-16, 5, -4, 7); c.quadraticCurveTo(14, 8, 20, 0); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(-21, sw * 2); c.lineTo(-30, -6 + sw * 3); c.lineTo(-27, sw * 2); c.lineTo(-30, 6 + sw * 3); c.closePath(); c.fill(); c.stroke();   // the flukes
+  c.fillStyle = '#2B1D14'; for (let i = 0; i < 6; i++){ c.beginPath(); c.arc(10 - i * 5, (i % 2 ? -2 : 2), .8, 0, TAU); c.fill(); }   // a row of dots, as on the pots
+  if (!reduced && Math.sin(now / 1300) > .93){ c.globalAlpha = f * .7; c.strokeStyle = '#E6FFFA'; c.beginPath(); c.moveTo(8, -7); c.lineTo(6, -16); c.moveTo(8, -7); c.lineTo(11, -15); c.stroke(); }   // it blows
+  c.restore(); c.globalAlpha = 1;
+}
+function hitWhale(p){ const W = lightWhale; if (!W || W.seen) return false; const q = whalePos(W, performance.now()); return Math.hypot(p.x - q.x, p.y - q.y) < Math.max(26, 30 / cam.z); }
+function seeWhale(){
+  const W = lightWhale; if (!W || W.seen) return; W.seen = true; mana += WHALE.mana; stats.wal = (stats.wal || 0) + 1;
+  const I = isl(W.isl), p = I && (I.people || []).filter(isAdult)[Math.floor(Math.random() * Math.max(1, (I.people || []).filter(isAdult).length))];
+  if (p) lifeEvent(p, 'wal'); sfx('shells');
+  toast(`Der Lichtwal zieht an ${I ? I.name : 'der Insel'} vorbei.${p ? ` ${p.n} sah ihn zuerst und erzählt es den Kindern.` : ''} Ansehen +${WHALE.mana}.`, 4600); note('Der Lichtwal kam in der Nacht vorbei.');
 }

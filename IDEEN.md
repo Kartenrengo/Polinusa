@@ -82,6 +82,14 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 5. **Das Netz als Ziel.** Teils erledigt in Version 82 (jedes Kanu zwischen den Dörfern: Ansehen +0,5). Offen:  Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
    Erst ab Hawaiki: ein oberster Häuptling über mehrere Inseln.
 
+## Offen aus der Runde „Kulturen und Lichtwal“ (Version 83)
+
+- **Mehr Lehren:** Bisher je Volk eine Lehre ab 6 Knoten. Denkbar: Obsidian-Tausch mit dem Großen Land, Heiraten mit den
+  Alten als neue Linien, die Punktkreise vom Nordmeer in den eigenen Töpfen.
+- **Lichtwal:** zeigt sich nur dem aktiven Dorf und nur nachts. Mehr erfundene Wunder (ohne echte heilige Gestalten) sind
+  möglich, etwa ein leuchtender Riffgarten.
+- **Kanu-Tafel:** Ein Doppelkanu im Hafen zeigt weiter die volle Tafel zum Beladen.
+
 ## Offen aus der Runde „Gaben und Netz“ (Version 82)
 
 - **Ein anderer Clan besetzt eine Insel:** noch nicht gebaut. Bräuchte eine Insel, die vom freien Land zum Clan-Dorf wird.
