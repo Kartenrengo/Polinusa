@@ -260,12 +260,37 @@ function startMove(b){
   const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:b.v, moveId:b.id};
   showPlaceBar(); invalidate(); ghostRender(); if (lod === 'far') flyTo(b.x, b.y, 1.6);
 }
+/* One compact row for the place bar: what a site takes (green in store, red missing) -> what it makes, and the crew */
+const miniTile = (cls, k, ic, n) => `<span class="mt ${cls}" role="img" aria-label="${GN[k]}${n ? ' ' + n : ''}">${icon(ic)}<small>${tileName(k)}</small></span>`;
+function miniFlow(I, K){
+  const outs = K.picks ? Object.keys(K.picks).slice(0, 3) : K.prod ? [K.prod] : [];
+  if (!outs.length) return '';
+  const ins = Object.entries(K.use || {}).map(([k, v]) => miniTile(groupHave(I, k) >= v ? 'ok' : 'out', k, GROUPS[k] ? groupNext(I, k) : k, v));
+  if (K.boost) ins.push(miniTile((I.stock[K.boost.k] || 0) > 0 ? 'ok tool' : 'tool', K.boost.k, K.boost.k, ''));
+  const crew = K.crew ? `<span class="mt crew" role="img" aria-label="${K.crew} Arbeiter">${icon('pop')}<small>${K.crew}</small></span>` : '';
+  return `${ins.length ? `<span class="mlbl">Braucht</span>${ins.join('')}<span class="marr">→</span>` : ''}<span class="mlbl">Macht</span>${outs.map(k => miniTile('made', k, k, '')).join('')}${crew}`;
+}
+/* The overview "Werk": one row per kind of production site on the island */
+function werkMarkup(I){
+  const ws = I.buildings.filter(b => KINDS[b.kind].prod && !b.at && !KINDS[b.kind].fixed && !HOME_KINDS.has(b.kind));
+  if (!ws.length) return `<p class="sub">Noch keine Werkstatt auf ${I.name}.</p>`;
+  const groups = []; for (const b of ws){ const g = groups.find(q => q.k === b.kind); if (g) g.l.push(b); else groups.push({k:b.kind, l:[b]}); }
+  groups.sort((a, c) => a.l.every(b => b.bt) - c.l.every(b => b.bt));
+  return `<ul class="list werk">${groups.map(g => { const K = KINDS[g.k], done = g.l.filter(b => !b.bt), b0 = done[0] || g.l[0];
+    let w = null, run = 0; for (const b of done){ const q = b.idle || workState(I, b); if (q) w = w || q; else run++; }
+    const st = !done.length ? ['low', 'wird gebaut'] : w && !run ? ['out', shortWhy(w)] : w ? ['low', `${run} von ${done.length} laufen`] : ['ok', 'läuft'];
+    const outs = (K.picks ? [prodOf(b0)] : [K.prod]).filter(Boolean).map(k => miniTile('made', k, k, ''));
+    const ins = Object.entries(K.use || {}).map(([k, v]) => miniTile(groupHave(I, k) >= v ? 'ok' : 'out', k, GROUPS[k] ? groupNext(I, k) : k, v));
+    return `<li class="wrow"><button class="wgo" type="button" data-act="goto" data-b="${b0.id}" aria-label="${K.n}: ${st[1]}. Hingehen"><span class="wnm">${bIcon(g.k)}<b>${g.l.length > 1 ? g.l.length + '× ' : ''}${K.s}</b></span><span class="wfl">${ins.join('')}<span class="mgrp">${ins.length ? '<span class="marr">→</span>' : ''}${outs.join('')}</span></span><span class="state ${st[0]}">${st[1]}</span></button></li>`; }).join('')}</ul>`;
+}
 function showPlaceBar(){
   const K = KINDS[placing.kind], I = isl(placing.island);
   $('placeName').textContent = (mode === 'move' ? 'Versetzen: ' : '') + K.n;
   const secs = Math.round(K.bt * TICK / 1000), c = costOf(placing.kind, I);
   const facts = [Object.keys(c).length ? `Kostet ${costText(c)}` : '', K.plant ? `wächst ${secs} s` : `${secs} s Bauzeit`, K.crew ? `${K.crew} Arbeiter` : ''].filter(Boolean).join(', ');
-  $('placeInfo').textContent = mode === 'move' ? 'Ziehen oder woanders hintippen.' : `${facts[0].toUpperCase() + facts.slice(1)}. ${K.info}`;
+  const pf = mode === 'move' ? '' : miniFlow(I, K);
+  $('placeFlow').innerHTML = pf; $('placeFlow').hidden = !pf;
+  $('placeInfo').textContent = mode === 'move' ? 'Ziehen oder woanders hintippen.' : pf ? `${facts[0].toUpperCase() + facts.slice(1)}.` : `${facts[0].toUpperCase() + facts.slice(1)}. ${K.info}`;
   $('placeIc').setAttribute('viewBox', K.vb); $('placeIc').innerHTML = iconMarkup(placing.kind);
   $('placeOk').textContent = mode === 'move' ? 'Hier hin' : 'Bauen'; $('placeOk').disabled = false;
   $('bottom').hidden = true; $('place').hidden = false; measure();
@@ -506,9 +531,10 @@ function houseMarkup(I, b, withHead = true){
 function centerMarkup(I, b){
   const f = famOfHome(I, b), tab = (sheetData && sheetData.tab) || 'dorf';
   let h = head('Dorfzentrum', `${I.name}${f ? ` · hier wohnt ${famName(f)}` : ''}`);
-  h += `<div class="tabs" role="tablist">${[['dorf', 'Dorf'], ['lager', 'Lager'], ['staerke', 'Stärke'], ['haus', 'Familie']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="ctab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
+  h += `<div class="tabs" role="tablist">${[['dorf', 'Dorf'], ['lager', 'Lager'], ['staerke', 'Stärke'], ['werk', 'Werk'], ['haus', 'Familie']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="ctab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
   if (tab === 'haus') return h + houseMarkup(I, b, false);
   if (tab === 'staerke') return h + strengthMarkup(I);
+  if (tab === 'werk') return h + werkMarkup(I);
   if (tab === 'lager') return h + storeTiles(I) + `<div class="rowx"><span class="sub">Platz für ${storeCap(I)} je Ware. Antippen zeigt, woher sie kommt.</span></div>`;
   return h + villageMarkup(I, b);
 }

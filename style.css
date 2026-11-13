@@ -895,3 +895,28 @@ canvas.kor{width:auto;height:min(168px,24vh);max-width:100%;margin:4px auto}
 #newsBtn.nod{animation:nod .6s ease-out .35s both}
 @keyframes nod{0%{transform:scale(1)}35%{transform:scale(1.28) rotate(-10deg)}70%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#toast.open,#newsBtn.nod{animation:none}}
+
+/* place bar: compact "Braucht -> Macht" row */
+.place-inner{flex-wrap:wrap}
+.pflow{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-width:0}
+.pflow[hidden]{display:none}
+.mlbl{font:800 9px/1 var(--font-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.marr{font:800 14px/1 var(--font-ui);color:var(--muted);flex:none}
+.mt{display:inline-flex;align-items:center;gap:2px;flex:none;padding:2px 4px;border-radius:8px;background:#E4EED6;box-shadow:inset 0 0 0 1.5px var(--ok);color:var(--ink)}
+.mt .ic{width:15px;height:15px}
+.mt small{font:700 10.5px/1 var(--font-ui);color:var(--ink)}
+.mt.out{background:#F6E3C4;box-shadow:inset 0 0 0 1.5px var(--ochre)}
+.mt.made,.mt.crew{background:var(--cloth-hi);box-shadow:inset 0 0 0 1.5px rgba(62,36,22,.4)}
+.mt.tool{opacity:.8}
+/* overview "Werk" */
+.list.werk{margin:4px 0 0;padding:0}
+.wrow{list-style:none}
+.wgo{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;align-items:center;width:100%;padding:6px 2px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.wnm{display:flex;align-items:center;gap:6px;min-width:0}
+.wnm .bi{width:26px;height:26px;flex:none}
+.wnm b{font:800 14px/1.1 var(--font-ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wfl{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-width:0}
+.wgo .state{grid-column:2;grid-row:1;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.tab{padding:3px 6px;letter-spacing:.04em}}
+.mgrp{display:inline-flex;align-items:center;gap:3px;flex:none}
+@media (max-width:340px){.tab{padding:3px 3px;letter-spacing:0;font-size:11px}.tabs{gap:2px}}
