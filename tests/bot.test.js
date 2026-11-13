@@ -73,10 +73,10 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
       if (sh && many === 1 && sh.state !== 'sail' && !atollReady() && !H.buildings.some(b => b.kind === 'steg')){ const r = tryBuild('steg'); tried['steg/' + r] = (tried['steg/' + r] || 0) + 1; }   // the atoll area opens with a Kanusteg and its dugout
       if (sh && many === 1 && sh.state !== 'sail' && atollReady()){
         if (sh.port === H.id && sh.people === 0 && H.pop >= SETTLE.keep + SETTLE.people + 2){
-          sheetKind = 'ship'; sheetData = {id:sh.id}; for (let i = 0; i < SETTLE.people; i++) fleetAct('pp+', {dataset:{}}, true); for (const [k, n] of [['nahrung', 8], ['wasser', 6], ['holz', 4], ['dach', 4]]) for (let i = 0; i < n; i++) fleetAct('cg+', {dataset:{k}}, true); sheetKind = null; sheetData = null;
+          sheetKind = 'ship'; sheetData = {id:sh.id}; for (let i = 0; i < SETTLE.people; i++) fleetAct('pp+', {dataset:{}}, true); for (const [k, n] of [['holz', 4], ['dach', 5], ['nahrung', 2], ['wasser', 1]]) for (let i = 0; i < n; i++) fleetAct('cg+', {dataset:{k}}, true); sheetKind = null; sheetData = null;
           const T = islands.filter(J => !J.settled && !J.clan && J.center.x < FAR_X && (J.id === 'tochter' || J.type === 'atoll')).sort((a, c) => (c.id === 'tochter') - (a.id === 'tochter') || 0).sort((a, c) => Math.hypot(a.center.x - H.center.x, a.center.y - H.center.y) - Math.hypot(c.center.x - H.center.x, c.center.y - H.center.y))[0];
           if (T){ discover(T); exploreAt(T.center.x, T.center.y, 400); if (!sailTo(sh, {isl:T.id}, true)) sh.people = 0; } }
-        else if (sh.port && !isl(sh.port).settled && sh.people >= SETTLE.people){ settleFrom(sh); mark('Dorf auf dem Atoll gegründet', minute); }
+        else if (sh.port && !isl(sh.port).settled && sh.people >= SETTLE.people){ const T = isl(sh.port); settleFrom(sh); if (T.settled) mark('Dorf auf dem Atoll gegründet', minute); else tried['settle/' + Object.keys(hutLack(sh, T)).join('+')] = 1; }
       }
       if (A.trade){ const J = isl(A.trade.J), ok = startTrade(H, A.trade.k, J); tried['trade/' + (ok ? 'ok' : 'fail ' + JSON.stringify(ships.filter(q => q.own).map(q => [q.state, q.port, q.route, !!q.diving, q.dest && q.dest.isl])))] = 1; if (ok) mark('Handelskette eingerichtet', minute); }
       if (A.t === 'Eine Stärke für das Dorf') setStrength(H, ['pflanzer', 'fischer', 'toepfer'][(H.center.x | 0) % 3]);

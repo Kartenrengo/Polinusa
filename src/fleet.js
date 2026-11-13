@@ -335,10 +335,13 @@ function giveGift(s){
   const T = isl(s.port), ri = routeIndex(s.last, T.id); if (!T.clan || ri < 0 || !cargoLoad(s)) return;
   receiveGift(T, s.cargo, s.last, routes[ri]); s.cargo = {}; save();
 }
+/* the first house of a new village is built from what the canoe brought: what is missing of it on board */
+const hutLack = (s, T) => { const m = {}; for (const [k, v] of Object.entries(costOf('haus', T))) if ((s.cargo[k] || 0) < v) m[k] = v - (s.cargo[k] || 0); return m; };
 function settleFrom(s){
   const T = isl(s.port);
   if (!T || T.settled || T.clan) return;
   if (s.people < SETTLE.people){ toast(`Es braucht ${SETTLE.people} Siedler an Bord.`, 2600, false); return; }
+  { const m = hutLack(s, T); if (Object.keys(m).length){ toast(`Für das erste Haus fehlen an Bord ${giftText(m)}.`, 3600, false); return; } }
   if (mana < manaNeeded()){ toast(`Für eine weitere Siedlung braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200, false); return; }
   const from = isl(s.last);
   settle(T, from, {pop:s.people, stock:s.cargo, folk:s.folk, life:s.life}); s.people = 0; s.folk = []; s.cargo = {}; s.life = []; s.last = T.id;

@@ -18,7 +18,8 @@ function settle(T, S, o){
       // the breadfruit shoots from the canoe are set out first and grow up by themselves
       for (let i = 0; i < 3; i++){ const a = r() * TAU, p = {x:T.center.x + Math.cos(a) * 64, y:T.center.y + Math.sin(a) * 46}; if (!check('baum', T, p.x, p.y)) addB(T, 'baum', p, {scale:fx(.9 + r() * .15)}, tick).bt = KINDS.baum.bt; } }
   }
-  const hs = findSpot(T, 'haus', homeSpot(T)); if (hs){ addB(T, 'haus', hs, variant('haus'), tick); placePlaza(T, hs); }
+  // the first house is built from the wood and fronds the canoe brought (settleFrom checks there is enough)
+  const hs = findSpot(T, 'haus', homeSpot(T)); if (hs){ addB(T, 'haus', hs, variant('haus'), tick); pay(T, costOf('haus', T)); placePlaza(T, hs); }
   if (S && routeIndex(S.id, T.id) < 0) routes.push({a:S.id, b:T.id, knots:1, lastGift:tick, plan:{a:{}, b:{}}});
   renderAll(); setActive(T.id); renderBuildBar(); flyTo(T.center.x, T.center.y, 1.3); save(); checkQuest();
   toast(`Auf ${T.name} steht das erste Haus.${S ? ` Eine Schnur führt nach ${S.name}.` : ''} ${fresh.length ? `Mitgebracht: ${andList(fresh.map(id => LIFE[id].n))}.` : 'Noch ohne Setzlinge: Fischer, Kokos und Wild nähren die Leute.'}${(T.stock.wasser || 0) < 4 ? ' Zuerst Wasser: ' + (T.atoll ? 'ein Brunnen oder grüne Nüsse vom Erntehaus.' : T.river ? 'eine Quelle oder grüne Nüsse vom Erntehaus.' : 'grüne Nüsse vom Erntehaus.') : ''}`, 5200);

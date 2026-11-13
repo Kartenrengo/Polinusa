@@ -351,6 +351,11 @@ const r = await p.evaluate(()=>{
       want(!b || sp < sf, 'meal: the hungry do not work slower');
       want(NEEDS.find(N => N.k === 'essen').rate === 1 / 6 && dailyPace('fisch') === DAILY.food && dailyPace('holz') === 1, 'meal: production not at the pace of days');
       H.stock = keepSt; H.hunger = keepH; tick = t0; for (const p of H.people) p.meal = 0; H._mf = null; H.meal = null; H._fore = null; }
+    // a new village builds its first house from what the canoe brought: without wood and fronds on board, no village
+    { const T = islands.find(J => !J.settled && !J.clan), H = isl('heimat'); if (T){ const s = makeShip('oc', H), m0 = mana; s.port = T.id; s.people = SETTLE.people; s.cargo = {}; mana = 999;
+      settleFrom(s); const refused = !T.settled; s.cargo = {...costOf('haus', T)}; const lack = Object.keys(hutLack(s, T)).length;
+      mana = m0; ships.splice(ships.indexOf(s), 1);
+      want(refused && lack === 0, 'settle: a village is founded without wood for its first house'); } }
     const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
     want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}
