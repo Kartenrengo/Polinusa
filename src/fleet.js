@@ -285,6 +285,7 @@ function arriveShip(s){
   const d = s.dest; s.path = []; s.dest = null;
   if (s.founder){ s.state = 'sea'; if (landing && d && d.isl) landHome(isl(d.isl), false); return; }   // the village begins where the clan sets its meeting house   // the voyaging canoe lands, and the village begins
   if (!s.own && s.leaving){ ships.splice(ships.indexOf(s), 1); requestDraw(); return; }   // a canoe that went on is out of sight
+  if (!s.own && s.pack){ packArrive(s); return; }   // a daughter village sends what it has to spare
   if (!s.own && s.immig){ immigArrive(s); return; }   // a family from far away asks to stay
   if (!s.own){
     // a clan canoe hands over its return gift and goes home again out of sight

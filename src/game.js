@@ -1534,9 +1534,10 @@ function econ(){
     growTrees(I); stepWear(I); wildTick(I); I.reefLife = Math.min(1, (I.reefLife ?? 1) + .0012 * (I.rahui ? 3 : 1));
     // use up what people need; fractions carry over so small villages use little. Food and water are eaten only at
     // the morning meal (mealTick); the fire, the pots, the mats and the rest are used all day.
-    if ((tick + 30) % DAY_TICKS === 0) mealTick(I);
+    if ((tick + 30) % DAY_TICKS === 0){ mealTick(I); packTick(I); }
     if ((tick + 30) % DAY_TICKS === DUSK_AT) fireTick(I);
     if (tick % 15 === 0) satTick(I);
+    eldersTick(I);   // a daughter village led by its elders
     I.owe = I.owe || {};
     for (const N of NEEDS){
       if (!needActive(I, N) || MEAL_NEEDS.has(N.k)) continue;
@@ -1676,6 +1677,7 @@ function onTap(p){
   // a bubble over a house or a workplace: what it lacks, and where that comes from
   { const q = hitBubble(p); if (q){ q.go(); return; } }
   const sh = hitShip(p);
+  if (sh && !sh.own && sh.pack){ const F = isl(sh.pack.from); toast(`Ein Kanu aus ${F ? F.name : 'einem Tochterdorf'} bringt ${packText(sh.pack.g)} nach ${isl(sh.to).name}.`, 3400, false); return; }
   if (sh && !sh.own && (sh.immig || sh.leaving)){ if (sh.immig && sh.state === 'moored') openSheet('immig', {ship:sh.id}); else toast(sh.immig ? `Ein Kanu ${sh.immig.from}: Familie ${sh.immig.n} sucht ein Zuhause auf ${isl(sh.to).name}.` : 'Das Kanu fährt weiter, zurück übers Meer.', 3400, false); return; }
   if (sh && !sh.own){ const C = isl(sh.clan).clan; toast(`Kanu ${clanVom(C)}. An Bord ${sh.guest ? '4 Gäste für das Fest' : '2 Boten'} mit ${giftText(sh.cargo) || 'leeren Händen'}. Es fährt nach ${isl(sh.to).name}.`, 4200, false); return; }
   if (sh){ if (sh === selShip){ closeSheet(); return; } closeSheet(); selectShip(sh); return; }
@@ -1887,6 +1889,7 @@ function govern(dt){
 const AWAY_MAX = 8 * 3600 * 1000;
 function awayMinute(I, R){
   roofTick(I, 30); stormTick(I); gatherTick(I, 30); nutTick(I, 30); payRebuilds(I);
+  eldersTick(I, true);   // the elders of a daughter village go on leading it
   const sf = staff(I), st = I.stock, cap = storeCap(I);
   // building sites and canoes: the builders work as if they were there
   for (const b of I.buildings){
@@ -1949,7 +1952,7 @@ function catchUp(ms){
   awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[], mot:[], fade:[]};
   try {
     for (let i = 1; i <= n; i++){
-      tick++; if ((tick + 30) % DAY_TICKS === 0) for (const I of islands) if (I.settled) mealTick(I);
+      tick++; if ((tick + 30) % DAY_TICKS === 0) for (const I of islands) if (I.settled){ mealTick(I); packTick(I); }
       if ((tick + 30) % DAY_TICKS === DUSK_AT) for (const I of islands) if (I.settled) fireTick(I);
       if (ships.length){ stepShips(performance.now(), TICK); driftTouch(); } driftTick();
       feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();

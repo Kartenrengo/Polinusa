@@ -69,7 +69,7 @@ Weiter fahren ist ein Ziel, kein Zwang: Das Netz endet bei den Inseln des Morgen
 
 Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 
-1. **Tochterdörfer laufen allein.** Der Rat führt sie; jedes schickt von selbst ein Paket an die Mutter (seine Gabe,
+1. ~~**Tochterdörfer laufen allein.**~~ **erledigt in Version 79** (Rat führt, Kanus mit Gaben und Starthilfe). Der Rat führt sie; jedes schickt von selbst ein Paket an die Mutter (seine Gabe,
    Essen, Holz). Erst das macht mehrere Dörfer angenehm statt lästig.
 2. **Jede Insel hat eine Gabe.** Jede Insel außer der Heimat genau eine, nah an der Heimat mindestens drei verschiedene;
    jede mit etwas Sichtbarem: Pandanus-Segel (Kanus schneller), Obsidian (Tatau), Armringe (Brautgabe), Rote Erde
@@ -81,6 +81,15 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
    Schwindet der Wald, bringen Kanus Brennholz fürs Nachtfeuer.
 5. **Das Netz als Ziel.** Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
    Erst ab Hawaiki: ein oberster Häuptling über mehrere Inseln.
+
+## Offen aus der Runde „Tochterdörfer führen sich selbst“ (Version 79)
+
+- **Der Rat ist vorsichtig:** eine Baustelle zugleich, keine doppelten stillen Plätze. Ob Tochterdörfer zu langsam oder zu
+  schnell wachsen, zeigt das Spielen (im Test: 3 auf 14 Menschen in 40 Minuten). Stellschrauben `ELDERS`, `PACK`, `HELP`
+  in `kin.js`.
+- **Kanus der Pakete** gehen beim Speichern unterwegs verloren; die Waren nicht, sie wandern erst bei der Ankunft.
+- **Die Mutter selbst** kann der Rat noch nicht führen; vielleicht später als Wahl.
+- Der Bot zählt nur die Mutter; Tochterdörfer sollte er mitzählen.
 
 ## Offen aus der Runde „Nachtfeuer und Zufriedenheit“ (Version 77)
 

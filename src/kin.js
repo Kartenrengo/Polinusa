@@ -146,3 +146,102 @@ function storyTick(I){
     if (stageOf(p) === 'old' && (p.ev || []).length && !p.ev.some(e => e[1] === 'alt')) lifeEvent(p, 'alt');
   }
 }
+/* ---------- daughter villages run themselves. Every village but the first is led by its elders (I.rat, on by default;
+   the overview can hand it back): once a minute they do what their own advice says, as a player would: build one thing
+   at a time, tie the roofs before a storm, take in families, give houses a craft, and let houses rise by themselves.
+   And at every dawn a daughter sends a small canoe to the mother village with what it has to spare (packTick). */
+const ELDERS = {every:30}, PACK = {max:8, from:.6, keep:.45, mother:.85};
+const SPEC_GOODS = new Set(Object.keys(SPEC_OF_KIND).map(q => KINDS[q].prod).filter(Boolean));   // what only special ground makes
+const eldersOn = I => !!I && I.settled && !I.clan && (I.rat ?? I.id !== 'heimat');
+function eldersBuild(I, kind){
+  const K = KINDS[kind]; if (!K || !unlocked(kind) || K.fixed || !K.on.includes(I.type)) return false;
+  if (K.craft){ const h = homesOf(I).find(q => famOfHome(I, q) && !craftOf(I, q) && !craftWhy(I, q, kind)); if (!h) return false; setCraft(I, h, kind); return true; }
+  if (I.buildings.some(b => b.bt && !KINDS[b.kind].plant)) return false;   // one site at a time, like a careful player
+  if (K.max && I.buildings.filter(b => b.kind === kind).length >= K.max) return false;
+  if (!hasLife(I, kind) || (K.spring && !I.river) || (SPEC_OF_KIND[kind] && specOf(I) !== SPEC_OF_KIND[kind]) || (K.dep && !depsOf(I, K.dep).length)) return false;
+  // one of the kind already stands still: a second would too
+  if (!HOME_KINDS.has(kind) && I.buildings.some(b => b.kind === kind && (b.bt || (b.idle && b.idle.why !== 'full')))) return false;
+  // a workplace nobody is free for would only stand empty
+  if (K.crew && !HOME_KINDS.has(kind) && !staffOf(I).free && placesOf(I).some(b => b.idle && b.idle.why === 'crew')) return false;
+  const c = costOf(kind, I); if (!canPay(I, c)) return false;
+  const p = findSpot(I, kind, startSpot(I, K)); if (!p) return false;
+  pay(I, c); const b = addB(I, kind, p, variant(kind), tick); if (K.bt) b.bt = K.bt; clearStumps(I, b); I.staff = null;
+  (I.ratLog = I.ratLog || []).unshift({t:tick, k:kind}); I.ratLog.length = Math.min(I.ratLog.length, 4);
+  if (I.id === active && !awayQuiet){ invalidate(); syncWalkers(); note(`Der Rat von ${I.name} lässt bauen: ${K.n}.`); }
+  return true;
+}
+function eldersTick(I, force = false){
+  if (!eldersOn(I) || (!force && tick % ELDERS.every !== 7)) return;
+  I.autoUp = true; if (I.handWork) I.handWork = false;
+  if (!I.ratSaid && !awayQuiet){ I.ratSaid = true; note(`Der Rat von ${I.name} führt das junge Dorf. Unter Übersicht, „Insel“, kannst du es selbst führen.`); }
+  const A = adviceOf(I) || {};
+  if (A.tie){ tieRoofs(I); return; }
+  if (A.immig){ const s = ships.find(q => q.id === A.immig); if (s && s.immig) immigAnswer(s, true, true); return; }
+  if (A.rain && !rainState(I)){ rainDance(I); return; }   // a dance it cannot hold does not stop the rest
+  // a young village first needs its harvest house, then water and food; only then what the advice says
+  { const has = k => I.buildings.some(b => b.kind === k), F = mealFore(I);
+    if (!has('ernte')){ eldersBuild(I, 'ernte'); return; }
+    if (F.water < F.n + 2 && !I.river && I.buildings.filter(b => b.kind === 'ernte').length < 2 && eldersBuild(I, 'ernte')) return;
+    if (F.food < F.n + 2 && !has(foodBuild(I)) && eldersBuild(I, foodBuild(I))) return; }
+  if (A.build && (A.urgent || I.pop >= 8) && eldersBuild(I, A.build)) return;
+  // nothing urgent: room for one more family when the meal reaches everyone
+  if (!roofless(I) && surplus(I, needsOf(I).list) && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)) && homesOf(I).every(b => famOfHome(I, b))) eldersBuild(I, 'haus');
+}
+/* what a daughter can spare: goods it has plenty of, the ones the mother lacks first; never food or water it will need
+   itself tomorrow morning, never fuel for its own night fires */
+function packOf(I, M){
+  const cap = storeCap(I), mcap = storeCap(M), F = mealFore(I), keepFood = F.food < F.n + 2 * MEAL_SPARE;
+  const out = [], room = k => Math.floor(mcap * PACK.mother) - (M.stock[k] || 0);
+  for (const k of GOODS){
+    if (k === 'wasser' || TREASURE_GOODS.includes(k) || (keepFood && FOODS.includes(k)) || (GROUPS.brenn.includes(k) && fireShort(I))) continue;
+    const have = I.stock[k] || 0; if (have < cap * PACK.from) continue;
+    const n = Math.min(have - Math.ceil(cap * PACK.keep), room(k)); if (n < 1) continue;
+    const lack = (M.stock[k] || 0) < mcap * .3 ? 2 : 0, fine = SPEC_GOODS.has(k) ? 1 : 0;
+    out.push({k, n, w:lack + fine + n / cap});
+  }
+  out.sort((a, b) => b.w - a.w); const goods = {}; let left = PACK.max;
+  for (const o of out){ if (left <= 0) break; const n = Math.min(o.n, left); goods[o.k] = n; left -= n; }
+  return goods;
+}
+const packText = g => andList(Object.entries(g).map(([k, n]) => `${n} ${n === 1 ? G1[k] : GN[k]}`));
+function packGive(I, M, g, help = false){
+  const mcap = storeCap(M), got = {};
+  for (const [k, n0] of Object.entries(g)){ const n = Math.min(n0, I.stock[k] || 0, mcap - (M.stock[k] || 0)); if (n < 1) continue; I.stock[k] -= n; M.stock[k] = (M.stock[k] || 0) + n; got[k] = n; }
+  if (!Object.keys(got).length) return null;
+  if (help){ M.helpLast = {t:tick, g:got}; M.helps = (M.helps || 0) + 1; }   // M: the young village that is helped
+  else { M.packs = (M.packs || 0) + 1; I.packLast = {t:tick, g:got}; stats.packs = (stats.packs || 0) + 1; }
+  I.staff = null; M.staff = null; I._fore = M._fore = null; I._ffore = M._ffore = null;
+  return got;
+}
+function sendPack(I, M, g, help = false){
+  if (!Object.keys(g).length) return;
+  if (awayQuiet){ packGive(I, M, g, help); return; }
+  const from = I.harbor || I.center, sh = {id:nextShip++, kind:'oc', own:false, pack:{from:I.id, g, help}, to:M.id, cargo:{...g}, life:[], people:2, folk:[], path:[], pi:0, state:'moored', x:from.x, y:from.y, hx:1, hy:0, dist:0, home:{x:from.x, y:from.y}};
+  ships.push(sh); if (!sailTo(sh, {isl:M.id}, true)){ ships.splice(ships.indexOf(sh), 1); packGive(I, M, g, help); }
+}
+/* at dawn: a daughter sends what it has to spare to the mother; the mother helps a young daughter (under HELP.pop people)
+   with what it lacks to build and to get through the next morning */
+const HELP = {pop:15, max:16};
+function helpOf(M, D){
+  const cap = storeCap(D), mcap = storeCap(M), F = mealFore(D), FM = mealFore(M), g = {}; let left = HELP.max;
+  const give = (k, want) => { const spare = Math.floor((M.stock[k] || 0) - mcap * .4), n = Math.min(want, spare, cap - (D.stock[k] || 0), left); if (n > 0){ g[k] = n; left -= n; } };
+  if (F.water < F.n + 2 && FM.water >= FM.n + MEAL_SPARE) give('wasser', F.n + 2 - F.water);
+  if (F.food < F.n + 2 && FM.food >= FM.n + MEAL_SPARE) for (const k of FOODS){ if (F.food + Object.values(g).reduce((t, v) => t + v, 0) >= F.n + 2) break; give(k, F.n + 2 - F.food); }
+  if ((D.stock.holz || 0) < 4) give('holz', 6 - (D.stock.holz || 0));
+  if ((D.stock.dach || 0) < 4) give('dach', 6 - (D.stock.dach || 0));
+  return g;
+}
+function packTick(I){
+  if (!eldersOn(I) || I.id === 'heimat') return; const M = isl('heimat'); if (!M || !M.settled || M === I) return;
+  if (I.pop < HELP.pop) sendPack(M, I, helpOf(M, I), true);
+  sendPack(I, M, packOf(I, M));
+}
+/* the canoe lands at the mother village: what is still there at home goes into the store (taken only now, so a game
+   saved on the way loses nothing), then it paddles back */
+function packArrive(s){
+  const P = s.pack, I = isl(P.from), M = isl(s.to); s.pack = null; s.cargo = {};
+  const got = I && M ? packGive(I, M, P.g, P.help) : null;
+  if (got && !awayQuiet){ const msg = P.help ? `${I.name} hilft dem jungen Dorf ${M.name}: ${packText(got)}.` : `Ein Kanu aus ${I.name} bringt ${packText(got)}.`; note(msg); if (M.id === active){ toast(msg, 3600); sfx('shells'); updateHUD(); } }
+  s.leaving = true; if (!s.home || !sailTo(s, {x:s.home.x, y:s.home.y}, true)){ const i = ships.indexOf(s); if (i >= 0) ships.splice(i, 1); }
+  requestDraw();
+}

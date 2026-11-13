@@ -1674,6 +1674,21 @@ Der Stil bleibt: flache Farben, feine Tuschelinien, Figuren ohne Arme und Beine.
   liest das schon beim Setzen. „Ohne Einführung“ steht nur bei den ersten Aufgaben. Die Hilfe spricht von Kacheln statt
   Knoten und erklärt das Gesicht oben.
 
+## Tochterdörfer führen sich selbst (seit Version 79)
+
+Jedes Dorf außer dem ersten führt **sein Rat**. Einmal in der Minute tut er, was ein umsichtiger Spieler täte: erst das
+Erntehaus, dann Wasser und Essen, dann was der Rat des Dorfes vorschlägt, immer nur eine Baustelle zugleich und keinen
+Platz, für den niemand frei ist oder der schon still steht. Er bindet vor dem Sturm die Dächer, ruft den Regen, nimmt
+Familien auf, gibt Häusern ein Hauswerk und lässt Häuser von selbst ausbauen; reicht es, baut er eine Hütte mehr. Das läuft
+auch, während ihr fort seid.
+
+**Kanus zwischen Mutter und Töchtern.** Jeden Morgen schickt ein Tochterdorf ein kleines Kanu zur Mutter mit dem, was es
+übrig hat (bis 8 Stück; zuerst, was der Mutter fehlt, und die feinen Dinge der besonderen Böden; nie Wasser, nie Essen
+oder Brennstoff, die es selbst braucht). Solange eine Tochter klein ist (unter 15 Menschen), hilft die Mutter ihr am
+Morgen mit Holz, Wedeln, Wasser und Essen aus ihrem Überfluss (bis 16 Stück). Die Kanus fahren sichtbar; die Waren gehen
+erst bei der Ankunft vom einen ins andere Lager. In der Übersicht unter „Insel“ steht, wer das Dorf führt, was der Rat
+zuletzt baute und was das letzte Kanu brachte; ein Tipp auf „Selbst führen“ gibt das Dorf in deine Hand.
+
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,

@@ -654,6 +654,15 @@ function satMarkup(I){
     return `<li><button class="link" type="button" data-act="who" data-p="${q.id}">${q.n}</button><span class="sub">${w ? w.t : 'zufrieden'}</span><b class="${satBand(u.v)}">${u.v}</b></li>`; }).join('')}</ul>`;
   return h;
 }
+/* who leads a village: the player, or its elders (daughter villages by default); what they built last and the last
+   canoe it sent to the mother village */
+function ratMarkup(I){
+  if (!I.settled || I.clan) return '';
+  const on = eldersOn(I), last = (I.ratLog || [])[0], P = I.packLast, M = isl('heimat');
+  const what = on ? `Der Rat von ${I.name} baut, nimmt Familien auf, bindet die Dächer und baut Häuser aus.${last ? ` Zuletzt: ${KINDS[last.k].n}.` : ''}` : 'Du führst dieses Dorf selbst.';
+  const hp = I.helps ? `<p class="sub">${M.name} half ${I.helps}-mal mit Holz, Wedeln, Wasser oder Essen.</p>` : "", pk = hp + (I.id === "heimat" ? (M.packs ? `<p class="sub">${M.packs} ${M.packs === 1 ? 'Kanu brachte' : 'Kanus brachten'} Gaben der Tochterdörfer.</p>` : '') : on ? `<p class="sub">${P ? `Letztes Kanu nach ${M.name}: ${packText(P.g)}.` : `Jeden Morgen schickt ${I.name} ein Kanu mit dem, was übrig ist, nach ${M.name}.`}</p>` : '');
+  return `<div class="ratrow"><span class="nm">${icon('pop')}<b>${on ? 'Der Rat führt' : 'Du führst'}</b></span><button class="chip" type="button" data-act="rat" aria-pressed="${on}">${on ? 'Selbst führen' : 'Rat führen lassen'}</button></div><p class="sub">${what}</p>${pk}`;
+}
 /* A person: who, what they do now, where they work, how their day is shared, and the village's slider */
 /* on a person's tile in the house: the short name of the place (Fischer, not Fischerhütte), so four fit in a row */
 const jobShort = (I, p) => { const b = p.job && findB(p.job); return isAdult(p) && b && !b.at && !loanWord(I, p) && !(staffOf(I).restP || []).includes(p.id) ? KINDS[b.kind].s : personWork(I, p); };
@@ -706,7 +715,7 @@ function workTab(I, nd){
   return h + `</ul></details>`;
 }
 function isleTab(I, nd){
-  let h = `<ul class="list needs">`;
+  let h = ratMarkup(I) + `<ul class="list needs">`;
   if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
     h += rowS('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', barS(f / .6), e ? chipS(e > 1 ? 'out' : 'low', 'Erosion') : chipS('ok', 'hält'), e ? 'need' : ''); }
   { const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;
@@ -1203,6 +1212,7 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
   if (act === 'satopen'){ openSheet('sat', {id:active}); return; }
+  if (act === 'rat'){ const I = sheetData && sheetData.id && isl(sheetData.id) || isl(active); I.rat = !eldersOn(I); if (!I.rat) I.autoUp = false; renderSheet(); save(); toast(I.rat ? `Der Rat führt ${I.name}.` : `Du führst ${I.name} selbst.`, 2400, false); return; }
   if (sheetKind === 'person' && act === 'jobpick'){ sheetData = {...sheetData, pick:!sheetData.pick}; renderSheet(); return; }
   if (sheetKind === 'person' && act === 'setjob'){ const I = isl(sheetData.id), p = I && (I.people || []).find(q => q.id === sheetData.p), b = findB(+btn.dataset.b), r = chooseJob(I, p, b);
     if (r){ toast(`${p.n}: Stammplatz ${placeName(b)}.${r.swap ? ` ${r.swap.n} tauscht${r.swap.job && r.old ? ` und geht zu ${placeName(r.old)}` : ' und ist jetzt frei'}.` : ''}`, 3200, false); sheetData = {...sheetData, pick:false}; updateHUD(); renderSheet(); save(); checkQuest(); }
