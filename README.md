@@ -1621,6 +1621,27 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
 Diese Kleinigkeiten laufen mit wenigen Bildern pro Sekunde, wenn sonst nichts animiert ist, und gar nicht, wenn das Gerät
 weniger Bewegung wünscht.
 
+## Mehr Leben in den Bewegungen (seit Version 76)
+
+Der Stil bleibt: flache Farben, feine Tuschelinien, Figuren ohne Arme und Beine. Neu ist, wie sie sich bewegen.
+
+- **Gehen:** Der Wickelrock wiegt bei jedem Schritt, der Oberkörper federt ein wenig nach und neigt sich nach vorn.
+  Kinder hüpfen, Alte gehen kleiner und setzen den Stock mit dem Schritt. Lasten auf dem Kopf schaukeln gegen den
+  Schritt, die Körbe an der Tragestange schwingen. Wer stehen bleibt, federt kurz nach; wer umkehrt, dreht sich in
+  einem Augenblick um, statt umzuspringen.
+- **Stehen:** Die Leute atmen, blinzeln alle paar Sekunden (jeder zu seiner Zeit) und schauen sich ab und zu um.
+- **Arbeiten:** Jeder Schlag hat einen Takt: langsam ausholen, schnell zuschlagen, kurz halten, wieder aufrichten.
+  Gerät und Körper gehen zusammen, beim Aufschlag staucht sich der Körper ein wenig. Dazu fliegen Erdklumpen und Staub
+  beim Graben, drehende Späne beim Fällen, Locken beim Schnitzen, Splitter und ein Funkeln am Stein, Staubringe beim
+  Stampfen und Tropfen beim Schöpfen. Etwa jeder achte Schlag ist eine Pause: Die Leute richten sich auf und strecken
+  sich, damit sie nicht wie Maschinen wirken.
+- **Dorf:** Bei Tagesanbruch, zum Morgenmahl, steigt aus jedem bewohnten Haus Herdrauch: weiche Wölkchen, die sich
+  weiten und mit dem Wind treiben; tagsüber aus einigen. Schmetterlinge flattern über Blumen, Hibiskus und Gärten und
+  setzen sich ab und zu. Vom Paddelblatt laufen Tropfen, wenn es aus dem Wasser kommt.
+- **Sparsam:** Die feinen Bewegungen gibt es nur nah herangezoomt; ein langsames Gerät (Bildqualität 0) zeichnet die
+  Figuren wie bisher, ein mittleres die nächsten 14, ein schnelles 28. Wer „weniger Bewegung“ eingestellt hat, sieht
+  alles ruhig wie früher.
+
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,

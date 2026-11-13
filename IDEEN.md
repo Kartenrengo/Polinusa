@@ -61,6 +61,17 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
 
+## Offen aus der Runde „Mehr Leben in den Bewegungen“ (Version 76)
+
+- **Blinzeln:** nur eine Hautlinie über den Augen; aus normaler Nähe kaum zu sehen.
+- **Nicken bei Flecht- und Schnurarbeit:** der Körper nickt sanft, die kleinen Effekte (Streifen, Schnur) laufen noch
+  nicht im selben Takt.
+- **Pflanzen:** das Gerät neigt sich mit dem Körper, schwingt aber nicht wie beim Graben.
+- **Langsame Geräte:** Auf Qualität 0 gibt es die feinen Körper nicht; der Handy-Test misst darum nur den alten Weg.
+  Auf einem echten Handy prüfen, ob es flüssig bleibt.
+- **Weitere Arbeiten** (Keil, Feile, Reibe, Malen, Netz, Dachdecken, Aufhängen) nutzen denselben Takt, sind aber nicht
+  einzeln angesehen.
+
 ## Offen aus der Runde „Morgenmahl, Werk, Atoll“ (Version 74)
 
 - ~~**Arme der Figuren**~~ **entschieden in Version 75:** Die Figuren haben vorerst gar keine Arme; Werkzeuge und was
