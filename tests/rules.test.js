@@ -298,6 +298,18 @@ const r = await p.evaluate(()=>{
       want(H.stock.matten > 0, `trade: no mats arrived after ${n} steps`); out.push(`trade: mats at home after ${n} steps`);
       want(followAdvice === undefined || typeof followAdvice === 'function', 'trade: no advice handler'); }
     else out.push('trade: no island to trade with'); }
+  // a full store keeps the cargo aboard; goods the port sends on are not unloaded there
+  { const H = isl('heimat'), B = islands.find(J => J.settled && J !== H);
+    if (B){ const s = makeShip('dc', H), ri0 = routes.length; routes.push({a:H.id, b:B.id, knots:1, lastGift:tick, plan:{a:{}, b:{}}}); const r = routes[ri0], cap = storeCap(B);
+      s.route = ri0; s.port = B.id; s.state = 'moored'; s.tripFrom = H.id; B.stock.holz = cap; s.cargo = {holz:5};
+      routeArrive(s); want(B.stock.holz === cap && s.cargo.holz === 5 && !!s.full, `full: goods lost or not kept aboard (${B.stock.holz}/${cap}, ${s.cargo.holz})`);
+      s.state = 'moored'; routeArrive(s); want(B.stock.holz === cap && s.cargo.holz === 5, 'full: second arrival changed things');
+      B.stock.holz = cap - 3; s.state = 'moored'; routeArrive(s); want(B.stock.holz === cap && s.cargo.holz === 2 && !!s.full, 'full: partial unload wrong');
+      B.stock.holz = 0; s.state = 'moored'; routeArrive(s); want(B.stock.holz === 2 && !s.cargo.holz && !s.full, 'full: not unloaded when there is room');
+      r.plan[B.id === r.a ? 'a' : 'b'] = {holz:6}; B.stock.holz = 0; s.cargo = {holz:4}; s.state = 'moored'; routeArrive(s);
+      want(s.cargo.holz === 4 && B.stock.holz === 0, 'full: an outbound good is unloaded at its own port');
+      B.stock.holz = 10; s.state = 'moored'; routeArrive(s); want(s.cargo.holz === 6 && B.stock.holz === 8, `full: load up to the plan wrong (${s.cargo.holz}, ${B.stock.holz})`);
+      routes.splice(ri0, 1); ships.splice(ships.indexOf(s), 1); out.push('full store: cargo stays aboard'); } }
   // palms bear only so many nuts; one bar with the day running round it; a picture that fails does not stop the game
   { const H = isl('heimat'), e = H.buildings.find(q => q.kind === 'ernte' && !q.bt);
     if (e){ const pk = e.v && e.v.pick; e.v = {...e.v, pick:'kokos'}; e.nuts = 0; const w = workState(H, e); want(w && w.why === 'nuts', 'nuts: a grove picked clean still gives');

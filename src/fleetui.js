@@ -9,7 +9,7 @@ const slider = (act, k, n, max, label) => `<span class="slide"><input type="rang
 function shipStatus(s){
   const r = s.route != null ? routes[s.route] : null;
   if (s.auto) return s.state === 'sail' && s.dest && s.dest.isl ? `Erkundet von selbst, holt Proviant auf ${isl(s.dest.isl).name}.` : 'Erkundet von selbst.';
-  if (r) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}.`;
+  if (r) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}.${s.full ? ` An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt} voll.` : ''}`;
   if (s.state === 'sail') return s.dest && s.dest.isl ? `Unterwegs nach ${isl(s.dest.isl).name}.` : 'Unterwegs auf See.';
   if (s.state === 'sea') return 'Liegt auf offener See vor Anker.';
   const P = isl(s.port); return P.clan ? `Liegt ${clanBeim(P.clan)} auf ${P.name}.` : P.settled ? `Liegt im Hafen von ${P.name}.` : `Liegt vor ${P.name}, das noch unbewohnt ist.`;
@@ -25,6 +25,7 @@ function shipMarkup(s){
   // a treasure island: what the crew can gather here
   if (P && P.treasure){ const T = P.treasure; h += `<div class="stat">${icon(T.k)}<span>${GN[T.k]}: ${T.left} bereit</span><span class="sub">${s.auto ? '' : 'Solange das Kanu hier liegt, sammelt die Mannschaft.'}</span></div>`; }
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
+  if (s.full && cargoLoad(s)) h += `<p class="sub">An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt || 'dem Hafen'} voll.</p>`;
   h += shipDiveMarkup(s);
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', cargoLoad(s) ? giftText(s.cargo) : '', life.length ? andList(life.map(id => LIFE[id].s)) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
@@ -171,7 +172,7 @@ function fleetAct(act, btn, quiet = false){
     else if (act === 'pp-' && P && s.people > 0){ const q = (s.folk || []).pop(); if (q){ syncPeople(P); P.people.push(q); } s.people--; P.pop++; P.staff = null; syncWalkers(); }
     else if (act === 'life' && P && P.settled) toggleLife(s, P, k);
     else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && roomUsed(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }
-    else if (act === 'cg-' && P && s.cargo[k] > 0){ s.cargo[k]--; if (!s.cargo[k]) delete s.cargo[k]; P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + 1); }
+    else if (act === 'cg-' && P && s.cargo[k] > 0 && (P.stock[k] || 0) < storeCap(P)){ s.cargo[k]--; if (!s.cargo[k]) delete s.cargo[k]; P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + 1); }
     else if (act === 'unload') unloadAll(s);
     else if (act === 'load' || act === 'fold'){ sheetData.load = act === 'load'; renderSheet(); measure(); return true; }
     else if (act === 'assign'){ assignRoute(s, +btn.dataset.r); }

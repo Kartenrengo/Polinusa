@@ -211,7 +211,7 @@ function autoNext(s){
   const P = s.state === 'moored' && s.port ? isl(s.port) : null;
   if (P && P.settled){
     // at home: everything but provisions goes ashore, provisions come aboard
-    for (const k of GOODS) if (k !== 'proviant' && s.cargo[k]){ P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + s.cargo[k]); delete s.cargo[k]; }
+    unloadFit(s, P, {proviant:1});
     if (s.people){ syncPeople(P); P.people.push(...(s.folk || [])); s.folk = []; P.pop += s.people; s.people = 0; }
     landLife(P, s);
     const take = Math.min(AUTO_LOAD - (s.cargo.proviant || 0), P.stock.proviant || 0); if (take > 0){ s.cargo.proviant = (s.cargo.proviant || 0) + take; P.stock.proviant -= take; }
@@ -304,12 +304,23 @@ function arriveShip(s){
   else toast(`${s.name} ist in ${T.name}.`);
   if (sheetKind === 'ship') renderSheet(); save(); checkQuest();
 }
+/* Unload goods ashore only as far as the store has room; the rest stays aboard. `keep` goods are not unloaded. Returns what is left. */
+function unloadFit(s, I, keep){
+  const left = {};
+  for (const [k, v] of Object.entries(s.cargo)){
+    if (keep && keep[k]) continue;
+    const q = Math.min(v, Math.max(0, storeCap(I) - (I.stock[k] || 0)));
+    if (q > 0) I.stock[k] = (I.stock[k] || 0) + q;
+    if (v > q){ s.cargo[k] = v - q; left[k] = v - q; } else delete s.cargo[k];
+  }
+  return left;
+}
 const cargoLoad = s => Object.values(s.cargo).reduce((a, b) => a + b, 0);
 const roomUsed = s => cargoLoad(s) + (s.life ? s.life.length : 0) * LIFE_LOAD;   // goods, and two places for each plant or pair of pigs
 function unloadAll(s){
   const I = isl(s.port); if (!I || !I.settled) return;
-  for (const [k, v] of Object.entries(s.cargo)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + v);
-  syncPeople(I); I.people.push(...(s.folk || [])); s.folk = []; I.pop += s.people; s.cargo = {}; s.people = 0; landLife(I, s); updateHUD(); syncWalkers(); save();
+  const left = unloadFit(s, I); if (Object.keys(left).length) toast(`Lager auf ${I.name} voll: ${giftText(left)} bleiben an Bord.`, 3000, false);
+  syncPeople(I); I.people.push(...(s.folk || [])); s.folk = []; I.pop += s.people; s.people = 0; landLife(I, s); updateHUD(); syncWalkers(); save();
 }
 function giveGift(s){
   const T = isl(s.port), ri = routeIndex(s.last, T.id); if (!T.clan || ri < 0 || !cargoLoad(s)) return;
@@ -338,10 +349,19 @@ function routeArrive(s){
   const r = routes[s.route], here = isl(s.port);
   if (s.tripFrom && s.tripFrom !== here.id && !here.clan){ r.knots = Math.min(12, r.knots + 1); invalidate(); }
   if (here.clan){ if (cargoLoad(s)) receiveGift(here, s.cargo, s.tripFrom || s.last, r); s.cargo = {}; }
-  else { for (const [k, v] of Object.entries(s.cargo)) here.stock[k] = Math.min(storeCap(here), (here.stock[k] || 0) + v); s.cargo = {}; }
+  const plan = r.plan[here.id === r.a ? 'a' : 'b'] || {};
+  if (!here.clan){
+    // what does not fit stays aboard; goods this port sends on are not unloaded here
+    // (a good both ends send is unloaded wherever it fits, or it would go round and round)
+    const other = r.plan[here.id === r.a ? 'b' : 'a'] || {}, left = {}, out = {}; for (const k in plan) if (!(k in other)) out[k] = 1;
+    const rest = unloadFit(s, here, out); for (const k in rest) left[k] = rest[k];
+    const mark = Object.keys(left).sort().map(k => k + left[k]).join('');
+    if (mark && mark !== s.full) toast(`Lager auf ${here.name} voll: ${giftText(left)} bleiben an Bord.`, 3200);
+    s.full = mark || undefined; s.fullAt = mark ? here.name : undefined;
+  } else { s.full = undefined; s.fullAt = undefined; }
   if (here.settled){
-    const plan = r.plan[here.id === r.a ? 'a' : 'b'] || {}; let room = SHIPS[s.kind].cap - roomUsed(s);
-    for (const [k, v] of Object.entries(plan)){ const q = Math.min(v, here.stock[k] || 0, room); if (q > 0){ s.cargo[k] = q; here.stock[k] -= q; room -= q; } }
+    let room = SHIPS[s.kind].cap - roomUsed(s);
+    for (const [k, v] of Object.entries(plan)){ const q = Math.min(v - (s.cargo[k] || 0), here.stock[k] || 0, room); if (q > 0){ s.cargo[k] = (s.cargo[k] || 0) + q; here.stock[k] -= q; room -= q; } }
   }
   s.state = 'wait'; s.wait = 1500; s.tripFrom = here.id;
   updateHUD(); if (sheetKind) renderSheet(); checkQuest();

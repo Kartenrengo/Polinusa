@@ -152,7 +152,7 @@ function serialize(){
       ppl:I.people ? I.people.map(packP) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, an:I.ahnenN || undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
       nm:I.custom ? I.name : undefined, ts:I.treasure ? I.treasure.left : undefined, wr:I._wg ? wearCode(I._wg) : I.wearSaved || undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, fm:I.fams && I.fams.length ? I.fams.map(f => [f.id, f.n, f.home || 0, f.job || 0]) : undefined, hw:I.handWork ? 1 : undefined, rl:I.rl || undefined, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0, b.soil != null ? Math.round(b.soil * 100) / 100 : null, b.fallow ? 1 : 0, b.t || 0, b.want || 0, b.prio ? 1 : 0, b.grow > 0 ? Math.round(b.grow) : 0, b.ys || b.kept ? [b.ys || 0, Math.round((b.sown || 0) * 100) / 100, Math.round(b.kept || 0)] : 0, b.at || 0, b.keep ? 1 : 0, b.rw ? Math.round(b.rw * 1000) / 1000 : 0, b.rf != null ? b.rf : null, b.nuts != null ? Math.round(b.nuts * 10) / 10 : null])})),
-    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, au:s.auto || undefined, lv:s.life && s.life.length ? s.life : undefined, fk:s.folk && s.folk.length ? s.folk.map(packP) : undefined}))});
+    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, fl:s.full, fa:s.full ? s.fullAt : undefined, au:s.auto || undefined, lv:s.life && s.life.length ? s.life : undefined, fk:s.folk && s.folk.length ? s.folk.map(packP) : undefined}))});
 }
 function restore(raw){
   try {
@@ -181,7 +181,7 @@ function restore(raw){
     ships = []; selShip = null;
     for (const o of s.ships || []){
       if (o.port && !isl(o.port)) o.port = null;
-      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, auto:!!o.au, life:(o.lv || []).filter(id => LIFE[id]), folk:(o.fk || []).map(unpackP)};
+      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, full:o.fl, fullAt:o.fa, auto:!!o.au, life:(o.lv || []).filter(id => LIFE[id]), folk:(o.fk || []).map(unpackP)};
       ships.push(sh);
       if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
       if (sh.route != null && !routes[sh.route]) sh.route = null;
