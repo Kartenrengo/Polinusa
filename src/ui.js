@@ -173,14 +173,16 @@ function toast(msg, ms = 2600, keep = true){
   if (keep && toastBusy){ if (!toastQ.some(q => q.msg === msg) && $('toast').textContent !== msg){ toastQ.push({msg, ms}); if (toastQ.length > TOAST.wait) toastQ.shift(); } return; }
   showToast(msg, ms);
 }
+// the strip has room for a few words: the first sentence; the whole message stays in the conch
+const toastShort = m => { const c = m.match(/^.+?[.!?](?=\s|$)/), f = c ? c[0] : m; return f.length > 70 ? f.slice(0, 66).replace(/\s+\S*$/, '') + ' …' : f; };
 function showToast(msg, ms){
-  toastBusy = true;
-  const t = $('toast'); t.textContent = msg; t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
+  toastBusy = true; if (!$('hudbar').classList.contains('tell')){ $('hudbar').classList.add('tell'); setTimeout(measure, 0); }
+  const t = $('toast'); t.innerHTML = ''; const tt = document.createElement('span'); tt.className = 'tt'; tt.textContent = toastShort(msg); t.appendChild(tt); t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
   clearTimeout(toastT); toastT = setTimeout(foldToast, Math.max(TOAST.min, ms) + Math.min(2400, msg.length * 25));
 }
 function foldToast(){
   const t = $('toast'); clearTimeout(toastT);
-  const next = () => { toastBusy = false; const q = toastQ.shift(); if (q) toastT = setTimeout(() => showToast(q.msg, q.ms), TOAST.gap); };
+  const next = () => { toastBusy = false; const q = toastQ.shift(); if (q) toastT = setTimeout(() => showToast(q.msg, q.ms), TOAST.gap); else { $('hudbar').classList.remove('tell'); setTimeout(measure, 0); } };
   if (t.hidden || !t.classList.contains('open')){ t.classList.remove('open'); t.hidden = true; next(); return; }
   // it draws back into the day bar, to the left
   t.classList.remove('open');

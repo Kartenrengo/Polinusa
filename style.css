@@ -975,15 +975,26 @@ body #toast[data-tone=good]::after{background-image:url("data:image/svg+xml,%3Cs
 /* the gifts of the clan (giftsMarkup) */
 .list.gifts li small{display:block;font-size:12px;color:var(--muted);font-weight:600}
 
-/* version 86: a message is a strip of the day bar: it comes out of the bar's right side at the same height, cream with an
-   ink edge like the bar, and draws back into it (measure() sets --tx, --tw, --th) */
-body #toast{left:var(--tx,200px)!important;right:auto!important;max-width:var(--tw,180px)!important;width:max-content;min-height:var(--th,40px);z-index:5;
-  background:#F4ECD8!important;background-image:none!important;border:2px solid var(--ink)!important;border-left:0!important;border-radius:0 15px 15px 0!important;
-  box-shadow:inset 0 -3px 0 var(--tone);filter:drop-shadow(0 2px 1px rgba(43,29,20,.22));padding:5px 11px 7px 22px!important;font:700 12.5px/1.25 var(--font-ui);gap:6px;
-  transform-origin:0 50%;clip-path:inset(-2px 100% -6px 0)!important;opacity:1!important;transform:translateX(-12px);animation:none!important;
+/* version 87: a message is a little sister of the day bar: the same height, the same broad ring with an ink edge, cream
+   inside, round corners; the ring and the round badge take the tone (yellow, red warning, green good). It hangs on a short
+   cord at the bar's right side, slides out to the right and back in. Small type, at most three lines; the whole text
+   stays in the conch. (measure() sets --tx, --tw, --th.) */
+body #toast{--ring:#FBE7A0;left:calc(var(--tx,200px) + 30px)!important;right:auto!important;max-width:calc(var(--tw,180px) - 30px)!important;width:max-content;
+  height:calc(var(--th,40px) + 10px);min-height:0;box-sizing:border-box;z-index:5;overflow:visible;
+  border:4px solid transparent!important;border-radius:17px!important;
+  background:linear-gradient(#F4ECD8,#F4ECD8) padding-box,linear-gradient(var(--ring),var(--ring)) border-box!important;
+  box-shadow:0 0 0 1.5px #2B1D14,0 3px 0 rgba(43,29,20,.3),inset 0 0 0 1px rgba(43,29,20,.55)!important;filter:none!important;
+  padding:2px 10px 2px 4px!important;gap:6px;font:700 11px/1.22 var(--font-ui);color:var(--ink);
+  transform-origin:0 50%;clip-path:inset(-8px 100% -8px -24px)!important;opacity:1!important;transform:translateX(-14px);animation:none!important;
   transition:clip-path .42s cubic-bezier(.25,.9,.3,1),transform .42s cubic-bezier(.25,.9,.3,1)!important}
-body #toast.open{clip-path:inset(-6px -10px -8px 0)!important;transform:none}
-body #toast::after{display:none!important}
-body #toast::before{width:18px;height:18px}
-@media (max-width:350px){body #toast{font-size:12px;padding:4px 9px 6px 20px!important}}
+body #toast[data-tone=warn]{--ring:#E9A48E} body #toast[data-tone=good]{--ring:#BCD69A}
+body #toast.open{clip-path:inset(-8px -10px -8px -24px)!important;transform:none}
+body #toast .tt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+body #toast::before{width:26px!important;height:26px!important;flex:none;border-radius:50%;background:var(--ic) center/15px no-repeat,var(--ring)!important;box-shadow:0 0 0 1.5px #2B1D14}
+body #toast::after{display:block!important;content:''!important;position:absolute!important;left:-22px!important;right:auto!important;top:50%!important;bottom:auto!important;
+  width:18px!important;height:4px!important;margin:-2px 0 0!important;transform:none!important;border-radius:2px;box-shadow:0 0 0 1px #2B1D14;
+  background:repeating-linear-gradient(90deg,#B08048 0 3px,#6E4C2E 3px 5px)!important}
+@media (max-width:350px){body #toast{font-size:10.5px;padding:2px 8px 2px 3px!important}body #toast::before{width:22px!important;height:22px!important}}
 @media (prefers-reduced-motion:reduce){body #toast{transition:none!important;transform:none}}
+/* while a message is out, the day bar folds its wind text away (dial, conch and menu stay), so the message has room */
+#hudbar.tell #compass span{display:none}
