@@ -1424,7 +1424,7 @@ function econ(){
     if (!I.settled) continue;
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); if (tick % 20 === 0) storyTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
-    roofTick(I); mendTick(I); stormTick(I); gatherTick(I); nutTick(I);
+    roofTick(I); mendTick(I); stormTick(I); gatherTick(I); nutTick(I); if (tick % 5 === 0) payRebuilds(I);
     if (raining(I)){ I._rw = (I._rw || 0) + RAIN.water / DAILY.water; if (I._rw >= 1){ add('wasser', Math.floor(I._rw)); I._rw -= Math.floor(I._rw); } if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
@@ -1822,7 +1822,7 @@ function govern(dt){
    happened. The village is reckoned in whole minutes, the sea tick by tick, so canoes still find their way. */
 const AWAY_MAX = 8 * 3600 * 1000;
 function awayMinute(I, R){
-  roofTick(I, 30); stormTick(I); gatherTick(I, 30); nutTick(I, 30);
+  roofTick(I, 30); stormTick(I); gatherTick(I, 30); nutTick(I, 30); payRebuilds(I);
   const sf = staff(I), st = I.stock, cap = storeCap(I);
   // building sites and canoes: the builders work as if they were there
   for (const b of I.buildings){

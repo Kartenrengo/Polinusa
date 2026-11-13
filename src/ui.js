@@ -916,7 +916,9 @@ function infoMarkup(I, b){
     const qi = (staffOf(I).queue || []).indexOf(b.id), lim = builders(I) + I.buildings.filter(q => q.bt && q.prio).length, doing = !crewAt(I, b) ? st('out', qi >= lim ? `wartet · ${qi + 1 - lim}. in der Reihe` : 'keine Leute frei') : !here.length ? st('low', 'Bauleute kommen') : here.some(w => w.leg === 'work') && b.bt > woodFloor(W) + .01 ? st('ok', groundSite(b.kind) ? 'wird angelegt' : 'wird gebaut') : st('low', 'Holz wird geholt');
     line = `${doing}<span>${icon('holz')}${W.o.got}/${W.need}</span><span>${Math.round(f * 100)} %</span>`;
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
-    if (!crewAt(I, b)) more.unshift(`Es wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} zugleich gebaut, je 10 Bewohner eine mehr. Ist niemand frei, legen zwei ihre Arbeit dafür nieder.`);
+    // wrecked by a storm: it waits for half of its wood and fronds in the store before anyone builds
+    if (b.unpaid){ line = st('out', 'wartet auf Holz und Wedel'); bar = costTiles(I, b.unpaid); more.unshift(`Der Sturm hat es zerstört. Für den Wiederaufbau braucht es ${costText(b.unpaid)} aus dem Lager. Sobald es da ist, bauen die Leute.`); }
+    else if (!crewAt(I, b)) more.unshift(`Es wird an ${builders(I)} ${builders(I) === 1 ? 'Stelle' : 'Stellen'} zugleich gebaut, je 10 Bewohner eine mehr. Ist niemand frei, legen zwei ihre Arbeit dafür nieder.`);
     more.unshift('Gebaut wird zu zweit: Einer hält den Pfosten, der andere bindet. Allein dauert es dreimal so lang. Die Bauleute tragen Holz und Palmwedel aus dem Lager herbei.');
   } else if (b.boat > 0){
     const f = 1 - b.boat / K.canoe;

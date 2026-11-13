@@ -284,17 +284,25 @@ function stormTick(I){
   const msg = stormStrike(I, S); cycloneStart(I, 10); syncWalkers();
   if (I.id === active && !awayQuiet){ toast(msg, 6000); sfx && sfx('horn'); } else note(msg);
 }
+/* What a storm wrecked is built anew with half of what it cost, from the store. What is not there yet the site waits
+   for (b.unpaid): nobody builds on it until the wood and fronds are in the store (see payRebuilds). */
+function rebuildCost(I, b){
+  const c = {}; for (const [k, v] of Object.entries(costOf(b.kind, I))) if (v > 0) c[k] = Math.ceil(v / 2);
+  if (!Object.keys(c).length) return; b.unpaid = c; payRebuild(I, b);
+}
+function payRebuild(I, b){ if (!b.unpaid || !canPay(I, b.unpaid)) return false; pay(I, b.unpaid); delete b.unpaid; I.staff = null; return true; }
+function payRebuilds(I){ for (const b of I.buildings) if (b.unpaid && b.bt && payRebuild(I, b) && I.id === active && !awayQuiet) note(`${KINDS[b.kind].n}: Das Holz für den Wiederaufbau ist da.`); }
 function stormStrike(I, S){
   const homes = homesOf(I).filter(h => !h.bt), pick = (list, n) => list.slice().sort(() => Math.random() - .5).slice(0, n);
   let loose = homes.filter(h => !S.tied.includes(h.id)), charm = false;
   if (loose.length && (I.stock.talisman || 0) > 0){ I.stock.talisman--; charm = true; loose = []; }
   for (const h of loose){ h.rw = Math.max(h.rw || 0, ROOF.leak); h.rf = tick - AGE_FULL; }
-  const wreck = loose.filter(() => Math.random() < .15).slice(0, 2); for (const h of wreck){ h.bt = Math.ceil(KINDS[h.kind].bt / 2); h.rw = 0; }   // built anew, with a new roof
-  const hit = loose.length > homes.length / 2 && pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !b.at)); if (hit) hit.bt = Math.ceil(KINDS[hit.kind].bt / 2);
+  const wreck = loose.filter(() => Math.random() < .15).slice(0, 2); for (const h of wreck){ h.bt = Math.ceil(KINDS[h.kind].bt / 2); h.rw = 0; rebuildCost(I, h); }   // built anew, with a new roof
+  const hit = loose.length > homes.length / 2 && pickOf(I.buildings.filter(b => KINDS[b.kind].crew && !b.bt && !b.at)); if (hit){ hit.bt = Math.ceil(KINDS[hit.kind].bt / 2); rebuildCost(I, hit); }
   const down = pick(I.trees.filter(t => t.st === 0), Math.round(I.trees.filter(t => t.st === 0).length * .06)); for (const t of down){ t.st = 1; t.g = STUMP_TICKS; t.w = 0; }
   if (down.length) treesChanged(I);
   for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt) b.soil = Math.max(.12, (b.soil ?? 1) - .1);
-  const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; }   // off a bare slope the earth slides
+  const slide = erosionOf(I) && pickOf(I.buildings.filter(b => KINDS[b.kind].soil && !b.bt)); if (slide){ slide.bt = Math.ceil(KINDS[slide.kind].bt / 2); slide.soil = .2; rebuildCost(I, slide); }   // off a bare slope the earth slides
   invalidate(true);
   for (const p of I.people || []) if (isAdult(p)) lifeEvent(p, 'sturm', charm ? 'übersteht einen Sturm, der Talisman hielt die Dächer' : loose.length ? 'übersteht einen Sturm, der Dächer abdeckte' : 'übersteht einen Sturm, die Dächer hielten');
   const held = homes.length - loose.length;
@@ -503,7 +511,7 @@ function staff(I){
   const F = mealFore(I), shortK = [F.water < F.n + MEAL_SPARE ? 'wasser' : '', F.food < F.n + MEAL_SPARE ? 'essen' : ''].filter(Boolean), urgent = b => shortK.some(k => makesK(b.kind, k)), roofNeed = roofless(I);
   // a site called with the conch comes first of all, and always gets its builders, even beyond the usual number of sites
   const rank = b => b.prio ? -1 : urgent(b) ? 0 : b.kind === 'haus' && roofNeed ? 1 : 2;
-  const all = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant).sort((a, b) => rank(a) - rank(b) || a.id - b.id), lim = builders(I) + all.filter(q => q.prio).length;   // a called site comes on top, it does not stop one already worked
+  const all = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant && !q.unpaid).sort((a, b) => rank(a) - rank(b) || a.id - b.id), lim = builders(I) + all.filter(q => q.prio).length;   // a called site comes on top, it does not stop one already worked
   const want = all.slice(0, lim).map(b => [b, SITE_CREW]);
   const yardB = I.yard && I.buildings.find(b => b.kind === 'werft' && !b.bt); if (yardB) want.push([yardB, YARD_CREW]);
   let yard = 0;

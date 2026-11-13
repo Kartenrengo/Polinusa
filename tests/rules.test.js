@@ -356,6 +356,12 @@ const r = await p.evaluate(()=>{
       settleFrom(s); const refused = !T.settled; s.cargo = {...costOf('haus', T)}; const lack = Object.keys(hutLack(s, T)).length;
       mana = m0; ships.splice(ships.indexOf(s), 1);
       want(refused && lack === 0, 'settle: a village is founded without wood for its first house'); } }
+    // what a storm wrecked is built anew only with wood and fronds from the store
+    { const H = isl('heimat'), keepSt = {...H.stock}, h = homesOf(H).find(q => !q.bt); if (h){ H.stock.holz = 0; H.stock.dach = 0;
+      h.bt = 5; rebuildCost(H, h); H.staff = null; const waits = !!h.unpaid && !staffOf(H).sites.includes(h);
+      Object.assign(H.stock, {holz:10, dach:10}); payRebuilds(H); const paid = !h.unpaid && H.stock.holz < 10;
+      delete h.bt; delete h.unpaid; H.stock = keepSt; H.staff = null;
+      want(waits && paid, 'storm: a wrecked house is built anew without wood'); } }
     const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
     want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}
