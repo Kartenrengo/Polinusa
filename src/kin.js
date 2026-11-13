@@ -146,9 +146,10 @@ function storyTick(I){
     if (stageOf(p) === 'old' && (p.ev || []).length && !p.ev.some(e => e[1] === 'alt')) lifeEvent(p, 'alt');
   }
 }
-/* ---------- daughter villages run themselves. Every village but the first is led by its elders (I.rat, on by default;
-   the overview can hand it back): once a minute they do what their own advice says, as a player would: build one thing
-   at a time, tie the roofs before a storm, take in families, give houses a craft, and let houses rise by themselves.
+/* ---------- the elders of a daughter village step in only when it is in need (I.rat, on by default for every village
+   but the first; the overview turns it off or on): once a minute, when water or food will not last until the morning,
+   people sleep without a roof or a storm comes, they build the harvest house or a place for food, a hut, tie the roofs or
+   call the rain. Everything else the player builds.
    And at every dawn a daughter sends a small canoe to the mother village with what it has to spare (packTick). */
 const ELDERS = {every:30}, PACK = {max:8, from:.6, keep:.45, mother:.85};
 const SPEC_GOODS = new Set(Object.keys(SPEC_OF_KIND).map(q => KINDS[q].prod).filter(Boolean));   // what only special ground makes
@@ -172,20 +173,16 @@ function eldersBuild(I, kind){
 }
 function eldersTick(I, force = false){
   if (!eldersOn(I) || (!force && tick % ELDERS.every !== 7)) return;
-  I.autoUp = true; if (I.handWork) I.handWork = false;
-  if (!I.ratSaid && !awayQuiet){ I.ratSaid = true; note(`Der Rat von ${I.name} führt das junge Dorf. Unter Übersicht, „Insel“, kannst du es selbst führen.`); }
-  const A = adviceOf(I) || {};
-  if (A.tie){ tieRoofs(I); return; }
-  if (A.immig){ const s = ships.find(q => q.id === A.immig); if (s && s.immig) immigAnswer(s, true, true); return; }
-  if (A.rain && !rainState(I)){ rainDance(I); return; }   // a dance it cannot hold does not stop the rest
-  // a young village first needs its harvest house, then water and food; only then what the advice says
-  { const has = k => I.buildings.some(b => b.kind === k), F = mealFore(I);
-    if (!has('ernte')){ eldersBuild(I, 'ernte'); return; }
-    if (F.water < F.n + 2 && !I.river && I.buildings.filter(b => b.kind === 'ernte').length < 2 && eldersBuild(I, 'ernte')) return;
-    if (F.food < F.n + 2 && !has(foodBuild(I)) && eldersBuild(I, foodBuild(I))) return; }
-  if (A.build && (A.urgent || I.pop >= 8) && eldersBuild(I, A.build)) return;
-  // nothing urgent: room for one more family when the meal reaches everyone
-  if (!roofless(I) && surplus(I, needsOf(I).list) && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind)) && homesOf(I).every(b => famOfHome(I, b))) eldersBuild(I, 'haus');
+  if (!I.ratSaid && !awayQuiet){ I.ratSaid = true; note(`Der Rat von ${I.name} hilft dem jungen Dorf nur in der Not: Wasser, Essen, Dächer. Alles andere baust du.`); }
+  const A = adviceOf(I) || {}, F = mealFore(I), has = k => I.buildings.some(b => b.kind === k);
+  if (A.tie){ tieRoofs(I); return; }   // a storm is coming: the roofs
+  if (A.rain && !rainState(I)){ rainDance(I); return; }   // no water: the rain dance (one it cannot hold does not stop the rest)
+  // no water or food for the next morning: the harvest house, a second one for green nuts, a place for food
+  if (!has('ernte') && (F.water < F.n + 2 || F.food < F.n + 2)){ eldersBuild(I, 'ernte'); return; }
+  if (F.water < F.n && !I.river && I.buildings.filter(b => b.kind === 'ernte').length < 2 && eldersBuild(I, 'ernte')) return;
+  if (F.food < F.n && !has(foodBuild(I)) && eldersBuild(I, foodBuild(I))) return;
+  // people sleeping without a roof: one hut
+  if (roofless(I) && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind))) eldersBuild(I, 'haus');
 }
 /* what a daughter can spare: goods it has plenty of, the ones the mother lacks first; never food or water it will need
    itself tomorrow morning, never fuel for its own night fires */

@@ -1674,20 +1674,20 @@ Der Stil bleibt: flache Farben, feine Tuschelinien, Figuren ohne Arme und Beine.
   liest das schon beim Setzen. „Ohne Einführung“ steht nur bei den ersten Aufgaben. Die Hilfe spricht von Kacheln statt
   Knoten und erklärt das Gesicht oben.
 
-## Tochterdörfer führen sich selbst (seit Version 79)
+## Der Rat in der Not und Kanus zwischen den Dörfern (seit Version 79)
 
-Jedes Dorf außer dem ersten führt **sein Rat**. Einmal in der Minute tut er, was ein umsichtiger Spieler täte: erst das
-Erntehaus, dann Wasser und Essen, dann was der Rat des Dorfes vorschlägt, immer nur eine Baustelle zugleich und keinen
-Platz, für den niemand frei ist oder der schon still steht. Er bindet vor dem Sturm die Dächer, ruft den Regen, nimmt
-Familien auf, gibt Häusern ein Hauswerk und lässt Häuser von selbst ausbauen; reicht es, baut er eine Hütte mehr. Das läuft
-auch, während ihr fort seid.
+In jedem Dorf außer dem ersten hilft **der Rat in der Not** (seit Version 80; in Version 79 führte er das ganze Dorf, das
+nahm zu viel aus der Hand). Einmal in der Minute schaut er nach: Reicht Wasser oder Essen nicht bis zum Morgen, baut er
+das Erntehaus, ein zweites für grüne Nüsse oder einen Platz für Essen; schlafen Leute ohne Dach, eine Hütte; kommt ein
+Sturm, bindet er die Dächer; fehlt Regen, ruft er ihn. Immer nur eine Baustelle, nie einen Platz, für den niemand frei ist.
+**Alles andere baust du:** Wachsen, Ausbau, Hauswerk, Werkstätten. In der Übersicht unter „Insel“ steht „Rat in der Not“
+oder „Ohne Rat“; ein Tipp schaltet ihn um, auch in der Mutterstadt.
 
 **Kanus zwischen Mutter und Töchtern.** Jeden Morgen schickt ein Tochterdorf ein kleines Kanu zur Mutter mit dem, was es
 übrig hat (bis 8 Stück; zuerst, was der Mutter fehlt, und die feinen Dinge der besonderen Böden; nie Wasser, nie Essen
 oder Brennstoff, die es selbst braucht). Solange eine Tochter klein ist (unter 15 Menschen), hilft die Mutter ihr am
 Morgen mit Holz, Wedeln, Wasser und Essen aus ihrem Überfluss (bis 16 Stück). Die Kanus fahren sichtbar; die Waren gehen
-erst bei der Ankunft vom einen ins andere Lager. In der Übersicht unter „Insel“ steht, wer das Dorf führt, was der Rat
-zuletzt baute und was das letzte Kanu brachte; ein Tipp auf „Selbst führen“ gibt das Dorf in deine Hand.
+erst bei der Ankunft vom einen ins andere Lager. Dort steht auch, was das letzte Kanu brachte.
 
 ## Menschen
 

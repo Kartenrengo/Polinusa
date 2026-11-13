@@ -375,7 +375,7 @@ const r = await p.evaluate(()=>{
       settleFrom(s); const refused = !T.settled; s.cargo = {...costOf('haus', T)}; const lack = Object.keys(hutLack(s, T)).length;
       mana = m0; ships.splice(ships.indexOf(s), 1);
       want(refused && lack === 0, 'settle: a village is founded without wood for its first house'); } }
-    // a daughter village is led by its elders: they build its harvest house first, the mother helps it with wood and
+    // the elders of a daughter village help only in need: without water they begin the harvest house; the mother helps with wood and
     // fronds, and it sends what it has plenty of to the mother; the player can take the lead back
     { const T = islands.find(J => !J.settled && !J.clan && !J.treasure), H = isl('heimat'); if (T){ const s = makeShip('oc', H), m0 = mana; s.port = T.id; s.people = SETTLE.people; s.cargo = {...costOf('haus', T), nahrung:6}; mana = 999;
       settleFrom(s); mana = m0; ships.splice(ships.indexOf(s), 1);
@@ -383,12 +383,13 @@ const r = await p.evaluate(()=>{
       if (T.settled){ T.stock.holz = 0; T.stock.dach = 0; const keepH = {...H.stock}; Object.assign(H.stock, {holz:30, dach:30, schnur:2});
         const g = helpOf(H, T); want(g.holz > 0 && g.dach > 0, `elders: the mother sends no wood and fronds to a young village: ${JSON.stringify(g)}`);
         packGive(H, T, g, true); want(T.stock.holz > 0 && T.helps === 1, 'elders: the help does not arrive');
-        Object.assign(T.stock, {holz:10, dach:10}); T.staff = null; eldersTick(T, true);
+        Object.assign(T.stock, {holz:10, dach:10, wasser:0}); T.staff = null; T._fore = null; eldersTick(T, true);
         want(T.buildings.some(b => b.kind === 'ernte' && b.bt), `elders: no harvest house begun: ${T.buildings.filter(b => b.bt).map(b => b.kind)}`);
         T.stock.schnur = storeCap(T); const P = packOf(T, H); want(P.schnur > 0, `elders: a daughter with a full store sends nothing: ${JSON.stringify(P)}`);
         const n0 = H.stock.schnur; packGive(T, H, P); want(H.stock.schnur > n0 && H.packs >= 1, 'elders: the package does not reach the mother');
-        openSheet('needs', {tab:'insel'}); active = T.id; renderSheet(); want(/Der Rat führt/.test($('sheetBody').textContent), 'elders: the overview does not say who leads');
-        $('sheetBody').querySelector('[data-act=rat]').click(); want(!eldersOn(T) && T.rat === false, 'elders: the lead cannot be taken back');
+        openSheet('needs', {tab:'insel'}); active = T.id; renderSheet(); want(/Rat in der Not/.test($('sheetBody').textContent), 'elders: the overview does not say the elders help');
+        $('sheetBody').querySelector('[data-act=rat]').click(); want(!eldersOn(T) && T.rat === false, 'elders: the elders cannot be turned off');
+        { const n = T.buildings.length; T.rat = true; Object.assign(T.stock, {wasser:20, nahrung:20}); T._fore = null; eldersTick(T, true); want(T.buildings.length === n, 'elders: the elders build though nothing is wanting'); }
         active = 'heimat'; closeSheet(); H.stock = keepH; T.rat = undefined; } } }
     // what a storm wrecked is built anew only with wood and fronds from the store
     { const H = isl('heimat'), keepSt = {...H.stock}, h = homesOf(H).find(q => !q.bt); if (h){ H.stock.holz = 0; H.stock.dach = 0;
