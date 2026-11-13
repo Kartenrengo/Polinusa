@@ -61,6 +61,39 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
 
+## Plan: Jede Insel hat eine Gabe (noch nicht gebaut)
+
+**Ziel:** Man gründet ein Dorf, weil die Insel etwas kann, was die Heimat nicht kann, und man merkt es gleich im ganzen
+Clan, nicht erst bei der Häuptlingsfamilie.
+
+**Was es schon gibt:** vier besondere Böden (Rote Erde, Feuchte Hänge, Kegelschnecken, Feiner Pandanus), Obsidian auf
+Vulkanen, drei Schatzinseln (nur per Kanu). Ein Drittel der Inseln hat nichts. Die Böden zählen erst für die
+Häuptlingsfamilie, also spät.
+
+1. **Gaben festlegen** (`data.js`): Jede Gabe hat Inselart, Gebäude, Ware und einen Nutzen für alle Dörfer.
+   - Obsidian (Vulkan): Klingen; Kanubau und Schnitzen +25 %, das Tatau braucht Klingen.
+   - Kegelschnecken (Atoll): Armringe; Brautgabe, Hochzeiten mit Clans gelingen, mehr Zuzug.
+   - Feiner Pandanus (Atoll): Segelmatten; alle Kanus +20 % schneller. Feine Matten weiter erst ab Hawaiki.
+   - Rote Erde (hoch): Kurkuma; Feste und Tatau bringen mehr Ansehen.
+   - Feuchte Hänge (hoch): Taro dort +50 %; Kava weiter erst ab Hawaiki.
+   - neu: Vogelfelsen (klein): Eier und Federn; Navigatoren lernen schneller, Zeichen im Nebel reichen weiter.
+   - neu: Schildkrötenstrand (Atoll): Proviant in der Saison; die große Fahrt braucht weniger Vorrat.
+2. **Welt** (`world.js`): jede Insel außer der Heimat genau eine Gabe; in den ersten zwei Ringen mindestens drei
+   verschiedene; alte Spielstände behalten ihre Zuordnung (neue Weltversion).
+3. **Wirkung** (`game.js`): Der Nutzen gilt, solange ein eigenes Dorf dort das Gebäude betreibt. Per Handel kommt nur die
+   Ware. Gründen gibt einmal Ansehen und den Gründer-Ahn in der Chronik.
+4. **Oberfläche:** Bild der Gabe unter dem Inselnamen; Inseltafel „Ein Dorf hier gibt allen Dörfern …“ mit „Siedler
+   schicken“; Übersicht „Gaben des Clans“ als Raster (gehalten, bekannt, unbekannt); Kundschafter melden neue Gaben.
+5. **Rat und Weg des Dorfes:** „Dorf auf Kula gründen: Obsidian“, sobald Kanu und Leute da sind; Knoten „erste Gabe“
+   und „drei Gaben“.
+6. **Bot und Tests:** Der Bot gründet gezielt auf Gaben-Inseln (Maß: erste Gabe meist vor Minute 60); ein Test je Gabe
+   (an mit Dorf, aus ohne); Daten-Test; Handy-Test für Inseltafel und Raster.
+7. **README** mit belegt und vermutet: Obsidian aus Talasea weit gehandelt (belegt), Obsidian-Werkzeuge fürs Tatau
+   (belegt), Schildkröten und Seevögel als Essen (belegt, Knochenfunde), Pandanus-Segel (spätere Berichte), Boni als
+   Spielregeln.
+
+**Offen zu entscheiden:** Nutzen nur mit eigenem Dorf? Die zwei neuen Gaben dazu? Alte Spielstände unverändert?
+
 ## Offen aus der Runde „Nachtfeuer und Zufriedenheit“ (Version 77)
 
 - **Zufriedenheit abstimmen:** Die Werte (Start 72, Hunger −20, Kälte −12, viel Arbeit −15 …) sind ein erster Wurf.
