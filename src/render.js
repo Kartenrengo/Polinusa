@@ -1088,10 +1088,11 @@ function drawPeople(c, v, now){
       c.restore(); continue;
     }
     const up = CLIMB_FX.has(w.fx) && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
-    const bob = w.moving && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = w.moving && !reduced && !up ? Math.sin(w.phase) * .05 : 0;
+    const P = walkerPose(w, now, up), dir = w.left ? -1 : 1;
+    const bob = P ? P.bob : w.moving && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = P ? P.rot + P.lean * dir : w.moving && !reduced && !up ? Math.sin(w.phase) * .05 : 0;
     // up at the crown a nut drops now and then
     if (up > 12 && !reduced){ const f = (now / 900 + w.x) % 1; c.fillStyle = '#7A5434'; c.beginPath(); c.arc(w.x + 3, w.y - up - 2 + f * (up + 1), .9, 0, TAU); c.fill(); }
-    c.save(); c.translate(w.x, w.y + bob - up); if (rot) c.rotate(rot); if (w.left) c.scale(-1, 1);
+    c.save(); c.translate(w.x, w.y + bob - up); if (rot) c.rotate(rot); if (P ? P.sx !== 1 : w.left) c.scale(P ? P.sx : -1, 1);
     // someone sitting on a mat in front of a house; children are smaller
     if (w.sit && (!w.moving || w.busy)){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
     if (w.child) c.scale(.7, .7);
@@ -1102,13 +1103,15 @@ function drawPeople(c, v, now){
     const at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3, show = (at || w.dance || w.hop || w.cheer) && w.fx && w.fx[0] !== '~';
     w._sq = 0; const ln = show && LEAN[w.fx] ? LEAN[w.fx](reduced ? .35 : now / 1000 + (w.x % 7), w, now) : 0; w._ln = ln;
     if (ln){ c.save(); c.rotate(ln); if (w._sq) c.scale(1, w._sq); }
-    blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
+    if (P) drawWalkerBody(c, w, P); else blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
     const tool = w.old ? 'stab' : !w.carry && w.job && !(at && NOTOOL.has(w.fx)) && w.job.tool;
-    // at work the adze and the digging stick swing
+    // at work the adze and the digging stick swing with the stroke (workBeat); the old one's staff swings with the step
+    const stab = P && tool === 'stab' && P.stab; if (stab){ c.save(); c.translate(1.9, -7.4); c.rotate(stab); c.translate(-1.9, 7.4); }
     if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? workBeat(w, now).sw * .4 : 0; if (sw){ c.save(); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
+    if (stab) c.restore();
     if (ln) c.restore();
     if (show) workFx(c, w, now);
-    if (pole) poleLoads(c, w); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag) blit(c, 'load|' + w.carry, LOADS[w.carry]);
+    if (pole) poleLoads(c, w, P ? P.swing : 0); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag){ if (P) headLoad(c, w, P); else blit(c, 'load|' + w.carry, LOADS[w.carry]); }
     if (w.busy && w.job && w.job.type === 'wade'){ c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); }
     // who works at the selected place, or the one you tapped: a small mark over the head
     if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
@@ -1217,9 +1220,62 @@ function drawFalls(c, v, now){
 /* Carrying, two ways: baskets on the head, or two on a pole across the shoulder (as on the islands with heavy loads of taro
    and nuts); a builder drags a log behind on a rope, the dust rising where it scrapes */
 const POLE_LOADS = new Set(['taro', 'frucht', 'nuss', 'eier', 'muschel', 'stein', 'obsidian']);
-function poleLoads(c, w){
+/* ---------- the bodies, close up: two halves (wrap, and torso with head) that move a little against each other. Far away the
+   whole figure is one bitmap as before. */
+const BODY_Z = 1.6, WAIST = 3.9, FINE_MAX = [0, 14, 28];   // how many people a frame get the fine body, by drawing quality
+let fineFrame = -1, finePeople = 0;
+function walkerPose(w, now, up){
+  if (reduced || cam.z < BODY_Z || up || !quality) return null;   // quality 0 is a slow device: one bitmap per person as before
+  if (fineFrame !== frameNo){ fineFrame = frameNo; finePeople = 0; }
+  if (++finePeople > FINE_MAX[quality]) return null;
+  const sd = w._sd ?? (w._sd = Math.random()), mv = !!w.moving, left = !!w.left;
+  const P = w._pose || (w._pose = {}); P.sx = left ? -1 : 1; P.bob = P.rot = P.lean = P.skew = P.upDy = P.upRot = P.ldRot = P.stab = P.swing = 0; P.breath = 1; P.blink = false;
+  // turning: over about 150 ms the figure goes through a narrow width instead of flipping
+  if (w._tl === undefined || now - (w._seen || 0) > 600) w._tl = left;
+  w._seen = now;
+  if (w._tl !== left){ w._tl = left; if (now - (w._turnAt || -1e9) > 400) w._turnAt = now; else w._turnAt = 0; }
+  const tq = w._turnAt ? (now - w._turnAt) / 150 : 1;
+  if (tq < 1){ const e = tq * tq * (3 - 2 * tq), x = (left ? -1 : 1) * (2 * e - 1); P.sx = Math.abs(x) < .12 ? (x < 0 ? -.12 : .12) : x; }
+  if (w._wm && !mv) w._stopAt = now;
+  w._wm = mv;
+  const at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3, plain = at || w.dance || w.hop;
+  if (mv){
+    const ph = w.phase * (w.old ? .8 : 1), s = Math.sin(ph), a = Math.abs(s);
+    P.bob = -a * (w.old ? .45 : w.child ? .95 + .4 * Math.cos(ph / 2) : .7);   // children skip: every other step is higher
+    P.rot = s * (w.old ? .03 : .05);
+    if (!plain){
+      const d = Math.sin(ph - .6);
+      P.lean = w.old ? .07 : .045; P.skew = s * (w.old ? .07 : .1);
+      P.upDy = .3 * (1 - Math.abs(d)); P.upRot = d * .025; P.ldRot = -d * .07;
+      if (w.old) P.stab = -s * .2;
+      P.swing = Math.sin(ph - 1) * .12;
+    }
+  } else {
+    P.breath = 1 + Math.sin(now / 1300 + sd * 20) * .015;
+    if (((now + sd * 9000) % (3200 + sd * 2600)) < 120) P.blink = true;
+    const gc = 8000 + sd * 4000, gq = ((now + sd * 5000) % gc) / 1100;
+    if (gq < 1) P.upRot = Math.sin(Math.PI * gq) * .07 * ((((now + sd * 5000) / gc) | 0) % 2 ? 1 : -1);
+  }
+  const sq = w._stopAt ? (now - w._stopAt) / 280 : 1;
+  if (sq < 1 && !mv) P.upDy += .45 * Math.sin(Math.PI * sq);
+  return P;
+}
+function drawWalkerBody(c, w, P){
+  const K = w.look + (w.old ? 'o' : '');
+  c.save(); if (P.skew){ c.translate(0, -WAIST); c.transform(1, 0, P.skew, 1, 0, 0); c.translate(0, WAIST); }   // the wrap sways around the waist
+  blit(c, 'figl|' + K, () => figureArt(w.look, w.old, 'low')); c.restore();
+  c.save(); c.translate(0, -WAIST); if (P.upRot) c.rotate(P.upRot); if (P.breath !== 1) c.scale(1, P.breath); c.translate(0, WAIST + P.upDy);
+  blit(c, 'figu|' + K, () => figureArt(w.look, w.old, 'up'));
+  if (P.blink) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
+  c.restore();
+}
+/* a load on the head follows the upper body and sways against the step */
+function headLoad(c, w, P){
+  c.save(); c.translate(0, -WAIST); c.rotate(P.upRot + P.ldRot); c.translate(0, WAIST + P.upDy); blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore();
+}
+function poleLoads(c, w, sw = 0){
   stroke(c, new Path2D('M-5.2-7.9L5.2-7.3'), '#2B1D14', 1, null, 'round'); stroke(c, new Path2D('M-5.2-7.9L5.2-7.3'), '#9C7246', .5, null, 'round');
-  for (const dx of [-4.4, 4.4]){ stroke(c, new Path2D(`M${dx}-7.6L${dx}-5.4`), '#6B4428', .3); c.save(); c.translate(dx, 4.36); c.scale(.8, .8); blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore(); }
+  for (const dx of [-4.4, 4.4]){ stroke(c, new Path2D(`M${dx}-7.6L${dx}-5.4`), '#6B4428', .3); c.save(); if (sw){ c.translate(dx, -7.6); c.rotate(sw); c.translate(-dx, 7.6); } c.translate(dx, 4.36); c.scale(.8, .8); blit(c, 'load|' + w.carry, LOADS[w.carry]); c.restore(); }
 }
 function dragLog(c, w, now){
   stroke(c, new Path2D('M-1.2-4.4L-3.6-3.4'), '#B08048', .35);   // the rope
