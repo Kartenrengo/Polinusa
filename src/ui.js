@@ -287,6 +287,8 @@ function showPlaceBar(){
   const pf = mode === 'move' ? '' : miniFlow(I, K);
   $('placeFlow').innerHTML = pf; $('placeFlow').hidden = !pf;
   $('placeInfo').textContent = mode === 'move' ? 'Ziehen oder woanders hintippen.' : pf ? `${facts[0].toUpperCase() + facts.slice(1)}.` : `${facts[0].toUpperCase() + facts.slice(1)}. ${K.info}`;
+  // a workplace nobody is free for stays empty: say so before it is built, not after
+  if (mode !== 'move' && K.crew && !K.craft && !staffOf(I).free) $('placeInfo').textContent += ' Gerade ist niemand frei: Der Platz bleibt leer, bis eine Familie mehr da ist.';
   $('placeIc').setAttribute('viewBox', K.vb); $('placeIc').innerHTML = iconMarkup(placing.kind);
   $('placeOk').textContent = mode === 'move' ? 'Hier hin' : 'Bauen'; $('placeOk').disabled = false;
   $('bottom').hidden = true; $('place').hidden = false; measure();
@@ -315,6 +317,7 @@ function confirmPlace(){
 
 /* ---------- sheets */
 function openSheet(kind, data){
+  closeNews();   // a sheet covers the map; the news would hang over it
   if (kind !== 'ship') endSteer(); sliding = false; sheetKind = kind; sheetData = data;
   const el = $('sheet'); if (el.hidden && !reduced){ el.classList.add('opening'); clearTimeout(el._op); el._op = setTimeout(() => el.classList.remove('opening'), 700); }
   el.hidden = false; renderSheet(); measure();
@@ -751,7 +754,7 @@ function vitalLine(I){
 function storeMarkup(I){
   let h = head(`Lager auf ${I.name}`, `${icon('haus')} ${storeCap(I)} je Ware`) + storeTiles(I);
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full' && b.idle.why !== 'grow');
-  if (idle.length) h += `<div class="chips stillrow"><span class="state out">steht still</span>${idle.slice(0, 8).map(b => `<button class="chip way" type="button" data-act="goto" data-b="${b.id}" aria-label="${KINDS[b.kind].n}: ${b.idle.text}">${bIcon(b.kind)}${KINDS[b.kind].n}</button>`).join('')}</div>`;
+  if (idle.length) h += `<div class="chips stillrow"><span class="state out">steht still</span>${idle.slice(0, 8).map(b => `<button class="chip way" type="button" data-act="goto" data-b="${b.id}" aria-label="${KINDS[b.kind].n}: ${b.idle.text}">${bIcon(b.kind)}${KINDS[b.kind].s}<small>${shortWhy(b.idle)}</small></button>`).join('')}</div>`;
   return h;
 }
 /* the tiles of the store, for the store sheet and the village centre: each good with its name under it; tap it to see who
@@ -1072,8 +1075,8 @@ function renderSheet(){
   } else if (sheetKind === 'intro'){
     const first = sheetData && sheetData.first;
     h += head(first ? 'Land in Sicht' : 'So geht es', first ? `Euer Ahnenkanu ist auf ${isl('heimat').name} gelandet.` : '');
-    if (first) h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Folge dem Finger.</li><li>${icon('haus')}Tippe ein Haus an.</li><li>${knotIc}Alle Knoten fest: Das Haus wird ausgebaut.</li></ul>`;
-    else h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Unten der nächste Schritt. Antippen zeigt den Weg.</li><li>${icon('haus')}Haus antippen: Familie, Knoten, Ausbau.</li><li>${knotIc}Alle Knoten fest: Ausbau.</li><li>${icon('pop')}Bewohnerzahl oben: alles auf einen Blick.</li><li>${bIcon('haus')}Bauen: Gebäude wählen, auf Land tippen.</li><li>${icon('horn')}Vorrang: Leute kommen sofort.</li><li>${icon('einbaum')}Leere Hütte: Eine Familie kommt im Kanu.</li><li>${icon('kind')}Kinder kommen im Familienhaus.</li></ul>`;
+    if (first) h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Folge dem Finger.</li><li>${icon('haus')}Tippe ein Haus an.</li><li>${knotIc}Alle Kacheln grün: Das Haus kann ausgebaut werden.</li></ul>`;
+    else h += `<ul class="help pics"><li><span class="fing">${FINGER_SVG}</span>Unten der nächste Schritt. Antippen zeigt den Weg.</li><li>${icon('haus')}Haus antippen: Familie, was sie braucht, Ausbau.</li><li>${knotIc}Alle Kacheln grün: Ausbau.</li><li>${icon('pop')}Bewohnerzahl oben: alles auf einen Blick.</li><li>${icon('idle')}Gesicht oben: wie zufrieden alle sind; antippen zeigt, wem es schlecht geht.</li><li>${bIcon('haus')}Bauen: Gebäude wählen, auf Land tippen.</li><li>${icon('horn')}Vorrang: Leute kommen sofort.</li><li>${icon('einbaum')}Leere Hütte: Eine Familie kommt im Kanu.</li><li>${icon('kind')}Kinder kommen im Familienhaus.</li></ul>`;
     h += `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="close">Los</button></div>`;
   } else if (sheetKind === 'quest'){
     h += questSheet();

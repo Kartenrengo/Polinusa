@@ -564,6 +564,7 @@ button.cost::after{content:"+";margin-left:3px;font-weight:800}
 .tile .fill{position:absolute;left:0;bottom:0;height:4px;background:repeating-linear-gradient(-55deg,#3E7A3A 0 3px,#5E9440 3px 5px)}
 .tile.down .fill{background:var(--ochre)}
 .stillrow{align-items:center;margin-top:6px}
+.stillrow .chip small{margin-left:5px;font:600 11px var(--font-ui);color:var(--muted)}
 .chips.picks .chip{display:inline-flex;align-items:center;gap:4px;padding-left:6px}
 .chips.picks .chip .ic{width:17px;height:17px}
 .chip.auto{box-shadow:0 0 0 2px var(--ok)}

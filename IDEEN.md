@@ -61,38 +61,26 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
 
-## Plan: Jede Insel hat eine Gabe (noch nicht gebaut)
+## Plan: Ein Netz von Dörfern, das die Mutterstadt hochzieht (noch nicht gebaut)
 
-**Ziel:** Man gründet ein Dorf, weil die Insel etwas kann, was die Heimat nicht kann, und man merkt es gleich im ganzen
-Clan, nicht erst bei der Häuptlingsfamilie.
+Neu sind nur 1 Ware (Segelmatten) und 2 Orte (Vogelfelsen, Schildkrötenstrand); alles andere gibt es schon und bekommt
+einen früheren Sinn. Die Mutterstadt wächst nach oben (Stufen, Zufriedenheit, Häuptlingssitz), die Tochterdörfer liefern.
+Weiter fahren ist ein Ziel, kein Zwang: Das Netz endet bei den Inseln des Morgens.
 
-**Was es schon gibt:** vier besondere Böden (Rote Erde, Feuchte Hänge, Kegelschnecken, Feiner Pandanus), Obsidian auf
-Vulkanen, drei Schatzinseln (nur per Kanu). Ein Drittel der Inseln hat nichts. Die Böden zählen erst für die
-Häuptlingsfamilie, also spät.
+Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 
-1. **Gaben festlegen** (`data.js`): Jede Gabe hat Inselart, Gebäude, Ware und einen Nutzen für alle Dörfer.
-   - Obsidian (Vulkan): Klingen; Kanubau und Schnitzen +25 %, das Tatau braucht Klingen.
-   - Kegelschnecken (Atoll): Armringe; Brautgabe, Hochzeiten mit Clans gelingen, mehr Zuzug.
-   - Feiner Pandanus (Atoll): Segelmatten; alle Kanus +20 % schneller. Feine Matten weiter erst ab Hawaiki.
-   - Rote Erde (hoch): Kurkuma; Feste und Tatau bringen mehr Ansehen.
-   - Feuchte Hänge (hoch): Taro dort +50 %; Kava weiter erst ab Hawaiki.
-   - neu: Vogelfelsen (klein): Eier und Federn; Navigatoren lernen schneller, Zeichen im Nebel reichen weiter.
-   - neu: Schildkrötenstrand (Atoll): Proviant in der Saison; die große Fahrt braucht weniger Vorrat.
-2. **Welt** (`world.js`): jede Insel außer der Heimat genau eine Gabe; in den ersten zwei Ringen mindestens drei
-   verschiedene; alte Spielstände behalten ihre Zuordnung (neue Weltversion).
-3. **Wirkung** (`game.js`): Der Nutzen gilt, solange ein eigenes Dorf dort das Gebäude betreibt. Per Handel kommt nur die
-   Ware. Gründen gibt einmal Ansehen und den Gründer-Ahn in der Chronik.
-4. **Oberfläche:** Bild der Gabe unter dem Inselnamen; Inseltafel „Ein Dorf hier gibt allen Dörfern …“ mit „Siedler
-   schicken“; Übersicht „Gaben des Clans“ als Raster (gehalten, bekannt, unbekannt); Kundschafter melden neue Gaben.
-5. **Rat und Weg des Dorfes:** „Dorf auf Kula gründen: Obsidian“, sobald Kanu und Leute da sind; Knoten „erste Gabe“
-   und „drei Gaben“.
-6. **Bot und Tests:** Der Bot gründet gezielt auf Gaben-Inseln (Maß: erste Gabe meist vor Minute 60); ein Test je Gabe
-   (an mit Dorf, aus ohne); Daten-Test; Handy-Test für Inseltafel und Raster.
-7. **README** mit belegt und vermutet: Obsidian aus Talasea weit gehandelt (belegt), Obsidian-Werkzeuge fürs Tatau
-   (belegt), Schildkröten und Seevögel als Essen (belegt, Knochenfunde), Pandanus-Segel (spätere Berichte), Boni als
-   Spielregeln.
-
-**Offen zu entscheiden:** Nutzen nur mit eigenem Dorf? Die zwei neuen Gaben dazu? Alte Spielstände unverändert?
+1. **Tochterdörfer laufen allein.** Der Rat führt sie; jedes schickt von selbst ein Paket an die Mutter (seine Gabe,
+   Essen, Holz). Erst das macht mehrere Dörfer angenehm statt lästig.
+2. **Jede Insel hat eine Gabe.** Jede Insel außer der Heimat genau eine, nah an der Heimat mindestens drei verschiedene;
+   jede mit etwas Sichtbarem: Pandanus-Segel (Kanus schneller), Obsidian (Tatau), Armringe (Brautgabe), Rote Erde
+   (Feste), Feuchte Hänge (Taro), Vogelfelsen (Navigatoren), Schildkrötenstrand (Proviant). Der Nutzen gilt nur mit
+   eigenem Dorf; Handel bringt nur die Ware. Übersicht „Gaben des Clans“. Alte Spielstände behalten ihre Inseln.
+3. **Die Mutterstadt wächst nach oben.** Hausstufen und Zufriedenheit („Feines aus der Ferne“) brauchen, was die
+   Töchter liefern; am Ende der Häuptlingssitz (wie bisher erst nach der großen Fahrt).
+4. **Druck von innen.** Wird es eng, fragen junge Paare nach einem eigenen Dorf; Gründer werden Ahnen der Chronik.
+   Schwindet der Wald, bringen Kanus Brennholz fürs Nachtfeuer.
+5. **Das Netz als Ziel.** Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
+   Erst ab Hawaiki: ein oberster Häuptling über mehrere Inseln.
 
 ## Offen aus der Runde „Nachtfeuer und Zufriedenheit“ (Version 77)
 

@@ -1668,6 +1668,11 @@ Der Stil bleibt: flache Farben, feine Tuschelinien, Figuren ohne Arme und Beine.
   Sturm, ohne Feuer), grün mit Stern für gute (Fest, Kind, Chronik), sonst die Muschel. Sie fliegen wie bisher in die
   Muschel und bleiben dort.
 - **Tagesrand:** siehe „Eine Leiste, um die der Tag läuft“: hell und dunkel, Sonne und Mond, keine Uhrzeit.
+- **Feinschliff (Version 78):** Die Nachrichten schließen sich, sobald eine Tafel, das Bauen oder die Flotte aufgeht.
+  Im Lager steht bei jedem stillen Platz der Grund („keine Leute“, „Lager voll“ …). Über leeren Plätzen zeigt die Karte
+  höchstens zwei Leute-Blasen je Insel statt einer über jedem. Wer einen Arbeitsplatz setzt, während niemand frei ist,
+  liest das schon beim Setzen. „Ohne Einführung“ steht nur bei den ersten Aufgaben. Die Hilfe spricht von Kacheln statt
+  Knoten und erklärt das Gesicht oben.
 
 ## Menschen
 

@@ -34,7 +34,7 @@ const QUESTS = [
     n:() => Math.min(3, linesWith(isl('heimat'))), of:3, show:{needs:true}, unlock:[], gift:{}},
   {id:'sennit', t:'Sennit drehen', d:'Lass eine Familie Sennit drehen.', why:'Tippe auf ein Haus und wähle unter Hauswerk die Schnur. Sennit wird zu Hause gedreht, auf dem Oberschenkel gerollt. Damit werden Hütten neu gebunden, Netze geknüpft und Kanus gebaut. Die Fasern bringt das Erntehaus mit den reifen Nüssen.',
     n:() => count('heimat', 'schnur'), of:1, show:{build:'schnur'}, unlock:[], gift:{faser:3}},
-  {id:'ausbau', t:'Ein Familienhaus', d:'Baue eine Hütte aus.', get why(){ return `Tippe auf eine Hütte. Dort steht, wer wohnt, die Schnur der Familie mit einem Knoten für jedes Bedürfnis und was zum Ausbau fehlt: alle Knoten fest und ${costText(TIERS[2].cost)}. Ist alles da, schwebt ein Knoten mit Blüte über der Hütte: Ausbauen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
+  {id:'ausbau', t:'Ein Familienhaus', d:'Baue eine Hütte aus.', get why(){ return `Tippe auf eine Hütte. Dort steht, wer wohnt, eine Kachel für jedes Bedürfnis und was zum Ausbau fehlt: alle Kacheln grün und ${costText(TIERS[2].cost)}. Ist alles da, schwebt ein Knoten mit Blüte über der Hütte: Ausbauen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
     n:() => homesOf(isl('heimat')).filter(b => tierOf(b) >= 2).length, of:1, show:{needs:true}, unlock:[], gift:{}},
   {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
     n:() => count('heimat', 'umu'), of:1, show:{build:'umu'}, unlock:[], gift:{steine:3}},
@@ -309,7 +309,7 @@ function questSheet(){
     `<p><b>${dOf(Q)}</b></p><span class="mbar big"><i style="width:${n / Q.of * 100}%"></i></span><details class="more"><summary>Warum</summary><p class="sub">${qn(Q.why)}</p></details>` +
     (Q.unlock.length ? `<p class="sub">Danach neu zum Bauen: ${Q.unlock.map(unlockName).join(', ')}.</p>` : '') +
     `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="close">Später</button><button class="btn primary" type="button" data-act="showq">Zeig es mir</button></span></div>` +
-    `<div class="rowx"><span class="sub">Kennst du das Spiel schon? Ohne Einführung ist gleich alles frei.</span><button class="btn" type="button" data-act="skipq">Ohne Einführung</button></div>`;
+    (quest > 5 ? '' : `<div class="rowx"><span class="sub">Kennst du das Spiel schon? Ohne Einführung ist gleich alles frei.</span><button class="btn" type="button" data-act="skipq">Ohne Einführung</button></div>`);   // only early on; later the menu has it
 }
 /* Without the introduction: every building free at once, no task card; the chronicle and everything else stay */
 function skipTutorial(quiet){

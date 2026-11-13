@@ -1757,11 +1757,11 @@ $('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar
 $('satBtn').addEventListener('click', () => openSheet('sat', {id:active}));
 $('isleName').addEventListener('click', () => { if (landing){ if (!landing.found) openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
-$('tradeBtn').addEventListener('click', () => { closeSheet(); setBar(barMode === 'fleet' ? null : 'fleet'); });
+$('tradeBtn').addEventListener('click', () => { closeSheet(); closeNews(); setBar(barMode === 'fleet' ? null : 'fleet'); });
 $('moreBtn').addEventListener('click', () => setSideOpen(!sideOpen));
 $('compass').addEventListener('click', () => openSheet('calendar'));
 $('compass').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSheet('calendar'); } });
-$('buildBtn').addEventListener('click', () => { closeSheet(); setBar(barMode === 'build' ? null : 'build'); });
+$('buildBtn').addEventListener('click', () => { closeSheet(); closeNews(); setBar(barMode === 'build' ? null : 'build'); });
 $('seasonBtn').addEventListener('click', () => openSheet('calendar'));
 $('placeOk').addEventListener('click', confirmPlace);
 $('placeDone').addEventListener('click', endPlace);

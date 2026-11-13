@@ -1837,8 +1837,9 @@ function drawNeeds(c, v, now){
   const hit = (x, y, go) => bubbleHits.push({x, y:y - 7.5 * s, r:Math.max(8 * s, 12 / cam.z), go});
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
+    let crewN = 0;   // places without people: two bubbles say it; a dozen of the same only clutter the village (the store lists them all)
     for (const b of I.buildings){
-      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || b.idle.why === 'grow' || b.idle.why === 'yam' || (b.idle.why === 'crew' && lod === 'near') || !ptIn(b.x, b.y, v)) continue;
+      if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || b.idle.why === 'grow' || b.idle.why === 'yam' || (b.idle.why === 'crew' && (lod === 'near' || ++crewN > 2)) || !ptIn(b.x, b.y, v)) continue;
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, by = b.y - KINDS[b.kind].hy - 14 + bob, w = b.idle;
       put(c, b.x, by, s, 1, 0, key, art); hit(b.x, by, () => w.why === 'use' && w.k ? needGo(I, w.k, b) : select(b));
     }
