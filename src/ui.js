@@ -54,7 +54,7 @@ function updateHUD(){
   const shown = [...first, ...more].slice(0, I.pop < 15 ? 5 : 7);
   const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span><small class="gl" aria-hidden="true">${shortGN(k)}</small></span>`).join(''); }
   // food and water turn red when the next morning meal will not reach everyone (see mealFore)
-  const F = mealFore(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : false;
+  const F = mealFore(I), cold = fireShort(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : k === 'holz' ? cold : false;   // wood too, when the night fires will not all burn
   for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
   lastStock = {isl:active, ...I.stock, essen:haveOf(I, 'essen')};
@@ -123,24 +123,20 @@ function showWind(){
   dayRing();
   C.querySelector('span b').textContent = 'Wind aus ' + W.ab; C.querySelector('span small').textContent = W.word; C.setAttribute('aria-label', `Wind aus ${W.dir}, ${W.word}`);
 }
-/* the ray round the bar: where in the day we are, and in words for the label (a day is six minutes) */
+/* the rim of the bar: only light (the day, the first DAY_END of the turn from the top) and dark (the night), fixed in the css.
+   A sun walks the light part and turns into a moon at dusk, which walks the dark part and is the sun again at dawn. No time is shown. */
 const DAY_END = .66;   // the share of a day that is light
 let ringAt = 0;
+const dayBlend = p => { const c = x => Math.max(0, Math.min(1, x)); return p < .5 ? c(.5 - p / .08) : Math.min(c((p - (DAY_END - .04)) / .08), c(1 - (p - .96) / .08)); };   // 0 = sun, 1 = moon
 function dayRing(){
-  const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); const T = $('dayTxt'), M = $('dayMark');
-  if (!opts.night){ H.style.background = ''; if (T) T.hidden = true; if (M) M.hidden = true; return; }
-  const p = dayPhase(), night = p >= DAY_END, left = Math.max(0, ((night ? 1 : DAY_END) - p) * DAY_TICKS * TICK / 1000 / Math.max(1, gameSpeed)), deg = p * 360;
-  // the rim: what is behind us is spent (pale), what is still to come shows its colour, gold for the day and blue for the night
-  const col = q => q < DAY_END - .08 ? '#F0C24A' : q < DAY_END ? '#E38B3E' : '#2E3E6C', stops = [];
-  for (const q of [0, DAY_END - .08, DAY_END, 1]) if (q > p) stops.push(`${col(Math.max(p, q - .0001))} ${(q * 360).toFixed(1)}deg`, `${col(q)} ${(q * 360).toFixed(1)}deg`);
-  H.style.background = `conic-gradient(from 0deg, #D9CDB0 0deg, #D9CDB0 ${deg.toFixed(1)}deg, #FFFBE0 ${deg.toFixed(1)}deg, ${col(p)} ${(deg + 5).toFixed(1)}deg, ${stops.join(', ')})`;
+  const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); const M = $('dayMark');
+  if (!opts.night){ if (M) M.hidden = true; H.removeAttribute('data-day'); H.setAttribute('aria-label', 'Wind, Kalender, Nachrichten und Menü'); return; }
+  const p = dayPhase(), night = p >= DAY_END, deg = p * 360, m = dayBlend(p);
   // the sun or the moon rides on the rim, where the ray of the gradient meets it
   if (M){ const r = H.getBoundingClientRect(), w = r.width, h = r.height, a = (deg - 90) * Math.PI / 180, cx = Math.cos(a), cy = Math.sin(a), k = Math.min(cx ? (w / 2) / Math.abs(cx) : 1e9, cy ? (h / 2) / Math.abs(cy) : 1e9);
-    M.hidden = false; M.style.left = (w / 2 + cx * k).toFixed(1) + 'px'; M.style.top = (h / 2 + cy * k).toFixed(1) + 'px'; M.className = night ? 'moon' : 'sun'; }
-  const mm = Math.floor(left / 60), ss = String(Math.floor(left % 60)).padStart(2, '0');
-  if (T){ T.hidden = false; T.textContent = `${night ? 'Nacht' : 'Tag'} noch ${mm}:${ss}`; T.className = night ? 'night' : 'day'; }
+    M.hidden = false; M.style.left = (w / 2 + cx * k).toFixed(1) + 'px'; M.style.top = (h / 2 + cy * k).toFixed(1) + 'px'; M.style.setProperty('--m', m.toFixed(2)); M.className = m < .5 ? 'sun' : 'moon'; }
   H.dataset.day = night ? 'nacht' : 'tag';
-  H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}, noch ${mm} Minuten ${+ss} Sekunden. Wind, Kalender, Nachrichten und Menü`);
+  H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}. Wind, Kalender, Nachrichten und Menü`);
 }
 /* the name under each good in the top row: short, so it fits under its icon */
 const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
@@ -162,12 +158,15 @@ function newsAdd(msg){
   try { localStorage.setItem(newsKey(), JSON.stringify(news)); } catch (e){}
 }
 function loadNews(){ try { const l = JSON.parse(localStorage.getItem(newsKey()) || '[]'); news.length = 0; if (Array.isArray(l)) news.push(...l.filter(n => n && typeof n.msg === 'string').slice(0, NEWS_MAX)); } catch (e){} }
+/* the colour of a message, read from its words: a warning, good news, or plain paper */
+const TOAST_BAD = /fehlt|fehlen|\bohne\b|Sturm|\bfort\b|Hunger|hungert|Durst|verloren|krank|gestorben/i, TOAST_GOOD = /Fest|Kind\b|Chronik|gegründet|geboren/;
+const toastTone = m => TOAST_BAD.test(m) ? 'warn' : TOAST_GOOD.test(m) ? 'good' : '';
 function toast(msg, ms = 2600, keep = true){
   if (awayQuiet) return;
   newsAdd(msg);
   if (newsOpen()){ renderNews(); if (keep) return; }
   else if (keep){ unread++; newsBadge(); }
-  const t = $('toast'); t.textContent = msg; t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
+  const t = $('toast'); t.textContent = msg; t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
   clearTimeout(toastT); toastT = setTimeout(foldToast, ms + 600);
 }
 function foldToast(){
@@ -659,7 +658,7 @@ function personMarkup(){
   const I = sheetData && isl(sheetData.id), p = I && I.people && I.people.find(q => q.id === sheetData.p); if (!p) return '';
   const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
   let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
-  h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.${p.meal ? ` <b class="meal-bad">Heute früh ${p.meal === 3 ? 'ohne Essen und Wasser' : p.meal === 1 ? 'ohne Essen' : 'ohne Wasser'}: ${st === 'adult' ? 'arbeitet langsamer' : 'ist müde'}.</b>` : I.meal ? ' Hat heute früh gegessen und getrunken.' : ''}</p>`;
+  h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.${p.meal ? ` <b class="meal-bad">Heute früh ${p.meal === 3 ? 'ohne Essen und Wasser' : p.meal === 1 ? 'ohne Essen' : 'ohne Wasser'}: ${st === 'adult' ? 'arbeitet langsamer' : 'ist müde'}.</b>` : I.meal ? ' Hat heute früh gegessen und getrunken.' : ''}${p.cold ? ` <b class="meal-bad">Letzte Nacht ohne Feuer: friert.</b>` : ''}${satOfIsle(I).by.has(p.id) ? ` <button class="link" type="button" data-act="satopen">Zufriedenheit ${satOfIsle(I).by.get(p.id)}</button>` : ''}</p>`;
   h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', `Spielt und lernt. ${ageOf(p) >= GATHER.age ? 'Sammelt Brennholz, sobald es einen Herd gibt. ' : 'Ab drei sammelt es Brennholz. '}Mit sechs Jahren arbeitet es mit.`) : st === 'old' ? job ? rowS('pop', `Alt · ${placeName(job)}`, 'Sitzt beim Hauswerk vor dem Haus, halb so schnell wie die Jüngeren, und erzählt dabei von den Ahnen.', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) : rowS('pop', 'Alt', 'Geht nicht mehr aufs Feld. Ein Hauswerk im Haus ihrer Familie gibt ihr noch Arbeit.') :
     rowS(job ? '' : 'idle', job ? `Stammplatz: ${placeName(job)}` : staffOf(I).rest ? 'Freizeit, ohne Stammplatz' : 'Ohne Stammplatz', job ? `${personWork(I, p).includes('·') ? `Gerade ${personWork(I, p).split(' · ')[1]}. ` : ''}${crewAt(I, job) || 0} von ${crewOf(job)} sind dort.` : staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.', '',
       `<span class="chips">${job ? `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>` : ''}<button class="chip" type="button" data-act="jobpick" aria-expanded="${!!sheetData.pick}">${sheetData.pick ? 'Fertig' : job ? 'Ändern' : 'Wählen'}</button></span>`)}</ul>`;
@@ -1200,6 +1199,7 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'immig' && sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); if (sh) immigAnswer(sh, btn.dataset.v === 'yes'); updateHUD(); return; }
   if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
+  if (act === 'satopen'){ openSheet('sat', {id:active}); return; }
   if (sheetKind === 'person' && act === 'jobpick'){ sheetData = {...sheetData, pick:!sheetData.pick}; renderSheet(); return; }
   if (sheetKind === 'person' && act === 'setjob'){ const I = isl(sheetData.id), p = I && (I.people || []).find(q => q.id === sheetData.p), b = findB(+btn.dataset.b), r = chooseJob(I, p, b);
     if (r){ toast(`${p.n}: Stammplatz ${placeName(b)}.${r.swap ? ` ${r.swap.n} tauscht${r.swap.job && r.old ? ` und geht zu ${placeName(r.old)}` : ' und ist jetzt frei'}.` : ''}`, 3200, false); sheetData = {...sheetData, pick:false}; updateHUD(); renderSheet(); save(); checkQuest(); }

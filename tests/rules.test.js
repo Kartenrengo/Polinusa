@@ -89,6 +89,13 @@ const r = await p.evaluate(()=>{
     want(nh > 0 && [...sf.help].every(([b, n]) => n <= crewOf(b) && (sf.crew.get(b) || 0) <= 2 * crewOf(b)), 'helpers: none, or too many at one place');
     want(teamF(KINDS.faeller, KINDS.faeller.crew + 1) > 1 && teamF(KINDS.faeller, 9 * KINDS.faeller.crew) <= 1.5, 'helpers: team factor');
     H.zeal = 0; H.staff = null; const sr = staffOf(H); updateHUD(); want(!sr.help.size && sr.rest && /^\d+$/.test($('satNum').textContent), 'free time: no contentment shown');
+    // contentment: the top bar shows the average; a tap shows the least content person; more free time raises everyone's value
+    { const adult = H.people.find(isAdult); H._sat = null; const a0 = satTick(H).by.get(adult.id); H.zeal = 2; H._sat = null; const a2 = satTick(H).by.get(adult.id);
+      want(a2 < a0, `contentment: much work does not lower it: ${a0} → ${a2}`);
+      adult.meal = 2; H._sat = null; const S = satTick(H); want(S.all[0][0] === adult || S.all[0][1].v <= S.by.get(adult.id), 'contentment: the thirsty one is not among the least content');
+      want(S.all.every(([, t], i, A) => !i || A[i - 1][1].v <= t.v), 'contentment: the list is not sorted'); adult.meal = 0;
+      updateHUD(); $('satBtn').click(); want(sheetKind === 'sat' && /Am wenigsten/.test($('sheetBody').textContent) && $('sheetBody').querySelector('.satbar').getBoundingClientRect().height > 4, 'contentment: the sheet does not show the least content and the band');
+      want(!!$('sheetBody').querySelector('input[type=range]'), 'contentment: no free-time slider on the sheet'); closeSheet(); H._sat = null; }
     H.zeal = 1; H.people = H.people.filter(p => !extra.includes(p)); H.staff = null; }
   // the village centre: the house by the plaza; its sheet shows the village, the store and the family; the rain dance
   { const H = isl('heimat'), cz = centerOf(H), pz = H.buildings.find(b => b.kind === 'platz');
@@ -226,7 +233,16 @@ const r = await p.evaluate(()=>{
     want(/kaputt/.test(roofText(H, hh)), 'roof: no word for a broken roof'); hh.rw = 0;
     // the hearth fire of a family house burns shells or wood
     H.staff = null; want(needsOf(H).list.some(n => n.k === 'brenn'), 'fire: a family house needs no fire');
-    H.stock.schalen = 100; H.stock.holz = 0; H.owe = {...(H.owe || {}), brenn:50}; run(1); want(H.stock.schalen <= 55, `fire: shells not burned: ${H.stock.schalen}`);
+    // the night fire: at dusk every family house burns one fuel, shells first; a house without fuel stays cold and its people work slower next day
+    { const fh = fireHomes(H), nH = fh.length; want(nH > 0, 'fire: no house wants a night fire');
+      Object.assign(H.stock, {schalen:100, reisig:0, holz:0}); fireTick(H); want(H.stock.schalen === 100 - nH && fh.every(b => b.fire) && H.fire.cold === 0, `fire: shells not burned at dusk: ${H.stock.schalen}`);
+      want(!H.people.some(p => p.cold), 'fire: someone is cold though every house burned');
+      Object.assign(H.stock, {schalen:0, reisig:0, holz:0}); fireTick(H); want(H.fire.cold > 0 && fh.every(b => b.fire === false), 'fire: no fuel but no cold house');
+      const cp = H.people.find(p => p.cold && isAdult(p)); want(!!cp, 'fire: nobody is cold without fuel');
+      if (cp){ H._sat = null; want(mealOf(H, cp.id) < 1, 'fire: a cold night does not slow work');
+        want(satOf(H, cp).why.some(w => w.k === 'feuer'), 'fire: a cold night is no reason for discontent'); }
+      const F0 = fireFore(H); want(F0 && F0.n === nH, `fire: forecast counts ${F0 && F0.n} houses, not ${nH}`);
+      Object.assign(H.stock, {schalen:20}); fireTick(H); want(!H.people.some(p => p.cold), 'fire: still cold after a fire'); H._sat = null; }
     select(hh); sheetData = {...sheetData, tab:'haus'}; renderSheet(); want(/Feuer/.test($('sheetBody').textContent), 'fire: no tile for the fire'); closeSheet();
     // a cyclone: announced, the elders say so, a cord bubble over each loose roof; then people go to the roofs and tie them
     Object.assign(H.stock, {schnur:20, faser:20, dach:20, holz:20}); stormWarn(H, false); const S = H.storm;
@@ -327,11 +343,14 @@ const r = await p.evaluate(()=>{
       nutTick(H, NUTS.every * 3); want(e.nuts > 0 && e.nuts <= nutPalms(H, e) * NUTS.keep + 1e-6, `nuts: do not ripen again: ${e.nuts}`); want(nutRate(H, e) > 0 && makeRate(H, 'kokos') <= H.buildings.filter(q => q.kind === 'ernte').reduce((t, q) => t + nutRate(H, q), 0) + 1e-6, 'nuts: more promised than the palms bear');
       e.v = {...e.v}; if (pk) e.v.pick = pk; else delete e.v.pick; }
     want($('hudbar') && $('hudbar').contains($('compass')) && $('hudbar').contains($('menuBtn')) && $('hudbar').contains($('newsBtn')), 'bar: wind, news and menu are not one');
-    opts.night = true; dayRing(); want(/^(Tag|Nacht) noch \d+:\d\d$/.test($('dayTxt').textContent) && !$('dayTxt').hidden && /conic-gradient/.test($('hudbar').style.background), 'bar: the day does not run round it');
-    { const t0 = tick; tick = Math.floor(tick / DAY_TICKS) * DAY_TICKS + 10; dayRing(); const a = $('dayTxt').textContent, m0 = $('dayMark').style.left + $('dayMark').style.top;
-      tick += 60; dayRing(); const b = $('dayTxt').textContent, m1 = $('dayMark').style.left + $('dayMark').style.top;
-      tick = Math.floor(tick / DAY_TICKS) * DAY_TICKS + 120; dayRing(); const c = $('dayTxt').textContent; tick = t0; dayRing();
-      want(a !== b && m0 !== m1 && /^Tag/.test(a) && /^Nacht/.test(c) && $('dayMark').className !== '', 'bar: the sun does not move on, or day and night are not told apart'); }
+    // the rim is light (the day) and dark (the night), no time is written; a sun walks the light part and a moon the dark part
+    opts.night = true; dayRing(); { const bg = getComputedStyle($('hudbar')).backgroundImage, H = $('hudbar');
+      want(!document.getElementById('dayTxt') && !/\d:\d\d/.test(H.getAttribute('aria-label')) && /conic-gradient/.test(bg) && !H.style.background && /^(Tag|Nacht)\./.test(H.getAttribute('aria-label')), 'bar: it shows a time, or the rim has no light and dark part'); }
+    { const t0 = tick, at = k => { tick = Math.floor(tick / DAY_TICKS) * DAY_TICKS + k; dayRing(); const M = $('dayMark'); return {pos:M.style.left + '|' + M.style.top, cls:M.className, m:+M.style.getPropertyValue('--m'), lab:$('hudbar').getAttribute('aria-label')}; };
+      const a = at(5), b = at(40), d = at(120); tick = t0; dayRing();
+      want(a.pos !== b.pos && b.pos !== d.pos && a.cls === 'sun' && b.cls === 'sun' && d.cls === 'moon' && a.m === 0 && d.m === 1 && /^Tag/.test(a.lab) && /^Nacht/.test(d.lab), `bar: the sun does not move on, or is no moon by night (${a.cls} ${b.cls} ${d.cls})`);
+      const dusk = at(Math.round(DAY_END * DAY_TICKS) - 30); want(dusk.m > 0 && dusk.m < 1, 'bar: sun and moon do not blend at dusk'); tick = t0; dayRing();
+      opts.night = false; dayRing(); want($('dayMark').hidden, 'bar: a mark rides on a plain rim'); opts.night = true; dayRing(); }
     { const keep = news.slice(); news.length = 0; newsAdd('Probe: ein Kanu kommt.'); newsAdd('Probe: ein Kanu kommt.'); news.length = 0; loadNews();
       want(news[0] && news[0].msg === 'Probe: ein Kanu kommt.' && news[0].n === 2 && news[0].y >= 1, 'conch: a message is not kept, or a repeat is not counted');
       news.length = 0; news.push(...keep); }

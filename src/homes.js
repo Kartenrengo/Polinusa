@@ -31,7 +31,7 @@ const homeCapMax = (I, b) => TIERS[tierOf(b)].cap;
 const DRY_GRACE = 15;   // ticks a good may be gone before the houses lose the room it gives
 function homeCap(I, b){
   // a need counts as met while the store has some, or this morning's meal and last night's fire reached everyone
-  const M = I.meal, F = I.fire, met = k => k === 'essen' ? M && !M.hungry : k === 'wasser' ? M && !M.thirsty : k === 'brenn' ? F && !F.cold : false;
+  const M = I.meal, F = I.fire, met = k => k === 'essen' ? M && !M.hungry : k === 'wasser' ? M && !M.thirsty : k === 'brenn' ? F && b.fire === true : false;   // this house burned its fire last night
   const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE || met(k), basic = ['essen', 'wasser'].filter(have).length;
   const leak = roofState(b) === 'out' ? 1 : 0;   // under a broken roof one fewer finds a dry place
   if (t === 1) return Math.min(max, 2 + basic) - leak;
@@ -345,6 +345,7 @@ function needOf(I, places){
   if ((I.stock.wasser || 0) < 6 || F.water < F.n + MEAL_SPARE) short.add('wasser');
   if ((I.stock.dach || 0) < 4) short.add('dach');
   if ((I.stock.holz || 0) < 4) short.add('holz');
+  { const Fo = fireFore(I); if (Fo.n && Fo.fuel < Fo.n + 2) for (const k of GROUPS.brenn) short.add(k); }   // the night fires
   const full = b => KINDS[b.kind].picks ? Object.keys(KINDS[b.kind].picks).every(k => (I.stock[k] || 0) >= cap * .75) : (I.stock[prodOfB(b)] || 0) >= cap * .75;
   return b => !b ? 1 : b.boat > 0 || outs(b).some(k => short.has(k)) ? 0 : full(b) ? 2 : 1;   // (a resting place is not in the list: as usual)
 }

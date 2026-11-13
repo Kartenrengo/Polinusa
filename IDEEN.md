@@ -61,6 +61,18 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
    was gerade gut läuft.
 
+## Offen aus der Runde „Nachtfeuer und Zufriedenheit“ (Version 77)
+
+- **Zufriedenheit abstimmen:** Die Werte (Start 72, Hunger −20, Kälte −12, viel Arbeit −15 …) sind ein erster Wurf.
+  Erst das Spielen zeigt, ob das Gesicht zu oft rot ist. Stellschraube: `SAT` in `game.js`.
+- **Mehr Gründe:** Verwandte auf anderen Inseln, ein Todesfall in der Familie, Kava am Abend oder ein schöner Platz vor
+  dem eigenen Haus könnten die Zufriedenheit auch bewegen.
+- **Feuer sehen:** Häuser ohne Feuer bleiben nachts dunkel. Ein kleines Feuer vor dem Haus, um das die Familie sitzt,
+  wäre schöner.
+- **Nachrichten-Farben:** Ob eine Nachricht rot, grün oder neutral ist, folgt aus Wörtern im Text (`toastTone`). Falsch
+  gefärbte Meldungen dort nachtragen.
+- **Sonne über dem Muschel-Zähler:** Die Marke auf dem Tagesrand kann kurz die Zahl an der Muschel verdecken.
+
 ## Offen aus der Runde „Mehr Leben in den Bewegungen“ (Version 76)
 
 - **Blinzeln:** nur eine Hautlinie über den Augen; aus normaler Nähe kaum zu sehen.

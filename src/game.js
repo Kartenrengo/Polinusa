@@ -1365,18 +1365,25 @@ function fireTick(I){
   stats.fire = 1; toast(`Nachtfeuer auf ${I.name}: ${coldFam.size === 1 ? 'Ein Haus bleibt' : `${coldFam.size} Häuser bleiben`} ohne Feuer. Dort frieren die Leute und arbeiten morgen langsamer.`, 4200);
 }
 /* the coming night: fuel by dusk (the store and what comes in until then) against one fire for every house */
-function fireFore(I){
-  const p = ((tick + 30) % DAY_TICKS), left = ((DUSK_AT - p + DAY_TICKS) % DAY_TICKS || DAY_TICKS) / PER_MIN, cap = storeCap(I);
-  const fuel = GROUPS.brenn.reduce((t, k) => t + Math.min(cap, (I.stock[k] || 0) + Math.max(0, makeRate(I, k) - workUse(I, k)) * left), 0);
-  return {n:fireHomes(I).length, fuel:Math.floor(fuel), left};
+function fireFore(I){   // cached and guarded like mealFore: makeRate asks the staff, the staff asks needOf, needOf asks this
+  if (I._ffore && tick - I._ffore.t < 5) return I._ffore.v;
+  const n = fireHomes(I).length;
+  if (I._ffBusy) return I._ffore ? I._ffore.v : {n, fuel:GROUPS.brenn.reduce((t, k) => t + (I.stock[k] || 0), 0), left:0};
+  I._ffBusy = true;
+  try {
+    const p = ((tick + 30) % DAY_TICKS), left = ((DUSK_AT - p + DAY_TICKS) % DAY_TICKS || DAY_TICKS) / PER_MIN, cap = storeCap(I);
+    const fuel = GROUPS.brenn.reduce((t, k) => t + Math.min(cap, (I.stock[k] || 0) + Math.max(0, makeRate(I, k) - workUse(I, k)) * left), 0);
+    return (I._ffore = {t:tick, v:{n, fuel:Math.floor(fuel), left}}).v;
+  } finally { I._ffBusy = false; }
 }
+const fireShort = I => { const F = fireFore(I); return F.n > 0 && F.fuel < F.n; };
 /* ---------- contentment. Every person has a value from 0 to 100: what they had this morning and tonight, the roof over
    them, what their house step wants, room, the village's share of work and free time, a feast, a beautiful village.
    Very content people work a little faster, discontent ones slower (mealOf). The top bar shows the village's average;
    a tap shows the least content person, why, and what helps. */
 const SAT = {base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8};
 const ZEAL_SAT_TXT = ['viel Freizeit', '', 'viel Arbeit'];
-function satOf(I, p, nd){
+function satOf(I, p, nd = needsOf(I)){
   const why = []; let v = SAT.base; const add = (k, d, t) => { if (!d) return; v += d; why.push({k, d, t}); };
   if (p.meal & 1) add('essen', SAT.hungry, 'ohne Essen');
   if (p.meal & 2) add('wasser', SAT.thirsty, 'ohne Wasser');

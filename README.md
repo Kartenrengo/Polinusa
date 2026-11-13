@@ -1366,6 +1366,9 @@ für den Tag, orange zum Abend und blau für die Nacht, und ein heller Strahl st
 ist. So sieht man, wie lange Tag oder Nacht noch dauern (ein Tag sind sechs Minuten). Ohne „Tag und Nacht“ ist der Rand
 einfach braun. Seit Version 74 läuft der Rand sichtbar mit (zweimal in der Sekunde neu gezeichnet): was vorbei ist, wird
 blass, eine kleine Sonne oder ein Mond wandert um die Leiste, und darunter steht die Restzeit in Minuten und Sekunden.
+Seit Version 77 ist der Rand einfacher: **ein heller Teil für den Tag, ein dunkler für die Nacht**, und keine Uhrzeit mehr.
+Eine kleine Sonne läuft den hellen Teil entlang; in der Dämmerung wird sie zum Mond, und der Mond läuft den dunklen Teil
+ab. Am Morgen wird der Mond wieder zur Sonne.
 
 **Weniger leerer Platz:** Die Tafel eines Arbeitsplatzes zeigt den Zustand, „Vorrang“ und „Bleiben“ in einer Zeile, darunter
 links „Braucht“ und „Macht“ und rechts daneben die Leute mit − und +. Der Knöchelwurf passt mit flacher Matte und kurzen
@@ -1439,16 +1442,16 @@ Erde. Ein **Talisman der Matriarchin** im Lager hält einmal alle Dächer. Was e
 und seiner Wedel aus dem Lager** neu gebaut (seit Version 75; vorher gratis). Fehlt das, wartet die Baustelle: Auf ihrer
 Tafel steht „wartet auf Holz und Wedel“ mit den Kacheln, und niemand baut, bis es im Lager ist.
 
-**Herdfeuer und Holzwirtschaft.** Ab dem Familienhaus will jede Familie ein Feuer im Herd: das neue Bedürfnis
-**Feuer**. Es brennt mit **Brennstoff**: Kokosschalen (jede reife Nuss aus dem Erntehaus gibt eine) oder Holz (vom Holzfäller, auf Atollen
+**Herdfeuer und Holzwirtschaft.** Jedes bewohnte Haus will ein Feuer: das Bedürfnis **Feuer** (bis Version 76 erst ab
+dem Familienhaus; seit Version 77 brennt es als **Nachtfeuer**, siehe unten). Es brennt mit **Brennstoff**: Kokosschalen (jede reife Nuss aus dem Erntehaus gibt eine) oder Holz (vom Holzfäller, auf Atollen
 aus Treibholz und Palmholz). Erst brennen die Schalen, die ohnehin übrig sind, dann Brennholz, zuletzt Holz. So zieht
 der Wald jetzt dreifach: Holz zum Bauen, Holz für die Dächer der Familienhäuser, Holz und Schalen für Herd, Erdofen und
 Töpferei. Fehlt Brennstoff, ist die Kachel „Feuer“ rot, und das Familienhaus hat weniger Platz.
 
 **Brennholz sammeln** (seit Version 68). Kinder ab drei Jahren und Alte ohne Hauswerk gehen an den Waldrand (auf
 einem Atoll den Strand entlang), heben dürre Äste auf, brechen sie übers Knie und tragen ein Bündel heim. Das gibt die
-neue Ware **Brennholz**, je Sammler etwa 0,12 pro Minute (auf Atollen etwas weniger). Gesammelt wird erst, wenn es
-einen Herd gibt (ein Familienhaus) oder einen Erdofen oder eine Töpferei. So bleibt das Bauholz des Holzfällers für
+neue Ware **Brennholz**, je Sammler etwa 0,12 pro Minute (auf Atollen etwas weniger). Seit Version 77 sammeln sie von
+Anfang an, bis das Lager voll ist, denn jedes Haus brennt nachts ein Feuer. So bleibt das Bauholz des Holzfällers für
 Häuser und Kanus. In der Übersicht unter „Arbeit“ steht, wie viele sammeln.
 
 ## Ansehen
@@ -1642,6 +1645,30 @@ Der Stil bleibt: flache Farben, feine Tuschelinien, Figuren ohne Arme und Beine.
   Figuren wie bisher, ein mittleres die nächsten 14, ein schnelles 28. Wer „weniger Bewegung“ eingestellt hat, sieht
   alles ruhig wie früher.
 
+## Nachtfeuer, Zufriedenheit, Nachrichten (seit Version 77)
+
+- **Nachtfeuer:** Wie beim Morgenmahl gibt es einen festen Augenblick. Bei Einbruch der Nacht brennt **jedes bewohnte Haus
+  ein Feuer** und verbraucht dafür einen Brennstoff: erst Kokosschalen, dann Brennholz, zuletzt Holz. Häuser mit Feuer
+  leuchten in der Nacht, Häuser ohne bleiben dunkel. Wer ohne Feuer schläft, **friert**: Er arbeitet am nächsten Tag
+  langsamer (85 %), ist unzufrieden, und auf seiner Tafel steht „Letzte Nacht ohne Feuer: friert“. Die Muschel meldet
+  „Nachtfeuer auf Panua: 2 Häuser bleiben ohne Feuer“. Reicht der Brennstoff bis zur Dämmerung nicht für alle Häuser
+  (gerechnet wie beim Morgenmahl: Lager plus was bis dahin dazukommt), wird **Holz oben rot**, die Holzfäller und Sammler
+  bekommen Vorrang, und der Rat sagt **„Brennholz für die Nacht“**. Kinder und Alte sammeln dafür von Anfang an Brennholz.
+- **Zufriedenheit statt Arbeitslosen-Anzeige:** Wer keinen Platz hat, hilft ohnehin mit; ein Zähler für Freie sagt also
+  wenig. Oben steht jetzt ein **Gesicht mit einer Zahl von 0 bis 100**: der Mittelwert aller Menschen der Insel. Jeder
+  Mensch beginnt bei 72. Es zieht ab: ohne Essen oder ohne Wasser am Morgen (je −20), ohne Feuer in der Nacht (−12), ohne
+  Dach (−25), ein kaputtes (−12) oder undichtes Dach (−5), was dem Haus fehlt (−7) oder knapp ist (−2), ein zu volles Haus
+  (−8) und viel Arbeit (−15, bei Alten die Hälfte). Es hilft: viel Freizeit (+8), ein Fest (+10) und ein schönes Dorf
+  (bis +8). Ein Tipp auf das Gesicht zeigt **die am wenigsten zufriedene Person** mit ihren Gründen als rote und grüne
+  Kacheln, bis zu drei Knöpfe, was hilft („Mehr Wasser“, „Zum Haus“), den **Regler Arbeit und Freizeit** für alle und
+  darunter die nächsten vier. Ein Band zeigt, wie viele zufrieden sind, wie viele es so geht und wie viele unzufrieden.
+  Unter 35 arbeitet man etwas langsamer (90 %), ab 85 etwas schneller (105 %).
+- **Nachrichten:** Die schwarzen Kästchen sind jetzt **Streifen aus hellem Rindenbaststoff** mit Tuschekante, einer farbigen
+  Kante oben, einer gezackten unten und einem kleinen Bild: rot mit Warnzeichen für schlechte Nachrichten (fehlt, Hunger,
+  Sturm, ohne Feuer), grün mit Stern für gute (Fest, Kind, Chronik), sonst die Muschel. Sie fliegen wie bisher in die
+  Muschel und bleiben dort.
+- **Tagesrand:** siehe „Eine Leiste, um die der Tag läuft“: hell und dunkel, Sonne und Mond, keine Uhrzeit.
+
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,
@@ -1714,6 +1741,8 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Ein Mahl am Morgen, eine Portion für jeden | **Spielregel.** Aus späteren Berichten kennt man meist ein bis zwei Mahlzeiten am Tag, die Hauptmahlzeit aus dem Erdofen oft am Nachmittag oder Abend; Reste am Morgen. Das Spiel legt das Essen auf den Morgen, damit man sieht, ob es für alle reicht |
 | Ins Atoll nur mit Kanusteg und Einbaum | erschlossen: Riffpässe sind flach und schmal, Einbäume fahren in der Lagune; als Regel für die Zeit angenommen |
 | Herdfeuer und Erdöfen mit Holz und Kokosschalen | Feuerstellen und Erdöfen sind an Lapita-Orten gefunden; Kokosschalen als Brennstoff kennt man aus späterer Zeit |
+| Jedes Haus brennt nachts ein Feuer | Feuerstellen in und bei den Häusern sind gefunden. Dass in jedem Haus nachts eines brennt (Wärme, Rauch gegen Mücken), kennt man aus späteren Berichten; die eine Portion Brennstoff je Haus und Nacht ist eine **Spielregel** |
+| Zufriedenheit als Zahl | **Spielregel**, keine Aussage über die Menschen damals |
 | Kauri-Harz im Treibgut, Talisman der Matriarchin | Kauri-Bäume (Agathis) wachsen in Melanesien und Fidschi, ihr Harz gab es also in der Region; in Fidschi überzog man Töpfe später mit dem Harz des Dakua-Baums. Dass es am Strand antreibt und ein Talisman gegen den Sturm daraus wird, ist **erfunden**, eine Spielidee. Bernstein (Version 67) war ganz erfunden: Aus Lapita-Fundstellen ist keiner bekannt. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
 
 ## Quellen
