@@ -582,8 +582,8 @@ function needsMarkup(I){
   const tab = (sheetData && sheetData.tab) || 'leute', nd = needsOf(I);
   let h = head(I.name, `${LEVEL_NAMES[I.lvl || 1]} · ${I.pop} Bewohner · Platz für ${nd.cap}`);
   h += epochCord();
-  h += `<div class="tabs" role="tablist">${[['leute', 'Bewohner'], ['arbeit', 'Arbeit'], ['insel', 'Insel']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="tab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
-  return h + (tab === 'arbeit' ? workTab(I, nd) : tab === 'insel' ? isleTab(I, nd) : peopleTab(I, nd));
+  h += `<div class="tabs" role="tablist">${[['leute', 'Bewohner'], ['arbeit', 'Arbeit'], ['insel', 'Insel'], ['netz', 'Netz']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="tab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
+  return h + (tab === 'arbeit' ? workTab(I, nd) : tab === 'insel' ? isleTab(I, nd) : tab === 'netz' ? netTab(I) : peopleTab(I, nd));
 }
 const chipS = (cls, t) => `<span class="state ${cls}">${t}</span>`, barS = f => `<span class="mbar"><i style="width:${clamp(f, 0, 1) * 100}%"></i></span>`;
 const rowS = (k, n, small, extra, right, cls = '') => `<li class="${cls}">${k ? icon(k) : ''}<span class="nm">${n}<small>${small}</small>${extra || ''}</span>${right || ''}</li>`;
@@ -654,6 +654,8 @@ function satMarkup(I){
     return `<li><button class="link" type="button" data-act="who" data-p="${q.id}">${q.n}</button><span class="sub">${w ? w.t : 'zufrieden'}</span><b class="${satBand(u.v)}">${u.v}</b></li>`; }).join('')}</ul>`;
   return h;
 }
+/* the net of villages: who helps this one, the gifts of the clan, what other peoples taught */
+const netTab = I => ratMarkup(I) + giftsMarkup() + teachMarkup();
 /* who leads a village: the player, or its elders (daughter villages by default); what they built last and the last
    canoe it sent to the mother village */
 function ratMarkup(I){
@@ -715,7 +717,7 @@ function workTab(I, nd){
   return h + `</ul></details>`;
 }
 function isleTab(I, nd){
-  let h = ratMarkup(I) + giftsMarkup() + teachMarkup() + `<ul class="list needs">`;
+  let h = `<ul class="list needs">`;
   if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
     h += rowS('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', barS(f / .6), e ? chipS(e > 1 ? 'out' : 'low', 'Erosion') : chipS('ok', 'hält'), e ? 'need' : ''); }
   { const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;

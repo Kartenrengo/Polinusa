@@ -825,7 +825,7 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
 - **Was sie lehren** (seit Version 83). Die Lapita-Kultur ist aus Begegnungen entstanden; das soll das Spiel zeigen. Außer
   der ersten Gegengabe lehrt jedes Volk dem Clan bei viel Vertrauen (6 Knoten) etwas, das für immer bleibt:
   **Gartenwissen vom Großen Land** (Felder laugen halb so schnell aus) und **Wetterzeichen vom Nordmeer** (Böen auf See
-  kosten nur halb so viel Proviant). Jede Lehre bringt Ansehen 3. In der Übersicht unter „Insel“ steht „Was andere Völker
+  kosten nur halb so viel Proviant). Jede Lehre bringt Ansehen 3. In der Übersicht unter „Netz“ steht „Was andere Völker
   lehrten“, mit Herkunft und wie weit das Vertrauen schon reicht.
 
 ## Raum für Fantasie: der Lichtwal (seit Version 83)
@@ -1696,7 +1696,7 @@ In jedem Dorf außer dem ersten hilft **der Rat in der Not** (seit Version 80; i
 nahm zu viel aus der Hand). Einmal in der Minute schaut er nach: Reicht Wasser oder Essen nicht bis zum Morgen, baut er
 das Erntehaus, ein zweites für grüne Nüsse oder einen Platz für Essen; schlafen Leute ohne Dach, eine Hütte; kommt ein
 Sturm, bindet er die Dächer; fehlt Regen, ruft er ihn. Immer nur eine Baustelle, nie einen Platz, für den niemand frei ist.
-**Alles andere baust du:** Wachsen, Ausbau, Hauswerk, Werkstätten. In der Übersicht unter „Insel“ steht „Rat in der Not“
+**Alles andere baust du:** Wachsen, Ausbau, Hauswerk, Werkstätten. In der Übersicht unter „Netz“ steht „Rat in der Not“
 oder „Ohne Rat“; ein Tipp schaltet ihn um, auch in der Mutterstadt.
 
 **Kanus zwischen Mutter und Töchtern.** Jeden Morgen schickt ein Tochterdorf ein kleines Kanu zur Mutter mit dem, was es
@@ -1722,7 +1722,7 @@ Handel kommt nur die Ware, nicht die Gabe.
 | Schildkrötenstrand (neu) | Inseln ohne andere Gabe | Auf langer Fahrt reicht der Proviant länger (jeden vierten Tag aus dem Meer) |
 
 Alte Spielstände behalten ihre Inseln; nur Inseln, die bisher nichts hatten, bekommen einen Vogelfelsen oder einen
-Schildkrötenstrand. Jede neue Gabe bringt einmal Ansehen 2. In der Übersicht unter „Insel“ stehen die **Gaben des Clans**:
+Schildkrötenstrand. Jede neue Gabe bringt einmal Ansehen 2. In der Übersicht unter „Netz“ stehen die **Gaben des Clans**:
 welche er hat, welche bekannt sind (mit Insel) und welche noch fehlen. Der Rat schlägt vor: „Dorf auf Kula gründen“.
 
 **Die Mutterstadt wächst nach oben.** Bringt ein Kanu einer Tochter etwas, das die Heimat selbst nicht machen kann, freuen

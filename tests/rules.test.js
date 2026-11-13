@@ -388,7 +388,7 @@ const r = await p.evaluate(()=>{
         want(T.buildings.some(b => b.kind === 'ernte' && b.bt), `elders: no harvest house begun: ${T.buildings.filter(b => b.bt).map(b => b.kind)}`);
         T.stock.schnur = storeCap(T); const P = packOf(T, H); want(P.schnur > 0, `elders: a daughter with a full store sends nothing: ${JSON.stringify(P)}`);
         const n0 = H.stock.schnur; packGive(T, H, P); want(H.stock.schnur > n0 && H.packs >= 1, 'elders: the package does not reach the mother');
-        openSheet('needs', {tab:'insel'}); active = T.id; renderSheet(); want(/Rat in der Not/.test($('sheetBody').textContent), 'elders: the overview does not say the elders help');
+        openSheet('needs', {tab:'netz'}); active = T.id; renderSheet(); want(/Rat in der Not/.test($('sheetBody').textContent), 'elders: the overview does not say the elders help');
         $('sheetBody').querySelector('[data-act=rat]').click(); want(!eldersOn(T) && T.rat === false, 'elders: the elders cannot be turned off');
         { const n = T.buildings.length; T.rat = true; Object.assign(T.stock, {wasser:20, nahrung:20}); T._fore = null; eldersTick(T, true); want(T.buildings.length === n, 'elders: the elders build though nothing is wanting'); }
         active = 'heimat'; closeSheet(); H.stock = keepH; T.rat = undefined;
@@ -398,7 +398,7 @@ const r = await p.evaluate(()=>{
         { const keep = giftMemo, sh = ships.find(q => q.own) || makeShip('oc', H); giftMemo = {t:tick, set:new Set()}; const v0 = speedOf(sh), f0 = feastMana(H, FEASTS[0]);
           giftMemo = {t:tick, set:new Set(['feinpandanus', 'kurkuma'])}; want(speedOf(sh) > v0 * 1.15, 'gifts: fine pandanus sails do not make canoes faster');
           want(feastMana(H, FEASTS[0]) >= f0, 'gifts: red earth makes feasts poorer'); giftMemo = keep; giftMemo.t = -1; }
-        openSheet('needs', {tab:'insel'}); want(/Gaben des Clans/.test($('sheetBody').textContent), 'gifts: the overview does not list the gifts'); closeSheet();
+        openSheet('needs', {tab:'netz'}); want(/Gaben des Clans/.test($('sheetBody').textContent), 'gifts: the overview does not list the gifts'); closeSheet();
         // the founders become ancestors; fine things from a daughter make the mother glad; every canoe adds standing
         want(T.people.some(p => (p.ev || []).some(e => e[1] === 'gru')), 'founders: nobody of the new village has its founding in the story');
         { const k = GOODS.find(q => !canMakeOn(H, q) && !TREASURE_GOODS.includes(q)), m0 = mana; T.stock[k] = 5; H.stock[k] = 0; H.fernAt = null; packGive(T, H, {[k]:3});

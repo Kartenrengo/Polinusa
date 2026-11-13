@@ -28,7 +28,7 @@ function shipMarkup(s){
   // a treasure island: what the crew can gather here
   if (P && P.treasure){ const T = P.treasure; h += `<div class="stat">${icon(T.k)}<span>${GN[T.k]}: ${T.left} bereit</span><span class="sub">${s.auto ? '' : 'Solange das Kanu hier liegt, sammelt die Mannschaft.'}</span></div>`; }
   if (s.hungry) h += `<p><b>Kein Proviant mehr.</b> Die Mannschaft fährt langsam heim.</p>`;
-  if (s.full && cargoLoad(s) && s.route == null) h += `<p class="sub">An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt || 'dem Hafen'} voll.</p>`;   // on a chain the status says it
+  if (s.full && cargoLoad(s) && s.route == null && !(P && P.settled)) h += `<p class="sub">An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt || 'dem Hafen'} voll.</p>`;   // on a chain the status says it
   h += shipDiveMarkup(s);
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', cargoLoad(s) ? giftText(s.cargo) : '', life.length ? andList(life.map(id => LIFE[id].s)) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering

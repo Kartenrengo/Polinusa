@@ -361,7 +361,7 @@ function assignRoute(s, ri){
   if (s.port === r.a || s.port === r.b) routeArrive(s); else sailTo(s, {isl:r.a});
   save();
 }
-function unassign(s){ s.route = null; if (s.state === 'wait') s.state = 'moored'; save(); }
+function unassign(s){ s.route = null; s.full = false; if (s.state === 'wait') s.state = 'moored'; save(); }
 function routeArrive(s){
   const r = routes[s.route], here = isl(s.port);
   if (s.tripFrom && s.tripFrom !== here.id && !here.clan){ r.knots = Math.min(12, r.knots + 1); invalidate(); }
