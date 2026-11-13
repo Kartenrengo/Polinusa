@@ -188,7 +188,7 @@ function sailTo(s, dest, quiet, force){
   if (s.own && !s.founder && !force && atollShut(dest)){ if (!quiet) toast('Ins Atoll erst mit Kanusteg und Einbaum. Sie kennen den Weg durchs flache Riff.', 3600, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
-  s.path = laneOf(s, curvePath(s, path)); s.pi = 0; s.dist0 = s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
+  s.path = laneOf(s, curvePath(s, path)); s.pi = 0; s.dist0 = s.state === 'sail' && s.dist0 != null ? s.dist0 : s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
 const sight = s => SHIPS[s.kind].vision * (s.kind !== 'oc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
@@ -263,7 +263,7 @@ function stepShips(now, dt){
     if (s.auto && s.state !== 'sail'){ s.autoWait = (s.autoWait || 0) + dt; if (s.autoWait > 1500){ s.autoWait = 0; autoNext(s); } continue; }
     if (s.state !== 'sail') continue;
     // a canoe gathers way slowly and glides in to land; it turns gradually instead of flipping round
-    const end = s.path[s.path.length - 1], rem = end ? Math.hypot(end.x - s.x, end.y - s.y) : 0, ease = clamp(Math.min((s.dist - (s.dist0 || 0) + 12) / 60, (rem + 10) / 80), .3, 1);
+    const end = s.path[s.path.length - 1], rem = end ? Math.hypot(end.x - s.x, end.y - s.y) : 0, e0 = clamp(Math.min((s.dist - (s.dist0 || 0) + 8) / 60, (rem + 6) / 70), 0, 1), ease = .28 + .72 * e0 * e0 * (3 - 2 * e0);   // it pushes off slowly, gathers way, and slows to a glide before it lands
     let step = speedOf(s) * ease * dt / 1000; const x0 = s.x, y0 = s.y;
     while (step > 0 && s.pi < s.path.length){
       const t = s.path[s.pi], dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy);

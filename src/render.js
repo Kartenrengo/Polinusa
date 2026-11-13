@@ -184,7 +184,7 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
-  const step = b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
+  const step = b._fo != null ? b._fo : b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
   let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}|${o.yam}`, art = () => artOf(b.kind, o);
   const sc = t.s * (chief ? 1.12 : 1) * grown;
   // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
@@ -225,7 +225,7 @@ function drawStakes(c, b, K, f, alpha, I){
 /* No bar over the site: the frame stands while the walls go up, and the rising building shows how far it is */
 function drawSite(c, b, K, f, alpha){
   const s = clamp(K.r / 11, .7, 1.5);
-  if (f > .1 && f < .97) put(c, b.x, b.y, s, 1, 0, 'scaffold', '<use href="#scaffold"/>', alpha);
+  if (f > .02 && f < .97) putRising(c, b.x, b.y, s, 1, 0, 'scaffold', '<use href="#scaffold"/>', clamp(.05 + (f - .02) * 2.6, 0, 1), alpha);   // the frame grows up with the work
 }
 
 /* ---------- patterns: drawn at 8× and scaled back so they stay sharp when zoomed in */
@@ -445,7 +445,7 @@ function drawObjects(c, area){
   all.sort((a, b) => a[0].y - b[0].y);
   // first every shadow on the ground, then the things themselves, so no shadow lies over a roof; what sways is drawn later
   const sh = sunShadow(); if (sh.alpha > 0) for (const [b, I] of all){ if (I){ if (b.id !== movingId) drawBuilding(c, b, I, 1, sh); } else drawTree(c, b, sh); }
-  for (const [b, I] of all){ if (I){ if (!(sw && SWAY_KINDS.has(b.kind))) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); } else if (!swT || b.st === 1) drawTree(c, b); }
+  for (const [b, I] of all){ if (I){ if (!(sw && SWAY_KINDS.has(b.kind)) && !b._fx) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); } else if (!swT || b.st === 1) drawTree(c, b); }
 }
 function drawSel(c){
   if (lod === 'far' || !selectedId) return; const b = findB(selectedId); if (!b) return;
@@ -537,6 +537,7 @@ function drawAnim(c, now){
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
   if (lod === 'near' && !reduced && nightLevel() < .2) drawButterflies(c, v, now);
   drawWhales(c, v, now); if (lod !== 'far' && !reduced) drawSeaLife(c, v, now); if (lod !== 'far') drawDrift(c, v, now);
+  drawBuildFx(c, v, now);
   if (cam.z > PEOPLE_Z){ drawPeople(c, v, now); if (falls.length) drawFalls(c, v, now); }
   drawWork(c, v);
   if (!reduced) drawWeather(c, v, now);
@@ -1133,7 +1134,8 @@ function drawSwayDeco(c, v, now){
 const FLAT = new Set(['taro', 'platz', 'tanzplatz', 'pulaka', 'garten', 'kurkumagarten', 'kavagarten', 'brunnen', 'quelle']);
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v, now){
-  const vis = [...walkers, ...critters].filter(w => !w.asleep && ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
+  fxWalkers(now);
+  const vis = [...walkers, ...critters].filter(w => (!w.asleep || w._fa > .02) && ptIn(w.x, w.y, v)), items = vis.map(w => [w.y, w]), near = new Map(), mk = markUntil > now ? markW : null;
   // close up, palms and trees sway: they are drawn here, and whatever stands in front of them is drawn again over them
   const sway = new Set(), sw = swayOn() && baseL.at && baseL.at.sw, swT = sw && baseL.at.swT, vv = grow(v, 30);
   if (sw){
@@ -1165,12 +1167,14 @@ function drawPeople(c, v, now){
     if (w.ride || w.boat || w.lie || (w.paddle || w.swim) && !landAt(isl(w.isl), w)) continue;
     c.save(); c.translate(w.x, w.y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (w.left) c.scale(-1, 1);
     if (w.home) blitShadow(c, 'cr|' + w.kind, `<use href="#${w.kind}"/>`, sh.alpha);
-    else { if (w.child) c.scale(.7, .7); if (w.sit && (!w.moving || w.busy)) c.scale(1, .78); blitShadow(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old), sh.alpha); }
+    else { if (w.child) c.scale(.7, .7); if (w.sit && (!w.moving || w.busy)) c.scale(1, .78); blitShadow(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old), sh.alpha * (w._fa ?? 1)); }
     c.restore();
   }
   for (const [, w] of items){
+    c.globalAlpha = w.look && w._fa < 1 ? w._fa : 1;   // someone stepping out of a house or going in (fxWalkers)
     if (w.home){ drawCritter(c, w); continue; }
     if (w.kind || w.st != null){
+      if (w.kind && w._fx) continue;   // a building that settles is drawn by its transition (drawBuildFx)
       if (sway.has(w)){ drawBending(c, w, now, near.get(w), w.kind ? SWAY_AMP[w.kind] : .03, w.kind ? KINDS[w.kind].hy * 2 * ((w.v && w.v.scale) || 1) : 18 * (w.s || 1)); continue; }
       if (w.kind) drawBuilding(c, w, near.get(w)); else drawTree(c, w);
       continue;
@@ -1189,10 +1193,10 @@ function drawPeople(c, v, now){
     }
     const up = CLIMB_FX.has(w.fx) && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
     const P = walkerPose(w, now, up), dir = w.left ? -1 : 1;
-    const bob = P ? P.bob : w.moving && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) : 0, rot = P ? P.rot + P.lean * dir : w.moving && !reduced && !up ? Math.sin(w.phase) * .05 : 0;
+    const gg = w._g ?? (w.moving ? 1 : 0), bob = P ? P.bob : gg > .02 && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) * gg : 0, rot = P ? P.rot + P.lean * dir : gg > .02 && !reduced && !up ? Math.sin(w.phase) * .05 * gg : 0;
     // up at the crown a nut drops now and then
     if (up > 12 && !reduced){ const f = (now / 900 + w.x) % 1; c.fillStyle = '#7A5434'; c.beginPath(); c.arc(w.x + 3, w.y - up - 2 + f * (up + 1), .9, 0, TAU); c.fill(); }
-    c.save(); c.translate(w.x, w.y + bob - up); if (rot) c.rotate(rot); if (P ? P.sx !== 1 : w.left) c.scale(P ? P.sx : -1, 1);
+    c.save(); c.translate(w.x + (w._fa < 1 && !reduced ? (w.asleep ? 1 : -1) * dir * (1 - w._fa) * 2.4 : 0), w.y + bob - up + (w._fa < 1 && !reduced ? (1 - w._fa) * .8 : 0)); if (rot) c.rotate(rot); if (P ? P.sx !== 1 : w.left) c.scale(P ? P.sx : -1, 1);
     // someone sitting on a mat in front of a house; children are smaller
     if (w.sit && (!w.moving || w.busy)){ c.fillStyle = '#DCC48C'; c.fill(MAT); stroke(c, MAT, '#2B1D14', .35); c.scale(1, .78); }
     if (w.child) c.scale(.7, .7);
@@ -1217,6 +1221,7 @@ function drawPeople(c, v, now){
     if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
     c.restore();
   }
+  c.globalAlpha = 1;
 }
 /* ---------- in the water for fun. Swimmers show head and shoulders and leave rings, and now and then duck under;
    children jump in from the beach. Surfers paddle out lying on the board, sit up and wait for the wave, and ride it in
@@ -1339,7 +1344,8 @@ function walkerPose(w, now, up){
   if (w._wm && !mv) w._stopAt = now;
   w._wm = mv;
   const at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3, plain = at || w.dance || w.hop;
-  if (mv){
+  const gt = w._g ?? (mv ? 1 : 0);   // the step eases in and out (fxWalkers): bob and sway fade rather than switch
+  if (mv || gt > .02){
     const ph = w.phase * (w.old ? .8 : 1), s = Math.sin(ph), a = Math.abs(s);
     P.bob = -a * (w.old ? .45 : w.child ? .95 + .4 * Math.cos(ph / 2) : .7);   // children skip: every other step is higher
     P.rot = s * (w.old ? .03 : .05);
@@ -1350,11 +1356,13 @@ function walkerPose(w, now, up){
       if (w.old) P.stab = -s * .2;
       P.swing = Math.sin(ph - 1) * .12;
     }
-  } else {
+    if (gt < 1){ P.bob *= gt; P.rot *= gt; P.lean *= gt; P.skew *= gt; P.upDy *= gt; P.upRot *= gt; P.ldRot *= gt; P.stab *= gt; P.swing *= gt; }
+  }
+  if (!mv){
     P.breath = 1 + Math.sin(now / 1300 + sd * 20) * .015;
     if (((now + sd * 9000) % (3200 + sd * 2600)) < 120) P.blink = true;
     const gc = 8000 + sd * 4000, gq = ((now + sd * 5000) % gc) / 1100;
-    if (gq < 1) P.upRot = Math.sin(Math.PI * gq) * .07 * ((((now + sd * 5000) / gc) | 0) % 2 ? 1 : -1);
+    if (gq < 1) P.upRot += Math.sin(Math.PI * gq) * .07 * ((((now + sd * 5000) / gc) | 0) % 2 ? 1 : -1);
   }
   const sq = w._stopAt ? (now - w._stopAt) / 280 : 1;
   if (sq < 1 && !mv) P.upDy += .45 * Math.sin(Math.PI * sq);
@@ -1933,7 +1941,8 @@ function needGo(I, k, b){
   if (b) select(b); toast(`${GN[k] || k}: ${w.text}.`, 3600, false);
 }
 function drawNeeds(c, v, now){
-  const s = clamp(1 / cam.z, 1, 1.8); bubbleHits = [];
+  const s = clamp(1 / cam.z, 1, 1.8); bubbleHits = []; fxBubbleStart();
+  const bub = (id, x, y, sc, rot, key, art) => fxBubble(c, id, x, y, sc, rot, key, art, now);   // a bubble with memory: it pops in, changes by cross-fade and fades out
   const hit = (x, y, go) => bubbleHits.push({x, y:y - 7.5 * s, r:Math.max(8 * s, 12 / cam.z), go});
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
@@ -1941,17 +1950,17 @@ function drawNeeds(c, v, now){
     for (const b of I.buildings){
       if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || b.idle.why === 'grow' || b.idle.why === 'yam' || (b.idle.why === 'crew' && (lod === 'near' || ++crewN > 2)) || !ptIn(b.x, b.y, v)) continue;
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, by = b.y - KINDS[b.kind].hy - 14 + bob, w = b.idle;
-      put(c, b.x, by, s, 1, 0, key, art); hit(b.x, by, () => w.why === 'use' && w.k ? needGo(I, w.k, b) : select(b));
+      bub('i' + b.id, b.x, by, s, 0, key, art); hit(b.x, by, () => w.why === 'use' && w.k ? needGo(I, w.k, b) : select(b));
     }
-    for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)){ put(c, b.x, b.y - 14, s, 1, 0, 'need|soil', needBubble('soil')); hit(b.x, b.y - 14, () => select(b)); }
-    for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)){ put(c, b.x, b.y - KINDS[b.kind].hy - 14, s, 1, 0, 'need|einbaum', needBubble('einbaum')); hit(b.x, b.y - KINDS[b.kind].hy - 14, () => select(b)); }
+    for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)){ bub('s' + b.id, b.x, b.y - 14, s, 0, 'need|soil', needBubble('soil')); hit(b.x, b.y - 14, () => select(b)); }
+    for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)){ bub('l' + b.id, b.x, b.y - KINDS[b.kind].hy - 14, s, 0, 'need|einbaum', needBubble('einbaum')); hit(b.x, b.y - KINDS[b.kind].hy - 14, () => select(b)); }
     // over each house what its family lacks; over the meeting house a roof, while families sleep there without one
     const list = needsOf(I).list, S = I.storm && tick < I.storm.at ? I.storm : null;
     for (const b of I.buildings){
       if (!ptIn(b.x, b.y, v)) continue;
       // a cyclone on the way: over every loose roof a cord, shaking; a tap sends the people to the roofs
       if (S && homeOk(I, b) && !S.tied.includes(b.id)){ const sc = (b.v && b.v.scale) || 1, by = b.y - KINDS[b.kind].hy * sc - 12 + (reduced ? 0 : Math.sin(now / 150 + b.id) * 1.1), bb = b;
-        put(c, b.x, by, s * 1.1, 1, reduced ? 0 : Math.sin(now / 190 + b.id) * .12, 'need|schnur', needBubble('schnur')); hit(b.x, by, () => S.tie ? select(bb) : tieRoofs(I)); continue; }
+        bub('h' + b.id, b.x, by, s * 1.1, reduced ? 0 : Math.sin(now / 190 + b.id) * .12, 'need|schnur', needBubble('schnur')); hit(b.x, by, () => S.tie ? select(bb) : tieRoofs(I)); continue; }
       let k = null;
       if ((b.kind === 'halle' && !b.bt || b.kind === 'platz' && !I.buildings.some(q => q.kind === 'halle' && !q.bt)) && roofless(I)) k = 'haus';
       else if (homeOk(I, b)){ const f = famOfHome(I, b); if (f){ const miss = famNeeds(I, f, list).filter(n => n.state === 'out'); if (miss.length) k = miss[Math.floor(now / 2400 + b.id) % miss.length].k; } }
@@ -1960,8 +1969,8 @@ function drawNeeds(c, v, now){
       if (!k && !up) continue;
       const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
       const by = b.y - KINDS[b.kind].hy * sc - 12 + bob;
-      if (up){ put(c, b.x, by + bob * .6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), 1, reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE); hit(b.x, by, () => select(b)); }
-      else { put(c, b.x, by, s, 1, 0, 'need|' + k, needBubble(k)); const kk = k; hit(b.x, by, () => needGo(I, kk, HOME_KINDS.has(b.kind) ? b : null)); }
+      if (up){ bub('h' + b.id, b.x, by + bob * .6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE); hit(b.x, by, () => select(b)); }
+      else { bub('h' + b.id, b.x, by, s, 0, 'need|' + k, needBubble(k)); const kk = k; hit(b.x, by, () => needGo(I, kk, HOME_KINDS.has(b.kind) ? b : null)); }
     }
   }
   // hunger has lasted a while: over the house of the family that would go first, its canoe, rocking
@@ -1969,15 +1978,16 @@ function drawNeeds(c, v, now){
     if (!I.settled || (I.hunger || 0) < HUNGER_GO / 2 || !boxIn(I.box, v)) continue;
     const f = leaverOf(I), b = f && f.home && findB(f.home); if (!b || !ptIn(b.x, b.y, v)) continue;
     const sc = (b.v && b.v.scale) || 1, k = (I.hunger - HUNGER_GO / 2) / (HUNGER_GO / 2), rock = reduced ? 0 : Math.sin(now / (260 - 140 * k)) * (.08 + .12 * k);
-    put(c, b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, s * (1.05 + .15 * k), 1, rock, 'need|leave', LEAVE_BUBBLE); hit(b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, () => select(b));
+    bub('v' + b.id, b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, s * (1.05 + .15 * k), rock, 'need|leave', LEAVE_BUBBLE); hit(b.x + 9, b.y - KINDS[b.kind].hy * sc - 10, () => select(b));
   }
   // a place called with the conch: the horn over it, sounding
   for (const I of islands){ if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){ if (!b.prio || !ptIn(b.x, b.y, v)) continue;
       const sc = (b.v && b.v.scale) || 1, top = b.bt ? KINDS[b.kind].hy * .5 : KINDS[b.kind].hy * sc, pulse = reduced ? 1 : 1 + Math.max(0, Math.sin(now / 260)) * .08;
-      put(c, b.x - 10, b.y - top - 12 + (reduced ? 0 : Math.sin(now / 500 + b.id) * .8), s * pulse, 1, 0, 'need|horn', needBubble('horn')); hit(b.x - 10, b.y - top - 12, () => select(b)); } }
+      bub('p' + b.id, b.x - 10, b.y - top - 12 + (reduced ? 0 : Math.sin(now / 500 + b.id) * .8), s * pulse, 0, 'need|horn', needBubble('horn')); hit(b.x - 10, b.y - top - 12, () => select(b)); } }
   // a canoe from far away waits at the beach: the family asks to stay
-  for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; put(c, sh.x, sh.y - 16 + bob, s * 1.15, 1, 0, 'need|pop', needBubble('pop')); const id = sh.id; hit(sh.x, sh.y - 16, () => openSheet('immig', {ship:id})); }
+  for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; bub('m' + sh.id, sh.x, sh.y - 16 + bob, s * 1.15, 0, 'need|pop', needBubble('pop')); const id = sh.id; hit(sh.x, sh.y - 16, () => openSheet('immig', {ship:id})); }
+  fxBubbleEnd(c, v, now);
   const t = now;
   // a house newly bound: blossoms rain on its roof, as garlands are laid on a new house at its blessing
   for (const I of islands) if (I.settled && boxIn(I.box, v)) for (const b of I.buildings){
@@ -2098,7 +2108,7 @@ function drawTop(c, now){
         const spots = [[-12.6, -1.4], [-5.4, -1.2], [2.6, -1.4], [-1.4, .4], [5.2, .6]].slice(0, Math.min(5, 3 + Math.ceil((s.people || 0) / 3))).map(([px, py]) => at(px, py)).sort((p, q) => p.y - q.y);
         spots.forEach((p, k) => { c.save(); c.translate(p.x, p.y + 1.2); c.scale(.78, .78); blit(c, 'fig|' + crewLook(s, k), () => figureArt(crewLook(s, k))); c.restore(); });
         // the mat sail fills with the wind: fuller when it blows hard, slack in a calm
-        { const fill = s.state === 'sail' ? .88 + wind().str * .26 : .9; c.save(); c.scale(fill, 1); blit(c, up ? 'dcS' : 'dcInS', up ? '<use href="#sail" transform="translate(2.5 -3) scale(1.05)"/>' : '<use href="#sail" transform="translate(-2.5 -3) scale(-1.05 1.05)"/>'); c.restore(); }
+        { const fill = s.state === 'sail' ? .88 + wind().str * .26 : .9, lift = sailLift(s, now), bx = up ? 2.5 : -2.5; c.save(); c.scale(fill * (.45 + .55 * lift), 1); if (lift < 1){ c.translate(bx, -3); c.scale(1, .12 + .88 * lift); c.translate(-bx, 3); } blit(c, up ? 'dcS' : 'dcInS', up ? '<use href="#sail" transform="translate(2.5 -3) scale(1.05)"/>' : '<use href="#sail" transform="translate(-2.5 -3) scale(-1.05 1.05)"/>'); c.restore(); }
       } }
     c.restore();
     if (!far) shipPanel(c, s);
@@ -2212,6 +2222,156 @@ function drawSea(now){
   ctx.globalAlpha = 1;
   drawSeaSky(now);
 }
+/* ---------- soft transitions: nothing on the map pops in or out. Bubbles, new buildings, people and canoes ease in and
+   out, with a little spring where it suits a hand-drawn world. All of it lives here, apart from the drawing code. With
+   prefers-reduced-motion only short fades remain: no scale, no bounce, no dust. */
+let fxLive = false;   // set while something still eases, so the loop keeps drawing frames (see animating)
+const easeBack = (t, k = 1.5) => { t = clamp(t, 0, 1) - 1; return 1 + (k + 1) * t * t * t + k * t * t; };   // a small overshoot at the end
+const easeIO = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+/* -- bubbles: each one is remembered by a key (a slot over a house or a place), so one that goes can fade, one that
+   changes its icon cross-fades, and a new one grows from its tail with a little overshoot */
+const BUB_IN = 340, BUB_OUT = 240, BUB_X = 260;
+const bubMem = new Map(); let bubFrame = -9, bubQuiet = true;
+function fxBubbleStart(){
+  bubQuiet = frameNo - bubFrame > 1;   // drawNeeds did not run last frame (far out, or the first one): what is there simply is there
+  if (bubQuiet) bubMem.clear();
+  bubFrame = frameNo;
+}
+function fxBubble(c, id, x, y, sc, rot, key, art, now){
+  let m = bubMem.get(id);
+  if (!m){ m = {key, art, t0:bubQuiet ? -1e9 : now, out:0, al:1, e:1, pk:null, pa:null, kt:0, f:0, x, y, s:sc, r:rot}; bubMem.set(id, m); }
+  else {
+    if (m.out){ m.out = 0; m.t0 = now - BUB_IN * .35; }   // it came back while fading: it grows again
+    if (m.key !== key){ m.pk = m.key; m.pa = m.art; m.kt = now; m.key = key; m.art = art; }
+  }
+  m.f = frameNo; m.x = x; m.y = y; m.s = sc; m.r = rot;
+  drawBub(c, m, now);
+}
+function drawBub(c, m, now){
+  let al = 1, e = 1;
+  if (m.out){ const u = clamp((now - m.out) / BUB_OUT, 0, 1); al = m.al * (1 - u); e = reduced ? 1 : m.e * (1 - .3 * easeIO(u)); fxLive = true; }
+  else {
+    const a = now - m.t0;
+    if (a < BUB_IN){ fxLive = true; al = reduced ? clamp(a / 160, 0, 1) : clamp(a / 130, 0, 1); e = reduced ? 1 : Math.max(.001, easeBack(a / BUB_IN, 1.5)); }
+    m.al = al; m.e = e;
+  }
+  // another icon: the old one stays under the new one, which fades in on top (no dip in between)
+  let ka = 1;
+  if (m.pk && !m.out){ const u = (now - m.kt) / BUB_X; if (u < 1){ fxLive = true; ka = easeIO(u); put(c, m.x, m.y, m.s * e, 1, m.r, m.pk, m.pa, al); } else m.pk = null; }
+  put(c, m.x, m.y, m.s * e, 1, m.r, m.key, m.art, al * ka);
+}
+function fxBubbleEnd(c, v, now){
+  for (const [id, m] of bubMem){
+    if (m.f === frameNo) continue;
+    if (!m.out){ if (bubQuiet || !ptIn(m.x, m.y, v)){ bubMem.delete(id); continue; } m.out = now; }
+    if (now - m.out >= BUB_OUT){ bubMem.delete(id); continue; }
+    drawBub(c, m, now);
+  }
+}
+/* -- buildings: a new site rises out of the ground, each step of the work rises smoothly, and a building that is finished
+   (or a house that is raised a tier) settles with a squash, a puff of dust and a few chips. While one of these plays the
+   building is left out of the ground layer (b._fx) and drawn here, over it; the ground layer is painted again after. */
+const bFx = []; let fxTick = -1, fxInit = false;
+const fxTall = b => { const K = KINDS[b.kind]; return K.hy > 5 && !FLAT.has(b.kind) && !K.soil && !K.plant && !K.path; };
+function fxEnd(e){ const b = e.b; if (b._fx === e) b._fx = null; b._fo = null; const i = bFx.indexOf(e); if (i >= 0) bFx.splice(i, 1); invalidate(); }
+function fxStart(b, I, kind, f0 = 0, f1 = 0){
+  if (b._fx){ if (kind === 'step' || kind === 'site') return; fxEnd(b._fx); }
+  if (bFx.length >= 8 || lod === 'far') return;
+  const tall = fxTall(b);
+  if (reduced && kind !== 'site') return;
+  if ((kind === 'done' || kind === 'up') && !tall) return;
+  const e = {b, I, kind, t0:-1, dur:kind === 'site' ? 560 : kind === 'step' ? 650 : 780, f0, f1, tall};
+  b._fx = e; bFx.push(e); invalidate();
+}
+/* every frame the ground layer would be painted (or a game tick has passed): who has just changed? Buildings out of view
+   and everything while far out only update what they were, so nothing plays for what happened long ago. */
+function fxBuildScan(now){
+  if (tick === fxTick && !baseL.dirty) return;
+  fxTick = tick; const quiet = lod === 'far' || !fxInit, v = view(60); fxInit = true;
+  for (const I of islands){
+    if (!I.buildings.length) continue;
+    const vis = !quiet && boxIn(I.box, v);
+    for (const b of I.buildings){
+      const K = KINDS[b.kind], site = b.bt ? 1 : 0, tier = b.t || 0, step = site && !K.plant ? Math.floor((1 - b.bt / K.bt) * 10) : 10;
+      if (b._wb === undefined){ if (vis && site && tick - b.born < 2 && ptIn(b.x, b.y, v)) fxStart(b, I, 'site'); }
+      else if (vis && ptIn(b.x, b.y, v)){
+        if (site && !b._wb) fxStart(b, I, 'site');
+        else if (b._wb && !site) fxStart(b, I, 'done');
+        else if (!site && tier > b._wt) fxStart(b, I, 'up');
+        else if (site && step > b._ws) fxStart(b, I, 'step', b._ws / 10, step / 10);
+      }
+      b._wb = site; b._wt = tier; b._ws = step;
+    }
+  }
+}
+function drawBuildFx(c, v, now){
+  if (!bFx.length) return;
+  fxLive = true;
+  for (let i = bFx.length - 1; i >= 0; i--){
+    const e = bFx[i], b = e.b, I = e.I;
+    if (e.t0 < 0) e.t0 = now;
+    if (!I.buildings.includes(b) || lod === 'far'){ fxEnd(e); continue; }
+    const age = now - e.t0, u = clamp(age / e.dur, 0, 1), sec = age / 1000, over = u >= 1;
+    let sx = 1, sy = 1, al = 1;
+    if (e.kind === 'done' || e.kind === 'up'){
+      const w = Math.exp(-5 * sec) * Math.sin(14 * sec);
+      sy = e.kind === 'done' ? 1 - .2 * w : 1 + .12 * w; sx = 1 - (sy - 1) * .55;
+    } else if (e.kind === 'site'){
+      if (e.tall && !reduced){ sy = Math.max(.03, easeBack(u, 1.3)); al = clamp(u * 3, 0, 1); } else al = clamp(age / (reduced ? 300 : 420), 0, 1);
+    } else b._fo = e.f0 + (e.f1 - e.f0) * easeIO(u);
+    if (over) b._fo = null;
+    c.save(); c.translate(b.x, b.y); c.scale(sx, sy); c.translate(-b.x, -b.y);
+    drawBuilding(c, b, I, al); c.restore();
+    if (!over && (e.kind === 'done' || e.kind === 'up') && lod === 'near' && !reduced && ptIn(b.x, b.y, v)) fxDust(c, b, sec);
+    if (over) fxEnd(e);
+  }
+}
+/* the puff of dust at the foot of the building, and chips that fly up and fall */
+function fxDust(c, b, sec){
+  const K = KINDS[b.kind], r = K.r * ((b.v && b.v.scale) || 1);
+  if (sec < .7){
+    const q = sec / .7;
+    if (K.water){   // over the water: rings spread from the posts instead of dust
+      for (let k = 0; k < 2; k++){ const g = clamp(q * 1.3 - k * .25, 0, 1); if (g > 0) stroke(c, ellipse(b.x, b.y + 3, r * (.5 + g * .9), r * (.5 + g * .9) * .32), '#F4FBFA', .9, null, null, (1 - g) * .9); }
+    } else for (let k = 0; k < 7; k++){
+      const j = hsh(k, b.id), a = (k + .5) / 7 * Math.PI + (j - .5) * .5, qq = clamp(q * (.8 + j * .4), 0, 1), x = b.x + Math.cos(a) * (r * (.6 + j * .35) + qq * (6 + j * 5)), y = b.y + 2 + Math.sin(a) * (r * .2 + qq * 2.5) - qq * (3 + j * 4), rad = 1 + qq * (1.8 + j * 1.6);
+      c.globalAlpha = (1 - qq) * .85 * Math.min(1, qq * 9); c.fillStyle = k % 2 ? '#F6F1E6' : '#E9E2D3';
+      c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill();
+      c.globalAlpha *= .45; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.stroke();
+    }
+  }
+  if (sec < .8 && quality){
+    c.strokeStyle = '#2B1D14'; c.lineWidth = .3;
+    for (let k = 0; k < 5; k++){
+      const dir = k % 2 ? 1 : -1, t = sec - k * .018, vx = dir * (9 + hsh(k, b.id) * 14), vy = -(30 + hsh(k + 7, b.id) * 22);
+      if (t < 0) continue;
+      c.save(); c.translate(b.x + dir * r * .45 + vx * t, b.y - 1 + vy * t + 110 * t * t); c.rotate(t * 9 * dir + k);
+      c.globalAlpha = sec > .55 ? clamp((.8 - sec) / .25, 0, 1) : 1; c.fillStyle = k % 2 ? '#D9B27A' : '#B89A62'; c.fillRect(-1.2, -.6, 2.4, 1.2); c.strokeRect(-1.2, -.6, 2.4, 1.2); c.restore();
+    }
+  }
+  c.globalAlpha = 1;
+}
+/* -- people: someone who steps out of a house fades and slides in, going in they fade out; the walk eases in and out */
+let fxWalkAt = 0, fxWalkInit = false;
+function fxWalkers(now){
+  const cold = now - fxWalkAt > 700, dt = cold ? 0 : Math.min(80, now - fxWalkAt), first = !fxWalkInit; fxWalkAt = now; fxWalkInit = true;
+  for (const w of walkers){
+    const tf = w.asleep ? 0 : 1, tg = w.moving ? 1 : 0;
+    if (w._fa === undefined) w._fa = cold || first ? tf : 0; else if (cold) w._fa = tf;
+    if (w._g === undefined || cold) w._g = tg;
+    if (w._fa !== tf){ w._fa = tf > w._fa ? Math.min(1, w._fa + dt / 380) : Math.max(0, w._fa - dt / 380); fxLive = true; }
+    if (w._g !== tg) w._g = tg > w._g ? Math.min(1, w._g + dt / 170) : Math.max(0, w._g - dt / 260);
+  }
+}
+/* -- canoes: the sail comes down as a canoe nears its landing and goes up again once it has pushed off (0 = lowered) */
+function sailLift(s, now){
+  const e = s.path && s.path[s.path.length - 1], rem = e ? Math.hypot(e.x - s.x, e.y - s.y) : 0, tg = s.state === 'sail' && rem > 50 && (s.dist || 0) - (s.dist0 || 0) > 12 ? 1 : 0;
+  const dt = Math.min(80, now - (s._slAt || now)), cold = now - (s._slAt || 0) > 600; s._slAt = now;
+  if (s._sl === undefined || cold) s._sl = tg;
+  else if (s._sl !== tg){ s._sl = clamp(s._sl + (tg - s._sl > 0 ? dt : -dt) / 800, 0, 1); if (Math.abs(s._sl - tg) < .01) s._sl = tg; else fxLive = true; }
+  return s._sl;
+}
+
 /* ---------- layers and one frame */
 function renderLayer(L, paint){
   L.w = vw * OVER; L.h = vh * OVER;
@@ -2235,7 +2395,7 @@ function blitLayer(L){
 }
 const stale = now => baseL.at && baseL.at.z !== cam.z && now - lastCamMove > 140;
 function draw(now){
-  frameNo++;
+  frameNo++; fxLive = false; fxBuildScan(now);
   if (!fresh(baseL, now)) renderLayer(baseL, drawBase);
   if (!fresh(fogL, now)) renderLayer(fogL, drawFog);
   drawSea(now); ctx.setTransform(1, 0, 0, 1, 0, 0); blitLayer(baseL);
@@ -2245,7 +2405,7 @@ function draw(now){
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => fxLive || !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
 
 /* ======================================================================================================================
    Polish of water and nature: calm, slow motion in the same flat ink style. Everything here is a fine effect: it is

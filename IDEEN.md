@@ -82,6 +82,14 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 5. **Das Netz als Ziel.** Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
    Erst ab Hawaiki: ein oberster Häuptling über mehrere Inseln.
 
+## Offen aus der Runde „Schöner bewegt“ (Version 81)
+
+- **Kosten auf dem Handy:** Bei höchster Qualität zeichnet das Spiel jetzt merklich mehr (Palmen zweimal mit Schnitt,
+  Strandwasser, Wellenreihen). Die eigene Bildraten-Steuerung fängt das ab; auf einem echten Handy ansehen.
+- **Abendfarben:** Gold und Rosa sind schon zurückgenommen; das Meer wird am Abend etwas grau. Stellschraube `GRADE`.
+- **Noch ohne Übergang:** Figuren, die sterben oder fortziehen, und Kanus, die verschwinden, blenden nicht aus.
+- **Feuer bei neuen Häusern:** Ein Haus, das nach der Dämmerung fertig wird, leuchtet, hat aber noch kein Feuer.
+
 ## Offen aus der Runde „Rat in der Not“ (Version 79/80)
 
 - **Der Rat hilft nur in der Not** (Wasser, Essen, Dach, Sturm). Ein Dorf, um das sich niemand kümmert, überlebt, wächst

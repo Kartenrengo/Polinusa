@@ -1025,7 +1025,7 @@ function stepWalkers(dt){
     if (w.ride){ const L = w.ride; if (L.boat && L.mate === w && walkers.includes(L)){ w.x = L.x; w.y = L.y; w.left = L.left; continue; } w.ride = null; w.boat = false; w.leg = 'work'; w.bout = false; w.wait = 200; }
     if (w.on && w.leg === 'work' && w.job && BUILD_JOBS.has(w.job.type) && !w.hurry) buildBit(w, dt, at.get(w.job.type === 'yard' ? 'y' + w.isl : w.job.b.id) || 1);
     if (w.wait > 0){
-      w.wait -= dt;
+      w.wait -= dt; w._sp = 0;
       if (w.dance && Math.hypot(w.x - w.dance.x, (w.y - w.dance.y) * 2) < 26 || w.hop){ w.moving = true; w.phase += dt * .008; }
       else if (w.busy && !w.rest && !(w.play && w.fx !== 'drum') && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3){ w.moving = true; w.phase += dt * .014; }
       continue;
@@ -1035,7 +1035,8 @@ function stepWalkers(dt){
     w.sit = false; w.lie = false;
     // feet wear the ground, children less as they run everywhere; on a laid path people walk faster
     const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle || w.swim ? -1 : wearAt(g, w.x, w.y);
-    const v = Math.min(d, dt * (w.swim ? (w.play && w.play.ph === 'ride' ? .0085 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    w._sp = Math.min(1, (w._sp ?? 1) + dt / 300);   // starting and stopping ease: from standing it gathers pace, and the last steps are shorter
+    const v = Math.min(d, dt * (.3 + .7 * w._sp) * Math.min(1, .5 + d / 16) * (w.swim ? (w.play && w.play.ph === 'ride' ? .0085 : .0042) : w.boat || w.paddle ? .011 : w.carry ? .006 : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
     // feet find the trodden way: a little to the side where the ground is more worn, so paths gather and bend as real ones do
     if (ci >= 0 && d > 14 && !w.child){
       const ux = dx / d, uy = dy / d, ax = w.x + ux * 7, ay = w.y + uy * 7, l = wearAt(g, ax - uy * 4.5, ay + ux * 4.5), r = wearAt(g, ax + uy * 4.5, ay - ux * 4.5);

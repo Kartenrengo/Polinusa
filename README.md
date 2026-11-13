@@ -1689,6 +1689,25 @@ oder Brennstoff, die es selbst braucht). Solange eine Tochter klein ist (unter 1
 Morgen mit Holz, Wedeln, Wasser und Essen aus ihrem Überfluss (bis 16 Stück). Die Kanus fahren sichtbar; die Waren gehen
 erst bei der Ankunft vom einen ins andere Lager. Dort steht auch, was das letzte Kanu brachte.
 
+## Schöner bewegt: Licht, Wasser, Übergänge (seit Version 81)
+
+- **Licht über den Tag:** Ein weicher Farbverlauf ohne Stufen: pfirsichfarbener Morgen, klarer Tag, goldener Nachmittag,
+  ein orange-rosa Abend mit leichtem Glühen, tiefblaue Nacht. Nachts funkeln Sterne über dem tiefen Wasser, ein Mondpfad
+  flimmert auf dem Meer; am Tag blitzen Sonnenglitzer. Vor jedem Haus mit Nachtfeuer brennt ein kleines Feuer im
+  Steinring, das flackert, atmet und ab und zu einen Funken steigen lässt; Fenster flackern mit. Häuser ohne Feuer bleiben
+  dunkel.
+- **Wasser und Natur:** Die Wellenreihen des Meeres steigen und vergehen nacheinander; am Riff rollt die Brandung stückweise
+  heran, schäumt und vergeht; am Strand läuft Wasser hinauf, gleitet zurück und lässt eine nasse Linie. Kanus ziehen ein
+  V-Kielwasser, das Paddel taucht mit Ring und Tropfen ein. Böen laufen über die Insel, die Kronen der Palmen folgen dem
+  Stamm einen Augenblick später, Gras kräuselt sich. Vögel schlagen in Schüben mit den Flügeln und gleiten dazwischen,
+  Fische in der Lagune flitzen und verharren.
+- **Weiche Übergänge:** Blasen wachsen mit kleinem Überschwingen und vergehen sanft, ein neues Zeichen blendet über das
+  alte. Bauplätze wachsen aus dem Boden, fertige und ausgebaute Häuser setzen sich mit Federn, Staub und Spänen. Leute
+  gleiten aus dem Haus und hinein, setzen beim Gehen weich an und halten weich an. Kanus reffen vor dem Anlegen das Segel
+  und setzen es nach dem Ablegen.
+- **Sparsam:** Feines nur nah herangezoomt und bei guter Bildrate; das Spiel senkt die Bildqualität von selbst, wenn das
+  Handy nicht nachkommt. Mit „weniger Bewegung“ bleibt alles ruhig, ohne „Tag und Nacht“ bleibt der flache Look.
+
 ## Menschen
 
 Kleine Figuren ohne Arme und Beine: Tapa-Wickelrock, Muschelkette, Haarknoten, Hibiskusblüte oder langes Haar,
