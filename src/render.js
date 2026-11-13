@@ -423,10 +423,7 @@ function drawCords(c){
    people, each frame, swaying a little; the forest only where not too many trees are in view. */
 const SWAY_KINDS = new Set(['palme', 'pandanus', 'baum', 'hibiskus']), SWAY_DECO = new Set(['tuft', 'fern', 'reed', 'flowers']);
 const swayOn = () => !reduced && cam.z > PEOPLE_Z && quality > 1;
-function swayK(x, y, amp, now){
-  const W = wind(), t = now / 1000, ph = Math.sin(x * 12.9898 + y * 78.233) * 6, g = (x * W.tx + y * W.ty) / 90;   // gusts run across with the wind
-  return amp * (.35 + .65 * W.str) * (Math.sin(t * 1.25 + ph) * .65 + Math.sin(t * .5 - g) * .35 + W.tx * W.str * .5);
-}
+const swayK = (x, y, amp, now) => windLean(x, y, now, 0, amp);   // gusts that run across, see windLean
 function drawObjects(c, area){
   if (lod === 'far'){
     for (const I of islands){
@@ -488,7 +485,7 @@ const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4
    with narrow wings that beats fast; and the noddy and booby of the old shape */
 const FRIG1 = new Path2D('M-7.6 1.2L-3.4-1.9L0 .2L3.4-1.9L7.6 1.2M0 .2L-.7 2.2M0 .2L.7 2.2'), FRIG2 = new Path2D('M-7.2.5L-3.4-.7L0 .2L3.4-.7L7.2.5M0 .2L-.7 2.2M0 .2L.7 2.2');
 const TERN1 = new Path2D('M-4.2-.2q2-1.9 4.2.2q2.1-2.1 4.2-.2'), TERN2 = new Path2D('M-4-.1q2-.6 4 .1q2-.8 4-.1');
-const birdOf = (k, t) => k % 3 === 1 ? {p:Math.sin(t / 900 + k) > .6 ? FRIG2 : FRIG1, s:1.25, w:1.1} : k % 3 === 2 ? {p:Math.sin(t / 110 + k * 2) > -.2 ? TERN1 : TERN2, s:.7, w:1.2} : {p:Math.sin(t / 220 + k * 3) > -.3 ? BIRD1 : BIRD2, s:1, w:1.3};
+const birdOf = (k, t) => { const kind = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0; return {p:birdPath(kind, t, k * 1.7), s:kind === 1 ? 1.25 : kind === 2 ? .7 : 1, w:kind === 1 ? 1.1 : 1.3 - (kind === 2 ? .1 : 0)}; };
 function drawAnim(c, now){
   const v = view(40), ph = (now % 3400) / 3400 * TAU, a = reduced ? .4 : .41 - .29 * Math.cos(ph), dy = reduced ? 0 : 1.5 * Math.cos(ph);
   for (const I of islands){
@@ -509,7 +506,7 @@ function drawAnim(c, now){
     const w = (I.box.x1 - I.box.x0) * .4, h = (I.box.y1 - I.box.y0) * .32, n = 1 + Math.round(wildOf(I) * wildKeep(I) * 6);
     for (let k = 0; k < n; k++){
       const a = now / (9000 + k * 2300) * (k % 2 ? -1 : 1) + k * 2.4 + I.center.x, rr = k < 2 ? 1 : .45 + (k * 7 % 5) / 8, x = I.center.x + Math.cos(a) * w * rr, y = I.center.y + Math.sin(a) * h * rr - 24 - (k % 3) * 6;
-      const B = birdOf(k, now); c.save(); c.translate(x, y); c.scale(B.s, B.s); stroke(c, B.p, '#2B1D14', B.w / B.s, null, 'round', .85); c.restore();
+      const B = birdOf(k, now), bank = (k % 2 ? -1 : 1) * (.2 + .07 * Math.sin(now / 1300 + k)); c.save(); c.translate(x, y); c.rotate(bank); c.scale(B.s, B.s); stroke(c, B.p, '#2B1D14', B.w / B.s, null, 'round', .85); c.restore();
     }
   }
   // smoke from the cooking fires: at dawn, when everyone eats (see mealTick), from every house where a family lives, then
@@ -532,8 +529,9 @@ function drawAnim(c, now){
     // surf runs along the reef and swells now and then
     if (!seen(I) || !boxIn(I.box, v)) continue;
     const p = islandPaths(I), sk = cycloneOver(I) ? cycloneLevel() : 0, sw = .5 + .5 * Math.sin(now / (2600 - 1900 * sk) + I.center.x * .01);
-    stroke(c, p.ring, '#F4EEDC', 7 + 9 * sk, null, null, .06 + .07 * sw + .3 * sk);   // the swell breaks on the reef in an even rhythm; in a storm the breakers pound it
-    c.lineDashOffset = -(now / (700 - 450 * sk)) % 3.7; stroke(c, p.ring, '#F4EEDC', 2.2, [.1, 3.6], 'round', .5); c.lineDashOffset = 0;
+    if (quality) drawReefSurf(c, I, p, sk, now);   // the swell rolls in, breaks and fades, stretch by stretch; in a storm the breakers pound it
+    else { stroke(c, p.ring, '#F4EEDC', 7 + 9 * sk, null, null, .06 + .07 * sw + .3 * sk); c.lineDashOffset = -(now / (700 - 450 * sk)) % 3.7; stroke(c, p.ring, '#F4EEDC', 2.2, [.1, 3.6], 'round', .5); c.lineDashOffset = 0; }
+    if (quality && lod === 'near') drawBeachWash(c, I, p, now);
   }
   if (cyclone && lod !== 'far') drawStormSea(c, v, now);
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
@@ -564,7 +562,8 @@ function drawLagoonLife(c, v, now){
   for (const I of islands){
     if (!I.discovered || !boxIn(I.box, v)) continue;
     const lp = lagoonLoop(I);
-    for (let k = 0; k < 2; k++){ const q = alongLoop(lp, t * 7 + k * lp.len / 2 + I.center.x); put(c, q.x, q.y, 1, 1, q.a, 'fishes', '<use href="#fishes"/>'); }
+    for (let k = 0; k < 2; k++){ const q = alongLoop(lp, reduced || !quality ? t * 7 + k * lp.len / 2 + I.center.x : t * 2.2 + dartAt(t, k * .37, 4.6) * 1.8 + k * lp.len / 2 + I.center.x); put(c, q.x, q.y, 1, 1, q.a, 'fishes', '<use href="#fishes"/>'); }
+    if (!reduced && quality && lod === 'near') drawFishShadows(c, I, lp, now);
     // the sun glints on the lagoon
     if (!reduced && nightLevel() < .3) for (let k = 0; k < 7; k++){
       const tw = Math.sin(now / 650 + k * 2.1 + I.center.x); if (tw < .6) continue;
@@ -621,6 +620,7 @@ function paddleStroke(c, x, y, s, now, ph){
   stroke(c, p, '#2B1D14', .8 * s, null, 'round'); stroke(c, p, '#9C7246', .36 * s, null, 'round');
   c.fillStyle = '#9C7246'; const bl = ellipse(bx, by + .2 * s, .55 * s, 1.15 * s); c.fill(bl); stroke(c, bl, '#2B1D14', .3 * s);
   if (!reduced && a > .55) stroke(c, ellipse(bx - .6 * s, by + 1.2 * s, 1.4 * s, .45 * s), '#F4FBFA', .4 * s, [.4, .7], 'round', .85);   // the water swirls behind the blade
+  if (!reduced && quality && lod === 'near') paddleSplash(c, x, y, s, now, ph);
   if (!reduced && a < -.3 && lod === 'near'){ const q = (-a - .3) / .7; c.fillStyle = '#F4FBFA';   // drops run off the blade as it comes out of the water
     for (let k = 0; k < 3; k++){ c.globalAlpha = (1 - q) * .9; c.beginPath(); c.arc(bx - (.5 + k * .7 + q * 1.4) * s, by + (-.6 - k * .25 + q * q * 2.2) * s, (.3 - k * .06) * s, 0, TAU); c.fill(); }
     c.globalAlpha = 1; }
@@ -691,6 +691,7 @@ function drawBoatFig(c, w, now){
     return;
   }
   const yy = y + (reduced ? 0 : Math.sin(now / 900 + w.x) * .3);
+  if (!reduced && quality && lod === 'near' && !w.fishing) drawCanoeWake(c, x, yy, w, now);
   // at night a torch of dry coconut leaves at the bow: the fish come to the light
   if (nightLevel() > .15 && w.job && w.job.type === 'fish'){ const tx = x + (w.left ? -5.4 : 5.4), fl = reduced ? 1 : 1 + Math.sin(now / 90 + w.x) * .15; stroke(c, new Path2D(`M${tx} ${yy}L${tx + (w.left ? -1.2 : 1.2)} ${yy - 6.4}`), '#5A3F22', .7, null, 'round'); c.save(); c.translate(tx + (w.left ? -1.3 : 1.3), yy - 6.4); c.scale(.55 * fl, .55 * fl); c.fillStyle = '#E0803A'; c.fill(FLAME); c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); c.restore(); }
   if (w.mate) drawDugout2(c, x, yy, w.left, rock, w.look, w.old, w.mate.look, w.mate.old, now, w.phase || 0, !w.fishing);
@@ -713,7 +714,7 @@ function drawBoatFig(c, w, now){
     if (g < .25) for (let k = 0; k < 3; k++){ c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(x + d * (9 + k - 1), y + 1.4 - g * 6, .35, 0, TAU); c.fill(); }
   }
   // sea birds circle over the canoe, as they gather over a shoal: the old sign where the fish are
-  for (let k = 0; k < 2; k++){ const a = now / 2600 * (k ? -1 : 1) + k * 2.6 + w.x; c.save(); c.translate(x + Math.cos(a) * 12, y - 18 + Math.sin(a) * 4 - k * 3); c.scale(.55, .55); stroke(c, Math.sin(now / 190 + k * 2) > -.2 ? BIRD1 : BIRD2, '#2B1D14', 1.4, null, 'round', .8); c.restore(); }
+  for (let k = 0; k < 2; k++){ const a = now / 2600 * (k ? -1 : 1) + k * 2.6 + w.x; c.save(); c.translate(x + Math.cos(a) * 12, y - 18 + Math.sin(a) * 4 - k * 3); c.scale(.55, .55); stroke(c, birdPath(0, now, k * 2 + w.x), '#2B1D14', 1.4, null, 'round', .8); c.restore(); }
 }
 const WADE = ellipse(0, .3, 3, 1.3);
 const glint = (x, y, r) => { const p = new Path2D(); p.moveTo(x - r, y); p.lineTo(x + r, y); p.moveTo(x, y - r * .7); p.lineTo(x, y + r * .7); return p; };
@@ -1010,7 +1011,7 @@ function drawSeaLife(c, v, now){
       const w = waterNear(I, b), gx = w.x + (w.x - b.x) * 1.6, gy = w.y + (w.y - b.y) * 1.6 + 10; if (!ptIn(gx, gy, v)) continue;
       for (let i = 0; i < 4; i++){
         const a = t * (.7 + i * .13) + i * 1.7 + b.id, dive = (t + i * 1.3 + b.id) % 6 < .5, x = gx + Math.cos(a) * 14, y = gy + Math.sin(a) * 6 - (dive ? 0 : 10);
-        c.save(); c.translate(x, y); c.scale(.75, .75); stroke(c, Math.sin(t * 4.4 + i * 3) > -.3 ? BIRD1 : BIRD2, '#2B1D14', 1.3, null, 'round', .85); c.restore();
+        c.save(); c.translate(x, y); c.scale(.75, .75); stroke(c, birdPath(0, t * 1000, i * 3), '#2B1D14', 1.3, null, 'round', .85); c.restore();
         if (dive) stroke(c, ellipse(x, y + 2, 2.4, .8), '#F4FBFA', .7, null, 'round', .8);
       }
     }
@@ -1111,6 +1112,7 @@ function drawDugouts(c, v, now){
       // out, a pause there, back, a pause at the jetty
       const go = l.d / SPEED * 1000, f = t < go ? t / go : t < go + 1300 ? 1 : t < 2 * go + 1300 ? 1 - (t - go - 1300) / go : 0, bow = l.k * Math.sin(f * Math.PI);
       const x = A.x + (l.B.x - A.x) * f + l.nx * bow, y = A.y + (l.B.y - A.y) * f + l.ny * bow, left = (t < go + 1300) === (l.B.x < A.x);
+      if (!reduced && quality && lod === 'near' && (t < go || (t > go + 1300 && t < 2 * go + 1300))){ const sg = t < go ? 1 : -1, dd = l.d || 1; drawVWake(c, x + sg * (l.B.x - A.x) / dd * 4, y + 1.4 + sg * (l.B.y - A.y) / dd * 2, sg * (l.B.x - A.x) / dd, sg * (l.B.y - A.y) / dd, .65, now, 1); }   // the V wake behind the ferry
       drawDugout(c, x, y, left, reduced ? 0 : Math.sin(now / 760 + j.id) * .05, ferry, false, now, j.id, f > 0 && f < 1);
     });
   }
@@ -1123,7 +1125,7 @@ function drawSwayDeco(c, v, now){
     for (const d of I.deco){
       if (!SWAY_DECO.has(d.t) || !ptIn(d.x, d.y, v)) continue;
       if (d.s && I.buildings.some(b => { const r = KINDS[b.kind].r; return Math.abs(b.x - d.x) < r + 3 && Math.abs(b.y - d.y) < r * .7 + 3; })) continue;
-      const k = swayK(d.x, d.y, d.t === 'tuft' || d.t === 'reed' ? .16 : .09, now);
+      const k = windLean(d.x, d.y, now, 0, d.t === 'tuft' || d.t === 'reed' ? .17 : .1, 2.2);   // grass ripples in short waves
       c.save(); c.translate(d.x, d.y); c.transform(1, 0, -k, 1, 0, 0); if (d.rot) c.rotate(d.rot * Math.PI / 180); blit(c, d.t, `<use href="#${d.t}"/>`); c.restore();
     }
   }
@@ -1169,10 +1171,9 @@ function drawPeople(c, v, now){
   for (const [, w] of items){
     if (w.home){ drawCritter(c, w); continue; }
     if (w.kind || w.st != null){
-      const k = sway.has(w) ? swayK(w.x, w.y, w.kind ? SWAY_AMP[w.kind] : .03, now) : 0;
-      if (k){ c.save(); c.translate(w.x, w.y); c.transform(1, 0, -k, 1, 0, 0); c.translate(-w.x, -w.y); }
+      if (sway.has(w)){ drawBending(c, w, now, near.get(w), w.kind ? SWAY_AMP[w.kind] : .03, w.kind ? KINDS[w.kind].hy * 2 * ((w.v && w.v.scale) || 1) : 18 * (w.s || 1)); continue; }
       if (w.kind) drawBuilding(c, w, near.get(w)); else drawTree(c, w);
-      if (k) c.restore(); continue;
+      continue;
     }
     if (w.ride) continue;   // in the canoe of the other fisher
     // across the lagoon they paddle a dugout
@@ -2068,6 +2069,7 @@ function drawTop(c, now){
       for (let i = 1; i < n; i++){ const a = tr[i - 1], b = tr[i], f = i / n, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, w = (1 - f) * 5 + 1.5, px = -dy / d * w, py = dx / d * w;
         const p = new Path2D(); p.moveTo(a.x + px, a.y + py); p.lineTo(b.x + px * .8, b.y + py * .8); p.moveTo(a.x - px, a.y - py); p.lineTo(b.x - px * .8, b.y - py * .8);
         stroke(c, p, '#F4FBFA', 1.1, null, 'round', f * .55); } }
+    if (!far && !reduced && quality && s.state === 'sail') drawVWake(c, s.x + (s.hx || 1) * 9 * ks, s.y + (s.hy || 0) * 5 * ks + 1, s.hx || 1, s.hy || 0, .6 + wind().str * .4, now, 1.5 * ks);
     // spray at the bow, more when the wind is strong; the canoe leans into a turn
     if (!far && !reduced && s.state === 'sail'){
       const hx = s.hx || 1, hy = s.hy || 0, str = wind().str, bx = s.x + hx * 11 * ks, by = s.y + hy * 6 * ks + 1;
@@ -2178,7 +2180,7 @@ function drawNavHints(c, now){
     for (let i = 0; i < 4; i++){
       const f = ((now / 9000 + i * .23 + I.center.x * .01) % 1) * .35, dist = 90 + (out * .8 + f) * Math.min(d, 520), side = (i - 1.5) * 12;
       const x = I.center.x + ux * dist - uy * side, y = I.center.y + uy * dist + ux * side;
-      c.save(); c.translate(x, y); c.scale(k, k); stroke(c, Math.sin(now / 200 + i * 2) > -.2 ? BIRD1 : BIRD2, '#1E1410', 1.2, null, 'round', .9); c.restore();
+      c.save(); c.translate(x, y); c.scale(k, k); stroke(c, birdPath(0, now, i * 2), '#1E1410', 1.2, null, 'round', .9); c.restore();
     }
   }
 }
@@ -2204,7 +2206,8 @@ function drawSea(now){
   for (const [k, sp, a, bob] of quality ? [[1.7, .55, .45, 1.2], [1, 1, .9, .6]] : [[1, 1, .9, .6]]){   // on a slow device one layer of waves
     const ox = seaX * sp, oy = seaY * sp + Math.sin(t * .8 + k) * bob;
     ctx.save(); ctx.scale(k, k); ctx.translate(((ox / k) % 16 + 16) % 16, ((oy / k) % 10 + 10) % 10);
-    ctx.globalAlpha = fade * a; ctx.fillStyle = P; ctx.fillRect(v.x0 / k - 32, v.y0 / k - 32, (v.x1 - v.x0) / k + 64, (v.y1 - v.y0) / k + 64); ctx.restore();
+    if (k === 1 && quality && !reduced) ctx.restore(), seaRows(ctx, P, v, ox + Math.sin(t * .23) * 1.6, oy, t, fade * a);   // rows that rise and fade in turn
+    else { ctx.globalAlpha = fade * a; ctx.fillStyle = P; ctx.fillRect(v.x0 / k - 32, v.y0 / k - 32, (v.x1 - v.x0) / k + 64, (v.y1 - v.y0) / k + 64); ctx.restore(); }
   }
   ctx.globalAlpha = 1;
   drawSeaSky(now);
@@ -2243,3 +2246,148 @@ function draw(now){
 }
 /* Something moves on screen, so the top layers need regular frames */
 const animating = () => !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+
+/* ======================================================================================================================
+   Polish of water and nature: calm, slow motion in the same flat ink style. Everything here is a fine effect: it is
+   drawn only where it can be seen (zoomed in), only with a good frame rate (quality), and with reduced motion it stays still.
+   ====================================================================================================================== */
+
+/* ---------- wind: a gust is a ridge that runs across the island in the wind direction (phase by position). lag (in
+   seconds) looks back in time, so the crown of a palm follows the trunk a little later than the trunk follows the gust. */
+function windLean(x, y, now, lag, amp, ripple){
+  const W = wind(), t = now / 1000 - (lag || 0), ph = Math.sin(x * 12.9898 + y * 78.233) * 6, p = x * W.tx + y * W.ty, dir = W.tx > .05 || W.tx < -.05 ? Math.sign(W.tx) : (ph > 0 ? 1 : -1);
+  const wl = ripple || 1, gust = Math.max(0, Math.sin(t * .55 - p / (110 / wl))), steady = W.tx * .55 + dir * .08;
+  const flutter = Math.sin(t * 1.6 + ph) * .28 + Math.sin(t * .9 - p / (46 / wl)) * .22;
+  return amp * (.3 + .7 * W.str) * (flutter + dir * gust * gust * 1.15 + steady * (.4 + W.str));
+}
+/* A palm, bush or tree bends in the wind: the trunk (below the cut) leans a little, the crown above it leans more and
+   comes a moment later. Two drawings with a clip at the cut, joined so the trunk does not break. */
+function drawBending(c, w, now, near, amp, H){
+  const lean = windLean(w.x, w.y, now, 0, amp * .55), lag = windLean(w.x, w.y, now, .22, amp * 1.25), s = H * .5;
+  const draw = () => { if (w.kind) drawBuilding(c, w, near); else drawTree(c, w); };
+  c.save(); c.translate(w.x, w.y); c.transform(1, 0, -lean, 1, 0, 0); c.beginPath(); c.rect(-90, -s - .8, 180, s + 90); c.clip(); c.translate(-w.x, -w.y); draw(); c.restore();
+  c.save(); c.translate(w.x, w.y); c.transform(1, 0, -lag, 1, (lean - lag) * s, 0); c.beginPath(); c.rect(-90, -s - 160, 180, 160); c.clip(); c.translate(-w.x, -w.y); draw(); c.restore();
+}
+
+/* ---------- birds: wing beats in bursts, in between they glide. The wing is a curve whose tips follow the beat. */
+const BIRD_SHAPE = [{S:5, arch:3.2, up:3.4, dn:2.6}, null, {S:4.2, arch:1.9, up:2.6, dn:1.8}], BIRD_CACHE = new Map();
+function birdWing(kind, u){
+  const q = Math.round(clamp(u, -1, 1) * 5), key = kind * 16 + q + 5; let P = BIRD_CACHE.get(key); if (P) return P;
+  const g = q / 5; P = new Path2D();
+  if (kind === 1){   // frigatebird: long angled wings and a forked tail
+    const el = -1.9 - 1 * g, tip = g > 0 ? 1.2 - 4.6 * g : 1.2 - 2.4 * g;
+    P.moveTo(-7.6, tip); P.lineTo(-3.4, el); P.lineTo(0, .2); P.lineTo(3.4, el); P.lineTo(7.6, tip); P.moveTo(0, .2); P.lineTo(-.7, 2.2); P.moveTo(0, .2); P.lineTo(.7, 2.2);
+  } else {
+    const B = BIRD_SHAPE[kind], tip = g > 0 ? -B.up * g : -B.dn * g, ct = -B.arch + (g > 0 ? 1.6 * g : .4 * g);
+    P.moveTo(-B.S, tip); P.quadraticCurveTo(-B.S / 2, ct, 0, 0); P.quadraticCurveTo(B.S / 2, ct, B.S, tip);
+  }
+  BIRD_CACHE.set(key, P); return P;
+}
+/* kind 0 noddy/booby, 1 frigatebird (soars most), 2 tern (beats fast) */
+function birdU(kind, t, seed){
+  const cyc = kind === 1 ? 9000 : kind === 2 ? 3200 : 5200, share = kind === 1 ? .2 : kind === 2 ? .72 : .55, hz = kind === 1 ? 1.9 : kind === 2 ? 6 : 3.4;
+  const m = ((t + seed * 1913) % cyc) / cyc;
+  if (m < share){ const e = Math.min(1, m / share * 6, (1 - m / share) * 6); return Math.sin(t / 1000 * hz * TAU + seed) * (.35 + .65 * e); }
+  return .1 * Math.sin(t / 900 + seed) - .06;   // gliding: the wings held still, only a slight tremble
+}
+const birdPath = (kind, t, seed) => birdWing(kind, reduced ? 0 : birdU(kind, t, seed || 0));
+
+/* ---------- the open sea: rows of wave marks that rise and fade in turn, the wavefront running slowly across */
+function seaRows(ctx, P, v, ox, oy, t, a){
+  const rowsN = Math.ceil((v.y1 - v.y0) / 10), rs = Math.max(1, Math.ceil(rowsN / 22)) * 10, cs = Math.max(1, Math.ceil((v.x1 - v.x0) / 16 / 5)) * 16;
+  const tx = (ox % 16 + 16) % 16, ty = (oy % 10 + 10) % 10, id0 = Math.floor(oy / 10);
+  ctx.save(); ctx.translate(tx, ty); ctx.fillStyle = P;
+  const x0 = Math.floor((v.x0 - tx - 16) / cs) * cs, x1 = v.x1 - tx + 16, y0 = Math.floor((v.y0 - ty - 10) / rs) * rs, y1 = v.y1 - ty + 10;
+  for (let y = y0; y < y1; y += rs){
+    const row = Math.round(y / 10) - id0;
+    for (let x = x0; x < x1; x += cs){
+      const w = .5 + .5 * Math.sin(t * .62 - row * .85 - (x + ox) / 55 + hsh(row, 3) * 1.3);
+      ctx.globalAlpha = a * (.1 + .9 * w * w); ctx.fillRect(x, y, cs, rs);
+    }
+  }
+  ctx.restore();
+}
+
+/* ---------- the reef: the swell rolls in towards it, breaks in foam and fades, one stretch after the other */
+function drawReefSurf(c, I, p, sk, now){
+  const R = Math.max(I.box.x1 - I.box.x0, I.box.y1 - I.box.y0) / 2 || 100, cx = I.center.x, cy = I.center.y, per = (2900 - 1700 * sk) * 1.6, seed = (I.center.x * .013) % 1;
+  stroke(c, p.ring, '#F4EEDC', 5 + 8 * sk, null, null, .05 + .2 * sk);
+  for (let j = 0; j < 3; j++){
+    const f = ((now / per) + j / 3 + seed) % 1, e = Math.sin(Math.PI * f), env = e * e, s = 1 + (1 - f) * (6 + 8 * sk) / R;   // from the open sea to the reef
+    c.save(); c.translate(cx, cy); c.scale(s, s); c.translate(-cx, -cy); c.lineDashOffset = -j * 41 - now / 260;
+    stroke(c, p.ring, '#F4EEDC', 2.4 + env * (4 + 5 * sk), [38, 82], 'round', env * (.3 + .22 * sk));   // the white water, thickest as the swell breaks
+    stroke(c, p.ring, '#FBF8EC', 1 + .5 * f, [38, 82], 'round', Math.max(0, f - .25) * 1.34 * (1 - f) * 2.2 * (.5 + .5 * sk) + env * .2);   // the crisp crest that runs ahead
+    c.restore();
+  }
+  c.lineDashOffset = -(now / (700 - 450 * sk)) % 3.7; stroke(c, p.ring, '#F4EEDC', 2, [.1, 3.6], 'round', .3 + .2 * sk); c.lineDashOffset = 0;
+}
+
+/* ---------- the beach: a wash runs up the sand, slides back and leaves a thin wet line that dries (fine, close up only) */
+function washClips(p){
+  if (p._wash) return p._wash;
+  const land = new Path2D(), sea = new Path2D();
+  for (const L of p.lands) land.addPath(L);
+  sea.rect(-1e5, -1e5, 2e5, 2e5); sea.addPath(land);
+  return p._wash = {land, sea};
+}
+function drawBeachWash(c, I, p, now){
+  if (!p.lands || !p.lands.length) return;
+  const W = washClips(p), seed = (I.center.y * .017) % 1, run = [];
+  for (let j = 0; j < 3; j++){
+    const f = (now / 7200 + j * .37 + seed) % 1;
+    let w, a, wet;
+    if (f < .36){ const u = f / .36, e = 1 - (1 - u) * (1 - u); w = 1.5 + 5.5 * e; a = .7 * e; wet = 0; }        // runs up
+    else if (f < .46){ w = 7; a = .7; wet = .3; }                                                                   // rests
+    else { const u = Math.min(1, (f - .46) / .54), e = u * u * (3 - 2 * u); w = 7 - 5.5 * e; a = .7 * (1 - e); wet = .3 * (1 - u * u); }   // slides back
+    run.push([j, w, a, wet]);
+  }
+  c.save(); c.clip(W.sea, 'evenodd');
+  for (const [j, w, a] of run){ if (a < .02) continue; c.lineDashOffset = -j * 53 - seed * 90; stroke(c, W.land, '#F4FBFA', w, [46, 78], 'round', a); }
+  c.restore();
+  c.save(); c.clip(W.land);
+  for (const [j, , , wet] of run){ if (wet < .02) continue; c.lineDashOffset = -j * 53 - seed * 90; stroke(c, W.land, '#4F6E4A', 2.6, [46, 78], 'round', wet * .7); }
+  c.restore(); c.lineDashOffset = 0;
+}
+
+/* ---------- canoes: a V wake that widens and fades behind the bow (x, y at the bow, h the heading) */
+function drawVWake(c, x, y, hx, hy, sp, now, sz){
+  const L = (13 + 12 * sp) * sz, px = -hy, py = hx, n = 4;
+  for (let side = -1; side <= 1; side += 2){
+    for (let i = 0; i < n; i++){
+      const s0 = i / n, s1 = (i + 1) / n, w0 = 1 + s0 * L * .44 + Math.sin(now / 340 - s0 * 8 + side) * .25 * s0, w1 = 1 + s1 * L * .44 + Math.sin(now / 340 - s1 * 8 + side) * .25 * s1;
+      const p = new Path2D(); p.moveTo(x - hx * L * s0 + px * side * w0, y - hy * L * s0 * .6 + py * side * w0 * .6); p.lineTo(x - hx * L * s1 + px * side * w1, y - hy * L * s1 * .6 + py * side * w1 * .6);
+      c.lineDashOffset = -now / 160; stroke(c, p, '#F4FBFA', (1.6 - s0 * .8) * sz, [2 * sz, .9 * sz], 'round', Math.min(.95, Math.pow(1 - s0, 1.2) * 1.15 * sp));
+    }
+  }
+  c.lineDashOffset = 0;
+}
+function drawCanoeWake(c, x, y, w, now){
+  const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy); if (d < 2) return;
+  const hx = dx / d, hy = dy / d; drawVWake(c, x + hx * 4, y + 1.4 + hy * 2, hx, hy, .65, now, 1);
+}
+/* the blade goes in with a ring on the water and a few drops, the ring widens behind the canoe and fades (x, y: the paddle) */
+function paddleSplash(c, x, y, s, now, ph){
+  const u = ((now / 340 + ph) % TAU + TAU) % TAU, age = (((u - .58) % TAU + TAU) % TAU) / TAU;
+  if (age > .5) return;
+  const q = age / .5, cx = x + (4.2 - q * 5.5) * s, cy = y + 2.5 * s;
+  for (let k = 0; k < 2; k++){ const qq = q - k * .22; if (qq <= 0) continue;
+    stroke(c, ellipse(cx - k * 1.2 * s, cy, (.7 + qq * 3.4) * s, (.25 + qq * .95) * s), '#F4FBFA', .4 * s, null, null, (1 - qq) * .8); }
+  if (age < .14 && lod === 'near'){ const f = age / .14; c.fillStyle = '#F4FBFA';
+    for (let k = 0; k < 4; k++){ c.globalAlpha = (1 - f) * .9; c.beginPath(); c.arc(cx + (k - 1.5) * .7 * s, cy - (Math.sin(f * Math.PI) * (1.2 + k % 2 * .9)) * s, .3 * s, 0, TAU); c.fill(); }
+    c.globalAlpha = 1; }
+}
+
+/* ---------- the lagoon: shadows of fish that dart and pause */
+function dartAt(t, seed, per){   // distance along the way: still for a while, a quick dart, still again
+  const cyc = t / per + seed, n = Math.floor(cyc), f = cyc - n, e = f < .6 ? 0 : Math.min(1, (f - .6) / .22), s = e * e * (3 - 2 * e);
+  return (n + s) * 15;
+}
+function drawFishShadows(c, I, lp, now){
+  const t = now / 1000;
+  for (let k = 0; k < 6; k++){
+    const sd = hsh(k, I.center.x | 0), per = 3.4 + sd * 3, d = dartAt(t, sd * 5, per) * (k % 2 ? -1 : 1), q = alongLoop(lp, k * lp.len / 6 + sd * 40 + d), off = (sd - .5) * 26;
+    const x = q.x + Math.sin(q.a) * off, y = q.y - Math.cos(q.a) * off, f = ((t / per + sd * 5) % 1), moving = f > .6 && f < .85, wig = Math.sin(t * (moving ? 22 : 3) + k) * (moving ? .5 : .15), dir = k % 2 ? q.a + Math.PI : q.a;
+    c.save(); c.translate(x, y); c.rotate(dir + wig * .25); c.globalAlpha = .26 + (moving ? .1 : 0); c.fillStyle = '#1E4A5A';
+    c.beginPath(); c.ellipse(0, 0, 2.5, .95, 0, 0, TAU); c.moveTo(-2.2, 0); c.lineTo(-4.2, -1.1 + wig); c.lineTo(-4.2, 1.1 + wig); c.closePath(); c.fill(); c.restore();
+  }
+}
