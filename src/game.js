@@ -337,7 +337,7 @@ function landLife(I, s, quiet){
    yet. Grown-ups without work gather it, much at first and less as it grows scarce. It comes back slowly, slower still
    where the rats that came in the canoes eat the eggs. Hunted below a third, the first kinds die out for good, as they did
    on Tonga and Fiji within a few generations of the first settlers; below an eighth the next. A tapu spares the rest. */
-const WILD_G = .002, WILD_AT = [.3, .12], WILD_PER = 12;   // regrowth, where kinds die out, ticks per food a gatherer needs in untouched wild
+const WILD_G = .002, WILD_AT = [.3, .12], WILD_PER = 72;   // regrowth, where kinds die out, ticks per food a gatherer needs in untouched wild
 const wildK = I => I.type === 'atoll' ? 420 : 560;   // how much the wild of an island holds, in food: three or four gatherers it bears for good
 const wildOf = I => I.wild ?? (I.id === 'heimat' || I.clan ? .25 : 1);
 const goneOf = I => I.gone ?? (I.id === 'heimat' ? 1 : 0);   // on the home island the first kinds went long ago
@@ -471,7 +471,7 @@ function wedClan(T){
   return true;
 }
 /* a whole family leaves the island, children and all */
-const HUNGER_GO = 60;
+const HUNGER_GO = 3;   // mornings in a row with too little before a family packs up (see mealTick)
 const leaverOf = I => famsOf(I).filter(q => q.id !== chiefFam(I)?.id).sort((a, b) => b.id - a.id)[0];
 function famLeaves(I, why){
   const f = leaverOf(I); if (!f) return;
@@ -641,11 +641,14 @@ function landCatch(I, b, crew, k){
   const reef = I.reefLife ?? 1, rf = k === 'fisch' ? (reef > .3 ? 1 : .7) : reef > .55 ? 1 : reef > .3 ? .7 : .4, silt = k === 'fisch' ? 1 : [1, .8, .6][erosionOf(I)];
   const hook = k === 'fisch' && (I.stock.haken || 0) > 0;   // with hooks of shell the line catches more
   let n = crew >= 2 ? ((K.picks && K.picks[k]) || {out:2}).out * (k === 'fisch' && tooled(I, K) ? 2 : 1) * (hook ? HOOK.more : 1) : hook ? 2 : 1;
-  n *= rf * silt * (I.rahuiDone === yearOf() && festivalTime() ? 3 : 1); n = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+  n *= rf * silt * (I.rahuiDone === yearOf() && festivalTime() ? 3 : 1);
+  // fish and sea food are a day's meal now: what a trip brings adds up over the trips (see DAILY)
+  if (dailyPace(k) > 1){ b._cf = (b._cf || 0) + n / dailyPace(k); n = Math.floor(b._cf); b._cf -= n; } else n = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+  const reefPer = dailyPace(k);   // the reef feels a portion as much as six fish before
   let got = 0;
   while (got < n && (I.stock[k] || 0) < storeCap(I)){
     I.stock[k] = (I.stock[k] || 0) + 1; got++; if (k === 'fisch') stats.fisch++;
-    I.reefLife = Math.max(0, reef - got * (k === 'fisch' ? .003 : .008));
+    I.reefLife = Math.max(0, reef - got * reefPer * (k === 'fisch' ? .003 : .008));
     if (k === 'fisch' && K.boost && tooled(I, K) && (b.worn = (b.worn || 0) + 1) >= K.boost.per){ b.worn = 0; I.stock[K.boost.k]--; }   // the net tears
     if (hook && (I.stock.haken || 0) > 0 && (b.hookWorn = (b.hookWorn || 0) + 1) >= HOOK.per){ b.hookWorn = 0; I.stock.haken--; }   // a hook breaks or is lost
   }
@@ -995,7 +998,8 @@ function diveLeg(I, w, j){
     case 'back': w.boat = false; w.leg = 'land'; goTo(I, w, j.x, j.y - 1, 200); return;
     case 'land': {
       const got = {};
-      for (const k of w.catch || []) if ((I.stock[k] || 0) < storeCap(I)){ I.stock[k] = (I.stock[k] || 0) + 1; got[k] = (got[k] || 0) + 1; }
+      for (const k of w.catch || []){ let q = 1; if (dailyPace(k) > 1){ j.b._cd = (j.b._cd || 0) + 1 / dailyPace(k); q = Math.floor(j.b._cd); j.b._cd -= q; }
+        if (q && (I.stock[k] || 0) < storeCap(I)){ I.stock[k] = (I.stock[k] || 0) + 1; got[k] = (got[k] || 0) + 1; } }
       w.catch = [];
       if (I.id === active && (got.perlmutt || got.beile)) toast(got.perlmutt ? `Die Taucher von ${I.name} bringen ${got.perlmutt} Perlmutt aus der Tiefe.` : 'Aus der dicken Schale einer Riesenmuschel ist ein Beil geschliffen.', 2800);
       const s = Object.keys(got).length && storeNear(I, w); if (!s){ w.leg = 'work'; w.bout = false; w.wait = 300; return; }
@@ -1008,7 +1012,7 @@ function diveLeg(I, w, j){
 function buildBit(w, dt, m){
   const W = workOf(isl(w.isl), w.job); if (!W) return;
   const left = W.o[W.f], floor = Math.max(1e-4, woodFloor(W)), K = w.job.type === 'site' ? SITE_K : w.job.type === 'yard' ? YARD_K : null;
-  const f = (K ? teamF(K, m) * K.crew / Math.max(1, m) : 1) * (opts.night ? 1.5 : 1);   // in pairs: alone one gets a third of it done; by day faster, for the night they sleep
+  const f = (K ? teamF(K, m) * K.crew / Math.max(1, m) : 1) * (opts.night ? 1.5 : 1) * (w.pid ? mealOf(isl(w.isl), w.pid) : 1);   // in pairs: alone one gets a third of it done; by day faster, for the night they sleep
   if (left > floor) W.o[W.f] = Math.max(floor, left - dt / TICK / W.crew * f);
 }
 function stepWalkers(dt){
@@ -1123,7 +1127,7 @@ function ratTick(I){
 }
 /* ---------- animals eat all the time: pigs and hens take from the feed (scraps first, then coconut and taro). Without
    feed the hens stop laying and, after a while, a pig is lost. */
-const feedNeed = I => ((I.stock.schweine || 0) * KINDS.pferch.feed + I.buildings.filter(b => b.kind === 'huehnerhof' && !b.bt).length * KINDS.huehnerhof.feed) / PER_MIN;
+const feedNeed = I => ((I.stock.schweine || 0) * KINDS.pferch.feed + I.buildings.filter(b => b.kind === 'huehnerhof' && !b.bt).length * KINDS.huehnerhof.feed) / PER_MIN / DAILY.food;
 function feedAnimals(I, ticks){
   const want = feedNeed(I) * ticks; if (!want) return;
   I.oweFeed = (I.oweFeed || 0) + want; const take = Math.floor(I.oweFeed);
@@ -1143,9 +1147,18 @@ const pace = (I, K) => tooled(I, K) ? 1 : K.boost.slow;
    or cooking stones. The player can hold them to one. */
 const choiceOf = b => { const P = KINDS[b.kind].picks; return P ? (b.v && P[b.v.pick] ? b.v.pick : P[b.want] ? b.want : KINDS[b.kind].prod) : null; };
 const prodOf = b => KINDS[b.kind].picks ? choiceOf(b) : KINDS[b.kind].prod;
-const byOf = b => { const K = KINDS[b.kind]; return K.picks ? K.picks[choiceOf(b)].by || null : K.by || null; };
+/* People eat and drink once a day, at the morning meal (see mealTick): one portion each. So food and water are made at
+   the pace of days: a field gives a sixth of what it gave when people ate all day long, a spring a third. What falls off
+   besides (fibre, shells and fronds from the nuts, provisions from the canarium) keeps its pace; leaves and leftovers go
+   with the food, as the earth oven that wants them is just as much slower. */
+const DAILY = {food:6, water:3}, FOOD_CHAIN = new Set([...FOODS, 'wasser', 'blaetter', 'reste']);
+const dailyPace = k => FOODS.includes(k) ? DAILY.food : k === 'wasser' ? DAILY.water : 1;
+const BY_CACHE = new Map();
+const byOf = b => { const K = KINDS[b.kind], c = choiceOf(b), by = K.picks ? K.picks[c].by || null : K.by || null; if (!by) return null;
+  const f = dailyPace(prodOf(b)); if (f === 1) return by;
+  const key = b.kind + '|' + c; let o = BY_CACHE.get(key); if (!o){ o = {}; for (const [k, v] of Object.entries(by)) o[k] = FOOD_CHAIN.has(k) ? v : v * f; BY_CACHE.set(key, o); } return o; };
 const outOf = b => { const K = KINDS[b.kind]; return K.picks ? K.picks[choiceOf(b)].out || 1 : K.out || 1; };
-const slowOf = b => { const K = KINDS[b.kind]; return K.picks ? K.picks[choiceOf(b)].slow || 1 : 1; };
+const slowOf = b => { const K = KINDS[b.kind]; return (K.picks ? K.picks[choiceOf(b)].slow || 1 : 1) * dailyPace(prodOf(b)); };
 /* how much each pick is wanted now: what is missing once all the other places have made theirs, against what is in store.
    Fronds are always wanted a little, every roof needs them. */
 function pickScores(I, b){
@@ -1175,13 +1188,15 @@ function choosePick(I, b){
   if (!K.picks[b.want] || sc[best] > (sc[b.want] ?? -1) * 1.25 + .01){ if (b.want && b.want !== best) b._by = null; b.want = best; }
 }
 /* the Erntehaus does more with more palms around it, and the work is slower when the store is far away */
-/* Palms bear only so many nuts: each palm ripens about one a minute, ripe or green. An Erntehaus takes them from the palms
+/* Palms bear only so many nuts: each palm ripens about one a day, ripe or green. An Erntehaus takes them from the palms
    around it and shares them with every other Erntehaus that reaches the same grove; when they are picked clean it waits
    (or cuts fronds meanwhile). So a palm feeds about one person, and more people want more palms, or fish and fields. */
-const NUTS = {every:30, keep:3}, NUT_PICKS = new Set(['kokos', 'wasser']);
+const NUTS = {every:DAY_TICKS, keep:3}, NUT_PICKS = new Set(['kokos', 'wasser']);
 const nutPalms = (I, b) => { const P = palmsNear(I, b).length, sh = I.buildings.filter(q => q.kind === 'ernte' && !q.bt && Math.hypot(q.x - b.x, q.y - b.y) < KINDS.ernte.near.r).length || 1; return P / sh; };
 const nutsOf = (I, b) => b.nuts == null ? nutPalms(I, b) * NUTS.keep : b.nuts;
-function nutTick(I, n = 1){ for (const b of I.buildings) if (b.kind === 'ernte' && !b.bt){ const p = nutPalms(I, b); b.nuts = Math.min(p * NUTS.keep, nutsOf(I, b) + n * p / NUTS.every); } }
+function nutTick(I, n = 1){ for (const b of I.buildings) if (b.kind === 'ernte' && !b.bt){ const p = nutPalms(I, b); b.nuts = Math.min(p * NUTS.keep, nutsOf(I, b) + n * p / NUTS.every);
+  // picked clean, the harvesters rest until a few nuts have ripened again, and help elsewhere meanwhile (placesOf)
+  const was = !!b.nutRest; b.nutRest = b.nuts < 1 || (was && b.nuts < Math.min(3, p * NUTS.keep * .5)); if (was !== b.nutRest) I.staff = null; } }
 const nutRate = (I, b) => nutPalms(I, b) * PER_MIN / NUTS.every;   // nuts a minute this house can count on
 const palmF = (I, b) => b.kind === 'ernte' ? clamp(palmsNear(I, b).length / 6, .5, 1.25) : 1;
 function wayF(I, b){
@@ -1204,7 +1219,7 @@ function dayShares(I, p){
 }
 const oldF = (I, b, n) => { const o = b.at ? (staffOf(I).oldAt.get(b) || 0) : 0; return o && n ? 1 - .5 * Math.min(o, n) / n : 1; };   // the old work at half strength
 const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a master family works its craft faster
-const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b); };
+const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b) * (K.crew ? mealF(I, b) : 1); };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
    A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
@@ -1222,7 +1237,7 @@ function yamTick(I, b, K, n, mult = 1){
   }
   b.idle = {why:'grow', text:`Die Ranken wachsen. Geerntet wird, wenn die ${SEASON_IN(Y.harvest)} beginnt.`};
   if (S !== Y.harvest) return;
-  const got = Math.round(Y.out * (b.sown || 1) * Math.max(.4, b.soil ?? 1));
+  const got = Math.round(Y.out * (b.sown || 1) * Math.max(.4, b.soil ?? 1) / DAILY.food);
   b.kept = (b.kept || 0) + got; stats.yams = (stats.yams || 0) + got; if (got > 0) I.yamAt = tick;
   b.ys = 0; b.sown = 0; b.soil = Math.max(0, (b.soil ?? 1) - .22); b.idle = null; if (b.soil < .3){ b.fallow = true; } I.staff = null; invalidate();
   if (!awayQuiet && I.id === active){ toast(`Yamsernte: ${got} Feldfrüchte. Sie halten sich auf dem Gestell am Feld.`, 3200); sfx('rise'); }
@@ -1261,8 +1276,8 @@ function workUse(I, k){
 }
 /* basic needs hold for everyone, the others for the families whose house has reached that step */
 const needActive = (I, N) => N.lvl === 1 || popTier(I, N.lvl) > 0;
-// children eat and drink about half of what grown-ups do
-const eaters = I => (I.people || []).reduce((n, p) => n + (stageOf(p) === 'kid' ? .5 : 1), 0) || I.pop;
+// at the morning meal everyone eats and drinks one portion, children too
+const eaters = I => (I.people || []).length || I.pop;
 const needPop = (I, N) => N.lvl === 1 ? eaters(I) : popTier(I, N.lvl);
 /* Food is everything people eat; any other need is one good */
 /* the goods that meet a need: food of every kind; pots, and from Hawaiki on wooden bowls as well */
@@ -1279,6 +1294,56 @@ function needsOf(I){
   });
   const cap = popCap(I), missing = list.filter(n => n.state === 'out'), roomy = homesOf(I).some(b => !famOfHome(I, b) || membersOf(I, famOfHome(I, b)).length < homeCap(I, b));
   return {list, cap, missing, full:!roomy, atMax:I.pop >= islandMax(I), roofless:roofless(I), next:NEEDS.find(N => !needActive(I, N)), growing:!!growTarget(I, list)};
+}
+/* ---------- the morning meal. At dawn everyone eats one portion and drinks one, and then nothing more that day. Whoever
+   lives in a family house or better gets a cooked meal from the earth oven while there is one, the others what there is
+   most of. The children and the old are served first, then the families by how long they have lived here. Whoever gets
+   nothing works slower that day (MEAL); is it too little on HUNGER_GO mornings in a row, the family that came last packs
+   up and leaves, never the last one (and never while you are away). */
+const MEAL = {slow:.75, both:.55}, MEAL_NEEDS = new Set(['essen', 'wasser', 'speisen']);
+const mealFx = [];   // bowls over the houses at dawn, for the eye (render.js)
+const RAW_FOODS = FOODS.filter(k => k !== 'speisen');
+function mealTick(I){
+  syncPeople(I);
+  const P = (I.people || []).slice(), st = I.stock; if (!P.length) return;
+  const rank = p => { const a = stageOf(p); return a === 'kid' ? 0 : a === 'old' ? 1 : 2; };
+  P.sort((a, b) => rank(a) - rank(b) || (a.h || 0) - (b.h || 0) || a.id - b.id);
+  const tierP = new Map(); for (const f of famsOf(I)){ const h = f.home && findB(f.home); tierP.set(f.id, h ? tierOf(h) : 1); }
+  let hungry = 0, thirsty = 0; const famShort = new Set();
+  for (const p of P){
+    let ate = false;
+    if ((tierP.get(p.h) || 1) >= 2 && (st.speisen || 0) > 0){ st.speisen--; ate = true; }
+    else { const k = RAW_FOODS.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m, RAW_FOODS[0]); if ((st[k] || 0) > 0){ st[k]--; ate = true; } else if ((st.speisen || 0) > 0){ st.speisen--; ate = true; } }
+    const drank = (st.wasser || 0) > 0; if (drank) st.wasser--;
+    p.meal = (ate ? 0 : 1) + (drank ? 0 : 2);
+    if (!ate) hungry++; if (!drank) thirsty++; if (p.meal) famShort.add(p.h);
+  }
+  I._mf = null; I._fore = null; I.meal = {at:tick, n:P.length, hungry, thirsty};
+  if (!awayQuiet && I.id === active) mealFx.push({isl:I.id, t0:performance.now(), short:famShort});
+  if (!hungry && !thirsty){ I.hunger = 0; if (!stats.meal && !awayQuiet && I.id === active){ stats.meal = 1; toast('Morgenmahl: Jeder isst und trinkt am Morgen eine Portion, dann nichts mehr. Fehlt etwas, arbeiten die Leute an dem Tag langsamer.', 6500); } return; }
+  I.hunger = (I.hunger || 0) + 1; stats.meal = 1;
+  const what = [hungry ? `${hungry} ohne Essen` : '', thirsty ? `${thirsty} ohne Wasser` : ''].filter(Boolean).join(', ');
+  if (I.hunger >= HUNGER_GO && famsOf(I).length > 1 && !awayQuiet){ I.hunger = 0; famLeaves(I, hungry >= thirsty ? 'essen' : 'wasser'); return; }
+  if (awayQuiet || I.id !== active) return;
+  const f = leaverOf(I), warn = I.hunger === HUNGER_GO - 1 && f && famsOf(I).length > 1 ? ` Reicht es morgen wieder nicht, fährt ${famName(f)} fort.` : '';
+  toast(`Morgenmahl auf ${I.name}: ${what}. Sie arbeiten heute langsamer.${warn}`, 4200);
+}
+/* how fast someone works after the morning meal: 1 fed, slower hungry or thirsty, slower still both */
+const mealOf = (I, id) => { if (!I._mf){ I._mf = new Map(); for (const p of I.people || []) if (p.meal) I._mf.set(p.id, p.meal === 3 ? MEAL.both : MEAL.slow); } return I._mf.get(id) ?? 1; };
+const mealF = (I, b) => { const ids = staffOf(I).crewP.get(b); if (!ids || !ids.length) return 1; let t = 0; for (const id of ids) t += mealOf(I, id); return t / ids.length; };
+/* the next morning: what there will be by then (the store now and what is made until dawn, as far as the store holds
+   it) against one portion for everyone */
+// (kept for a few ticks: the work is shared out by it, and the rates it reads depend on who works where)
+function mealFore(I){
+  if (I._fore && tick - I._fore.t < 5) return I._fore.v;
+  const n = eaters(I);
+  if (I._foreBusy) return I._fore ? I._fore.v : {n, left:0, food:haveOf(I, 'essen'), water:I.stock.wasser || 0};
+  I._foreBusy = true;
+  try {
+    const left = (DAY_TICKS - (tick + 30) % DAY_TICKS) / PER_MIN, cap = storeCap(I);
+    const by = k => Math.min(cap, (I.stock[k] || 0) + Math.max(0, makeRate(I, k) - workUse(I, k)) * left);
+    return (I._fore = {t:tick, v:{n, left, food:Math.floor(FOODS.reduce((t, k) => t + by(k), 0)), water:Math.floor(by('wasser'))}}).v;
+  } finally { I._foreBusy = false; }
 }
 /* Levels: a hamlet, a village from thirty, and a chief's village. That needs a big high island, the chief's house with
    its family, everything that family wants, people, standing and beauty. It stays one while the chief's family lacks nothing. */
@@ -1331,7 +1396,7 @@ function holdFeast(I, F){
 /* The rain dance: in the dry time the village dances on the plaza by the village centre and calls the rain, as people on
    the islands asked the gods and the ancestors for rain (known from later accounts). Once a moon; the dancers are fed.
    After the dance a rain cloud stands over the village: the water vessels fill, a drought ends, the fields drink. */
-const RAIN = {cost:{roh:6}, dance:8, len:24, water:1};
+const RAIN = {cost:{roh:2}, dance:8, len:24, water:1};
 const raining = I => I.rainUntil > tick && tick >= (I.rainAt || 0) + RAIN.dance;
 function rainState(I){
   if (!centerOf(I)) return 'Getanzt wird am Dorfzentrum.';
@@ -1359,7 +1424,7 @@ function econ(){
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); if (tick % 20 === 0) storyTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
     roofTick(I); mendTick(I); stormTick(I); gatherTick(I); nutTick(I);
-    if (raining(I)){ add('wasser', RAIN.water); if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
+    if (raining(I)){ I._rw = (I._rw || 0) + RAIN.water / DAILY.water; if (I._rw >= 1){ add('wasser', Math.floor(I._rw)); I._rw -= Math.floor(I._rw); } if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){
@@ -1404,10 +1469,12 @@ function econ(){
       makePiece(I, b, add);
     }
     growTrees(I); stepWear(I); wildTick(I); I.reefLife = Math.min(1, (I.reefLife ?? 1) + .0012 * (I.rahui ? 3 : 1));
-    // use up what people need; fractions carry over so small villages use little
+    // use up what people need; fractions carry over so small villages use little. Food and water are eaten only at
+    // the morning meal (mealTick); the fire, the pots, the mats and the rest are used all day.
+    if ((tick + 30) % DAY_TICKS === 0) mealTick(I);
     I.owe = I.owe || {};
     for (const N of NEEDS){
-      if (!needActive(I, N)) continue;
+      if (!needActive(I, N) || MEAL_NEEDS.has(N.k)) continue;
       I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate / PER_MIN;
       const take = Math.floor(I.owe[N.k]); if (take <= 0) continue; I.owe[N.k] -= take;
       const ks = needGoods(N.k); if (ks.length < 2){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
@@ -1421,12 +1488,7 @@ function econ(){
     birthTick(I); immigTick(I);
     tierTick(I, nd.list); rooflessTick(I); crowdTick(I); prioTick(I);
     if (nd.atMax && !I.fullSaid && I.id === active && !awayQuiet){ I.fullSaid = true; toast(`${I.name} ist voll: Mehr als ${islandMax(I)} Menschen trägt die Insel nicht. Schickt Familien im Kanu aus und gründet ein neues Dorf.`, 6000); } else if (!nd.atMax) I.fullSaid = false;
-    // without food or water people leave, slowly, but a few always stay
-    // without food or water a family packs up and leaves in its canoe, the youngest household first, never the last one
-    // hunger builds while food or water are gone and fades twice as fast when they are back; at two minutes a family
-    // goes (a canoe over its house warns from the half on). Room in the houses shrinks only after half a minute of nothing.
-    I.hunger = nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') ? (I.hunger || 0) + 1 : Math.max(0, (I.hunger || 0) - 2);
-    if (I.hunger >= HUNGER_GO && famsOf(I).length > 1 && tick >= (I.grace || 0)){ I.hunger = 0; I.grace = tick + 60; famLeaves(I, (nd.missing.find(n => n.k === 'essen' || n.k === 'wasser') || {k:'essen'}).k); }
+    // (hunger is counted in mornings, see mealTick.) Room in the houses shrinks only after half a minute of nothing.
     { const d = I.dry || (I.dry = {}); for (const n of nd.list) d[n.k] = n.stock > 0 ? 0 : (d[n.k] || 0) + 1; }
   }
   stageTick();
@@ -1802,7 +1864,7 @@ function awayMinute(I, R){
   // what people use; when something runs out nobody leaves, the village only stops growing
   I.owe = I.owe || {};
   for (const N of NEEDS){
-    if (!needActive(I, N)) continue;
+    if (!needActive(I, N) || MEAL_NEEDS.has(N.k)) continue;
     I.owe[N.k] = (I.owe[N.k] || 0) + needPop(I, N) * N.rate; const take = Math.floor(I.owe[N.k]); I.owe[N.k] -= take;
     const ks = needGoods(N.k); if (ks.length < 2){ st[N.k] = Math.max(0, (st[N.k] || 0) - take); continue; }
     for (let i = 0; i < take; i++){ const k = burnFirst(N.k, st) || ks.reduce((m, q) => (st[q] || 0) > (st[m] || 0) ? q : m); if (st[k] > 0) st[k]--; }
@@ -1812,7 +1874,7 @@ function awayMinute(I, R){
   // a minute away: children are born, families come to empty huts, the houses rise or fall
   birthTick(I, 30); immigTick(I); I.reefLife = Math.min(1, (I.reefLife ?? 1) + .0012 * 30);
   for (let k = 0; k < 3; k++) tierTick(I, needsOf(I).list, true);   // while you are away nobody leaves a crowded house
-  I.hunger = 0; syncPeople(I); lifeTick(I); navTick(I, 30);
+  syncPeople(I); lifeTick(I); navTick(I, 30);
 }
 function catchUp(ms){
   if (landing) return null;   // before the landing no time passes
@@ -1822,7 +1884,7 @@ function catchUp(ms){
   awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[], mot:[], fade:[]};
   try {
     for (let i = 1; i <= n; i++){
-      tick++;
+      tick++; if ((tick + 30) % DAY_TICKS === 0) for (const I of islands) if (I.settled) mealTick(I);
       if (ships.length){ stepShips(performance.now(), TICK); driftTouch(); } driftTick();
       feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
       if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I); }

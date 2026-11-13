@@ -50,14 +50,16 @@ function updateHUD(){
   const first = ['essen', 'wasser', 'holz', 'dach', 'schnur'], more = GOODS.filter(k => !FOODS.includes(k) && !first.includes(k) && ((I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)));
   const shown = [...first, ...more].slice(0, I.pop < 15 ? 5 : 7);
   const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span><small class="gl" aria-hidden="true">${shortGN(k)}</small></span>`).join(''); }
-  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v);
+  // food and water turn red when the next morning meal will not reach everyone (see mealFore)
+  const F = mealFore(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : false;
+  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
   lastStock = {isl:active, ...I.stock, essen:haveOf(I, 'essen')};
   $('vitalBtn').innerHTML = vitalLine(I);
   // what does not fit next to the hint is left out whole, never cut in half (the store sheet shows everything)
   for (const li of ul.children) li.hidden = false;
   { const edge = ul.getBoundingClientRect().right + 1; for (const li of ul.children) if (li.getBoundingClientRect().right > edge) li.hidden = true; }
-  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}`).join(', ') + '. Tippen zeigt alles.');
+  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}${short(k) ? ', reicht morgen früh nicht' : ''}`).join(', ') + `. Am Morgen essen und trinken ${F.n} Menschen. Tippen zeigt alles.`);
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
 /* Two menus: what the village needs, with paths at the end, and what only adorns it */
@@ -124,7 +126,7 @@ let ringAt = 0;
 function dayRing(){
   const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); const T = $('dayTxt'), M = $('dayMark');
   if (!opts.night){ H.style.background = ''; if (T) T.hidden = true; if (M) M.hidden = true; return; }
-  const p = dayPhase(), night = p >= DAY_END, left = Math.max(0, ((night ? 1 : DAY_END) - p) * DAY_TICKS * TICK / 1000 / gameSpeed), deg = p * 360;
+  const p = dayPhase(), night = p >= DAY_END, left = Math.max(0, ((night ? 1 : DAY_END) - p) * DAY_TICKS * TICK / 1000 / Math.max(1, gameSpeed)), deg = p * 360;
   // the rim: what is behind us is spent (pale), what is still to come shows its colour, gold for the day and blue for the night
   const col = q => q < DAY_END - .08 ? '#F0C24A' : q < DAY_END ? '#E38B3E' : '#2E3E6C', stops = [];
   for (const q of [0, DAY_END - .08, DAY_END, 1]) if (q > p) stops.push(`${col(Math.max(p, q - .0001))} ${(q * 360).toFixed(1)}deg`, `${col(q)} ${(q * 360).toFixed(1)}deg`);
@@ -517,7 +519,7 @@ function houseMarkup(I, b, withHead = true){
   let h = withHead ? head(famName(f), sub) : `<p class="sub">${sub}</p>`;
   // the people: name and age, under it what they do
   const picking = !!(sheetData && sheetData.crafts);
-  h += `<div class="folk home">${m.map(p => `<button class="who chip pers" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${personWork(I, p)}</span></button>`).join('')}${picking ? '' : craftChip(I, b)}</div>`;
+  h += `<div class="folk home">${m.map(p => `<button class="who chip pers" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${jobShort(I, p)}</span></button>`).join('')}${picking ? '' : craftChip(I, b)}</div>`;
   if (picking) return h + craftRow(I, b);   // while a craft is chosen, the choice stands in the place of the rest
   // what the family needs, one tile each; then the one thing to do next
   const fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out').concat(fn.filter(n => n.state === 'low'));
@@ -535,7 +537,8 @@ function centerMarkup(I, b){
   if (tab === 'haus') return h + houseMarkup(I, b, false);
   if (tab === 'staerke') return h + strengthMarkup(I);
   if (tab === 'werk') return h + werkMarkup(I);
-  if (tab === 'lager') return h + storeTiles(I) + `<div class="rowx"><span class="sub">Platz für ${storeCap(I)} je Ware. Antippen zeigt, woher sie kommt.</span></div>`;
+  if (tab === 'lager'){ const F = mealFore(I), mm = F.food < F.n || F.water < F.n;
+    return h + `<p class="sub${mm ? ' meal-bad' : ''}">Morgenmahl: ${F.n} Menschen essen und trinken je eine Portion. Bis dahin gibt es etwa ${F.food} Essen und ${F.water} Wasser.</p>` + storeTiles(I) + `<div class="rowx"><span class="sub">Platz für ${storeCap(I)} je Ware. Antippen zeigt, woher sie kommt.</span></div>`; }
   return h + villageMarkup(I, b);
 }
 const KNOCHEN_IC = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knochen"/></svg>';
@@ -620,11 +623,13 @@ function zealMarkup(I){
   return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><p class="sub">${ZEAL_TEXT[z]}</p></div>`;
 }
 /* A person: who, what they do now, where they work, how their day is shared, and the village's slider */
+/* on a person's tile in the house: the short name of the place (Fischer, not Fischerhütte), so four fit in a row */
+const jobShort = (I, p) => { const b = p.job && findB(p.job); return isAdult(p) && b && !b.at && !loanWord(I, p) && !(staffOf(I).restP || []).includes(p.id) ? KINDS[b.kind].s : personWork(I, p); };
 function personMarkup(){
   const I = sheetData && isl(sheetData.id), p = I && I.people && I.people.find(q => q.id === sheetData.p); if (!p) return '';
   const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
   let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
-  h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.</p>`;
+  h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.${p.meal ? ` <b class="meal-bad">Heute früh ${p.meal === 3 ? 'ohne Essen und Wasser' : p.meal === 1 ? 'ohne Essen' : 'ohne Wasser'}: ${st === 'adult' ? 'arbeitet langsamer' : 'ist müde'}.</b>` : I.meal ? ' Hat heute früh gegessen und getrunken.' : ''}</p>`;
   h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', `Spielt und lernt. ${ageOf(p) >= GATHER.age ? 'Sammelt Brennholz, sobald es einen Herd gibt. ' : 'Ab drei sammelt es Brennholz. '}Mit sechs Jahren arbeitet es mit.`) : st === 'old' ? job ? rowS('pop', `Alt · ${placeName(job)}`, 'Sitzt beim Hauswerk vor dem Haus, halb so schnell wie die Jüngeren, und erzählt dabei von den Ahnen.', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) : rowS('pop', 'Alt', 'Geht nicht mehr aufs Feld. Ein Hauswerk im Haus ihrer Familie gibt ihr noch Arbeit.') :
     rowS(job ? '' : 'idle', job ? `Stammplatz: ${placeName(job)}` : staffOf(I).rest ? 'Freizeit, ohne Stammplatz' : 'Ohne Stammplatz', job ? `${personWork(I, p).includes('·') ? `Gerade ${personWork(I, p).split(' · ')[1]}. ` : ''}${crewAt(I, job) || 0} von ${crewOf(job)} sind dort.` : staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.', '',
       `<span class="chips">${job ? `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>` : ''}<button class="chip" type="button" data-act="jobpick" aria-expanded="${!!sheetData.pick}">${sheetData.pick ? 'Fertig' : job ? 'Ändern' : 'Wählen'}</button></span>`)}</ul>`;

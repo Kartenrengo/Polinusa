@@ -124,13 +124,17 @@ function syncFamilies(I){
 /* Where the next child is born: a family house (step 2 or more) with room, a woman and a man. Room comes with the
    needs met (homeCap), so without cooked food a family house has no room for a child. Nobody is born while food or
    water have run out. */
-const surplus = (I, list) => ['essen', 'wasser'].every(k => { const n = list.find(q => q.k === k); return !n || n.make >= (n.use + n.work) * 1.15 || n.stock >= storeCap(I) * .6; });
+// the morning meal decides: today's was enough for everyone, and the next morning there will be enough for everyone and
+// a family more (MEAL_SPARE)
+const MEAL_SPARE = 4;
+const surplus = (I, list) => !(I.meal && (I.meal.hungry || I.meal.thirsty)) && ['essen', 'wasser'].every(k => { const n = list.find(q => q.k === k); if (!n) return true; const f = mealFore(I);
+  return (k === 'essen' ? f.food : f.water) >= f.n + MEAL_SPARE; });
 /* which of food and water does not reach the surplus children and newcomers need ('' when both do) */
 const surplusMiss = (I, list) => ['essen', 'wasser'].find(k => !surplus(I, list.filter(n => n.k === k))) || '';
 function growTarget(I, list, lean = false){
   if (!I.settled || I.pop >= islandMax(I)) return null;
-  const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));
-  if (out.has('essen') || out.has('wasser') || haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0) return null;
+  const out = new Set(list.filter(n => n.state === 'out').map(n => n.k)), F = mealFore(I);
+  if (out.has('essen') || out.has('wasser') || (I.meal && (I.meal.hungry || I.meal.thirsty)) || F.food < F.n || F.water < F.n) return null;   // nobody new while the morning meal falls short
   // children come fastest where there is more than enough: the harvest covers what everyone eats and drinks with some to
   // spare, or the stores are well filled. Without that they still come, seldom (lean), so a village never dies out
   // only because it eats what it grows.
@@ -162,6 +166,7 @@ function birthWhy(I, list){
   if (I.pop >= islandMax(I)) return '';
   const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));
   if (out.has('essen') || out.has('wasser')) return `${out.has('essen') ? 'Essen' : 'Wasser'} fehlt. Dann kommen keine Kinder.`;
+  if (I.meal && (I.meal.hungry || I.meal.thirsty)) return `Beim Morgenmahl fehlte ${I.meal.hungry ? 'Essen' : 'Wasser'}. Dann kommen keine Kinder.`;
   const fh = homesOf(I).filter(b => tierOf(b) >= 2 && famOfHome(I, b));
   if (!fh.length) return 'Kinder kommen nur im Familienhaus. Baut eine Hütte aus.';
   const pair = b => { const m = membersOf(I, famOfHome(I, b)); return m.some(p => p.s === 'f' && isAdult(p) && ageOf(p) >= 16 && ageOf(p) < 42) && m.some(p => p.s === 'm' && isAdult(p) && ageOf(p) >= 16); };
@@ -314,7 +319,7 @@ const WOMEN_WORK = new Set(['flecht', 'klopf', 'malerin', 'weberin', 'duftoel', 
 const MEN_WORK = new Set(['hakenmacher', 'schnitzer', 'fisch', 'taucher', 'faeller', 'beil', 'klingen', 'ernte', 'pferch', 'harzer', 'kalkbrenner', 'pflanzer']);
 const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null; return w ? ad.slice().sort((p, q) => (q.s === w) - (p.s === w)) : ad; };
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
-const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1));   // a growing garden needs nobody yet; a yam field only at planting
+const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1) && !(b.nutRest && NUT_PICKS.has(prodOf(b))));   // a growing garden needs nobody yet; a yam field only at planting; palms picked clean wait for nuts
 /* how many work at a place: its crew, or one who carves the dugout of a jetty (a jetty has no crew of its own) */
 const crewOf = b => KINDS[b.kind].crew || (b.boat > 0 ? 1 : 0);
 const autoWork = I => !I.handWork;
@@ -324,14 +329,25 @@ function needOf(I, places){
   const cap = storeCap(I), outs = b => [prodOfB(b), ...Object.keys(byOf(b) || {}), ...Object.keys(KINDS[b.kind].picks || {})].filter(Boolean);
   const short = new Set(places.map(prodOfB).filter(k => k && (I.stock[k] || 0) < 5));
   for (const b of places) if (short.has(prodOfB(b)) && KINDS[b.kind].use) for (const k of Object.keys(KINDS[b.kind].use)) for (const q of GROUPS[k] || [k]) if ((I.stock[q] || 0) < 5) short.add(q);
-  if (haveOf(I, 'essen') < 12) for (const k of FOODS) short.add(k);
-  if ((I.stock.wasser || 0) < 6) short.add('wasser');
+  // food and water are short when the next morning meal will not reach everyone and a family more (see mealFore)
+  const F = mealFore(I);
+  if (haveOf(I, 'essen') < 12 || F.food < F.n + MEAL_SPARE) for (const k of FOODS) short.add(k);
+  if ((I.stock.wasser || 0) < 6 || F.water < F.n + MEAL_SPARE) short.add('wasser');
   if ((I.stock.dach || 0) < 4) short.add('dach');
   if ((I.stock.holz || 0) < 4) short.add('holz');
   const full = b => KINDS[b.kind].picks ? Object.keys(KINDS[b.kind].picks).every(k => (I.stock[k] || 0) >= cap * .75) : (I.stock[prodOfB(b)] || 0) >= cap * .75;
   return b => b.boat > 0 || outs(b).some(k => short.has(k)) ? 0 : full(b) ? 2 : 1;
 }
 const rankOf = b => PLACE_RANK[catOf(b)] ?? 3;
+/* is water or food short for the next morning meal? On below everyone and a family more, off again from three families
+   more; looked at once a minute and after the meal, so the borrowed hands do not go back and forth */
+function vitalOf(I){
+  const V = I.vital || (I.vital = {wasser:false, essen:false});
+  if (V.t != null && tick - V.t < 30 && !(I.meal && I.meal.at > V.t)) return V;
+  const F = mealFore(I); V.t = tick;
+  for (const [k, have] of [['wasser', F.water], ['essen', F.food]]) V[k] = have < F.n + MEAL_SPARE || (V[k] && have < F.n + 3 * MEAL_SPARE);
+  return V;
+}
 /* the best of those free for a place: someone of the family already there, then by the old ways, then who lives nearest */
 function pickWorker(I, b, free, here){
   const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null, fams = new Set(here.map(p => p.h));
@@ -344,7 +360,7 @@ function pickWorker(I, b, free, here){
 const masterSet = I => new Set((I.people || []).filter(p => { const f = famOf(I, p.h); return f && famTier(I, f) >= 3; }).map(p => p.id));
 const lowWork = b => !b.at && rankOf(b) < 3;
 function fitOf(I){
-  const M = masterSet(I), hunger = haveOf(I, 'essen') <= 0 || (I.stock.wasser || 0) <= 0;
+  const M = masterSet(I), F = mealFore(I), hunger = F.food < F.n || F.water < F.n;   // the next morning meal falls short
   return (p, b) => hunger || !M.has(p.id) || !lowWork(b);
 }
 function autoAssign(I, places, at, adults, fit = () => true, away = []){
@@ -470,10 +486,21 @@ function staff(I){
         const fl = at.get(from), p = fl.filter(can).pop(); fl.splice(fl.indexOf(p), 1); p.loan = b.id; l.push(p);   // borrowed: back home when the call ends
       }
     } }
+  // the morning meal comes first: while the next morning will fall short of water or food, an empty place that makes it
+  // borrows hands from a place that can wait (back home when there is enough again; decided once a minute, see vitalOf)
+  { const V = vitalOf(I), need = needOf(I, places), stuck = new Set(['full', 'use', 'near', 'trees', 'dep', 'fallow', 'grow', 'yam', 'nuts', 'carving', 'storm', 'rahui']);
+    for (const k of ['wasser', 'essen']){ if (!V[k]) continue;
+      for (const b of places.filter(q => !q.prio && !q.at && makesK(q.kind, k) && !(q.idle && stuck.has(q.idle.why)))){
+        const l = at.get(b) || []; at.set(b, l);
+        while (l.length < crewOf(b)){
+          const can = p => fit(p, b) && !p.loan, from = places.filter(q => q !== b && !q.prio && !q.keep && !q.at && need(q) !== 0 && (at.get(q) || []).some(can)).sort((x, y) => need(y) - need(x) || rankOf(y) - rankOf(x) || y.born - x.born)[0];
+          if (!from) break;
+          const fl = at.get(from), p = fl.filter(can).pop(); fl.splice(fl.indexOf(p), 1); p.loan = b.id; l.push(p);
+        } } } }
   const pool = away.filter(p => !p.loan).concat(adults.filter(p => !p.job && !p.loan));   // whose place rests first, then who has none
   // the building sites and the canoe house: first who has no work, then the people of the place needed least
   // a site that will make what is running out (water, food) goes first, then huts for those without a roof, then in order
-  const shortK = ['wasser', 'essen'].filter(k => haveOf(I, k) < 6), urgent = b => shortK.some(k => makesK(b.kind, k)), roofNeed = roofless(I);
+  const F = mealFore(I), shortK = [F.water < F.n + MEAL_SPARE ? 'wasser' : '', F.food < F.n + MEAL_SPARE ? 'essen' : ''].filter(Boolean), urgent = b => shortK.some(k => makesK(b.kind, k)), roofNeed = roofless(I);
   // a site called with the conch comes first of all, and always gets its builders, even beyond the usual number of sites
   const rank = b => b.prio ? -1 : urgent(b) ? 0 : b.kind === 'haus' && roofNeed ? 1 : 2;
   const all = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant).sort((a, b) => rank(a) - rank(b) || a.id - b.id), lim = builders(I) + all.filter(q => q.prio).length;   // a called site comes on top, it does not stop one already worked

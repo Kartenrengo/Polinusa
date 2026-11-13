@@ -37,7 +37,7 @@ const IMMIG_GAP = 40, IMMIG_WAIT = 75;   // ticks at least between two canoes fo
 const emptyHome = I => homesOf(I).find(b => !famOfHome(I, b) && b.kind !== 'fale') || null;
 function wantsSettlers(I){
   if (!I.settled || !I.people || I.pop >= islandMax(I) || roofless(I) || !emptyHome(I)) return false;
-  const nd = needsOf(I); return !nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') && surplus(I, nd.list);   // a new family only where there is enough for them
+  const nd = needsOf(I); return !nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') && !(I.meal && (I.meal.hungry || I.meal.thirsty)) && surplus(I, nd.list);   // a new family only where there is enough for them, also at the morning meal
 }
 const immigFor = I => ships.find(s => s.immig && s.to === I.id) || null;
 function newImmig(I){
@@ -47,7 +47,7 @@ function newImmig(I){
   const kids = Math.random() < .3 ? 0 : Math.random() < .6 ? 1 : 2;
   for (let i = 0; i < kids && P.length < 4; i++) P.push(person(I, Math.random() < .5 ? 1 + Math.random() * 4 : 7 + Math.random() * 6));
   const ln = newLine(w.n, from); for (const p of P){ p.h = fam; p.ln = ln; }
-  const gift = {nahrung:2 + Math.floor(Math.random() * 4)}; if (Math.random() < .3) gift.schnur = 2; if (I.type === 'atoll' && Math.random() < .3) gift.toepfe = 1;
+  const gift = {nahrung:1 + Math.floor(Math.random() * 2)}; if (Math.random() < .3) gift.schnur = 2; if (I.type === 'atoll' && Math.random() < .3) gift.toepfe = 1;
   const miss = LIFE_BASE.filter(id => lifeFits(I, id) && !lifeOf(I).includes(id)), life = miss.length && Math.random() < .5 ? [miss[Math.floor(Math.random() * miss.length)]] : [];
   return {from, people:P, gift, life, n:w.n};
 }

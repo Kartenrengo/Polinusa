@@ -15,19 +15,19 @@ const QUESTS = [
   {id:'holz', t:'Holz schlagen', d:'Baue einen Holzfäller am Waldrand.', why:'Jedes Gebäude braucht Holz und Palmwedel. Zu zweit fällt es sich dreimal so schnell: Einer schlägt, der andere zieht den Stamm am Seil zur Seite.',
     n:() => count('heimat', 'faeller'), of:1, show:{build:'faeller'}, unlock:[], gift:{holz:2}},
   {id:'trinken', t:'Wasser holen', d:() => isl('heimat').river ? 'Lagere 8 Wasser von der Quelle am Bach.' : 'Lagere 8 Wasser: grüne Nüsse vom Erntehaus.', why:'Jeder Mensch braucht Wasser. Ohne Wasser kommt niemand dazu, und bald ziehen Leute fort. Jede Insel mit einem Bach hat eine Quelle; wo kein Bach fließt, trinkt man das Wasser der grünen Kokosnüsse.',
-    n:() => stockOf('heimat', 'wasser') >= 8 ? 1 : 0, of:1, get show(){ return isl('heimat') && isl('heimat').river ? {sheet:'quelle'} : {sheet:'ernte'}; }, unlock:[], gift:{wasser:6}},
+    n:() => stockOf('heimat', 'wasser') >= 8 ? 1 : 0, of:1, get show(){ return isl('heimat') && isl('heimat').river ? {sheet:'quelle'} : {sheet:'ernte'}; }, unlock:[], gift:{wasser:3}},
   {id:'fang', t:'Fischer am Strand', d:'Baue eine Fischerhütte am Strand.', why:'Zwei fahren zusammen im Kanu hinaus und holen, was gebraucht wird: Fisch, Meeresfrüchte, Muscheln, Kochsteine. Erst schnitzen sie ihr Kanu.',
     n:() => count('heimat', 'fisch'), of:1, show:{build:'fisch'}, unlock:[], gift:{holz:2}},
   {id:'huette', t:'Eine Hütte für Gäste', d:'Baue eine zweite Hütte.', why:'Steht eine Hütte leer, kommt bald ein Kanu von weit her mit einer Familie, die bleiben möchte. Gebaut wird zu zweit; ist niemand frei, legen zwei für die Bauzeit ihre Arbeit nieder.',
     n:() => count('heimat', 'haus'), of:2, show:{build:'haus'}, unlock:[], gift:{dach:2}},
   {id:'zuzug', t:'Neue Familien', d:'Nimm eine Familie auf, die per Kanu kommt.', why:'Jeder Erwachsene ist eine Arbeitskraft. Familien von weit her bringen eine neue Linie mit: Ihre Kinder machen das Dorf gesünder. Tippe das fremde Kanu an, wenn es anlegt.',
-    n:() => stats.zuzug ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{nahrung:4}},
+    n:() => stats.zuzug ? 1 : 0, of:1, show:{needs:true}, unlock:[], gift:{nahrung:2}},
   {id:'arbeit', t:'Arbeit verteilen', d:'Lass 6 Menschen arbeiten.', why:'Tippe einen Arbeitsplatz an: Mit + schickst du jemanden hin, mit − rufst du ihn ab. Oben in der Übersicht siehst du, wer frei ist. Wer keine Arbeit hat, sammelt im Wald und am Strand.',
     n:() => Math.min(6, working(isl('heimat'))), of:6, show:{needs:true}, unlock:[], gift:{holz:2}},
   {id:'acht', t:'Acht Menschen', d:'Erreiche 8 Bewohner.', why:'Bei 8 Menschen kommen die Gärten: Taro, Yams, der Nussbaum. Leere Hütten holen Familien von weit her.',
     n:() => isl('heimat').pop, of:8, show:{build:'haus'}, unlock:[], gift:{holz:2}},
   {id:'essen', t:'Gärten anlegen', d:'Lege 2 Tarofelder an.', why:'Bei 8 Menschen kommen die Gärten. Die Familie hat Taro als Setzlinge im Kanu mitgebracht. Taro, Fisch, Kokos und Brotfrucht zählen alle als Nahrung.',
-    n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:[], gift:{nahrung:4}},
+    n:() => count('heimat', 'taro'), of:2, show:{build:'taro'}, unlock:[], gift:{nahrung:2}},
   {id:'wachsen', t:'Zwölf Menschen', d:'Erreiche 12 Bewohner.', why:'Bei 12 Menschen kommen Sennit und Erdofen. Baut Hütten, dann kommen Familien. Tippe oben auf die Bewohnerzahl: Dort steht, was fehlt.',
     n:() => isl('heimat').pop, of:12, show:{build:'haus'}, unlock:[], gift:{holz:4}},
   {id:'blut', t:'Frisches Blut', d:'Sorge für Familien aus 3 Linien auf Panua.', why:'Eine kleine Insel wird schnell eine einzige Verwandtschaft. Familien von weit her, Leute von euren anderen Inseln oder eine Hochzeit mit einem Clan bringen neue Linien. Sind alle zu nah verwandt, kommen kaum Kinder.',
@@ -51,7 +51,7 @@ const QUESTS = [
   {id:'dreissig', t:'Auf dem Weg zum Dorf', d:'Erreiche 30 Bewohner.', why:'Bei 30 Menschen ist es ein Dorf: Öl, Doppelkanu, Sternhaus, Taucher und Versammlungshaus kommen dazu.',
     n:() => isl('heimat').pop, of:30, show:{build:'haus'}, unlock:[], gift:{holz:4}},
   {id:'wasser', t:'Ans Wasser', d:'Baue ein Kanuhaus am Strand.', why:'Im Kanuhaus entstehen die Boote. Es steht am Strand.',
-    n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'fackel'], gift:{holz:4, nahrung:4}},
+    n:() => count('heimat', 'werft'), of:1, show:{build:'werft'}, unlock:['hibiskus', 'blumen', 'fackel'], gift:{holz:4, nahrung:2}},
   {id:'ausleger', t:'Ein Auslegerkanu', d:'Baue im Kanuhaus ein Auslegerkanu.', why:'Drei Bauleute brauchen etwa zweieinhalb Minuten. Schmücke solange das Dorf.',
     n:() => fleetOf('oc') || isl('tochter').settled ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:[], gift:{}},
   {id:'motu', t:'Hinüber nach Motu', d:'Fahre 4 Siedler nach Motu und gründe ein Dorf.', get why(){ return (atollReady() ? '' : 'Erst muss ein Kanusteg mit Einbaum stehen, sonst fährt kein Kanu ins Atoll. ') + 'Siedler gehen als Familie. Tippe das Kanu an, lade Siedler, Holz, Wasser, Palmwedel und Taro-Setzlinge. Dann tippe auf Motu. Wer übers Meer geht, nimmt seine Linie mit.'; },
@@ -207,11 +207,16 @@ function adviceOf(I, urgentOnly = false){
     if (n < hs.length && !tieCost(I)) return {t, key:'sturm', d:`${n} von ${hs.length} Dächern fest. Es fehlt Schnur oder Kokosfasern.`, ware:'schnur', urgent:true};
     if (n < hs.length) return {t, key:'sturm', d:`${n} von ${hs.length} Dächern fest. Die Leute binden.`, goto:(hs.find(h => !S.tied.includes(h.id)) || hs[0]).id, urgent:true};
   } }
+  // the morning meal must fit into the store: water is one good, so beyond the store's room nobody more can drink
+  { const F = mealFore(I), cap = storeCap(I); if (F.n + MEAL_SPARE > cap && unlocked('speicher') && !I.buildings.some(b => b.kind === 'speicher' && b.bt)) return {t:'Speicher bauen', d:`Am Morgen trinken ${F.n} Menschen ${F.n} Wasser. Ins Lager passen nur ${cap}. Ein Speicher gibt jeder Ware 10 Platz mehr.`, build:'speicher', urgent:true}; }
   if (nd.roofless && !sites) return {t:'Hütten bauen', d:`${nd.roofless} ${nd.roofless === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach. Eine Hütte braucht Holz und Palmwedel.`, build:'haus', urgent:true};
-  const goes = (I.hunger || 0) >= 10 && leaverOf(I) && famsOf(I).length > 1 ? ` Sonst fährt ${famName(leaverOf(I))} fort.` : '';
-  { const cz = centerOf(I); if (cz && (I.stock.wasser || 0) < 4 && low('wasser') && !rainState(I)) return {t:'Regentanz', d:'Das Wasser geht aus. Am Dorfzentrum tanzt das Dorf und ruft den Regen: eine Weile Wasser für alle.', goto:cz.id, rain:true, urgent:true}; }
-  if ((I.stock.wasser || 0) < 8 && low('wasser')) return {t:has(wsrc) || has('ernte') ? 'Mehr Wasser' : 'Wasser holen', d:goes + (freeHands(I) ? `${freeHands(I)} ${freeHands(I) === 1 ? 'ist' : 'sind'} frei, doch jeder Platz ist besetzt: ` : '') + (I.river ? 'Die Quelle am Bach reicht nicht mehr: Ein Erntehaus mehr holt grüne Nüsse zum Trinken.' : 'Hier fließt kein Bach: Das Erntehaus holt grüne Nüsse zum Trinken. Ein zweites hilft.'), build:'ernte', urgent:true};
-  if (out('essen') || haveOf(I, 'essen') < 6 && low('essen')) return {t:'Mehr Essen', d:goes + (freeHands(I) ? `${freeHands(I)} ${freeHands(I) === 1 ? 'ist' : 'sind'} frei, doch jeder Platz für Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.` : 'Die Nahrung geht aus. Erntehaus, Fischerhütte und Gärten helfen, wer frei ist, sammelt.'), build:!has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : producerOf(I, 'nahrung') || 'fisch', urgent:true};
+  const goes = (I.hunger || 0) >= 1 && leaverOf(I) && famsOf(I).length > 1 ? ` Sonst fährt ${famName(leaverOf(I))} fort.` : '';
+  // the morning meal ahead: what there will be by dawn against one portion for everyone (mealFore)
+  const F = mealFore(I), tomorrow = (k, have) => `Morgen früh ${k === 'wasser' ? 'trinken' : 'essen'} ${F.n} Menschen, bis dahin gibt es etwa ${have} ${k === 'wasser' ? 'Wasser' : 'Essen'}. `;
+  { const cz = centerOf(I); if (cz && F.water < F.n * .7 && low('wasser') && !rainState(I)) return {t:'Regentanz', d:tomorrow('wasser', F.water) + 'Am Dorfzentrum tanzt das Dorf und ruft den Regen: eine Weile Wasser für alle.', goto:cz.id, rain:true, urgent:true}; }
+  { const q = I.buildings.find(b => b.kind === 'quelle' && !b.bt); if (q && F.water < F.n + 2 && (crewAt(I, q) || 0) < crewOf(q) && !(q.idle && q.idle.why === 'full')) return {t:'Wasser tragen', d:tomorrow('wasser', F.water) + `An der Quelle tragen erst ${crewAt(I, q) || 0} von ${crewOf(q)}. Gib jemandem dort den Stammplatz.`, goto:q.id, urgent:true}; }
+  if (F.water < F.n + 2 && low('wasser')) return {t:has(wsrc) || has('ernte') ? 'Mehr Wasser' : 'Wasser holen', d:goes + tomorrow('wasser', F.water) + (freeHands(I) ? `${freeHands(I)} ${freeHands(I) === 1 ? 'ist' : 'sind'} frei, doch jeder Platz ist besetzt: ` : '') + (I.river ? 'Die Quelle am Bach reicht nicht mehr: Ein Erntehaus mehr holt grüne Nüsse zum Trinken.' : 'Hier fließt kein Bach: Das Erntehaus holt grüne Nüsse zum Trinken. Ein zweites hilft.'), build:'ernte', urgent:true};
+  if (out('essen') || F.food < F.n + 2 && low('essen')) return {t:'Mehr Essen', d:goes + tomorrow('essen', F.food) + (freeHands(I) ? `${freeHands(I)} ${freeHands(I) === 1 ? 'ist' : 'sind'} frei, doch jeder Platz für Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.` : 'Die Nahrung geht aus. Erntehaus, Fischerhütte und Gärten helfen, wer frei ist, sammelt.'), build:!has('ernte') ? 'ernte' : !has('fisch') ? 'fisch' : producerOf(I, 'nahrung') || 'fisch', urgent:true};
   { const s = immigFor(I); if (s && s.state === 'moored' && s.immig) return {t:'Ein Kanu fragt', d:`Familie ${s.immig.n} ${s.immig.from} möchte auf ${I.name} bleiben.`, immig:s.id, urgent:true}; }
   if (urgentOnly) return null;
   // a workplace whose good is short stands still for a reason the player can fix

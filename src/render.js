@@ -1735,6 +1735,24 @@ function drawNeeds(c, v, now){
     c.globalAlpha = 1;
     if (fb < .5){ const r = 6 + fb * 50; stroke(c, ellipse(b.x, b.y + 2, r, r * .4), '#F7F1E3', 1.2, [.5, 1.6], 'round', (.5 - fb) * 1.6); }   // the voices go out over the village
   }
+  // the morning meal: over every house a bowl rises, full where all of the family ate and drank, empty and red where
+  // someone went without (mealTick)
+  for (let i = mealFx.length - 1; i >= 0; i--){
+    const M = mealFx[i], f = (t - M.t0) / 3400; if (f > 1){ mealFx.splice(i, 1); continue; } if (f < 0) continue;
+    const I = isl(M.isl); if (!I || !boxIn(I.box, v)) continue;
+    for (const F of famsOf(I)){
+      const b = F.home && findB(F.home); if (!b || b.bt || !ptIn(b.x, b.y, v)) continue;
+      const bad = M.short.has(F.id), sc = (b.v && b.v.scale) || 1, y = b.y - KINDS[b.kind].hy * sc * .55 - f * 8, al = f < .15 ? f / .15 : f > .7 ? (1 - f) / .3 : 1;
+      c.save(); c.translate(b.x - KINDS[b.kind].r * .9, y); c.scale(s, s); c.globalAlpha = al;   // beside the roof, clear of the bubbles
+      c.fillStyle = bad ? '#F4ECD8' : '#F3D9A0'; c.strokeStyle = '#2B1D14'; c.lineWidth = .5; c.setLineDash([]);
+      c.beginPath(); c.moveTo(-3.6, -1.2); c.quadraticCurveTo(-3.2, 2.6, 0, 2.7); c.quadraticCurveTo(3.2, 2.6, 3.6, -1.2); c.closePath(); c.fill(); c.stroke();   // the bowl
+      if (!bad){ c.fillStyle = '#C8902E'; c.beginPath(); c.ellipse(0, -1.2, 3.1, .9, 0, 0, TAU); c.fill(); c.fillStyle = '#6E9A3A'; c.beginPath(); c.ellipse(-1, -1.9, 1.2, .6, -.4, 0, TAU); c.fill(); }   // taro and greens
+      else { c.strokeStyle = '#B3261E'; c.lineWidth = .8; c.beginPath(); c.moveTo(-1.6, -3.4); c.lineTo(1.6, -.4); c.moveTo(1.6, -3.4); c.lineTo(-1.6, -.4); c.stroke(); }   // nothing in it
+      if (!reduced && !bad && f < .6){ c.globalAlpha = al * (1 - f / .6) * .7; c.strokeStyle = '#F7F1E3'; c.lineWidth = .5; for (const dx of [-1.2, 1.2]){ c.beginPath(); c.moveTo(dx, -2.6 - f * 4); c.quadraticCurveTo(dx + .8, -3.6 - f * 4, dx, -4.6 - f * 4); c.stroke(); } }   // steam
+      c.restore();
+    }
+  }
+  if (mealFx.length) requestDraw();
   hearts = hearts.filter(h => t - h.t0 < 1600);
   for (const h of hearts){
     const f = (t - h.t0) / 1600; if (f < 0) continue;

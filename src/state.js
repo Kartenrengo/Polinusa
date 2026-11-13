@@ -39,7 +39,7 @@ function newGame(s = newSeed()){
 function resetCaches(){ news.length = 0; unread = 0; newsBadge(); foldToast(); newKinds.clear(); cyclone = null; loreCache = null; hintCache = null; windCache = null; lifeLog = null; markW = null; hearts = []; landing = null; walkers = []; critters = []; }   // the people and animals of the old world go with it; spawnWalkers brings the new ones
 /* The clan lands on the island it chose: that island becomes home. The canoe is drawn ashore, and what it carried is the
    first store: one family, a little wood, fronds and food, and the plants and pigs of the old land. */
-const START_STOCK = {holz:8, dach:8, nahrung:24, wasser:12};
+const START_STOCK = {holz:8, dach:8, nahrung:12, wasser:9};   // food and water for about three mornings of the first family
 function foundHome(I){
   if (!landing || !I || !I.start || I.type !== 'hoch' || I.settled) return false;
   if (I.id !== 'heimat'){ swapHome(islands, I); homeSwap = 1; }

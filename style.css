@@ -920,3 +920,16 @@ canvas.kor{width:auto;height:min(168px,24vh);max-width:100%;margin:4px auto}
 @media (max-width:400px){.tab{padding:3px 6px;letter-spacing:.04em}}
 .mgrp{display:inline-flex;align-items:center;gap:3px;flex:none}
 @media (max-width:340px){.tab{padding:3px 3px;letter-spacing:0;font-size:11px}.tabs{gap:2px}}
+/* the morning meal: food or water that will not reach everyone tomorrow morning */
+#goods .g.short > span{color:#B3261E}
+#goods .g.short .ic{animation:shortPulse 1.6s ease-in-out infinite}
+@keyframes shortPulse{50%{transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){#goods .g.short .ic{animation:none}}
+.meal-bad{color:#B3261E}
+/* the smallest phones: four people and the household craft in one row of the house sheet */
+@media (max-width:340px){
+  .folk.home{gap:3px}
+  .folk.home .who.pers{padding:2px 5px 2px 5px;font-size:12px}
+  .folk.home .who.pers .job{font-size:10.5px}
+  .folk.home .who.pers small{display:none}
+}

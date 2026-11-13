@@ -50,10 +50,10 @@ function korScore(){
   const hit = kor.bones.map(b => n[b.side] >= 2 && best.has(b.side));
   if (c[0] === 5) return {t:'Fünf gleich!', get:{perlmutt:1}, chart:true, hit};
   if (c[0] === 4) return {t:'Vier gleich', mana:3, hit};
-  if (c[0] === 3 && c[1] === 2) return {t:'Volle Hand', get:{speisen:3 * m}, hit};
-  if (c[0] === 3) return {t:'Drei gleich', get:{nahrung:5 * m}, hit};
+  if (c[0] === 3 && c[1] === 2) return {t:'Volle Hand', get:{speisen:m}, hit};
+  if (c[0] === 3) return {t:'Drei gleich', get:{nahrung:2 * m}, hit};
   if (c[0] === 2 && c[1] === 2) return {t:'Zwei Paare', get:{schnur:3 * m}, hit};
-  if (c[0] === 2) return {t:'Ein Paar', get:{kokos:3 * m}, hit};
+  if (c[0] === 2) return {t:'Ein Paar', get:{kokos:m}, hit};
   return {t:'Nichts passt', get:{kokos:1}, hit};
 }
 const korGain = S => [S.get ? giftText(S.get) : '', S.mana ? `Ansehen +${S.mana}` : '', S.chart ? 'eine Tauchkarte' : ''].filter(Boolean).join(', ');

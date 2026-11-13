@@ -22,17 +22,17 @@ const EVENTS = [
       {n:'Alle an die Dächer!', text:I => `In einer Minute ist er da. Wer kann, bindet die Dächer fest: je Dach eine Schnur oder zwei Kokosfasern. Im Lager: ${I.stock.schnur || 0} Schnur, ${I.stock.faser || 0} Fasern.`, go:I => { stormWarn(I, true); return `Die Leute laufen zu den Häusern von ${I.name}. Jedes Dach braucht eine Schnur.`; }},
       {n:'Abwarten', text:I => I.stock.talisman > 0 ? 'Der Talisman der Matriarchin hält ihn von den Dächern.' : 'Die Dächer bleiben lose. Festbinden geht auch später noch.', go:I => { stormWarn(I, false); return `Der Sturm kommt in einer Minute über ${I.name}.`; }}]},
   {id:'treibgut', t:'Schiffbrüchige',
-    when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:6}))),
+    when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:3}))),
     text:I => `Ein fremdes Kanu treibt mit erschöpften Menschen auf den Strand von ${I.name}. Sie haben ihr Ziel auf dem Meer verfehlt.`,
     choices:[
-      {n:'Aufnehmen', cost:{nahrung:6}, text:'Sie bekommen Essen und dürfen bleiben.', go:I => { const room = Math.max(0, popCap(I) - I.pop), n = Math.min(4, room); I.pop += n; mana += 1; return n ? `${n} Menschen bleiben auf ${I.name}.` : `Sie bleiben gern, aber es ist kein Platz in den Häusern. Sie ziehen dankbar weiter. Ansehen +1.`; }},
+      {n:'Aufnehmen', cost:{nahrung:3}, text:'Sie bekommen Essen und dürfen bleiben.', go:I => { const room = Math.max(0, popCap(I) - I.pop), n = Math.min(4, room); I.pop += n; mana += 1; return n ? `${n} Menschen bleiben auf ${I.name}.` : `Sie bleiben gern, aber es ist kein Platz in den Häusern. Sie ziehen dankbar weiter. Ansehen +1.`; }},
       {n:'Mit Proviant weiterschicken', cost:{proviant:2}, text:'Ein Geschenk für die Reise.', go:() => { mana += 4; return 'Sie fahren weiter und erzählen überall von eurer Großzügigkeit. Ansehen +4.'; }},
       {n:'Nichts geben', text:'Die Vorräte sind knapp.', go:() => { mana = Math.max(0, mana - 2); return 'Sie fahren hungrig weiter. Ansehen −2.'; }}]},
   {id:'thunfisch', t:'Ein Thunfischschwarm',
     when:() => seasonOf().id === 'passat' && pickOf(villages().filter(I => I.buildings.some(b => b.kind === 'fisch' && !b.bt))),
     text:I => `Draußen vor dem Riff von ${I.name} kocht das Wasser. Ein Schwarm Thunfische zieht vorbei, die Vögel stürzen sich hinein.`,
     choices:[
-      {n:'Alle Kanus hinaus', text:'Jeder, der paddeln kann, fährt mit.', go:I => { addTo(I, 'fisch', 12); stats.fisch += 12; mana += 1; return `Die Kanus kommen schwer beladen zurück. 12 Fisch für ${I.name}, Ansehen +1.`; }},
+      {n:'Alle Kanus hinaus', text:'Jeder, der paddeln kann, fährt mit.', go:I => { addTo(I, 'fisch', 4); stats.fisch += 4; mana += 1; return `Die Kanus kommen schwer beladen zurück. 4 Fisch für ${I.name}, Ansehen +1.`; }},
       {n:'Weiterarbeiten', text:'Die Arbeit an Land geht vor.', go:() => 'Der Schwarm zieht weiter.'}]},
   {id:'duerre', t:'Dürre',
     when:() => seasonOf().id === 'mager' && pickOf(villages().filter(I => I.buildings.some(b => (b.kind === 'taro' || b.kind === 'pulaka') && !b.bt))),
@@ -67,13 +67,13 @@ const EVENTS = [
     when:() => pickOf(villages().filter(I => I.pop >= 20)),
     text:I => `Zwei Familien auf ${I.name} wollen ihre Kinder verheiraten. Matten und Schweine werden als Brautgaben getauscht.`,
     choices:[
-      {n:'Ein Hochzeitsfest', cost:{nahrung:8, matten:1}, text:'Das ganze Dorf feiert.', go:I => { I.joyUntil = tick + 20; I.feastEnd = tick + 6; mana += 2; for (let i = 0; i < 6; i++) heartAt(I); return `Ein fröhliches Fest auf ${I.name}. Ansehen +2, und eine Weile wächst das Dorf doppelt so schnell.`; }},
+      {n:'Ein Hochzeitsfest', cost:{nahrung:3, matten:1}, text:'Das ganze Dorf feiert.', go:I => { I.joyUntil = tick + 20; I.feastEnd = tick + 6; mana += 2; for (let i = 0; i < 6; i++) heartAt(I); return `Ein fröhliches Fest auf ${I.name}. Ansehen +2, und eine Weile wächst das Dorf doppelt so schnell.`; }},
       {n:'Im Kreis der Familie', text:'Ohne großes Fest.', go:() => 'Eine stille, schöne Hochzeit.'}]},
   {id:'navigator', t:'Ein fremder Navigator',
-    when:() => quest > QUESTS.findIndex(Q => Q.id === 'land') && islands.some(I => !I.discovered) && pickOf(villages().filter(I => canPay(I, {nahrung:4}))),
+    when:() => quest > QUESTS.findIndex(Q => Q.id === 'land') && islands.some(I => !I.discovered) && pickOf(villages().filter(I => canPay(I, {nahrung:2}))),
     text:I => `Ein alter Navigator legt mit seinem Kanu an ${I.name} an. Er liest die Sterne, die Dünung und die Vögel und erzählt von einer Insel jenseits des Horizonts.`,
     choices:[
-      {n:'Ihn bewirten', cost:{nahrung:4}, text:'Gastfreundschaft öffnet den Mund.', go:I => {
+      {n:'Ihn bewirten', cost:{nahrung:2}, text:'Gastfreundschaft öffnet den Mund.', go:I => {
         const far = islands.filter(J => !J.discovered).sort((a, b) => Math.hypot(a.center.x - I.center.x, a.center.y - I.center.y) - Math.hypot(b.center.x - I.center.x, b.center.y - I.center.y))[0];
         if (!far) return 'Er erzählt die ganze Nacht, aber die Insel findet ihr nicht wieder.';
         fogHoles.push({cx:Math.round(far.center.x), cy:Math.round(far.center.y), rx:200, ry:170, seed:7}); discover(far); invalidate(true);
@@ -174,7 +174,7 @@ const CHRONIK = [
   {id:'chief', t:'Ein Häuptlingsdorf', d:'Ein Dorf zum Häuptlingsdorf gemacht.', test:() => villages().some(I => I.lvl === 3), mana:4},
   {id:'sturm', t:'Dem Sturm getrotzt', d:'Einen Wirbelsturm überstanden.', test:() => stats.stuerme >= 1, mana:2},
   {id:'wald', t:'Hüter des Waldes', d:'50 junge Bäume gepflanzt.', test:() => stats.gepflanzt >= 50, mana:3},
-  {id:'fang', t:'Volle Netze', d:'500 Fisch gefangen.', test:() => stats.fisch >= 500, mana:3},
+  {id:'fang', t:'Volle Netze', d:'100 Fisch gefangen.', test:() => stats.fisch >= 100, mana:3},
   {id:'pop50', t:'Fünfzig Menschen', d:'50 Menschen in allen Dörfern.', test:() => allPop() >= 50, mana:3},
   {id:'schoen', t:'Ein schönes Dorf', d:'Schönheit 30 auf einer Insel.', test:() => villages().some(I => beautyOf(I) >= 30), mana:3},
   {id:'flotte', t:'Eine Flotte', d:'6 Kanus.', test:() => own().length >= 6, mana:3},

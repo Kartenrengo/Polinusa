@@ -105,7 +105,7 @@ const r = await p.evaluate(()=>{
     const keepS = {...H.stock}, t0 = tick; while (seasonOf().id === 'sturm') tick++;
     Object.assign(H.stock, {nahrung:20, wasser:0}); H.drought = tick + 99; H.rainAt = 0; H.rainUntil = 0;
     want(!rainState(H), 'rain: cannot dance (' + rainState(H) + ')'); rainDance(H);
-    want(H.drought === 0 && (H.stock.nahrung || 0) === 14 && /tanzt/.test(rainState(H)), 'rain: dance does not pay or end the drought');
+    want(H.drought === 0 && (H.stock.nahrung || 0) === 20 - RAIN.cost.roh && /tanzt/.test(rainState(H)), 'rain: dance does not pay or end the drought');
     for (let i = 0; i < RAIN.dance + 4; i++) econ();
     out.push(`rain dance: water after ${RAIN.dance + 4} ticks ${H.stock.wasser}, state "${rainState(H)}"`); want(raining(H) && H.stock.wasser > 0, 'rain: no water from the rain');
     tick = H.rainUntil + 1; want(/Wieder in/.test(rainState(H)), 'rain: can dance again at once');
@@ -141,7 +141,7 @@ const r = await p.evaluate(()=>{
     // the masters: their grown-ups leave the fields, the sea and the forest; a craft of theirs works a quarter faster
     const mh = homesOf(H).find(h => famOfHome(H, h) && famAdults(H, famOfHome(H, h)).length), mf = famOfHome(H, mh), t0 = mh.t; mh.t = 3; H.staff = null;
     const sm = staffOf(H), low = [...sm.crewP].filter(([b, ids]) => !b.bt && !b.at && rankOf(b) < 3 && ids.some(id => famAdults(H, mf).some(p => p.id === id)));
-    want(!low.length || haveOf(H, 'essen') <= 0, 'master: still in the fields');
+    want(!low.length || (F => F.food < F.n || F.water < F.n)(mealFore(H)), 'master: still in the fields');   // only when the morning meal falls short do all go out
     setCraft(H, mh, 'schnur'); const mc = craftOf(H, mh); want(mc && masterF(mc) === 1.25, 'master: craft not faster');
     setCraft(H, mh, null); mh.t = t0; H.staff = null;
     // ratios and the chain
@@ -335,6 +335,22 @@ const r = await p.evaluate(()=>{
     { const keep = news.slice(); news.length = 0; newsAdd('Probe: ein Kanu kommt.'); newsAdd('Probe: ein Kanu kommt.'); news.length = 0; loadNews();
       want(news[0] && news[0].msg === 'Probe: ein Kanu kommt.' && news[0].n === 2 && news[0].y >= 1, 'conch: a message is not kept, or a repeat is not counted');
       news.length = 0; news.push(...keep); }
+    // the morning meal: at dawn everyone eats one portion and drinks one, and nothing during the day; who gets nothing works slower
+    { const H = isl('heimat'), keepSt = {...H.stock}, keepH = H.hunger, t0 = tick; syncPeople(H); const n = H.people.length;
+      for (const k of FOODS) H.stock[k] = 0; Object.assign(H.stock, {nahrung:n + 3, wasser:n + 2});
+      tick = Math.floor(tick / DAY_TICKS) * DAY_TICKS + DAY_TICKS + 40; const f0 = haveOf(H, 'essen'), w0 = H.stock.wasser;
+      mealTick(H);
+      want(haveOf(H, 'essen') === f0 - n && H.stock.wasser === w0 - n && H.meal.hungry === 0 && H.meal.thirsty === 0 && H.people.every(p => !p.meal), 'meal: everyone does not eat and drink one portion');
+      Object.assign(H.stock, {nahrung:0, wasser:Math.max(0, n - 2)}); for (const k of FOODS) H.stock[k] = 0; mealTick(H);
+      const hung = H.people.filter(p => p.meal & 1).length, dry = H.people.filter(p => p.meal & 2).length;
+      want(hung === n && dry === Math.min(2, n) && H.meal.hungry === n && H.hunger >= 1, 'meal: shortage not counted per person');
+      const kid = H.people.find(p => stageOf(p) === 'kid'), adult = H.people.filter(isAdult).sort((a, b) => (b.h || 0) - (a.h || 0))[0];
+      want(!kid || !(kid.meal & 2) || H.people.filter(isAdult).every(p => p.meal & 2), 'meal: the children are not served first');
+      const b = H.buildings.find(q => !q.bt && KINDS[q.kind].crew && (staffOf(H).crewP.get(q) || []).length), sp = b && workSpeed(H, b, crewAt(H, b) || 1);
+      for (const p of H.people) p.meal = 0; H._mf = null; const sf = b && workSpeed(H, b, crewAt(H, b) || 1);
+      want(!b || sp < sf, 'meal: the hungry do not work slower');
+      want(NEEDS.find(N => N.k === 'essen').rate === 1 / 6 && dailyPace('fisch') === DAILY.food && dailyPace('holz') === 1, 'meal: production not at the pace of days');
+      H.stock = keepSt; H.hunger = keepH; tick = t0; for (const p of H.people) p.meal = 0; H._mf = null; H.meal = null; H._fore = null; }
     const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
     want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}

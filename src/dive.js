@@ -9,7 +9,7 @@
 let drift = [], diveSpots = [], nextDrift = 1;
 const DRIFT = {
   stamm:{n:'ein Treibstamm', get:{holz:3}},
-  kokos:{n:'treibende Kokosnüsse', get:{kokos:4}},
+  kokos:{n:'treibende Kokosnüsse', get:{kokos:2}},
   wrack:{n:'ein Wrackteil', get:{holz:2, schnur:1}},
   kauri:{n:'ein Klumpen Kauri-Harz', get:{kauri:1}}
 };
