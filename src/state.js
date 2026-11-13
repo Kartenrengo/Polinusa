@@ -183,7 +183,7 @@ function restore(raw){
       if (o.port && !isl(o.port)) o.port = null;
       const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, full:o.fl, fullAt:o.fa, auto:!!o.au, life:(o.lv || []).filter(id => LIFE[id]), folk:(o.fk || []).map(unpackP)};
       ships.push(sh);
-      if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
+      if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest, false, true); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
       if (sh.route != null && !routes[sh.route]) sh.route = null;
       if (sh.route != null && sh.state === 'moored') sh.state = 'wait', sh.wait = 800;
     }

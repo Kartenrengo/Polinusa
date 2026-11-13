@@ -70,7 +70,8 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
       if (H.buildings.some(b => b.kind === 'werft' && !b.bt) && !H.yard && !ships.some(q => q.own)){ for (const k of ['beile', 'harz']) H.stock[k] = Math.max(H.stock[k] || 0, 1);   // the stone adze and the resin come from places the bot does not reach: they are given
         if (canPay(H, SHIPS.oc.cost)) startYard(H, 'oc'); }
       const sh = ships.find(q => q.own && q.kind !== 'vaka'), many = islands.filter(J => J.settled).length;
-      if (sh && many === 1 && sh.state !== 'sail'){
+      if (sh && many === 1 && sh.state !== 'sail' && !atollReady() && !H.buildings.some(b => b.kind === 'steg')){ const r = tryBuild('steg'); tried['steg/' + r] = (tried['steg/' + r] || 0) + 1; }   // the atoll area opens with a Kanusteg and its dugout
+      if (sh && many === 1 && sh.state !== 'sail' && atollReady()){
         if (sh.port === H.id && sh.people === 0 && H.pop >= SETTLE.keep + SETTLE.people + 2){
           sheetKind = 'ship'; sheetData = {id:sh.id}; for (let i = 0; i < SETTLE.people; i++) fleetAct('pp+', {dataset:{}}, true); for (const [k, n] of [['nahrung', 8], ['wasser', 6], ['holz', 4], ['dach', 4]]) for (let i = 0; i < n; i++) fleetAct('cg+', {dataset:{k}}, true); sheetKind = null; sheetData = null;
           const T = islands.filter(J => !J.settled && !J.clan && J.center.x < FAR_X && (J.id === 'tochter' || J.type === 'atoll')).sort((a, c) => (c.id === 'tochter') - (a.id === 'tochter') || 0).sort((a, c) => Math.hypot(a.center.x - H.center.x, a.center.y - H.center.y) - Math.hypot(c.center.x - H.center.x, c.center.y - H.center.y))[0];

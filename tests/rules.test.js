@@ -289,6 +289,17 @@ const r = await p.evaluate(()=>{
     const w0 = workSpeed(H, e, 2); H.str = 'pflanzer'; H.strAt = tick; want(Math.abs(workSpeed(H, e, 2) / w0 - STRENGTH_BONUS) < 1e-6, 'strength: the planters are not faster at the Erntehaus');
     H.str = 'toepfer'; want(workSpeed(H, e, 2) === w0, 'strength: potters speed up the Erntehaus'); want(!setStrength(H, 'fischer'), 'strength: changed again at once'); H.strAt = tick - STRENGTH_PAUSE - 1; want(setStrength(H, 'fischer') && H.str === 'fischer', 'strength: no change after the pause');
     { const cz = centerOf(H); if (cz){ openSheet('info', {id:cz.id}); sheetData = {...sheetData, tab:'staerke'}; renderSheet(); want(/Stärke des Dorfes/.test($('sheetBody').textContent), 'strength: not offered at the centre'); closeSheet(); } } H.str = null;
+    { const A = islands.find(J => !J.settled && !J.clan && J.type === 'atoll'), saved = H.buildings.slice();
+      if (A){ discover(A); exploreAt(A.center.x, A.center.y, 400); H.buildings = H.buildings.filter(q => q.kind !== 'steg');
+        const cn = makeShip('oc', H), fd = makeShip('dc', H, {founder:true});
+        want(!atollReady() && !sailTo(cn, {isl:A.id}, true) && cn.state !== 'sail', 'atoll: a canoe sails in without a Kanusteg');
+        want(!sailTo(cn, {x:A.atoll.cx, y:A.atoll.cy}, true), 'atoll: a canoe sails into the lagoon without a Kanusteg');
+        want(sailTo(fd, {isl:A.id}, true), 'atoll: the founding canoe is blocked'); fd.state = 'moored';
+        const st = {kind:'steg', x:H.harbor.x, y:H.harbor.y, bt:5, boat:3}; H.buildings.push(st);
+        want(!atollReady() && !sailTo(cn, {isl:A.id}, true), 'atoll: an unfinished Kanusteg opens it'); st.bt = 0;
+        want(!atollReady(), 'atoll: a Steg without its Einbaum opens it'); st.boat = 0;
+        want(atollReady() && sailTo(cn, {isl:A.id}, true) && cn.state === 'sail', 'atoll: a finished Kanusteg with Einbaum does not open it');
+        for (const q of [cn, fd]) ships.splice(ships.indexOf(q), 1); H.buildings = saved; } }
     const T = islands.find(J => !J.settled && !J.clan && J.type === 'atoll') || islands.find(J => !J.settled && !J.clan);
     if (T){ discover(T); exploreAt(T.center.x, T.center.y, 400); settle(T, H, {pop:6, stock:{matten:12, nahrung:10, wasser:10}, folk:[], life:[]});
       const s = makeShip('dc', H); H.stock.holz = 30; H.stock.schnur = 20; H.stock.matten = 0;
