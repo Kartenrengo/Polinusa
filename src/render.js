@@ -34,7 +34,8 @@ function measure(){
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
   const t0 = topH + 8, t = t0 + $('hudbar').offsetHeight + 6; $('hudbar').style.top = t0 + 'px';   // the toast and the news hang under the bar
-  $('toast').style.top = (t - 12) + 'px';   // tucked under the day bar, out of which it slides $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  { const hb = $('hudbar'), T = $('toast'), x = hb.offsetLeft + hb.offsetWidth - 18;   // the message comes out of the day bar's right side, at its height
+    T.style.top = (t0 + 5) + 'px'; T.style.setProperty('--tx', x + 'px'); T.style.setProperty('--tw', Math.max(140, vw - x - 8) + 'px'); T.style.setProperty('--th', Math.max(30, hb.offsetHeight - 10) + 'px'); } $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
@@ -504,7 +505,8 @@ function drawAnim(c, now){
   if (lod === 'near'){ const W = wind(), dp = dayPhase(), dawn = dp < .14 ? 1 - dp / .14 : 0;
     for (const I of islands) if (lived(I) && boxIn(I.box, v)) for (const b of I.buildings){
       if (!HOME_KINDS.has(b.kind) || b.bt || !ptIn(b.x, b.y, v)) continue;
-      const lit = Math.max(b.id % 3 ? 0 : .7, dawn && famOfHome(I, b) ? dawn : 0); if (!lit) continue;
+      const night = opts.night && nightLevel() > .15;   // at night the hearth inside: a little smoke from every second house that has its fire
+      const lit = Math.max(!night && b.id % 3 === 0 ? .7 : 0, dawn && famOfHome(I, b) ? dawn : 0, night && b.fire === true && b.id % 2 === 0 ? .6 : 0); if (!lit) continue;
       const sc = (b.v && b.v.scale) || 1, x0 = b.x - 4 * sc, y0 = b.y - KINDS[b.kind].hy * sc - 4;
       if (reduced){ c.save(); c.translate(x0, y0 + 1); c.scale(.8, .8); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', .3 * lit); c.restore(); continue; }
       drawPlume(c, x0, y0, b.id, lit, now);   // curls up, widens, thins; the wind lays it over (worldmotion.js)
@@ -792,41 +794,16 @@ function drawNight(now){
    spark that rises and fades. Houses with a cold hearth stay dark. Near the village only; still with reduced motion. */
 const HEARTH_STONE = [[-3.4, .6], [-1.2, 1.5], [1.4, 1.5], [3.4, .6], [1.6, -.4], [-1.6, -.4]];
 const hearthOn = () => opts.night && lod !== 'far' && nightLevel() > .06;
+/* the village fire: at night it burns on the square, in the stone ring of the plaza, the heart of the village. The houses
+   keep their fire inside (a little smoke, see the cooking smoke above; their windows glow, see lightsOf). */
 function drawHearths(now){
   if (!hearthOn()) return;
-  const lv = clamp(nightLevel() / .55, 0, 1), v = view(30), t = reduced ? 0 : now / 1000, c = ctx, near = lod === 'near';
+  const lv = clamp(nightLevel() / .55, 0, 1), v = view(30), c = ctx; if (lv < .2) return;
   camXform(c);
   for (const I of islands){
     if (!seen(I) || !lived(I) || !boxIn(I.box, grow(v, 40))) continue;
-    for (const b of I.buildings){
-      if (b.bt || b.fire !== true || !HOME_KINDS.has(b.kind) || !ptIn(b.x, b.y, v)) continue;
-      const sc = (b.v && b.v.scale) || 1, x = b.x + 9 * sc, y = b.y + 5 * sc, id = b.id;
-      const fa = reduced ? .9 : .78 + .22 * flick(t * 7, id), br = reduced ? 1 : 1 + .09 * Math.sin(t * 1.3 + id);   // the light flickers and breathes
-      // the pool of warm light on the ground
-      c.globalCompositeOperation = 'lighter'; const R = 17 * br * (.9 + .15 * fa) * lv + 4, g = c.createRadialGradient(x, y - 1, 0, x, y - 1, R);
-      g.addColorStop(0, `rgba(255,170,80,${.34 * lv * fa})`); g.addColorStop(.5, `rgba(255,130,60,${.14 * lv * fa})`); g.addColorStop(1, 'rgba(255,110,50,0)');
-      c.fillStyle = g; c.beginPath(); c.ellipse(x, y - 1, R, R * .78, 0, 0, TAU); c.fill(); c.globalCompositeOperation = 'source-over';
-      c.globalAlpha = clamp(lv * 1.6, 0, 1);
-      // stones round the fire, with a little ink
-      c.fillStyle = '#8D8576'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35;
-      for (const [sx, sy] of HEARTH_STONE){ c.beginPath(); c.ellipse(x + sx * .8, y + sy * .6 + .5, 1.15, .75, 0, 0, TAU); c.fill(); c.stroke(); }
-      // two or three tongues, each its own height and lean, by noise
-      const tongues = [[0, 1, .95, 0], [-1.5, .7, .8, 1], [1.6, .62, .7, 2]];
-      for (const [dx, hs, ws, k] of tongues){
-        const h = reduced ? hs : hs * (.78 + .5 * flick(t * 8.5 + k * 3.1, id * 3 + k)), lean = reduced ? 0 : (flick(t * 5 + k * 7, id + 40 + k) - .5) * .55;
-        c.save(); c.translate(x + dx * .8, y); c.rotate(lean); c.scale(ws * .78, h * .78); c.lineJoin = 'round';
-        c.fillStyle = k === 0 ? '#E0803A' : k === 1 ? '#D0612E' : '#EC9A44'; c.fill(FLAME); c.lineWidth = .5 / Math.max(.5, ws * .78); c.strokeStyle = '#2B1D14'; c.stroke(FLAME);
-        if (k === 0){ c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); }
-        c.restore();
-      }
-      c.globalAlpha = 1;
-      // a spark now and then, rising, wavering and fading out
-      if (near && !reduced && quality) drawPlume(c, x, y - 4, id + 3, .5 * lv, now, .7);   // a thin thread of smoke from the night fire
-      if (near && !reduced){
-        const cyc = 2600 + (id * 37 % 5) * 500, q = ((now + id * 911) % cyc) / 1500;
-        if (q < 1){ c.globalAlpha = (1 - q) * lv; c.fillStyle = '#FFD27A'; c.beginPath(); c.arc(x + Math.sin(q * 7 + id) * 1.6, y - 6 - q * 15, .5 * (1 - q * .5), 0, TAU); c.fill(); c.globalAlpha = 1; }
-      }
-    }
+    if (I.fire && I.fire.n && I.fire.cold >= I.fire.n) continue;   // no fuel at all: the square stays dark too
+    for (const P of I.buildings) if (P.kind === 'platz' && ptIn(P.x, P.y, v)){ c.globalAlpha = clamp(lv * 1.5, 0, 1); drawFeastFire(c, {id:P.id, x:P.x + 4, y:P.y + 1 - 24}, now); c.globalAlpha = 1; }
   }
 }
 /* ---------- the sky over the sea, drawn under the islands: at night a few twinkling stars on the deep water and a moon path of

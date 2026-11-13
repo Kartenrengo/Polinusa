@@ -1741,7 +1741,8 @@ die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was d
   ein orange-rosa Abend mit leichtem Glühen, tiefblaue Nacht. Nachts funkeln Sterne über dem tiefen Wasser, ein Mondpfad
   flimmert auf dem Meer; am Tag blitzen Sonnenglitzer. Vor jedem Haus mit Nachtfeuer brennt ein kleines Feuer im
   Steinring, das flackert, atmet und ab und zu einen Funken steigen lässt; Fenster flackern mit. Häuser ohne Feuer bleiben
-  dunkel.
+  dunkel. **Seit Version 86** brennt das Feuer der Nacht auf dem **Dorfplatz**, groß, mit Funken und Lichtschein; die Hütten
+  haben ihr Feuer drinnen: Aus jeder zweiten steigt ein Rauchwölkchen, die Fenster leuchten.
 - **Wasser und Natur:** Die Wellenreihen des Meeres steigen und vergehen nacheinander; am Riff rollt die Brandung stückweise
   heran, schäumt und vergeht; am Strand läuft Wasser hinauf, gleitet zurück und lässt eine nasse Linie. Kanus ziehen ein
   V-Kielwasser, das Paddel taucht mit Ring und Tropfen ein. Böen laufen über die Insel, die Kronen der Palmen folgen dem
@@ -1766,7 +1767,7 @@ die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was d
 
 ## Ruhiger und verspielter (seit Version 85)
 
-- **Nachrichten** gleiten unter der Tagesleiste nach rechts heraus und ziehen sich danach wieder in sie zurück. Es kommt
+- **Nachrichten** (seit Version 86) sind ein Streifen der Tagesleiste: Sie fahren auf gleicher Höhe rechts aus ihr heraus, cremefarben mit Tuscherand und einer farbigen Kante unten (rot Warnung, grün gut), und ziehen sich danach wieder in sie zurück. Es kommt
   immer nur eine; was währenddessen geschieht, wartet (höchstens zwei), alles Ältere steht nur in der Muschel. Eine
   Nachricht bleibt mindestens gut zwei Sekunden, lange etwas länger. Antworten auf ein Antippen erscheinen sofort.
 - **Weniger auf einmal:** Ereignisse kommen alle 8 bis 12 Minuten statt alle 5 bis 8. Die Kanus der Tochterdörfer melden

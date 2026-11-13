@@ -975,9 +975,15 @@ body #toast[data-tone=good]::after{background-image:url("data:image/svg+xml,%3Cs
 /* the gifts of the clan (giftsMarkup) */
 .list.gifts li small{display:block;font-size:12px;color:var(--muted);font-weight:600}
 
-/* version 85: a message slides out of the day bar to the right and draws back into it (toast/foldToast) */
-body #toast{left:calc(20px + env(safe-area-inset-left,0px))!important;right:auto!important;max-width:min(calc(100vw - 36px),380px)!important;z-index:5;transform-origin:0 0;
-  clip-path:inset(0 100% 0 0)!important;opacity:1!important;transform:translate(-10px,-8px);animation:none!important;
-  transition:clip-path .44s cubic-bezier(.25,.9,.3,1),transform .44s cubic-bezier(.25,.9,.3,1)!important}
-body #toast.open{clip-path:inset(-8px -12px -14px -8px)!important;transform:none}
+/* version 86: a message is a strip of the day bar: it comes out of the bar's right side at the same height, cream with an
+   ink edge like the bar, and draws back into it (measure() sets --tx, --tw, --th) */
+body #toast{left:var(--tx,200px)!important;right:auto!important;max-width:var(--tw,180px)!important;width:max-content;min-height:var(--th,40px);z-index:5;
+  background:#F4ECD8!important;background-image:none!important;border:2px solid var(--ink)!important;border-left:0!important;border-radius:0 15px 15px 0!important;
+  box-shadow:inset 0 -3px 0 var(--tone);filter:drop-shadow(0 2px 1px rgba(43,29,20,.22));padding:5px 11px 7px 22px!important;font:700 12.5px/1.25 var(--font-ui);gap:6px;
+  transform-origin:0 50%;clip-path:inset(-2px 100% -6px 0)!important;opacity:1!important;transform:translateX(-12px);animation:none!important;
+  transition:clip-path .42s cubic-bezier(.25,.9,.3,1),transform .42s cubic-bezier(.25,.9,.3,1)!important}
+body #toast.open{clip-path:inset(-6px -10px -8px 0)!important;transform:none}
+body #toast::after{display:none!important}
+body #toast::before{width:18px;height:18px}
+@media (max-width:350px){body #toast{font-size:12px;padding:4px 9px 6px 20px!important}}
 @media (prefers-reduced-motion:reduce){body #toast{transition:none!important;transform:none}}
