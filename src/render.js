@@ -537,6 +537,7 @@ function drawAnim(c, now){
   }
   if (cyclone && lod !== 'far') drawStormSea(c, v, now);
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
+  if (lod === 'near' && !reduced && nightLevel() < .2) drawButterflies(c, v, now);
   drawWhales(c, v, now); if (lod !== 'far' && !reduced) drawSeaLife(c, v, now); if (lod !== 'far') drawDrift(c, v, now);
   if (cam.z > PEOPLE_Z){ drawPeople(c, v, now); if (falls.length) drawFalls(c, v, now); }
   drawWork(c, v);
@@ -719,6 +720,24 @@ const DAY_TICKS = 180;
 let lastEconAt = 0;
 function dayPhase(){ const f = lastEconAt ? clamp((performance.now() - lastEconAt) * gameSpeed / TICK, 0, 1) : 0; return ((tick + f + 30) % DAY_TICKS) / DAY_TICKS; }
 const smooth01 = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+/* By day butterflies flutter over the flowers, the hibiscus and the gardens: each loops on its own path, the wings beat,
+   now and then it rests a moment on a blossom */
+const BUTTERFLY_KINDS = new Set(['blumen', 'hibiskus', 'garten', 'kurkumagarten', 'bananen']), BUTTERFLY_COL = ['#E8913A', '#F3D35A', '#F6F1E6', '#7FB6C8'];
+function drawButterflies(c, v, now){
+  const t = now / 1000;
+  for (const I of islands){ if (!I.settled || !boxIn(I.box, v)) continue;
+    for (const b of I.buildings){
+      if (!BUTTERFLY_KINDS.has(b.kind) || b.bt || !ptIn(b.x, b.y, v)) continue;
+      for (let k = 0; k < (b.kind === 'blumen' ? 2 : 1); k++){
+        const sd = (b.id * 7 + k * 13) % 17, f = .35 + sd * .02, rest = Math.sin(t * .4 + sd) > .82;   // now and then it sits still
+        const x = b.x + (rest ? 2 : Math.cos(t * f * 2.1 + sd) * 7 + Math.sin(t * f * 3.3) * 2), y = b.y - 4 + (rest ? -1 : Math.sin(t * f * 2.9 + sd) * 3.5 - 3 - Math.abs(Math.sin(t * 1.7 + sd)) * 2);
+        const flap = rest ? .25 + .2 * Math.abs(Math.sin(t * 2 + sd)) : .2 + .8 * Math.abs(Math.sin(t * 17 + sd)), col = BUTTERFLY_COL[sd % BUTTERFLY_COL.length];
+        c.save(); c.translate(x, y); c.rotate(Math.sin(t * f * 2.1 + sd) * .4); c.fillStyle = col; c.strokeStyle = '#2B1D14'; c.lineWidth = .22;
+        for (const d of [-1, 1]){ c.save(); c.scale(d * flap, 1); c.beginPath(); c.ellipse(.75, -.35, .8, .55, -.5, 0, TAU); c.ellipse(.6, .45, .55, .4, .4, 0, TAU); c.fill(); c.stroke(); c.restore(); }
+        c.fillStyle = '#2B1D14'; c.fillRect(-.12, -.7, .24, 1.4); c.restore();
+      }
+    } }
+}
 function nightLevel(){
   if (!opts.night) return 0;
   const p = dayPhase();
