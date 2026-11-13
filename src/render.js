@@ -35,7 +35,7 @@ function measure(){
   topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
   const t0 = topH + 8, t = t0 + $('hudbar').offsetHeight + 6; $('hudbar').style.top = t0 + 'px';   // the toast and the news hang under the bar
   { const hb = $('hudbar'), T = $('toast'), x = hb.offsetLeft + hb.offsetWidth - 18;   // the message comes out of the day bar's right side, at its height
-    T.style.top = (t0 + 5) + 'px'; T.style.setProperty('--tx', x + 'px'); T.style.setProperty('--tw', Math.max(90, vw - x - 8) + 'px'); T.style.setProperty('--th', Math.max(30, hb.offsetHeight - 10) + 'px'); } $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+    T.style.top = t0 + 'px'; T.style.setProperty('--tx', x + 'px'); T.style.setProperty('--tw', Math.max(90, vw - x - 8) + 'px'); T.style.setProperty('--th', hb.offsetHeight + 'px'); } $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }

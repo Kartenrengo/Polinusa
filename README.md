@@ -1767,7 +1767,7 @@ die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was d
 
 ## Ruhiger und verspielter (seit Version 85)
 
-- **Nachrichten** (seit Version 87) sehen aus wie eine kleine Schwester der Tagesleiste: gleiche Höhe, derselbe breite Ring mit Tuscherand, innen Creme, runde Ecken; Ring und rundes Abzeichen tragen die Farbe (gelb, rot Warnung, grün gut). Sie hängen an einer kurzen Schnur rechts an der Leiste, fahren nach rechts heraus und wieder hinein. Gezeigt wird nur der erste Satz in kleiner Schrift (höchstens drei Zeilen), der ganze Text steht in der Muschel. Solange eine Nachricht draußen ist, klappt die Leiste ihren Windtext ein, damit Platz ist. Es kommt
+- **Nachrichten** (seit Version 87) sehen aus wie eine kleine Schwester der Tagesleiste: genau gleiche Oberkante und Höhe (seit Version 88), derselbe breite Ring mit Tuscherand, innen Creme, runde Ecken; Ring und rundes Abzeichen tragen die Farbe (gelb, rot Warnung, grün gut). Sie hängen an einer kurzen Schnur rechts an der Leiste, fahren nach rechts heraus und wieder hinein. Gezeigt wird nur der erste Satz in kleiner Schrift (höchstens drei Zeilen), der ganze Text steht in der Muschel. Solange eine Nachricht draußen ist, klappt die Leiste ihren Windtext ein, damit Platz ist. Es kommt
   immer nur eine; was währenddessen geschieht, wartet (höchstens zwei), alles Ältere steht nur in der Muschel. Eine
   Nachricht bleibt mindestens gut zwei Sekunden, lange etwas länger. Antworten auf ein Antippen erscheinen sofort.
 - **Weniger auf einmal:** Ereignisse kommen alle 8 bis 12 Minuten statt alle 5 bis 8. Die Kanus der Tochterdörfer melden
