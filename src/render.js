@@ -512,12 +512,22 @@ function drawAnim(c, now){
       const B = birdOf(k, now); c.save(); c.translate(x, y); c.scale(B.s, B.s); stroke(c, B.p, '#2B1D14', B.w / B.s, null, 'round', .85); c.restore();
     }
   }
-  if (lod === 'near') for (const I of islands) if (lived(I) && boxIn(I.box, v)) for (const b of I.buildings){
-    // smoke from the cooking fires of some houses
-    if (b.kind !== 'haus' || b.bt || b.id % 3 || !ptIn(b.x, b.y, v)) continue;
-    const q = ((now / 3400 + b.id * .37) % 1) * TAU, al = reduced ? .3 : .3 - .2 * Math.cos(q), sc = (b.v && b.v.scale) || 1;
-    c.save(); c.translate(b.x - 4 * sc, b.y - KINDS.haus.hy * sc + 6 + (reduced ? 0 : Math.cos(q))); c.scale(.8, .8); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', al); c.restore();
-  }
+  // smoke from the cooking fires: at dawn, when everyone eats (see mealTick), from every house where a family lives, then
+  // thinning out; during the day from some. Soft puffs rise, widen and drift with the wind.
+  if (lod === 'near'){ const W = wind(), dp = dayPhase(), dawn = dp < .14 ? 1 - dp / .14 : 0;
+    for (const I of islands) if (lived(I) && boxIn(I.box, v)) for (const b of I.buildings){
+      if (!HOME_KINDS.has(b.kind) || b.bt || !ptIn(b.x, b.y, v)) continue;
+      const lit = Math.max(b.id % 3 ? 0 : .7, dawn && famOfHome(I, b) ? dawn : 0); if (!lit) continue;
+      const sc = (b.v && b.v.scale) || 1, x0 = b.x - 4 * sc, y0 = b.y - KINDS[b.kind].hy * sc + 5;
+      if (reduced){ c.save(); c.translate(x0, y0 + 1); c.scale(.8, .8); stroke(c, SMOKE_T, '#2B1D14', .8, null, 'round', .3 * lit); c.restore(); continue; }
+      for (let k = 0; k < 4; k++){
+        const q = (now / 2700 + b.id * .37 + k / 4) % 1, r = 1 + q * 3.2, drift = q * q * 12 * (.25 + W.str);
+        c.globalAlpha = lit * (1 - q) * .85 * Math.min(1, q * 6); c.fillStyle = k % 2 ? '#F6F1E6' : '#E9E2D3';
+        c.beginPath(); c.ellipse(x0 + W.tx * drift + Math.sin(q * 5 + b.id + k) * .7, y0 - q * 18 + W.ty * drift * .5, r, r * .78, 0, 0, TAU); c.fill();
+        c.globalAlpha *= .45; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.stroke();   // a thin ink line, as the clouds have
+      }
+      c.globalAlpha = 1;
+    } }
   if (lod !== 'far' && !reduced) for (const I of islands){
     // surf runs along the reef and swells now and then
     if (!seen(I) || !boxIn(I.box, v)) continue;
