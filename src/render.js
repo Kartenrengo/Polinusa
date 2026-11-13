@@ -741,12 +741,25 @@ function drawButterflies(c, v, now){
       }
     } }
 }
+/* The colour of the light over the day: keys of phase, colour and strength, blended smoothly (no steps). Warm gold in the late
+   afternoon, orange and pink at dusk, deep blue at night, a peach dawn. Strength 0 = the plain daylight. */
+const GRADE = [[0, 12, 24, 58, .53], [.04, 52, 44, 92, .43], [.08, 240, 156, 150, .24], [.14, 255, 196, 150, .1], [.22, 255, 214, 160, 0],
+  [.44, 255, 214, 160, 0], [.52, 255, 208, 130, .04], [.58, 255, 184, 104, .08], [.63, 255, 170, 130, .11], [.675, 235, 110, 160, .22], [.72, 100, 66, 140, .45],
+  [.78, 16, 28, 66, .53], [.9, 10, 22, 54, .55], [1, 12, 24, 58, .53]];
+const gradeOut = [0, 0, 0, 0];
+function gradeAt(p){
+  let i = 1; while (i < GRADE.length - 1 && GRADE[i][0] < p) i++;
+  const A = GRADE[i - 1], B = GRADE[i], f = smooth01((p - A[0]) / (B[0] - A[0]));
+  for (let k = 0; k < 4; k++) gradeOut[k] = A[k + 1] + (B[k + 1] - A[k + 1]) * f;
+  return gradeOut;
+}
 function nightLevel(){
   if (!opts.night) return 0;
-  const p = dayPhase();
-  return .55 * (p < .06 ? 1 - smooth01(p / .06) : p < .58 ? 0 : p < .68 ? smooth01((p - .58) / .1) : 1);
+  return .55 * smooth01((gradeAt(dayPhase())[3] - .1) / .45);   // how dark it is: the lights and fires follow this
 }
 const nightC = document.createElement('canvas'), nightX = nightC.getContext('2d');
+/* noise instead of a sine: smooth random values between whole steps of t, so the flicker never repeats evenly */
+const flick = (t, id) => { const i = Math.floor(t), f = smooth01(t - i); return hsh(i, id) * (1 - f) + hsh(i + 1, id) * f; };
 function lightsOf(v, now){
   const L = [], fl = id => reduced ? 1 : 1 + .07 * Math.sin(now / 95 + id) + .04 * Math.sin(now / 41 + id * 3);
   for (const I of islands){
@@ -757,7 +770,7 @@ function lightsOf(v, now){
       if (b.bt || !ptIn(b.x, b.y, grow(v, 60))) continue;
       if (b.kind === 'fackel') L.push({x:b.x, y:b.y - 12, r:34 * fl(b.id), c:'255,170,70'});
       else if (b.kind === 'halle') L.push({x:b.x, y:b.y + 18, r:(I.feastEnd > tick ? 62 : 30) * fl(b.id), c:'255,150,60'});
-      else if (HOME_KINDS.has(b.kind) && b.fire !== false && famOfHome(I, b)) L.push({x:b.x, y:b.y - 2, r:14 * fl(b.id), c:'255,180,90'});   // the night fire (fireTick); a cold house stays dark
+      else if (HOME_KINDS.has(b.kind) && b.fire !== false && famOfHome(I, b)) L.push({x:b.x, y:b.y - 2, r:14 * (reduced ? 1 : .88 + .3 * flick(now / 1000 * 7, b.id)), c:'255,180,90'});   // the night fire (fireTick); a cold house stays dark
       else if (b.kind === 'toepfer') L.push({x:b.x - 11, y:b.y + 2, r:16 * fl(b.id), c:'255,130,50'});
     }
     for (const w of walkers) if (w.isl === I.id && w.boat && w.job && w.job.type === 'fish' && ptIn(w.x, w.y, grow(v, 40))) L.push({x:w.x + (w.left ? -5 : 5), y:w.y - 7, r:24 * fl(w.x | 0), c:'255,165,70'});   // torch fishing
@@ -765,20 +778,106 @@ function lightsOf(v, now){
   return L;
 }
 function drawNight(now){
-  const lv = nightLevel(); if (lv <= .01) return;
+  const lv = nightLevel(); if (!opts.night || gradeAt(dayPhase())[3] <= .01) return;
   if (nightC.width !== mapC.width || nightC.height !== mapC.height){ nightC.width = mapC.width; nightC.height = mapC.height; }
-  // the colour runs from a warm dusk to the blue of the night
-  const f = lv / .55, dusk = dayPhase() > .5, warm = dusk ? [120, 58, 40] : [110, 70, 92], blue = [10, 22, 54], col = warm.map((w, i) => Math.round(w + (blue[i] - w) * f));
+  const f = lv / .55, G = gradeAt(dayPhase()), col = [Math.round(G[0]), Math.round(G[1]), Math.round(G[2])];
   const n = nightX, v = view(40), lights = lightsOf(v, now);
   n.setTransform(1, 0, 0, 1, 0, 0); n.globalCompositeOperation = 'source-over'; n.clearRect(0, 0, nightC.width, nightC.height);
-  n.fillStyle = `rgba(${col.join()},${lv})`; n.fillRect(0, 0, nightC.width, nightC.height);
-  n.globalCompositeOperation = 'destination-out'; camXform(n);
-  for (const L of lights){ const g = n.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(.45, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)'); n.fillStyle = g; n.beginPath(); n.arc(L.x, L.y, L.r, 0, TAU); n.fill(); }
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(nightC, 0, 0);
+  const ga = G[3], af = clamp(ga * 2, 0, 1); n.fillStyle = `rgba(${col.join()},${af})`; n.fillRect(0, 0, nightC.width, nightC.height);
+  n.globalCompositeOperation = 'destination-out'; camXform(n); const cut = clamp(f * 2.5, 0, 1);
+  for (const L of lights){ const g = n.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r); g.addColorStop(0, `rgba(0,0,0,${.95 * cut})`); g.addColorStop(.45, `rgba(0,0,0,${.55 * cut})`); g.addColorStop(1, 'rgba(0,0,0,0)'); n.fillStyle = g; n.beginPath(); n.arc(L.x, L.y, L.r, 0, TAU); n.fill(); }
+  // warm light is multiplied in (it keeps the blue of the sea clean instead of greying it), the dark of the night is laid over; they cross-fade
+  const w = 1 - smooth01((ga - .22) / .14); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (w > .01){ ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = w; ctx.drawImage(nightC, 0, 0); }
+  if (w < .99){ ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = (1 - w) * ga / af; ctx.drawImage(nightC, 0, 0); }
+  const p = dayPhase(), glow = Math.max(0, 1 - Math.abs(p - .645) / .075);   // and at sunset a soft orange-pink glow, laid on with light
+  if (glow > .01){ ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1; ctx.fillStyle = `rgba(255,104,72,${.27 * smooth01(glow)})`; ctx.fillRect(0, 0, nightC.width, nightC.height); }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   camXform(ctx); ctx.globalCompositeOperation = 'lighter';
   for (const L of lights){ const r = L.r * .55, g = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, r); g.addColorStop(0, `rgba(${L.c},${.32 * f})`); g.addColorStop(1, `rgba(${L.c},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(L.x, L.y, r, 0, TAU); ctx.fill(); }
   ctx.globalCompositeOperation = 'source-over';
 }
+/* ---------- hearth fires: at night each house whose fire burns (b.fire === true, see fireTick) has a little fire in front of
+   it: a ring of stones, two or three flame tongues that flicker by noise, a warm pool of light that breathes, now and then a
+   spark that rises and fades. Houses with a cold hearth stay dark. Near the village only; still with reduced motion. */
+const HEARTH_STONE = [[-3.4, .6], [-1.2, 1.5], [1.4, 1.5], [3.4, .6], [1.6, -.4], [-1.6, -.4]];
+const hearthOn = () => opts.night && lod !== 'far' && nightLevel() > .06;
+function drawHearths(now){
+  if (!hearthOn()) return;
+  const lv = clamp(nightLevel() / .55, 0, 1), v = view(30), t = reduced ? 0 : now / 1000, c = ctx, near = lod === 'near';
+  camXform(c);
+  for (const I of islands){
+    if (!seen(I) || !lived(I) || !boxIn(I.box, grow(v, 40))) continue;
+    for (const b of I.buildings){
+      if (b.bt || b.fire !== true || !HOME_KINDS.has(b.kind) || !ptIn(b.x, b.y, v)) continue;
+      const sc = (b.v && b.v.scale) || 1, x = b.x + 9 * sc, y = b.y + 5 * sc, id = b.id;
+      const fa = reduced ? .9 : .78 + .22 * flick(t * 7, id), br = reduced ? 1 : 1 + .09 * Math.sin(t * 1.3 + id);   // the light flickers and breathes
+      // the pool of warm light on the ground
+      c.globalCompositeOperation = 'lighter'; const R = 17 * br * (.9 + .15 * fa) * lv + 4, g = c.createRadialGradient(x, y - 1, 0, x, y - 1, R);
+      g.addColorStop(0, `rgba(255,170,80,${.34 * lv * fa})`); g.addColorStop(.5, `rgba(255,130,60,${.14 * lv * fa})`); g.addColorStop(1, 'rgba(255,110,50,0)');
+      c.fillStyle = g; c.beginPath(); c.ellipse(x, y - 1, R, R * .78, 0, 0, TAU); c.fill(); c.globalCompositeOperation = 'source-over';
+      c.globalAlpha = clamp(lv * 1.6, 0, 1);
+      // stones round the fire, with a little ink
+      c.fillStyle = '#8D8576'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35;
+      for (const [sx, sy] of HEARTH_STONE){ c.beginPath(); c.ellipse(x + sx * .8, y + sy * .6 + .5, 1.15, .75, 0, 0, TAU); c.fill(); c.stroke(); }
+      // two or three tongues, each its own height and lean, by noise
+      const tongues = [[0, 1, .95, 0], [-1.5, .7, .8, 1], [1.6, .62, .7, 2]];
+      for (const [dx, hs, ws, k] of tongues){
+        const h = reduced ? hs : hs * (.78 + .5 * flick(t * 8.5 + k * 3.1, id * 3 + k)), lean = reduced ? 0 : (flick(t * 5 + k * 7, id + 40 + k) - .5) * .55;
+        c.save(); c.translate(x + dx * .8, y); c.rotate(lean); c.scale(ws * .78, h * .78); c.lineJoin = 'round';
+        c.fillStyle = k === 0 ? '#E0803A' : k === 1 ? '#D0612E' : '#EC9A44'; c.fill(FLAME); c.lineWidth = .5 / Math.max(.5, ws * .78); c.strokeStyle = '#2B1D14'; c.stroke(FLAME);
+        if (k === 0){ c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); }
+        c.restore();
+      }
+      c.globalAlpha = 1;
+      // a spark now and then, rising, wavering and fading out
+      if (near && !reduced){
+        const cyc = 2600 + (id * 37 % 5) * 500, q = ((now + id * 911) % cyc) / 1500;
+        if (q < 1){ c.globalAlpha = (1 - q) * lv; c.fillStyle = '#FFD27A'; c.beginPath(); c.arc(x + Math.sin(q * 7 + id) * 1.6, y - 6 - q * 15, .5 * (1 - q * .5), 0, TAU); c.fill(); c.globalAlpha = 1; }
+      }
+    }
+  }
+}
+/* ---------- the sky over the sea, drawn under the islands: at night a few twinkling stars on the deep water and a moon path of
+   short broken strokes that shimmer; by day a few sun glints that sparkle on the open water. Small and cheap. */
+const SKY_CELL = 74;
+function drawSeaSky(now){
+  if (lod === 'far' || !quality || !opts.night) return;   // without day and night the sea stays as it was
+  const dk = clamp(nightLevel() / .55, 0, 1), sun = clamp(1 - dk * 2.5, 0, 1);
+  if (dk < .05 && sun < .05) return;
+  const c = ctx, v = view(10), t = reduced ? 0 : now / 1000; camXform(c);
+  const cs = SKY_CELL, i0 = Math.floor(v.x0 / cs), i1 = Math.floor(v.x1 / cs), j0 = Math.floor(v.y0 / cs), j1 = Math.floor(v.y1 / cs);
+  c.lineCap = 'round';
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++){
+    const h = hsh(i * 1.37, j * 2.11), x = (i + hsh(i, j + 5)) * cs, y = (j + hsh(i + 9, j)) * cs;
+    if (h > (dk > sun ? .5 : .24)) continue;
+    let deep = true; for (const I of islands) if (boxIn(I.box, {x0:x - 26, y0:y - 26, x1:x + 26, y1:y + 26})){ deep = false; break; }
+    if (!deep) continue;
+    const tw = reduced ? .7 : Math.max(0, Math.sin(t * (1.2 + h * 4) + h * 90)), tw8 = tw * tw * tw;
+    if (dk >= sun){   // a star: a little cross that swells and shrinks
+      const r = 1.5 + tw8 * 2.2 + h * 1.6; c.strokeStyle = c.fillStyle = '#FBF3DA'; c.globalAlpha = dk * (.55 + .45 * tw8); c.lineWidth = .7; c.lineCap = 'round'; c.stroke(glint(x, y, r)); c.beginPath(); c.arc(x, y, .75, 0, TAU); c.fill();
+    } else {          // a sun glint: a short bright dash that flashes
+      c.globalAlpha = sun * (.15 + .75 * tw8); c.strokeStyle = '#FFF9E6'; c.lineWidth = .8; c.beginPath(); c.moveTo(x - 2.2, y); c.lineTo(x + 2.2, y + .3); c.stroke();
+      if (tw8 > .5){ c.lineWidth = .5; c.stroke(glint(x, y, 1.8)); }
+    }
+  }
+  // the moon path: broken strokes on a band down the screen, wider and brighter towards the viewer, each shimmering by itself
+  if (dk > .25 && cam.z > .8){
+    const W = vw / cam.z, H = vh / cam.z, bx = cam.x + W * .16, rows = 19;
+    c.strokeStyle = '#F8EFCB'; c.lineWidth = 1.2;
+    for (let r = 0; r < rows; r++){
+      const f = r / (rows - 1), y = cam.y - H * .42 + f * H * .9, wid = (10 + f * 40) * (1 + .3 * Math.sin(r * 1.7));
+      for (let k = 0; k < 4; k++){
+        const sd = r * 7.3 + k * 3.1, x = bx + (hsh(r, k) - .5) * wid * 2 + Math.sin(sd) * 4, len = 3.5 + hsh(r + 3, k) * 6 + f * 4;
+        const tw = reduced ? .6 : .5 + .5 * Math.sin(t * (1.6 + hsh(r, k + 7) * 2.2) + sd * 4), a = dk * (.3 + .7 * tw * tw) * (1 - Math.abs(x - bx) / (wid * 2.4));
+        if (a < .04) continue;
+        c.globalAlpha = a; c.beginPath(); c.moveTo(x - len, y); c.quadraticCurveTo(x, y - .9, x + len, y + .2); c.stroke();
+      }
+    }
+  }
+  c.globalAlpha = 1;
+}
+const lightAnimating = () => !reduced && opts.night && lod !== 'far' && (nightLevel() > .06 || (quality && gradeAt(dayPhase())[3] < .2));
 /* ---------- a cyclone. Over the island the sky darkens, rain lashes slantwise in the wind, gusts and torn leaves race
    past and lightning flashes; on the water spray flies off the wave tops, the breakers pound the reef, the palms bend. */
 const hsh = (i, k) => { const h = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return h - Math.floor(h); };
@@ -2108,6 +2207,7 @@ function drawSea(now){
     ctx.globalAlpha = fade * a; ctx.fillStyle = P; ctx.fillRect(v.x0 / k - 32, v.y0 / k - 32, (v.x1 - v.x0) / k + 64, (v.y1 - v.y0) / k + 64); ctx.restore();
   }
   ctx.globalAlpha = 1;
+  drawSeaSky(now);
 }
 /* ---------- layers and one frame */
 function renderLayer(L, paint){
@@ -2138,8 +2238,8 @@ function draw(now){
   drawSea(now); ctx.setTransform(1, 0, 0, 1, 0, 0); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
-  camXform(ctx); drawTop(ctx, now); drawNight(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
+  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */
-const animating = () => !!cyclone || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
+const animating = () => !!cyclone || lightAnimating() || !!selShip || driftFx.length > 0 || (lod !== 'far' && islands.some(I => I.settled && I.buildings.some(b => b.kind === 'steg' && !b.bt))) || ships.some(s => s.state === 'sail' || s.race) || !!placing || hearts.length > 0 || islands.some(I => I.feastEnd > tick) || cam.z > PEOPLE_Z || islands.some(I => I.volcano && seen(I));
