@@ -65,7 +65,7 @@ function immigTick(I){
   // a family that is not answered stays, by custom
   if (s){ if (s.state === 'moored' && s.askAt && tick - s.askAt > IMMIG_WAIT) immigAnswer(s, true, true); return; }
   if (tick < (I.immigAt || 0) || !wantsSettlers(I)) return;
-  I.immigAt = tick + IMMIG_GAP;
+  I.immigAt = tick + Math.round(IMMIG_GAP * giftF('conus'));
   const F = newImmig(I);
   if (awayQuiet){ immigLand(I, F); return; }   // while you were away they came and stayed
   const from = immigStart(I), sh = {id:nextShip++, kind:'oc', own:false, immig:F, to:I.id, cargo:{}, life:[], people:F.people.length, folk:F.people, path:[], pi:0, state:'moored', x:from.x, y:from.y, hx:1, hy:0, dist:0, home:from};
@@ -136,7 +136,7 @@ function lifeEvent(p, what, detail = ''){
 }
 const STORY_TEXT = {
   geb:() => 'wird geboren', kam:d => `kommt mit dem Kanu ${d}`, kind:d => `bekommt ein Kind: ${d}`, arb:d => `fängt bei ${d} an zu arbeiten`, tat:() => 'bekommt das Tatau',
-  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', alt:() => 'wird alt und sitzt jetzt vor dem Haus'
+  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', gru:d => `gründet das Dorf ${d} und wird ein Ahn des Dorfes`, alt:() => 'wird alt und sitzt jetzt vor dem Haus'
 };
 const storyOf = p => (p.ev || []).filter(e => STORY_TEXT[e[1]]).map(e => ({year:yearOf(e[0]) + 1, text:STORY_TEXT[e[1]](e[2])}));
 /* once in a while: who has started to work, who has grown old */
@@ -206,7 +206,9 @@ function packGive(I, M, g, help = false){
   for (const [k, n0] of Object.entries(g)){ const n = Math.min(n0, I.stock[k] || 0, mcap - (M.stock[k] || 0)); if (n < 1) continue; I.stock[k] -= n; M.stock[k] = (M.stock[k] || 0) + n; got[k] = n; }
   if (!Object.keys(got).length) return null;
   if (help){ M.helpLast = {t:tick, g:got}; M.helps = (M.helps || 0) + 1; }   // M: the young village that is helped
-  else { M.packs = (M.packs || 0) + 1; I.packLast = {t:tick, g:got}; stats.packs = (stats.packs || 0) + 1; }
+  else { M.packs = (M.packs || 0) + 1; I.packLast = {t:tick, g:got}; stats.packs = (stats.packs || 0) + 1;
+    if (Object.keys(got).some(k => !canMakeOn(M, k))) M.fernAt = tick;   // fine things from afar: the mother is glad (satOf)
+    mana += NET.mana; }   // every canoe between the villages of the clan adds a little standing
   I.staff = null; M.staff = null; I._fore = M._fore = null; I._ffore = M._ffore = null;
   return got;
 }
@@ -218,7 +220,7 @@ function sendPack(I, M, g, help = false){
 }
 /* at dawn: a daughter sends what it has to spare to the mother; the mother helps a young daughter (under HELP.pop people)
    with what it lacks to build and to get through the next morning */
-const HELP = {pop:15, max:16};
+const HELP = {pop:15, max:16}, NET = {mana:.5};
 function helpOf(M, D){
   const cap = storeCap(D), mcap = storeCap(M), F = mealFore(D), FM = mealFore(M), g = {}; let left = HELP.max;
   const give = (k, want) => { const spare = Math.floor((M.stock[k] || 0) - mcap * .4), n = Math.min(want, spare, cap - (D.stock[k] || 0), left); if (n > 0){ g[k] = n; left -= n; } };
@@ -241,4 +243,42 @@ function packArrive(s){
   if (got && !awayQuiet){ const msg = P.help ? `${I.name} hilft dem jungen Dorf ${M.name}: ${packText(got)}.` : `Ein Kanu aus ${I.name} bringt ${packText(got)}.`; note(msg); if (M.id === active){ toast(msg, 3600); sfx('shells'); updateHUD(); } }
   s.leaving = true; if (!s.home || !sailTo(s, {x:s.home.x, y:s.home.y}, true)){ const i = ships.indexOf(s); if (i >= 0) ships.splice(i, 1); }
   requestDraw();
+}
+/* ---------- the gifts of the islands. Every island but the first has one: its special ground (SPECS), obsidian on a
+   volcano, or else a bird rock or a turtle beach. A gift counts for the whole clan only while a village of its own
+   lives there; by trade comes the good, not the gift. Old games keep their islands: only islands that had nothing
+   before get a bird rock or a turtle beach. */
+const GIFTS = {
+  obsidian:{n:'Obsidian', ic:'klingen', does:'Kanubau und Schnitzen gehen ein Viertel schneller.', f:1.25},
+  feinpandanus:{n:'Feiner Pandanus', ic:'matten', does:'Segelmatten aus feinem Pandanus: alle eigenen Kanus fahren ein Fünftel schneller.', f:1.2},
+  conus:{n:'Kegelschnecken', ic:'schmuck', does:'Armringe als Brautgabe: Familien von weit her kommen öfter.', f:.75},
+  kurkuma:{n:'Rote Erde', ic:'kurkuma', does:'Rote Farbe für Feste: Feste bringen ein Viertel mehr Ansehen.', f:1.25},
+  kava:{n:'Feuchte Hänge', ic:'kava', does:'Taro wächst hier anderthalbmal so gut.', f:1.5},
+  voegel:{n:'Vogelfelsen', ic:'eier', does:'Navigatoren lernen anderthalbmal so schnell: Sie lesen die Vögel.', f:1.5},
+  schildkroete:{n:'Schildkrötenstrand', ic:'wild', does:'Auf langer Fahrt reicht der Proviant länger.', f:.75}
+};
+function giftOf(I){
+  if (!I || I.clan || I.id === 'heimat' || I.treasure || I.culture) return null;
+  const s = specOf(I); if (s) return s;
+  if (depsOf(I, 'obsidian').length) return 'obsidian';
+  return Math.abs(Math.round(I.center.x * 11 + I.center.y * 5)) % 2 ? 'voegel' : 'schildkroete';
+}
+let giftMemo = {t:-1, set:new Set()};
+function giftsHeld(){
+  if (giftMemo.t === tick) return giftMemo.set;
+  const set = new Set(); for (const I of islands) if (I.settled && I.pop > 0){ const g = giftOf(I); if (g) set.add(g); }
+  if (giftMemo.t >= 0 && !awayQuiet) for (const g of set) if (!giftMemo.set.has(g) && !(stats.gifts || []).includes(g)){
+    stats.gifts = [...(stats.gifts || []), g]; mana += 2; note(`Eine neue Gabe für den Clan: ${GIFTS[g].n}. ${GIFTS[g].does} Ansehen +2.`); }
+  giftMemo = {t:tick, set}; return set;
+}
+const hasGift = g => giftsHeld().has(g);
+const giftF = (g, k = GIFTS[g].f) => hasGift(g) ? k : 1;
+// the gift that works on a place: obsidian for the carvers, the damp slopes for taro on that very island
+const giftWork = (I, b) => (['schnitzer', 'klingen', 'beil'].includes(b.kind) ? giftF('obsidian') : 1) * (b.kind === 'taro' && giftOf(I) === 'kava' ? GIFTS.kava.f : 1);
+/* the clan's gifts in the overview: which it has, which it knows (and where), which are still to be found */
+function giftsMarkup(){
+  const held = giftsHeld(), known = g => islands.filter(J => J.discovered && !J.settled && giftOf(J) === g);
+  return `<p class="sec">Gaben des Clans · ${held.size} von ${Object.keys(GIFTS).length}</p><ul class="list gifts">` + Object.entries(GIFTS).map(([g, G]) => {
+    const k = known(g), st = held.has(g) ? 'ok' : k.length ? 'low' : '';
+    return `<li class="${held.has(g) ? 'okk' : ''}">${icon(G.ic)}<span class="nm">${G.n}<small>${G.does}</small></span>${held.has(g) ? chipS('ok', 'da') : k.length ? chipS('low', k[0].name) : chipS('', '?')}</li>`; }).join('') + '</ul>';
 }

@@ -2154,7 +2154,7 @@ function drawLabels(c){
   seaNames(c, k); drawNavHints(c, performance.now());
   for (const I of islands){
     if (!I.discovered || !ptIn(I.labelAt.x, I.labelAt.y, v)) continue;
-    label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}${specOf(I) ? ' · ' + SPECS[specOf(I)].s : ''}` : I.treasure ? `Schatzinsel: ${GN[I.treasure.k]}` : specOf(I) ? `unbewohnt · ${SPECS[specOf(I)].s}` : 'unbewohnt');
+    label(c, I.labelAt.x, I.labelAt.y, k, I.name, I.clan ? I.clan.name : I.settled ? `${I.pop} Bewohner, ${LEVEL_NAMES[I.lvl || 1]}${giftOf(I) ? ' · ' + GIFTS[giftOf(I)].n : ''}` : I.treasure ? `Schatzinsel: ${GN[I.treasure.k]}` : giftOf(I) && I.discovered ? `unbewohnt · ${GIFTS[giftOf(I)].n}` : 'unbewohnt');
     // a treasure island shows what it gives next to its name
     if (I.treasure) put(c, I.labelAt.x, I.labelAt.y + 24 * k, k * .9, 1, 0, 'tr|' + I.treasure.k, `<use href="#ic-${I.treasure.k}" transform="translate(-10 -10)"/>`);
     // the patterns stamped here, the island's own first: on the chart one sees how far each has travelled

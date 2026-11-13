@@ -623,7 +623,7 @@ function zealMarkup(I){
    what pulls them down and what helps: the share of work and free time for everyone, their house, food, water, fuel */
 const SAT_BANDS = ['gut', 'mittel', 'schlecht'], satBand = v => v >= 70 ? 'gut' : v >= 45 ? 'mittel' : 'schlecht';
 const SAT_FACE = {gut:['M6.6 11.8Q10 15 13.4 11.8', '#F3D98A'], mittel:['M6.8 12.9H13.2', '#E9DCC0'], schlecht:['M6.6 14Q10 11.2 13.4 14', '#E8A88A']};
-const SAT_ICON = {essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen'};
+const SAT_ICON = {fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen'};
 function satHelp(I, p, w){
   const f = famOf(I, p.h), h = f && f.home && findB(f.home);
   if (w.k === 'essen') return {a:'ware', k:'nahrung', t:'Mehr Essen'};
@@ -715,7 +715,7 @@ function workTab(I, nd){
   return h + `</ul></details>`;
 }
 function isleTab(I, nd){
-  let h = ratMarkup(I) + `<ul class="list needs">`;
+  let h = ratMarkup(I) + giftsMarkup() + `<ul class="list needs">`;
   if (I.type === 'hoch' && I.trees0 >= 25){ const f = forestShare(I), e = erosionOf(I);
     h += rowS('holz', `Wald ${Math.round(f * 100)} %`, e > 1 ? 'Starke Erosion: Felder laugen sehr schnell aus, das Riff verschlammt. Pflanzt Bäume!' : e ? 'Erosion: Felder laugen schneller aus. Pflanzt Bäume.' : 'Genug Wald hält den Boden fest.', barS(f / .6), e ? chipS(e > 1 ? 'out' : 'low', 'Erosion') : chipS('ok', 'hält'), e ? 'need' : ''); }
   { const fields = I.buildings.filter(b => KINDS[b.kind].soil && !b.bt), tired = fields.filter(b => !b.fallow && (b.soil ?? 1) < .45).length, resting = fields.filter(b => b.fallow).length;

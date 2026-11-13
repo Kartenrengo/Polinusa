@@ -971,3 +971,6 @@ body #toast[data-tone=good]::after{background-image:url("data:image/svg+xml,%3Cs
 .ratrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0}
 .ratrow .nm{display:inline-flex;align-items:center;gap:6px;font:800 14px var(--font-ui)}
 .ratrow .ic{width:20px;height:20px}
+
+/* the gifts of the clan (giftsMarkup) */
+.list.gifts li small{display:block;font-size:12px;color:var(--muted);font-weight:600}

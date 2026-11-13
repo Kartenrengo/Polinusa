@@ -37,7 +37,7 @@ const SEA_KINDS = new Set(['fisch', 'taucher']), DRY_WORK = new Set(['toepfer', 
 const dryPace = () => { const id = seasonOf().id; return id === 'sturm' ? 1.7 : id === 'passat' ? .8 : 1; };
 /* after the yam harvest the stores are full: for three moons a feast brings half as much standing again */
 const afterHarvest = I => !!I && I.yamAt > 0 && tick - I.yamAt < 3 * MOON;
-const feastMana = (I, F) => { const base = F.mana + (F.per ? Math.min(12, F.per * youthsOf(I).length) : 0); return F.id === 'schatz' ? base : Math.round(base * (afterHarvest(I) ? 1.5 : 1)); };
+const feastMana = (I, F) => { const base = F.mana + (F.per ? Math.min(12, F.per * youthsOf(I).length) : 0); return F.id === 'schatz' ? base : Math.round(base * (afterHarvest(I) ? 1.5 : 1) * giftF('kurkuma')); };   // red earth: turmeric for the dancers
 /* what each time of the year does, as pictures with up or down, for the calendar */
 const SEASON_FX = {
   plejaden:[['plejaden', 1, 'Fest der ersten Früchte'], ['nahrung', 1, 'Die Brotfrucht trägt reich']],

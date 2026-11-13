@@ -390,7 +390,18 @@ const r = await p.evaluate(()=>{
         openSheet('needs', {tab:'insel'}); active = T.id; renderSheet(); want(/Rat in der Not/.test($('sheetBody').textContent), 'elders: the overview does not say the elders help');
         $('sheetBody').querySelector('[data-act=rat]').click(); want(!eldersOn(T) && T.rat === false, 'elders: the elders cannot be turned off');
         { const n = T.buildings.length; T.rat = true; Object.assign(T.stock, {wasser:20, nahrung:20}); T._fore = null; eldersTick(T, true); want(T.buildings.length === n, 'elders: the elders build though nothing is wanting'); }
-        active = 'heimat'; closeSheet(); H.stock = keepH; T.rat = undefined; } } }
+        active = 'heimat'; closeSheet(); H.stock = keepH; T.rat = undefined;
+        // the gifts: every island but the first has one; a village of its own gives it to the clan
+        want(!giftOf(H) && islands.filter(J => !J.clan && !J.treasure && J.id !== 'heimat').every(J => GIFTS[giftOf(J)]), 'gifts: an island without a gift, or the home island with one');
+        giftMemo.t = -1; want(hasGift(giftOf(T)), `gifts: the village on ${T.name} does not give ${giftOf(T)}`);
+        { const keep = giftMemo, sh = ships.find(q => q.own) || makeShip('oc', H); giftMemo = {t:tick, set:new Set()}; const v0 = speedOf(sh), f0 = feastMana(H, FEASTS[0]);
+          giftMemo = {t:tick, set:new Set(['feinpandanus', 'kurkuma'])}; want(speedOf(sh) > v0 * 1.15, 'gifts: fine pandanus sails do not make canoes faster');
+          want(feastMana(H, FEASTS[0]) >= f0, 'gifts: red earth makes feasts poorer'); giftMemo = keep; giftMemo.t = -1; }
+        openSheet('needs', {tab:'insel'}); want(/Gaben des Clans/.test($('sheetBody').textContent), 'gifts: the overview does not list the gifts'); closeSheet();
+        // the founders become ancestors; fine things from a daughter make the mother glad; every canoe adds standing
+        want(T.people.some(p => (p.ev || []).some(e => e[1] === 'gru')), 'founders: nobody of the new village has its founding in the story');
+        { const k = GOODS.find(q => !canMakeOn(H, q) && !TREASURE_GOODS.includes(q)), m0 = mana; T.stock[k] = 5; H.stock[k] = 0; H.fernAt = null; packGive(T, H, {[k]:3});
+          const ad = H.people.find(isAdult); want(H.fernAt === tick && satOf(H, ad).why.some(w => w.k === 'fern') && mana > m0, `network: ${k} from afar does not gladden the mother or add standing`); mana = m0; H.fernAt = null; } } } }
     // what a storm wrecked is built anew only with wood and fronds from the store
     { const H = isl('heimat'), keepSt = {...H.stock}, h = homesOf(H).find(q => !q.bt); if (h){ H.stock.holz = 0; H.stock.dach = 0;
       h.bt = 5; rebuildCost(H, h); H.staff = null; const waits = !!h.unpaid && !staffOf(H).sites.includes(h);

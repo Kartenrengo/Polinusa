@@ -1689,6 +1689,35 @@ oder Brennstoff, die es selbst braucht). Solange eine Tochter klein ist (unter 1
 Morgen mit Holz, Wedeln, Wasser und Essen aus ihrem Überfluss (bis 16 Stück). Die Kanus fahren sichtbar; die Waren gehen
 erst bei der Ankunft vom einen ins andere Lager. Dort steht auch, was das letzte Kanu brachte.
 
+## Gaben der Inseln und das Netz der Dörfer (seit Version 82)
+
+**Jede Insel hat eine Gabe** (außer der Heimat). Sie steht unter dem Namen auf der Karte, sobald die Insel entdeckt ist,
+und am Kanu, das davor liegt. Die Gabe gilt **für alle Dörfer des Clans, solange dort ein eigenes Dorf lebt**; per
+Handel kommt nur die Ware, nicht die Gabe.
+
+| Gabe | Wo | Was sie dem Clan gibt |
+| --- | --- | --- |
+| Obsidian | Vulkaninseln | Kanubau und Schnitzen ein Viertel schneller |
+| Feiner Pandanus | manche Koralleninseln | Segelmatten: alle eigenen Kanus ein Fünftel schneller |
+| Kegelschnecken | Motu, manche Koralleninseln | Armringe als Brautgabe: Familien von weit her kommen öfter |
+| Rote Erde | Talise, manche hohe Inseln | Kurkuma für die Tänzer: Feste ein Viertel mehr Ansehen |
+| Feuchte Hänge | manche hohe Inseln | Taro wächst dort anderthalbmal so gut (und Kava ab Hawaiki) |
+| Vogelfelsen (neu) | Inseln ohne andere Gabe | Navigatoren lernen anderthalbmal so schnell |
+| Schildkrötenstrand (neu) | Inseln ohne andere Gabe | Auf langer Fahrt reicht der Proviant länger (jeden vierten Tag aus dem Meer) |
+
+Alte Spielstände behalten ihre Inseln; nur Inseln, die bisher nichts hatten, bekommen einen Vogelfelsen oder einen
+Schildkrötenstrand. Jede neue Gabe bringt einmal Ansehen 2. In der Übersicht unter „Insel“ stehen die **Gaben des Clans**:
+welche er hat, welche bekannt sind (mit Insel) und welche noch fehlen. Der Rat schlägt vor: „Dorf auf Kula gründen“.
+
+**Die Mutterstadt wächst nach oben.** Bringt ein Kanu einer Tochter etwas, das die Heimat selbst nicht machen kann, freuen
+sich dort zwei Tage lang alle („Feines aus der Ferne“, Zufriedenheit +6). Jede Gabe des Clans macht alle etwas zufriedener
+(+1, höchstens +5). Jedes Kanu zwischen den Dörfern bringt ein wenig Ansehen (+0,5).
+
+**Druck von innen.** Ist die Heimat voll, wollen junge Paare fort: Die Erwachsenen sind unzufrieden („Insel voll: will
+fort“, −4), und der Rat sagt „Junge Paare wollen fort“. Wer ein neues Dorf gründet, hat das in seiner Lebensgeschichte
+(„gründet das Dorf … und wird ein Ahn des Dorfes“), und die Muschel meldet die Gründer. Schwindet der Wald der Heimat, bringen
+die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was der Mutter fehlt).
+
 ## Schöner bewegt: Licht, Wasser, Übergänge (seit Version 81)
 
 - **Licht über den Tag:** Ein weicher Farbverlauf ohne Stufen: pfirsichfarbener Morgen, klarer Tag, goldener Nachmittag,
@@ -1782,6 +1811,11 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Herdfeuer und Erdöfen mit Holz und Kokosschalen | Feuerstellen und Erdöfen sind an Lapita-Orten gefunden; Kokosschalen als Brennstoff kennt man aus späterer Zeit |
 | Jedes Haus brennt nachts ein Feuer | Feuerstellen in und bei den Häusern sind gefunden. Dass in jedem Haus nachts eines brennt (Wärme, Rauch gegen Mücken), kennt man aus späteren Berichten; die eine Portion Brennstoff je Haus und Nacht ist eine **Spielregel** |
 | Zufriedenheit als Zahl | **Spielregel**, keine Aussage über die Menschen damals |
+| Obsidian aus wenigen Fundorten weit gehandelt; Obsidian-Werkzeuge für das Tatau | ja, durch Funde (Talasea-Obsidian bis Fidschi; Gebrauchsspuren an Lapita-Abschlägen) |
+| Schildkröten und Seevögel als Essen | ja, durch Knochenfunde an Lapita-Orten |
+| Segel aus Pandanusmatten | aus späteren Berichten; für Lapita angenommen |
+| Neue Dörfer gründen jüngere Linien, die Gründer werden Ahnen | vermutet (aus späteren Überlieferungen erschlossen) |
+| Die Gaben und ihre Zahlen | **Spielregeln** |
 | Kauri-Harz im Treibgut, Talisman der Matriarchin | Kauri-Bäume (Agathis) wachsen in Melanesien und Fidschi, ihr Harz gab es also in der Region; in Fidschi überzog man Töpfe später mit dem Harz des Dakua-Baums. Dass es am Strand antreibt und ein Talisman gegen den Sturm daraus wird, ist **erfunden**, eine Spielidee. Bernstein (Version 67) war ganz erfunden: Aus Lapita-Fundstellen ist keiner bekannt. Dass Familien nach den Frauen benannt sind, folgt der Vermutung, dass Lapita-Haushalte bei der Familie der Frau lebten |
 
 ## Quellen

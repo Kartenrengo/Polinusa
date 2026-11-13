@@ -275,7 +275,7 @@ function navTick(I, n = 1){
   const {p, master, goal} = L, now = p.nv || 0; H.pupil = p.id;
   if (now >= goal) return;
   const lvl0 = Math.floor(now), lore0 = navLore().lvl;
-  p.nv = Math.min(goal, now + n * (I.str === 'navigator' ? 1.5 : 1) / ((master > lvl0 ? 3 : 6) * YEAR));
+  p.nv = Math.min(goal, now + n * (I.str === 'navigator' ? 1.5 : 1) * giftF('voegel') / ((master > lvl0 ? 3 : 6) * YEAR));
   if (Math.floor(p.nv) > lvl0){
     loreCache = null;
     lifeEvent(p, 'nav', NAV_N[Math.floor(p.nv)]);
@@ -1013,7 +1013,7 @@ function diveLeg(I, w, j){
 function buildBit(w, dt, m){
   const W = workOf(isl(w.isl), w.job); if (!W) return;
   const left = W.o[W.f], floor = Math.max(1e-4, woodFloor(W)), K = w.job.type === 'site' ? SITE_K : w.job.type === 'yard' ? YARD_K : null;
-  const f = (K ? teamF(K, m) * K.crew / Math.max(1, m) : 1) * (opts.night ? 1.5 : 1) * (w.pid ? mealOf(isl(w.isl), w.pid) : 1);   // in pairs: alone one gets a third of it done; by day faster, for the night they sleep
+  const f = (K ? teamF(K, m) * K.crew / Math.max(1, m) : 1) * (opts.night ? 1.5 : 1) * (w.pid ? mealOf(isl(w.isl), w.pid) : 1) * (w.job.type === 'yard' ? giftF('obsidian') : 1);   // obsidian adzes and blades   // in pairs: alone one gets a third of it done; by day faster, for the night they sleep
   if (left > floor) W.o[W.f] = Math.max(floor, left - dt / TICK / W.crew * f);
 }
 function stepWalkers(dt){
@@ -1221,7 +1221,7 @@ function dayShares(I, p){
 }
 const oldF = (I, b, n) => { const o = b.at ? (staffOf(I).oldAt.get(b) || 0) : 0; return o && n ? 1 - .5 * Math.min(o, n) / n : 1; };   // the old work at half strength
 const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a master family works its craft faster
-const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b) * (K.crew ? mealF(I, b) : 1); };
+const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b) * (K.crew ? mealF(I, b) : 1) * giftWork(I, b); };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
    A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
@@ -1382,7 +1382,7 @@ const fireShort = I => { const F = fireFore(I); return F.n > 0 && F.fuel < F.n; 
    them, what their house step wants, room, the village's share of work and free time, a feast, a beautiful village.
    Very content people work a little faster, discontent ones slower (mealOf). The top bar shows the village's average;
    a tap shows the least content person, why, and what helps. */
-const SAT = {base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8};
+const SAT = {fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8};
 const ZEAL_SAT_TXT = ['viel Freizeit', '', 'viel Arbeit'];
 function satOf(I, p, nd = needsOf(I)){
   const why = []; let v = SAT.base; const add = (k, d, t) => { if (!d) return; v += d; why.push({k, d, t}); };
@@ -1398,6 +1398,9 @@ function satOf(I, p, nd = needsOf(I)){
   }
   const z = I.zeal != null ? I.zeal : 1, a = stageOf(p); if (a !== 'kid' && z !== 1) add('zeit', a === 'old' ? Math.round(SAT.zeal[z] / 2) : SAT.zeal[z], ZEAL_SAT_TXT[z]);
   if (I.joyUntil > tick) add('fest', SAT.feast, 'Fest');
+  if (I.fernAt != null && tick - I.fernAt < 2 * DAY_TICKS) add('fern', SAT.fern, 'Feines aus der Ferne');   // a canoe of a daughter brought what the island cannot make
+  { const g = giftsHeld().size; if (g) add('gaben', Math.min(5, g), 'Gaben des Clans'); }
+  if (nd.atMax && a === 'adult') add('voll', SAT.full, 'Insel voll: will fort');
   add('schoen', Math.round(clamp(beautyOf(I) / Math.max(4, I.pop) * 2, 0, 1) * SAT.beauty), 'schönes Dorf');
   return {v:clamp(Math.round(v), 0, 100), why};
 }

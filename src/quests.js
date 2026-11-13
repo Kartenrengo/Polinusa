@@ -233,6 +233,11 @@ function adviceOf(I, urgentOnly = false){
   { const M = masterSet(I), idle = sf.freeP.filter(id => M.has(id)), p = idle.length && I.people.find(q => q.id === idle[0]), f = p && famOf(I, p.h), h = f && f.home && findB(f.home);
     if (h && !craftOf(I, h) && !sf.rest) return {t:'Meisterfamilie ohne Werk', d:`${famName(f)} geht nicht mehr aufs Feld. Gib ihrem Haus ein Hauswerk: Meister arbeiten dort ein Viertel schneller.`, goto:h.id}; }
   if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
+  // the island is full: young couples want a village of their own (contentment falls, see satOf)
+  if (I.id === 'heimat' && nd.atMax && islands.some(J => J.discovered && !J.settled && !J.clan && !J.treasure)) return {t:'Junge Paare wollen fort', d:'Die Insel ist voll. Junge Paare möchten ein eigenes Dorf gründen und sind unzufrieden, solange sie bleiben müssen. Bau ein Kanu und schicke Siedler auf eine freie Insel.', fleet:true};
+  // a known island whose gift the clan lacks: a village there gives it to all (only from the first village, with a canoe)
+  if (I.id === 'heimat' && I.pop >= 20 && ships.some(s => s.own && s.kind !== 'oc')){ const held = giftsHeld(), J = islands.filter(J => J.discovered && !J.settled && giftOf(J) && !held.has(giftOf(J))).sort((a, b) => Math.hypot(a.center.x - I.center.x, a.center.y - I.center.y) - Math.hypot(b.center.x - I.center.x, b.center.y - I.center.y))[0];
+    if (J) return {t:`Dorf auf ${J.name} gründen`, d:`${GIFTS[giftOf(J)].n}: ${GIFTS[giftOf(J)].does} Das gilt für alle Dörfer, solange dort ein eigenes Dorf lebt. Schicke Siedler mit dem Kanu.`, fleet:true}; }
   // houses whose needs are met and whose material lies ready rise, as in Anno, when you say so
   { const r = I.autoUp ? [] : readyHomes(I, nd.list); if (r.length) return {t:'Ausbau', d:`${r.length} ${r.length === 1 ? 'Haus ist' : 'Häuser sind'} bereit: Tippe drauf, dann „Ausbauen“.`, goto:r[0].id}; }
   // leaking roofs: the families need palm fronds to cover them anew

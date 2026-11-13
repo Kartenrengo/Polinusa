@@ -165,7 +165,7 @@ function moorSpot(I, s){
 function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind !== 'oc' ? .4 : .25) * W.str * dot, .6, 1.45); }
 function speedOf(s){
   const r = s.route != null ? routes[s.route] : null;
-  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1);
+  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1) * (s.own ? giftF('feinpandanus') : 1);
 }
 function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, life:[], people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
@@ -346,6 +346,9 @@ function settleFrom(s){
   if (mana < manaNeeded()){ toast(`Für eine weitere Siedlung braucht es Ansehen ${manaNeeded()}, jetzt sind es ${Math.floor(mana)}. Feiert ein Fest.`, 4200, false); return; }
   const from = isl(s.last);
   settle(T, from, {pop:s.people, stock:s.cargo, folk:s.folk, life:s.life}); s.people = 0; s.folk = []; s.cargo = {}; s.life = []; s.last = T.id;
+  // the founders become the ancestors of the new village: it stands in their story
+  if (T.settled){ const F = (T.people || []).filter(isAdult); for (const p of F) lifeEvent(p, 'gru', T.name);
+    if (F.length && !awayQuiet) note(`${andList(F.slice(0, 3).map(p => p.n))} gründen ${T.name}. Sie werden die Ahnen des Dorfes.`); }
 }
 
 /* ---------- trade chains: a canoe on a chain unloads, loads what the chain says, waits a moment and sails on */
@@ -418,7 +421,7 @@ function feedCrews(){
   if (tick % voyageDay()) return;
   for (const s of ships){
     if (!s.own || s.kind === 'oc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
-    if ((s.cargo.proviant || 0) > 0){ s.cargo.proviant--; squall(s); continue; }
+    if ((s.cargo.proviant || 0) > 0){ s.fed = (s.fed || 0) + 1; if (!(hasGift('schildkroete') && s.fed % 4 === 0)) s.cargo.proviant--; squall(s); continue; }   // turtles and their eggs: every fourth day from the sea
     if (s.hungry) continue;
     s.hungry = true;
     const home = homeFor(s); if (!home) continue;

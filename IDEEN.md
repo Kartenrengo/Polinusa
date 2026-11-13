@@ -71,16 +71,23 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 
 1. ~~**Tochterdörfer laufen allein.**~~ **erledigt in Version 79/80** (Rat nur in der Not, Kanus mit Gaben und Starthilfe; Wachsen bleibt beim Spieler). Der Rat führt sie; jedes schickt von selbst ein Paket an die Mutter (seine Gabe,
    Essen, Holz). Erst das macht mehrere Dörfer angenehm statt lästig.
-2. **Jede Insel hat eine Gabe.** Jede Insel außer der Heimat genau eine, nah an der Heimat mindestens drei verschiedene;
+2. ~~**Jede Insel hat eine Gabe.**~~ **erledigt in Version 82.** Jede Insel außer der Heimat genau eine, nah an der Heimat mindestens drei verschiedene;
    jede mit etwas Sichtbarem: Pandanus-Segel (Kanus schneller), Obsidian (Tatau), Armringe (Brautgabe), Rote Erde
    (Feste), Feuchte Hänge (Taro), Vogelfelsen (Navigatoren), Schildkrötenstrand (Proviant). Der Nutzen gilt nur mit
    eigenem Dorf; Handel bringt nur die Ware. Übersicht „Gaben des Clans“. Alte Spielstände behalten ihre Inseln.
-3. **Die Mutterstadt wächst nach oben.** Hausstufen und Zufriedenheit („Feines aus der Ferne“) brauchen, was die
+3. ~~**Die Mutterstadt wächst nach oben.**~~ **erledigt in Version 82** (Zufriedenheit: Feines aus der Ferne, Gaben; Hausstufen wie bisher). Hausstufen und Zufriedenheit („Feines aus der Ferne“) brauchen, was die
    Töchter liefern; am Ende der Häuptlingssitz (wie bisher erst nach der großen Fahrt).
-4. **Druck von innen.** Wird es eng, fragen junge Paare nach einem eigenen Dorf; Gründer werden Ahnen der Chronik.
+4. ~~**Druck von innen.**~~ **erledigt in Version 82** (Insel voll: junge Paare wollen fort; Gründer als Ahnen). Wird es eng, fragen junge Paare nach einem eigenen Dorf; Gründer werden Ahnen der Chronik.
    Schwindet der Wald, bringen Kanus Brennholz fürs Nachtfeuer.
-5. **Das Netz als Ziel.** Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
+5. **Das Netz als Ziel.** Teils erledigt in Version 82 (jedes Kanu zwischen den Dörfern: Ansehen +0,5). Offen:  Verbundene Dörfer (Handel, Heirat) geben Ansehen; ein Clan kann eine Insel vor dir besetzen.
    Erst ab Hawaiki: ein oberster Häuptling über mehrere Inseln.
+
+## Offen aus der Runde „Gaben und Netz“ (Version 82)
+
+- **Ein anderer Clan besetzt eine Insel:** noch nicht gebaut. Bräuchte eine Insel, die vom freien Land zum Clan-Dorf wird.
+- **Oberster Häuptling über mehrere Inseln:** erst ab Hawaiki, noch nicht gebaut.
+- **Bot:** Er nutzt die Gaben noch nicht gezielt und zählt nur die Mutter.
+- **Gaben abstimmen:** Die Zahlen sind ein erster Wurf (`GIFTS` in `kin.js`).
 
 ## Offen aus der Runde „Schöner bewegt“ (Version 81)
 

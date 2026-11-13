@@ -12,7 +12,7 @@ function shipStatus(s){
   if (r) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}.${s.full ? ` An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt} voll.` : ''}`;
   if (s.state === 'sail') return s.dest && s.dest.isl ? `Unterwegs nach ${isl(s.dest.isl).name}.` : 'Unterwegs auf See.';
   if (s.state === 'sea') return 'Liegt auf offener See vor Anker.';
-  const P = isl(s.port); return P.clan ? `Liegt ${clanBeim(P.clan)} auf ${P.name}.` : P.settled ? `Liegt im Hafen von ${P.name}.` : `Liegt vor ${P.name}, das noch unbewohnt ist.`;
+  const P = isl(s.port); return P.clan ? `Liegt ${clanBeim(P.clan)} auf ${P.name}.` : P.settled ? `Liegt im Hafen von ${P.name}.` : `Liegt vor ${P.name}, das noch unbewohnt ist.${giftOf(P) ? ` Gabe: ${GIFTS[giftOf(P)].n}. ${GIFTS[giftOf(P)].does}` : ''}`;
 }
 /* The canoe sheet: what it carries, loading in a port of ours, and what it can do where it is */
 function shipMarkup(s){
