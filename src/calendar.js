@@ -63,15 +63,15 @@ function calendarTick(){
   const t = yearTick();
   if (t % MOON === 0){
     const S = seasonOf();
-    if (moonOf() === S.from){ toast(`${S.n}. ${S.text}`, 6000); invalidate(true); }   // the land changes colour with the season
+    if (moonOf() === S.from){ const m = `${S.n}. ${S.text}`; if (/Sturm|Mager/.test(S.n)) toast(m, 5000); else hush(m); invalidate(true); }   // only a season that brings danger pops up; the others go quietly into the conch   // the land changes colour with the season
     if (moonOf() === 0){
       // the rāhui is lifted at the feast: the reef opens again
       for (const I of islands) if (I.settled && I.rahui){ I.rahui = false; I.rahuiDone = yearOf(); mana += 3; }
     }
-    if (moonOf() === 11) toast('Nur noch ein Mond, dann stehen die Plejaden am Abendhimmel. Bereitet das Fest der ersten Früchte vor.', 5000);
+    if (moonOf() === 11) hush('Nur noch ein Mond, dann stehen die Plejaden am Abendhimmel. Bereitet das Fest der ersten Früchte vor.');
   }
   if (isPalolo()){
-    if (dayOf() === PALOLO.from) toast('Palolo-Nacht: Eine Woche nach Vollmond steigt der Riffwurm aus dem Riff. Alle schöpfen ihn am Ufer mit Körben, eine Köstlichkeit.', 5000);
+    if (dayOf() === PALOLO.from) hush('Palolo-Nacht: Eine Woche nach Vollmond steigt der Riffwurm aus dem Riff. Alle schöpfen ihn am Ufer mit Körben, eine Köstlichkeit.');
     for (const I of islands){
       if (!I.settled) continue;
       const reef = I.buildings.filter(b => SEA_KINDS.has(b.kind) && !b.bt).length, gain = Math.ceil(I.pop / 8) + reef * 2;

@@ -221,8 +221,8 @@ function drawHouseFlags(c, v, now){
 /* the feast fire in front of the house: a fire that flares in turns, higher tongues, sparks that fly off with the wind, a plume of smoke */
 function drawFeastFire(c, h, now){
   const W = wind(), t = now / 1000, id = h.id, fx = h.x, fy = h.y + 24;
-  const flare = reduced ? 0 : Math.pow(Math.max(0, Math.sin(t * 1.9 + id * 2.3)), 4) * .75 + (Math.sin(t * .6 + id) > .85 ? .3 : 0);
-  const fl = reduced ? 1 : 1.05 + flare + Math.sin(now / 90) * .1 + Math.sin(now / 53) * .07;
+  const flare = reduced ? 0 : Math.pow(Math.max(0, Math.sin(t * .55 + id * 2.3)), 4) * .35;   // a calm fire: it breathes slowly, now and then a little higher
+  const fl = reduced ? 1 : 1.05 + flare + Math.sin(now / 420) * .06 + Math.sin(now / 260) * .04;
   if (!reduced && lod !== 'far') drawPlume(c, fx + 1, fy - 6 - flare * 3, id + 5, .55, now, 1.25, 1);
   c.save(); c.translate(fx, fy);
   if (!reduced && lod !== 'far'){   // the glow on the ground
@@ -231,13 +231,13 @@ function drawFeastFire(c, h, now){
   }
   const tongues = [[0, 1.05, 1, '#E0803A'], [-2.2, .75, .85, '#D0612E'], [2.3, .7, .8, '#EC9A44'], [-1, .9, .7, '#EC9A44'], [1.2, .85, .7, '#D0612E']];
   tongues.forEach(([dx, hs, ws, col], i) => {
-    const hh = reduced ? hs : hs * (.75 + .55 * flick(t * 8.5 + i * 3.1, id * 3 + i)) * fl, lean = reduced ? 0 : (flick(t * 5 + i * 7, id + 40 + i) - .5) * .6 + W.tx * .12 * W.str;
+    const hh = reduced ? hs : hs * (.85 + .3 * flick(t * 2.6 + i * 3.1, id * 3 + i)) * fl, lean = reduced ? 0 : (flick(t * 1.6 + i * 7, id + 40 + i) - .5) * .3 + W.tx * .1 * W.str;
     c.save(); c.translate(dx, 0); c.rotate(lean); c.scale(ws * 1.05, hh * 1.05); c.fillStyle = col; c.fill(FLAME); c.lineWidth = .5 / Math.max(.5, ws); c.strokeStyle = INKC; c.lineJoin = 'round'; c.stroke(FLAME);
     if (i === 0){ c.scale(.55, .6); c.fillStyle = '#F3D9A0'; c.fill(FLAME); } c.restore();
   });
   if (!reduced && lod === 'near'){   // sparks fly up, wavering, and are carried off
     c.fillStyle = '#FFD27A';
-    for (let i = 0; i < 7; i++){ const per = 1.5 + hsh(i, id) * 1.3, q = ((t + hsh(i, id + 3) * 4) / per) % 1, sx = Math.sin(q * 7 + i * 2) * 1.8 + (hsh(i, id + 8) - .5) * 4 * q + W.tx * q * q * 14 * (.4 + W.str), sy = -5 - q * (13 + flare * 9 + hsh(i, id + 9) * 5);
+    for (let i = 0; i < 4; i++){ const per = 3.2 + hsh(i, id) * 2, q = ((t + hsh(i, id + 3) * 4) / per) % 1, sx = Math.sin(q * 7 + i * 2) * 1.8 + (hsh(i, id + 8) - .5) * 4 * q + W.tx * q * q * 14 * (.4 + W.str), sy = -5 - q * (13 + flare * 9 + hsh(i, id + 9) * 5);
       c.globalAlpha = (1 - q) * (.55 + flare * .45); c.beginPath(); c.arc(sx, sy, .55 * (1 - q * .5), 0, TAU); c.fill(); }
     c.globalAlpha = 1;
   }

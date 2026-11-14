@@ -1494,7 +1494,7 @@ function econ(){
     const st = I.stock, cap = storeCap(I), add = (k, n) => { st[k] = Math.min(cap, (st[k] || 0) + n); };
     syncPeople(I); lifeTick(I); navTick(I); if (tick % 20 === 0) storyTick(I); cleanCrafts(I); oldShops(I); if (tick % 15 === 0) ensureSpring(I);
     roofTick(I); mendTick(I); stormTick(I); gatherTick(I); nutTick(I); if (tick % 5 === 0) payRebuilds(I);
-    if (raining(I)){ I._rw = (I._rw || 0) + RAIN.water / DAILY.water; if (I._rw >= 1){ add('wasser', Math.floor(I._rw)); I._rw -= Math.floor(I._rw); } if (tick === I.rainAt + RAIN.dance && I.id === active) toast(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`, 3600); }
+    if (raining(I)){ I._rw = (I._rw || 0) + RAIN.water / DAILY.water; if (I._rw >= 1){ add('wasser', Math.floor(I._rw)); I._rw -= Math.floor(I._rw); } if (tick === I.rainAt + RAIN.dance && I.id === active) hush(`Regen über ${I.name}: Die Gefäße füllen sich, die Felder trinken.`); }
     // young plants grow by themselves; building sites and dugouts move on only while their builders are there (see buildBit)
     const sf = staff(I), on = presentAt(I);
     for (const b of I.buildings){
@@ -1864,7 +1864,7 @@ function frameBody(now){
   const dt = Math.min(64, now - last); last = now;
   stepCam(now); camGuard(); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
   try { audioTick(now); } catch (e){ frameErr(e, 'audio'); }
-  if (now - ringAt > 500){ ringAt = now; dayRing(); }   // the day moves round the bar twice a second
+  if (!document.hidden) dayRing();   // the sun glides round the bar, every frame (it only touches the page when it moved)
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
   let drew = false;
   if (needDraw || stale(now) || (animating() && now - lastDraw > (quality ? 32 : 48)) || (!reduced && now - lastDraw > 140)){ if (animating() && lastDraw) govern(now - lastDraw); draw(now); lastDraw = now; drew = true; }

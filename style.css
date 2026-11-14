@@ -997,4 +997,46 @@ body #toast::after{display:block!important;content:''!important;position:absolut
 @media (max-width:350px){body #toast{font-size:10.5px;padding:2px 8px 2px 3px!important}body #toast::before{width:22px!important;height:22px!important}}
 @media (prefers-reduced-motion:reduce){body #toast{transition:none!important;transform:none}}
 /* while a message is out, the day bar folds its wind text away (dial, conch and menu stay), so the message has room */
-#hudbar.tell #compass span{display:none}
+/* version 89: one bar. The band with all the goods is gone; the day bar carries everything: wind, conch and menu on top, under
+   it the island with its people and their contentment, and below only what the people use up every day (food, water, fuel,
+   cooked food). Tapping the goods shows all of them. A message unfolds downwards under the bar, hanging on a cord from the
+   conch, and when it is read it shrinks and flies back into the conch. (measure() sets --tx, --tw and --cx.) */
+#top{position:absolute;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:none;pointer-events:none;z-index:1}
+#hudbar{right:calc(8px + env(safe-area-inset-right,0px));max-width:440px;box-sizing:border-box}
+#hudbar .hud-in{display:block;padding:0}
+#hudbar .hud-row{display:flex;align-items:center;gap:4px;padding:2px 5px 2px 2px}
+#hudbar .hud-row #compass{flex:1;min-width:0}
+#hudbar .hud-row #sidectl{flex:none}
+.hud-who,.hud-goods{display:flex;align-items:center;gap:8px;padding:2px 8px 2px 9px;border-top:1.5px dashed rgba(62,36,22,.28)}
+.hud-who{justify-content:space-between;min-height:28px}
+.hud-who .isle{flex:1;min-width:0}
+.hud-who .isle-name{font:800 17px/1.1 var(--font-name);overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hud-who .top-right{gap:4px}
+.hud-who .pop b{font-size:15px}.hud-who .pop span{font-size:11px}.hud-who .top-right .ic{width:17px;height:17px}
+.hud-goods{min-height:34px;padding-top:3px;padding-bottom:3px}
+.hud-goods .storebtn{flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.hud-goods .goods{flex:1;min-width:0;display:flex;justify-content:flex-start;flex-wrap:nowrap;column-gap:12px;overflow:hidden}
+.hud-goods .goods .g{font-size:15px}
+.hud-goods .goods .ic{width:18px;height:18px}
+.hud-goods .more{flex:none;width:9px;height:9px;margin:0 2px 4px 0;border-right:2.4px solid var(--ink);border-bottom:2.4px solid var(--ink);transform:rotate(45deg);opacity:.7}
+.hud-goods .vital{flex:none;width:auto;padding:0;flex-wrap:nowrap;font-size:12px}
+.hud-goods .vital:empty{display:none}
+@media (max-width:350px){.hud-goods .goods{column-gap:8px}.hud-goods .goods .g{font-size:13.5px}.hud-goods .goods .ic{width:16px;height:16px}.hud-who .isle-name{font-size:15.5px}.hud-goods .vital{font-size:11px}}
+body.landing .hud-goods{display:none}
+/* the message: as wide as the bar, under it, unfolding downwards; then it flies into the conch */
+body #toast{left:var(--tx,8px)!important;width:var(--tw,300px)!important;max-width:none!important;height:auto!important;min-height:34px;
+  padding:4px 10px 4px 5px!important;font:700 12px/1.25 var(--font-ui);transform-origin:var(--cx,80%) 0;
+  clip-path:inset(0 0 100% 0)!important;transform:translateY(-8px);
+  transition:clip-path .45s cubic-bezier(.25,.9,.3,1),transform .45s cubic-bezier(.25,.9,.3,1)!important}
+body #toast.open{clip-path:inset(-14px -8px -10px -8px)!important;transform:none}
+body #toast.fly{clip-path:inset(-14px -8px -10px -8px)!important;opacity:0!important;
+  transition:transform .55s cubic-bezier(.55,0,.75,.45),opacity .5s ease-in .1s!important}
+body #toast .tt{-webkit-line-clamp:2}
+body #toast::before{width:24px!important;height:24px!important;background-size:14px!important}
+body #toast::after{left:calc(var(--cx,80%) - 2px)!important;top:-13px!important;width:4px!important;height:10px!important;margin:0!important;
+  background:repeating-linear-gradient(0deg,#B08048 0 3px,#6E4C2E 3px 5px)!important}
+@media (max-width:350px){body #toast{font-size:11px;padding:3px 8px 3px 4px!important}body #toast::before{width:20px!important;height:20px!important}}
+#newsBtn.take{animation:take .5s ease-out both}
+@keyframes take{0%{transform:scale(1)}40%{transform:scale(1.3) rotate(-12deg)}75%{transform:scale(.94) rotate(5deg)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){#newsBtn.take{animation:none}}
+body #toast.fly{z-index:7}

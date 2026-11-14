@@ -32,10 +32,12 @@ function requestDraw(){ needDraw = true; }
 function measure(){
   const r = mapC.getBoundingClientRect(), w = r.width || 390, h = r.height || 844;
   if (w !== vw || h !== vh){ vw = w; vh = h; mapC.width = Math.round(vw * DPR); mapC.height = Math.round(vh * DPR); invalidate(true); }
-  topH = $('top').offsetHeight; const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
-  const t0 = topH + 8, t = t0 + $('hudbar').offsetHeight + 6; $('hudbar').style.top = t0 + 'px';   // the toast and the news hang under the bar
-  { const hb = $('hudbar'), T = $('toast'), x = hb.offsetLeft + hb.offsetWidth - 18;   // the message comes out of the day bar's right side, at its height
-    T.style.top = t0 + 'px'; T.style.setProperty('--tx', x + 'px'); T.style.setProperty('--tw', Math.max(90, vw - x - 8) + 'px'); T.style.setProperty('--th', hb.offsetHeight + 'px'); } $('newsList').style.top = t + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - t - botH - 16) + 'px';
+  const bot = !$('sheet').hidden ? $('sheet') : (!$('place').hidden ? $('place') : $('bottom')); botH = bot.offsetHeight;
+  // one bar on top (under the safe area); the map's free part starts below it. The message hangs under the bar, from the conch.
+  const hb = $('hudbar'), t0 = $('top').offsetHeight + 8; hb.style.top = t0 + 'px'; topH = t0 + hb.offsetHeight; ringGeo = null;
+  { const T = $('toast'), nb = $('newsBtn'), cx = nb.offsetParent ? nb.getBoundingClientRect().left + nb.offsetWidth / 2 - hb.offsetLeft : hb.offsetWidth * .7;
+    T.style.top = (topH + 10) + 'px'; T.style.setProperty('--tx', hb.offsetLeft + 'px'); T.style.setProperty('--tw', hb.offsetWidth + 'px'); T.style.setProperty('--cx', Math.round(cx) + 'px'); }
+  $('newsList').style.top = (topH + 6) + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - topH - 6 - botH - 16) + 'px';
   $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }

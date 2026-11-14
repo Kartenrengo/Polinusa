@@ -48,23 +48,22 @@ function updateHUD(){
   const nd = needsOf(I), st = nd.missing.length ? 'out' : nd.full ? 'full' : 'ok';
   $('popDot').className = 'dot ' + st;
   $('popBtn').setAttribute('aria-label', `${I.pop} Bewohner, Platz für ${nd.cap}. ${growText(I, nd)} Tippen zeigt den Bedarf.`);
-  // the goods row shows what matters here: all food as one, wood, then whatever is stored, made or needed, at most seven
-  // the goods row: food, water, wood, thatch and cord first, then what matters here; few while the village is small
-  const first = ['essen', 'wasser', 'holz', 'dach', 'schnur'], more = GOODS.filter(k => !FOODS.includes(k) && !first.includes(k) && ((I.stock[k] || 0) > 0 || makeRate(I, k) > 0 || nd.list.some(n => n.k === k)));
-  const shown = [...first, ...more].slice(0, I.pop < 15 ? 5 : 7);
+  // the bar shows only what the people use up every day: food and water at the morning meal, fuel for the night fires, and
+  // cooked food once a family house wants it. Everything else is one tap away (the store sheet).
+  const shown = dailyGoods(I, nd);
   const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span><small class="gl" aria-hidden="true">${shortGN(k)}</small></span>`).join(''); }
-  // food and water turn red when the next morning meal will not reach everyone (see mealFore)
-  const F = mealFore(I), cold = fireShort(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : k === 'holz' ? cold : false;   // wood too, when the night fires will not all burn
+  // they turn red when the next morning meal or the night fires will not reach everyone (see mealFore, fireShort)
+  const F = mealFore(I), cold = fireShort(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : k === 'brenn' ? cold : k === 'speisen' ? nd.list.some(n => n.k === k && n.state === 'out') : false;
   for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
-  lastStock = {isl:active, ...I.stock, essen:haveOf(I, 'essen')};
+  lastStock = {isl:active, ...I.stock}; for (const k of shown) lastStock[k] = haveOf(I, k);
   $('vitalBtn').innerHTML = vitalLine(I);
-  // what does not fit next to the hint is left out whole, never cut in half (the store sheet shows everything)
-  for (const li of ul.children) li.hidden = false;
-  { const edge = ul.getBoundingClientRect().right + 1; for (const li of ul.children) if (li.getBoundingClientRect().right > edge) li.hidden = true; }
-  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}${short(k) ? ', reicht morgen früh nicht' : ''}`).join(', ') + `. Am Morgen essen und trinken ${F.n} Menschen. Tippen zeigt alles.`);
+  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}${short(k) ? ', reicht morgen früh nicht' : ''}`).join(', ') + `. Am Morgen essen und trinken ${F.n} Menschen. Tippen zeigt alle Waren.`);
+  ringGeo = null;
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
 }
+/* what the people use up every day, for the bar */
+const dailyGoods = (I, nd = needsOf(I)) => ['essen', 'wasser', 'brenn', ...(nd.list.some(n => n.k === 'speisen') || tier2Pop(I) ? ['speisen'] : [])];
 /* Two menus: what the village needs, with paths at the end, and what only adorns it */
 let buildTab = 'bau', buildOpen = false, barMode = null, sideOpen = false, fleetKey = '';
 /* speed and menu fold out from the side button, the conch with the messages always stays */
@@ -126,20 +125,42 @@ function showWind(){
 /* the rim of the bar: only light (the day, the first DAY_END of the turn from the top) and dark (the night), fixed in the css.
    A sun walks the light part and turns into a moon at dusk, which walks the dark part and is the sun again at dawn. No time is shown. */
 const DAY_END = .66;   // the share of a day that is light
-let ringAt = 0;
 const dayBlend = p => { const c = x => Math.max(0, Math.min(1, x)); return p < .5 ? c(.5 - p / .08) : Math.min(c((p - (DAY_END - .04)) / .08), c(1 - (p - .96) / .08)); };   // 0 = sun, 1 = moon
+/* The sun walks the rim at an even pace: along the rounded edge of the bar, from the top middle round to the point where the
+   light part ends (dusk) during the day, and on round to the top during the night. Before, it followed a ray from the
+   middle and crawled in the middle of the long sides and raced at the corners. It is set every frame, so it glides. */
+let ringGeo = null;
+function rimGeo(w, h){
+  const e = 2, r = 14, x0 = e, y0 = e, x1 = w - e, y1 = h - e, Q = Math.PI / 2, S = [];
+  const line = (ax, ay, bx, by) => S.push({len:Math.hypot(bx - ax, by - ay), at:f => [ax + (bx - ax) * f, ay + (by - ay) * f]});
+  const arc = (cx, cy, a0) => S.push({len:Q * r, at:f => [cx + Math.cos(a0 + Q * f) * r, cy + Math.sin(a0 + Q * f) * r]});
+  line(w / 2, y0, x1 - r, y0); arc(x1 - r, y0 + r, -Q); line(x1, y0 + r, x1, y1 - r); arc(x1 - r, y1 - r, 0);
+  line(x1 - r, y1, x0 + r, y1); arc(x0 + r, y1 - r, Q); line(x0, y1 - r, x0, y0 + r); arc(x0 + r, y0 + r, 2 * Q); line(x0 + r, y0, w / 2, y0);
+  const L = S.reduce((t, q) => t + q.len, 0), G = {w, h, S, L};
+  // where the ray of dusk (the edge of the gradient) meets the rim: the angle grows steadily along the rim, so halve the search
+  const ang = s => { const [x, y] = rimAt(G, s); return (Math.atan2(x - w / 2, h / 2 - y) + 2 * Math.PI) % (2 * Math.PI); };
+  let lo = L * .25, hi = L * .99, want = DAY_END * 2 * Math.PI; for (let i = 0; i < 30; i++){ const m = (lo + hi) / 2; if (ang(m) < want) lo = m; else hi = m; }
+  G.dusk = (lo + hi) / 2; return G;
+}
+function rimAt(G, s){ for (const q of G.S){ if (s <= q.len) return q.at(q.len ? s / q.len : 0); s -= q.len; } return G.S[0].at(0); }
+let ringLast = {};
 function dayRing(){
-  const H = $('hudbar'); if (!H) return; H.classList.toggle('noday', !opts.night); const M = $('dayMark');
-  if (!opts.night){ if (M) M.hidden = true; H.removeAttribute('data-day'); H.setAttribute('aria-label', 'Wind, Kalender, Nachrichten und Menü'); return; }
-  const p = dayPhase(), night = p >= DAY_END, deg = p * 360, m = dayBlend(p);
-  // the sun or the moon rides on the rim, where the ray of the gradient meets it
-  if (M){ const r = H.getBoundingClientRect(), w = r.width, h = r.height, a = (deg - 90) * Math.PI / 180, cx = Math.cos(a), cy = Math.sin(a), k = Math.min(cx ? (w / 2) / Math.abs(cx) : 1e9, cy ? (h / 2) / Math.abs(cy) : 1e9);
-    M.hidden = false; M.style.left = (w / 2 + cx * k).toFixed(1) + 'px'; M.style.top = (h / 2 + cy * k).toFixed(1) + 'px'; M.style.setProperty('--m', m.toFixed(2)); M.className = m < .5 ? 'sun' : 'moon'; }
-  H.dataset.day = night ? 'nacht' : 'tag';
-  H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}. Wind, Kalender, Nachrichten und Menü`);
+  const H = $('hudbar'); if (!H) return; const M = $('dayMark');
+  if (!opts.night){ if (ringLast.on !== false){ ringLast = {on:false}; H.classList.add('noday'); if (M) M.hidden = true; H.removeAttribute('data-day'); H.setAttribute('aria-label', 'Wind, Kalender, Nachrichten und Menü'); } return; }
+  if (ringLast.on !== true){ ringLast = {on:true}; H.classList.remove('noday'); }
+  const p = dayPhase(), night = p >= DAY_END, m = dayBlend(p);
+  if (M){
+    if (!ringGeo) ringGeo = rimGeo(H.offsetWidth, H.offsetHeight);
+    const G = ringGeo, s = night ? G.dusk + (G.L - G.dusk) * (p - DAY_END) / (1 - DAY_END) : G.dusk * p / DAY_END, [x, y] = rimAt(G, s);
+    if (M.hidden) M.hidden = false;
+    if (Math.abs(x - (ringLast.x ?? -99)) + Math.abs(y - (ringLast.y ?? -99)) > .15){ ringLast.x = x; ringLast.y = y; M.style.left = x.toFixed(1) + 'px'; M.style.top = y.toFixed(1) + 'px'; }
+    if (Math.abs(m - (ringLast.m ?? -1)) > .01){ ringLast.m = m; M.style.setProperty('--m', m.toFixed(2)); }
+    const cls = m < .5 ? 'sun' : 'moon'; if (M.className !== cls) M.className = cls;
+  }
+  const d = night ? 'nacht' : 'tag'; if (H.dataset.day !== d){ H.dataset.day = d; H.setAttribute('aria-label', `${night ? 'Nacht' : 'Tag'}. Wind, Kalender, Nachrichten und Menü`); }
 }
 /* the name under each good in the top row: short, so it fits under its icon */
-const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brenn.', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
+const SHORT_GN = {essen:'Essen', roh:'Rohes Essen', meeres:'Meeresfr.', nahrung:'Feldfrucht', wild:'Wild', dach:'Wedel', faser:'Fasern', kokos:'Kokos', schalen:'Kokosch.', muschel:'Muschel', schweine:'Schweine', haken:'Haken', kumete:'Holzsch.', oel:'Öl', brenn:'Brennstoff', perlmutt:'Perlm.', federn:'Federn', tabua:'Walzahn', kauri:'Kauri', talisman:'Talisman', reisig:'Brennholz', schmuck:'Schmuck', feinmatten:'F. Matten', bemtapa:'B. Tapa', harz:'Harz', klingen:'Klingen', proviant:'Proviant'};
 const shortGN = k => SHORT_GN[k] || (GN[k] && GN[k].length <= 8 ? GN[k] : (GN[k] || k).slice(0, 7) + '.');
 function villageCenter(I){
   const hs = I.buildings.filter(b => KINDS[b.kind].roof); if (!hs.length) return I.anchor || I.center;
@@ -161,7 +182,7 @@ function loadNews(){ try { const l = JSON.parse(localStorage.getItem(newsKey()) 
 /* the colour of a message, read from its words: a warning, good news, or plain paper */
 const TOAST_BAD = /fehlt|fehlen|\bohne\b|Sturm|\bfort\b|Hunger|hungert|Durst|verloren|krank|gestorben/i, TOAST_GOOD = /Fest|Kind\b|Chronik|gegründet|geboren/;
 const toastTone = m => TOAST_BAD.test(m) ? 'warn' : TOAST_GOOD.test(m) ? 'good' : '';
-/* Messages slide out of the day bar to the right and draw back into it. One at a time: what comes while one is shown
+/* Messages unfold downwards under the bar, hanging from the conch, and fly back into it. One at a time: what comes while one is shown
    waits its turn (at most two wait; older ones are only kept in the conch). An answer to a tap shows at once. */
 const TOAST = {gap:700, min:2600, wait:2};
 let toastQ = [], toastBusy = false;
@@ -173,20 +194,24 @@ function toast(msg, ms = 2600, keep = true){
   if (keep && toastBusy){ if (!toastQ.some(q => q.msg === msg) && $('toast').textContent !== msg){ toastQ.push({msg, ms}); if (toastQ.length > TOAST.wait) toastQ.shift(); } return; }
   showToast(msg, ms);
 }
+/* a message that only goes into the conch, without popping up: the shell counts it */
+function hush(msg){ if (awayQuiet) return; newsAdd(msg); if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
 // the strip has room for a few words: the first sentence; the whole message stays in the conch
 const toastShort = m => { const c = m.match(/^.+?[.!?](?=\s|$)/), f = c ? c[0] : m; return f.length > 70 ? f.slice(0, 66).replace(/\s+\S*$/, '') + ' …' : f; };
 function showToast(msg, ms){
-  toastBusy = true; if (!$('hudbar').classList.contains('tell')){ $('hudbar').classList.add('tell'); setTimeout(measure, 0); }
-  const t = $('toast'); t.innerHTML = ''; const tt = document.createElement('span'); tt.className = 'tt'; tt.textContent = toastShort(msg); t.appendChild(tt); t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; void t.offsetWidth; t.classList.add('open');
+  toastBusy = true;
+  const t = $('toast'); t.innerHTML = ''; const tt = document.createElement('span'); tt.className = 'tt'; tt.textContent = toastShort(msg); t.appendChild(tt); t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; t.style.transformOrigin = ''; void t.offsetWidth; t.classList.add('open');
   clearTimeout(toastT); toastT = setTimeout(foldToast, Math.max(TOAST.min, ms) + Math.min(2400, msg.length * 25));
 }
 function foldToast(){
   const t = $('toast'); clearTimeout(toastT);
-  const next = () => { toastBusy = false; const q = toastQ.shift(); if (q) toastT = setTimeout(() => showToast(q.msg, q.ms), TOAST.gap); else { $('hudbar').classList.remove('tell'); setTimeout(measure, 0); } };
+  const next = () => { toastBusy = false; const q = toastQ.shift(); if (q) toastT = setTimeout(() => showToast(q.msg, q.ms), TOAST.gap); };
   if (t.hidden || !t.classList.contains('open')){ t.classList.remove('open'); t.hidden = true; next(); return; }
-  // it draws back into the day bar, to the left
-  t.classList.remove('open');
-  toastT = setTimeout(() => { if (!t.classList.contains('open')){ t.hidden = true; t.style.transform = ''; } next(); }, reduced ? 0 : 460);
+  // it shrinks and flies up into the conch it hangs from, and the conch takes it with a little nod
+  const nb = $('newsBtn'), a = t.getBoundingClientRect(), c = nb.getBoundingClientRect();
+  if (!reduced && a.width && c.width){ t.style.transform = `translate(${(c.left + c.width / 2 - a.left - a.width / 2).toFixed(0)}px,${(c.top + c.height / 2 - a.top - a.height / 2).toFixed(0)}px) scale(.08)`; t.style.transformOrigin = '50% 50%'; t.classList.add('fly'); }
+  else t.classList.remove('open');
+  toastT = setTimeout(() => { if (!t.classList.contains('open') || t.classList.contains('fly')){ t.hidden = true; t.classList.remove('open', 'fly'); t.style.transform = ''; t.style.transformOrigin = ''; nb.classList.remove('take'); void nb.offsetWidth; if (!reduced) nb.classList.add('take'); } next(); }, reduced ? 0 : 560);
 }
 const newsOpen = () => !$('newsList').hidden;
 function newsBadge(){ const n = $('newsNum'); n.hidden = !unread; n.textContent = unread > 9 ? '9+' : unread; $('newsBtn').setAttribute('aria-label', unread ? `Nachrichten, ${unread} neu` : 'Nachrichten'); }
