@@ -1123,3 +1123,18 @@ details.more .rowx{margin-top:6px}
 .list.daily li .ic{width:18px;height:18px;flex:none}
 .list.daily li b{font:800 12.5px var(--font-ui);flex:none;min-width:62px}
 .list.daily li .sub{margin:0;font-size:12px;line-height:1.2}
+/* one line for the name and the numbers beside it: every button the same height, the number in the middle of the room above
+   its little name, and the island's name on the same middle line */
+.hud-who{align-items:stretch}
+.hud-who .isle{display:flex;align-items:center;padding-bottom:11px}
+.hud-who .top-right{align-items:stretch}
+.hud-who .top-right > button{display:flex!important;align-items:center;height:36px;box-sizing:border-box;margin:0!important;padding:0 3px 11px!important;line-height:1!important}
+.hud-who .top-right > button b{font:800 15px/1 var(--font-ui)!important}
+.hud-who .top-right > button span{line-height:1}
+.hud-who .top-right > button::after{bottom:1px;line-height:1}
+/* the goods: the number and the day's need in brackets sit on one baseline */
+.hud-goods .goods .g{align-items:baseline}
+.hud-goods .goods .g .ic{align-self:center}
+.hud-goods .goods .g .day{align-self:baseline}
+.hud-who .top-right{gap:12px}
+@media (max-width:350px){.hud-who .top-right{gap:6px}}

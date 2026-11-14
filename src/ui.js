@@ -670,7 +670,7 @@ function peopleTab(I, nd){
   const g = villageGoal(I, nd); if (g) h += `<div class="goal ${g.cls}"><span><b>${g.t}</b>${g.d ? `<small>${g.d}</small>` : ''}${g.chain || ''}</span>${g.btn || ''}</div>`;
   // the houses by step, each with the needs of its step
   const roof = nd.roofless ? 'out' : 'ok';
-  for (const t of [1, 2, 3, 'see', 'nav', 'wis', 4]){
+  for (const t of [1, 2, 3, 'see', ...(WAYS_DEEP ? ['nav', 'wis'] : []), 4]){
     const sea = SEA[t], hs = homesOf(I).filter(b => rowKey(b) === t), fams = hs.map(b => famOfHome(I, b)).filter(Boolean), people = fams.reduce((n, f) => n + membersOf(I, f).length, 0);
     const some = w => homesOf(I).some(b => rowKey(b) === w);
     const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && some(2)) || (t === 'see' && unlocked('werft') && homesOf(I).some(b => tierOf(b) === 2 && onShore(I, b))) || (t === 'nav' && some('see')) || (t === 'wis' && some('nav')); if (!shown) continue;

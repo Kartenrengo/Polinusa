@@ -25,6 +25,7 @@ const SEA = {
   wis:{n:'Haus der Wissenden', fam:'Wissende', ic:'mana', rank:3, cap:8, cost:{holz:2, dach:3, schnur:2}, add:['tapa'], does:'Sie bewahren den Sternenpfad, auch wenn der Navigator stirbt. Etwas Ansehen.'}
 };
 const SEA_ORDER = ['see', 'nav', 'wis'];
+const WAYS_DEEP = false;   // for now the sea way ends at the seafarer house; navigators and Wissende come later (IDEEN.md). Saved deeper steps read as seafarers.
 const SEA_NEAR = 18;   // a house is near the shore when its foot is no further from the water's edge than a coast building's (see check in world.js)
 const WIS_MANA = 1;    // standing a house of the Wissende adds every 15 ticks, up to what a village's beauty gives
 const SEA_SPEED = .03, SEA_SPEED_MAX = .12, SEA_SQUALL = .75;   // canoes: per seafarer adult, at most; chance of a squall with seafarers at home
@@ -39,7 +40,7 @@ const homeOk = (I, b) => !!b && !b.bt && HOME_KINDS.has(b.kind) && !(b.kind === 
 const homesOf = I => I.buildings.filter(b => homeOk(I, b));
 const tierOf = b => !b ? 1 : b.kind === 'fale' ? 4 : b.t >= 2 ? Math.min(3, b.t) : 1;
 /* the way of a house above the family house: 'hand' (every b.t 3, also from old saves), 'see', 'nav', 'wis', or '' */
-const wayOf = b => !b || b.kind === 'fale' ? '' : b.t >= 3 ? 'hand' : b.t === 2 && SEA[b.way] ? b.way : '';
+const wayOf = b => !b || b.kind === 'fale' ? '' : b.t >= 3 ? 'hand' : b.t === 2 && SEA[b.way] ? (WAYS_DEEP ? b.way : 'see') : '';
 const seaRank = b => SEA[wayOf(b)] ? SEA[wayOf(b)].rank : 0;
 const seaGoods = way => SEA[way] ? SEA_ORDER.slice(0, SEA[way].rank).flatMap(w => SEA[w].add) : [];
 const seaHave = (I, k) => k === 'fisch' ? (I.stock.fisch || 0) + (I.stock.meeres || 0) : haveOf(I, k);   // fish counts with seafood
@@ -224,7 +225,7 @@ function famNeeds(I, f, list){
    seafarers (fish, provisions, sennit), then of navigators (a navigator in the family; mats), then of the Wissende (a
    navigator of the second level; tapa). A house falls back a step when one of its goods has run out for half a minute; the
    sennit of a family house holds. */
-const WAY_NEXT = {'':'fam', fam:'hand', see:'nav', nav:'wis'};   // the step after, by where the house stands; fam also leads to 'see'
+const WAY_NEXT = {'':'fam', fam:'hand', ...(WAYS_DEEP ? {see:'nav', nav:'wis'} : {})};   // the step after, by where the house stands; fam also leads to 'see'
 const wayCost = way => way === 'fam' ? TIERS[2].cost : way === 'hand' ? TIERS[3].cost : SEA[way].cost;
 const wayName = way => way === 'fam' ? TIERS[2].n : way === 'hand' ? TIERS[3].n : SEA[way].n;
 const wayCap = way => way === 'fam' ? TIERS[2].cap : way === 'hand' ? TIERS[3].cap : SEA[way].cap;

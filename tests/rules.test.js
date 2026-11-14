@@ -452,6 +452,9 @@ const r = await p.evaluate(()=>{
       // old ways stay: tier 3 is the craftsmen's house
       h.t = 3; want(wayOf(h) === 'hand' && houseName(h) === 'Handwerkerhaus' && tierOf(h) === 3 && famLabel(H, f) === 'Handwerkerhaus', 'ways: old tier 3 is not a craftsmen house');
       h.t = 2; delete h.way;
+      // for now the sea way ends at the seafarer house: no further step, and a saved deeper step reads as a seafarer house
+      if (!WAYS_DEEP){ rich(); h.way = 'see'; want(!upgradeWays(H, h).length && wayOf(h) === 'see', 'ways: the sea way goes on past the seafarer house'); h.way = 'nav'; want(wayOf(h) === 'see' && houseName(h) === 'Seefahrerhaus', 'ways: a saved navigator house is not a seafarer house'); delete h.way; }
+      if (WAYS_DEEP){
       // navigators: a navigator in the family; they learn faster
       rich(); h.way = 'see'; const un = upgradeSteps(H, h, needsOf(H).list, 'nav'); want(!un.steps.find(q => q.k === 'navi').ok && !un.ready, 'ways: a navigator house without a navigator');
       const mem = membersOf(H, f).find(isAdult); for (const q of H.people) q.nv = 0; mem.nv = 1.2; rich();
@@ -471,6 +474,7 @@ const r = await p.evaluate(()=>{
       { const dead = mem; want(navLore().lvl === 3, 'ways: navigator level ' + navLore().lvl); dead.l = 0; dead.b = tick - 1; loreCache = null; lifeTick(H); loreCache = null;
         want(!H.people.includes(dead) && H.keep === 3 && navLore().lvl === 3, `ways: the Wissende lost the star path (${H.keep}, ${navLore().lvl})`);
         h.way = 'nav'; loreCache = null; want(navLore().lvl === 0, `ways: knowledge kept without the house (${navLore().lvl})`); h.way = 'wis'; loreCache = null; }
+      }
       // the house sheet shows the choice, compactly, and the sea way only at the shore
       delete h.way; h.t = 2; near(shore); rich(); H.keep = 0; loreCache = null; closeSheet(); openSheet('info', {id:h.id, tab:'haus'}); let bodyT = $('sheetBody').textContent; const ways = document.querySelectorAll('#sheetBody [data-act=way]');
       want(ways.length === 2 && /Handwerkerhaus/.test(bodyT) && /Seefahrerhaus/.test(bodyT), `ways: the choice is not shown (${ways.length})`);
@@ -483,7 +487,7 @@ const r = await p.evaluate(()=>{
       // save and load: a b.t of 3 is a craftsmen house, the sea way and the kept star path come back
       h.t = 3; delete h.way; restore(serialize());
       { const H2 = isl('heimat'), h2 = findB(h.id); want(h2.t === 3 && wayOf(h2) === 'hand' && houseName(h2) === 'Handwerkerhaus', 'ways: old tier 3 lost on load'); h2.t = 2; h2.way = 'nav'; H2.keep = 2; restore(serialize());
-        const H3 = isl('heimat'), h3 = findB(h.id); want(h3.t === 2 && h3.way === 'nav' && seaRank(h3) === 2 && H3.keep === 2, `ways: sea way not kept on load (${h3.way}, ${H3.keep})`);
+        const H3 = isl('heimat'), h3 = findB(h.id); want(h3.t === 2 && h3.way === 'nav' && seaRank(h3) === (WAYS_DEEP ? 2 : 1) && H3.keep === 2, `ways: sea way not kept on load (${h3.way}, ${H3.keep})`);
         h3.t = t0; if (w0) h3.way = w0; else delete h3.way; H3.keep = 0; h3.x = pos0.x; h3.y = pos0.y; H3.stock = keepSt; H3.autoUp = auto0; H3.handWork = hw0; stats.peakPop = peak0; H3.people.forEach((p, i) => { p.nv = nv0[i]; }); } }
     const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;

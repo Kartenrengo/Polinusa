@@ -257,3 +257,14 @@ Reihenfolge nach Wichtigkeit. „Belegt“ heißt durch Funde oder gute Quellen,
 10. **Malaria im Westen** (vermutet). Auf den Inseln nahe Neuguinea gibt es Malaria, ab Fidschi nicht mehr. Das könnte
     ein Grund gewesen sein, weiter nach Osten zu ziehen. Im Spiel: Fieber auf westlichen Inseln.
 11. **Hunde** (belegt, aber selten bei Lapita). Mit Schwein und Huhn kam manchmal der Hund mit.
+
+## Später: der Seeweg geht weiter (gebaut, aber abgeschaltet seit Version 92)
+
+Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false`:
+
+- **Navigatorenhaus** nach dem Seefahrerhaus: eine Navigatorin oder ein Navigator in der Familie, dazu Matten. Ihre
+  Navigatoren lernen anderthalbmal so schnell.
+- **Haus der Wissenden**, eins je Insel: Tapa, ein Navigator der zweiten Stufe. Die Sternwege gehen nicht verloren, wenn der
+  Navigator stirbt; etwas Ansehen.
+- Erst einschalten, wenn die zwei Stränge sich gut anfühlen.
+

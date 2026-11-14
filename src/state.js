@@ -203,7 +203,7 @@ const SLOTS = 2;
 /* A save is never lost to a new version of the game. Before a new version saves for the first time, every slot is copied
    aside as it was ("vor dem Update"), and a save that cannot be read is put aside instead of being written over. The menu
    offers both again. */
-const GAME_V = 91, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
+const GAME_V = 92, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
 let lastLoadErr = '';
 function keptOf(key){ try { const o = JSON.parse(localStorage.getItem(key) || 'null'); return o && o.raw ? o : null; } catch (e){ return null; } }
 function keepAside(n, raw){ try { const k = keptOf(keepKey(n)); if (!k || k.raw !== raw) localStorage.setItem(keepKey(n), JSON.stringify({at:Date.now(), why:lastLoadErr, raw})); } catch (e){} }

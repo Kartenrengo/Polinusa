@@ -2001,3 +2001,11 @@ Das Häuptlingshaus bleibt, wie es war.
 - **Im Lager steht oben „Jeden Tag“:** je Tagesware eine Zeile, wofür sie gebraucht wird und wie viel. Beim Feuer steht dabei,
   was zuerst brennt: Kokosschalen, dann Brennholz, zuletzt Bauholz.
 
+## Zwei Stränge, der Rest später (Version 92)
+
+- **Der Hausbau hat jetzt zwei Stränge und endet dort:** Hütte, Familienhaus, dann **Handwerkerhaus** oder (am Strand)
+  **Seefahrerhaus**. Navigatorenhaus und Haus der Wissenden sind wieder herausgenommen; sie kommen später (siehe IDEEN.md).
+  Ein Spielstand mit so einem Haus lädt es als Seefahrerhaus.
+- **Eine Linie:** In der Leiste stehen der Inselname und die Zahlen von Ansehen, Zufriedenheit und Menschen genau auf einer
+  Höhe, die kleinen Namen darunter auch. Bei den Tageswaren stehen Zahl und Tagesbedarf auf einer Grundlinie.
+
