@@ -213,6 +213,7 @@ function hush(msg){ if (awayQuiet) return; newsAdd(msg); if (newsOpen()) renderN
 // the strip has room for a few words: the first sentence; the whole message stays in the conch
 const toastShort = m => { const c = m.match(/^.+?[.!?](?=\s|$)/), f = c ? c[0] : m; return f.length > 70 ? f.slice(0, 66).replace(/\s+\S*$/, '') + ' …' : f; };
 function showToast(msg, ms){
+  if (typeof crabOnToast === 'function') crabOnToast();
   toastBusy = true;
   const t = $('toast'); t.innerHTML = ''; const tt = document.createElement('span'); tt.className = 'tt'; tt.textContent = toastShort(msg); t.appendChild(tt); t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; t.style.transformOrigin = ''; void t.offsetWidth; t.classList.add('open');
   clearTimeout(toastT); toastT = setTimeout(foldToast, Math.max(TOAST.min, ms) + Math.min(2400, msg.length * 25));
@@ -1470,83 +1471,110 @@ document.addEventListener('click', e => {
 /* ---------- the mascot: a little hermit crab in a shell stamped like a Lapita pot. Now and then it climbs out of the day bar's
    top edge, its eyes pop up, it waves a claw, blinks, and goes back into its shell and down again. A tap makes it hop and says
    who it is. It never shows while the clan is still at sea, and it stays still for those who want less motion. */
-const MASCOT = {first:75000, gap:[150000, 270000], S:34};
-/* Its little plays with the bar, as key frames: time (ms), the crab's middle (x, y) in the bar's frame, its turn (90 looks
-   up, -90 down), flip (walks to the right), the clip ('u': only below the bar's lower edge, as if behind the bar; 't': only
-   below the top edge) and what it does ('o' out of the shell, 'w' waves, 'k' walks, 'b' blinks). x is pixels from its spot,
-   y a share of the height plus a share of its size; the 7th value lifts it (a hop). Hermit crabs are shy: they come out
-   slowly, duck back at once when something moves, look about a long while, then scuttle off sideways in short bursts. */
+const MASCOT = {first:75000, gap:[150000, 270000], S:36, toastGap:240000};
+/* Its little plays with the bar, as key frames: [time ms, dx, y share of the bar's height, y share of its own size, turn
+   (90 looks up, -90 down), flip (faces right), dy pixels, clip ('u': only below the bar's lower edge, as if behind it; 't':
+   only below the top edge), what it does]. What it does: 'o' out of the shell, 'w' waves, 'k' walks, 'b' blinks, 'n' knocks
+   on the bar from below (the bar jumps a little), 't' taps the conch of the news (it nods), 'r' reads (eyes down), 'c' looks
+   at the conch and at its own shell, 's' shy (ducks in at once). A play has an anchor: anywhere on the bar ('bar'), under the
+   conch button ('conch') or at the message that has just come ('toast'). Hermit crabs are shy: they come out slowly, duck
+   back at once, look about a long while, then scuttle sideways in short bursts. */
 const CRAB_PLAYS = [
-  // under the bar: the shell rocks, the eyes come up, it ducks back (shy), comes out again, scuttles along under the edge,
-  // climbs onto the bar, sits and looks, and scuttles back down and behind the edge
-  [[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [900, 0, 1, .42, 0, 0, 0, 'u', ''], [1700, 0, 1, .42, 0, 0, 0, 'u', 'o'], [2300, 0, 1, .42, 0, 0, 0, 'u', ''], [3300, 0, 1, .42, 0, 0, 0, 'u', 'o'],
+  {at:'bar', k:[[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [900, 0, 1, .42, 0, 0, 0, 'u', ''], [1700, 0, 1, .42, 0, 0, 0, 'u', 'o'], [2300, 0, 1, .42, 0, 0, 0, 'u', 's'], [3300, 0, 1, .42, 0, 0, 0, 'u', 'o'],
    [4400, 0, 1, .42, 0, 0, 0, 'u', 'ob'], [5200, 0, 1, .42, 0, 0, 0, 'u', 'ok'], [7000, -44, 1, .42, 0, 0, 0, 'u', 'o'], [7700, -44, 1, .42, 0, 0, 0, 'u', 'ow'], [8600, -44, 1, .42, 0, 0, 0, 'u', 'ok'],
    [9300, -44, 1, .2, 70, 0, 0, '', 'ok'], [10800, -44, .58, 0, 90, 0, 0, '', 'ok'], [11300, -44, .58, 0, 10, 0, 0, '', 'o'], [12600, -44, .58, 0, 0, 0, 0, '', 'ob'],
-   [13300, -44, .58, 0, -80, 0, 0, '', 'ok'], [14800, -44, 1, .42, -90, 0, 0, 'u', 'ok'], [15300, -44, 1, .42, 0, 0, 0, 'u', ''], [16300, -44, 1, -.6, 0, 0, 0, 'u', '']],
-  // from behind the top edge it creeps down over the bar, stops on the lower rim, waves, drops onto the map, looks, hides
-  [[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [3200, 0, .7, 0, -90, 0, 0, '', 'ok'], [3800, 0, .7, 0, -8, 0, 0, '', 'o'], [4600, 0, .7, 0, 0, 1, 0, '', 'ob'], [5300, 0, .7, 0, 0, 1, 0, '', 'ow'],
-   [6200, 0, .7, 0, 0, 1, 0, '', 'o'], [6700, 20, 1, .42, 0, 1, -12, '', 'o'], [7900, 20, 1, .42, 0, 1, 0, 'u', 'ob'], [8600, 20, 1, .42, 0, 1, 0, 'u', ''], [9600, 20, 1, -.6, 0, 1, 0, 'u', '']],
-  // only the shell lies under the bar: it rocks, an eye, two eyes, a careful look, a wave, back in, the shell slides away
-  [[0, 0, 1, -.6, 0, 1, 0, 'u', ''], [900, 0, 1, .42, 0, 1, 0, 'u', ''], [2200, 0, 1, .42, 0, 1, 0, 'u', ''], [2900, 0, 1, .42, 0, 1, 0, 'u', 'o'], [3500, 0, 1, .42, 0, 1, 0, 'u', ''],
-   [4400, 0, 1, .42, 0, 1, 0, 'u', 'o'], [5600, 0, 1, .42, 0, 1, 0, 'u', 'ob'], [6300, 0, 1, .42, 0, 1, 0, 'u', 'ow'], [7200, 0, 1, .42, 0, 1, 0, 'u', ''], [8100, 26, 1, -.6, 0, 1, 0, 'u', '']]];
-const CRAB_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"`, eye = (x, y) => `<circle cx="${x}" cy="${y}" r="4.4" fill="${I}"/><circle cx="${x - 1.5}" cy="${y - 1.7}" r="1.6" fill="#fff"/>`;
-  const leg = (i, x, y) => `<path class="c-leg" data-i="${i}" d="M${x} ${y}l-4 7l-2 7" ${S} stroke="#D9583E" stroke-width="3.2" fill="none"/>`;
-  return `<svg viewBox="0 0 100 100"><g class="c-all"><g class="c-crab">${leg(0, 22, 74)}${leg(1, 29, 77)}${leg(2, 36, 77)}` +
-    `<path d="M18 60Q16 50 26 50Q40 52 40 66Q38 80 26 80Q16 78 18 60Z" fill="#E36A4C" ${S}/><ellipse cx="22" cy="68" rx="4.5" ry="2.6" fill="#F2A08F"/><path d="M26 70Q29 72 32 70" fill="none" stroke="${I}" stroke-width="1.6" stroke-linecap="round"/>` +
-    `<g class="c-eyes"><g class="c-eye" data-i="0"><path d="M24 50L22 36" ${S} stroke-width="2"/>${eye(22, 33)}<rect class="c-lid" x="16" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g>` +
-    `<g class="c-eye" data-i="1"><path d="M32 51L34 36" ${S} stroke-width="2"/>${eye(35, 33)}<rect class="c-lid" x="29" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g>` +
-    `<path class="c-ant" d="M27 52Q20 40 12 38M30 52Q26 40 20 34" fill="none" stroke="#B9472F" stroke-width="1.2" stroke-linecap="round"/></g>` +
-    `<g class="c-claw"><path d="M8 62Q2 56 6 50Q12 46 16 52L12 56L18 58Q16 66 8 62Z" fill="#E36A4C" ${S}/></g></g>` +
-    `<g class="c-shell"><path d="M44 26Q74 18 82 46Q88 72 62 80Q40 84 34 64Q30 46 44 26Z" fill="#F3D9A0" ${S}/><path d="M48 32Q70 28 74 48Q76 66 60 70Q46 72 44 60Q43 50 54 48Q64 48 62 58" fill="none" stroke="${I}" stroke-width="2" stroke-linecap="round"/>` +
-    `<g fill="#A84A2C"><circle cx="58" cy="36" r="1.5"/><circle cx="64" cy="37" r="1.5"/><circle cx="70" cy="41" r="1.5"/><circle cx="74" cy="47" r="1.5"/><circle cx="76" cy="54" r="1.5"/><circle cx="75" cy="61" r="1.5"/></g><path d="M50 52l4 4l4-4l4 4" fill="none" stroke="#A84A2C" stroke-width="1.5"/></g></g></svg>`; })();
-let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotLast = '', crabEls = null, crabOut = 0, crabBlinkAt = 0;
+   [13300, -44, .58, 0, -80, 0, 0, '', 'ok'], [14800, -44, 1, .42, -90, 0, 0, 'u', 'ok'], [15300, -44, 1, .42, 0, 0, 0, 'u', 's'], [16300, -44, 1, -.6, 0, 0, 0, 'u', '']]},
+  // from behind the top edge it creeps down over the bar, waves on the lower rim, drops onto the map, looks, hides
+  {at:'bar', k:[[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [3200, 0, .7, 0, -90, 0, 0, '', 'ok'], [3800, 0, .7, 0, -8, 0, 0, '', 'o'], [4600, 0, .7, 0, 0, 1, 0, '', 'ob'], [5300, 0, .7, 0, 0, 1, 0, '', 'ow'],
+   [6200, 0, .7, 0, 0, 1, 0, '', 'o'], [6700, 20, 1, .42, 0, 1, -12, '', 'o'], [7900, 20, 1, .42, 0, 1, 0, 'u', 'ob'], [8600, 20, 1, .42, 0, 1, 0, 'u', 's'], [9600, 20, 1, -.6, 0, 1, 0, 'u', '']]},
+  // under the bar it knocks on it from below, the bar jumps, it listens, knocks again, waves and hides
+  {at:'bar', k:[[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [900, 0, 1, .36, 0, 0, 0, 'u', 'o'], [1900, 0, 1, .36, 0, 0, 0, 'u', 'ob'], [2400, 0, 1, .36, 0, 0, 0, 'u', 'on'], [3400, 0, 1, .36, 0, 0, 0, 'u', 'o'],
+   [4300, 0, 1, .36, 0, 0, 0, 'u', 'on'], [5100, 0, 1, .36, 0, 0, 0, 'u', 'ow'], [6100, 0, 1, .36, 0, 0, 0, 'u', 's'], [7000, 0, 1, -.6, 0, 0, 0, 'u', '']]},
+  // it finds the big conch of the news: walks to it under the bar, climbs up, taps it (the conch nods), looks from the big
+  // conch to its own little shell and back, decides it is too big, climbs down and hides
+  {at:'conch', k:[[0, -70, 1, -.6, 0, 1, 0, 'u', ''], [900, -70, 1, .42, 0, 1, 0, 'u', 'o'], [1700, -70, 1, .42, 0, 1, 0, 'u', 'ob'], [3400, -8, 1, .42, 0, 1, 0, 'u', 'ok'],
+   [4200, -8, .85, 0, 80, 1, 0, '', 'ok'], [6600, -8, 'c', .55, 90, 1, 0, '', 'ok'], [7200, -24, 'c', .1, 0, 1, 0, '', 'o'], [7800, -24, 'c', .1, 0, 1, 0, '', 'ot'], [8600, -24, 'c', .1, 0, 1, 0, '', 'oc'],
+   [10000, -24, 'c', .1, 0, 1, 0, '', 'ob'], [10600, -24, 'c', .1, 0, 1, 0, '', 'ot'], [11300, -24, 'c', .1, -80, 1, 0, '', 'ok'], [13600, -24, 1, .42, -90, 1, 0, 'u', 'ok'], [14100, -24, 1, .42, 0, 1, 0, 'u', 's'], [15000, -24, 1, -.6, 0, 1, 0, 'u', '']]},
+  // a message has come: it peeps out from under the bar and sits on the message to read it, then ducks away
+  {at:'toast', k:[[0, -30, 1, -.6, 0, 1, 0, 'u', ''], [700, -30, 1, .1, 0, 1, 10, 'u', 'o'], [1300, -30, 1, .1, 0, 1, 10, 'u', 'or'], [3400, -30, 1, .1, 0, 1, 10, 'u', 'orb'], [4300, -30, 1, .1, 0, 1, 10, 'u', 's'], [5000, -30, 1, -.6, 0, 1, 0, 'u', '']]}];
+/* A hermit crab: a big right claw (it shuts the shell with it) and a small left one, two pairs of walking legs, eyes on
+   banded stalks, long feelers, a soft body tucked into a snail shell stamped like a Lapita pot. */
+const CRAB_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"`, eye = (x, y) => `<circle cx="${x}" cy="${y}" r="4.2" fill="${I}"/><circle cx="${x - 1.4}" cy="${y - 1.6}" r="1.5" fill="#fff"/><circle cx="${x + 1.2}" cy="${y + 1.3}" r=".6" fill="#fff"/>`;
+  const leg = (i, x, y, c) => `<g class="c-leg" data-i="${i}"><path d="M${x} ${y}l-5 6" ${S} stroke="${c}" stroke-width="3.4" fill="none"/><path d="M${x - 5} ${y + 6}l-1.5 7.5" ${S} stroke="${c}" stroke-width="2.8" fill="none"/><circle cx="${x - 5}" cy="${y + 6}" r="1.3" fill="#F2A08F"/></g>`;
+  const dots = [[57, 33], [63, 33], [69, 36], [74, 41], [77, 47], [78, 54], [76, 61], [71, 67]].map(([x, y]) => `<rect x="${x - .9}" y="${y - 1.1}" width="1.8" height="2.2" fill="#A84A2C"/>`).join('');
+  return `<svg viewBox="0 0 100 100"><ellipse class="c-shadow" cx="50" cy="91" rx="30" ry="4" fill="#2B1D14" opacity=".18"/><g class="c-all"><g class="c-crab">` +
+    `${leg(0, 20, 72, '#C9503A')}${leg(1, 27, 75, '#D9583E')}${leg(2, 34, 76, '#C9503A')}${leg(3, 40, 74, '#D9583E')}` +
+    `<path d="M17 60Q15 49 26 49Q41 51 41 65Q39 79 26 79Q15 77 17 60Z" fill="#E36A4C" ${S}/><path d="M21 57Q28 54 36 58M20 64Q28 61 38 65M22 71Q29 69 36 72" fill="none" stroke="#B9472F" stroke-width="1.3" stroke-linecap="round"/>` +
+    `<circle cx="25" cy="60" r="1" fill="#F6C2B4"/><circle cx="32" cy="62" r=".9" fill="#F6C2B4"/><circle cx="28" cy="67" r=".8" fill="#F6C2B4"/><path d="M24 71Q27 73 30 71" fill="none" stroke="${I}" stroke-width="1.4" stroke-linecap="round"/>` +
+    `<g class="c-eyes"><g class="c-eye" data-i="0"><path d="M24 50L22 37" ${S} stroke-width="2.2"/><path d="M23.6 45l-.6-2M23 41l-.4-1.6" stroke="#E36A4C" stroke-width="1.1"/>${eye(22, 33)}<rect class="c-lid" x="16" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g>` +
+    `<g class="c-eye" data-i="1"><path d="M32 51L34 37" ${S} stroke-width="2.2"/><path d="M32.4 46l.6-2M33 42l.4-1.6" stroke="#E36A4C" stroke-width="1.1"/>${eye(35, 33)}<rect class="c-lid" x="29" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g>` +
+    `<path class="c-ant" d="M27 51Q18 38 6 36M30 51Q25 37 16 28" fill="none" stroke="#B9472F" stroke-width="1.1" stroke-linecap="round"/></g>` +
+    `<g class="c-claw"><path d="M9 60Q4 55 7 50Q12 47 15 52L12 55L17 57Q15 63 9 60Z" fill="#E36A4C" ${S}/></g>` +
+    `<g class="c-big"><path d="M14 72Q2 70 2 62Q3 55 11 56L18 60Q20 68 14 72Z" fill="#D9583E" ${S}/><path d="M3 62Q0 66 4 69" fill="none" stroke="${I}" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="61" r=".9" fill="#F6C2B4"/><circle cx="11" cy="65" r=".9" fill="#F6C2B4"/></g></g>` +
+    `<g class="c-shell"><path d="M44 26Q74 17 83 46Q89 72 62 81Q40 85 34 64Q30 46 44 26Z" fill="#F3D9A0" ${S}/><path d="M60 27Q80 32 82 52Q81 72 64 79Q74 66 74 50Q72 36 60 27Z" fill="#E2C384"/>` +
+    `<path d="M48 32Q70 28 74 48Q76 66 60 70Q46 72 44 60Q43 50 54 48Q64 48 62 58Q60 63 55 61" fill="none" stroke="${I}" stroke-width="1.9" stroke-linecap="round"/>${dots}` +
+    `<path d="M48 54l3 3l3-3l3 3l3-3" fill="none" stroke="#A84A2C" stroke-width="1.4"/><path d="M38 66Q40 74 46 78" fill="none" stroke="#C9A866" stroke-width="2"/><path d="M50 30Q55 28 58 29" fill="none" stroke="#FFF6DE" stroke-width="2" stroke-linecap="round" opacity=".8"/></g></g></svg>`; })();
+let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotY = 0, crabEls = null, crabOut = 0, crabBlinkAt = 0, crabToastAt = -1e9, crabPrev = '', crabNow = null;
 const crabSm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+function crabStart(P, now){
+  const H = $('hudbar'), w = H.offsetWidth, hb = H.getBoundingClientRect(), sun = parseFloat($('dayMark').style.left) || -99;
+  if (P.at === 'conch'){ const c = $('newsBtn').getBoundingClientRect(); mascotX = c.left + c.width / 2 - hb.left; mascotY = c.top + c.height / 2 - hb.top; }
+  else if (P.at === 'toast'){ const t = $('toast').getBoundingClientRect(); mascotX = clamp(t.left + t.width * .78 - hb.left, 40, w - 30); }
+  else for (let i = 0; i < 6; i++){ mascotX = w * (.38 + Math.random() * .45); if (Math.abs(mascotX - sun) > 60) break; }
+  mascotPlay = P; mascotOn = now; crabOut = 0; crabPrev = '';
+}
+/* a message: now and then the crab comes to read it (not every time, it is shy) */
+function crabOnToast(){ const now = performance.now(); if (mascotOn || reduced || landing || now - crabToastAt < MASCOT.toastGap || now < MASCOT.first || Math.random() > .5) return; crabToastAt = now; setTimeout(() => { if (!mascotOn && !$('toast').hidden) crabStart(CRAB_PLAYS[4], performance.now()); }, 500); }
 function mascotTick(now){
   const M = $('mascot'); if (!M) return;
   if (!M.firstChild.innerHTML){ M.firstChild.innerHTML = CRAB_SVG; crabEls = null; }
-  if (!crabEls){ const q = sel => [...M.querySelectorAll(sel)]; crabEls = {all:M.querySelector('.c-all'), crab:M.querySelector('.c-crab'), legs:q('.c-leg'), eyes:q('.c-eye'), lids:q('.c-lid'), claw:M.querySelector('.c-claw'), ant:M.querySelector('.c-ant'), shell:M.querySelector('.c-shell')}; }
+  if (!crabEls){ const q = sel => [...M.querySelectorAll(sel)]; crabEls = {all:M.querySelector('.c-all'), crab:M.querySelector('.c-crab'), legs:q('.c-leg'), eyes:q('.c-eye'), lids:q('.c-lid'), claw:M.querySelector('.c-claw'), big:M.querySelector('.c-big'), ant:M.querySelector('.c-ant'), shell:M.querySelector('.c-shell'), shadow:M.querySelector('.c-shadow')}; }
   if (!mascotAt) mascotAt = now + MASCOT.first;
   if (mascotOn){
-    const P = mascotPlay, t = now - mascotOn, end = P[P.length - 1][0];
-    if (t > end){ mascotOn = 0; M.className = ''; M.style.clipPath = ''; crabOut = 0; return; }
+    const P = mascotPlay.k, t = now - mascotOn, end = P[P.length - 1][0];
+    if (t > end){ mascotOn = 0; M.className = ''; M.style.clipPath = ''; crabOut = 0; crabNow = null; return; }
     let i = 0; while (i < P.length - 2 && P[i + 1][0] <= t) i++;
     const A = P[i], B = P[i + 1], dur = Math.max(1, B[0] - A[0]), raw = clamp((t - A[0]) / dur, 0, 1), H = $('hudbar'), HH = H.offsetHeight, S = MASCOT.S, does = A[8];
-    const at = K => ({x:mascotX + K[1], y:K[2] * HH + K[3] * S + (K[6] || 0)}), pa = at(A), pb = at(B), dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
-    // walking: in little bursts, step and rest, the body lifting on each step; otherwise a soft glide (in and out of hiding)
+    const at = K => ({x:mascotX + K[1], y:(K[2] === 'c' ? mascotY : K[2] * HH) + K[3] * S + (K[6] || 0)}), pa = at(A), pb = at(B), dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
     const walk = does.includes('k') && dist > 2, steps = Math.max(1, Math.round(dist / 4.5)), ph = raw * steps, f = ph - Math.floor(ph), burst = Math.min(1, f * 1.7);
     const u = walk ? (Math.floor(ph) + crabSm(burst)) / steps : crabSm(raw), lift = walk ? Math.sin(Math.PI * burst) * 1.3 : 0;
-    const hop = (A[6] || B[6]) && !walk ? -Math.sin(Math.PI * raw) * 10 : 0;
-    const x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u - lift + hop, rot = A[4] + (B[4] - A[4]) * crabSm(raw) + (walk ? Math.sin(ph * Math.PI * 2) * 3 : 0), flip = A[5], clip = A[7];
+    const x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u - lift, rot = A[4] + (B[4] - A[4]) * crabSm(raw) + (walk ? Math.sin(ph * Math.PI * 2) * 3 : 0), flip = A[5], clip = A[7];
+    crabNow = {x, y, rot, flip, clip};
     M.style.transform = `translate(${(x - S / 2).toFixed(1)}px,${(y - S / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scaleX(${flip ? -1 : 1})`;
     const top = y - S / 2; M.style.clipPath = clip === 'u' ? `inset(${Math.max(0, HH - 3 - top).toFixed(1)}px -20px -20px -20px)` : clip === 't' ? `inset(${Math.max(0, -top).toFixed(1)}px -20px -20px -20px)` : 'none';
     if (!M.classList.contains('on')) M.classList.add('on');
-    // the body: out of the shell slowly, back in quickly (shy)
-    const want = does.includes('o') || walk ? 1 : 0; crabOut += (want - crabOut) * (want > crabOut ? .07 : .3);
-    const E = crabEls, o = crabOut, ts = now / 1000;
+    // things it does to the bar, once at the start of a key frame
+    const key = i + does; if (key !== crabPrev){ crabPrev = key;
+      if (does.includes('t')){ const nb = $('newsBtn'); nb.classList.remove('take'); void nb.offsetWidth; nb.classList.add('take'); }
+      if (does.includes('n')){ const hi = H.querySelector('.hud-in'); hi.classList.remove('knock'); void hi.offsetWidth; hi.classList.add('knock'); setTimeout(() => { hi.classList.remove('knock'); void hi.offsetWidth; hi.classList.add('knock'); }, 260); } }
+    // the body: out of the shell slowly, back in quickly ('s': at once)
+    const want = (does.includes('o') || walk) && !does.includes('s') ? 1 : 0; crabOut += (want - crabOut) * (want > crabOut ? .07 : does.includes('s') ? .5 : .3);
+    const E = crabEls, o = crabOut, ts = now / 1000, on = rot === 0 && clip !== 't';
     E.crab.setAttribute('transform', `translate(${(14 * (1 - o)).toFixed(2)} ${(6 * (1 - o)).toFixed(2)}) translate(62 58) scale(${(.35 + .65 * o).toFixed(3)}) translate(-62 -58)`);
-    // the shell sways while it walks and rocks a little when it is about to come out
-    const rock = !walk && o < .5 && raw < .9 ? Math.sin(ts * 9) * 4 * (1 - o) * (A[8] === '' ? 1 : 0) : 0;
+    E.shadow.setAttribute('opacity', Math.abs(rot) < 20 && y > HH ? .18 : 0);
+    const rock = !walk && o < .5 && raw < .9 && does === '' ? Math.sin(ts * 9) * 4 * (1 - o) : does.includes('s') ? Math.sin(ts * 30) * 3 : 0;
     E.shell.setAttribute('transform', `rotate(${(walk ? Math.sin(ph * Math.PI * 2 + 1) * 3 : rock).toFixed(1)} 60 70)`);
-    // legs step in turn; at rest they shift now and then
-    E.legs.forEach((L, k) => { const a = walk ? Math.sin(ph * Math.PI * 2 + k * 2.1) * 22 : Math.sin(ts * 1.3 + k) * 3; L.setAttribute('transform', `rotate(${a.toFixed(1)} ${[22, 29, 36][k]} ${[74, 77, 77][k]})`); });
-    // eyes on stalks look about each on its own, with a quick twitch now and then; they come up last and go down first
-    E.eyes.forEach((Ey, k) => { const look = Math.sin(ts * (1.7 + k * .6) + k * 2) * 10 + (Math.sin(ts * 7.3 + k * 5) > .97 ? 14 : 0), up = crabSm((o - .4) / .6);
+    E.legs.forEach((L, k) => { const a = walk ? Math.sin(ph * Math.PI * 2 + k * 1.6) * 22 : Math.sin(ts * 1.3 + k) * 3; L.setAttribute('transform', `rotate(${a.toFixed(1)} ${[20, 27, 34, 40][k]} ${[72, 75, 76, 74][k]})`); });
+    // eyes: each looks about on its own, twitches; reading looks down at the message, comparing looks at the conch then at its shell
+    const up = crabSm((o - .4) / .6), cmp = does.includes('c') ? (Math.sin(ts * 2.4) > 0 ? -38 : 34) : null;
+    E.eyes.forEach((Ey, k) => { const look = cmp != null ? cmp : does.includes('r') ? 26 + Math.sin(ts * 3 + k) * 6 : Math.sin(ts * (1.7 + k * .6) + k * 2) * 10 + (Math.sin(ts * 7.3 + k * 5) > .97 ? 14 : 0);
       Ey.setAttribute('transform', `translate(${k ? 33 : 23} 51) scale(1 ${(.2 + .8 * up).toFixed(2)}) rotate(${(look * up).toFixed(1)}) translate(${k ? -33 : -23} -51)`); });
     if (does.includes('b') && now > crabBlinkAt) crabBlinkAt = now + 1600 + Math.random() * 1400;
     const bl = crabBlinkAt - now > 1450 ? 1 : 0; E.lids.forEach((L, k) => L.setAttribute('opacity', bl || (k === 0 && Math.sin(ts * 2.1) > .985) ? 1 : 0));
     E.ant.setAttribute('transform', `rotate(${(Math.sin(ts * 5) * 6 * o).toFixed(1)} 28 52)`);
-    // the claw: waves in a few quick strokes, else it picks at the ground now and then
-    const wave = does.includes('w'), cl = wave ? Math.sin(ts * 11) * 26 - 12 : (Math.sin(ts * 2.3) > .9 ? -10 : 0) * o;
-    E.claw.setAttribute('transform', `rotate(${cl.toFixed(1)} 15 58)`);
+    // the small claw waves or taps; the big claw knocks on the bar, or rests and shuts the shell when it ducks
+    const tap = does.includes('t') ? Math.max(0, Math.sin(raw * Math.PI * 4)) * -34 : 0, wave = does.includes('w') ? Math.sin(ts * 11) * 26 - 12 : 0;
+    E.claw.setAttribute('transform', `rotate(${(tap || wave || (Math.sin(ts * 2.3) > .9 ? -10 : 0) * o).toFixed(1)} 15 56)`);
+    const knock = does.includes('n') ? -Math.max(0, Math.sin(raw * Math.PI * 4)) * 40 : 0;
+    E.big.setAttribute('transform', `rotate(${(knock + (does.includes('s') ? 12 : 0)).toFixed(1)} 16 62)`);
     return;
   }
   if (now < mascotAt || landing || document.hidden || sheetKind === 'menu' || reduced) return;
   mascotAt = now + MASCOT.gap[0] + Math.random() * (MASCOT.gap[1] - MASCOT.gap[0]);
-  // a play, somewhere along the bar, not where the sun or the moon stands
-  const H = $('hudbar'), w = H.offsetWidth, sun = parseFloat($('dayMark').style.left) || -99;
-  for (let i = 0; i < 6; i++){ mascotX = w * (.38 + Math.random() * .45); if (Math.abs(mascotX - sun) > 60) break; }
-  mascotPlay = CRAB_PLAYS[Math.floor(Math.random() * CRAB_PLAYS.length)]; mascotOn = now; mascotLast = ''; crabOut = 0;
+  const pick = Math.random(); crabStart(CRAB_PLAYS[pick < .3 ? 0 : pick < .5 ? 1 : pick < .7 ? 2 : 3], now);
 }
-$('mascot').addEventListener('click', e => { e.stopPropagation(); const M = $('mascot'); if (!mascotOn) return; M.classList.remove('hop'); void M.offsetWidth; M.classList.add('hop'); mascotLast = '';
-  M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Wird sie zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });
+$('mascot').addEventListener('click', e => { e.stopPropagation(); if (!mascotOn || !crabNow) return; const H = $('hudbar'), HH = H.offsetHeight, S = MASCOT.S, n = crabNow, y = n.y, dx = n.x - mascotX, c = n.clip;
+  // startled: in at once, the shell trembles; then a careful peep, then away
+  const K = (t, d) => [t, dx, 0, 0, n.rot, n.flip, y, c, d]; mascotPlay = {at:'bar', k:[K(0, 's'), K(1300, ''), K(2300, 'o'), K(3400, 'ob'), K(3900, 's'), [4800, dx, 1, -.6, 0, n.flip, 0, 'u', '']]}; mascotOn = performance.now(); crabPrev = '';
+  const M = $('mascot'); M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Erschreckt er sich, zieht er sich hinein und hält die große Schere vor den Eingang. Wird die Muschel zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });
 

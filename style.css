@@ -1204,3 +1204,7 @@ body.landing #mascot{display:none}
 .chips.stabs .chip .ic{width:14px;height:14px;margin-right:0}
 @media (max-width:350px){.chips.stabs .chip .ic{display:none}.chips.stabs .chip{padding:0 6px}}
 @keyframes crabHop{0%{transform:translateY(0)}40%{transform:translateY(-9px) rotate(-6deg)}100%{transform:none}}
+/* the crab knocks on the bar from below: the cream jumps a little */
+#hudbar .hud-in.knock{animation:barKnock .22s ease-out}
+@keyframes barKnock{0%{transform:none}30%{transform:translateY(-2px) rotate(-.3deg)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){#hudbar .hud-in.knock{animation:none}}

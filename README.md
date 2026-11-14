@@ -2155,3 +2155,17 @@ frei erfunden. Wo und wie oft man sie sieht, ist Spiel.
 - **Augen auf Stielen** schauen jedes für sich umher und zucken manchmal; die Fühler zittern; er blinzelt; die Schere winkt in
   schnellen Schlägen oder pickt am Boden. Beim Klettern dreht er sich weich statt auf einen Schlag.
 
+## Der Einsiedlerkrebs spielt mit der Leiste (Version 99)
+
+- **Mehr Einzelheiten:** eine große rechte Schere (damit verschließt er die Muschel) und eine kleine linke, vier Laufbeine mit
+  Gelenken, Augen auf geringelten Stielen, lange Fühler, ein gestreifter Körper mit hellen Punkten, eine Muschel mit Spirale,
+  Zahnstempel-Muster, Glanz und einer Kerbe, ein weicher Schatten auf der Karte.
+- **Er spielt mit der Leiste:**
+  - Er klopft von unten mit der großen Schere an die Leiste; die Leiste hüpft ein wenig. Er lauscht, klopft noch einmal.
+  - Er findet die große Muschel der Nachrichten, klettert hinauf, tippt sie an (sie nickt), schaut von ihr zu seiner eigenen
+    kleinen Muschel und zurück und entscheidet: zu groß. Dann klettert er wieder hinunter.
+  - Kommt eine Nachricht, setzt er sich manchmal oben auf sie und liest mit, dann huscht er weg.
+  - Dazu wie bisher: unter der Leiste hervor und auf sie hinauf, von oben über sie hinunter, nur die Muschel, die wackelt.
+- **Antippen erschreckt ihn:** Er zieht sich sofort zurück, hält die große Schere vor den Eingang, die Muschel zittert; nach
+  einem Moment lugt er vorsichtig heraus und verschwindet. Eine Blase erzählt von ihm.
+
