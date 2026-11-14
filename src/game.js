@@ -228,7 +228,9 @@ function lifeTick(I){
     if (tick - p.b < p.l || I.pop <= 2) continue;
     // a death: the name goes to the ancestors; with an ancestor house the dead add to the clan's standing
     const lore0 = (p.nv || 0) >= 1 ? navLore().lvl : 0;
+    const wis = (p.nv || 0) >= 1 && wisHouse(I) && Math.floor(p.nv) > (I.keep || 0); if (wis) I.keep = Math.floor(p.nv);   // the Wissende keep the star paths of whoever dies
     I.people.splice(I.people.indexOf(p), 1); I.pop--; changed = true; loreCache = null;
+    if (wis && lore0 && !lifeLog) toast(`Mit ${p.n} stirbt ein Navigator. Die Wissenden bewahren sein Wissen: ${NAV_N[lore0]}.`, 5200);
     if (lore0 && navLore().lvl < lore0){ const msg = `Mit ${p.n} ist Wissen der Navigatoren verloren: ${NAV_N[lore0]}. Ein Schüler im Haus der Navigatoren muss es neu lernen.`; if (lifeLog) lifeLog.lost.push(p.n); else toast(msg, 5200); }
     const chief = I.chief === p.id, house = I.buildings.some(b => b.kind === 'ahnenhaus' && !b.bt);
     (I.ahnen = I.ahnen || []).push([p.n, p.b, tick, chief ? 1 : 0]); I.ahnenN = (I.ahnenN || I.ahnen.length - 1) + 1; if (I.ahnen.length > ANC_NAMED) I.ahnen.shift();   // the last ones by name, the rest counted
@@ -259,23 +261,26 @@ function navLore(){
   if (loreCache && loreCache.t === tick) return loreCache;
   let best = null, lvl = 0;
   for (const I of islands) if (I.settled && I.people) for (const p of I.people){ const l = Math.floor(p.nv || 0); if (l > lvl){ lvl = l; best = {p, I}; } }
+  for (const I of islands) if (I.settled && I.keep > lvl && wisHouse(I)) lvl = I.keep, best = null;   // kept by the Wissende, not by one living head
   return loreCache = {t:tick, lvl, best};
 }
 /* who learns in the house: the one sent to the stones, or the one who learnt last, or the grown-up who knows most and can
    still go further. Whoever has reached what the best teacher can give makes room, so the knowledge passes to a second head. */
 function navPupil(I, H){
-  const P = I.people || [], top = q => P.reduce((m, r) => r === q ? m : Math.max(m, Math.floor(r.nv || 0)), 0), goal = q => Math.min(navCap(), top(q) + 1);
+  const P = I.people || [], keep = wisHouse(I) ? I.keep || 0 : 0, top = q => P.reduce((m, r) => r === q ? m : Math.max(m, Math.floor(r.nv || 0)), keep), goal = q => Math.min(navCap(), top(q) + 1);
   const alive = id => P.find(p => p.id === id && isAdult(p)), can = q => q && (q.nv || 0) < goal(q), at = walkers.find(w => w.isl === I.id && w.job && w.job.b === H);
-  const p = [at && alive(at.pid), alive(H.pupil)].find(can) || P.filter(q => isAdult(q) && can(q)).sort((a, b) => (b.nv || 0) - (a.nv || 0) || b.b - a.b)[0] || alive(H.pupil) || null;
+  const p = [at && alive(at.pid), alive(H.pupil)].find(can) || P.filter(q => isAdult(q) && can(q)).sort((a, b) => navHome(I, b) - navHome(I, a) || (b.nv || 0) - (a.nv || 0) || b.b - a.b)[0] || alive(H.pupil) || null;
   return p ? {p, master:top(p), goal:goal(p), who:P.filter(q => q !== p).sort((a, b) => (b.nv || 0) - (a.nv || 0))[0]} : null;
 }
+/* how fast someone learns: the village's strength, a house of navigators, the gift of the birds */
+const navRate = (I, p) => (I.str === 'navigator' ? 1.5 : 1) * (navHome(I, p) ? NAV_FAST : 1) * giftF('voegel');
 function navTick(I, n = 1){
   const H = I.buildings.find(b => b.kind === 'sternhaus' && !b.bt); if (!H || !I.people || !crewAt(I, H)) return;
   const L = navPupil(I, H); if (!L) return;
   const {p, master, goal} = L, now = p.nv || 0; H.pupil = p.id;
   if (now >= goal) return;
   const lvl0 = Math.floor(now), lore0 = navLore().lvl;
-  p.nv = Math.min(goal, now + n * (I.str === 'navigator' ? 1.5 : 1) * giftF('voegel') / ((master > lvl0 ? 3 : 6) * YEAR));
+  p.nv = Math.min(goal, now + n * navRate(I, p) / ((master > lvl0 ? 3 : 6) * YEAR));
   if (Math.floor(p.nv) > lvl0){
     loreCache = null;
     lifeEvent(p, 'nav', NAV_N[Math.floor(p.nv)]);
@@ -1223,7 +1228,7 @@ function dayShares(I, p){
   return {sleep, free, work:1 - sleep - free};
 }
 const oldF = (I, b, n) => { const o = b.at ? (staffOf(I).oldAt.get(b) || 0) : 0; return o && n ? 1 - .5 * Math.min(o, n) / n : 1; };   // the old work at half strength
-const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a master family works its craft faster
+const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a family of craftsmen works its craft faster
 const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b) * (K.crew ? mealF(I, b) : 1) * giftWork(I, b); };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
@@ -1570,6 +1575,7 @@ function econ(){
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
   if (tick % 15 === 0) for (const I of islands) if (I.settled) mana += Math.min(1, Math.floor(Math.min(beautyOf(I), I.pop / 2) / 6));
+  if (tick % 30 === 0) for (const I of islands) if (I.settled && wisHouse(I)) mana += WIS_MANA;   // the keepers of star paths and genealogies add to the clan's standing
   for (const I of islands) if (!I.settled && I._wg) stepWear(I);   // the clans' paths too
   if (tick % 20 === 0) rollAhead();
   if (tick % 10 === 0 && !stats.signs && !awayQuiet && dayPhase() < .62 && navHints().some(h => boxIn(h.I.box, view(200)))){ stats.signs = 1; toast('Seevögel fliegen aus dem Nebel und wieder hinein: Dort liegt Land. Tippe auf die Vögel.', 6000); }

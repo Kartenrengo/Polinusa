@@ -1100,3 +1100,19 @@ details.more .rowx{margin-top:6px}
 .hud-goods{padding-top:11px}
 @media (max-width:350px){.hud-goods .vital span{font-size:0;gap:0}.hud-goods .vital .ic{width:18px;height:18px}.hud-goods .goods .g .day{font-size:9.5px}.hud-goods .goods{column-gap:7px}}
 /* dawn and dusk on the rim: short orange stripes where night turns to day (at the top) and day to night (where the light part ends) */
+/* the two ways from the family house: craftsmen or seafarers */
+.rise2 .ways{display:flex;gap:6px}
+.rise2 .ways .wbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;min-height:32px;padding:3px 6px;font:800 12.5px/1.1 var(--font-ui);white-space:nowrap}
+.rise2 .ways .wbtn .ic{width:18px;height:18px;flex:none}
+.rise2 .wayno{display:flex;align-items:center;gap:5px;margin:0;font-size:12px;line-height:1.2}
+.rise2 .wayno .ic{width:16px;height:16px;flex:none}
+.rise2 .rfor{margin:0 0 3px;font-size:12px;line-height:1.25}
+.needtiles.n9,.needtiles.n10{grid-template-columns:repeat(5,minmax(0,1fr))}
+.rise2 .rtile{min-width:0;flex:1 1 38px;padding:3px 3px}
+.rise2 .ways .wbtn{min-height:30px}
+@media (max-height:720px){.rise2 .rfor{display:none}}
+@media (max-height:640px){.rise2 .wayno,.rise2 .rhead .sub{display:none}.rise2{gap:3px;padding:5px 8px 6px}.rise2 .rhead .btn{min-height:34px}.rise2 .ways .wbtn{min-height:28px}.rise2 .rtile{padding:2px 3px}}
+@media (max-height:720px){.needtiles.n8,.needtiles.n9,.needtiles.n10{gap:4px}.needtiles.n8 .ntile,.needtiles.n9 .ntile,.needtiles.n10 .ntile{padding:2px 1px 2px;gap:0}.needtiles.n8 .ntile .ic,.needtiles.n9 .ntile .ic,.needtiles.n10 .ntile .ic{width:17px;height:17px}.needtiles.n8 .ntile b,.needtiles.n9 .ntile b,.needtiles.n10 .ntile b{font-size:9px}}
+.rise2 .wbtn .ws{display:none}
+@media (max-height:640px){.rise2 .wbtn .wl{display:none}.rise2 .wbtn .ws{display:inline}.rise2 .wbtn{font-size:11.5px}.rise2.two{flex-direction:row;flex-wrap:wrap;align-items:center}.rise2.two .ways{flex:1 1 0;min-width:0}.rise2.two .rhead{flex:none}.rise2.two .rhead .rt{display:none}.rise2.two .rtiles{flex:1 1 100%}.nextline{margin:0 0 3px}.nextline .chip.way{min-height:28px}}
+@media (max-height:640px){.hsub{display:none}}

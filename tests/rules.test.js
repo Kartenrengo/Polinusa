@@ -418,6 +418,72 @@ const r = await p.evaluate(()=>{
       Object.assign(H.stock, {holz:10, dach:10}); payRebuilds(H); const paid = !h.unpaid && H.stock.holz < 10;
       delete h.bt; delete h.unpaid; H.stock = keepSt; H.staff = null;
       want(waits && paid, 'storm: a wrecked house is built anew without wood'); } }
+    // the two ways from the family house: craftsmen, or (near the shore) seafarers, navigators and the Wissende
+    { const H = isl('heimat'), keepSt = {...H.stock}, keepP = H.people.slice(), ships0 = ships.length, auto0 = H.autoUp, peak0 = stats.peakPop, hw0 = H.handWork;
+      stats.peakPop = Math.max(peak0 || 0, 30); H.autoUp = false;
+      const h = homesOf(H).find(q => famOfHome(H, q) && membersOf(H, famOfHome(H, q)).length), f = famOfHome(H, h), L0 = H.lands[0];
+      const box = (() => { let m = null; for (let x = L0.poly[0].x - 500; x < L0.poly[0].x + 500; x += 12) for (let y = L0.poly[0].y - 500; y < L0.poly[0].y + 500; y += 12){ if (!m && inPoly({x, y}, L0.poly) && polyDist({x, y}, L0.poly) > 40) m = {x, y}; } return m; })();
+      const shore = {x:L0.poly[0].x * .96 + H.center.x * .04, y:L0.poly[0].y * .96 + H.center.y * .04}, pos0 = {x:h.x, y:h.y}, t0 = h.t, w0 = h.way, nv0 = H.people.map(p => p.nv);
+      const rich = () => { Object.assign(H.stock, {holz:30, dach:30, schnur:30, matten:30, tapa:5, fisch:5, proviant:5, toepfe:5, oel:5, nahrung:30, wasser:30, speisen:30, schalen:30, faser:30}); h.rw = 0; H.meal = {at:tick, n:H.pop, hungry:0, thirsty:0}; };
+      const near = p => { h.x = p.x; h.y = p.y; };
+      h.t = 2; delete h.way; H.staff = null;
+      // only at the coast
+      near(shore); const shoreOk = onShore(H, h); near(box || H.center); const inlandOk = onShore(H, h);
+      want(shoreOk && (!box || !inlandOk), `ways: shore test (shore ${shoreOk}, inland ${inlandOk}, found inland spot ${!!box})`);
+      rich(); near(shore); const nd = needsOf(H);
+      const uh = upgradeSteps(H, h, nd.list, 'hand'), us = upgradeSteps(H, h, nd.list, 'see');
+      want(upgradeWays(H, h).join() === 'hand,see' && us.steps.find(q => q.k === 'ufer').ok, 'ways: a family house at the shore has both ways');
+      if (box){ near(box); rich(); want(!upgradeSteps(H, h, needsOf(H).list, 'see').steps.find(q => q.k === 'ufer').ok && !upgradeHouse(H, h, 'see'), 'ways: the sea way inland'); near(shore); }
+      // craftsmen: the family must run a Hauswerk
+      want(!uh.steps.find(q => q.k === 'werk').ok && !uh.ready, 'ways: a craftsmen house without a Hauswerk');
+      setCraft(H, h, 'schnur'); want(upgradeSteps(H, h, needsOf(H).list, 'hand').steps.find(q => q.k === 'werk').ok, 'ways: Hauswerk not seen'); setCraft(H, h, null);
+      // seafarers: needs, room, name
+      rich(); want(upgradeHouse(H, h, 'see') && wayOf(h) === 'see' && h.t === 2 && houseName(h) === 'Seefahrerhaus' && homeCapMax(H, h) === 7, 'ways: not a seafarer house after the step');
+      want(['fisch', 'proviant', 'schnur'].every(k => famNeeds(H, f, needsOf(H).list).some(n => n.k === k && n.state === 'ok')), 'ways: seafarers want fish, provisions and sennit');
+      { const keepF = [H.stock.fisch, H.stock.meeres]; H.stock.fisch = 0; H.stock.meeres = 0; want(famNeeds(H, f, needsOf(H).list).find(n => n.k === 'fisch').state === 'out', 'ways: no fish, no state out'); [H.stock.fisch, H.stock.meeres] = keepF; }
+      want(famLabel(H, f) === 'Seefahrerhaus' && famTier(H, f) === 2, 'ways: family label');
+      // the grown-ups of the seafarer houses speed up the canoes of their island
+      { const sh = makeShip('oc', H); ships.push(sh); const v1 = speedOf(sh), n1 = seafarers(H); h.way = ''; const v0 = speedOf(sh); h.way = 'see';
+        want(n1 > 0 && v1 > v0 * 1.02 && v1 <= v0 * (1 + SEA_SPEED_MAX) + 1e-9, `ways: seafarers do not speed up canoes (${v0.toFixed(2)} -> ${v1.toFixed(2)}, ${n1} adults)`); ships.length = ships0; }
+      // falling back after half a minute without a good of the step
+      rich(); H.stock.proviant = 0; tierTick(H, needsOf(H).list, true); tierTick(H, needsOf(H).list, true); const still = wayOf(h) === 'see'; tierTick(H, needsOf(H).list, true);
+      want(still && wayOf(h) === '' && h.t === 2, `ways: a seafarer house falls back after 30 ticks without provisions (${wayOf(h)})`);
+      // old ways stay: tier 3 is the craftsmen's house
+      h.t = 3; want(wayOf(h) === 'hand' && houseName(h) === 'Handwerkerhaus' && tierOf(h) === 3 && famLabel(H, f) === 'Handwerkerhaus', 'ways: old tier 3 is not a craftsmen house');
+      h.t = 2; delete h.way;
+      // navigators: a navigator in the family; they learn faster
+      rich(); h.way = 'see'; const un = upgradeSteps(H, h, needsOf(H).list, 'nav'); want(!un.steps.find(q => q.k === 'navi').ok && !un.ready, 'ways: a navigator house without a navigator');
+      const mem = membersOf(H, f).find(isAdult); for (const q of H.people) q.nv = 0; mem.nv = 1.2; rich();
+      want(upgradeSteps(H, h, needsOf(H).list, 'nav').steps.find(q => q.k === 'navi').ok, 'ways: navigator in the family not seen');
+      want(upgradeHouse(H, h, 'nav') && wayOf(h) === 'nav', 'ways: nav step');
+      const other = H.people.find(p => isAdult(p) && p.h !== f.id);
+      want(!other || navRate(H, mem) === navRate(H, other) * NAV_FAST, `ways: navigator speed ${navRate(H, mem)} against ${other && navRate(H, other)}`);
+      { const had = H.buildings.find(q => q.kind === 'sternhaus' && !q.bt), sh = had || addB(H, 'sternhaus', findSpot(H, 'sternhaus', startSpot(H, KINDS.sternhaus)), variant('sternhaus'), tick); delete sh.bt; H.handWork = true; for (const q of H.people) q.job = 0; mem.job = sh.id; H.staff = null; mem.nv = .2; loreCache = null; staffOf(H).crew.set(sh, 1);   // someone sits at the stones
+        const a0 = mem.nv; navTick(H, 100); const gain1 = mem.nv - a0; mem.nv = a0; h.way = 'see'; loreCache = null; navTick(H, 100); const gain2 = mem.nv - a0; h.way = 'nav';
+        want(gain1 > 0 && Math.abs(gain1 / gain2 - NAV_FAST) < .01, `ways: navigators of a navigator house learn ${NAV_FAST} times as fast (${gain1} / ${gain2})`);
+        if (!had) H.buildings = H.buildings.filter(q => q !== sh); mem.job = 0; H.staff = null; }
+      // the Wissende: need tapa and a navigator of the second level, one house to the island; their knowledge outlives the navigator
+      mem.nv = 3.1; rich(); const uw = upgradeSteps(H, h, needsOf(H).list, 'wis'); want(uw.ready, 'ways: house of the Wissende not ready ' + uw.steps.filter(q => !q.ok).map(q => q.k));
+      want(upgradeHouse(H, h, 'wis') && wayOf(h) === 'wis' && houseName(h) === 'Haus der Wissenden' && wisHouse(H) === h, 'ways: no house of the Wissende');
+      { const again = homesOf(H).find(q => q !== h && famOfHome(H, q) && tierOf(q) === 2 && !wayOf(q)); if (again){ again.way = 'nav'; want(!upgradeSteps(H, again, needsOf(H).list, 'wis').steps.find(q => q.k === 'eins').ok, 'ways: two houses of the Wissende on one island'); delete again.way; } }
+      { const m0 = mana; tick += 30 - tick % 30; const n0 = mana; mana += 0; for (const J of islands) if (J.settled && wisHouse(J)) mana += WIS_MANA; want(mana === n0 + WIS_MANA, 'ways: no standing from the Wissende'); mana = m0; }
+      { const dead = mem; want(navLore().lvl === 3, 'ways: navigator level ' + navLore().lvl); dead.l = 0; dead.b = tick - 1; loreCache = null; lifeTick(H); loreCache = null;
+        want(!H.people.includes(dead) && H.keep === 3 && navLore().lvl === 3, `ways: the Wissende lost the star path (${H.keep}, ${navLore().lvl})`);
+        h.way = 'nav'; loreCache = null; want(navLore().lvl === 0, `ways: knowledge kept without the house (${navLore().lvl})`); h.way = 'wis'; loreCache = null; }
+      // the house sheet shows the choice, compactly, and the sea way only at the shore
+      delete h.way; h.t = 2; near(shore); rich(); H.keep = 0; loreCache = null; closeSheet(); openSheet('info', {id:h.id, tab:'haus'}); let bodyT = $('sheetBody').textContent; const ways = document.querySelectorAll('#sheetBody [data-act=way]');
+      want(ways.length === 2 && /Handwerkerhaus/.test(bodyT) && /Seefahrerhaus/.test(bodyT), `ways: the choice is not shown (${ways.length})`);
+      if (box){ near(box); renderSheet(); bodyT = $('sheetBody').textContent; want(!document.querySelector('#sheetBody [data-act=way]') && /nur nah am Strand/.test(bodyT), 'ways: inland says why not'); near(shore); }
+      closeSheet(); openSheet('needs', {tab:'leute'}); want(/Handwerkerhaus/.test($('sheetBody').textContent), 'ways: overview lacks the craftsmen row'); closeSheet();
+      // auto-rise: craftsmen, but the sea way near the shore while there are more canoes than seafarer houses
+      rich(); setCraft(H, h, 'schnur'); rich(); const aw0 = autoWay(H, h, needsOf(H).list);
+      const sh2 = makeShip('oc', H); ships.push(sh2); const aw1 = autoWay(H, h, needsOf(H).list); ships.length = ships0; setCraft(H, h, null);
+      want(aw0 === 'hand' || ships.some(q => q.own && (q.port || q.last) === H.id), `ways: auto-rise without canoes takes ${aw0}`); want(aw1 === 'see', `ways: auto-rise with a canoe and no seafarer house takes ${aw1}`);
+      // save and load: a b.t of 3 is a craftsmen house, the sea way and the kept star path come back
+      h.t = 3; delete h.way; restore(serialize());
+      { const H2 = isl('heimat'), h2 = findB(h.id); want(h2.t === 3 && wayOf(h2) === 'hand' && houseName(h2) === 'Handwerkerhaus', 'ways: old tier 3 lost on load'); h2.t = 2; h2.way = 'nav'; H2.keep = 2; restore(serialize());
+        const H3 = isl('heimat'), h3 = findB(h.id); want(h3.t === 2 && h3.way === 'nav' && seaRank(h3) === 2 && H3.keep === 2, `ways: sea way not kept on load (${h3.way}, ${H3.keep})`);
+        h3.t = t0; if (w0) h3.way = w0; else delete h3.way; H3.keep = 0; h3.x = pos0.x; h3.y = pos0.y; H3.stock = keepSt; H3.autoUp = auto0; H3.handWork = hw0; stats.peakPop = peak0; H3.people.forEach((p, i) => { p.nv = nv0[i]; }); } }
     const d0 = draw, n0 = errN; let rafs = 0; const r0 = window.requestAnimationFrame; window.requestAnimationFrame = () => { rafs++; return 0; };
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
     want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}

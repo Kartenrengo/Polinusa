@@ -48,7 +48,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     for (const w of walkers){ if (w.isl !== I.id || !w.job || w.on || w.boat || w.asleep || w.toBed || sleepTime()) { W.fig.delete(w); continue; }
       const o = W.fig.get(w) || {x:w.x, y:w.y, at:tick}; W.fig.set(w, o); if (Math.hypot(w.x - o.x, w.y - o.y) > 3){ o.x = w.x; o.y = w.y; o.at = tick; }
       else if (tick - o.at > 45 && !W.figStuck.has(w)){ W.figStuck.add(w); bad.push(`min ${minute}: ${w.name} on the way to ${KINDS[w.job.b.kind].n} has not moved for 90 s (leg ${w.leg}, at ${w.x | 0},${w.y | 0} to ${w.tx | 0},${w.ty | 0})`); } }
-    if (homesOf(I).some(b => tierOf(b) >= 2)) mark('Familienhaus', minute); if (homesOf(I).some(b => tierOf(b) >= 3)) mark('Meisterhaus', minute);
+    if (homesOf(I).some(b => tierOf(b) >= 2)) mark('Familienhaus', minute); if (homesOf(I).some(b => tierOf(b) >= 3)) mark('Handwerkerhaus', minute);
     if (famsOf(I).length > 1) mark('erste Familie aus der Ferne', minute); if (ships.some(q => q.own)) mark('erstes eigenes Kanu', minute);
     if (I.pop >= 20) mark('20 Menschen', minute); if (I.pop >= 30) mark('30 Menschen', minute); if (islands.filter(J => J.settled).length > 1) mark('zweites Dorf', minute);
   };
@@ -80,7 +80,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
       }
       if (A.trade){ const J = isl(A.trade.J), ok = startTrade(H, A.trade.k, J); tried['trade/' + (ok ? 'ok' : 'fail ' + JSON.stringify(ships.filter(q => q.own).map(q => [q.state, q.port, q.route, !!q.diving, q.dest && q.dest.isl])))] = 1; if (ok) mark('Handelskette eingerichtet', minute); }
       if (A.t === 'Eine Stärke für das Dorf') setStrength(H, ['pflanzer', 'fischer', 'toepfer'][(H.center.x | 0) % 3]);
-      if (homesOf(H).some(b => tierOf(b) === 3)) mark('Meisterhaus', minute); }
+      if (homesOf(H).some(b => tierOf(b) === 3)) mark('Handwerkerhaus', minute); }
     if (A.build && A.build !== want) tryBuild(A.build); if (A.goto){ const gb = findB(A.goto); if (gb && gb.idle && gb.idle.why !== 'use'){ const q = startSpot(Hm(), KINDS[gb.kind]); const s2 = findSpot(Hm(), gb.kind, q); if (s2){ gb.x = s2.x; gb.y = s2.y; } } }
     if (Hm().stock.holz < 4) tryBuild('faeller');
     // like a player, it sets the Erntehaus on fronds when the elders say so, and lets it choose again once there are enough

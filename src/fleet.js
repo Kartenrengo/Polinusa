@@ -163,9 +163,12 @@ function moorSpot(I, s){
 }
 /* With the wind a canoe runs fast, against it slowly; the double canoe's big sail feels it more */
 function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind !== 'oc' ? .4 : .25) * W.str * dot, .6, 1.45); }
+/* the grown-ups of the seafarer families are the canoe crews of their island: a few more paddles, a sure hand on the sail */
+const seaCrew = s => { const I = s.own && isl(s.port || s.last); return I ? seafarers(I) : 0; };
+const seaF = s => 1 + Math.min(SEA_SPEED_MAX, SEA_SPEED * seaCrew(s));
 function speedOf(s){
   const r = s.route != null ? routes[s.route] : null;
-  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1) * (s.own ? giftF('feinpandanus') : 1);
+  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1) * (s.own ? giftF('feinpandanus') : 1) * seaF(s);
 }
 function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, life:[], people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
@@ -434,7 +437,7 @@ function feedCrews(){
    (level 2) sees it coming more often and takes in the sail in time. */
 const SQUALL = {chance:.16, read:.07, lose:2};
 function squall(s){
-  if (seasonOf().id !== 'sturm' || Math.random() >= (navLore().lvl >= 2 ? SQUALL.read : SQUALL.chance)) return 0;
+  if (seasonOf().id !== 'sturm' || Math.random() >= (navLore().lvl >= 2 ? SQUALL.read : SQUALL.chance) * (seaCrew(s) ? SEA_SQUALL : 1)) return 0;
   const n = Math.min(taught('wetter') ? Math.ceil(SQUALL.lose / 2) : SQUALL.lose, s.cargo.proviant || 0); if (!n) return 0;   // weather signs from the north
   s.cargo.proviant -= n; stats.boeen = (stats.boeen || 0) + 1;
   if (!awayQuiet) toast(`Böen auf See: ${s.name || 'Das Doppelkanu'} verliert ${n} Proviant. In der Sturmzeit ist das Meer rau.`, 4200);

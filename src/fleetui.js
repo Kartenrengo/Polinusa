@@ -21,7 +21,7 @@ function shipMarkup(s){
   const mini = sheetData.mini ?? (s.state === 'sail' || s.state === 'sea' || s.route != null);
   if (mini) return head(s.name, shipStatus(s)) + `<div class="rowx"><span class="sub">Tippe aufs Meer oder eine Insel.</span><span class="chips">${s.route != null ? '<button class="chip" type="button" data-act="unassign">Aus der Kette</button>' : ''}<button class="chip" type="button" data-act="shipmore">Mehr</button></span></div>`;
   let h = head(s.name, shipStatus(s));
-  h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind !== 'oc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}</p>`;
+  h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind !== 'oc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}${seaCrew(s) ? ` Seefahrerfamilien: ${Math.round((seaF(s) - 1) * 100)} % schneller, weniger Böen.` : ''}</p>`;
   h += `<div class="rowx"><span class="sub">Tippe auf das Meer oder eine Insel, dann fährt es dorthin.${S.fog ? '' : ' Ins Unbekannte fährt es nicht.'}</span><button class="chip" type="button" data-act="shipless">Weniger</button></div>`;
   if (S.fog && s.route == null) h += `<div class="rowx"><span class="sub">${s.auto ? 'Es fährt an den Rand des Bekannten, kehrt rechtzeitig um, holt im nächsten eigenen Hafen Proviant und fährt wieder los.' : 'Von selbst erkunden: an den Rand des Bekannten und rechtzeitig zurück, mit Proviant aus dem eigenen Lager.'}</span><button class="btn${s.auto ? '' : ' primary'}" type="button" data-act="auto">${s.auto ? 'Anhalten' : 'Erkunden lassen'}</button></div>`;
   if (S.fog) h += provisionNote(s, P);

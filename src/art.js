@@ -257,12 +257,19 @@ const HOUSE_T3 = '<g transform="translate(7.4 1.4) scale(.3)"><use href="#pt"/><
   '<path d="M-3.4-12Q0-10.4 3.4-12" fill="none" stroke="#5E8A3A" stroke-width=".7"/><circle cx="-2.2" cy="-11.4" r=".55" fill="#E86A8A"/><circle cx="0" cy="-11" r=".55" fill="#F4ECD8"/><circle cx="2.2" cy="-11.4" r=".55" fill="#E86A8A"/>';
 const HOUSE_T2 = '<path d="M-3.2-11.4H3.2V-5.6H-3.2Z" fill="#E9DCC0" stroke="#2B1D14" stroke-width=".45"/><path d="M-3.2-9.6H3.2M-3.2-7.6H3.2" stroke="#6B4428" stroke-width=".45"/><path d="M-2.6-8.6L-1.3-9.2L0-8.6L1.3-9.2L2.6-8.6" fill="none" stroke="#A84A2C" stroke-width=".45"/>' +
   '<g transform="translate(-12.6 2) scale(.34)"><use href="#pfosten"/></g><g transform="translate(12.6 2) scale(.34)"><use href="#pfosten"/></g>';
+/* the sea way: a paddle against the wall and a net hung to dry (seafarers); a small ring of stones for the star compass (navigators);
+   a cord with knots by the door, on which the genealogies are kept (Wissende) */
+const SEA_MARKS = ['',
+  '<path d="M9.6 3.2L11.4-8.2" stroke="#2B1D14" stroke-width="1.7" stroke-linecap="round"/><path d="M9.6 3.2L11.4-8.2" stroke="#B08048" stroke-width=".8" stroke-linecap="round"/><ellipse cx="11.8" cy="-9.8" rx="1.5" ry="2.5" transform="rotate(10 11.8 -9.8)" fill="#C79A5C" stroke="#2B1D14" stroke-width=".5"/>' +
+  '<path d="M-10.8-3.8H-4.6L-7.7 2.2Z" fill="#EBDDB8" fill-opacity=".6" stroke="#2B1D14" stroke-width=".45"/><path d="M-9.4-3.8L-7.7 2.2M-7.7-3.8V2.2M-6-3.8L-7.7 2.2M-10 -1.4H-5.4" stroke="#6B4428" stroke-width=".3"/>',
+  '<g transform="translate(2 4.6)"><ellipse rx="5.2" ry="1.9" fill="#C9B48A" opacity=".55"/>' + [0, 1, 2, 3, 4, 5, 6, 7].map(i => { const a = i / 8 * TAU; return `<ellipse cx="${(Math.cos(a) * 4.6).toFixed(1)}" cy="${(Math.sin(a) * 1.5).toFixed(1)}" rx=".7" ry=".5" fill="${i % 4 ? '#6E6A62' : '#F4ECD8'}" stroke="#2B1D14" stroke-width=".25"/>`; }).join('') + '</g>',
+  '<path d="M-3.4-1.6V4.2" stroke="#5A3A26" stroke-width=".55"/><circle cx="-3.4" cy="0" r=".7" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".3"/><circle cx="-3.4" cy="1.7" r=".7" fill="#E86A8A" stroke="#2B1D14" stroke-width=".3"/><circle cx="-3.4" cy="3.4" r=".7" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".3"/>'];
 const HOUSE_SHAPES = ['hw', 'hr', 'hg', 'hl'];   // round-ended, round, a high gable with crossed ridge poles, a long low house
 function artOf(kind, o = {}){
   const roof = o.roof || ROOF_NEW, hut = `<use href="#hc" fill="${roof}" transform="scale(.9)"/>`;
   switch (kind){
     // a house of the second step: a bark cloth hung at the door and two carved posts in front
-    case 'haus': return `<use href="#${HOUSE_SHAPES.includes(o.shape) ? o.shape : 'hw'}" fill="${roof}"/>` + (HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '') + (o.t2 ? HOUSE_T2 : '') + (o.t3 ? HOUSE_T3 : '');
+    case 'haus': return `<use href="#${HOUSE_SHAPES.includes(o.shape) ? o.shape : 'hw'}" fill="${roof}"/>` + (HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '') + (o.t2 ? HOUSE_T2 : '') + (o.t3 ? HOUSE_T3 : '') + SEA_MARKS.slice(1, (o.sea || 0) + 1).join('');
     case 'pfahl': return `<use href="#hp" fill="${roof}"/>`;
     case 'speicher': return `<use href="#hs" fill="${roof}"/>`;
     // the village plaza in front of the first house: trodden earth, the hearth with its cooking stones, a log to sit on

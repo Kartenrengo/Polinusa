@@ -3,17 +3,32 @@
    makeshift shelter by the village plaza. Needs are met family by family: first a roof, food and water. A house has four
    steps. A hut of posts and palm fronds holds one family, at most four people, and no children are born in it: new people
    come from far away, by canoe, when a hut stands empty. Bound anew with coconut fibre and sennit it becomes a family house
-   with room for children, and the family wants cooked food. With pots, mats and coconut oil in store it becomes the house
-   of a master family, the tufunga of later times. The chief's house is the fourth step. Families are named after the woman
+   with room for children, and the family wants cooked food. From there two ways lead on. The craft way: a family that runs
+   a household craft (Hauswerk) and has pots, mats and coconut oil in store gets the house of the craftsmen, the tufunga of
+   later times; its craft works a quarter faster. The sea way, only for a house near the shore: the house of seafarers (fish,
+   provisions and sennit in store), of navigators (a navigator in the family, and mats) and of the Wissende, the keepers of
+   star paths and genealogies (tapa). There was no writing: they kept it all in memory. The chief's house is the last step. Families are named after the woman
    who founded them; Lapita households most likely lived where the women's families lived. */
 const HOME_KINDS = new Set(['haus', 'pfahl', 'fale']);
 const TIERS = {
   1:{n:'Hütte', fam:'Familie', cap:4, needs:['dach', 'essen', 'wasser']},
   2:{n:'Familienhaus', fam:'Familie', cap:6, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen'], cost:{holz:2, faser:3, schnur:2}},
-  3:{n:'Meisterhaus', fam:'Meisterfamilie', cap:8, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen', 'toepfe', 'matten', 'oel'], cost:{holz:2, matten:2}},
+  3:{n:'Handwerkerhaus', fam:'Handwerkerfamilie', cap:8, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen', 'toepfe', 'matten', 'oel'], cost:{holz:2, matten:2}},
   4:{n:'Häuptlingshaus', fam:'Häuptlingsfamilie', cap:10, needs:['dach', 'essen', 'wasser', 'brenn', 'speisen', 'toepfe', 'matten', 'oel', 'tapa', 'schweine', 'kava', 'schmuck', 'feinmatten', 'bemtapa', 'duftoel']}
 };
 const MASTER_GOODS = ['toepfe', 'matten', 'oel'];
+/* The sea way (b.t stays 2, b.way names the step): what each step wants in store besides the family house's needs, and costs.
+   Kept apart from TIERS: these are goods that must lie in store (not flows), checked by seaHave. */
+const SEA = {
+  see:{n:'Seefahrerhaus', fam:'Seefahrerfamilie', ic:'einbaum', rank:1, cap:7, cost:{holz:3, dach:2, schnur:2}, add:['fisch', 'proviant', 'schnur'], does:'Ihre Kanus fahren schneller und überstehen Böen besser.'},
+  nav:{n:'Navigatorenhaus', fam:'Navigatorenfamilie', ic:'plejaden', rank:2, cap:8, cost:{holz:2, dach:2, matten:2}, add:['matten'], does:'Ihre Navigatoren lernen anderthalbmal so schnell.'},
+  wis:{n:'Haus der Wissenden', fam:'Wissende', ic:'mana', rank:3, cap:8, cost:{holz:2, dach:3, schnur:2}, add:['tapa'], does:'Sie bewahren den Sternenpfad, auch wenn der Navigator stirbt. Etwas Ansehen.'}
+};
+const SEA_ORDER = ['see', 'nav', 'wis'];
+const SEA_NEAR = 18;   // a house is near the shore when its foot is no further from the water's edge than a coast building's (see check in world.js)
+const WIS_MANA = 1;    // standing a house of the Wissende adds every 15 ticks, up to what a village's beauty gives
+const SEA_SPEED = .03, SEA_SPEED_MAX = .12, SEA_SQUALL = .75;   // canoes: per seafarer adult, at most; chance of a squall with seafarers at home
+const NAV_FAST = 1.5;
 const UPGRADE_KEEP = {schnur:2};   // what stays in store when huts are bound anew by themselves: sennit for nets and canoes
 const START_POP = 4;   // one family: a woman, a man and their two half-grown children; everyone works
 let nextFam = 1;
@@ -23,19 +38,28 @@ const membersOf = (I, f) => (I.people || []).filter(p => p.h === f.id);
 const homeOk = (I, b) => !!b && !b.bt && HOME_KINDS.has(b.kind) && !(b.kind === 'pfahl' && unserved(I, b));
 const homesOf = I => I.buildings.filter(b => homeOk(I, b));
 const tierOf = b => !b ? 1 : b.kind === 'fale' ? 4 : b.t >= 2 ? Math.min(3, b.t) : 1;
+/* the way of a house above the family house: 'hand' (every b.t 3, also from old saves), 'see', 'nav', 'wis', or '' */
+const wayOf = b => !b || b.kind === 'fale' ? '' : b.t >= 3 ? 'hand' : b.t === 2 && SEA[b.way] ? b.way : '';
+const seaRank = b => SEA[wayOf(b)] ? SEA[wayOf(b)].rank : 0;
+const seaGoods = way => SEA[way] ? SEA_ORDER.slice(0, SEA[way].rank).flatMap(w => SEA[w].add) : [];
+const seaHave = (I, k) => k === 'fisch' ? (I.stock.fisch || 0) + (I.stock.meeres || 0) : haveOf(I, k);   // fish counts with seafood
+const houseName = b => SEA[wayOf(b)] ? SEA[wayOf(b)].n : TIERS[tierOf(b)].n;
+const houseFam = b => SEA[wayOf(b)] ? SEA[wayOf(b)].fam : TIERS[tierOf(b)].fam;
+/* near the shore: the same test as for a building that belongs on the beach */
+function onShore(I, b){ const L = b && landAt(I, b); return !!L && polyDist({x:b.x, y:b.y}, L.poly) <= SEA_NEAR; }
 const CHIEF_GOODS = TIERS[4].needs.filter(k => !TIERS[3].needs.includes(k));
 /* Room in a house, as in Anno: every need met brings room for one more. A hut holds 2, with food and water 4; a family
    house 4 to 6 with cooked food, a master's house 4 to 8, the chief's house 4 to 10, by how many of their goods are in
    store. When a need runs out the house has less room, and one by one people leave it (crowdTick). */
-const homeCapMax = (I, b) => TIERS[tierOf(b)].cap;
+const homeCapMax = (I, b) => SEA[wayOf(b)] ? SEA[wayOf(b)].cap : TIERS[tierOf(b)].cap;
 const DRY_GRACE = 15;   // ticks a good may be gone before the houses lose the room it gives
 function homeCap(I, b){
   // a need counts as met while the store has some, or this morning's meal and last night's fire reached everyone
   const M = I.meal, F = I.fire, met = k => k === 'essen' ? M && !M.hungry : k === 'wasser' ? M && !M.thirsty : k === 'brenn' ? F && b.fire === true : false;   // this house burned its fire last night
-  const t = tierOf(b), max = homeCapMax(I, b), have = k => haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE || met(k), basic = ['essen', 'wasser'].filter(have).length;
+  const t = tierOf(b), max = homeCapMax(I, b), sea = seaGoods(wayOf(b)), have = k => sea.includes(k) ? seaHave(I, k) > 0 : haveOf(I, k) > 0 || ((I.dry && I.dry[k]) || 0) < DRY_GRACE || met(k), basic = ['essen', 'wasser'].filter(have).length;
   const leak = roofState(b) === 'out' ? 1 : 0;   // under a broken roof one fewer finds a dry place
   if (t === 1) return Math.min(max, 2 + basic) - leak;
-  const extra = TIERS[t].needs.filter(k => !['dach', 'essen', 'wasser'].includes(k)), share = extra.filter(have).length / extra.length;
+  const extra = TIERS[t].needs.concat(sea).filter(k => !['dach', 'essen', 'wasser'].includes(k)), share = extra.filter(have).length / extra.length;
   return Math.min(max, 2 + basic + Math.round(share * (max - 4))) - leak;
 }
 /* a house fuller than its room: every half minute one of its people moves away */
@@ -55,7 +79,12 @@ const roofless = I => (I.people || []).filter(p => { const f = famOf(I, p.h); re
 const popTier = (I, t) => famsOf(I).reduce((n, f) => n + (famTier(I, f) >= t ? membersOf(I, f).length : 0), 0);
 const tier2Pop = I => popTier(I, 2), tier3Pop = I => popTier(I, 3), tier4Pop = I => popTier(I, 4);
 const chiefFam = I => famsOf(I).find(f => famTier(I, f) === 4) || null;
-const famLabel = (I, f) => f.home ? TIERS[famTier(I, f)].n : 'ohne Dach';
+const famLabel = (I, f) => f.home ? houseName(findB(f.home)) : 'ohne Dach';
+/* the grown-ups of the seafarer families: the canoe crews of the village */
+const seafarers = I => (I.people || []).filter(p => { const f = famOf(I, p.h), h = f && f.home && findB(f.home); return h && seaRank(h) && isAdult(p); }).length;
+const seaFamPop = I => famsOf(I).reduce((n, f) => n + (f.home && seaRank(findB(f.home)) ? membersOf(I, f).length : 0), 0);
+const wisHouse = I => homesOf(I).find(b => wayOf(b) === 'wis' && famOfHome(I, b)) || null;
+const navHome = (I, p) => { const f = famOf(I, p.h), h = f && f.home && findB(f.home); return h && seaRank(h) >= 2 ? 1 : 0; };   // someone of a navigator house
 /* the matriarch: the eldest woman of the chief's family; the chief: its eldest man, her brother or son */
 const eldest = (I, f, s) => membersOf(I, f).filter(p => p.s === s && stageOf(p) !== 'kid').sort((a, b) => a.b - b.b)[0] || null;
 function newFam(I, name, home = 0){
@@ -183,46 +212,92 @@ function ageMix(I){
   const P = I.people || [], st = q => P.filter(p => stageOf(p) === q).length;
   return {kid:st('kid'), adult:st('adult'), old:st('old'), soon:P.filter(p => isAdult(p) && ageOf(p) >= OLD_Y - 5).length, oldWork:P.filter(p => stageOf(p) === 'old' && p.job).length};
 }
-/* What a family has and lacks, by the needs of its step */
+/* What a family has and lacks, by the needs of its step; on the sea way the goods of the sea steps must lie in store */
 function famNeeds(I, f, list){
-  const t = famTier(I, f), by = new Map(list.map(n => [n.k, n]));
-  return TIERS[t].needs.map(k => k === 'dach' ? {k, state:f.home ? roofState(findB(f.home)) : 'out'} : {k, state:(by.get(k) || {state:'ok'}).state});
+  const t = famTier(I, f), by = new Map(list.map(n => [n.k, n])), h = f.home && findB(f.home), sea = h ? seaGoods(wayOf(h)) : [];
+  return TIERS[t].needs.concat(sea).map(k => k === 'dach' ? {k, state:f.home ? roofState(findB(f.home)) : 'out'} : sea.includes(k) ? {k, state:seaHave(I, k) > 0 ? 'ok' : 'out'} : {k, state:(by.get(k) || {state:'ok'}).state});
 }
 /* Rising, as in Anno. A house can rise one step when every need of its family is met and the material for the next step
-   lies in store; for a master's house its new goods must be there too. You tap the house and "Aufsteigen" (or let houses
-   rise by themselves). A hut is bound anew with fibre and sennit: a family house, with room for children. A family house
-   with pots, mats and coconut oil becomes a master's house. A master family falls back when one of its goods has run out
-   for half a minute; the sennit of a family house holds. */
-function upgradeSteps(I, b, list){
+   lies in store; its new goods must be there too. You tap the house and "Ausbauen" (or let houses rise by themselves).
+   A hut is bound anew with fibre and sennit: a family house, with room for children. From the family house two ways lead on:
+   the house of craftsmen (the family runs a Hauswerk; pots, mats and coconut oil in store) or, near the shore, the house of
+   seafarers (fish, provisions, sennit), then of navigators (a navigator in the family; mats), then of the Wissende (a
+   navigator of the second level; tapa). A house falls back a step when one of its goods has run out for half a minute; the
+   sennit of a family house holds. */
+const WAY_NEXT = {'':'fam', fam:'hand', see:'nav', nav:'wis'};   // the step after, by where the house stands; fam also leads to 'see'
+const wayCost = way => way === 'fam' ? TIERS[2].cost : way === 'hand' ? TIERS[3].cost : SEA[way].cost;
+const wayName = way => way === 'fam' ? TIERS[2].n : way === 'hand' ? TIERS[3].n : SEA[way].n;
+const wayCap = way => way === 'fam' ? TIERS[2].cap : way === 'hand' ? TIERS[3].cap : SEA[way].cap;
+const hasNavigator = (I, f, lvl = 1) => membersOf(I, f).some(p => Math.floor(p.nv || 0) >= lvl);
+/* the steps a house can take now, one or two: [{way, ...}] */
+const upgradeWays = (I, b) => { const w = wayOf(b), t = tierOf(b); return t === 1 ? ['fam'] : t >= 3 || b.kind === 'fale' ? [] : !w ? ['hand', 'see'] : SEA[w] && WAY_NEXT[w] ? [WAY_NEXT[w]] : []; };
+function upgradeSteps(I, b, list, way){
   const t = tierOf(b), f = famOfHome(I, b); if (t >= 3 || !f || b.bt) return null;
+  const ways = upgradeWays(I, b); if (!ways.length) return null;
+  way = ways.includes(way) ? way : ways[0];
   list = list || needsOf(I).list;
-  const T = TIERS[t + 1], fn = famNeeds(I, f, list), miss = fn.filter(n => n.state === 'out').map(n => n.k), steps = [];
+  const fn = famNeeds(I, f, list), miss = fn.filter(n => n.state === 'out').map(n => n.k), steps = [], cost = wayCost(way), sea = SEA[way];
+  const T = {n:wayName(way), cap:wayCap(way), cost, fam:sea ? sea.fam : way === 'hand' ? TIERS[3].fam : TIERS[2].fam};
   steps.push({k:'needs', ok:!miss.length, miss, t:miss.length ? `Es fehlt ${andList(miss.map(k => k === 'dach' ? 'Dach' : GN[k]))}` : 'Alle Bedürfnisse erfüllt'});
-  if (t === 2) for (const k of MASTER_GOODS) steps.push({k, ok:haveOf(I, k) > 0, t:`${GN[k]} im Lager`, have:haveOf(I, k), need:1});
-  for (const [k, v] of Object.entries(T.cost)) steps.push({k, ok:(I.stock[k] || 0) >= v, t:amount(k, v), have:I.stock[k] || 0, need:v});
-  return {t:t + 1, T, steps, ready:steps.every(q => q.ok)};
+  let add = [];
+  if (way === 'fam') add = TIERS[2].needs.filter(k => !TIERS[1].needs.includes(k));
+  if (way === 'hand'){
+    add = MASTER_GOODS;
+    for (const k of MASTER_GOODS) steps.push({k, ok:haveOf(I, k) > 0, t:`${GN[k]} im Lager`, have:haveOf(I, k), need:1});
+    const c = craftOf(I, b); steps.push({k:'werk', ic:'haus', label:'Werk', ok:!!c, t:c ? KINDS[c.kind].craft : 'fehlt', have:c ? 1 : 0, need:1, why:'Die Familie braucht ein Hauswerk'});
+  } else if (sea){
+    add = sea.add.filter(k => !seaGoods(wayOf(b)).includes(k));
+    for (const k of add) steps.push({k, ok:seaHave(I, k) > 0, t:`${GN[k]} im Lager`, have:seaHave(I, k), need:1});
+    if (way === 'see') steps.push({k:'ufer', ic:'fisch', label:'Strand', ok:onShore(I, b), t:onShore(I, b) ? 'nah' : 'zu weit', have:onShore(I, b) ? 1 : 0, need:1, why:'Nur ein Haus nah am Strand'});
+    if (way === 'nav') steps.push({k:'navi', ic:'plejaden', label:'Navi', ok:hasNavigator(I, f, 1), t:hasNavigator(I, f, 1) ? 'da' : 'fehlt', have:hasNavigator(I, f, 1) ? 1 : 0, need:1, why:'In der Familie lernt jemand im Haus der Navigatoren'});
+    if (way === 'wis'){ const other = homesOf(I).some(q => q !== b && wayOf(q) === 'wis'); steps.push({k:'eins', ic:'mana', label:'Nur eines', ok:!other, t:other ? 'schon da' : 'frei', have:other ? 0 : 1, need:1, why:'Es gibt nur ein Haus der Wissenden auf der Insel'}); }
+    if (way === 'wis') steps.push({k:'navi', ic:'plejaden', label:'Navi 2', ok:hasNavigator(I, f, 2), t:hasNavigator(I, f, 2) ? 'da' : 'fehlt', have:hasNavigator(I, f, 2) ? 1 : 0, need:1, why:'Jemand in der Familie kennt die Wolkenzeichen (Navigator Stufe 2)'});
+  }
+  for (const [k, v] of Object.entries(cost)) steps.push({k, ok:(I.stock[k] || 0) >= v, t:amount(k, v), have:I.stock[k] || 0, need:v});
+  return {t:t + 1, way, T, add, ways, steps, ready:steps.every(q => q.ok)};
 }
-const canUpgrade = (I, b, list) => { const u = upgradeSteps(I, b, list); return !!u && u.ready; };
+const canUpgrade = (I, b, list) => upgradeWays(I, b).some(w => { const u = upgradeSteps(I, b, list, w); return !!u && u.ready; });
 const readyHomes = (I, list) => homesOf(I).filter(b => canUpgrade(I, b, list));
-function upgradeHouse(I, b){
-  const t = tierOf(b) + 1, f = famOfHome(I, b); if (t > 3 || !f) return false;
-  pay(I, TIERS[t].cost); b.t = t; b.miss = 0; b.rw = 0; b.rf = tick; b.blessAt = typeof performance !== 'undefined' ? performance.now() : 0; invalidate(); I.staff = null;
-  if (t === 2) stats.ausbau = (stats.ausbau || 0) + 1; else stats.tufunga = (stats.tufunga || 0) + 1;
+/* which way a house takes by itself (the craft house, or the sea way near the shore while the island has fewer seafarer houses
+   than canoes; further steps of the sea way follow on); null when none is ready */
+function autoWay(I, b, list){
+  const ways = upgradeWays(I, b), ok = w => { const u = upgradeSteps(I, b, list, w); return !!u && u.ready; };
+  if (ways.includes('see') && ok('see') && ships.filter(s => s.own && (s.port || s.last) === I.id).length > homesOf(I).filter(q => seaRank(q) >= 1).length) return 'see';
+  return ways.find(w => w !== 'see' && ok(w)) || null;
+}
+const anyWay = (I, b) => autoWay(I, b) || upgradeWays(I, b).find(w => { const u = upgradeSteps(I, b, null, w); return !!u && u.ready; }) || null;
+const rowKey = b => SEA[wayOf(b)] ? wayOf(b) : tierOf(b);   // the row of the overview a house stands in
+function upgradeHouse(I, b, way){
+  const f = famOfHome(I, b); if (!f || tierOf(b) >= 3) return false;
+  way = way || autoWay(I, b); if (!way) return false; const u = upgradeSteps(I, b, null, way); if (!u || !u.ready || u.way !== way) return false;
+  pay(I, u.T.cost); b.miss = 0; b.rw = 0; b.rf = tick; b.blessAt = typeof performance !== 'undefined' ? performance.now() : 0; invalidate(); I.staff = null;
+  if (u.way === 'fam' || u.way === 'hand') b.t = u.way === 'fam' ? 2 : 3; else { b.t = 2; b.way = u.way; }
+  if (u.way === 'fam') stats.ausbau = (stats.ausbau || 0) + 1; else if (u.way === 'hand') stats.tufunga = (stats.tufunga || 0) + 1; else stats.seeweg = Math.max(stats.seeweg || 0, SEA[u.way].rank);
+  if (u.way === 'wis') loreCache = null;
   if (!awayQuiet && I.id === active) sfx('rise');
-  if (!awayQuiet && I.id === active) toast(t === 2 ? `${famName(f)}: Familienhaus. Jetzt können Kinder kommen.` : `${famName(f)}: Meisterhaus.`, 2800);
+  if (!awayQuiet && I.id === active) toast(u.way === 'fam' ? `${famName(f)}: Familienhaus. Jetzt können Kinder kommen.` : `${famName(f)}: ${u.T.n}.`, 2800);
   return true;
 }
+/* a house falls back a step when one of its goods is gone for half a minute: the craft house to the family house, a sea
+   house one step down the sea way */
 function tierTick(I, list, force = false){
   if (tick % 10 && !force) return;
   const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));
   for (const b of homesOf(I)){
-    if (tierOf(b) !== 3) continue;
-    b.miss = MASTER_GOODS.some(k => out.has(k)) ? (b.miss || 0) + 10 : 0;
-    if (b.miss >= 30){ b.t = 2; b.miss = 0; invalidate(); I.staff = null; const f = famOfHome(I, b); if (I.id === active && !awayQuiet) note(`${f ? famName(f) : 'Ein Haus'} hat keine ${MASTER_GOODS.filter(k => out.has(k)).map(k => GN[k]).join(' und ')} mehr und lebt wieder als einfache Familie.`); }
+    const w = wayOf(b);
+    if (!w){ b.miss = 0; continue; }
+    const goods = w === 'hand' ? MASTER_GOODS.filter(k => out.has(k)) : SEA[w].add.filter(k => seaHave(I, k) <= 0);   // a sea house loses a step for the goods of its own step
+    b.miss = goods.length ? (b.miss || 0) + 10 : 0;
+    if (b.miss >= 30){
+      const f = famOfHome(I, b);
+      if (w === 'hand') b.t = 2; else if (SEA[w].rank === 1){ delete b.way; } else b.way = SEA_ORDER[SEA[w].rank - 2];
+      b.miss = 0; invalidate(); I.staff = null; loreCache = null;
+      if (I.id === active && !awayQuiet) note(`${f ? famName(f) : 'Ein Haus'} hat keine ${goods.map(k => GN[k]).join(' und ')} mehr. Das Haus ist wieder: ${houseName(b)}.`);
+    }
   }
   // by themselves the houses rise only when the player wants it so; a reserve of sennit stays for nets and canoes
   if (!I.autoUp) return;
-  const b = homesOf(I).sort((a, q) => tierOf(a) - tierOf(q) || a.born - q.born).find(q => canUpgrade(I, q, list) && (tierOf(q) > 1 || (I.stock.schnur || 0) >= TIERS[2].cost.schnur + UPGRADE_KEEP.schnur));
+  const b = homesOf(I).sort((a, q) => tierOf(a) - tierOf(q) || seaRank(a) - seaRank(q) || a.born - q.born).find(q => autoWay(I, q, list) && (tierOf(q) > 1 || (I.stock.schnur || 0) >= TIERS[2].cost.schnur + UPGRADE_KEEP.schnur));
   if (b) upgradeHouse(I, b);
 }
 /* Roofs wear. Palm thatch lasts a few years on the islands (here four years of the game, 48 minutes). A worn roof
@@ -589,7 +664,7 @@ function workAdd(I, b){
   const K = KINDS[b.kind], here = (I.people || []).filter(p => p.job === b.id);
   if (here.length >= crewOf(b)){ toast(`${K.n} hat Platz für ${crewOf(b)}. Alle Plätze sind besetzt.`, 2600, false); return false; }
   const fit = fitOf(I), all = (I.people || []).filter(p => isAdult(p) && !p.job), free = all.filter(p => fit(p, b));
-  if (all.length && !free.length){ toast('Frei sind nur Leute aus Meisterfamilien. Sie arbeiten im Handwerk, nicht auf Feld, Meer oder im Wald.', 3600, false); return false; }
+  if (all.length && !free.length){ toast('Frei sind nur Leute aus Handwerkerfamilien. Sie arbeiten im Handwerk, nicht auf Feld, Meer oder im Wald.', 3600, false); return false; }
   if (!free.length){ toast('Niemand ist frei. Ruf jemanden woanders mit − ab, oder baut Hütten: Dann kommen Familien von weit her.', 3600, false); return false; }
   handNote(I); const p = pickWorker(I, b, free, here); p.job = b.id; I.staff = null; syncWalkers(); return p;
 }
@@ -602,7 +677,7 @@ function workDel(I, b){
    old place in exchange (or is free, when it does not suit them). Nothing else changes: the island stays automatic. */
 const jobPlaces = (I, p) => I.buildings.filter(b => !b.bt && KINDS[b.kind].crew > 0 && (!b.at || (findB(b.at) && famOfHome(I, findB(b.at)) && famOfHome(I, findB(b.at)).id === p.h)));
 function jobWhy(I, p, b){
-  if (!fitOf(I)(p, b)) return 'Meisterfamilie: arbeitet im Handwerk, nicht auf Feld, Meer oder im Wald';
+  if (!fitOf(I)(p, b)) return 'Handwerkerfamilie: arbeitet im Handwerk, nicht auf Feld, Meer oder im Wald';
   return '';
 }
 function chooseJob(I, p, b){

@@ -157,7 +157,7 @@ Das Spiel hält sich an die Zeit der Lapita-Leute, die als Erste von Neuguinea b
 - **Was es damals gab:** Töpfe mit gestempelten Mustern und weißer Kalkfüllung, Obsidian aus dem Handel, Steinbeile,
   Muschelschmuck, Auslegerkanus und Doppelkanus mit Mattensegel, Kokospalmen und Pandanus, Sennit aus Kokosfaser, das
   salzwasserfest Kanus, Beile und Häuser zusammenhält, der Erdofen.
-- **Spätere Wörter nur als Hinweis:** Aus der Familie der Tufunga wurde die Meisterfamilie (tufunga sagte man später in
+- **Spätere Wörter nur als Hinweis:** Aus der Familie der Tufunga wurde die Handwerkerfamilie (tufunga sagte man später in
   Tonga und Samoa), aus dem Kōruru-Wurf der Knöchelwurf (die Māori nannten das Spiel später Kōruru), aus Taravana die
   Taucherkrankheit. Die Matriarchin folgt dem, was über frühe matrilokale Familien vermutet wird; Tonga mit Fahu und
   Tamahā ist ein späteres Beispiel.
@@ -190,7 +190,7 @@ ohne dass ein Dorf zusammenbricht.
 | nach der großen Fahrt | **Hawaiki** | Kavagarten, Häuptlingshaus; als Hauswerk feine Matten, bemalte Tapa, Duftöl, Holzschalen |
 | in Hawaiki, mit dem Sternenpfad | **Die lange Pause** | Reisekanu |
 
-Das Kanuhaus kommt mit 20 Menschen, weil die Meisterhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
+Das Kanuhaus kommt mit 20 Menschen, weil die Handwerkerhäuser Matten wollen, die es nur auf Atollen gibt. Die Stufen stehen
 in der Übersicht als **Weg des Dorfes**: eine Schnur mit einem Knoten je Stufe, dann der Knoten der großen Fahrt und
 dann Hawaiki, die lange Pause und zuletzt die zweite Fahrt; fest sind die erreichten, locker die nächste (mit der Zahl der Menschen darunter), hell die kommenden.
 
@@ -257,11 +257,11 @@ frei ist, sonst sammeln sie Wild, und das wird weniger. Ein Arbeiter im Feld ern
 Minute, jeder isst 1,0), einer an der Quelle tränkt etwa 10. Der Rat sagt es jetzt: „3 sind frei, doch jeder Platz für
 Nahrung ist besetzt: Ein Feld oder eine Fischerhütte mehr gibt Arbeit.“
 
-**Arbeit nach Stand, wie bei Anno.** Die Erwachsenen einer **Meisterfamilie** gehen nicht mehr aufs Feld, aufs Meer
+**Arbeit nach Stand, wie bei Anno.** Die Erwachsenen einer **Handwerkerfamilie** gehen nicht mehr aufs Feld, aufs Meer
 oder in den Wald. Sie arbeiten im Hauswerk, im Handwerk, im Kanuhaus und auf Baustellen. Ihr eigenes Hauswerk geht ein
-Viertel schneller. Wer Meister macht, braucht also weiter einfache Familien für Essen, Wasser und Holz. Fehlt Essen oder
-Wasser ganz, packen alle wieder mit an. Hat eine Meisterfamilie freie Hände und kein Hauswerk, sagt der Rat
-„Meisterfamilie ohne Werk“ und zeigt das Haus.
+Viertel schneller. Wer Handwerker macht, braucht also weiter einfache Familien für Essen, Wasser und Holz. Fehlt Essen oder
+Wasser ganz, packen alle wieder mit an. Hat eine Handwerkerfamilie freie Hände und kein Hauswerk, sagt der Rat
+„Handwerkerfamilie ohne Werk“ und zeigt das Haus.
 
 **Verhältnisse und Ketten.** Die Tafel eines Arbeitsplatzes zeigt „≈3,1“ mit dem Bild für Menschen: so viele versorgt der
 Platz, voll besetzt. Darunter in Worten, etwa „Voll besetzt 3,8 Nahrung pro Minute: genug für etwa 3,1 Menschen. Jeder
@@ -321,7 +321,7 @@ auch die Lapita-Leute: gegen den Wind hinaus, damit der Weg zurück leicht war (
 9. 12 Bewohner, 10. Familien aus drei Linien, 11. Sennit drehen im Haus, 12. ein Familienhaus, 13. Erdofen, 14. Baumpflanzer,
 15. 20 Bewohner, 16. eine Familie am Ton töpfert, 17. Steg und Pfahlhaus, 18. Beilwerkstatt, 19. 30 Bewohner, 20. Kanuhaus,
 21. Auslegerkanu, 22. Siedler nach Motu, 23. Matten flechten und Sennit drehen auf Motu, 24. Handelskette, 25. ein Dorf mit einer
-Meisterfamilie, 26. 6 Proviant, 27. Doppelkanu, 28. neues Land im Nebel, 29. eine Hochzeit mit einem Clan, 30. ein Fest,
+Handwerkerfamilie, 26. 6 Proviant, 27. Doppelkanu, 28. neues Land im Nebel, 29. eine Hochzeit mit einem Clan, 30. ein Fest,
 31. das Fest der Plejaden, 32. Tauchen, 33. das Lapita-Netz, 34. die Weite See, 35. eine Schatzinsel, 36. ein Dorf in
 der Ferne, 37. das Fest der Schätze, 38. Hawaiki: ein Häuptlingsdorf, 39. die lange Pause: ein Navigator mit dem
 Sternenpfad, 40. das Reisekanu, 41. die Inseln des Morgens, 42. ein Dorf am Morgen, 43. andere Menschen: ein Volk einer
@@ -360,7 +360,7 @@ Einfach und nach Bedeutung geordnet:
     40 s: Das Dach ist lose“ mit „Dächer festbinden“.
   - **Eine Zeile „Als Nächstes“:** das Erste, was fehlt (sonst knapp ist), mit dem Gebäude, das hilft: „Essen knapp →
     Tarofeld“, oder in Worten: „Gekochtes fehlt: Erdofen kommt ab 12 Menschen.“
-  - **Ausbau:** „Ausbau: Meisterhaus“, darunter „Platz für 8 · will dann auch Töpfe, Matten und Öl“, daneben der Knopf
+  - **Ausbau:** „Ausbau: Handwerkerhaus“, darunter „Platz für 8 · will dann auch Töpfe, Matten und Öl“, daneben der Knopf
     „Ausbauen“. Darunter jede Bedingung als Kachel mit Namen und „hat/braucht“: Bedarf 3/4, Töpfe 0/1, Matten 0/2, Öl
     0/1, Holz 2/2, grün oder rot. Muss etwas per Kanu kommen, trägt die Kachel ein kleines „Kanu“ und führt zu den Kanus.
   - Unten die Linie der Familie und „Versetzen“, „Entfernen“.
@@ -381,7 +381,7 @@ Einfach und nach Bedeutung geordnet:
   die fortwill, und ein Kanu mit Zuzug öffnen ihr Blatt.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
-    sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Meisterhaus fehlen Matten von einem Atoll, die Insel ist
+    sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Handwerkerhaus fehlen Matten von einem Atoll, die Insel ist
     voll. Darunter jede Hausstufe mit Häusern und Menschen und **Kacheln wie im Haus** (seit Version 68): Bild, Name und
     ein Wort, da, knapp, fehlt, beim Dach hält, undicht, kaputt. Eine Stufe, die noch kein Haus erreicht hat, zeigt ihre
     Bedürfnisse blass mit „später“. Ein Tipp führt zu dem, was hilft. Dazu Zuzug und Kinder und die Verwandtschaft.
@@ -500,27 +500,28 @@ die Aufgabe „Hinüber nach Motu“ zeigt zuerst den Steg. Wo ihr schon wohnt, 
 
 ## Haushalte und Familien
 
-Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
+Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen, ab dem Familienhaus mit zwei Wegen (siehe „Zwei Wege: Handwerker und Seefahrer“ am Ende):
 
 | Stufe | Bau | Platz | Will |
 | --- | --- | --- | --- |
 | Hütte | 4 Holz, 4 Palmwedel | 2 bis 4 | Dach, Nahrung, Wasser |
 | Familienhaus | neu gebunden: 2 Holz, 3 Kokosfasern, 2 Schnur | 4 bis 6, **Platz für Kinder** | dazu Gekochtes |
-| Meisterhaus | 2 Holz, 2 Matten; Töpfe, Matten und Öl im Lager | 4 bis 8 | dazu Töpfe, Matten, Kokosöl |
+| Handwerkerhaus | die Familie hat ein Hauswerk; 2 Holz, 2 Matten; Töpfe, Matten und Öl im Lager | 4 bis 8 | dazu Töpfe, Matten, Kokosöl |
+| Seefahrerhaus (nur nah am Strand) | 3 Holz, 2 Palmwedel, 2 Schnur; Fisch, Proviant, Schnur im Lager | 4 bis 7 | dazu Fisch, Proviant, Schnur |
 | Häuptlingshaus | eigenes Gebäude | 4 bis 10 | dazu das Feinste |
 
 - **Familien:** Jeder Mensch gehört zu einer Familie. Eine Familie trägt den Namen der Frau, die sie gegründet hat; die
   frühen Lapita lebten wohl dort, wo die Familie der Frau lebte.
 - **Hütte:** Pfosten und ein Dach aus Palmwedeln, ohne Nägel. Sie ist das Zuhause einer Familie, bis 4 Menschen. In einer
   Hütte kommen **keine Kinder** zur Welt.
-- **Ausbau:** Ein Haus kann eine Stufe höher, wenn **alle Bedürfnisse da** sind und das **Material** im Lager liegt; für das Meisterhaus müssen dazu Töpfe, Matten und Kokosöl da sein.
+- **Ausbau:** Ein Haus kann eine Stufe höher, wenn **alle Bedürfnisse da** sind und das **Material** im Lager liegt; für das Handwerkerhaus müssen dazu Töpfe, Matten und Kokosöl da sein.
   Dann schwebt ein Knoten mit Blüte über dem Haus, oben steht „Ausbau“, und auf der Tafel des Hauses ist der Knopf
   „Ausbauen“ frei. Beim Ausbau regnen Blüten aufs Dach. In der Übersicht baut „Alle ausbauen“ alle bereiten Häuser auf
   einmal aus. Wer will, schaltet dort „Von selbst ausbauen“ ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
-- **So sieht man die Stufe:** Das Familienhaus hat Tapa an der Tür und zwei geschnitzte Pfosten, das Meisterhaus dazu
+- **So sieht man die Stufe:** Das Familienhaus hat Tapa an der Tür und zwei geschnitzte Pfosten, das Handwerkerhaus dazu
   Töpfe und eine gerollte Matte davor und einen Blütenkranz über der Tür.
 - **Weiterkommen:** Die Tafel zeigt, was fehlt, und woher es kommt. Manches gibt es nicht auf jeder Insel: Matten nur auf
-  Atollen, Töpfe nur auf hohen Inseln, feine Dinge nur auf Inseln mit besonderem Boden. Ab dem Meisterhaus muss das Dorf
+  Atollen, Töpfe nur auf hohen Inseln, feine Dinge nur auf Inseln mit besonderem Boden. Ab dem Handwerkerhaus muss das Dorf
   also hinaus: siedeln, tauschen, Gaben bringen.
 - **Kinder:** Sie kommen in Familienhäusern, wo eine Frau und ein Mann leben, Platz ist und die Ernte mehr als reicht:
   Essen und Wasser kommen mindestens 15 % schneller nach, als sie gebraucht werden, oder das Lager ist gut gefüllt.
@@ -538,7 +539,7 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen:
   höchstens 4“.
 - **Zu voll:** Werden die Kinder groß, gründen die jüngsten Erwachsenen eine eigene Familie und ziehen in die nächste
   leere Hütte.
-- **Meisterfamilie:** Meister eines Handwerks; viel später hießen sie in Tonga und Samoa tufunga. Fehlen Töpfe, Matten
+- **Handwerkerfamilie:** Meister eines Handwerks; viel später hießen sie in Tonga und Samoa tufunga. Fehlen Töpfe, Matten
   oder Öl eine halbe Minute lang, lebt sie wieder als einfache Familie im Familienhaus.
 
 ## Zuzug: Familien aus der Ferne
@@ -595,7 +596,7 @@ Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht
     niemand ausgeliehen.
   - **Stammplatz wählen** (seit Version 68): Auf der Tafel einer Person steht „Stammplatz: Erntehaus“ mit „Ändern“. Dann
     stehen alle Arbeitsplätze als Kacheln da, mit Namen und wie viele dort ihren Platz haben. Ist einer voll, tauscht
-    der Letzte dort mit dir: Er bekommt deinen alten Platz. Was nicht passt (eine Meisterfamilie auf dem Feld), ist blass
+    der Letzte dort mit dir: Er bekommt deinen alten Platz. Was nicht passt (eine Handwerkerfamilie auf dem Feld), ist blass
     und sagt warum. Die Insel bleibt dabei automatisch.
 - **Von Hand:** Auf der Tafel eines Arbeitsplatzes steht, wer dort arbeitet, mit Namen. Mit „+“ schickst du einen Freien
   hin, mit „−“ rufst du einen ab. Das geht für **jeden** Freien, auch wenn seine Familie schon woanders arbeitet. Dann wird
@@ -1180,7 +1181,7 @@ oder einmal fällen.
 - **Bauen wie damals:** Gebäude werden ohne Nägel gebaut: Holz und Palmwedel für jedes Dach, Sennit erst für das
   Familienhaus, Pfahlhaus, Versammlungs- und Kanuhaus. Kanus brauchen dazu Brotfruchtharz.
 - **Wasser** ist ein Grundbedürfnis: jeder Mensch braucht 0,5 pro Minute. Fehlt es, wächst das Dorf nicht.
-- **Kokosöl** wollen die Meisterfamilien. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der
+- **Kokosöl** wollen die Handwerkerfamilien. Beim Fest der Plejaden glänzen die Tänzer vom Öl (Salbung, +3), und der
   Clan vom Feuerberg und der Clan vom Maulbeerhain schätzen es als Gabe.
 - **Warengruppen:** Eine Werkstatt kann eine Gruppe verlangen, etwa Brennstoff. Dann nimmt sie, was da ist, zuerst die
   Abfälle.
@@ -1189,7 +1190,7 @@ oder einmal fällen.
 
 ## Veredelung, Erdofen und Tiere
 
-Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptling wollen.
+Aus den Rohstoffen werden die Dinge, die Handwerkerfamilien und später der Häuptling wollen.
 
 | Ort | Braucht | Macht |
 | --- | --- | --- |
@@ -1204,7 +1205,7 @@ Aus den Rohstoffen werden die Dinge, die Meisterfamilien und später der Häuptl
 
 - **Nebenprodukte:** Taro- und Pulakafelder geben Blätter, Bananen noch mehr. Die Beilwerkstatt gibt Kochsteine aus Basalt,
   die Fischerhütte vom Riff Korallenbrocken als Kochsteine und Muschelschalen. Der Schweinepferch gibt Eberhauer.
-- **Gekochtes** zählt als Nahrung und ist ein Bedürfnis der Meisterfamilien (0,3 pro Kopf und Minute).
+- **Gekochtes** zählt als Nahrung und ist ein Bedürfnis der Handwerkerfamilien (0,3 pro Kopf und Minute).
 - **Tiere fressen:** Jedes Schwein frisst laufend (0,25 pro Minute), jeder Hühnerhof 0,6, aus dem Futter: erst Reste, dann
   Kokosnüsse, dann Feldfrüchte. Ohne Futter legen die Hühner nicht, und jede halbe Minute geht ein Schwein ein.
 - Der Erdofen und der Kalkbrenner kommen mit der Töpferei, Kurkuma und Hühner mit dem Tarofeld, Malerin, Weberin und
@@ -1233,12 +1234,12 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 | Stufe | Ab | Wer braucht was (pro Kopf und Minute) |
 | --- | --- | --- |
 | Weiler | Anfang | alle: Dach, Nahrung 1,0 (jede Sorte zählt), Wasser 0,5; Familienhäuser dazu Gekochtes 0,3 |
-| Dorf | 30 Bewohner | Meisterfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04 |
+| Dorf | 30 Bewohner | Handwerkerfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04 |
 | Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
 - **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (8 Holz, 6 Palmwedel, 4 Schnur, 1 feine Matte), eines je
   Insel, nur auf hohen Inseln, mit Hawaiki. Die Familie, deren älteste Frau die älteste unter den
-  Meisterfamilien ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
+  Handwerkerfamilien ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
   Die Schwester des Häuptlings stand im Rang über ihm (fahu), die Tamahā war die Ranghöchste im Land.
 - **Weg zum Häuptlingsdorf**, als Liste in der Übersicht, jeder Schritt mit Haken: die große Fahrt (ein Dorf auf den
   Fernen Inseln); eine große hohe Insel, die mindestens
@@ -1804,7 +1805,7 @@ geht alle zwei Jahre (24 Minuten); jede Wahl bringt 1 Ansehen. Ab 12 Menschen r�
 ein Gesicht, und die Dörfer haben einander etwas zu bieten.
 
 **Handel auf einen Tipp.** Fehlt einem Haus für den nächsten Schritt eine Ware, die ein anderes Dorf von dir hat oder macht
-(die Matten des Meisterhauses kommen von den Atollen), schlägt der Rat vor: „Handel: Matten aus Motu“. Ein Tipp richtet die
+(die Matten des Handwerkerhauses kommen von den Atollen), schlägt der Rat vor: „Handel: Matten aus Motu“. Ein Tipp richtet die
 Kette ein: Das Kanu im Hafen fährt hin, holt die Ware und bringt dafür mit, was das Dorf im Überfluss hat und das andere
 nicht (bis zu zwei Waren, je vier). Gab es noch keine Schnur zwischen den Dörfern, fährt das Kanu erst einmal hin, knüpft sie
 und richtet die Kette am Ziel ein. Ohne Kanu im Hafen verweist der Rat auf das Kanuhaus.
@@ -1856,6 +1857,9 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Obsidian aus wenigen Fundorten weit gehandelt; Obsidian-Werkzeuge für das Tatau | ja, durch Funde (Talasea-Obsidian bis Fidschi; Gebrauchsspuren an Lapita-Abschlägen) |
 | Schildkröten und Seevögel als Essen | ja, durch Knochenfunde an Lapita-Orten |
 | Segel aus Pandanusmatten | aus späteren Berichten; für Lapita angenommen |
+| Lange Fahrten über offenes Meer, von den Bismarck-Inseln bis Fidschi, Tonga und Samoa; Obsidian und Töpfe als Tauschgut | ja, durch Funde (Obsidian aus Talasea auf Fidschi und weiter, Lapita-Orte auf fernen Inseln) |
+| Ein eigener Rang von Seefahrern und Navigatoren (Seefahrerhaus, Navigatorenhaus) | **vermutet.** Erschlossen aus den späteren Navigatoren Mikronesiens und Polynesiens, etwa den palu der Karolinen. Ob die Lapita einen eigenen Stand hatten, ist nicht belegt |
+| „Wissende“ als Hüter von Sternenpfaden und Ahnenreihen (Haus der Wissenden) | **vermutet, von später angelehnt.** Es gab keine Schrift; Fahrtenwissen und Ahnenreihen gab man mündlich weiter, so kennt man es aus späterer Zeit. Das Wort „Wissende“ ist eine Wahl des Spiels, kein überliefertes Wort. Dass sie das Wissen eines gestorbenen Navigators bewahren und etwas Ansehen bringen, ist eine **Spielregel** |
 | Neue Dörfer gründen jüngere Linien, die Gründer werden Ahnen | vermutet (aus späteren Überlieferungen erschlossen) |
 | Die Gaben und ihre Zahlen | **Spielregeln** |
 | Gärten in Neuguinea, Bananen, Taro, Zuckerrohr von dort | ja (Kuk-Sumpf, Bergland von Neuguinea, Tausende Jahre vor Lapita) |
@@ -1922,3 +1926,46 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 - **Arbeitsplatz-Blatt** (Tippen auf z. B. den Erdofen): oben nur Name und eine Zeile mit dem Zustand (rot „Fehlt: Blätter“, grün „Arbeitet“) und „Vorrang“. Darunter „Braucht → Macht“ als kleine Kacheln, die immer in die Breite passen: sie werden schmaler, und „Macht“ rutscht erst darunter, wenn es gar nicht anders geht. Ein Werkzeug wie die Kochsteine ist nur noch ein kleines Abzeichen („wäre schneller“) in der Zeile „Braucht“. Die Leute stehen mit − und + in einer einzigen Zeile. Das Blatt scrollt auf dem Handy nicht (getestet bei 390×844).
 - **Unter „Mehr dazu“** liegen jetzt: die langen Sätze („2 feste Plätze …“, „Es fehlt …“), „Bleiben“, „Versetzen“, „Entfernen“ und „Fällen“. Die Rückfrage zum Entfernen klappt „Mehr dazu“ von selbst auf. Das Haus-Blatt bleibt, wie es war.
 - **Bau-Menü** in Gruppen: Wohnen, Essen (mit Wasser), Rohstoffe, Handwerk, Meer, Schmuck. Es werden nur Gruppen mit etwas Baubarem gezeigt. Jede Kachel ist eine Zeile: Bild, Name, Kosten (fehlendes Material in Ocker). Was noch nicht freigeschaltet ist, bleibt versteckt; was nur ein Lebewesen im Kanu braucht, ist grau mit „Bring Taro mit“. Der Ablauf bleibt: Gebäude wählen, dann Land antippen.
+
+## Zwei Wege: Handwerker und Seefahrer (Version 89)
+
+Der Ausbau der Häuser war „nicht logisch genug“. Jetzt führt er vom Familienhaus aus auf **zwei Wege**. Jeder Schritt
+kostet genau das, was man am Haus sieht: Pfosten sind Holz, das Dach sind Palmwedel, die Bindung ist Schnur oder
+Fasern, der Boden sind Matten.
+
+Hütte → Familienhaus → entweder **Handwerkerhaus** oder **Seefahrerhaus** → Navigatorenhaus → Haus der Wissenden.
+Das Häuptlingshaus bleibt, wie es war.
+
+- **Handwerkerhaus** (früher Meisterhaus; ein altes Haus der dritten Stufe ist jetzt eins). Regel in einer Zeile: *Die
+  Familie muss ein Hauswerk haben.* Dazu Töpfe, Matten und Kokosöl im Lager; es kostet 2 Holz und 2 Matten. Das Hauswerk
+  arbeitet dort ein Viertel schneller. Die Tafel zeigt die Kachel „Werk“; tippt man darauf, wählt man das Hauswerk.
+  Verliert das Haus Töpfe, Matten oder Öl eine halbe Minute lang, ist es wieder ein Familienhaus. Ein Haus, das sein
+  Hauswerk später abgibt, bleibt Handwerkerhaus; der Rat erinnert dann an das Werk.
+- **Seefahrerhaus** gibt es nur für ein Haus **nah am Strand** (dieselbe Prüfung wie bei Gebäuden, die an den Strand
+  gehören). Die Familie will zusätzlich Fisch (Fisch oder Meeresfrüchte), Proviant und Schnur im Lager. Kosten: 3 Holz,
+  2 Palmwedel, 2 Schnur; Platz für 7. Die Erwachsenen dieser Familien sind die Kanumannschaften des Dorfes: **Kanus
+  dieser Insel fahren je Erwachsenem 3 % schneller (höchstens 12 %) und geraten seltener in Böen** (Chance ein Viertel
+  kleiner). Das Kanublatt sagt es. Ein Haus mit Paddel an der Wand und einem Netz zum Trocknen zeigt es auf der Karte.
+- **Navigatorenhaus:** ein Seefahrerhaus, in dessen Familie jemand Navigator ist (Stufe 1 oder mehr). Will zusätzlich
+  Matten für die Segel; Kosten 2 Holz, 2 Palmwedel, 2 Matten; Platz für 8. Navigatoren dieser Familie **lernen
+  anderthalbmal so schnell**, und im Haus der Navigatoren lernt zuerst, wer in einem solchen Haus wohnt. An der Tür liegt
+  ein kleiner Ring aus Steinen, der Sternenkompass.
+- **Haus der Wissenden:** ein Navigatorenhaus, in dem jemand mindestens Stufe 2 kennt (die Wolkenzeichen). Will zusätzlich
+  Tapa für die Gewänder; Kosten 2 Holz, 3 Palmwedel, 2 Schnur; **höchstens eins je Insel.** Weil es keine Schrift gab,
+  bewahren die Wissenden Sternenpfade und Ahnenreihen im Gedächtnis: **Stirbt ein Navigator ohne Schüler, geht sein Wissen
+  nicht verloren**, solange das Haus steht. Dazu bringt das Haus etwas Ansehen (1 alle halbe Minute). Eine geknotete
+  Schnur hängt an der Tür.
+- **Zurückfallen:** Fehlt einem Seefahrerhaus ein Gut seiner Stufe eine halbe Minute lang, fällt es eine Stufe zurück
+  (Wissende zu Navigatoren, Navigatoren zu Seefahrern, Seefahrer zum Familienhaus). Das Wissen, das die Wissenden
+  bewahrt haben, gilt nur, solange das Haus der Wissenden steht.
+- **Wahl im Spiel:** Auf der Tafel eines Familienhauses stehen am Strand zwei Knöpfe, „Handwerkerhaus“ und
+  „Seefahrerhaus“, mit ihren Kacheln darunter; weiter im Land steht nur: „Seefahrerhaus: nur nah am Strand.“ Jede Kachel
+  hat ein Wort, wofür sie gut ist (Fisch: Kost der Fahrer, Matten: für die Segel …). Auf dem Handy scrollt die Tafel
+  nicht (der Handytest prüft Handwerker, Seefahrer, Navigatoren und Wissende in drei Größen).
+- **Von selbst ausbauen:** Ein Haus wird Handwerkerhaus. Ist es am Strand und hat die Insel weniger Seefahrerhäuser als
+  Kanus, wählt es den Seeweg. Die weiteren Stufen des Seewegs folgen dann von selbst.
+- **Alte Spielstände:** Ein Haus mit Stufe 3 ist ein Handwerkerhaus. Der Seeweg steht im Haus als `way` (Stufe bleibt 2),
+  das gerettete Wissen als Zahl auf der Insel. Beides wird mitgespeichert.
+- **Was belegt ist und was vermutet:** Lange Fahrten und Obsidian-Tausch sind für die Lapita belegt. Ein eigener Rang von
+  Seefahrern und Navigatoren und die Wissenden sind **vermutet** und von späteren Völkern angelehnt (siehe die Tabelle
+  oben, „Was belegt ist und was später“).

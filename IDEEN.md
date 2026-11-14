@@ -23,9 +23,9 @@ Regelverstoß. Vier Stellen hängen aber:
    der Bot bleibt bei etwa 40 Menschen stehen (sechs Läufe, Version 68).
 2. **Das Erntehaus macht vier Dinge** (Nüsse, Wasser, Wedel, Palmholz) und kann nur eins zugleich. Wasser und Wedel
    kommen sich in die Quere. In einem von sechs Läufen zerfielen die Dächer, weil keine Wedel kamen.
-3. **Ab dem Familienhaus stockt es.** Das Meisterhaus braucht Matten, die es nur auf Atollen gibt. Dafür braucht es eine
+3. **Ab dem Familienhaus stockt es.** Das Handwerkerhaus braucht Matten, die es nur auf Atollen gibt. Dafür braucht es eine
    erste Fahrt von Hand, dann eine Handelskette. Der Weg dahin ist schwer zu finden; der Bot kommt nie darüber hinaus.
-4. **Die Tests sehen das späte Spiel nicht.** Der Bot kann nicht segeln. Ob Meisterhaus, Häuptlingsdorf und die große
+4. **Die Tests sehen das späte Spiel nicht.** Der Bot kann nicht segeln. Ob Handwerkerhaus, Häuptlingsdorf und die große
    Fahrt aufgehen, ist ungeprüft.
 
 **Nächste Schritte, nach langlebigem Spielspaß:** Was trägt ein Spiel über Wochen? Ein Grundgefühl von Wachsen statt
@@ -36,9 +36,9 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
    Essen, „Mehr Essen“ in weniger als einem Drittel der Zeit, der Bot im Schnitt über 50 Menschen. Ohne das hört man
    auf, bevor das Mittelspiel beginnt.
 2. ~~**Ein Mittelspiel mit Tiefe.**~~ **erledigt in Version 70** (Stärken, Handel auf Tipp, der Bot gründet ein zweites Dorf). Vorher stand hier: Jedes Dorf wählt eine Stärke (Töpfer, Fischer, Weberinnen, Navigatoren) mit einem
-   Bonus, und der Handel zwischen den eigenen Dörfern wird der Kern. Fehlen dem Meisterhaus Matten und ist ein Atoll
+   Bonus, und der Handel zwischen den eigenen Dörfern wird der Kern. Fehlen dem Handwerkerhaus Matten und ist ein Atoll
    bekannt, schlägt der Rat die Handelskette vor und setzt sie auf Tipp. Vorarbeit dafür: **Der Bot lernt segeln und
-   handeln**, sonst lässt sich das Mittelspiel nicht messen. Ziel: das Meisterhaus in 90 Minuten in mindestens der
+   handeln**, sonst lässt sich das Mittelspiel nicht messen. Ziel: das Handwerkerhaus in 90 Minuten in mindestens der
    Hälfte der Läufe.
 3. ~~**Soundtrack.**~~ **erledigt in Version 70** (siehe README, „Der Soundtrack“). Vorher stand hier: Musik, die das Spiel trägt und nie nervt, ohne Dateien im Spiel erzeugt (das Spiel bleibt eine
    Datei):
@@ -55,7 +55,7 @@ Mangel, ein Mittelspiel mit echten Entscheidungen, Stimmung, Menschen, an denen 
 4. ~~**Geschichten der Menschen.**~~ **erledigt in Version 70.** Vorher stand hier: Auf der Personentafel ein paar Lebensereignisse: der erste Fang, die Hochzeit, das
    Tatau, wird Navigatorin, ein Sturm überstanden. So erkennt man Leute wieder und hängt an ihnen.
 5. **Feste für Erfolge und Überfluss.** Erstes Familienhaus, 20, 30 und 50 Menschen, die erste Handelsfahrt, das erste
-   Meisterhaus: ein kurzes Fest auf dem Platz mit Blüten, Trommeln und einem kleinen Geschenk. Volle Lager bringen ein
+   Handwerkerhaus: ein kurzes Fest auf dem Platz mit Blüten, Trommeln und einem kleinen Geschenk. Volle Lager bringen ein
    Erntefest mit Ansehen und öfter Kindern; ein Vorrat für die magere Zeit wird ein sichtbares Ziel.
 6. **Sammelbuch.** Muster, Ahnen, Schätze und seltene Treibgut-Funde in einem Album mit Lücken, die locken.
 7. **Weniger Rot.** Rot nur, wenn es wirklich brennt (Wasser, Dach, Sturm). Sonst ein ruhiges nächstes Ziel, und grün,
@@ -159,7 +159,7 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 - **Atolle anderer Clans:** Auch Gaben zu einem Clan auf einem Atoll brauchen jetzt den Steg. Prüfen, ob das stört.
 - **Werk-Reiter:** zeigt keine Mengen pro Minute; bei Plätzen mit Wahl (Erntehaus, Fischer) nur die gewählte Ware.
 - **Bot-Wächter, einmal gesehen (Version 75):** „Fischerhütte 10 Minuten leer, während 7 frei sind“ im langen Lauf; in den
-  nächsten drei Läufen nicht wieder. Vermutung: Die Freien waren Meisterfamilien, die nicht fischen gehen, solange das
+  nächsten drei Läufen nicht wieder. Vermutung: Die Freien waren Handwerkerfamilien, die nicht fischen gehen, solange das
   Morgenmahl reicht. Beim nächsten Mal den Grund aus der Notiz „leer seit 2 Minuten“ ansehen.
 
 ## Offen aus der Runde „Brandung, eine Leiste, Palmen“ (Version 73)
@@ -176,10 +176,10 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 
 ## Offen aus der Runde „Mittelspiel, Soundtrack und Geschichten“ (Version 70)
 
-- **Der Bot kommt nicht zum Meisterhaus.** Er baut jetzt ein Kanu (Beil und Harz bekommt er geschenkt), gründet ein zweites Dorf
+- **Der Bot kommt nicht zum Handwerkerhaus.** Er baut jetzt ein Kanu (Beil und Harz bekommt er geschenkt), gründet ein zweites Dorf
   auf einem Atoll (um Minute 40) und richtet bei Bedarf die Handelskette ein. Danach bleibt er in 160 Minuten bei etwa 37
   Menschen stehen: Er schafft Töpfe, Öl und Brennstoff nicht, auch wenn die Matten kommen. Ob ein Mensch es schafft, ist
-  offen. Zu prüfen: Sagt der Rat klar genug, was für das Meisterhaus noch fehlt (Töpfe von einem Hauswerk am Ton, Öl aus
+  offen. Zu prüfen: Sagt der Rat klar genug, was für das Handwerkerhaus noch fehlt (Töpfe von einem Hauswerk am Ton, Öl aus
   der Ölhütte)? Die Läufe schwanken stark (15 bis 70 Menschen nach 90 Minuten).
 - **Musik auf einem echten Handy hören:** Lautstärke, ob sie nervt, ob sie bei langsamen Geräten ruckelt. Bisher nur
   offline gerendert und gemessen (Spitze unter 0,15).
@@ -218,7 +218,7 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 - **Wasser im langen Lauf:** Im Probelauf über 50 Jahre fehlte von Jahr 12 bis 26 oft Wasser, und es kamen keine
   Kinder. Der Bot konnte kein zweites Erntehaus stellen. Prüfen, ob ein Mensch hier auch hängen bleibt; vielleicht ein
   zweiter Wasserweg (Regenfang auf Pfahlhäusern, wie es belegt ist).
-- **Meisterfamilien im Spiel prüfen:** Der Bot kommt nie bis zum Meisterhaus (Matten fehlen auf hohen Inseln). Die
+- **Handwerkerfamilien im Spiel prüfen:** Der Bot kommt nie bis zum Handwerkerhaus (Matten fehlen auf hohen Inseln). Die
   Regel „Meister nicht aufs Feld“ ist nur im Regeltest geprüft.
 - **Längere Ketten:** Jetzt sind die Ketten sichtbar. Eine echte dritte Stufe in der Mitte des Spiels fehlt noch,
   etwa Kokosfasern → Schnur → Netze für die Fischer.

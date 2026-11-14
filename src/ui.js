@@ -453,7 +453,7 @@ function cordOf(knots, count){
   return h + (count ? `<b class="cnt">${count}</b>` : '') + '</div>';
 }
 function knotCord(I, f, t, nd, ahead = true){
-  const cur = famNeeds(I, f, nd.list), nxt = ahead && t < 3 ? TIERS[t + 1].needs.filter(k => !TIERS[t].needs.includes(k)) : [];
+  const cur = famNeeds(I, f, nd.list), hb = f.home && findB(f.home), u = ahead && hb && !wayOf(hb) && t < 3 ? upgradeSteps(I, hb, nd.list, 'hand') : null, nxt = u ? (t === 1 ? TIERS[2].needs.filter(k => !TIERS[1].needs.includes(k)) : u.add) : [];
   const ok = cur.filter(n => n.state !== 'out').length;   // a loose knot still holds
   return cordOf([...cur.map(n => ({k:n.k, st:n.state})), ...(nxt.length ? [{bead:true}] : []), ...nxt.map(k => ({k, st:'next'}))], `${ok}/${cur.length}`);
 }
@@ -547,23 +547,36 @@ function nextStep(I, n, b){
   const w = wantWay(I, n.k, b), btn = w.build ? `<button class="chip way" type="button" data-act="hint" data-k="${w.build}">${buildPic(w.build)}${buildName(w.build)}</button>` : w.fleet ? `<button class="chip way" type="button" data-act="fleetbar">${icon('einbaum')}Kanus</button>` : '';
   return `<div class="nextline ${n.state}"><span class="what"><b>${needShort(n.k)} ${needWord(n, b)}</b>${btn ? '<span class="to" aria-hidden="true">→</span>' : `: ${w.text}.`}</span>${btn}</div>`;
 }
-/* what the next step of the house takes: the needs met, then each good with its name and how much is there */
+/* what the next step of the house takes: the needs met, then each good with its name and how much is there. From a family
+   house two ways lead on: two buttons choose between them (the sea way only near the shore). */
+const WAY_IC = {fam:'haus', hand:'toepfe', see:'einbaum', nav:'plejaden', wis:'mana'};
+const WAY_FOR = {hand:'Das Hauswerk der Familie arbeitet ein Viertel schneller.', see:'Fisch und Proviant für die Fahrt, Schnur für Netze. Die Kanus fahren schneller.', nav:'Matten für die Segel. Navigatoren dieser Familie lernen schneller.', wis:'Tapa für die Gewänder. Sie bewahren Sternenpfade und Ahnen, auch wenn ein Navigator stirbt.'};
+const GOOD_FOR = {fisch:'Kost der Fahrer', proviant:'Vorrat für die Fahrt', schnur:'für Netze und Segel', matten:'für die Segel', tapa:'für die Gewänder', toepfe:'zum Kochen', oel:'zur Pflege'};
+function waysRow(I, b, u){
+  const sea = u.ways.includes('see'), near = sea && onShore(I, b);
+  if (u.ways.length < 2 || !unlocked('werft')) return '';
+  const btn = w => `<button class="chip wbtn${w === u.way ? ' on' : ''}" type="button" data-act="way" data-w="${w}" aria-pressed="${w === u.way}">${icon(WAY_IC[w])}<span class="wl">${wayName(w)}</span><span class="ws">${w === 'see' ? 'Seefahrt' : 'Handwerk'}</span></button>`;
+  return near ? `<div class="ways" role="group" aria-label="Weg wählen">${btn('hand')}${btn('see')}</div>` : `<p class="sub wayno">${icon('einbaum')}Seefahrerhaus: nur nah am Strand.</p>`;
+}
 function riseBlock(I, b, u, t, fn){
-  const add = TIERS[u.t].needs.filter(k => !TIERS[t].needs.includes(k)), need = new Map();
-  for (const q of u.steps) if (q.k !== 'needs') need.set(q.k, Math.max(need.get(q.k) || 0, q.need));
-  const tileR = (k, label, txt, ok, act, far) => `<${act ? 'button' : 'span'} class="rtile ${ok ? 'ok' : 'out'}${far ? ' far' : ''}" ${act ? `type="button" ${act}` : 'role="img"'} aria-label="${label}: ${txt}${far ? ', kommt per Kanu' : ''}">${icon(k)}<small>${label}</small><b>${txt}</b></${act ? 'button' : 'span'}>`;
-  let tiles = tileR('pop', 'Bedarf', `${fn.filter(x => x.state !== 'out').length}/${fn.length}`, u.steps[0].ok, null);
-  for (const [k, v] of need){ const have = I.stock[k] || 0, ok = have >= v, w = ok ? null : needWay(I, k);
-    tiles += tileR(k, shortGN(k), `${Math.min(have, v)}/${v}`, ok, w && w.build ? `data-act="hint" data-k="${w.build}"` : w && w.fleet ? 'data-act="fleetbar"' : `data-act="ware" data-k="${k}"`, w && w.outside); }
-  const go = `<button class="btn primary${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" ${u.ready ? '' : 'disabled'}>Ausbauen</button>`;
-  return `<div class="rise2"><div class="rhead"><span class="rt"><b>Ausbau: ${u.T.n}</b><span class="sub">Platz für ${u.T.cap}${u.t === 2 ? ', Kinder kommen' : ''}${add.length ? ` · will dann auch ${andList(add.map(needShort))}` : ''}</span></span>${go}</div><div class="rtiles">${tiles}</div></div>`;
+  const need = new Map(), tileR = (k, label, txt, ok, act, far, ic, why) => `<${act ? 'button' : 'span'} class="rtile ${ok ? 'ok' : 'out'}${far ? ' far' : ''}" ${act ? `type="button" ${act}` : 'role="img"'} aria-label="${label}: ${txt}${why ? ', ' + why : ''}${far ? ', kommt per Kanu' : ''}" title="${why || label}">${icon(ic || k)}<small>${label}</small><b>${txt}</b></${act ? 'button' : 'span'}>`;
+  for (const q of u.steps) if (q.k !== 'needs') need.set(q.k, {need:Math.max(need.get(q.k) ? need.get(q.k).need : 0, q.need), have:q.have, ok:q.ok, q});
+  let tiles = tileR('pop', 'Bedarf', `${fn.filter(x => x.state !== 'out').length}/${fn.length}`, u.steps[0].ok, null, false, 'pop', 'alle Bedürfnisse der Familie');
+  for (const [k, e] of need){
+    if (e.q.ic){ if (k === 'eins' && e.ok) continue; tiles += tileR(k, e.q.label, e.q.t, e.ok, k === 'werk' ? 'data-act="craftpick"' : '', false, e.q.ic, e.q.why); continue; }
+    const have = e.have != null ? e.have : I.stock[k] || 0, ok = have >= e.need && e.ok, w = ok ? null : needWay(I, k);
+    tiles += tileR(k, shortGN(k), `${Math.min(have, e.need)}/${e.need}`, ok, w && w.build ? `data-act="hint" data-k="${w.build}"` : w && w.fleet ? 'data-act="fleetbar"' : `data-act="ware" data-k="${k}"`, w && w.outside, null, GOOD_FOR[k] || ''); }
+  const go = `<button class="btn primary${u.ready ? ' tie' : ''}" type="button" data-act="upgrade" data-b="${b.id}" data-w="${u.way}" ${u.ready ? '' : 'disabled'}>Ausbauen</button>`;
+  const row = waysRow(I, b, u), choice = row.includes('data-act="way"');
+  const sub = `${choice ? '' : 'Ausbau: '}Platz für ${u.T.cap}${u.way === 'fam' ? ', Kinder kommen' : ''}${u.add.length && u.way !== 'hand' ? ` · will dann auch ${andList(u.add.map(needShort))}` : ''}`;
+  return `<div class="rise2${choice ? ' two' : ''}">${row}<div class="rhead"><span class="rt">${choice ? '' : `<b>${u.T.n}</b>`}<span class="sub">${sub}</span></span>${go}</div><div class="rtiles">${tiles}</div>${WAY_FOR[u.way] ? `<p class="sub rfor">${WAY_FOR[u.way]}</p>` : ''}</div>`;
 }
 function houseMarkup(I, b, withHead = true){
-  const f = famOfHome(I, b), t = tierOf(b), T = TIERS[t], nd = needsOf(I);
+  const f = famOfHome(I, b), t = tierOf(b), T = {n:houseName(b)}, nd = needsOf(I);
   if (!f){ const imm = immigFor(I); return (withHead ? head(T.n, 'leer') : '') + `<p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>` + craftRow(I, b); }   // a hut by the clay can take up its craft before anyone lives there
   const m = membersOf(I, f), cap = homeCap(I, b), max = homeCapMax(I, b);
-  const sub = `${T.n} · ${m.length} von ${cap} Plätzen${cap < max ? ` (bis ${max}, wenn alles da ist)` : ''}`;
-  let h = withHead ? head(famName(f), sub) : `<p class="sub">${sub}</p>`;
+  const sub = `${T.n} · ${m.length} von ${cap} Plätzen${cap < max ? ` (bis ${max})` : ''}`;
+  let h = withHead ? head(famName(f), sub) : `<p class="sub hsub">${sub}</p>`;
   // the people: name and age, under it what they do
   const picking = !!(sheetData && sheetData.crafts);
   h += `<div class="folk home">${m.map(p => `<button class="who chip pers" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${jobShort(I, p)}</span></button>`).join('')}${picking ? '' : craftChip(I, b)}</div>`;
@@ -572,7 +585,10 @@ function houseMarkup(I, b, withHead = true){
   const fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out').concat(fn.filter(n => n.state === 'low'));
   h += `<p class="sec needsec">Was die Familie braucht</p><div class="needtiles n${fn.length}">${fn.map(n => needTile(I, n, b)).join('')}</div>`;
   const sl = stormLine(I, b); if (sl) h += sl; else if (lack.length) h += nextStep(I, lack[0], b);
-  const u = upgradeSteps(I, b, nd.list); if (u) h += riseBlock(I, b, u, t, fn);
+  const ws = upgradeWays(I, b);
+  if (ws.length){ const seaOk = ws.length > 1 && unlocked('werft') && onShore(I, b), ready = w => upgradeSteps(I, b, nd.list, w).ready;
+    const pick = sheetData && ws.includes(sheetData.way) && (sheetData.way !== 'see' || seaOk) ? sheetData.way : seaOk && !ready('hand') && ready('see') ? 'see' : ws[0];
+    h += riseBlock(I, b, upgradeSteps(I, b, nd.list, pick), t, fn); }
   return h;
 }
 /* ---------- the village centre: the house by the plaza. Three tabs: the village (feasts, the rain dance, the knucklebones),
@@ -621,7 +637,8 @@ function villageGoal(I, nd){
   const miss = nd.missing.find(n => n.k === 'essen' || n.k === 'wasser'); if (miss){ const w = needWay(I, miss.k); return {cls:'out', t:`${GN[miss.k]} fehlt`, d:wayChip(w) ? '' : w.text, btn:wayChip(w) || wayBtn(w)}; }
   if (ready.length && !I.autoUp) return {cls:'up', t:`${ready.length} ${ready.length === 1 ? 'Haus' : 'Häuser'} zum Ausbau bereit`, d:'', btn:`<button class="btn primary small tie" type="button" data-act="upall">${knotIc}Alle ausbauen</button>`};
   // the next step up: what the first house that cannot rise yet still lacks
-  const nb = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).find(b => upgradeSteps(I, b, nd.list)), next = nb && upgradeSteps(I, nb, nd.list);
+  const nb = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3 && !wayOf(b)).sort((a, b) => tierOf(a) - tierOf(b)).find(b => upgradeSteps(I, b, nd.list, 'hand')), next = nb && upgradeSteps(I, nb, nd.list, 'hand');
+  if (next && !next.ready && next.steps.find(x => !x.ok).ic){ const q = next.steps.find(x => !x.ok); return {cls:'low', t:`Für ${next.T.n}: ${q.label}`, d:q.why, btn:''}; }
   if (next && !next.ready){ const q = next.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? (q.k === 'needs' ? wantWay(I, k, nb) : needWay(I, k)) : null;
     return w && w.outside ? {cls:'far', t:`Für ${next.T.n}: ${GN[k]}`, d:'', chain:outsideChain(I, k)} : {cls:'low', t:`Für ${next.T.n}: ${q.k === 'needs' ? q.t : `es fehlt ${q.t}`}`, d:w && !wayChip(w) ? w.text : '', btn:wayChip(w) || wayBtn(w)}; }
   if (nd.atMax) return {cls:'far', t:'Die Insel ist voll', d:`${I.name} trägt höchstens ${islandMax(I)} Menschen. Gründet ein Dorf auf einer anderen Insel.`, btn:wayBtn({fleet:true})};
@@ -642,16 +659,18 @@ function peopleTab(I, nd){
   const g = villageGoal(I, nd); if (g) h += `<div class="goal ${g.cls}"><span><b>${g.t}</b>${g.d ? `<small>${g.d}</small>` : ''}${g.chain || ''}</span>${g.btn || ''}</div>`;
   // the houses by step, each with the needs of its step
   const roof = nd.roofless ? 'out' : 'ok';
-  for (const t of [1, 2, 3, 4]){
-    const hs = homesOf(I).filter(b => tierOf(b) === t), fams = hs.map(b => famOfHome(I, b)).filter(Boolean), people = fams.reduce((n, f) => n + membersOf(I, f).length, 0);
-    const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && homesOf(I).some(b => tierOf(b) === 2)); if (!shown) continue;
-    const ready = hs.filter(b => canUpgrade(I, b, nd.list)).length;
-    h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${TIERS[t].n}</b><small>${icon('haus')}${hs.length} ${seatIc}${people}</small>${ready && !I.autoUp ? `<button class="btn primary small tie" type="button" data-act="upall" data-t="${t}">${knotIc}${ready}</button>` : ''}</div>`;
+  for (const t of [1, 2, 3, 'see', 'nav', 'wis', 4]){
+    const sea = SEA[t], hs = homesOf(I).filter(b => rowKey(b) === t), fams = hs.map(b => famOfHome(I, b)).filter(Boolean), people = fams.reduce((n, f) => n + membersOf(I, f).length, 0);
+    const some = w => homesOf(I).some(b => rowKey(b) === w);
+    const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && some(2)) || (t === 'see' && unlocked('werft') && homesOf(I).some(b => tierOf(b) === 2 && onShore(I, b))) || (t === 'nav' && some('see')) || (t === 'wis' && some('nav')); if (!shown) continue;
+    const ready = hs.filter(b => canUpgrade(I, b, nd.list)).length, name = sea ? sea.n : TIERS[t].n;
+    h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${name}</b><small>${icon('haus')}${hs.length} ${seatIc}${people}</small>${ready && !I.autoUp ? `<button class="btn primary small tie" type="button" data-act="upall" data-t="${t}">${knotIc}${ready}</button>` : ''}</div>`;
     // what the families of this step need, one tile each with its name and a word, as in the house; a step not reached yet
     // shows its needs pale, with "später"
-    const worst = l => l.includes('out') ? 'out' : l.includes('low') ? 'low' : 'ok';
-    const tiles = TIERS[t].needs.map(k => { if (!hs.length) return {k, state:'none'};
+    const worst = l => l.includes('out') ? 'out' : l.includes('low') ? 'low' : 'ok', keys = sea ? TIERS[2].needs.concat(seaGoods(t)) : TIERS[t].needs, seaK = sea ? seaGoods(t) : [];
+    const tiles = keys.map(k => { if (!hs.length) return {k, state:'none'};
       if (k === 'dach'){ if (t === 1 && roof === 'out') return {k, state:'out', b:null}; const st = worst(hs.map(roofState)); return {k, state:st, b:hs.find(q => roofState(q) === st) || hs[0]}; }
+      if (seaK.includes(k)) return {k, state:seaHave(I, k) > 0 ? 'ok' : 'out'};
       return {k, state:(nd.list.find(n => n.k === k) || {state:'ok'}).state}; });
     h += `<div class="needtiles n${tiles.length}">${tiles.map(n => n.state === 'none' ? `<span class="ntile none" role="img" aria-label="${needName(n.k)}: kommt mit dieser Stufe">${icon(needIcon(n.k))}<small>${needShort(n.k)}</small><b>später</b></span>` : needTile(I, n, n.k === 'dach' ? n.b : null)).join('')}</div></div>`;
   }
@@ -778,7 +797,7 @@ function isleTab(I, nd){
   { const R = I.reefLife ?? 1; if (I.buildings.some(b => b.kind === 'fisch')) h += rowS('meeres', `Riff: ${R > .55 ? 'reich' : R > .3 ? 'abgesammelt' : 'leer'}`, 'Wo viel gesammelt wird, gibt das Riff weniger. Es erholt sich langsam, unter Rāhui schneller.', barS(R), chipS(R > .55 ? 'ok' : R > .3 ? 'low' : 'out', R > .55 ? 'reich' : R > .3 ? 'weniger' : 'leer'), R > .3 ? '' : 'need'); }
   { const fit = LIFE_IDS.filter(id => lifeFits(I, id) && lifeKnown(id)), have = fit.filter(id => lifeOf(I).includes(id)), miss = fit.filter(id => !have.includes(id));
     h += rowS('setzling', have.length ? `Pflanzen und Tiere: ${andList(have.map(id => LIFE[id].n))}` : 'Noch nichts mitgebracht', miss.length ? `Es fehlen ${andList(miss.map(id => LIFE[id].n))}. Ein Kanu bringt sie aus einem Dorf, wo sie wachsen.` : 'Alles, was hier wachsen kann, ist da.', '', miss.length ? chipS('low', `${miss.length} fehlen`) : chipS('ok', 'alles'), ''); }
-  { const L = navLore(); if (L.lvl || I.buildings.some(b => b.kind === 'sternhaus')) h += rowS('einbaum', L.lvl ? `Navigatoren: Stufe ${L.lvl}` : 'Noch kein Navigator', L.best ? `${L.best.p.n} auf ${L.best.I.name}: ${NAV_N[L.lvl]}. Stirbt er ohne Schüler, ist das Wissen fort.` : 'Im Haus der Navigatoren lernt jemand Wellen, Vögel und Sterne.', '', L.lvl ? chipS('ok', `Stufe ${L.lvl}`) : chipS('low', 'keiner')); }
+  { const L = navLore(); if (L.lvl || I.buildings.some(b => b.kind === 'sternhaus')) h += rowS('einbaum', L.lvl ? `Navigatoren: Stufe ${L.lvl}` : 'Noch kein Navigator', L.best ? `${L.best.p.n} auf ${L.best.I.name}: ${NAV_N[L.lvl]}. Stirbt er ohne Schüler, ist das Wissen fort${islands.some(J => J.settled && wisHouse(J)) ? ', außer die Wissenden bewahren es' : ''}.` : L.lvl ? `${NAV_N[L.lvl]}: Die Wissenden bewahren es.` : 'Im Haus der Navigatoren lernt jemand Wellen, Vögel und Sterne.', '', L.lvl ? chipS('ok', `Stufe ${L.lvl}`) : chipS('low', 'keiner')); }
   h += `</ul>`;
   if (motifsOf(I).length || I.buildings.some(b => b.kind === 'toepfer')) h += `<p class="sec">Muster auf den Töpfen</p>${motifRows(I)}`;
   h += `<p class="sec">${I.lvl === 3 ? 'Häuptlingsdorf' : 'Weg zum Häuptlingsdorf'}</p><ul class="list needs">${chiefSteps(I, nd).map(q => `<li class="${q.ok ? 'okk' : ''}"><span class="state ${q.ok ? 'ok' : 'out'}">${q.ok ? '✓' : '–'}</span><span class="nm">${q.t}<small>${q.now}</small></span></li>`).join('')}</ul>`;
@@ -929,13 +948,14 @@ function crewNote(I, b){
 function famMarkup(I, f, withHead = true){
   const nd = needsOf(I), m = membersOf(I, f), t = famTier(I, f), fn = famNeeds(I, f, nd.list);
   const name = k => k === 'dach' ? 'Dach' : GN[k], icn = k => k === 'dach' ? 'haus' : k;
-  let h = withHead ? head(famName(f), `${f.home ? TIERS[t].n : 'Ohne Dach, unter Matten am Dorfplatz'} · ${I.name}`) : `<p class="sec">${famName(f)} · ${TIERS[t].n}${t > 1 ? `, ${TIERS[t].fam}` : ''}</p>`;
+  let h = withHead ? head(famName(f), `${f.home ? houseName(findB(f.home)) : 'Ohne Dach, unter Matten am Dorfplatz'} · ${I.name}`) : `<p class="sec">${famName(f)} · ${f.home ? houseName(findB(f.home)) : TIERS[t].n}${t > 1 && f.home ? `, ${houseFam(findB(f.home))}` : ''}</p>`;
   const met = fn.filter(n => n.state !== 'out').length, home = f.home && findB(f.home);
   if (home) h += `<p class="sub">Platz für ${homeCap(I, home)} von höchstens ${homeCapMax(I, home)}: Jedes erfüllte Bedürfnis bringt Platz für einen mehr. Jetzt wohnen hier ${m.length}.</p>`;
   h += `<div class="stat"><b>${met} von ${fn.length} erfüllt</b><span class="mbar" style="flex:1"><i style="width:${met / fn.length * 100}%"></i></span></div><div class="chips">${fn.map(n => `<span class="need-chip ${n.state}">${icon(icn(n.k))}${name(n.k)}</span>`).join('')}</div>`;
   if (t === 1 && f.home) h += `<p class="sub">Nächste Stufe, Familienhaus: mit ${costText(TIERS[2].cost)} neu gebunden, Platz für ${TIERS[2].cap} und für Kinder.</p>`;
-  if (t === 2 && f.home) h += `<p class="sub">Nächste Stufe, Meisterhaus: dazu ${andList(MASTER_GOODS.map(k => GN[k]))} im Lager, ausgebaut mit ${costText(TIERS[3].cost)}, Platz für ${TIERS[3].cap}.</p>`;
-  if (f.home && canUpgrade(I, findB(f.home))) h += `<div class="rowx"><span class="sub">Es liegt alles bereit.</span><button class="btn primary" type="button" data-act="upgrade" data-b="${f.home}">Ausbauen</button></div>`;
+  if (t === 2 && f.home && !wayOf(home)) h += `<p class="sub">Nächste Stufe, Handwerkerhaus: ein Hauswerk, dazu ${andList(MASTER_GOODS.map(k => GN[k]))} im Lager, ausgebaut mit ${costText(TIERS[3].cost)}, Platz für ${TIERS[3].cap}.${unlocked('werft') ? ` Oder am Strand das Seefahrerhaus: ${andList(SEA.see.add.map(k => GN[k]))} im Lager.` : ''}</p>`;
+  else if (home && SEA[wayOf(home)] && upgradeWays(I, home).length){ const nx = WAY_NEXT[wayOf(home)]; h += `<p class="sub">Nächste Stufe, ${SEA[nx].n}: ${nx === 'nav' ? 'jemand in der Familie ist Navigator, dazu ' : 'ein Navigator der zweiten Stufe, dazu '}${andList(SEA[nx].add.map(k => GN[k]))} im Lager.</p>`; }
+  if (home && canUpgrade(I, home)) h += `<div class="rowx"><span class="sub">Es liegt alles bereit.</span><button class="btn primary" type="button" data-act="upgrade" data-b="${f.home}" data-w="${anyWay(I, home)}">Ausbauen</button></div>`;
   if (!f.home) h += `<p class="sub">Sobald ein Haus frei ist, zieht sie ein.</p>`;
   h += `<div class="folk">${m.map(p => `<button class="who chip" type="button" data-act="who" data-p="${p.id}">${p.s === 'm' ? '♂' : '♀'} ${p.n}<small>${Math.floor(ageOf(p))}${stageOf(p) === 'kid' ? ', Kind' : stageOf(p) === 'old' ? ', alt' : ` · ${personWork(I, p)}`}${p.wk ? ', schwach' : ''}</small></button>`).join('')}</div>`;
   { const ln = m[0] && m[0].ln; h += `<div class="rowx"><span class="sub">Linie: ${lineName(ln)}${lineFrom(ln) ? ` ${lineFrom(ln)}` : ''}</span>${f.home && !withHead ? '' : f.home ? `<button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button>` : ''}</div>`; }
@@ -1263,13 +1283,14 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'tapu' && sheetKind === 'needs'){ const I = isl(active); setTapu(I, !I.tapu); renderSheet(); return; }
   if (act === 'folk'){ openSheet('folk', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : active}); return; }
   if (sheetKind === 'needs' && act === 'work'){ const I = isl(active); I.handWork = btn.dataset.v === 'hand'; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
-  if (act === 'upgrade'){ const b = findB(+btn.dataset.b), I = b && islOfB(b.id); if (b && canUpgrade(I, b)) upgradeHouse(I, b); updateHUD(); renderSheet(); save(); checkQuest(); return; }
+  if (act === 'way'){ sheetData = {...sheetData, way:btn.dataset.w}; renderSheet(); return; }
+  if (act === 'upgrade'){ const b = findB(+btn.dataset.b), I = b && islOfB(b.id); if (b && canUpgrade(I, b)) upgradeHouse(I, b, btn.dataset.w || null); updateHUD(); renderSheet(); save(); checkQuest(); return; }
   if (act === 'autoup' && sheetKind === 'needs'){ const I = isl(active); I.autoUp = !I.autoUp; renderSheet(); save(); return; }
   if (act === 'tab' && sheetKind === 'needs'){ sheetData = {...(sheetData || {}), tab:btn.dataset.v}; renderSheet(); return; }
   if (act === 'hint'){ closeSheet(); hintBuild(btn.dataset.k); return; }
   if (act === 'fleetbar'){ closeSheet(); setBar('fleet'); return; }
   if (act === 'store'){ openSheet('store'); return; }
-  if (act === 'upall'){ const I = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), t = +btn.dataset.t || 0, list = needsOf(I).list; let n = 0; for (const b of readyHomes(I, list)) if ((!t || tierOf(b) === t) && canUpgrade(I, b)){ upgradeHouse(I, b); n++; } if (n > 1) toast(`${n} Häuser ausgebaut.`, 2600, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
+  if (act === 'upall'){ const I = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), t = btn.dataset.t || 0, list = needsOf(I).list; let n = 0; for (const b of readyHomes(I, list)) if ((!t || String(rowKey(b)) === String(t)) && canUpgrade(I, b) && upgradeHouse(I, b, anyWay(I, b))) n++; if (n > 1) toast(`${n} Häuser ausgebaut.`, 2600, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
   if (act === 'immig' && sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); if (sh) immigAnswer(sh, btn.dataset.v === 'yes'); updateHUD(); return; }
   if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }

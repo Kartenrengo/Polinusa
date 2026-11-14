@@ -60,7 +60,7 @@ const QUESTS = [
     n:() => Math.min(1, count('tochter', 'flecht')) + Math.min(1, count('tochter', 'schnur')), of:2, get show(){ return {island:'tochter', build:count('tochter', 'flecht') ? 'schnur' : 'flecht'}; }, unlock:[], gift:{holz:2}, giftTo:'tochter'},
   {id:'tausch', t:'Eine Handelskette', d:'Bring 3 Matten und 3 Schnüre nach Panua.', why:'Tippe auf die Schnur zwischen den Inseln. Setz ein Kanu in die Kette und wähle die Ladung. Jede Fahrt knüpft einen Knoten.',
     n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube', 'oelhuette'], gift:{}},
-  {id:'dorf', t:'Ein Dorf', d:`Erreiche ${VILLAGE_POP} Bewohner und eine Meisterfamilie.`, why:'Mit Töpfen, Matten und Kokosöl im Lager baut eine Familie im Familienhaus weiter aus: ein Meisterhaus. Mehr Platz, mehr Bedürfnisse.',
+  {id:'dorf', t:'Ein Dorf', d:`Erreiche ${VILLAGE_POP} Bewohner und ein Handwerkerhaus.`, why:'Eine Familie mit einem Hauswerk, dazu Töpfe, Matten und Kokosöl im Lager, baut das Familienhaus aus: ein Handwerkerhaus. Mehr Platz, mehr Bedürfnisse.',
     n:() => Math.min(1, isl('heimat').pop >= VILLAGE_POP ? 1 : 0) + Math.min(1, tier3Pop(isl('heimat')) ? 1 : 0), of:2, show:{needs:true}, unlock:[], gift:{}},
   {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube; auch getrocknete Kanarinüsse halten auf See. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit.',
     n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:['dc', 'pfosten'], gift:{}},
@@ -231,7 +231,7 @@ function adviceOf(I, urgentOnly = false){
   const sf = staffOf(I), open = placesOf(I).filter(b => (crewAt(I, b) || 0) < KINDS[b.kind].crew && !sf.pulled.has(b));
   // a master family with free hands and no craft of its own: it wants its work
   { const M = masterSet(I), idle = sf.freeP.filter(id => M.has(id)), p = idle.length && I.people.find(q => q.id === idle[0]), f = p && famOf(I, p.h), h = f && f.home && findB(f.home);
-    if (h && !craftOf(I, h) && !sf.rest) return {t:'Meisterfamilie ohne Werk', d:`${famName(f)} geht nicht mehr aufs Feld. Gib ihrem Haus ein Hauswerk: Meister arbeiten dort ein Viertel schneller.`, goto:h.id}; }
+    if (h && !craftOf(I, h) && !sf.rest) return {t:'Handwerkerfamilie ohne Werk', d:`${famName(f)} geht nicht mehr aufs Feld. Gib ihrem Haus ein Hauswerk: Handwerker arbeiten dort ein Viertel schneller.`, goto:h.id}; }
   if (open.length && sf.free && !autoWork(I)) return {t:'Arbeit verteilen', d:`${sf.free} ${sf.free === 1 ? 'Mensch ist' : 'Menschen sind'} frei, ${open.length} ${open.length === 1 ? 'Platz hat' : 'Plätze haben'} noch Raum. Tippe einen an und dann auf +.`, needs:true};
   // the island is full: young couples want a village of their own (contentment falls, see satOf)
   if (I.id === 'heimat' && nd.atMax && islands.some(J => J.discovered && !J.settled && !J.clan && !J.treasure)) return {t:'Junge Paare wollen fort', d:'Die Insel ist voll. Junge Paare möchten ein eigenes Dorf gründen und sind unzufrieden, solange sie bleiben müssen. Bau ein Kanu und schicke Siedler auf eine freie Insel.', fleet:true};
@@ -247,8 +247,8 @@ function adviceOf(I, urgentOnly = false){
   if ((I.stock.dach || 0) < 3){ const e = I.buildings.find(b => b.kind === 'ernte'); if (!e) return {t:'Palmwedel holen', d:'Jedes Gebäude braucht Palmwedel fürs Dach. Das Erntehaus holt sie von den Palmen.', build:'ernte'}; if (!(e.v && e.v.pick === 'dach') && choiceOf(e) !== 'dach') return {t:'Palmwedel holen', d:'Im Erntehaus kannst du die Leute auf Wedel stellen, bis genug da ist.', goto:e.id}; }
   if ((I.stock.holz || 0) < 3 && I.type === 'hoch' && !has('faeller')) return {t:'Holz schlagen', d:'Jedes Gebäude braucht Holz. Ein Holzfäller am Waldrand, zu zweit.', build:'faeller'};
   // the next step up, as the houses show it: what the first house that cannot rise yet still lacks
-  { const g = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3).sort((a, b) => tierOf(a) - tierOf(b)).map(b => [b, upgradeSteps(I, b, nd.list)]).find(([, u]) => u && !u.ready);
-    if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok), k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? (q.k === 'needs' ? wantWay(I, k, hb) : needWay(I, k)) : null;
+  { const g = homesOf(I).filter(b => famOfHome(I, b) && tierOf(b) < 3 && !wayOf(b)).sort((a, b) => tierOf(a) - tierOf(b)).map(b => [b, upgradeSteps(I, b, nd.list, 'hand')]).find(([, u]) => u && !u.ready);
+    if (g && (tierOf(g[0]) > 1 || unlocked('schnur'))){ const [hb, u] = g, q = u.steps.find(x => !x.ok); if (q.ic) return {t:`Für ${u.T.n}: ${q.label}`, d:`${q.why}.`, goto:hb.id}; const k = q.k === 'needs' ? q.miss[0] : q.k, w = k ? (q.k === 'needs' ? wantWay(I, k, hb) : needWay(I, k)) : null;
       { const J = w && w.fleet && !w.build && k && k !== 'needs' ? tradeIdea(I, k) : null; if (J && tradeShip(I, J)){ const give = tradeGive(I, J, k); return {t:`Handel: ${GN[k]} aus ${J.name}`, d:`${J.name} hat ${GN[k]}. Ein Kanu fährt von selbst hin und her und bringt es${Object.keys(give).length ? `, ${giftText(give)} fahren dafür mit` : ''}. Tippen richtet die Kette ein.`, trade:{k, J:J.id}, go:'Einrichten ›'}; } }
       if (w && (w.build || w.fleet)) return {t:`Für ${u.T.n}: ${needName(k)}`, d:w.text, build:w.build && w.build !== 'haus' ? w.build : null, fleet:w.fleet, goto:w.build || w.fleet ? null : hb.id}; } }
   // growing needs more than the village eats: houses do not help while food or water only just reach
@@ -260,7 +260,7 @@ function adviceOf(I, urgentOnly = false){
   if (nd.full && !nd.atMax && !emptyHome(I)) return {t:'Mehr Hütten', d:'Alle Hütten sind belegt. Eine leere Hütte zieht eine Familie von weit her an.', build:'haus'};
   if (I.pop >= 8 && kinState(I) !== 'ok') return {t:'Neues Blut', d:kinText(I).help, needs:true};
   const nextS = STAGES[stageNow() + 1]; if (nextS && !nextS.gate && I.pop < nextS.pop) return {t:`Auf ${nextS.pop} Menschen wachsen`, d:`Dann kommt: ${nextS.n}. Baut Hütten für Familien von weit her und Familienhäuser für Kinder.`, build:nd.full && !emptyHome(I) ? 'haus' : null, needs:!(nd.full && !emptyHome(I))};   // a hut only where all are full
-  const miss = MASTER_GOODS.find(k => !(haveOf(I, k) > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Meisterfamilien`, d:p ? `${doIt(p)}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
+  const miss = MASTER_GOODS.find(k => !(haveOf(I, k) > 0)); if (miss && I.pop >= VILLAGE_POP){ const p = producerOf(I, miss); return {t:`${GN[miss]} für die Handwerkerfamilien`, d:p ? `${doIt(p)}.` : `${GN[miss]} kommt per Kanu von einer anderen Insel.`, build:p, fleet:!p}; }
   // the fine goods of the chief's family: some grow only on islands with the right ground
   if (chiefFam(I)){ const k = CHIEF_GOODS.find(q => !(I.stock[q] > 0)); if (k){ const p = producerOf(I, k), isles = specIslesFor(k) || [];
     const sp = ORDER.find(q => KINDS[q] && KINDS[q].prod === k && SPEC_OF_KIND[q]);

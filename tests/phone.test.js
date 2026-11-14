@@ -26,14 +26,16 @@ const {PAGE} = require('./lib');
       for (const [k, d] of sheets){ closeSheet(); openSheet(k, d);
         const body = $('sheetBody'); if (body.scrollWidth > body.clientWidth + 2) out.push(`${k}: ${body.scrollWidth - body.clientWidth}px too wide`);
         // a house shows all of itself without scrolling, also a family house on its way to a master's house
-        if (d && HOME_KINDS.has(findB(d.id).kind)) for (const t of [1, 2, 'full']){ const hb = findB(d.id), f = famOfHome(I, hb), keep = I.people.slice(), st = {...I.stock};
-          hb.t = t === 'full' ? 2 : t;
-          if (t === 'full'){ for (let i = 0; i < 2; i++) I.people.push(Object.assign(person(I, 22 + i), {h:f.id})); I.stock.wasser = 0; I.stock.speisen = 0; }   // six people, much missing
+        if (d && HOME_KINDS.has(findB(d.id).kind)) for (const t of [1, 2, 'full', 'shore', 'shorefull', 'see', 'nav', 'wis']){ const hb = findB(d.id), f = famOfHome(I, hb), keep = I.people.slice(), st = {...I.stock}, pos = {x:hb.x, y:hb.y};
+          hb.t = typeof t === 'number' ? t : 2; delete hb.way; if (['see', 'nav', 'wis'].includes(t)) hb.way = t;   // the sea way: three steps of the family house
+          if (/shore/.test(t)){ const L = I.lands[0]; hb.x = L.poly[0].x * .96 + I.center.x * .04; hb.y = L.poly[0].y * .96 + I.center.y * .04; }   // by the shore the choice of two ways shows
+          if (/full|see|nav|wis/.test(t)){ for (let i = 0; i < 2; i++) I.people.push(Object.assign(person(I, 22 + i), {h:f.id})); I.stock.wasser = 0; I.stock.speisen = 0; }   // six people, much missing
           // the village centre shows the village first; its family tab must fit as well
           for (const tab of centerOf(I) === hb ? ['dorf', 'haus'] : [null]){ if (tab) sheetData = {...sheetData, tab};
             renderSheet(); $('sheet').classList.remove('opening');
             if (body.scrollHeight > body.clientHeight + 2) out.push(`house step ${t}${tab ? ' ' + tab : ''}: sheet scrolls ${body.scrollHeight - body.clientHeight}px`); }
           if (centerOf(I) === hb) sheetData = {...sheetData, tab:'dorf'};
+          delete hb.way; hb.x = pos.x; hb.y = pos.y;
           hb.t = 1; I.people = keep; I.stock = st; }
         for (const el of body.querySelectorAll('button')){ const r = el.getBoundingClientRect(); if (r.width && (r.width < 28 || r.height < 26)) out.push(`${k}: small button "${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 18)}" ${r.width | 0}x${r.height | 0}`); }
       }
