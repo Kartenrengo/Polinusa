@@ -2019,3 +2019,13 @@ Das Häuptlingshaus bleibt, wie es war.
     passiert der Knopf nicht, nur die Blase kommt.
   - Bei einer Ware in der Leiste steht in der Blase auch „Alle Waren ›“.
 
+## Lager mit Reitern, weniger Erklärtext (Version 94)
+
+- **Das Lager hat vier Reiter:** Täglich (Essen, Wasser, Gekochtes, Brennstoff), **Brennmaterial**, Bauen und Handwerk.
+  Jeder Reiter passt ohne Scrollen auf den Schirm.
+- **Brennmaterial:** Kokosschalen, Brennholz und Bauholz mit den Nummern 1, 2, 3: in dieser Reihenfolge brennen sie. Darunter
+  eine Zeile, wie viele Feuer heute Nacht brennen. Die Brennstoff-Kachel unter „Täglich“ führt dorthin.
+- **Erklärungen nur noch in der Blase:** Der Block „Jeden Tag“ im Lager und die Zeile unter den Ausbau-Kacheln im Haus sind
+  weg. Derselbe Satz steht in der Blase (Kachel halten). So bleibt das Blatt kurz.
+- Die Blase bricht lange Wörter um, damit kein Text über ihren Rand läuft.
+

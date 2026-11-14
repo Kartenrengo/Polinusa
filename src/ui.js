@@ -858,7 +858,7 @@ function dailyMarkup(I){
   return `<p class="sec">Jeden Tag</p><ul class="list daily">${dailyGoods(I, nd).filter(k => day[k]).map(k => `<li>${icon(k)}<b>${needShort(k)}</b><span class="sub">${DAILY_WHY[k](day[k])}.</span></li>`).join('')}</ul>`;
 }
 function storeMarkup(I){
-  let h = head(`Lager auf ${I.name}`, `${icon('haus')} ${storeCap(I)} je Ware`) + dailyMarkup(I) + storeTiles(I);
+  let h = head(`Lager auf ${I.name}`, `${icon('haus')} ${storeCap(I)} je Ware`) + storeTiles(I);
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full' && b.idle.why !== 'grow');
   if (idle.length) h += `<div class="chips stillrow"><span class="state out">steht still</span>${idle.slice(0, 8).map(b => `<button class="chip way" type="button" data-act="goto" data-b="${b.id}" aria-label="${KINDS[b.kind].n}: ${b.idle.text}">${bIcon(b.kind)}${KINDS[b.kind].s}<small>${shortWhy(b.idle)}</small></button>`).join('')}</div>`;
   return h;
@@ -866,17 +866,32 @@ function storeMarkup(I){
 /* the tiles of the store, for the store sheet and the village centre: each good with its name under it; tap it to see who
    makes it; the arrow is green when more comes than goes, red when it runs down */
 let foodOpen = false;   // the single foods are folded into one tile "Essen"; a tap unfolds them
+/* The store in tabs: what is used up every day, the fuel for the night fires in the order it burns, the building stuff, and
+   the crafts. Names and what a good is for come in the bubble (hold a tile); a tap shows where it comes from. */
+const STORE_TABS = [['tag', 'Täglich'], ['brenn', 'Brennmaterial'], ['bau', 'Bauen'], ['werk', 'Handwerk']];
+const BAU_GOODS = ['holz', 'dach', 'faser', 'schnur'], FUEL_WHY = {schalen:'brennen zuerst. Kommen vom Erntehaus, beim Nüsse-Schälen.', reisig:'brennt als Zweites. Kinder und Alte sammeln es.', holz:'brennt erst, wenn nichts anderes da ist. Eigentlich zum Bauen.'};
+let storeTab = 'tag';
 function storeTiles(I){
-  const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, rate = k => {
+  const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, day = dailyNeed(I, nd), rate = k => {
     const make = ofNeed(k, q => makeRate(I, q)), need = nd.list.find(n => n.k === k), use = (need ? need.use : 0) + ofNeed(k, q => workUse(I, q)), have = haveOf(I, k);
     return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have};
-  }, rows = GOODS.map(rate).filter(g => !FOODS.includes(g.k) && (g.have || g.make || g.use));
-  const foods = FOODS.map(rate).filter(g => g.have || g.make || g.use), kinds = foods.filter(g => g.have > 0), all = rate('essen');
-  const tile = g => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / cap);
-    return `<button class="tile ${cls}" type="button" data-act="ware" data-k="${g.k}" aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute">${icon(g.k)}<b>${g.have}</b><small class="nm">${GN[g.k].length <= 12 ? GN[g.k] : shortGN(g.k)}</small>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`; };
-  const net = all.make - all.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, all.have / (cap * FOODS.length / 3));
-  const sum = `<button class="tile ${cls} sum" type="button" data-act="foodopen" aria-expanded="${foodOpen}" aria-label="Essen: ${all.have}, ${kinds.length} Sorten. Antippen ${foodOpen ? 'faltet zu' : 'zeigt jede Sorte'}">${icon('essen')}<b>${all.have}</b><small class="nm">Essen · ${kinds.length} ${kinds.length === 1 ? 'Sorte' : 'Sorten'} ${foodOpen ? '▴' : '▾'}</small><span class="kinds">${kinds.map(g => icon(g.k)).join('')}</span><span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`;
-  return `<div class="tiles">${sum}${foodOpen ? foods.map(tile).join('') : ''}${rows.map(tile).join('')}</div><p class="sub">Drei Sorten Essen machen zufrieden.</p>`;
+  }, all = GOODS.map(rate).filter(g => !FOODS.includes(g.k) && (g.have || g.make || g.use || BAU_GOODS.includes(g.k) || GROUPS.brenn.includes(g.k)));
+  const foods = FOODS.map(rate).filter(g => g.have || g.make || g.use), kinds = foods.filter(g => g.have > 0), food = rate('essen');
+  const why = k => DAILY_WHY[k] ? DAILY_WHY[k](day[k] || 0) + '.' : FUEL_WHY[k] ? `${GN[k]} ${FUEL_WHY[k]}` : '';
+  const tile = (g, n = '') => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / cap);
+    return `<button class="tile ${cls}" type="button" data-act="ware" data-k="${g.k}" aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute" data-tip="${esc(`<b>${GN[g.k]}</b> ${g.have} da${Math.abs(net) >= .05 ? `, ${net > 0 ? '+' : '−'}${perMin(Math.abs(net))} pro Minute` : ''}. ${why(g.k)}`)}">${n ? `<em class="ord">${n}</em>` : ''}${icon(g.k)}<b>${g.have}</b><small class="nm">${shortGN(g.k)}</small>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`; };
+  const fnet = food.make - food.use, fcls = Math.abs(fnet) < .05 ? '' : fnet > 0 ? 'up' : 'down', ffull = Math.min(1, food.have / (cap * FOODS.length / 3));
+  const sum = `<button class="tile ${fcls} sum" type="button" data-act="foodopen" aria-expanded="${foodOpen}" aria-label="Essen: ${food.have}, ${kinds.length} Sorten. Antippen ${foodOpen ? 'faltet zu' : 'zeigt jede Sorte'}" data-tip="${esc(`<b>Essen</b> ${food.have} da, ${kinds.length} Sorten. ${why('essen')} Drei Sorten machen zufrieden.`)}">${icon('essen')}<b>${food.have}</b><span class="kinds">${kinds.map(g => icon(g.k)).join('')}</span><span class="flow">${fcls ? (fnet > 0 ? '▲' : '▼') + perMin(Math.abs(fnet)) : '·'}</span><i class="fill" style="width:${Math.round(ffull * 100)}%"></i></button>`;
+  const tabs = `<div class="chips stabs" role="tablist">${STORE_TABS.map(([k, n]) => `<button class="chip${storeTab === k ? ' on' : ''}" role="tab" type="button" data-act="stab" data-v="${k}" aria-selected="${storeTab === k}">${k === 'brenn' ? icon('brenn') : ''}${n}</button>`).join('')}</div>`;
+  const by = k => all.find(g => g.k === k) || rate(k);
+  let body = '';
+  if (storeTab === 'tag') body = `<div class="tiles">${sum}${foodOpen ? foods.map(g => tile(g)).join('') : ''}${['wasser', 'speisen'].filter(k => k !== 'speisen' || dailyGoods(I, nd).includes('speisen')).map(k => tile(by(k))).join('')}${(g => `<button class="tile" type="button" data-act="stab" data-v="brenn" aria-label="Brennstoff: ${g.have}. Antippen zeigt das Brennmaterial" data-tip="${esc(`<b>Brennstoff</b> ${g.have} da. ${why('brenn')}`)}">${icon('brenn')}<b>${g.have}</b><span class="flow">›</span></button>`)(rate('brenn'))}</div><p class="sub">Halten zeigt, wofür. ${day.essen} Menschen essen und trinken jeden Morgen.</p>`;
+  else if (storeTab === 'brenn'){ const F = fireFore(I);
+    body = `<div class="tiles">${GROUPS.brenn.map((k, i) => tile(by(k), i + 1)).join('')}</div><p class="sub${F.n && F.fuel < F.n ? ' meal-bad' : ''}">Heute Nacht: ${F.n} Feuer, eins je Haus. Es brennt der Reihe nach: 1, 2, dann 3.</p>`; }
+  else if (storeTab === 'bau') body = `<div class="tiles">${BAU_GOODS.map(k => tile(by(k))).join('')}</div>`;
+  else { const rest = all.filter(g => !BAU_GOODS.includes(g.k) && !GROUPS.brenn.includes(g.k) && !['wasser', 'speisen'].includes(g.k) && (g.have || g.make || g.use));
+    body = rest.length ? `<div class="tiles">${rest.map(g => tile(g)).join('')}</div>` : '<p class="sub">Noch nichts. Hier liegen später Töpfe, Matten, Öl und mehr.</p>'; }
+  return tabs + body;
 }
 /* Standing sheet: what mana is for, and the feasts this island can hold */
 function feastMarkup(I){
@@ -1325,6 +1340,7 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'way'){ sheetData = {...sheetData, way:btn.dataset.w}; renderSheet(); return; }
   if (act === 'upgrade'){ const b = findB(+btn.dataset.b), I = b && islOfB(b.id); if (b && canUpgrade(I, b)) upgradeHouse(I, b, btn.dataset.w || null); updateHUD(); renderSheet(); save(); checkQuest(); return; }
   if (act === 'autoup' && sheetKind === 'needs'){ const I = isl(active); I.autoUp = !I.autoUp; renderSheet(); save(); return; }
+  if (act === 'stab'){ storeTab = btn.dataset.v; renderSheet(); return; }
   if (act === 'tab' && sheetKind === 'needs'){ sheetData = {...(sheetData || {}), tab:btn.dataset.v}; renderSheet(); return; }
   if (act === 'hint'){ closeSheet(); hintBuild(btn.dataset.k); return; }
   if (act === 'fleetbar'){ closeSheet(); setBar('fleet'); return; }

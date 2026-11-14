@@ -1158,3 +1158,16 @@ details.more .rowx{margin-top:6px}
 @media (prefers-reduced-motion:reduce){#tip.pop{animation:none}}
 #tip{display:block}#tip[hidden]{display:none}
 #tip .tipgo{white-space:nowrap}
+/* the store's tabs: small chips under the title; on the fuel tab the number tells the order in which it burns */
+.chips.stabs{gap:4px;margin:0 0 6px;flex-wrap:nowrap;overflow-x:auto}
+.chips.stabs .chip{min-height:30px;padding:0 9px;font-size:12.5px;white-space:nowrap}
+.chips.stabs .chip.on{background:var(--ink)!important;color:var(--cream);box-shadow:none}
+.chips.stabs .chip .ic{width:15px;height:15px;margin-right:2px}
+.tile .ord{position:absolute;left:5px;top:3px;font:800 12px/1 var(--font-ui);font-style:normal;color:#fff;background:var(--ochre);border-radius:50%;width:17px;height:17px;display:grid;place-items:center}
+.tile{position:relative}
+/* the bubble never lets text run over its edge */
+#tip,#tip > span{overflow-wrap:anywhere;word-break:normal;hyphens:auto}
+#tip{line-height:1.3;height:auto}
+/* the house sheet: what each tile is for is in its bubble now, not in a line under the tiles */
+.rise2 .sub.rfor{display:none}
+.chips.stabs .chip{display:inline-flex!important;align-items:center;flex-direction:row}
