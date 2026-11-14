@@ -1470,48 +1470,74 @@ document.addEventListener('click', e => {
 /* ---------- the mascot: a little hermit crab in a shell stamped like a Lapita pot. Now and then it climbs out of the day bar's
    top edge, its eyes pop up, it waves a claw, blinks, and goes back into its shell and down again. A tap makes it hop and says
    who it is. It never shows while the clan is still at sea, and it stays still for those who want less motion. */
-const MASCOT = {first:30000, gap:[55000, 110000], S:34};
+const MASCOT = {first:75000, gap:[150000, 270000], S:34};
 /* Its little plays with the bar, as key frames: time (ms), the crab's middle (x, y) in the bar's frame, its turn (90 looks
    up, -90 down), flip (walks to the right), the clip ('u': only below the bar's lower edge, as if behind the bar; 't': only
-   below the top edge) and what it does ('o' out of the shell, 'w' waves, 'k' walks, 'b' blinks). x is a share of the width,
-   y a share of the height; d* are pixels added. */
+   below the top edge) and what it does ('o' out of the shell, 'w' waves, 'k' walks, 'b' blinks). x is pixels from its spot,
+   y a share of the height plus a share of its size; the 7th value lifts it (a hop). Hermit crabs are shy: they come out
+   slowly, duck back at once when something moves, look about a long while, then scuttle off sideways in short bursts. */
 const CRAB_PLAYS = [
-  // up from under the bar, a wave, along under the edge, up onto the bar, a look round, back down and behind the edge
-  [[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [700, 0, 1, .45, 0, 0, 0, 'u', ''], [1000, 0, 1, .45, 0, 0, 0, 'u', 'o'], [1300, 0, 1, .45, 0, 0, 0, 'u', 'ow'], [2300, 0, 1, .45, 0, 0, 0, 'u', 'ob'],
-   [2600, 0, 1, .45, 0, 0, 0, 'u', 'ok'], [3800, -60, 1, .45, 0, 0, 0, 'u', 'ok'], [4300, -60, 1, .45, 90, 0, 0, '', 'ok'], [5600, -60, .55, 0, 90, 0, 0, '', 'ok'],
-   [6000, -60, .55, 0, 0, 0, 0, '', 'o'], [6700, -60, .55, 0, 0, 0, 0, '', 'ob'], [7200, -60, .55, 0, -90, 0, 0, '', 'ok'], [8400, -60, 1, .45, -90, 0, 0, 'u', 'ok'],
-   [8800, -60, 1, .45, 0, 0, 0, 'u', ''], [9500, -60, 1, -.6, 0, 0, 0, 'u', '']],
-  // from behind the top edge down over the bar, a wave on the lower rim, a hop down onto the map, into the shell and behind the edge
-  [[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [2600, 0, .72, 0, -90, 0, 0, '', 'ok'], [3000, 0, .72, 0, 0, 0, 0, '', 'o'], [3300, 0, .72, 0, 0, 1, 0, '', 'ow'], [4300, 0, .72, 0, 0, 1, 0, '', 'o'],
-   [4800, 26, 1, .45, 0, 1, -14, '', 'o'], [5600, 26, 1, .45, 0, 1, 0, 'u', 'ob'], [6400, 26, 1, .45, 0, 1, 0, 'u', ''], [7100, 26, 1, -.6, 0, 1, 0, 'u', '']],
-  // a shell lies under the bar: it rocks, the crab peeps out, waves, ducks back in and the shell slides away
-  [[0, 0, 1, -.6, 0, 1, 0, 'u', ''], [700, 0, 1, .45, 0, 1, 0, 'u', ''], [1500, 0, 1, .45, 0, 1, 0, 'u', ''], [1800, 0, 1, .45, 0, 1, 0, 'u', 'o'], [2100, 0, 1, .45, 0, 1, 0, 'u', 'ow'],
-   [3300, 0, 1, .45, 0, 1, 0, 'u', 'ob'], [3900, 0, 1, .45, 0, 1, 0, 'u', ''], [4600, 30, 1, -.6, 0, 1, 0, 'u', '']]];
+  // under the bar: the shell rocks, the eyes come up, it ducks back (shy), comes out again, scuttles along under the edge,
+  // climbs onto the bar, sits and looks, and scuttles back down and behind the edge
+  [[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [900, 0, 1, .42, 0, 0, 0, 'u', ''], [1700, 0, 1, .42, 0, 0, 0, 'u', 'o'], [2300, 0, 1, .42, 0, 0, 0, 'u', ''], [3300, 0, 1, .42, 0, 0, 0, 'u', 'o'],
+   [4400, 0, 1, .42, 0, 0, 0, 'u', 'ob'], [5200, 0, 1, .42, 0, 0, 0, 'u', 'ok'], [7000, -44, 1, .42, 0, 0, 0, 'u', 'o'], [7700, -44, 1, .42, 0, 0, 0, 'u', 'ow'], [8600, -44, 1, .42, 0, 0, 0, 'u', 'ok'],
+   [9300, -44, 1, .2, 70, 0, 0, '', 'ok'], [10800, -44, .58, 0, 90, 0, 0, '', 'ok'], [11300, -44, .58, 0, 10, 0, 0, '', 'o'], [12600, -44, .58, 0, 0, 0, 0, '', 'ob'],
+   [13300, -44, .58, 0, -80, 0, 0, '', 'ok'], [14800, -44, 1, .42, -90, 0, 0, 'u', 'ok'], [15300, -44, 1, .42, 0, 0, 0, 'u', ''], [16300, -44, 1, -.6, 0, 0, 0, 'u', '']],
+  // from behind the top edge it creeps down over the bar, stops on the lower rim, waves, drops onto the map, looks, hides
+  [[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [3200, 0, .7, 0, -90, 0, 0, '', 'ok'], [3800, 0, .7, 0, -8, 0, 0, '', 'o'], [4600, 0, .7, 0, 0, 1, 0, '', 'ob'], [5300, 0, .7, 0, 0, 1, 0, '', 'ow'],
+   [6200, 0, .7, 0, 0, 1, 0, '', 'o'], [6700, 20, 1, .42, 0, 1, -12, '', 'o'], [7900, 20, 1, .42, 0, 1, 0, 'u', 'ob'], [8600, 20, 1, .42, 0, 1, 0, 'u', ''], [9600, 20, 1, -.6, 0, 1, 0, 'u', '']],
+  // only the shell lies under the bar: it rocks, an eye, two eyes, a careful look, a wave, back in, the shell slides away
+  [[0, 0, 1, -.6, 0, 1, 0, 'u', ''], [900, 0, 1, .42, 0, 1, 0, 'u', ''], [2200, 0, 1, .42, 0, 1, 0, 'u', ''], [2900, 0, 1, .42, 0, 1, 0, 'u', 'o'], [3500, 0, 1, .42, 0, 1, 0, 'u', ''],
+   [4400, 0, 1, .42, 0, 1, 0, 'u', 'o'], [5600, 0, 1, .42, 0, 1, 0, 'u', 'ob'], [6300, 0, 1, .42, 0, 1, 0, 'u', 'ow'], [7200, 0, 1, .42, 0, 1, 0, 'u', ''], [8100, 26, 1, -.6, 0, 1, 0, 'u', '']]];
 const CRAB_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"`, eye = (x, y) => `<circle cx="${x}" cy="${y}" r="4.4" fill="${I}"/><circle cx="${x - 1.5}" cy="${y - 1.7}" r="1.6" fill="#fff"/>`;
-  return `<svg viewBox="0 0 100 100"><g class="c-crab"><g class="c-legs"><path d="M20 76L14 90M28 78L24 92M38 78L38 92" ${S} stroke="#D9583E" stroke-width="3.4"/></g>` +
+  const leg = (i, x, y) => `<path class="c-leg" data-i="${i}" d="M${x} ${y}l-4 7l-2 7" ${S} stroke="#D9583E" stroke-width="3.2" fill="none"/>`;
+  return `<svg viewBox="0 0 100 100"><g class="c-all"><g class="c-crab">${leg(0, 22, 74)}${leg(1, 29, 77)}${leg(2, 36, 77)}` +
     `<path d="M18 60Q16 50 26 50Q40 52 40 66Q38 80 26 80Q16 78 18 60Z" fill="#E36A4C" ${S}/><ellipse cx="22" cy="68" rx="4.5" ry="2.6" fill="#F2A08F"/><path d="M26 70Q29 72 32 70" fill="none" stroke="${I}" stroke-width="1.6" stroke-linecap="round"/>` +
-    `<g class="c-eyes"><path d="M24 50L22 36M32 51L34 36" ${S} stroke-width="2"/>${eye(22, 33)}${eye(35, 33)}<g class="c-lids"><rect x="16" y="28" width="12" height="10" rx="5" fill="#E36A4C"/><rect x="29" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g></g>` +
+    `<g class="c-eyes"><g class="c-eye" data-i="0"><path d="M24 50L22 36" ${S} stroke-width="2"/>${eye(22, 33)}<rect class="c-lid" x="16" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g>` +
+    `<g class="c-eye" data-i="1"><path d="M32 51L34 36" ${S} stroke-width="2"/>${eye(35, 33)}<rect class="c-lid" x="29" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g>` +
+    `<path class="c-ant" d="M27 52Q20 40 12 38M30 52Q26 40 20 34" fill="none" stroke="#B9472F" stroke-width="1.2" stroke-linecap="round"/></g>` +
     `<g class="c-claw"><path d="M8 62Q2 56 6 50Q12 46 16 52L12 56L18 58Q16 66 8 62Z" fill="#E36A4C" ${S}/></g></g>` +
     `<g class="c-shell"><path d="M44 26Q74 18 82 46Q88 72 62 80Q40 84 34 64Q30 46 44 26Z" fill="#F3D9A0" ${S}/><path d="M48 32Q70 28 74 48Q76 66 60 70Q46 72 44 60Q43 50 54 48Q64 48 62 58" fill="none" stroke="${I}" stroke-width="2" stroke-linecap="round"/>` +
-    `<g fill="#A84A2C"><circle cx="58" cy="36" r="1.5"/><circle cx="64" cy="37" r="1.5"/><circle cx="70" cy="41" r="1.5"/><circle cx="74" cy="47" r="1.5"/><circle cx="76" cy="54" r="1.5"/><circle cx="75" cy="61" r="1.5"/></g><path d="M50 52l4 4l4-4l4 4" fill="none" stroke="#A84A2C" stroke-width="1.5"/></g></svg>`; })();
-let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotLast = '';
-
+    `<g fill="#A84A2C"><circle cx="58" cy="36" r="1.5"/><circle cx="64" cy="37" r="1.5"/><circle cx="70" cy="41" r="1.5"/><circle cx="74" cy="47" r="1.5"/><circle cx="76" cy="54" r="1.5"/><circle cx="75" cy="61" r="1.5"/></g><path d="M50 52l4 4l4-4l4 4" fill="none" stroke="#A84A2C" stroke-width="1.5"/></g></g></svg>`; })();
+let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotLast = '', crabEls = null, crabOut = 0, crabBlinkAt = 0;
+const crabSm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 function mascotTick(now){
   const M = $('mascot'); if (!M) return;
-  if (!M.firstChild.innerHTML) M.firstChild.innerHTML = CRAB_SVG;
+  if (!M.firstChild.innerHTML){ M.firstChild.innerHTML = CRAB_SVG; crabEls = null; }
+  if (!crabEls){ const q = sel => [...M.querySelectorAll(sel)]; crabEls = {all:M.querySelector('.c-all'), crab:M.querySelector('.c-crab'), legs:q('.c-leg'), eyes:q('.c-eye'), lids:q('.c-lid'), claw:M.querySelector('.c-claw'), ant:M.querySelector('.c-ant'), shell:M.querySelector('.c-shell')}; }
   if (!mascotAt) mascotAt = now + MASCOT.first;
   if (mascotOn){
     const P = mascotPlay, t = now - mascotOn, end = P[P.length - 1][0];
-    if (t > end){ mascotOn = 0; M.className = ''; M.style.clipPath = ''; return; }
+    if (t > end){ mascotOn = 0; M.className = ''; M.style.clipPath = ''; crabOut = 0; return; }
     let i = 0; while (i < P.length - 2 && P[i + 1][0] <= t) i++;
-    const A = P[i], B = P[i + 1], u = easeIO(clamp((t - A[0]) / Math.max(1, B[0] - A[0]), 0, 1)), H = $('hudbar'), W = H.offsetWidth, HH = H.offsetHeight, S = MASCOT.S;
-    const at = K => ({x:mascotX + K[1] + (K[6] || 0) * 0, y:K[2] * HH + K[3] * S + (K[6] || 0)});
-    const pa = at(A), pb = at(B), x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u, rot = A[4] + (B[4] - A[4]) * u, flip = A[5], clip = A[7], does = A[8];
+    const A = P[i], B = P[i + 1], dur = Math.max(1, B[0] - A[0]), raw = clamp((t - A[0]) / dur, 0, 1), H = $('hudbar'), HH = H.offsetHeight, S = MASCOT.S, does = A[8];
+    const at = K => ({x:mascotX + K[1], y:K[2] * HH + K[3] * S + (K[6] || 0)}), pa = at(A), pb = at(B), dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
+    // walking: in little bursts, step and rest, the body lifting on each step; otherwise a soft glide (in and out of hiding)
+    const walk = does.includes('k') && dist > 2, steps = Math.max(1, Math.round(dist / 4.5)), ph = raw * steps, f = ph - Math.floor(ph), burst = Math.min(1, f * 1.7);
+    const u = walk ? (Math.floor(ph) + crabSm(burst)) / steps : crabSm(raw), lift = walk ? Math.sin(Math.PI * burst) * 1.3 : 0;
+    const hop = (A[6] || B[6]) && !walk ? -Math.sin(Math.PI * raw) * 10 : 0;
+    const x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u - lift + hop, rot = A[4] + (B[4] - A[4]) * crabSm(raw) + (walk ? Math.sin(ph * Math.PI * 2) * 3 : 0), flip = A[5], clip = A[7];
     M.style.transform = `translate(${(x - S / 2).toFixed(1)}px,${(y - S / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scaleX(${flip ? -1 : 1})`;
-    // the clip, in the crab's own box (before its turn, which is fine: it only turns where nothing is clipped)
     const top = y - S / 2; M.style.clipPath = clip === 'u' ? `inset(${Math.max(0, HH - 3 - top).toFixed(1)}px -20px -20px -20px)` : clip === 't' ? `inset(${Math.max(0, -top).toFixed(1)}px -20px -20px -20px)` : 'none';
-    const cls = 'on' + (does.includes('o') ? ' out' : '') + (does.includes('w') ? ' wave' : '') + (does.includes('k') ? ' walk' : '') + (does.includes('b') ? ' blink' : '');
-    if (cls !== mascotLast){ M.className = cls; mascotLast = cls; }
+    if (!M.classList.contains('on')) M.classList.add('on');
+    // the body: out of the shell slowly, back in quickly (shy)
+    const want = does.includes('o') || walk ? 1 : 0; crabOut += (want - crabOut) * (want > crabOut ? .07 : .3);
+    const E = crabEls, o = crabOut, ts = now / 1000;
+    E.crab.setAttribute('transform', `translate(${(14 * (1 - o)).toFixed(2)} ${(6 * (1 - o)).toFixed(2)}) translate(62 58) scale(${(.35 + .65 * o).toFixed(3)}) translate(-62 -58)`);
+    // the shell sways while it walks and rocks a little when it is about to come out
+    const rock = !walk && o < .5 && raw < .9 ? Math.sin(ts * 9) * 4 * (1 - o) * (A[8] === '' ? 1 : 0) : 0;
+    E.shell.setAttribute('transform', `rotate(${(walk ? Math.sin(ph * Math.PI * 2 + 1) * 3 : rock).toFixed(1)} 60 70)`);
+    // legs step in turn; at rest they shift now and then
+    E.legs.forEach((L, k) => { const a = walk ? Math.sin(ph * Math.PI * 2 + k * 2.1) * 22 : Math.sin(ts * 1.3 + k) * 3; L.setAttribute('transform', `rotate(${a.toFixed(1)} ${[22, 29, 36][k]} ${[74, 77, 77][k]})`); });
+    // eyes on stalks look about each on its own, with a quick twitch now and then; they come up last and go down first
+    E.eyes.forEach((Ey, k) => { const look = Math.sin(ts * (1.7 + k * .6) + k * 2) * 10 + (Math.sin(ts * 7.3 + k * 5) > .97 ? 14 : 0), up = crabSm((o - .4) / .6);
+      Ey.setAttribute('transform', `translate(${k ? 33 : 23} 51) scale(1 ${(.2 + .8 * up).toFixed(2)}) rotate(${(look * up).toFixed(1)}) translate(${k ? -33 : -23} -51)`); });
+    if (does.includes('b') && now > crabBlinkAt) crabBlinkAt = now + 1600 + Math.random() * 1400;
+    const bl = crabBlinkAt - now > 1450 ? 1 : 0; E.lids.forEach((L, k) => L.setAttribute('opacity', bl || (k === 0 && Math.sin(ts * 2.1) > .985) ? 1 : 0));
+    E.ant.setAttribute('transform', `rotate(${(Math.sin(ts * 5) * 6 * o).toFixed(1)} 28 52)`);
+    // the claw: waves in a few quick strokes, else it picks at the ground now and then
+    const wave = does.includes('w'), cl = wave ? Math.sin(ts * 11) * 26 - 12 : (Math.sin(ts * 2.3) > .9 ? -10 : 0) * o;
+    E.claw.setAttribute('transform', `rotate(${cl.toFixed(1)} 15 58)`);
     return;
   }
   if (now < mascotAt || landing || document.hidden || sheetKind === 'menu' || reduced) return;
@@ -1519,7 +1545,7 @@ function mascotTick(now){
   // a play, somewhere along the bar, not where the sun or the moon stands
   const H = $('hudbar'), w = H.offsetWidth, sun = parseFloat($('dayMark').style.left) || -99;
   for (let i = 0; i < 6; i++){ mascotX = w * (.38 + Math.random() * .45); if (Math.abs(mascotX - sun) > 60) break; }
-  mascotPlay = CRAB_PLAYS[Math.floor(Math.random() * CRAB_PLAYS.length)]; mascotOn = now; mascotLast = '';
+  mascotPlay = CRAB_PLAYS[Math.floor(Math.random() * CRAB_PLAYS.length)]; mascotOn = now; mascotLast = ''; crabOut = 0;
 }
 $('mascot').addEventListener('click', e => { e.stopPropagation(); const M = $('mascot'); if (!mascotOn) return; M.classList.remove('hop'); void M.offsetWidth; M.classList.add('hop'); mascotLast = '';
   M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Wird sie zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });

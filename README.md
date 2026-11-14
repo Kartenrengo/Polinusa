@@ -2144,3 +2144,14 @@ Zahl im Lager. Flughunde standen nur in einem Ereignistext.
 **Belegt oder Spiel.** Siehe „Was belegt ist und was später“: Hund, Schwein, Huhn und Ratte kamen mit den Kanus (belegt). Seevögel,
 Flughunde, Geckos, Landkrabben, Schildkröten, Riffische, Delfine, Wale und der Riffreiher sind heimisch (belegt). Der Lichtwal ist
 frei erfunden. Wo und wie oft man sie sieht, ist Spiel.
+
+## Der Einsiedlerkrebs, natürlicher (Version 98)
+
+- **Seltener:** das erste Mal nach gut einer Minute, dann etwa alle drei bis vier Minuten (vorher alle ein bis zwei).
+- **Scheu wie ein echter Einsiedlerkrebs:** Die Muschel wackelt, er kommt langsam heraus, duckt sich einmal schnell zurück und
+  traut sich dann wieder. Hinein geht es immer schnell, heraus langsam.
+- **Krabbeln in kleinen Schüben:** Schritt, Schritt, kurze Pause; der Körper hebt sich bei jedem Schritt, die drei Beine
+  treten nacheinander, die Muschel schaukelt mit.
+- **Augen auf Stielen** schauen jedes für sich umher und zucken manchmal; die Fühler zittern; er blinzelt; die Schere winkt in
+  schnellen Schlägen oder pickt am Boden. Beim Klettern dreht er sich weich statt auf einen Schlag.
+

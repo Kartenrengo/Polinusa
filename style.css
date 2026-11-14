@@ -1182,20 +1182,20 @@ details.more .rowx{margin-top:6px}
 #mascot.on{display:block;pointer-events:auto;cursor:pointer}
 #mascot .mc{display:block;width:100%;height:100%}
 #mascot svg{display:block;width:100%;height:100%;overflow:visible}
-#mascot .c-crab{transform-box:view-box;transform-origin:62px 58px;transform:translate(14px,6px) scale(.35);transition:transform .3s ease-in-out}
-#mascot.out .c-crab{transform:none}
-#mascot .c-eyes{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(.2);transition:transform .25s ease-out .15s}
-#mascot.out .c-eyes{transform:none}
-#mascot .c-lids{opacity:0}
-#mascot.blink .c-lids{animation:crabBlink2 .9s linear}
+
+
+
+
+
+
 @keyframes crabBlink2{0%,40%{opacity:0}45%,60%{opacity:1}65%,100%{opacity:0}}
-#mascot .c-claw{transform-box:fill-box;transform-origin:85% 70%}
-#mascot.wave .c-claw{animation:crabWave2 .55s ease-in-out infinite}
+
+
 @keyframes crabWave2{0%,100%{transform:rotate(0)}50%{transform:rotate(-30deg)}}
-#mascot .c-legs{transform-box:fill-box;transform-origin:50% 0}
-#mascot.walk .c-legs{animation:crabLegs .22s linear infinite}
+
+
 @keyframes crabLegs{0%,100%{transform:skewX(14deg)}50%{transform:skewX(-14deg)}}
-#mascot.walk svg{animation:crabBob .22s linear infinite}
+
 @keyframes crabBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
 #mascot.hop svg{animation:crabHop .45s ease-out}
 body.landing #mascot{display:none}
