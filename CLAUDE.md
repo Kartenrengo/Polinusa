@@ -6,3 +6,5 @@
 - Was spätere Zeit ist (Polynesien, Hawaiki), gehört erst nach die große Fahrt. Belegtes und Vermutetes im README trennen
   (Abschnitt „Was belegt ist und was später“).
 - Die Hausansicht darf auf dem Handy nicht scrollen; der Handy-Test prüft das.
+- Vor jedem Veröffentlichen `GAME_V` in `src/state.js` auf die neue Versionsnummer setzen. Dann legt das Spiel vor dem
+  ersten Speichern eine Kopie „vor dem Update“ an.

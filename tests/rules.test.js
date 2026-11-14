@@ -421,7 +421,8 @@ const r = await p.evaluate(()=>{
     // the two ways from the family house: craftsmen, or (near the shore) seafarers, navigators and the Wissende
     { const H = isl('heimat'), keepSt = {...H.stock}, keepP = H.people.slice(), ships0 = ships.length, auto0 = H.autoUp, peak0 = stats.peakPop, hw0 = H.handWork;
       stats.peakPop = Math.max(peak0 || 0, 30); H.autoUp = false;
-      const h = homesOf(H).find(q => famOfHome(H, q) && membersOf(H, famOfHome(H, q)).length), f = famOfHome(H, h), L0 = H.lands[0];
+      const h = homesOf(H).find(q => famOfHome(H, q) && membersOf(H, famOfHome(H, q)).length) || homesOf(H).find(q => famOfHome(H, q)), f = famOfHome(H, h), L0 = H.lands[0];
+      if (!membersOf(H, f).length) H.people.push({...H.people.find(isAdult), id:930000, h:f.id, job:0, loan:0});   // the village may have just moved about: one grown-up for the house
       const box = (() => { let m = null; for (let x = L0.poly[0].x - 500; x < L0.poly[0].x + 500; x += 12) for (let y = L0.poly[0].y - 500; y < L0.poly[0].y + 500; y += 12){ if (!m && inPoly({x, y}, L0.poly) && polyDist({x, y}, L0.poly) > 40) m = {x, y}; } return m; })();
       const shore = {x:L0.poly[0].x * .96 + H.center.x * .04, y:L0.poly[0].y * .96 + H.center.y * .04}, pos0 = {x:h.x, y:h.y}, t0 = h.t, w0 = h.way, nv0 = H.people.map(p => p.nv);
       const rich = () => { Object.assign(H.stock, {holz:30, dach:30, schnur:30, matten:30, tapa:5, fisch:5, proviant:5, toepfe:5, oel:5, nahrung:30, wasser:30, speisen:30, schalen:30, faser:30}); h.rw = 0; H.meal = {at:tick, n:H.pop, hungry:0, thirsty:0}; };
@@ -488,6 +489,33 @@ const r = await p.evaluate(()=>{
     draw = () => { throw new Error('probe'); }; needDraw = true; frame(performance.now()); draw = d0; window.requestAnimationFrame = r0;
     want(errN === n0 + 1 && rafs === 1 && /probe/.test(lastErr), `frame: an error stops the game (${errN - n0} errors, ${rafs} frames asked)`); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){}
     cam.x = NaN; camGuard(); want(cam.x === cam.x, 'camera: lost for good'); errN = n0; lastErr = ''; try { localStorage.removeItem('polinusa-err'); } catch (x){} }
+    // contentment V90: a person's own work/free setting, build orders, full stores, variety of food
+    { const H0 = isl('heimat'); const wj = (H0.buildings.find(b => KINDS[b.kind].crew && !b.bt) || {}).id || 0; for (let i = 0; H0.people.filter(q => isAdult(q) && q.job).length < 3 && i < 3; i++){ const q = {...H0.people.find(isAdult)}; q.id = 920000 + i; q.job = wj; q.loan = 0; q.h = 0; delete q.zeal; H0.people.push(q); }   // enough grown-ups to compare
+    { const H = isl('heimat'), keep = {...H.stock}, z0 = H.zeal, ads = H.people.filter(q => isAdult(q) && q.job), a = ads[0], c = ads.find(q => q !== a && q.h !== a.h) || ads[1];
+      H.zeal = 1; for (const q of H.people) delete q.zeal; const sat = q => satOf(H, q), has = (q, k) => sat(q).why.find(w => w.k === k);
+      const fa0 = dayShares(H, a).free, fc0 = dayShares(H, c).free; a.zeal = 0;
+      want(dayShares(H, a).free > fa0 && dayShares(H, c).free === fc0 && zealIdx(H, c) === 1 && H.zeal === 1, "zeal: own setting changes only that person's free time");
+      want(has(a, 'zeit') && has(a, 'zeit').d === SAT.zeal[0] && !has(c, 'zeit'), "zeal: own setting changes only that person's contentment");
+      a.zeal = 2; want(has(a, 'zeit').d === SAT.zeal[2] && dayShares(H, a).free === 0, 'zeal: work first for one person'); delete a.zeal; want(!has(a, 'zeit'), 'zeal: wie alle');
+      // build orders (the sites that stand already are set aside)
+      const olds = H.buildings.filter(q => q.bt).map(q => [q, q.bt]); for (const [q] of olds) delete q.bt;
+      const n = H.people.filter(isAdult).length, made = []; for (let i = 0; i < Math.floor(n / 2) + 1; i++){ const q = addB(H, 'haus', {x:H.center.x + 20 + i * 14, y:H.center.y + 60}, variant('haus'), tick); q.bt = 5; q.got = 0; made.push(q); } H.staff = null;
+      let C = satCtx(H, needsOf(H)); want(C.orders === 1, `orders: many sites lower a lot (${C.orders})`);
+      const bf = H.people.find(q => C.builders.has(q.h)); want(!bf || sat(bf).why.some(w => w.k === 'bau' && w.d === SAT.orders[1]), 'orders: builders feel it');
+      for (const q of made.slice(1)){ H.buildings.splice(H.buildings.indexOf(q), 1); } H.staff = null; const few = satCtx(H, needsOf(H)).orders; want(few < 1, `orders: fewer sites, less (${few})`);
+      for (const q of made){ const i = H.buildings.indexOf(q); if (i >= 0) H.buildings.splice(i, 1); } H.staff = null; want(satCtx(H, needsOf(H)).orders === -1, 'orders: no sites, no malus');
+      for (const [q, v] of olds) q.bt = v; H.staff = null;
+      // full stores
+      for (const k of FOODS.concat(['wasser'], GROUPS.brenn)) H.stock[k] = 0; const cap = storeCap(H);
+      H.stock.nahrung = cap; H.stock.fisch = cap; H.stock.wasser = cap; H.stock.holz = cap; H.stock.schalen = cap; H.stock.reisig = cap;
+      want(satCtx(H, needsOf(H)).full && has(a, 'vorrat') && has(a, 'vorrat').d === SAT.stores, 'stores: full stores raise'); H.stock.wasser = 0; want(!satCtx(H, needsOf(H)).full && !has(a, 'vorrat'), 'stores: no water, no raise');
+      // variety
+      for (const k of FOODS) H.stock[k] = 0; H.stock.nahrung = 30; want(has(a, 'sorten') && has(a, 'sorten').d === SAT.sameFood, 'variety: one kind lowers');
+      H.stock.fisch = 30; want(!has(a, 'sorten'), 'variety: two kinds are neutral'); H.stock.kokos = 30; want(has(a, 'sorten') && has(a, 'sorten').d === SAT.variety, 'variety: three kinds raise');
+      H.stock.kokos = 0; H.stock.fisch = 0; H.stock.speisen = 30; H.stock.eier = 30; want(!has(a, 'sorten') || has(a, 'sorten').d !== SAT.variety, 'variety: cooked food is not a kind');
+      // save and load: only a set value is kept
+      a.zeal = 0; c.zeal = 2; const ida = a.id, idc = c.id, other = H.people.find(q => q !== a && q !== c); const sv = serialize(); want(restore(sv), 'zeal: restore');
+      { const H2 = isl('heimat'), pa = pById(H2, ida), pc = pById(H2, idc), po = other ? pById(H2, other.id) : null; want(pa && pa.zeal === 0 && pc.zeal === 2 && (!po || (po.zeal === undefined && !('zeal' in po))), 'zeal: p.zeal saved and loaded, unset stays unset'); delete pa.zeal; delete pc.zeal; H2.zeal = z0; Object.assign(H2.stock, keep); H2.people = H2.people.filter(q => q.id < 920000 || q.id > 920002); H2.staff = null; } } }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

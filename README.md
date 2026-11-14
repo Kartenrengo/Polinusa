@@ -1972,3 +1972,32 @@ Das Häuptlingshaus bleibt, wie es war.
 - **Was belegt ist und was vermutet:** Lange Fahrten und Obsidian-Tausch sind für die Lapita belegt. Ein eigener Rang von
   Seefahrern und Navigatoren und die Wissenden sind **vermutet** und von späteren Völkern angelehnt (siehe die Tabelle
   oben, „Was belegt ist und was später“).
+
+## Zufriedenheit neu (Version 90)
+
+- **Was Menschen zufrieden macht:** volle Vorräte (Essen, Wasser und Brennstoff für drei Tage: +5), Zeit für sich (nichts fehlt
+  und weniger als 60 % der Erwachsenen haben einen festen Platz: +4), Essen aus drei oder mehr Sorten (+4).
+- **Was sie unzufrieden macht:** viele Bauaufträge (mehr als 1 offene Baustelle auf 4 Erwachsene: −4, mehr als 1 auf 2: −8; die
+  Bauleute und ihre Familien spüren es), immer dasselbe Essen (nur eine Sorte: −3). Dazu kommt, wie bisher, was fehlt.
+- **Eine Sorte zählt**, wenn mindestens eine Portion auf vier Menschen im Lager liegt. Gekochtes („Speisen“) zählt nicht als Sorte.
+  Darum lohnt es sich, Fisch, Feldfrüchte, Kokos und Wild nebeneinander zu haben.
+- **Arbeit und Freizeit für jeden:** Auf dem Blatt eines Menschen gibt es einen eigenen Regler (Viel Freizeit, Ausgewogen,
+  Dringend Arbeit) und „wie alle“. Die eigene Einstellung ändert für diesen Menschen die Freizeit, die Arbeitsgeschwindigkeit
+  (ein Arbeitsplatz nimmt den Mittelwert seiner Leute) und die Zufriedenheit. Kinder und Hilfsruhe im Dorf folgen weiter dem
+  Dorfregler. Der Dorfregler setzt die Grundeinstellung; darunter steht, wie viele Menschen eine eigene haben. „Alle wie das
+  Dorf“ löscht die eigenen. Gespeichert wird sie nur, wenn sie gesetzt ist.
+- **Lager:** Alle Essenssorten sind eine Kachel „Essen“ mit der Summe und kleinen Bildern der Sorten im Lager. Antippen zeigt jede
+  Sorte einzeln. Darunter steht: „Drei Sorten Essen machen zufrieden.“
+
+## Spielstände sind sicher (Version 91)
+
+- **Keine Version überschreibt einen Spielstand.** Gespeichert wird im Browser unter demselben Namen wie bisher; eine neue
+  Version liest die alten Spielstände weiter. Geprüft: Spielstände der Versionen 77, 82, 86 und 88 laden und laufen weiter.
+- **Kopie vor dem Update:** Startet eine neue Version zum ersten Mal, legt sie von jedem Spielstand eine Kopie beiseite. Im
+  Menü unter „Aufbewahrt“ lässt sie sich laden, falls mit der neuen Version etwas schiefgeht.
+- **Unlesbar heißt nicht verloren:** Lässt sich ein Spielstand nicht laden (auch keine der drei Sicherungen), wird er
+  aufbewahrt statt überschrieben. Das neue Spiel kommt in einen leeren Platz, und eine Nachricht sagt, wo der alte liegt.
+- Wer ganz sicher gehen will: Menü, „Als Datei“, „Sichern“.
+- **Im Lager steht oben „Jeden Tag“:** je Tagesware eine Zeile, wofür sie gebraucht wird und wie viel. Beim Feuer steht dabei,
+  was zuerst brennt: Kokosschalen, dann Brennholz, zuletzt Bauholz.
+

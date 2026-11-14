@@ -865,7 +865,7 @@ const OFF_OK = new Set(['carry', 'learn', 'chop', 'pull', 'climb', 'wade']);
 function offNow(I, w, T){
   if (!OFF_OK.has(T) || I.feastEnd > tick || w.carry || w.boat || (w.job && w.job.b && w.job.b.prio)) return false;   // a place called with the conch has no evening off
   const ph = dayPhase(), day = Math.floor((tick + 30) / DAY_TICKS), id = w.pid || (w.x | 0);
-  const Z = zealOf(I);
+  const Z = zealP(I, w.pid ? pById(I, w.pid) : null);
   if (ph > .5 && ph < .64) return hsh(day, id) < Z.off[0];
   if (ph > .27 && ph < .34) return hsh(day + .37, id) < Z.off[1];
   return false;
@@ -1221,15 +1221,27 @@ function wayF(I, b){
    evening off, and fewer children come, there is no time for them. */
 const ZEAL = [{n:'Viel Freizeit', work:.85, birth:1.25, off:[.9, .45]}, {n:'Ausgewogen', work:1, birth:1, off:[.65, .22]}, {n:'Dringend Arbeit', work:1.25, birth:.5, off:[0, 0]}];
 const zealOf = I => ZEAL[I && I.zeal != null ? I.zeal : 1];
+/* Each person may have an own setting (p.zeal, undefined = like the village). It counts for their free time, their work
+   speed and their contentment; births and the helpers' rest (village-wide) keep the village value. */
+const zealIdx = (I, p) => p && p.zeal != null ? p.zeal : I && I.zeal != null ? I.zeal : 1;
+const zealP = (I, p) => ZEAL[zealIdx(I, p)];
+const ownZeal = I => (I.people || []).reduce((t, p) => t + (p.zeal != null ? 1 : 0), 0);
+const pById = (I, id) => (I.people || []).find(q => q.id === id);
+/* the work factor of a place: the average of its people's settings (the village's when nobody there has their own) */
+function zealWork(I, b){
+  if (!ownZeal(I)) return zealOf(I).work;
+  const ids = staffOf(I).crewP.get(b); if (!ids || !ids.length) return zealOf(I).work;
+  let t = 0; for (const id of ids){ const p = pById(I, id); t += (p ? zealP(I, p) : zealOf(I)).work; } return t / ids.length;
+}
 /* the share of a grown-up's day: sleep at night, the evening off and the rest at noon by the village's choice, the rest work */
 function dayShares(I, p){
-  const sleep = opts.night ? .33 : 0, Z = zealOf(I), free = !p || !p.job ? null : .14 * Z.off[0] + .07 * Z.off[1];
+  const sleep = opts.night ? .33 : 0, Z = zealP(I, p), free = !p || !p.job ? null : .14 * Z.off[0] + .07 * Z.off[1];
   if (free == null) return {sleep, free:1 - sleep, work:0};
   return {sleep, free, work:1 - sleep - free};
 }
 const oldF = (I, b, n) => { const o = b.at ? (staffOf(I).oldAt.get(b) || 0) : 0; return o && n ? 1 - .5 * Math.min(o, n) / n : 1; };   // the old work at half strength
 const masterF = b => { const h = b.at && findB(b.at); return h && tierOf(h) >= 3 ? 1.25 : 1; };   // a family of craftsmen works its craft faster
-const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealOf(I).work * strengthF(I, b) * (K.crew ? mealF(I, b) : 1) * giftWork(I, b); };
+const workSpeed = (I, b, n) => { const K = KINDS[b.kind]; return (K.crew ? teamF(K, n) : 1) * oldF(I, b, n) * masterF(b) * palmF(I, b) / wayF(I, b) * zealWork(I, b) * strengthF(I, b) * (K.crew ? mealF(I, b) : 1) * giftWork(I, b); };
 /* The yam year. Bare mounds wait for the rains; then the people set the tubers (b.ys 1, b.sown up to 1); the vines grow
    (b.ys 2) until the lean time, when the whole field is dug up at once and the yams go into the store, where they keep.
    A field only half set yields half. Each harvest takes from the soil; a worn field rests. */
@@ -1390,9 +1402,20 @@ const fireShort = I => { const F = fireFore(I); return F.n > 0 && F.fuel < F.n; 
    them, what their house step wants, room, the village's share of work and free time, a feast, a beautiful village.
    Very content people work a little faster, discontent ones slower (mealOf). The top bar shows the village's average;
    a tap shows the least content person, why, and what helps. */
-const SAT = {fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8};
+const SAT = {fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8, orders:[-4, -8], stores:5, spare:4, variety:4, sameFood:-3};
 const ZEAL_SAT_TXT = ['viel Freizeit', '', 'viel Arbeit'];
-function satOf(I, p, nd = needsOf(I)){
+/* what is the same for everyone in the village (worked out once for a round of satTick):
+   open building sites per grown-up, full stores, little to do, the kinds of food in store */
+function satCtx(I, nd){
+  const P = I.people || [], adults = P.filter(isAdult), na = Math.max(1, adults.length), n = eaters(I), cap = storeCap(I);
+  const sites = I.buildings.filter(b => b.bt && !KINDS[b.kind].plant), ratio = sites.length / na, orders = ratio > .5 ? 1 : ratio > .25 ? 0 : -1;
+  const sf = staffOf(I), builders = new Set(); if (orders >= 0) for (const b of sites) for (const id of sf.crewP.get(b) || []){ const q = pById(I, id); if (q) builders.add(q.h); }
+  const fires = Math.max(1, fireHomes(I).length), full = n > 0 && haveOf(I, 'essen') >= Math.min(3 * n, 2 * cap) && (I.stock.wasser || 0) >= Math.min(3 * n, cap) && GROUPS.brenn.reduce((t, k) => t + (I.stock[k] || 0), 0) >= Math.min(3 * fires, cap);
+  const jobs = adults.filter(q => q.job).length, spare = !nd.list.some(q => q.state === 'out') && adults.length > 0 && jobs < .6 * adults.length;
+  const kinds = FOODS.filter(k => k !== 'speisen' && (I.stock[k] || 0) >= Math.max(1, n / 4)).length;
+  return {orders, builders, full, spare, kinds};
+}
+function satOf(I, p, nd = needsOf(I), C = satCtx(I, nd)){
   const why = []; let v = SAT.base; const add = (k, d, t) => { if (!d) return; v += d; why.push({k, d, t}); };
   if (p.meal & 1) add('essen', SAT.hungry, 'ohne Essen');
   if (p.meal & 2) add('wasser', SAT.thirsty, 'ohne Wasser');
@@ -1404,7 +1427,11 @@ function satOf(I, p, nd = needsOf(I)){
     for (const n of famNeeds(I, f, nd.list)) if (!['dach', 'essen', 'wasser', 'brenn'].includes(n.k)){ if (n.state === 'out') add(n.k, SAT.needOut, `${GN[n.k]} fehlt`); else if (n.state === 'low') add(n.k, SAT.needLow, `${GN[n.k]} knapp`); }
     if (membersOf(I, f).length > homeCap(I, h)) add('enge', SAT.crowded, 'zu eng');
   }
-  const z = I.zeal != null ? I.zeal : 1, a = stageOf(p); if (a !== 'kid' && z !== 1) add('zeit', a === 'old' ? Math.round(SAT.zeal[z] / 2) : SAT.zeal[z], ZEAL_SAT_TXT[z]);
+  const z = zealIdx(I, p), a = stageOf(p); if (a !== 'kid' && z !== 1) add('zeit', a === 'old' ? Math.round(SAT.zeal[z] / 2) : SAT.zeal[z], ZEAL_SAT_TXT[z]);
+  if (C.orders >= 0 && C.builders.has(p.h)) add('bau', SAT.orders[C.orders], 'viele Bauaufträge');
+  if (C.full) add('vorrat', SAT.stores, 'volle Vorräte');
+  if (C.spare && a === 'adult') add('frei', SAT.spare, 'Zeit für sich');
+  if (C.kinds >= 3) add('sorten', SAT.variety, 'abwechslungsreich'); else if (C.kinds === 1) add('sorten', SAT.sameFood, 'immer dasselbe');
   if (I.joyUntil > tick) add('fest', SAT.feast, 'Fest');
   if (I.fernAt != null && tick - I.fernAt < 2 * DAY_TICKS) add('fern', SAT.fern, 'Feines aus der Ferne');   // a canoe of a daughter brought what the island cannot make
   { const g = giftsHeld().size; if (g) add('gaben', Math.min(5, g), 'Gaben des Clans'); }
@@ -1413,8 +1440,8 @@ function satOf(I, p, nd = needsOf(I)){
   return {v:clamp(Math.round(v), 0, 100), why};
 }
 function satTick(I){
-  syncPeople(I); const nd = needsOf(I), by = new Map(), all = [];
-  for (const p of I.people || []){ const s = satOf(I, p, nd); by.set(p.id, s.v); all.push([p, s]); }
+  syncPeople(I); const nd = needsOf(I), by = new Map(), all = [], C = satCtx(I, nd);
+  for (const p of I.people || []){ const s = satOf(I, p, nd, C); by.set(p.id, s.v); all.push([p, s]); }
   all.sort((x, y) => x[1].v - y[1].v);
   I._sat = {t:tick, by, all, avg:all.length ? Math.round(all.reduce((t, x) => t + x[1].v, 0) / all.length) : 0}; I._mf = null;
   return I._sat;
@@ -2047,7 +2074,7 @@ function switchSlot(n, fresh){
   if (!fresh && n === curSlot) return;
   save(); closeSheet(); endSteer(); if (mode === 'place' || mode === 'move') endPlace(); setBar(null);
   curSlot = n; try { localStorage.setItem('polinusa-slot', String(n)); if (fresh) localStorage.removeItem(slotKey(n)); } catch (e){}
-  let ok = false, raw = null; try { raw = fresh ? null : localStorage.getItem(slotKey(n)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); } catch (e){ ok = false; }
+  let ok = false, raw = null; try { raw = fresh ? null : localStorage.getItem(slotKey(n)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); if (raw && !ok) keepAside(n, raw); } catch (e){ ok = false; }
   if (!ok){ newGame(); beginLanding(); toast(`Spielstand ${n}: ein neues Spiel mit neuen Inseln.`, 3000, false); return; }
   landing = null; document.body.classList.remove('landing');
   const away = savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
@@ -2056,8 +2083,9 @@ function switchSlot(n, fresh){
 }
 function start(data){
   injectDefs();
-  let ok = false;
-  try { const raw = (data && data.save) || localStorage.getItem(slotKey(curSlot)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); } catch (e){}   // a broken save: the newest copy
+  let ok = false, unread = 0; versionGuard();
+  try { const raw = (data && data.save) || localStorage.getItem(slotKey(curSlot)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup();   // a broken save: the newest copy
+    if (raw && !ok){ unread = curSlot; keepAside(curSlot, raw); const n = freeSlot(); if (n){ curSlot = n; localStorage.setItem('polinusa-slot', String(n)); } } } catch (e){}   // never written over: put aside, and the new game in an empty slot
   // a game from the old rules is not carried over: the island economy works differently now
   let oldGame = false; try { for (const k of OLD_KEYS) if (localStorage.getItem(k)){ oldGame = true; localStorage.removeItem(k); } } catch (e){}
   if (!ok) newGame();
@@ -2068,7 +2096,7 @@ function start(data){
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
-    if (!ok){ beginLanding(); if (oldGame) toast('Neue Regeln für Haushalte und Rohstoffe: Das Spiel beginnt neu.', 6000); }
+    if (!ok){ beginLanding(); if (unread) toast(`Spielstand ${unread} ließ sich nicht laden. Er ist sicher aufbewahrt: Menü, „Aufbewahrt“.`, 7000, false); else if (oldGame) toast('Neue Regeln für Haushalte und Rohstoffe: Das Spiel beginnt neu.', 6000); }
     else if (away && away.ms >= 3 * 60000) welcomeBack(away);
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });

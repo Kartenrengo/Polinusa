@@ -138,8 +138,8 @@ function homeSpot(I){
 /* ---------- save and load: the seed rebuilds the islands, only what changed is stored */
 /* a person as stored: id, name, birth, lifespan, grown, navigator knowledge, and for the married their clan, where they
    came from and the partner's name */
-const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1000 : 0, p.w || 0, p.f || 0, p.sp || 0, p.s || 'f', p.h || 0, p.job || 0, p.ln || 0, p.wk || 0, p.tt || 0, p.ev && p.ev.length ? p.ev : 0];
-const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk, tt, ev]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, job:job || 0, ln:ln || 0, ...(ev ? {ev} : {}), ...(wk ? {wk} : {}), ...(tt ? {tt} : {}), ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
+const packP = p => [p.id, p.n, p.b, p.l, p.a, p.nv ? Math.round(p.nv * 1000) / 1000 : 0, p.w || 0, p.f || 0, p.sp || 0, p.s || 'f', p.h || 0, p.job || 0, p.ln || 0, p.wk || 0, p.tt || 0, p.ev && p.ev.length ? p.ev : 0, p.zeal != null ? p.zeal + 1 : 0];
+const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk, tt, ev, zl]) => ({id, n, b, l, a, s:sx || 'f', h:h || 0, job:job || 0, ln:ln || 0, ...(ev ? {ev} : {}), ...(zl ? {zeal:zl - 1} : {}), ...(wk ? {wk} : {}), ...(tt ? {tt} : {}), ...(nv ? {nv} : {}), ...(w ? {w} : {}), ...(f ? {f} : {}), ...(sp ? {sp} : {})});
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
   return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), sum:saveSum(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:3, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
@@ -190,7 +190,7 @@ function restore(raw){
     for (const I of islands) I.lvl = I.lvl || 1;
     if (!isl(active) || !isl(active).settled) active = 'heimat';
     return isl('heimat').settled;
-  } catch (e){ console.error(e); return false; }
+  } catch (e){ console.error(e); lastLoadErr = String(e && e.message || e).slice(0, 200); return false; }
 }
 /* the names of the lines someone still belongs to */
 const liveLines = () => { const used = new Set(); for (const I of islands) for (const p of I.people || []) used.add(p.ln); for (const s of ships) for (const p of s.folk || []) used.add(p.ln); return Object.fromEntries(Object.entries(LINES).filter(([id]) => used.has(+id))); };
@@ -200,6 +200,21 @@ const questFromSave = s => { const old = s.qo || 0, id = s.qid === 'chief' && !o
 /* Two games side by side. Each slot keeps its own save and its own copies; slot 1 is the save from before there were
    slots. The slot in play is remembered. A save carries a short summary for the menu (sum). */
 const SLOTS = 2;
+/* A save is never lost to a new version of the game. Before a new version saves for the first time, every slot is copied
+   aside as it was ("vor dem Update"), and a save that cannot be read is put aside instead of being written over. The menu
+   offers both again. */
+const GAME_V = 91, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
+let lastLoadErr = '';
+function keptOf(key){ try { const o = JSON.parse(localStorage.getItem(key) || 'null'); return o && o.raw ? o : null; } catch (e){ return null; } }
+function keepAside(n, raw){ try { const k = keptOf(keepKey(n)); if (!k || k.raw !== raw) localStorage.setItem(keepKey(n), JSON.stringify({at:Date.now(), why:lastLoadErr, raw})); } catch (e){} }
+function versionGuard(){
+  let old = 0; try { old = +localStorage.getItem('polinusa-ver') || 0; } catch (e){}
+  if (old === GAME_V) return;
+  for (let n = 1; n <= SLOTS; n++){ try { const raw = localStorage.getItem(slotKey(n)); if (raw) localStorage.setItem(preKey(n), JSON.stringify({at:Date.now(), v:old, raw})); } catch (e){} }
+  try { localStorage.setItem('polinusa-ver', String(GAME_V)); } catch (e){}
+}
+/* where a new game goes when the save of this slot could not be read: an empty slot, so the unread one stays as it is */
+const freeSlot = () => { for (let n = 1; n <= SLOTS; n++) try { if (!localStorage.getItem(slotKey(n))) return n; } catch (e){} return 0; };
 let curSlot = (() => { try { return clamp(Math.round(+localStorage.getItem('polinusa-slot')) || 1, 1, SLOTS); } catch (e){ return 1; } })();
 const slotKey = n => n === 1 ? SAVE_KEY : `${SAVE_KEY}-s${n}`;
 const saveSum = () => { const vs = islands.filter(I => I.settled), H0 = islands.find(I => I.id === 'heimat'); return {n:H0 ? H0.name : '', p:vs.reduce((t, I) => t + I.pop, 0), d:vs.length, y:yearOf() + 1}; };

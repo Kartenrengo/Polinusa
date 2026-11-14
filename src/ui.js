@@ -231,6 +231,17 @@ const newsOpen = () => !$('newsList').hidden;
 function newsBadge(){ const n = $('newsNum'); n.hidden = !unread; n.textContent = unread > 9 ? '9+' : unread; $('newsBtn').setAttribute('aria-label', unread ? `Nachrichten, ${unread} neu` : 'Nachrichten'); }
 const ago = at => { const s = (Date.now() - at) / 1000; return s < 60 ? 'eben' : s < 3600 ? `vor ${Math.floor(s / 60)} Min` : s < 172800 ? `vor ${Math.floor(s / 3600)} Std` : `vor ${Math.floor(s / 86400)} Tagen`; };
 /* a slot in the menu: what is in it, and the buttons to play it or begin it anew */
+/* saves put aside: one that could not be read, and each slot as it was before this version of the game */
+function keptMarkup(){
+  const rows = [];
+  for (let n = 1; n <= SLOTS; n++){
+    const k = keptOf(keepKey(n)), v = keptOf(preKey(n));
+    if (k) rows.push(`<li>${icon('insel')}<span class="nm">Spielstand ${n}, nicht geladen<small>aufbewahrt ${ago(k.at)}</small></span><button class="btn small" type="button" data-act="kept" data-k="keep" data-n="${n}">Laden</button></li>`);
+    if (v){ let sum = null; try { sum = JSON.parse(v.raw).sum; } catch (e){}
+      rows.push(`<li>${icon('insel')}<span class="nm">Spielstand ${n} vor dem Update<small>${sum ? `${sum.n} · ${sum.p} Menschen · ${sum.y}. Jahr` : 'ein Spiel'}</small></span><button class="btn small" type="button" data-act="kept" data-k="vorher" data-n="${n}">Laden</button></li>`); }
+  }
+  return rows.length ? `<p class="sec">Aufbewahrt</p><ul class="list needs slots">${rows.join('')}</ul>` : '';
+}
 function slotRow(n){
   const me = n === curSlot, info = me ? {at:Date.now(), sum:landing ? null : saveSum()} : slotInfo(n), s = info && info.sum;
   const what = me && landing ? 'Das Kanu sucht noch Land' : s ? `${s.n} · ${s.p} Menschen${s.d > 1 ? ` in ${s.d} Dörfern` : ''} · ${s.y}. Jahr` : info ? 'Ein Spiel' : 'Leer';
@@ -686,13 +697,18 @@ function peopleTab(I, nd){
 const ZEAL_TEXT = ['Alle Arbeit geht langsamer (85 %), dafür ist mehr Zeit für Familie und Spiel: Kinder kommen öfter.', 'Abends hat ein Teil frei, mittags ruhen einige.', 'Alle arbeiten schneller (125 %), niemand nimmt den Abend frei. Für Kinder bleibt keine Zeit: Sie kommen halb so oft.'];
 function zealMarkup(I){
   const z = I.zeal != null ? I.zeal : 1;
-  return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><p class="sub">${ZEAL_TEXT[z]}</p></div>`;
+  return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><p class="sub">${ZEAL_TEXT[z]}</p>${ownZeal(I) ? `<div class="rowx"><span class="sub">${ownZeal(I)} ${ownZeal(I) === 1 ? 'Mensch hat' : 'Menschen haben'} eine eigene Einstellung.</span><button class="chip" type="button" data-act="zealall" data-i="${I.id}">Alle wie das Dorf</button></div>` : ''}</div>`;
+}
+/* the same for one person: the three steps, and "wie alle" to follow the village again */
+function zealPersonMarkup(I, p, extra = ''){
+  const z = zealIdx(I, p), own = p.zeal != null;
+  return `<div class="zeal zealp"><input id="zealP" data-i="${I.id}" data-p="${p.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit für ${p.n}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><div class="rowx"><span class="sub">${own ? 'Eigene Wahl' : 'Wie alle'}</span><span class="chips"><button class="chip" type="button" data-act="zealfollow" data-p="${p.id}" aria-pressed="${!own}">wie alle</button>${extra}</span></div></div>`;
 }
 /* Contentment (satOf): the village's average, how many are content, so-so or not, and the least content person, with
    what pulls them down and what helps: the share of work and free time for everyone, their house, food, water, fuel */
 const SAT_BANDS = ['gut', 'mittel', 'schlecht'], satBand = v => v >= 70 ? 'gut' : v >= 45 ? 'mittel' : 'schlecht';
 const SAT_FACE = {gut:['M6.6 11.8Q10 15 13.4 11.8', '#F3D98A'], mittel:['M6.8 12.9H13.2', '#E9DCC0'], schlecht:['M6.6 14Q10 11.2 13.4 14', '#E8A88A']};
-const SAT_ICON = {fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen'};
+const SAT_ICON = {fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen', bau:'beile', vorrat:'proviant', frei:'idle', sorten:'essen'};
 function satHelp(I, p, w){
   const f = famOf(I, p.h), h = f && f.home && findB(f.home);
   if (w.k === 'essen') return {a:'ware', k:'nahrung', t:'Mehr Essen'};
@@ -700,6 +716,7 @@ function satHelp(I, p, w){
   if (w.k === 'feuer') return {a:'ware', k:'holz', t:'Brennholz'};
   if (w.k === 'dach') return h ? {a:'goto', b:h.id, t:'Zum Haus'} : {a:'hint', k:'haus', t:'Hütte bauen'};
   if (w.k === 'enge') return {a:'hint', k:'haus', t:'Hütte bauen'};
+  if (w.k === 'sorten') return {a:'ware', k:'fisch', t:'Anderes Essen'};
   if (GN[w.k]) return {a:'ware', k:w.k, t:GN[w.k]};
   return null;
 }
@@ -715,7 +732,7 @@ function satMarkup(I){
   h += `<p class="sec">Am wenigsten zufrieden</p><div class="satlow"><button class="who chip pers" type="button" data-act="who" data-p="${p.id}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${f ? famName(f) : ''}</span></button>`
     + `<span class="satv ${m}" aria-label="${t.v} von 100"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.8" fill="${SAT_FACE[m][1]}" stroke="#2B1D14" stroke-width="1.6"/><circle cx="7.3" cy="8.6" r="1.05" fill="#2B1D14"/><circle cx="12.7" cy="8.6" r="1.05" fill="#2B1D14"/><path d="${SAT_FACE[m][0]}" fill="none" stroke="#2B1D14" stroke-width="1.5" stroke-linecap="round"/></svg><b>${t.v}</b></span></div>`;
   const tile = (w, cls) => `<span class="sattile ${cls}">${icon(SAT_ICON[w.k] || w.k)}<small>${w.t}</small><b>${w.d > 0 ? '+' : ''}${w.d}</b></span>`;
-  h += `<div class="sattiles">${minus.map(w => tile(w, 'out')).join('')}${plus.map(w => tile(w, 'ok')).join('')}${!minus.length ? '<span class="sub">Nichts fehlt. Mehr Freizeit, ein Fest oder ein schönes Dorf machen noch zufriedener.</span>' : ''}</div>`;
+  h += `<div class="sattiles">${minus.map(w => tile(w, 'out')).join('')}${plus.map(w => tile(w, 'ok')).join('')}${!minus.length ? '<span class="sub">Nichts fehlt. Volle Vorräte, drei Sorten Essen, wenig Bauaufträge, Freizeit, ein Fest oder ein schönes Dorf machen noch zufriedener.</span>' : ''}</div>`;
   const acts = []; for (const w of minus){ const a = satHelp(I, p, w); if (a && !acts.some(x => x.t === a.t)) acts.push(a); }
   if (acts.length) h += `<div class="chips satacts">${acts.slice(0, 3).map(a => `<button class="chip" type="button" data-act="${a.a}"${a.k ? ` data-k="${a.k}"` : ''}${a.b ? ` data-b="${a.b}"` : ''}>${a.t}</button>`).join('')}</div>`;
   h += `<p class="sec">Arbeit und Freizeit für alle</p>` + zealMarkup(I);
@@ -749,8 +766,9 @@ function personMarkup(){
   if (st === 'adult') h += `<div class="daybar" role="img" aria-label="Der Tag: Arbeit ${pc(D.work)} %, Freizeit ${pc(D.free)} %, Schlaf ${pc(D.sleep)} %"><i class="w" style="width:${pc(D.work)}%"></i><i class="f" style="width:${pc(D.free)}%"></i><i class="s" style="width:${pc(D.sleep)}%"></i></div>` +
     `<div class="daylegend"><span class="w">Arbeit ${pc(D.work)} %</span><span class="f">Freizeit ${pc(D.free)} %</span><span class="s">Schlaf ${pc(D.sleep)} %</span></div>`;
   { const st = storyOf(p); if (st.length) h += `<p class="sec">Lebensgeschichte</p><ul class="list needs story">${st.slice().reverse().map(e => `<li><span class="nm">${p.n} ${e.text}<small>Jahr ${e.year}</small></span></li>`).join('')}</ul>`; }
-  h += `<p class="sec">Arbeit und Freizeit auf ${I.name}</p>` + zealMarkup(I);
-  if (f && f.home) h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button></div>`;
+  const toHome = f && f.home ? `<button class="chip" type="button" data-act="goto" data-b="${f.home}">Zum Haus</button>` : '';
+  if (st !== 'kid') h += `<p class="sec">Arbeit und Freizeit von ${p.n}</p>` + zealPersonMarkup(I, p, toHome);
+  else if (toHome) h += `<div class="rowx"><span></span>${toHome}</div>`;
   return h;
 }
 /* every place someone could have as their own: name, how many have it as theirs, the current one marked; a full place
@@ -832,22 +850,33 @@ function vitalLine(I, skip = []){
   return hid ? '' : `<span>${ic('pop')}wächst</span>`;
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
+/* what one day takes, in one line each: so it is clear what food, water, fuel and cooked food are for */
+const DAILY_WHY = {essen:n => `${n} Portionen: jeder isst morgens eine`, wasser:n => `${n} Portionen: jeder trinkt morgens eine`,
+  brenn:n => `${n} Feuer nachts, eins je Haus. Erst Kokosschalen, dann Brennholz, zuletzt Bauholz`, speisen:n => `${n} für die Familienhäuser, vom Erdofen`};
+function dailyMarkup(I){
+  const nd = needsOf(I), day = dailyNeed(I, nd);
+  return `<p class="sec">Jeden Tag</p><ul class="list daily">${dailyGoods(I, nd).filter(k => day[k]).map(k => `<li>${icon(k)}<b>${needShort(k)}</b><span class="sub">${DAILY_WHY[k](day[k])}.</span></li>`).join('')}</ul>`;
+}
 function storeMarkup(I){
-  let h = head(`Lager auf ${I.name}`, `${icon('haus')} ${storeCap(I)} je Ware`) + storeTiles(I);
+  let h = head(`Lager auf ${I.name}`, `${icon('haus')} ${storeCap(I)} je Ware`) + dailyMarkup(I) + storeTiles(I);
   const idle = I.buildings.filter(b => b.idle && b.idle.why !== 'full' && b.idle.why !== 'grow');
   if (idle.length) h += `<div class="chips stillrow"><span class="state out">steht still</span>${idle.slice(0, 8).map(b => `<button class="chip way" type="button" data-act="goto" data-b="${b.id}" aria-label="${KINDS[b.kind].n}: ${b.idle.text}">${bIcon(b.kind)}${KINDS[b.kind].s}<small>${shortWhy(b.idle)}</small></button>`).join('')}</div>`;
   return h;
 }
 /* the tiles of the store, for the store sheet and the village centre: each good with its name under it; tap it to see who
    makes it; the arrow is green when more comes than goes, red when it runs down */
+let foodOpen = false;   // the single foods are folded into one tile "Essen"; a tap unfolds them
 function storeTiles(I){
-  const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, rows = ['essen', ...GOODS].map(k => {
+  const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, rate = k => {
     const make = ofNeed(k, q => makeRate(I, q)), need = nd.list.find(n => n.k === k), use = (need ? need.use : 0) + ofNeed(k, q => workUse(I, q)), have = haveOf(I, k);
     return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have};
-  }).filter(g => g.k === 'essen' || g.have || g.make || g.use);
-  return `<div class="tiles">${rows.map(g => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / (g.k === 'essen' ? cap * FOODS.length / 3 : cap));
-    const tag = g.k === 'essen' ? 'span' : 'button', at = g.k === 'essen' ? 'role="img"' : `type="button" data-act="ware" data-k="${g.k}"`;
-    return `<${tag} class="tile ${cls}${g.k === 'essen' ? ' sum' : ''}" ${at} aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute">${icon(g.k)}<b>${g.have}</b><small class="nm">${g.k === 'essen' ? 'Essen, alles' : GN[g.k].length <= 12 ? GN[g.k] : shortGN(g.k)}</small>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></${tag}>`; }).join('')}</div>`;
+  }, rows = GOODS.map(rate).filter(g => !FOODS.includes(g.k) && (g.have || g.make || g.use));
+  const foods = FOODS.map(rate).filter(g => g.have || g.make || g.use), kinds = foods.filter(g => g.have > 0), all = rate('essen');
+  const tile = g => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / cap);
+    return `<button class="tile ${cls}" type="button" data-act="ware" data-k="${g.k}" aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute">${icon(g.k)}<b>${g.have}</b><small class="nm">${GN[g.k].length <= 12 ? GN[g.k] : shortGN(g.k)}</small>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`; };
+  const net = all.make - all.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, all.have / (cap * FOODS.length / 3));
+  const sum = `<button class="tile ${cls} sum" type="button" data-act="foodopen" aria-expanded="${foodOpen}" aria-label="Essen: ${all.have}, ${kinds.length} Sorten. Antippen ${foodOpen ? 'faltet zu' : 'zeigt jede Sorte'}">${icon('essen')}<b>${all.have}</b><small class="nm">Essen · ${kinds.length} ${kinds.length === 1 ? 'Sorte' : 'Sorten'} ${foodOpen ? '▴' : '▾'}</small><span class="kinds">${kinds.map(g => icon(g.k)).join('')}</span><span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`;
+  return `<div class="tiles">${sum}${foodOpen ? foods.map(tile).join('') : ''}${rows.map(tile).join('')}</div><p class="sub">Drei Sorten Essen machen zufrieden.</p>`;
 }
 /* Standing sheet: what mana is for, and the feasts this island can hold */
 function feastMarkup(I){
@@ -1192,6 +1221,7 @@ function renderSheet(){
     else if (sheetData && sheetData.slotNew) h += `<div class="rowx"><span>Spielstand ${sheetData.slotNew} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="slotnew" data-n="${sheetData.slotNew}">Neu beginnen</button></span></div>`;
     else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<p class="sec">Spielstände</p><ul class="list needs slots">${Array.from({length:SLOTS}, (_, i) => slotRow(i + 1)).join('')}</ul>` +
+      keptMarkup() +
       `<p class="sec">Als Datei</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
       (backups().length ? `<div class="chips copies">${backups().map(b => `<button class="chip" type="button" data-act="backup" data-i="${b.i}">Kopie ${ago(b.at)}</button>`).join('')}</div>` : '') +
       `<details class="more"><summary>Als Text</summary><textarea id="saveText" class="savetext" rows="3" spellcheck="false" aria-label="Spielstand als Text"></textarea><div class="rowx"><span class="chips"><button class="chip" type="button" data-act="showtext">Zeigen</button><button class="chip" type="button" data-act="loadtext">Aus Text laden</button></span></div></details>` +
@@ -1242,9 +1272,18 @@ $('sheetBody').addEventListener('change', e => {
   const I = isl(e.target.dataset.i); if (!I) return;
   I.zeal = clamp(Math.round(+e.target.value), 0, 2); I.staff = null; I._sat = null; I._mf = null; save(); renderSheet(); updateHUD(); toast(`${I.name}: ${ZEAL[I.zeal].n}.`, 2200, false);
 });
+$('sheetBody').addEventListener('change', e => {
+  if (e.target.id !== 'zealP') return;
+  const I = isl(e.target.dataset.i), p = I && pById(I, +e.target.dataset.p); if (!p) return;
+  p.zeal = clamp(Math.round(+e.target.value), 0, 2); zealChanged(I); toast(`${p.n}: ${ZEAL[p.zeal].n}.`, 2200, false);
+});
+const zealChanged = I => { I.staff = null; I._sat = null; I._mf = null; save(); renderSheet(); updateHUD(); };
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;
   const act = btn.dataset.act;
+  if (act === 'foodopen'){ foodOpen = !foodOpen; renderSheet(); return; }
+  if (act === 'zealfollow'){ const I = isl(sheetData && sheetData.id), p = I && pById(I, +btn.dataset.p); if (p){ delete p.zeal; zealChanged(I); } return; }
+  if (act === 'zealall'){ const I = isl(btn.dataset.i); for (const p of I.people || []) delete p.zeal; zealChanged(I); return; }
   if (act === 'close'){ closeSheet(); return; }
   if (eventAct(act, btn)) return;
   if (fleetAct(act, btn)) return;
@@ -1321,6 +1360,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'askreset'){ sheetData = {confirm:true}; renderSheet(); return; }
     // the game as a file to keep, and back again; or as text where files cannot be saved
     if (act === 'export'){ exportGame(); return; }
+    if (act === 'kept'){ const n = +btn.dataset.n, o = keptOf(btn.dataset.k === 'keep' ? keepKey(n) : preKey(n)); if (o){ closeSheet(); loadRaw(o.raw); } return; }
     if (act === 'import'){ const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json,text/plain';
       inp.onchange = () => { const f = inp.files && inp.files[0]; if (!f) return; f.text().then(loadRaw); }; inp.click(); return; }
     if (act === 'backup'){ const b = backups().find(q => q.i === +btn.dataset.i); if (b) loadRaw(b.raw); return; }
