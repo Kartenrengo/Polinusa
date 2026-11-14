@@ -1911,6 +1911,9 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
   Unter Ansehen, Zufriedenheit und Menschen steht jetzt ihr Name. Das Bild neben der Zahl 1 ist nicht ein Kanu, sondern das
   Ansehen (Mana). Ein Kanu-Bild ganz rechts heißt „Kanu kommt“: Eine Familie ist unterwegs zu einer leeren Hütte. Was die roten
   Zahlen schon sagen, sagt der Hinweis rechts nicht noch einmal.
+- **Dämmerung am Rand:** Kurze orange Streifen zeigen, wo die Nacht in den Tag übergeht (oben) und der Tag in die Nacht. Dort
+  wird die Sonne zum Mond und wieder zur Sonne.
+- **Bauholz heißt jetzt Bauholz** (vorher „Holz“), damit es nicht mit Brennholz verwechselt wird.
 - **Die Leiste sieht aus wie die Bauleiste:** Rindenbaststoff mit Punkten. Zwischen den Reihen liegen Bänder wie auf Lapita-Töpfen:
   eine Reihe kleiner Zahnstempel oben und unten, dazwischen ein gestempelter Zickzack mit roten Punkten in den Spitzen. Auch der
   Rand mit Tag und Nacht ist fein punktiert, wie mit einem Zahnstempel gedrückt.

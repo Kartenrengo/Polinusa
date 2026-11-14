@@ -1098,7 +1098,7 @@ details.more .rowx{margin-top:6px}
 .hud-who,.hud-goods{border-top:0;position:relative;padding-top:10px}
 .hud-who::before,.hud-goods::before{content:'';position:absolute;left:6px;right:6px;top:0;height:9px;background:var(--lapita) repeat-x 0 0/24px 9px}
 .hud-goods{padding-top:11px}
-@media (max-width:350px){.hud-goods .vital span{font-size:0;gap:0}.hud-goods .vital .ic{width:18px;height:18px}.hud-goods .goods .g .day{font-size:9.5px}.hud-goods .goods{column-gap:7px}}
+@media (max-width:350px){.hud-goods .vital span{font-size:10px;gap:1px;white-space:normal;line-height:1.05;max-width:58px}.hud-goods .vital .ic{width:15px;height:15px}.hud-goods .goods .g .day{font-size:9.5px}.hud-goods .goods{column-gap:7px}}
 /* dawn and dusk on the rim: short orange stripes where night turns to day (at the top) and day to night (where the light part ends) */
 /* the two ways from the family house: craftsmen or seafarers */
 .rise2 .ways{display:flex;gap:6px}
