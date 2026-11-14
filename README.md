@@ -2223,3 +2223,11 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
   ihn sofort davonflitzen, eine Blase erzählt von ihm.
 - Blauschwanzskinke (Emoia) leben auf fast allen Inseln Ozeaniens (belegt).
 
+## Die Leiste in zwei Reihen (Version 103)
+
+- **Oben:** eine kleine Windrose, der Inselname, Ansehen, Zufriedenheit, Menschen, die Muschel und das Menü. Der Windtext ist weg;
+  die Fahne der Rose zeigt, woher der Wind weht. Gedrückt halten zeigt Wind und Stärke, Tippen den Kalender.
+- **Unten:** die Tageswaren mit dem Tagesbedarf.
+- Die Leiste ist so etwa ein Drittel niedriger, und mehr Karte ist zu sehen. Auf sehr kleinen Handys fallen „/Platz“ und der Punkt
+  neben den Menschen weg, damit der Inselname Platz hat.
+

@@ -1213,3 +1213,16 @@ body.landing #mascot{display:none}
 #lizard.on{display:block;pointer-events:auto;cursor:pointer}
 #lizard svg{display:block;width:100%;height:100%;overflow:visible}
 body.landing #lizard{display:none}
+/* version 103: two rows. Island, standing, contentment and people sit in the top row beside a small wind rose (no wind text:
+   a tap on the rose shows the calendar with the wind); the daily goods below. */
+#hudbar .hud-row{gap:6px;padding:3px 5px 3px 4px}
+#hudbar .hud-row #compass{flex:none;padding:0}
+#hudbar .hud-row #compass span{display:none!important}
+#hudbar .hud-row #compass svg{width:28px;height:28px}
+#hudbar .hud-row .hud-who{flex:1;min-width:0;border:0!important;padding:0 2px!important;min-height:0}
+#hudbar .hud-row .hud-who::before{display:none}
+#hudbar .hud-row .hud-who .isle-name{font-size:16px}
+#hudbar .hud-row .hud-who .top-right{gap:8px}
+#hudbar .hud-row #sidectl .round{width:34px;height:34px}
+@media (max-width:350px){#hudbar .hud-row .hud-who .isle-name{font-size:14px}#hudbar .hud-row .hud-who .top-right{gap:4px}#hudbar .hud-row #compass svg{width:24px;height:24px}#hudbar .hud-row #sidectl .round{width:30px;height:30px}.hud-who .pop b{font-size:13.5px}}
+@media (max-width:350px){#hudbar .hud-row .hud-who #popCap,#hudbar .hud-row .hud-who .pop .dot{display:none}#hudbar .hud-row .hud-who .isle{min-width:54px}#hudbar .hud-row .hud-who .top-right .ic{width:15px;height:15px}#hudbar .hud-row{gap:4px}}

@@ -1433,7 +1433,7 @@ function select(b){ const craft = b.at && findB(b.at); if (craft) b = craft; sel
 /* ---------- names only on demand. Tiles, goods and buttons show their picture; the name and a line about it pop up in a little
    bubble: at a tap where the tap does nothing else (a picture, a good in the bar), or when held a moment on a button that does
    something when tapped (then the tap is not done). The text is the element's data-tip, else its aria-label. */
-const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .hud-who .top-right > button, .sattile, .kinds, #mascot', TIP_HOLD = 380;
+const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .hud-who .top-right > button, .sattile, .kinds, #mascot, #compass', TIP_HOLD = 380;
 /* tiles: a tap shows what the picture is at once; what the tile did before (go to the store, build, mend the roof …) is a
    button in the bubble. Buttons in the bar and in the build menu keep their tap; held, they show the bubble. */
 const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds';
