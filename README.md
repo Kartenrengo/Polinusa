@@ -2009,3 +2009,13 @@ Das Häuptlingshaus bleibt, wie es war.
 - **Eine Linie:** In der Leiste stehen der Inselname und die Zahlen von Ansehen, Zufriedenheit und Menschen genau auf einer
   Höhe, die kleinen Namen darunter auch. Bei den Tageswaren stehen Zahl und Tagesbedarf auf einer Grundlinie.
 
+## Bilder statt Wörter (Version 93)
+
+- **Nur noch Bilder:** Unter den Waren in der Leiste, unter Ansehen, Zufriedenheit und Menschen, auf den Kacheln im Haus, am
+  Arbeitsplatz, im Lager und im Baumenü stehen keine Namen mehr, nur Bild und Zahl.
+- **Der Name kommt auf Druck:** Eine kleine Blase zeigt Name und einen Satz dazu.
+  - Wo ein Tippen sonst nichts tut (eine Ware in der Leiste, ein Bild ohne Knopf), reicht ein Tippen. Noch ein Tippen schließt sie.
+  - Auf Knöpfen, die etwas tun (eine Kachel, die ins Lager führt, ein Gebäude im Baumenü), einen Moment gedrückt halten. Dann
+    passiert der Knopf nicht, nur die Blase kommt.
+  - Bei einer Ware in der Leiste steht in der Blase auch „Alle Waren ›“.
+

@@ -55,7 +55,7 @@ function updateHUD(){
   // they turn red when the next morning meal or the night fires will not reach everyone (see mealFore, fireShort)
   const F = mealFore(I), cold = fireShort(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : k === 'brenn' ? cold : k === 'speisen' ? nd.list.some(n => n.k === k && n.state === 'out') : false;
   const day = dailyNeed(I, nd, F);
-  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.querySelector('.day').textContent = `(${day[k] || 0})`; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
+  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.querySelector('.day').textContent = `(${day[k] || 0})`; li.dataset.tip = `<b>${GN[k]}</b> ${v} da, ${day[k] || 0} am Tag. ${DAILY_WHY[k] ? DAILY_WHY[k](day[k] || 0) + '.' : ''}`; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
   lastStock = {isl:active, ...I.stock}; for (const k of shown) lastStock[k] = haveOf(I, k);
   $('vitalBtn').innerHTML = vitalLine(I, shown);   // what the goods already say in red is not said twice
@@ -1392,3 +1392,35 @@ function loadRaw(raw){
 }
 const giftGuess = (C, worth) => { const g = returnGoods(C, worth); return g.load ? giftText(g.cargo) : 'eine kleine Gabe'; };
 function select(b){ const craft = b.at && findB(b.at); if (craft) b = craft; selectedId = b.id; invalidate(); setActive(islOfB(b.id).id); openSheet('info', craft ? {id:b.id, tab:'haus'} : {id:b.id}); }   // a craft mat opens its house on the family tab
+/* ---------- names only on demand. Tiles, goods and buttons show their picture; the name and a line about it pop up in a little
+   bubble: at a tap where the tap does nothing else (a picture, a good in the bar), or when held a moment on a button that does
+   something when tapped (then the tap is not done). The text is the element's data-tip, else its aria-label. */
+const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .hud-who .top-right > button, .sattile, .kinds', TIP_HOLD = 380;
+let tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0;
+const tipNow = el => el.matches('.hud-goods .g') || (!el.matches('button') && !el.closest('button'));   // a tap shows the name only where a tap does nothing else
+function showTip(el){
+  const t = $('tip'), txt = el.dataset.tip || esc(el.getAttribute('aria-label') || ''); if (!txt) return;
+  t.innerHTML = `<span>${txt}</span>` + (el.matches('.hud-goods .g') ? '<button class="tipgo" type="button">Alle Waren ›</button>' : '');
+  t.hidden = false; tipFor = el; const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  const x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), below = r.bottom + 8 + h < innerHeight - 8;
+  t.style.left = x + 'px'; t.style.top = (below ? r.bottom + 8 : r.top - h - 8) + 'px'; t.style.setProperty('--ax', (r.left + r.width / 2 - x) + 'px'); t.dataset.side = below ? 'below' : 'above';
+  t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); clearTimeout(tipHide); tipHide = setTimeout(hideTip, 4500);
+}
+function hideTip(){ const t = $('tip'); if (t) t.hidden = true; tipFor = null; clearTimeout(tipHide); }
+document.addEventListener('pointerdown', e => {
+  clearTimeout(tipHold); tipEat = false; if (e.target.closest('#tip')) return;
+  const el = e.target.closest(TIP_SEL); tipEl = el; tipAt = {x:e.clientX, y:e.clientY}; if (!el){ hideTip(); return; }
+  if (!tipNow(el)) tipHold = setTimeout(() => { tipEat = true; showTip(el); }, TIP_HOLD);
+}, true);
+document.addEventListener('pointermove', e => { if (tipAt && Math.hypot(e.clientX - tipAt.x, e.clientY - tipAt.y) > 8) clearTimeout(tipHold); }, true);
+document.addEventListener('pointerup', () => clearTimeout(tipHold), true);
+document.addEventListener('pointercancel', () => clearTimeout(tipHold), true);
+document.addEventListener('contextmenu', e => { if (e.target.closest(TIP_SEL)) e.preventDefault(); }, true);
+document.addEventListener('click', e => {
+  if (e.target.closest('.tipgo')){ e.stopPropagation(); hideTip(); $('storeBtn').click(); return; }
+  if (tipEat){ tipEat = false; e.preventDefault(); e.stopPropagation(); return; }   // held: the name was shown, the tap is not done
+  const el = e.target.closest(TIP_SEL);
+  if (el && tipNow(el)){ e.preventDefault(); e.stopPropagation(); if (!$('tip').hidden && tipFor === el){ hideTip(); return; } showTip(el); return; }   // a second tap closes it
+  if (!e.target.closest('#tip')) hideTip();
+}, true);
+

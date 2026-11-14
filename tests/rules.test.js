@@ -421,7 +421,9 @@ const r = await p.evaluate(()=>{
     // the two ways from the family house: craftsmen, or (near the shore) seafarers, navigators and the Wissende
     { const H = isl('heimat'), keepSt = {...H.stock}, keepP = H.people.slice(), ships0 = ships.length, auto0 = H.autoUp, peak0 = stats.peakPop, hw0 = H.handWork;
       stats.peakPop = Math.max(peak0 || 0, 30); H.autoUp = false;
-      const h = homesOf(H).find(q => famOfHome(H, q) && membersOf(H, famOfHome(H, q)).length) || homesOf(H).find(q => famOfHome(H, q)), f = famOfHome(H, h), L0 = H.lands[0];
+      let h0 = homesOf(H).find(q => famOfHome(H, q) && membersOf(H, famOfHome(H, q)).length) || homesOf(H).find(q => famOfHome(H, q));
+      if (!h0){ h0 = homesOf(H).find(q => !famOfHome(H, q)); if (h0) newFam(H, 'Probe', h0.id); }   // the village may have just moved about: a family for an empty house
+      const h = h0, f = famOfHome(H, h), L0 = H.lands[0];
       if (!membersOf(H, f).length) H.people.push({...H.people.find(isAdult), id:930000, h:f.id, job:0, loan:0});   // the village may have just moved about: one grown-up for the house
       const box = (() => { let m = null; for (let x = L0.poly[0].x - 500; x < L0.poly[0].x + 500; x += 12) for (let y = L0.poly[0].y - 500; y < L0.poly[0].y + 500; y += 12){ if (!m && inPoly({x, y}, L0.poly) && polyDist({x, y}, L0.poly) > 40) m = {x, y}; } return m; })();
       const shore = {x:L0.poly[0].x * .96 + H.center.x * .04, y:L0.poly[0].y * .96 + H.center.y * .04}, pos0 = {x:h.x, y:h.y}, t0 = h.t, w0 = h.way, nv0 = H.people.map(p => p.nv);
