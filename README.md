@@ -1896,3 +1896,21 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 9. ~~Wald mit Holzfäller und Pflanzer, Arbeitskräfte, Flussdelta, Inseldetails~~
 10. ~~Fisch und Meeresfrüchte, Einbäume in der Lagune, Lapita-Netz als Ziel~~
 11. Android-App mit Capacitor
+
+## Übersichtlicher (Version 89)
+
+- **Eine Leiste oben.** Der Streifen mit allen Waren ist weg. Die Tagesleiste trägt alles: oben Wind, Muschel und Menü, darunter
+  die Insel mit Menschen und Zufriedenheit, ganz unten nur, was die Leute **jeden Tag** brauchen: Essen, Wasser, Brennstoff
+  und, sobald es ein Familienhaus gibt, Gekochtes. Rot heißt: reicht morgen früh (oder heute Nacht) nicht. Tippen zeigt alle Waren.
+- **Nachrichten** klappen unter der Leiste nach unten aus, hängen an einer Schnur an der Muschel und fliegen danach klein in
+  die Muschel zurück; sie nickt. Jahreszeiten ohne Gefahr, die Palolo-Nacht, der Regen und „Nur noch ein Mond“ gehen still in die
+  Muschel. Nur Sturmzeit und magere Zeit springen auf. In 30 Minuten Spiel kommen so etwa 19 statt 32 Meldungen. Größere
+  Ereignisse kommen alle 12 bis 18 statt 8 bis 12 Minuten.
+- **Sonne und Mond gleiten** gleichmäßig um den Rand der Leiste, jedes Bild neu. Vorher sprangen sie zweimal pro Sekunde und
+  krochen in der Mitte der langen Seiten, an den Ecken rasten sie.
+- **Das Feuer am Dorfplatz** brennt ruhig: Es atmet langsam, die Flammen wanken sacht, wenige Funken.
+- **Holz und Brennholz** sind zwei Waren. Holz kommt vom Holzfäller und ist zum Bauen. Brennholz sammeln Kinder und Alte.
+  Brennstoff ist alles, was im Herd brennt: zuerst Kokosschalen, dann Brennholz, erst zuletzt Bauholz.
+- **Arbeitsplatz-Blatt** (Tippen auf z. B. den Erdofen): oben nur Name und eine Zeile mit dem Zustand (rot „Fehlt: Blätter“, grün „Arbeitet“) und „Vorrang“. Darunter „Braucht → Macht“ als kleine Kacheln, die immer in die Breite passen: sie werden schmaler, und „Macht“ rutscht erst darunter, wenn es gar nicht anders geht. Ein Werkzeug wie die Kochsteine ist nur noch ein kleines Abzeichen („wäre schneller“) in der Zeile „Braucht“. Die Leute stehen mit − und + in einer einzigen Zeile. Das Blatt scrollt auf dem Handy nicht (getestet bei 390×844).
+- **Unter „Mehr dazu“** liegen jetzt: die langen Sätze („2 feste Plätze …“, „Es fehlt …“), „Bleiben“, „Versetzen“, „Entfernen“ und „Fällen“. Die Rückfrage zum Entfernen klappt „Mehr dazu“ von selbst auf. Das Haus-Blatt bleibt, wie es war.
+- **Bau-Menü** in Gruppen: Wohnen, Essen (mit Wasser), Rohstoffe, Handwerk, Meer, Schmuck. Es werden nur Gruppen mit etwas Baubarem gezeigt. Jede Kachel ist eine Zeile: Bild, Name, Kosten (fehlendes Material in Ocker). Was noch nicht freigeschaltet ist, bleibt versteckt; was nur ein Lebewesen im Kanu braucht, ist grau mit „Bring Taro mit“. Der Ablauf bleibt: Gebäude wählen, dann Land antippen.

@@ -60,12 +60,12 @@ function updateHUD(){
   $('vitalBtn').innerHTML = vitalLine(I);
   $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}${short(k) ? ', reicht morgen früh nicht' : ''}`).join(', ') + `. Am Morgen essen und trinken ${F.n} Menschen. Tippen zeigt alle Waren.`);
   ringGeo = null;
-  for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k) btn.classList.toggle('poor', !canPay(I, costOf(k, I))); }
+  for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k){ btn.classList.toggle('poor', !canPay(I, costOf(k, I))); const c = costOf(k, I); for (const g of btn.querySelectorAll('i[data-g]')) g.classList.toggle('out', groupHave(I, g.dataset.g) < c[g.dataset.g]); } }
 }
 /* what the people use up every day, for the bar */
 const dailyGoods = (I, nd = needsOf(I)) => ['essen', 'wasser', 'brenn', ...(nd.list.some(n => n.k === 'speisen') || tier2Pop(I) ? ['speisen'] : [])];
 /* Two menus: what the village needs, with paths at the end, and what only adorns it */
-let buildTab = 'bau', buildOpen = false, barMode = null, sideOpen = false, fleetKey = '';
+let buildTab = 'wohnen', buildOpen = false, barMode = null, sideOpen = false, fleetKey = '';
 /* speed and menu fold out from the side button, the conch with the messages always stays */
 function setSideOpen(on){ sideOpen = !!on; $('sidectl').classList.toggle('open', sideOpen); $('moreBtn').setAttribute('aria-expanded', sideOpen); $('speedMark').hidden = sideOpen || gameSpeed === 1; }
 /* The build bar is folded away until the build button is pressed, so the map shows more; tapping empty map folds it again */
@@ -90,21 +90,28 @@ function fleetItems(){
     `<button type="button" class="bbtn" data-fleet="1" aria-label="Alle Kanus und Ketten als Liste"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6H16M4 10H16M4 14H16" stroke="#2B1D14" stroke-width="1.8" stroke-linecap="round"/></svg><span>Liste</span></button>`;
 }
 const fleetSig = () => own().map(s => s.id + s.state + s.route + (s.hungry ? 1 : 0) + s.name).join() + '|' + routes.map(r => r.a + r.b + r.knots).join();
+/* the groups of the build menu: what a building is for */
+const BGROUPS = [{id:'wohnen', n:'Wohnen'}, {id:'essen', n:'Essen', long:'Essen und Wasser'}, {id:'roh', n:'Rohstoffe'}, {id:'werk', n:'Handwerk'}, {id:'meer', n:'Meer'}, {id:'deco', n:'Schmuck'}];
+const BG_OF = {wohnen:'haus pfahl speicher halle fale ahnenhaus sternhaus', essen:'ernte taro yams pulaka pansammler bananen nussbaum baum palme huehnerhof pferch umu gaergrube quelle brunnen kavagarten', roh:'faeller pflanzer harzer kalkbrenner kurkumagarten garten schnur pandanus', werk:'toepfer beil klingen flecht schmuck oelhuette weberin malerin hakenmacher schnitzer duftoel klopf', meer:'fisch taucher steg werft'};
+const BG_MAP = Object.fromEntries(Object.entries(BG_OF).flatMap(([g, l]) => l.split(' ').map(k => [k, g])));
+const buildGroup = k => DECO.includes(k) ? 'deco' : BG_MAP[k] || 'roh';
 function renderBuildBar(){
   const I = isl(active);
   if (barMode === 'fleet'){ fleetKey = fleetSig(); $('buildList').innerHTML = fleetItems(); document.querySelector('.bottom-head').hidden = true; $('tradeBtn').hidden = false; updateHUD(); return; }
   $('buildWhere').textContent = '';   // the island's name stands at the top already
   const fleet = own().length > 0 || routes.length > 0;
   $('tradeBtn').hidden = !fleet; $('tradeBtn').previousElementSibling.toggleAttribute('hidden', !fleet);
-  const can = k => !KINDS[k].fixed && !KINDS[k].craft && KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length) && (!SPEC_OF_KIND[k] || specOf(I) === SPEC_OF_KIND[k]), deco = ORDER.filter(k => DECO.includes(k) && can(k));
-  if (!deco.length) buildTab = 'bau';
-  $('tabDeco').hidden = !deco.length; $('tabDeco').classList.toggle('new', deco.some(k => newKinds.has(k)));
-  document.querySelector('.bottom-head').hidden = !deco.length;   // the tabs only when there is a choice
+  const can = k => !KINDS[k].fixed && !KINDS[k].craft && KINDS[k].on.includes(I.type) && unlocked(k) && (!KINDS[k].dep || depsOf(I, KINDS[k].dep).length) && (!SPEC_OF_KIND[k] || specOf(I) === SPEC_OF_KIND[k]), all = ORDER.filter(can);
+  const groups = BGROUPS.filter(G => all.some(k => buildGroup(k) === G.id));   // only the groups that have something to build
+  if (!groups.some(G => G.id === buildTab)) buildTab = groups.length ? groups[0].id : 'wohnen';
+  document.querySelector('.bottom-head').hidden = groups.length < 2;   // the tabs only when there is a choice
+  $('buildTabs').innerHTML = groups.map(G => `<button type="button" class="tab${all.some(k => buildGroup(k) === G.id && newKinds.has(k)) ? ' new' : ''}" data-grp="${G.id}" aria-pressed="${buildTab === G.id}" aria-label="${G.long || G.n}">${G.n}</button>`).join('');
   { const s = $('buildBtn').querySelector('svg'); if (!s.innerHTML) s.innerHTML = iconMarkup('haus'); }
-  $('tabBau').setAttribute('aria-pressed', buildTab === 'bau'); $('tabDeco').setAttribute('aria-pressed', buildTab === 'deco');
-  const list = buildTab === 'deco' ? deco : ORDER.filter(k => !DECO.includes(k) && can(k));
-  $('buildList').innerHTML = list.map(k => { const K = KINDS[k];
-    return `<button type="button" class="bbtn${newKinds.has(k) ? ' new' : ''}${hasLife(I, k) ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${hasLife(I, k) ? `kostet ${costText(costOf(k, I))}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span>${K.s}</span></button>`; }).join('');
+  { const t = $('buildTabs').querySelector('[aria-pressed="true"]'); if (t) $('buildTabs').scrollLeft = Math.max(0, t.offsetLeft - 40); }
+  const list = all.filter(k => buildGroup(k) === buildTab);
+  $('buildList').innerHTML = list.map(k => { const K = KINDS[k], ok = hasLife(I, k), c = costOf(k, I), L = K.life && LIFE[K.life];
+    const cost = ok ? Object.entries(c).map(([g, v]) => `<i data-g="${g}" class="${groupHave(I, g) < v ? 'out' : ''}">${v}${icon(GROUPS[g] ? groupNext(I, g) : g)}</i>`).join('') || '<i>gratis</i>' : `<i class="why">Bring ${L.n} mit</i>`;
+    return `<button type="button" class="bbtn bk${newKinds.has(k) ? ' new' : ''}${ok ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${ok ? `kostet ${costText(c)}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span class="bn">${K.s}</span><span class="bc">${cost}</span></button>`; }).join('');
   updateHUD();
 }
 function renameIsland(I, v){
@@ -902,7 +909,13 @@ function crewMarkup(I, b, horn = '', bare = false){
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
   if (!bare) horn += keepBtn(b);
   const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < crewOf(b) ? '' : 'disabled'}>+</button></span>`;
-  return `<div class="crew">${chips}${ctl.replace('<span class="grow"></span>', `<span class="grow"></span>${horn}`)}</div><p class="sub crewnote">${K.crew ? `${K.crew} ${K.crew === 1 ? 'fester Platz' : 'feste Plätze'}${nh ? `, dazu ${nh} ${nh === 1 ? 'Helfer' : 'Helfer'}: Wer frei ist, hilft, wo etwas knapp ist` : ''}. ` : ''}${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}</p>`;
+  return `<div class="crew">${chips}${ctl.replace('<span class="grow"></span>', `<span class="grow"></span>${horn}`)}</div>`;
+}
+/* the long sentences about the people of a place: folded under "Mehr dazu" */
+function crewNote(I, b){
+  const K = KINDS[b.kind], sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl || b.bt || (b.kind === 'werft' && I.yard)) return '';
+  const nh = sl.filter(k => k.startsWith('aid')).length, free = staffOf(I).free;
+  return `${K.crew ? `${K.crew} ${K.crew === 1 ? 'fester Platz' : 'feste Plätze'}${nh ? `, dazu ${nh} ${nh === 1 ? 'Helfer' : 'Helfer'}: Wer frei ist, hilft, wo etwas knapp ist` : ''}. ` : ''}${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}`.trim();
 }
 /* A family on its own sheet: its house and step, what it has and lacks, its people by name, where it works */
 function famMarkup(I, f, withHead = true){
@@ -944,13 +957,13 @@ const tileName = k => GN[k] && GN[k].length <= 11 ? GN[k] : shortGN(k);
 function flowMarkup(I, b, K, rate){
   const ins = Object.entries(K.use || {}).map(([k, v]) => { const have = Math.floor(groupHave(I, k)), ok = have >= v, ic = GROUPS[k] ? groupNext(I, k) : k, w = ok ? null : needWay(I, ic);
     const act = w && w.build ? `data-act="hint" data-k="${w.build}"` : `data-act="ware" data-k="${ic}"`;
-    return `<button class="ftile ${ok ? 'ok' : 'out'}" type="button" ${act} aria-label="${GN[k]}: ${perMin(rate * v)} pro Minute, ${have} im Lager${ok ? '' : ', fehlt'}">${icon(ic)}<small>${tileName(k)}</small><b>${perMin(rate * v)}/min</b><i>${ok ? `Lager ${have}` : 'fehlt'}</i></button>`; });
-  const tool = K.boost ? (k => { const have = Math.floor(I.stock[k] || 0); return `<span class="ftile tool ${have > 0 ? 'ok' : 'off'}" role="img" aria-label="Schneller mit ${GN[k]}${have > 0 ? `, ${have} da` : ', keine da'}">${icon(k)}<small>${tileName(k)}</small><i>${have > 0 ? 'macht schneller' : 'wäre schneller'}</i></span>`; })(K.boost.k) : '';
+    return `<button class="ftile ${ok ? 'ok' : 'out'}" type="button" ${act} aria-label="${GN[k]}: ${perMin(rate * v)} pro Minute, ${have} im Lager${ok ? '' : ', fehlt'}">${icon(ic)}<small>${tileName(k)}</small><b>${perMin(rate * v)}/min</b>${ok ? '' : '<i>fehlt</i>'}</button>`; });
+  const tool = K.boost ? (k => { const have = Math.floor(I.stock[k] || 0); return `<span class="fbadge ${have > 0 ? 'ok' : 'off'}" role="img" aria-label="Schneller mit ${GN[k]}${have > 0 ? `, ${have} da` : ', keine da'}">${icon(k)}${have > 0 ? 'schneller' : 'wäre schneller'}</span>`; })(K.boost.k) : '';
   const prod = prodOf(b), N = !b.at && needOfGood(prod), fr = N ? fullRate(I, b) : 0;
   const outs = [`<button class="ftile made" type="button" data-act="ware" data-k="${prod}" aria-label="macht ${GN[prod]}: ${perMin(rate * outOf(b))} pro Minute">${icon(prod)}<small>${tileName(prod)}</small><b>${perMin(rate * outOf(b))}/min</b><i>${N && fr > 0 ? `reicht für ${Math.round(fr / N.rate)}` : `Lager ${Math.floor(I.stock[prod] || 0)}`}</i></button>`];
-  for (const [k, v] of Object.entries(byOf(b) || {})) outs.push(`<span class="ftile made by" role="img" aria-label="dazu ${GN[k]}: ${perMin(rate * v)} pro Minute">${icon(k)}<small>${tileName(k)}</small><b>${perMin(rate * v)}/min</b><i>dazu</i></span>`);
-  const left = ins.length || tool ? `<div class="fcol"><span class="flbl">Braucht</span><div class="frow">${ins.join('')}${tool}</div></div><span class="farr" aria-hidden="true">→</span>` : '';
-  return `<div class="flow3">${left}<div class="fcol"><span class="flbl">Macht</span><div class="frow">${outs.join('')}</div></div></div>`;
+  for (const [k, v] of Object.entries(byOf(b) || {})) outs.push(`<span class="ftile made by" role="img" aria-label="dazu ${GN[k]}: ${perMin(rate * v)} pro Minute">${icon(k)}<small>${tileName(k)}</small><b>${perMin(rate * v)}/min</b></span>`);
+  const left = ins.length ? `<div class="fcol" style="--n:${Math.max(1, ins.length)}"><span class="flbl">Braucht${tool}</span><div class="frow">${ins.join('')}</div></div><span class="farr" aria-hidden="true">→</span>` : '';
+  return `<div class="flow3">${left}<div class="fcol" style="--n:${outs.length}"><span class="flbl">Macht${ins.length ? '' : tool}</span><div class="frow">${outs.join('')}</div></div></div>`;
 }
 /* what something takes, as tiles with the name of each good and how much is there, green or red; a red one leads to where
    the good comes from (canoes, feasts) */
@@ -1026,7 +1039,7 @@ function infoMarkup(I, b){
     if (K.soil){ line += `<span>${icon('soil')}Boden ${Math.round((b.soil ?? 1) * 100)} %${sheltered(I, b) ? ', Bäume schützen ihn' : ''}</span>`;
       more.push('Jede Ernte zehrt am Boden. Brach erholt er sich in gut zwei Minuten.');
       why += `<div class="rowx"><span class="soilbar" role="img" aria-label="Boden ${Math.round((b.soil ?? 1) * 100)} %">${icon('soil')}<span class="mbar"><i style="width:${Math.round((b.soil ?? 1) * 100)}%"></i></span></span><button class="btn" type="button" data-act="fallow">${b.fallow ? 'Wieder bestellen' : 'Brachliegen lassen'}</button></div>`; }
-    if (w && w.why !== 'way') why = `<p class="sub why">${w.text}</p>`;
+    if (w && w.why !== 'way' && w.text) more.unshift(w.text);   // the state line and the red tile say it; the sentence is folded away
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
   if (b.kind === 'fisch' && !b.bt && (unlocked('hakenmacher') || I.stock.haken > 0)) more.push((I.stock.haken || 0) > 0 ? `Mit Angelhaken aus Muschel fangen sie anderthalbmal so viel Fisch; ein Haken hält für etwa ${HOOK.per} Fische.` : 'Mit Angelhaken aus Muschel fingen sie mehr Fisch. Eine Familie kann sie schleifen.');
@@ -1038,10 +1051,12 @@ function infoMarkup(I, b){
   const working = (b.bt && !K.plant) || placesOf(I).includes(b);   // a growing garden or a yam field out of season needs nobody
   const lonely = working && !crewAt(I, b), horn = working ? `<button class="chip horn${lonely && !b.prio ? ' hint' : ''}" type="button" data-act="prio" aria-pressed="${!!b.prio}" aria-label="Vorrang: mit dem Muschelhorn Leute rufen, sie kommen sofort">${icon('horn')}Vorrang</button>` : '';
   { const sb = b.idle && b.idle.site && findB(b.idle.site);   // the place whose people build: a button to their site instead of a sentence
-    if (why && b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau')) why = sb ? `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>` : ''; }
+    if (b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau') && sb) why +=  `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>`; }
   // one tight block: the state with the conch and "Bleiben" on its line, then what it takes and makes beside its people
   const site = b.bt || (b.kind === 'werft' && I.yard), crewed = working || b.boat > 0, tight = crewed && !site && KINDS[b.kind].crew > 0;
-  return [(line || tight ? `<div class="stat">${line}${tight ? `<span class="grow"></span>${horn}${keepBtn(b)}` : ''}</div>` : '') + `<div class="workgrid">${bar}${crewed ? `<div class="crewbox">${crewMarkup(I, b, tight ? '' : horn, tight)}</div>` : ''}</div>` + why, `<details class="more"${sheetData.more ? ' open' : ''}><summary>Mehr dazu</summary>${more.map(t => `<p class="sub">${t}</p>`).join('')}</details>`];
+  if (tight) more.unshift(crewNote(I, b));
+  const keep = tight ? `<div class="rowx"><span class="sub">Bleiben: von hier wird niemand ausgeliehen.</span>${keepBtn(b)}</div>` : '';
+  return [(line || tight ? `<div class="stat">${line}${tight ? `<span class="grow"></span>${horn}` : ''}</div>` : '') + `<div class="workgrid">${bar}${crewed ? `<div class="crewbox">${crewMarkup(I, b, tight ? '' : horn, tight)}</div>` : ''}</div>` + why, `<details class="more"${sheetData.more || sheetData.confirm ? ' open' : ''}><summary>Mehr dazu</summary>${more.filter(Boolean).map(t => `<p class="sub">${t}</p>`).join('')}${keep}</details>`];
 }
 function head(title, sub){ return `<div class="sheet-head"><div><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="x" type="button" data-act="close" aria-label="Schließen">×</button></div>`; }
 /* a sheet about an island that is gone (another game was loaded or begun) closes instead of failing */
@@ -1070,7 +1085,7 @@ function renderSheet(){
     const b = findB(sheetData.id); if (!b){ closeSheet(); return; }
     const K = KINDS[b.kind], I = islOfB(b.id), home = HOME_KINDS.has(b.kind) && !b.bt;
     const [main, more] = home ? [b === centerOf(I) ? centerMarkup(I, b) : houseMarkup(I, b), ''] : infoMarkup(I, b);
-    h += home ? main : head(K.n, I.name) + main;
+    h += home ? main : head(K.n, `<span class="isln">${I.name}</span>`) + main;
     if (b.kind === 'werft' && !b.bt) h += yardMarkup(I);
     if (b.kind === 'sternhaus' && !b.bt){
       const L = navLore(), S = navPupil(I, b), lv = p => Math.floor(p.nv || 0);
@@ -1083,10 +1098,11 @@ function renderSheet(){
     if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${ancCount(I)} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
     if ((b.kind === 'halle' || b.kind === 'platz') && !b.bt) h += `<div class="rowx"><span class="sub">${korCanThrow() ? 'Im Schatten wird mit fünf Knochen geworfen, einmal am Tag.' : 'Der Knöchelwurf ist für heute geworfen.'}</span><button class="btn" type="button" data-act="koruru">Knöchelwurf</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
-    h += more;
-    if (sheetData.confirm) h += `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
-    else if (!K.fixed){ const bt = home ? 'chip' : 'btn';
-      h += `<div class="rowx${home ? ' foot' : ''}">${home ? houseLine(I, b) : ''}<span class="chips">${FELL_WOOD[b.kind] && !b.bt ? `<button class="btn" type="button" data-act="fell">Fällen: ${FELL_WOOD[b.kind]} Holz</button>` : ''}<button class="${bt}" type="button" data-act="move">Versetzen</button><button class="${bt}" type="button" data-act="askkill">Entfernen</button></span></div>`; }
+    let foot = '';
+    if (sheetData.confirm) h += more + `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
+    else if (!K.fixed && !home) foot = `<div class="rowx"><span class="chips">${FELL_WOOD[b.kind] && !b.bt ? `<button class="btn" type="button" data-act="fell">Fällen: ${FELL_WOOD[b.kind]} Holz</button>` : ''}<button class="chip" type="button" data-act="move">Versetzen</button><button class="chip" type="button" data-act="askkill">Entfernen</button></span></div>`;
+    if (!sheetData.confirm) h += home || !more ? more : more.replace(/<\/details>$/, foot + '</details>');
+    if (!sheetData.confirm && !K.fixed && home) h += `<div class="rowx foot">${houseLine(I, b)}<span class="chips"><button class="chip" type="button" data-act="move">Versetzen</button><button class="chip" type="button" data-act="askkill">Entfernen</button></span></div>`;
   } else if (sheetKind === 'away'){
     // while you were away: one row for each thing that happened
     const {R, lines, years} = sheetData;

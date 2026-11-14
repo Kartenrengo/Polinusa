@@ -1764,8 +1764,7 @@ $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbt
   if (b.dataset.route){ openRoute(+b.dataset.route); return; }
   if (b.dataset.fleet){ openSheet('fleet'); return; }
   newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
-$('tabBau').addEventListener('click', () => { buildTab = 'bau'; renderBuildBar(); });
-$('tabDeco').addEventListener('click', () => { buildTab = 'deco'; renderBuildBar(); });
+$('buildTabs').addEventListener('click', e => { const t = e.target.closest('[data-grp]'); if (!t) return; buildTab = t.dataset.grp; renderBuildBar(); });
 $('satBtn').addEventListener('click', () => openSheet('sat', {id:active}));
 $('isleName').addEventListener('click', () => { if (landing){ if (!landing.found) openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });

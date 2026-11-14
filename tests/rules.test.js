@@ -16,7 +16,7 @@ const r = await p.evaluate(()=>{
   want(I.buildings.some(b => b.kind === 'platz') && I.buildings.filter(b => b.kind === 'haus').length === 1, 'start: a hut and its plaza');
   want(!I.deco.some(d => d.t === 'garden' || d.t === 'plaza'), 'no taro deco');
   const pz = I.buildings.find(b => b.kind === 'platz'), h0 = I.buildings.find(b => b.kind === 'haus'); out.push(`plaza ${Math.round(Math.hypot(pz.x - h0.x, pz.y - h0.y))} from the hut`); want(Math.hypot(pz.x - h0.x, pz.y - h0.y) < 45, 'plaza next to the hut');
-  setBar('build'); want(!document.querySelector('#buildList [data-kind=platz]'), 'plaza not in the build bar'); want(!!document.querySelector('#buildList [data-kind=ernte]'), 'Erntehaus in the build bar'); setBar(null);
+  setBar('build'); want(!document.querySelector('#buildList [data-kind=platz]'), 'plaza not in the build bar'); buildTab = 'essen'; renderBuildBar(); want(!!document.querySelector('#buildList [data-kind=ernte]'), 'Erntehaus in the build bar (group Essen)'); setBar(null);
   want(!document.querySelector('#buildList [data-kind=regen]') && !KINDS.regen && !KINDS.riff && !KINDS.kletterer && !KINDS.deckerin, 'old kinds gone');
   // work by person: the old bug, free people that could not be sent anywhere
   I.handWork = true; const e = put('ernte'), f = put('faeller'); for (const q of I.people) q.job = 0; I.staff = null;

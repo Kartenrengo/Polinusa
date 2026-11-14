@@ -341,7 +341,7 @@ function showQuest(){
 function hintBuild(kind){
   if (KINDS[kind] && KINDS[kind].craft){ showCraft(kind); return; }
   setBuildOpen(true);
-  if (DECO.includes(kind) !== (buildTab === 'deco')){ buildTab = DECO.includes(kind) ? 'deco' : 'bau'; renderBuildBar(); }
+  if (buildGroup(kind) !== buildTab){ buildTab = buildGroup(kind); renderBuildBar(); }
   const b = $('buildList').querySelector(`[data-kind="${kind}"]`); if (!b) return;
   b.classList.remove('hint'); void b.offsetWidth; b.classList.add('hint');
   b.scrollIntoView({inline:'center', block:'nearest', behavior:reduced ? 'auto' : 'smooth'});

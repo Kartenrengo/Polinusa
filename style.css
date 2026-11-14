@@ -1040,3 +1040,43 @@ body #toast::after{left:calc(var(--cx,80%) - 2px)!important;top:-13px!important;
 @keyframes take{0%{transform:scale(1)}40%{transform:scale(1.3) rotate(-12deg)}75%{transform:scale(.94) rotate(5deg)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#newsBtn.take{animation:none}}
 body #toast.fly{z-index:7}
+
+/* Version 89: a workplace at a glance. Tiles always fit the width (they shrink, and "Macht" drops below only when it must);
+   the crew sits in one row under them; the rare things (Bleiben, Versetzen, Entfernen, long sentences) are under "Mehr dazu" */
+.workgrid{display:block}
+.workgrid .flow3,.flow3{display:flex;flex-wrap:wrap;align-items:stretch;gap:2px 4px;margin:2px 0 4px;width:100%}
+.flow3 .fcol{flex:var(--n,1) 1 calc(var(--n,1) * 52px);min-width:calc(var(--n,1) * 52px)}
+.flow3 .flbl{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.flow3 .frow{display:flex;flex-wrap:nowrap;gap:4px}
+.flow3 .farr{flex:none;margin-top:14px}
+.ftile{flex:1 1 0;min-width:0;max-width:96px;padding:3px 2px 2px;overflow:hidden}
+.ftile .ic{width:18px;height:18px}
+.ftile small,.ftile b,.ftile i{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftile small{font-size:10px}.ftile b{font-size:11.5px}
+.fbadge{display:inline-flex;align-items:center;gap:2px;padding:0 5px;border-radius:9px;font:700 9.5px/16px var(--font-ui);text-transform:none;letter-spacing:0;background:#E4EED6;box-shadow:inset 0 0 0 1.5px var(--ok);color:var(--ink)}
+.fbadge .ic{width:12px;height:12px}
+.fbadge.off{background:none;box-shadow:inset 0 0 0 1.5px rgba(62,36,22,.3);color:var(--muted)}
+.workgrid .crewbox{flex:none}
+.crew{flex-wrap:nowrap}
+.crew .who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workgrid .crew{margin:2px 0}
+.workgrid .crew .grow{display:block}
+details.more .rowx{margin-top:6px}
+.workgrid .chips.picks .chip,.chips.picks .chip{min-height:30px;padding:0 7px;font-size:12px}
+.chips.picks{gap:4px 4px;margin:2px 0}
+@media (max-height:640px){.sheet-head p.sub:has(>.isln){display:none}.workgrid .step button{width:32px;height:32px}.chips.picks .chip{min-height:28px}.ftile.made i{display:none}.stat{margin-block:2px}}
+/* Version 89: the build menu in groups; each item one compact tile: icon, name, cost */
+#buildTabs.tabs{margin:0;border:0;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+#buildTabs::-webkit-scrollbar{display:none}
+#buildTabs .tab{flex:none;min-height:0;margin:0;padding:4px 7px;font-size:12.5px;letter-spacing:0;text-transform:none;border-bottom:0}
+.bottom-head{align-items:center}
+.bbtn.bk{width:auto;min-width:104px;max-width:132px;height:50px;display:grid;grid-template-columns:34px 1fr;grid-template-rows:1fr 1fr;grid-template-areas:"i n" "i c";align-items:center;justify-items:start;column-gap:4px;row-gap:0;padding:2px 8px 2px 4px;text-align:left}
+.bbtn.bk svg{grid-area:i;width:34px;height:32px}
+.bbtn.bk .bn{grid-area:n;font:800 12.5px/1.1 var(--font-ui);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:end}
+.bbtn.bk .bc{grid-area:c;display:flex;flex-wrap:nowrap;gap:5px;align-self:start;font:700 11px/1 var(--font-ui);white-space:nowrap}
+.bbtn.bk .bc i{font-style:normal;display:inline-flex;align-items:center;gap:1px;font-variant-numeric:tabular-nums}
+.bbtn.bk .bc .ic{width:13px;height:13px}
+.bbtn.bk .bc i.out{color:var(--ochre)}
+.bbtn.bk .bc i.why{color:var(--muted);font-weight:600;font-size:10.5px}
+.bbtn.bk.lack{opacity:.6}
+@media (max-width:360px){.bbtn.bk{min-width:96px;height:46px}#buildTabs .tab{padding:3px 5px;font-size:12px}}
