@@ -2241,3 +2241,14 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
   im Schild blieb ein Stück Muschel zu sehen. Jetzt dreht der Schnitt mit dem Krebs mit.
 - **Der Skink kommt etwas öfter:** zuerst nach etwa drei Minuten, dann alle fünf bis zehn Minuten (vorher acht bis fünfzehn).
   Er kommt nie, solange der Krebs draußen ist.
+
+## Der Skink naturgetreu (Version 105)
+
+- **Gestalt nach dem Blauschwanzskink** (Emoia, auf vielen Inseln Ozeaniens): von oben gesehen, glatter, glänzender
+  dunkelbrauner Körper mit drei hellen Streifen von der Schnauze über den Rücken, ein kurzer Kopf ohne echten Hals, helle Ringe
+  um die Augen, kleine abstehende Beine mit fünf dünnen Zehen, ein langer Schwanz (gut anderthalb Körperlängen), der spitz
+  ausläuft und leuchtend blau wird.
+- **Bewegung:** Beim Rennen läuft eine Welle durch Körper und Schwanz, und die Beine schwingen über Kreuz (vorne links mit
+  hinten rechts), etwa sieben Schritte in der Sekunde. In der Ruhe liegt der Schwanz in einem weichen Bogen; er dreht den Kopf,
+  zuckt mit der Schwanzspitze oder züngelt. Er nickt nicht mehr, denn Skinke machen keine Liegestütze wie Agamen.
+- Er ist etwas länger als vorher (rund 66 Pixel), bleibt aber klein und scheu.
