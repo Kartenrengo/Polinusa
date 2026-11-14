@@ -51,16 +51,23 @@ function updateHUD(){
   // the bar shows only what the people use up every day: food and water at the morning meal, fuel for the night fires, and
   // cooked food once a family house wants it. Everything else is one tap away (the store sheet).
   const shown = dailyGoods(I, nd);
-  const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span><small class="gl" aria-hidden="true">${shortGN(k)}</small></span>`).join(''); }
+  const ul = $('goods'); if (ul.dataset.keys !== shown.join()){ ul.dataset.keys = shown.join(); ul.innerHTML = shown.map(k => `<span class="g" data-k="${k}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg><span></span><em class="day" aria-hidden="true"></em><small class="gl" aria-hidden="true">${shortGN(k)}</small></span>`).join(''); }
   // they turn red when the next morning meal or the night fires will not reach everyone (see mealFore, fireShort)
   const F = mealFore(I), cold = fireShort(I), short = k => k === 'essen' ? F.food < F.n : k === 'wasser' ? F.water < F.n : k === 'brenn' ? cold : k === 'speisen' ? nd.list.some(n => n.k === k && n.state === 'out') : false;
-  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
+  const day = dailyNeed(I, nd, F);
+  for (const li of ul.children){ const k = li.dataset.k, v = haveOf(I, k); li.querySelector('span').textContent = v; li.querySelector('.day').textContent = `(${day[k] || 0})`; li.classList.toggle('zero', !v); li.classList.toggle('short', short(k));
     if (lastStock.isl === active && v >= (lastStock[k] || 0) + 2){ li.classList.remove('up'); void li.offsetWidth; li.classList.add('up'); } }
   lastStock = {isl:active, ...I.stock}; for (const k of shown) lastStock[k] = haveOf(I, k);
-  $('vitalBtn').innerHTML = vitalLine(I);
-  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}${short(k) ? ', reicht morgen früh nicht' : ''}`).join(', ') + `. Am Morgen essen und trinken ${F.n} Menschen. Tippen zeigt alle Waren.`);
+  $('vitalBtn').innerHTML = vitalLine(I, shown);   // what the goods already say in red is not said twice
+  $('storeBtn').setAttribute('aria-label', 'Lager: ' + shown.map(k => `${GN[k]} ${haveOf(I, k)}, am Tag ${day[k] || 0}${short(k) ? ', reicht morgen früh nicht' : ''}`).join(', ') + `. Am Morgen essen und trinken ${F.n} Menschen. Tippen zeigt alle Waren.`);
   ringGeo = null;
   for (const btn of $('buildList').children){ const k = btn.dataset.kind; if (k){ btn.classList.toggle('poor', !canPay(I, costOf(k, I))); const c = costOf(k, I); for (const g of btn.querySelectorAll('i[data-g]')) g.classList.toggle('out', groupHave(I, g.dataset.g) < c[g.dataset.g]); } }
+}
+/* how much of each daily good one day takes: a portion of food and of water for every eater at the morning meal, one fire
+   for every house at night, and the cooked food the family houses eat in a day */
+function dailyNeed(I, nd = needsOf(I), F = mealFore(I)){
+  const sp = nd.list.find(n => n.k === 'speisen');
+  return {essen:F.n, wasser:F.n, brenn:fireHomes(I).length, speisen:sp ? Math.ceil(sp.use * DAY_TICKS / PER_MIN) : 0};
 }
 /* what the people use up every day, for the bar */
 const dailyGoods = (I, nd = needsOf(I)) => ['essen', 'wasser', 'brenn', ...(nd.list.some(n => n.k === 'speisen') || tier2Pop(I) ? ['speisen'] : [])];
@@ -791,18 +798,19 @@ function arrivalText(I, nd){
 }
 /* The line under the goods: work, builders, how long the food lasts, the next arrival */
 /* One hint in the head band, the one that matters most now: food running out, nobody moving in, full houses, or growth */
-function vitalLine(I){
+function vitalLine(I, skip = []){
   const nd = needsOf(I), ic = k => `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-${k}"/></svg>`;
   const fn = nd.list.find(x => x.k === 'essen'), fnet = fn.make - fn.use - fn.work, left = fnet >= 0 ? Infinity : fn.stock / -fnet;
-  if (left !== Infinity && left < 5) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
+  const hid = (left !== Infinity && left < 5) || nd.missing.length > 0;   // something is short: then never say "wächst"
+  if (left !== Infinity && left < 5 && !skip.includes('essen')) return `<span class="warn">${ic('essen')}${left < 1 ? 'Essen knapp' : `Essen ${Math.floor(left)} Min`}</span>`;
   if (nd.roofless) return `<span class="warn">${ic('haus')}${nd.roofless} ohne Dach</span>`;
-  if (nd.missing.length) return `<span class="warn">${ic(nd.missing[0].k)}fehlt</span>`;
+  { const m = nd.missing.find(n => !skip.includes(n.k)); if (m) return `<span class="warn">${ic(m.k)}fehlt</span>`; }
   { const r = I.autoUp ? 0 : readyHomes(I, nd.list).length; if (r) return `<span class="up">${knotIc}${r} Ausbau</span>`; }
   if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
   if (immigFor(I)) return `<span>${ic('einbaum')}Kanu kommt</span>`;
   if (emptyHome(I)) return `<span>${ic('haus')}Hütte frei</span>`;
-  return `<span>${ic('pop')}wächst</span>`;
+  return hid ? '' : `<span>${ic('pop')}wächst</span>`;
 }
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
 function storeMarkup(I){

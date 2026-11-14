@@ -1902,6 +1902,14 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 - **Eine Leiste oben.** Der Streifen mit allen Waren ist weg. Die Tagesleiste trägt alles: oben Wind, Muschel und Menü, darunter
   die Insel mit Menschen und Zufriedenheit, ganz unten nur, was die Leute **jeden Tag** brauchen: Essen, Wasser, Brennstoff
   und, sobald es ein Familienhaus gibt, Gekochtes. Rot heißt: reicht morgen früh (oder heute Nacht) nicht. Tippen zeigt alle Waren.
+  Neben jeder Zahl steht in Klammern, wie viel ein Tag braucht: „147 (16)“ heißt 147 im Lager, 16 am Tag (Essen und Wasser:
+  eine Portion je Esser am Morgen; Brennstoff: ein Feuer je Haus in der Nacht; Gekochtes: was die Familienhäuser am Tag essen).
+  Unter Ansehen, Zufriedenheit und Menschen steht jetzt ihr Name. Das Bild neben der Zahl 1 ist nicht ein Kanu, sondern das
+  Ansehen (Mana). Ein Kanu-Bild ganz rechts heißt „Kanu kommt“: Eine Familie ist unterwegs zu einer leeren Hütte. Was die roten
+  Zahlen schon sagen, sagt der Hinweis rechts nicht noch einmal.
+- **Die Leiste sieht aus wie die Bauleiste:** Rindenbaststoff mit Punkten. Zwischen den Reihen liegen Bänder wie auf Lapita-Töpfen:
+  eine Reihe kleiner Zahnstempel oben und unten, dazwischen ein gestempelter Zickzack mit roten Punkten in den Spitzen. Auch der
+  Rand mit Tag und Nacht ist fein punktiert, wie mit einem Zahnstempel gedrückt.
 - **Nachrichten** klappen unter der Leiste nach unten aus, hängen an einer Schnur an der Muschel und fliegen danach klein in
   die Muschel zurück; sie nickt. Jahreszeiten ohne Gefahr, die Palolo-Nacht, der Regen und „Nur noch ein Mond“ gehen still in die
   Muschel. Nur Sturmzeit und magere Zeit springen auf. In 30 Minuten Spiel kommen so etwa 19 statt 32 Meldungen. Größere
