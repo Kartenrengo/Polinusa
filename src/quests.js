@@ -147,7 +147,8 @@ const clanMakes = C => early(C.makes), clanWants = C => early(C.wants);
 const stageOfKind = k => STAGES.findIndex(S => S.kinds.includes(k));
 function unlocked(kind){
   if (KINDS[kind] && KINDS[kind].life && LIFE[KINDS[kind].life].from) return lifeKnown(KINDS[kind].life);   // bananas come with another people, not with a stage
-  const st = stageOfKind(kind); return st < 0 || st <= stageNow();
+  const st = stageOfKind(kind); if (st >= 0 && st > stageNow()) return false;
+  return !BEAUTY_GATE[kind] || (stats.bstep || 0) >= BEAUTY_GATE[kind];   // some adornments are earned by a beautiful village (beauty.js)
 }
 /* a new stage reached: a card says what is new, and the new buildings get their dot */
 function stageTick(){

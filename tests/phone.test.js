@@ -12,7 +12,7 @@ const {PAGE} = require('./lib');
     await p.goto(PAGE); await p.waitForTimeout(2500);
     await p.evaluate(() => { window.save = () => {}; newGame(4242); landHome(isl('heimat')); closeSheet(); skipTutorial(true); nextEvent = 1e9;
       const I = isl('heimat'), put = kind => { const q = findSpot(I, kind, startSpot(I, KINDS[kind])); return addB(I, kind, q, variant(kind), tick); };
-      for (const k of ['ernte', 'faeller', 'fisch', 'haus', 'haus', 'taro', 'quelle']) put(k); stats.peakPop = 20;
+      for (const k of ['ernte', 'faeller', 'fisch', 'haus', 'haus', 'taro', 'quelle', 'blumen', 'blumen', 'blumen', 'hibiskus', 'hibiskus', 'hibiskus', 'fackel']) put(k); stats.peakPop = 20; { const it = isl('heimat'); for (const b of it.buildings) delete b.bt; it.pop = Math.max(it.pop, 6); beautyTick(); }   // a pretty village: blooms, wreaths and butterflies are drawn too
       for (let t = 0; t < 20; t++){ for (let k = 0; k < 40; k++) stepWalkers(50); econ(); if (sheetKind) closeSheet(); }
       camAnim = null; cam.x = I.anchor.x; cam.y = I.anchor.y + 20; cam.z = 2.6; applyCam(); });
     await p.waitForTimeout(9000);   // time for the frame governor to settle

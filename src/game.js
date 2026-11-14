@@ -789,6 +789,7 @@ function villageLife(I, w){
   if (ph > .5 && hall && !w.child && Math.random() < .7){ near(hall, w.old ? 9 : 16, .5); w.sit = true; w.wait = 5000 + Math.random() * 5000; there(TALK_FX.halle); return true; }
   if (ph > .25 && ph < .4 && !w.child && Math.random() < .6){ const u = I.buildings.filter(b => b.kind === 'umu' && !b.bt); if (u.length){ near(u[Math.floor(Math.random() * u.length)], 10, .5); w.sit = true; w.wait = 4000 + Math.random() * 3000; there(TALK_FX.umu); return true; } }
   if (w.child && hall && playersOf(I, 'drum').some(q => q.play.ph === 'do') && Math.random() < .7){ near(hall, 14, .45); w.hop = true; w.fx = lookOf(HOP_FX, w); w.wait = 2500 + Math.random() * 2500; return true; }   // the drum sounds: the children dance
+  if (w.child && hall && beautyFx(I).kids && Math.random() < .35){ near(hall, 11, .4); w.hop = true; w.fx = lookOf(HOP_FX, w); w.wait = 2200 + Math.random() * 2400; return true; }   // a pretty village: the children skip and play on the plaza (beauty.js)
   if (w.child && hall && Math.random() < .5){ near(hall, 22, .45); w.wait = 300 + Math.random() * 600; return true; }
   return false;
 }
@@ -1599,7 +1600,7 @@ function econ(){
     // (hunger is counted in mornings, see mealTick.) Room in the houses shrinks only after half a minute of nothing.
     { const d = I.dry || (I.dry = {}); for (const n of nd.list) d[n.k] = n.stock > 0 ? 0 : (d[n.k] || 0) + 1; }
   }
-  stageTick();
+  stageTick(); beautyTick();
   if (tick % 2 === 0){ const was = $('quest').hidden; renderQuest(); if (was !== $('quest').hidden) measure(); }   // the elders' advice follows the village
   if (tick % MANA_FADE === 0) mana = Math.max(0, mana - 1);
   // a beautiful village adds to the clan's standing, every half minute, as far as its people can enjoy it, at most 2 a minute
@@ -1720,6 +1721,7 @@ function onTap(p){
   // a bubble over a house or a workplace: what it lacks, and where that comes from
   { const q = hitBubble(p); if (q){ q.go(); return; } }
   if (hitWhale(p)){ seeWhale(); return; }
+  if (hitEye(p)) return;   // a tap on a dolphin, a heron, a rainbow: a word (hingucker.js)
   if (palmDouble(p)) return;   // a second quick tap on a palm shakes it
   const sh = hitShip(p);
   if (sh && !sh.own && sh.pack){ const F = isl(sh.pack.from); toast(`Ein Kanu aus ${F ? F.name : 'einem Tochterdorf'} bringt ${packText(sh.pack.g)} nach ${isl(sh.to).name}.`, 3400, false); return; }

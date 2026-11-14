@@ -556,6 +556,49 @@ const r = await p.evaluate(()=>{
           want(restore(serialize()) === false || true, '');
         } else out.push('wish: none');
         { const W3 = isl('heimat'); Object.assign(W3.stock, keepK.s); W3.ask = null; W3.wish = null; W3.wishOk = undefined; W3.zeal = keepK.zeal; } }
+  // beauty is earned: five steps per village, measured per person; each step is celebrated once and opens a visible reward and some adornments (beauty.js, hingucker.js)
+  { newGame(5151); landHome(isl('heimat')); closeSheet(); nextEvent = 1e9; const B = isl('heimat'), fin = b => { delete b.bt; return b; };
+    const putB = kind => { const q = findSpot(B, kind, startSpot(B, KINDS[kind])); return q ? fin(addB(B, kind, q, variant(kind), tick)) : null; };
+    const msgs = [], toast0 = toast; window.toast = m => { msgs.push(m); };
+    want(beautyStepOf(0, 10) === 0 && beautyStepOf(3, 4) === 1 && beautyStepOf(7, 20) === 2 && beautyStepOf(13, 20) === 3 && beautyStepOf(22, 20) === 4, 'beauty: steps by beauty');
+    want(beautyStepOf(7, 40) === 1 && beautyStepOf(22, 40) === 3 && beautyStepOf(22, 30) === 4 && beautyStepOf(40, 2) === 4, 'beauty: measured per person (and at least 4 people count)');
+    want(BEAUTY_STEPS.length === 5 && BEAUTY_STEPS.every((S, i) => i === 0 || (S.b > BEAUTY_STEPS[i - 1].b && S.r > BEAUTY_STEPS[i - 1].r && S.say)), 'beauty: five rising steps with a line each');
+    // a fresh village stands on step 0 and nothing is shown
+    beautyTick(); want(B.bmax === 0 && beautyStep(B) === 0 && !beautyFx(B).blooms && !beautyFx(B).bunting && !beautyFx(B).guests, 'beauty: step 0, no rewards');
+    // the unlocks wait for the step even when the people are enough
+    stats.peakPop = 60; stats.bstep = 0; want(!unlocked('pfosten') && !unlocked('tanzplatz') && unlocked('trommel') && unlocked('blumen'), 'beauty: post and dance floor wait for a step, flowers are free');
+    const p0 = petals.length; putB('blumen'); putB('blumen'); const bb = beautyOf(B); beautyTick();
+    out.push(`beauty ${bb}, step ${beautyStep(B)}, pop ${B.pop}`); want(beautyStep(B) === 1 && B.bmax === 1 && stats.bstep === 1, 'beauty: two flower beds make the village Gepflegt');
+    want(petals.length > p0 && msgs.length === 1 && /Gepflegt/.test(msgs[0]) && /Ahnenpfosten/.test(msgs[0]), 'beauty: a petal burst and one word for the new step');
+    const pn = petals.length; beautyTick(); beautyTick(); want(petals.length === pn && msgs.length === 1, 'beauty: celebrated once');
+    want(beautyFx(B).blooms && !beautyFx(B).bunting && !beautyFx(B).fireflies && beautyFx(B).butterflies === 2 && unlocked('pfosten') && !unlocked('tanzplatz') && newKinds.has('pfosten'), 'beauty: step 1 gives blooms and the post (new dot in the build bar)');
+    // higher steps: more rewards
+    B.pop = 20; for (let i = 0; i < 2; i++) putB('blumen'); beautyTick();   // twenty people: the marks are higher
+    want(beautyStep(B) === 2 && beautyFx(B).bunting && beautyFx(B).kids && !beautyFx(B).fireflies && unlocked('tanzplatz') && msgs.length === 2 && /Geschmückt/.test(msgs[1]), 'beauty: step 2 gives wreaths, children play, the dance floor');
+    for (let i = 0; i < 2; i++) putB('pfosten'); beautyTick(); want(beautyStep(B) === 3 && beautyFx(B).fireflies && beautyFx(B).butterflies === 6 && !beautyFx(B).guests, 'beauty: step 3 gives fireflies and more butterflies');
+    for (let i = 0; i < 2; i++) putB('tanzplatz'); beautyTick(); want(beautyStep(B) === 4 && beautyFx(B).guests === 2 && msgs.length === 4 && /Gäste/.test(msgs[3]), `beauty: step 4 brings guests (beauty ${beautyOf(B)})`);
+    // contentment from beauty stays modest
+    const sat1 = satOf(B, B.people[0]); const sc = sat1.why.find(w => w.k === 'schoen'); want(sc && sc.d <= SAT.beauty && SAT.beauty <= 8, 'beauty: contentment bonus stays at most +8');
+    // when the beauty falls the rewards go, but the step is not celebrated again and what was opened stays open
+    for (const q of B.buildings.filter(q => q.kind === 'tanzplatz' || q.kind === 'pfosten' || q.kind === 'blumen')) B.buildings.splice(B.buildings.indexOf(q), 1); beautyTick(); const m4 = msgs.length;
+    want(beautyStep(B) === 0 && !beautyFx(B).blooms && B.bmax === 4 && unlocked('tanzplatz'), 'beauty: rewards go with the beauty, the unlocks stay');
+    putB('blumen'); putB('blumen'); beautyTick(); want(beautyStep(B) === 1 && msgs.length === m4, 'beauty: no new celebration for a step reached before');
+    // saved and loaded
+    const sv = serialize(); want(restore(sv), 'beauty: restore'); { const B2 = isl('heimat'); want(B2.bmax === 4 && stats.bstep === 4, 'beauty: step reached is saved'); beautyTick(); want(B2.bmax === 4, 'beauty: no celebration after loading'); }
+    // the row in the overview: step, next step, bar
+    { const B2 = isl('heimat'); const row = beautyRow(B2); want(/Schönheit: Gepflegt/.test(row) && /Weiter: Geschmückt/.test(row) && /mbar/.test(row), 'beauty: overview row shows step and next'); }
+    // the new sights draw without trouble at every distance and quality, day and night, and a tap on one gives a word
+    { const B2 = isl('heimat'), keepL = lod, keepQ = quality, keepN = opts.night, keepZ = cam.z, errs = []; B2.rainUntil = tick - 3; petalBurst(B2); const guests = guestSpots(B2, 2).length;
+      for (const q of [0, 1, 2]) for (const L of ['far', 'mid', 'near']) for (const night of [false, true]){
+        lod = L; quality = q; opts.night = night; cam.x = B2.center.x; cam.y = B2.center.y; cam.z = L === 'far' ? .4 : L === 'mid' ? .9 : 2.4; const v = view(1e4);
+        for (let now = 1000; now < 260000; now += 3100 + (now % 700)){ ctx.save(); try { drawBeautyGround(ctx, v, now); drawEyes(ctx, v, now); drawBeautyTop(ctx, v, now); drawNightEyes(now); } catch (e){ errs.push(`${L} q${q} ${night ? 'night' : 'day'} ${e.message}`); } ctx.restore(); if (errs.length > 3) break; }
+      }
+      lod = keepL; quality = keepQ; opts.night = keepN; cam.z = keepZ; want(!errs.length, 'sights draw without errors: ' + errs.slice(0, 2).join(' | ')); out.push(`guest canoes ${guests}`);
+      // a rainbow stands after the rain dance by day, and a tap on it gives a word
+      opts.night = false; lod = 'near'; quality = 2; cam.x = B2.center.x; cam.y = B2.center.y; cam.z = 1.6; B2.rainUntil = tick - 4; ctx.save(); drawEyes(ctx, view(1e4), 5000); ctx.restore();
+      const rb = eyes.find(e => e.kind === 'regenbogen'); want(!!rb, 'rainbow shows after the rain'); msgs.length = 0; delete eyeSaid.regenbogen; want(rb && hitEye({x:rb.x, y:rb.y}) && msgs.length === 1, 'a tap on a sight gives a word');
+      B2.rainUntil = tick - 40; ctx.save(); drawEyes(ctx, view(1e4), 5000); ctx.restore(); want(!eyes.some(e => e.kind === 'regenbogen'), 'rainbow fades away'); lod = keepL; quality = keepQ; opts.night = keepN; cam.z = keepZ; B2.rainUntil = 0; }
+    window.toast = toast0; }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

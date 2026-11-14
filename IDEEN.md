@@ -273,3 +273,9 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
   Navigator stirbt; etwas Ansehen.
 - Erst einschalten, wenn die zwei Stränge sich gut anfühlen.
 
+## Offen aus der Runde „Schönheit wird erspielt“ (Version 95)
+
+- **Noch mehr Hingucker, nicht gebaut:** Kinder jagen Hühner über den Platz; eine Kokosnuss fällt von allein (bisher nur auf
+  Tipp); eine Schildkröte, die am Strand Eier legt, auch bei den Hingucker-Tippern; Fregattvögel hoch über der Insel in großen Kreisen.
+- **Schönheit und Clans:** Gäste im Kanu könnten bei „Berühmt“ eine kleine Gabe bringen. Bisher kommen sie nur zum Schauen.
+- **Handy prüfen:** Die Blumen, Kränze und Hingucker nur im Test-Browser gemessen, nicht auf einem echten Handy.

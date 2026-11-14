@@ -524,10 +524,12 @@ function drawAnim(c, now){
   if (cyclone && lod !== 'far') drawStormSea(c, v, now);
   if (lod !== 'far'){ drawLagoonLife(c, v, now); drawDugouts(c, v, now); drawFishers(c, v, now); }
   if (lod === 'near' && !reduced && nightLevel() < .2) drawButterflies(c, v, now);
+  drawBeautyGround(c, v, now); drawEyes(c, v, now);   // blooms, more butterflies and guests that beauty brings; rare calm sights (hingucker.js)
   if (lod === 'near' && !reduced && quality) drawBeachCrabs(c, v, now);
   drawWhales(c, v, now); if (lod !== 'far' && !reduced) drawSeaLife(c, v, now); if (lod !== 'far') drawDrift(c, v, now);
   drawBuildFx(c, v, now);
   if (cam.z > PEOPLE_Z){ drawPeople(c, v, now); if (falls.length) drawFalls(c, v, now); }
+  drawBeautyTop(c, v, now);   // wreaths and ribbons on the houses, petals (hingucker.js)
   drawHouseFlags(c, v, now);   // flags and bunting at the meeting house, over the roof (worldmotion.js)
   drawWork(c, v);
   if (!reduced) drawWeather(c, v, now);
@@ -2546,7 +2548,7 @@ function draw(now){
   drawSea(now); ctx.setTransform(1, 0, 0, 1, 0, 0); blitLayer(baseL);
   camXform(ctx); drawAnim(ctx, now);
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (!fogL.empty) blitLayer(fogL);
-  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawLightWhale(now); drawPalmDrops(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
+  camXform(ctx); drawTop(ctx, now); drawNight(now); drawHearths(now); drawNightEyes(now); drawLightWhale(now); drawPalmDrops(now); drawStorm(now); camXform(ctx); drawLabels(ctx);
   needDraw = false;
 }
 /* Something moves on screen, so the top layers need regular frames */

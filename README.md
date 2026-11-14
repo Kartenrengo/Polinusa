@@ -1824,6 +1824,12 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Yams | wahrscheinlich; das ozeanische Wort für Yams ist alt, Reste von Knollen sind selten erhalten |
 | Zuerst vom Wilden leben: Schildkröten, Seevögel, Großfußhühner, die bald verschwinden | ja, durch Knochen in den frühesten Schichten |
 | Wachszeiten der Pflanzen | aus der Botanik; im Spiel verkürzt |
+| Delfine am Riff, Riffreiher am Strand, Geckos an den Hauspfosten, springende Fische, Schmetterlinge | Tiere, die auf den Inseln heimisch sind; dass man sie am Dorf sah, ist glaubhaft, im Einzelnen nicht belegt |
+| Blumen an den Wegen, Blütenkränze an den Häusern | Blüten als Schmuck kennt man aus späteren Berichten (Tonga, Samoa); für die Lapita vermutet |
+| Bänder aus Tapa an den Dächern | vermutet; Tapa ist aus Tonga und Samoa gut bekannt, für die frühen Lapita unsicher |
+| Glühwürmchen zwischen den Blumen | nur Stimmung, eine Freiheit des Spiels; nicht belegt |
+| Regenbogen nach dem Regen, Sternschnuppen | Natur, zu jeder Zeit zu sehen |
+| Gäste im Kanu, die das Dorf ansehen | Besuche zwischen Inseln sind belegt (Obsidian reiste über 3000 km); dass man nur zum Ansehen kam, ist erfunden |
 | Nachts mit Fackeln fischen | erst später belegt, aber weit verbreitet |
 | Fischfang im Riff und in der Lagune, Muschelsammeln, kleiner werdende Muscheln | ja, durch Muschelhaufen |
 | Angelhaken und Schleppköder aus Muschel und Perlmutt | ja, typische Funde an Lapita-Orten |
@@ -2053,3 +2059,26 @@ Das Häuptlingshaus bleibt, wie es war.
   Neues hinstellen: Die Quelle erscheint, wo ein Bach fließt (`ensureSpring`). Eine gefällte Palme wächst nach. Ein Haus, das
   der Sturm zerstört hat, wird neu gebaut, sobald das Holz da ist (`payRebuilds`). Die Familien flicken ihre Dächer.
 - Die Reise mit dem Kanu zu einer bekannten Insel als Wunsch ist noch nicht gebaut (siehe IDEEN.md).
+
+## Schönheit wird erspielt, neue Hingucker (Version 95)
+
+- **Fünf Stufen der Schönheit:** Schlicht, Gepflegt, Geschmückt, Prächtig, Berühmt. Gezählt wird wie bisher (Blumen, Hibiskus,
+  Fackeln, Pfosten, Trommel, Tanzplatz, Wege, Töpfermuster), aber je Mensch: Je größer das Dorf, desto mehr Schmuck braucht
+  es. Vier Menschen zählen mindestens. Die Zufriedenheit durch Schönheit bleibt wie sie war (höchstens +8).
+- **Jede neue Stufe wird einmal gefeiert:** Blütenblätter wirbeln über dem Platz, ein Hinweis sagt, was neu ist. Fällt die
+  Schönheit wieder, gehen die Belohnungen, aber die Stufe wird nicht noch einmal gefeiert.
+- **Was man davon sieht, solange die Stufe hält:**
+  - *Gepflegt:* Blumen blühen an den Wegen und vor den Häusern, zwei Schmetterlinge mehr. **Ahnenpfosten** gibt es erst jetzt.
+  - *Geschmückt:* Kränze und Tapa-Bänder an den Häusern, die Kinder hüpfen und spielen öfter auf dem Platz. **Tanzplatz** gibt es erst jetzt.
+  - *Prächtig:* mehr Schmetterlinge am Tag, nachts Glühwürmchen zwischen den Blumen.
+  - *Berühmt:* Gäste liegen im Kanu vor dem Riff und schauen.
+- **Die Stufe steht in der Übersicht,** Reiter „Insel“, ganz oben: eine Zeile mit kleinem Balken und dem Weg zur nächsten Stufe.
+  Gespeichert wird je Dorf die höchste Stufe, die es erreicht hat (Spielstand-Feld `bm`); alte Spielstände feiern nichts nach.
+- **Neue Hingucker,** selten und ruhig, nur nah herangezoomt, bei guter Bildrate und nicht bei „weniger Bewegung“:
+  Delfine springen vor dem Riff; ein Fischschwarm blitzt aus der Lagune; ein **Riffreiher** steht am Strand, tritt, stößt zu und
+  schluckt; ein **Gecko** sitzt am Dach eines Hauses und huscht; nach dem **Regentanz** steht ein Regenbogen über der Insel;
+  nachts fällt ab und zu eine Sternschnuppe. Tippt man auf einen Hingucker, steht ein Satz dazu im Hinweis.
+- **Technik:** neue Dateien `src/beauty.js` (Stufen, Feier, Zeile in der Übersicht) und `src/hingucker.js` (alles Gezeichnete).
+  Gezeichnet wird nur, was im Bild ist; bei „weit“ nichts; mit wenig Bildrate (Stufe 0) nur Blumen und Kränze, still.
+  Tests: `tests/rules.test.js` (Stufen, Belohnungen, einmal feiern, Freischaltung, Speichern, alle Hingucker in jedem Abstand
+  ohne Fehler); der Handy-Test hat jetzt ein schönes Dorf.
