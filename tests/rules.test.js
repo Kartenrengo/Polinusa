@@ -619,6 +619,18 @@ const r = await p.evaluate(()=>{
     // a piece that reaches the beach leaves a line of foam
     drift = [{id:92, k:'stamm', x:H.center.x, y:H.center.y, t0:tick, shore:H.id}]; driftFx = []; lod = 'near'; driftTick(); want(driftFx.some(q => q.ashore === 92), 'detail: foam where it comes ashore');
     drift = keepD; driftFx = keepFx; lod = keepL; quality = keepQ; cam.z = keepZ; applyCam(); }
+  // sailing by the wind: into the wind the canoe tacks and needs longer, but always gets there and never runs over land;
+  // with the wind across it is fastest; in a calm the crew paddles, slowly
+  { const s = own()[0], T = s && islands.find(I => (I.settled || I.clan) && I.id !== s.port);
+    if (s && T){ const from = {x:s.x, y:s.y}, port = s.port, st = s.state, d0 = Math.hypot(T.harbor.x - from.x, T.harbor.y - from.y), dx = (T.harbor.x - from.x) / d0, dy = (T.harbor.y - from.y) / d0, wc = windCache, r0 = s.route; s.route = null;
+      const run = (tx, ty, str) => { const W = {from:0, str, tx, ty, dir:'x', ab:'x', word:'x'}; windCache = {t:tick, w:W}; s.x = from.x; s.y = from.y; s.port = port; s.state = 'moored'; s.path = []; s.lat = 0;
+        if (!sailTo(s, {isl:T.id}, true, true)) return null; let t = 0, land = 0, tk = 0, lt = s.tack; while (s.state === 'sail' && t < 900000){ windCache = {t:tick, w:W}; stepShips(0, 100); t += 100; if (overLand({x:s.x, y:s.y}, {x:s.x + .1, y:s.y}, 0)) land++; if (s.tack !== lt){ tk++; lt = s.tack; } }
+        return {t, land, tk, ok:s.state !== 'sail'}; };
+      const up = run(-dx, -dy, .6), beam = run(-dy, dx, .6), calm = run(-dy, dx, .1);
+      want(up && beam && calm && up.ok && beam.ok && calm.ok, 'sailing: a canoe does not arrive');
+      if (up && beam && calm){ want(up.tk > 0 && up.t > beam.t * 1.5 && up.t < beam.t * 4, `sailing: into the wind ${up.t} against ${beam.t} with the wind across, ${up.tk} tacks`);
+        want(!up.land && !beam.land, 'sailing: over land while tacking'); want(calm.t > beam.t * 1.4, `sailing: a calm is not slower (${calm.t} / ${beam.t})`); }
+      windCache = wc; s.x = from.x; s.y = from.y; s.port = port; s.state = st; s.path = []; s.route = r0; } }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

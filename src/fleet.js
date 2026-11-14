@@ -162,13 +162,28 @@ function moorSpot(I, s){
   return {x:h.x - dy / l * k + dx / l * 6, y:h.y + dx / l * k + dy / l * 6};
 }
 /* With the wind a canoe runs fast, against it slowly; the double canoe's big sail feels it more */
-function windFactor(s){ const W = wind(), dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty; return clamp(1 + (s.kind !== 'oc' ? .4 : .25) * W.str * dot, .6, 1.45); }
+/* ---------- sailing by the wind. th is the angle between where the canoe heads and where the wind blows to: 0 running
+   before it, 90 the wind across (fastest), 180 straight into it. Into the wind (beyond SAIL.noGo) no canoe sails: it tacks,
+   a zigzag of legs about 50 degrees off the wind, and loses way at each turn. In a calm the crew paddles, slowly. The
+   outrigger canoe has paddlers aboard anyway and minds the wind less than a double canoe under its big mat sail. */
+const SAIL = {noGo:130, run:.86, beam:1.14, close:.8, calm:.2, paddle:.42, lane:32, look:100, turn:600};
+const pointOf = (hx, hy, W = wind()) => Math.acos(clamp(hx * W.tx + hy * W.ty, -1, 1)) * 180 / Math.PI;
+function windFactor(s, hx = s.hx || 0, hy = s.hy || 0){
+  const W = wind(); if (W.str < SAIL.calm) return SAIL.paddle;
+  const th = pointOf(hx, hy, W), f = th <= 90 ? SAIL.run + (SAIL.beam - SAIL.run) * Math.sin(th * Math.PI / 180) : SAIL.beam - (SAIL.beam - SAIL.close) * clamp((th - 90) / (SAIL.noGo - 90), 0, 1);
+  const k = (s.kind === 'oc' ? .55 : 1) * (.45 + .75 * W.str);   // how much the wind matters: more for a big sail, more when it blows hard
+  return clamp(1 + (f - 1) * k * 2, .55, 1.5);
+}
+/* how the canoe sails right now, in a word for its sheet */
+const sailWord = s => { if (s.state !== 'sail') return ''; const W = wind(); if (W.str < SAIL.calm) return 'Flaute: die Mannschaft paddelt';
+  if (s.tacking) return 'Gegenwind: es kreuzt im Zickzack'; const th = pointOf(s.hx || 0, s.hy || 0, W);
+  return th < 50 ? 'Rückenwind' : th < 115 ? 'Halber Wind: am schnellsten' : 'Hart am Wind'; };
 /* the grown-ups of the seafarer families are the canoe crews of their island: a few more paddles, a sure hand on the sail */
 const seaCrew = s => { const I = s.own && isl(s.port || s.last); return I ? seafarers(I) : 0; };
 const seaF = s => 1 + Math.min(SEA_SPEED_MAX, SEA_SPEED * seaCrew(s));
-function speedOf(s){
+function speedOf(s, hx, hy){
   const r = s.route != null ? routes[s.route] : null;
-  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1) * (s.own ? giftF('feinpandanus') : 1) * seaF(s);
+  return SHIPS[s.kind].speed * seasonOf().sea * windFactor(s, hx, hy) * (r ? 1 + .03 * r.knots : 1) * (s.hungry ? .6 : 1) * (s.founder ? 1.8 : 1) * (s.own ? giftF('feinpandanus') : 1) * seaF(s);
 }
 function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, life:[], people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
@@ -267,11 +282,14 @@ function stepShips(now, dt){
     if (s.state !== 'sail') continue;
     // a canoe gathers way slowly and glides in to land; it turns gradually instead of flipping round
     const end = s.path[s.path.length - 1], rem = end ? Math.hypot(end.x - s.x, end.y - s.y) : 0, e0 = clamp(Math.min((s.dist - (s.dist0 || 0) + 8) / 60, (rem + 6) / 70), 0, 1), ease = .28 + .72 * e0 * e0 * (3 - 2 * e0);   // it pushes off slowly, gathers way, and slows to a glide before it lands
-    let step = speedOf(s) * ease * dt / 1000; const x0 = s.x, y0 = s.y;
-    while (step > 0 && s.pi < s.path.length){
-      const t = s.path[s.pi], dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy);
-      if (d <= step){ s.x = t.x; s.y = t.y; s.pi++; step -= d; s.dist += d; }
-      else { s.x += dx / d * step; s.y += dy / d * step; s.dist += step; step = 0; }
+    const x0 = s.x, y0 = s.y;
+    if (!sailLeg(s, ease, dt)){
+      let step = speedOf(s) * ease * dt / 1000;
+      while (step > 0 && s.pi < s.path.length){
+        const t = s.path[s.pi], dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy);
+        if (d <= step){ s.x = t.x; s.y = t.y; s.pi++; step -= d; s.dist += d; }
+        else { s.x += dx / d * step; s.y += dy / d * step; s.dist += step; step = 0; }
+      }
     }
     { const mx = s.x - x0, my = s.y - y0, m = Math.hypot(mx, my);
       if (m > .001){ const k = clamp(dt / 500, 0, 1); let hx = (s.hx || 1) + (mx / m - (s.hx || 1)) * k, hy = (s.hy || 0) + (my / m - (s.hy || 0)) * k; const l = Math.hypot(hx, hy) || 1; s.hx = hx / l; s.hy = hy / l; }
@@ -283,6 +301,29 @@ function stepShips(now, dt){
     if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (exploreAt(s.x, s.y, sight(s)) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
     if (s.pi >= s.path.length) arriveShip(s);
   }
+}
+/* Into the wind: the canoe looks a little ahead along its way, and if that lies in the eye of the wind it sails a leg about
+   50 degrees off the wind on one side, then turns (it loses way while the sail goes over) and sails the other leg, never
+   straying more than SAIL.lane from its way and never onto land or reef. Returns false when it can simply sail straight. */
+function sailLeg(s, ease, dt){
+  const W = wind(); s.tacking = false; if (W.str < SAIL.calm || s.race || s.founder){ s.lat = 0; return false; }
+  let j = s.pi, acc = 0, px = s.x, py = s.y; while (j < s.path.length - 1 && acc < SAIL.look){ acc += Math.hypot(s.path[j].x - px, s.path[j].y - py); px = s.path[j].x; py = s.path[j].y; j++; }
+  const T = s.path[Math.min(j, s.path.length - 1)]; if (!T) return false;
+  const tx = T.x - s.x, ty = T.y - s.y, td = Math.hypot(tx, ty); if (td < 26) return false;   // close in, they paddle the last bit straight
+  const dx = tx / td, dy = ty / td; if (pointOf(dx, dy, W) < SAIL.noGo){ s.lat = 0; return false; }
+  s.tacking = true; if (!s.tack) s.tack = Math.random() < .5 ? 1 : -1;
+  const a = Math.atan2(-W.ty, -W.tx), off = (180 - SAIL.noGo + 4) * Math.PI / 180, leg = sg => ({x:Math.cos(a + sg * off), y:Math.sin(a + sg * off)});
+  let h = leg(s.tack); const step = speedOf(s, h.x, h.y) * ease * dt / 1000 * (s.turnLeft > 0 ? .4 : 1); s.turnLeft = Math.max(0, (s.turnLeft || 0) - dt);
+  const ahead = q => !overLand({x:s.x, y:s.y}, {x:s.x + q.x * Math.max(14, step * 3), y:s.y + q.y * Math.max(14, step * 3)}, 2);
+  // which side of its way it is on: turn when it has strayed far enough, or when land is ahead
+  s.lat = (s.lat || 0) + (h.x * -dy + h.y * dx) * step;
+  if (Math.abs(s.lat) > SAIL.lane && Math.sign(s.lat) === Math.sign(h.x * -dy + h.y * dx) || !ahead(h)){
+    const o = leg(-s.tack); if (ahead(o)){ s.tack = -s.tack; h = o; s.turnLeft = SAIL.turn; } else if (!ahead(h)) return false;   // both ways blocked: it is pushed along straight
+  }
+  s.x += h.x * step; s.y += h.y * step; s.dist += step * Math.max(0, h.x * dx + h.y * dy);
+  // the way points it has come past are behind it now
+  while (s.pi < s.path.length - 1){ const q = s.path[s.pi], qx = q.x - s.x, qy = q.y - s.y; if (Math.hypot(qx, qy) < 12 || qx * dx + qy * dy < 0) s.pi++; else break; }
+  return true;
 }
 function arriveShip(s){
   const d = s.dest; s.path = []; s.dest = null;

@@ -2195,3 +2195,18 @@ Der Wunsch: mehr Feinheit in allem. Alles im gleichen Tuschestil, ruhig, und das
 
 **Belegt oder Spiel.** Belegt: Kokosnüsse mit Faserhülle, Pandanusblätter für Matten, Sennit-Bindungen an Auslegerkanus, Reusen,
 Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf dem Stamm sind Spielidee. Wo genau was liegt, ist Spiel.
+
+## Segeln nach dem Wind (Version 101)
+
+- **Der Wind bestimmt das Tempo:** Halber Wind (von der Seite) ist am schnellsten, Rückenwind etwas langsamer, hart am Wind
+  langsamer. Das Doppelkanu mit seinem großen Mattensegel hängt mehr vom Wind ab als das Auslegerkanu mit seinen Paddlern;
+  je stärker der Wind, desto größer der Unterschied.
+- **Gegen den Wind wird gekreuzt:** Liegt das Ziel im Wind, fährt das Kanu im Zickzack, etwa 50 Grad neben dem Wind, und
+  wendet, wenn es zu weit vom Weg abkommt oder Land voraus ist. Bei jeder Wende verliert es kurz Fahrt. So dauert eine Fahrt
+  gegen den Wind gut doppelt so lang wie mit halbem Wind. Nahe am Ziel paddelt die Mannschaft das letzte Stück gerade.
+- **Flaute:** Bei sehr schwachem Wind paddelt die Mannschaft, gut halb so schnell.
+- Im Blatt eines fahrenden Kanus steht, wie es gerade segelt: Rückenwind, halber Wind, hart am Wind, kreuzt, Flaute.
+- **Was belegt ist und was Spiel:** Dass Seefahrer in Ozeanien gegen den vorherrschenden Ostwind hinausfuhren und mit ihm
+  sicher heimkamen, ist eine gut begründete Annahme aus Fahrtsimulationen (vermutet, Irwin). Wie gut Lapita-Kanus am Wind
+  segeln konnten und welche Segel sie hatten, ist nicht belegt; die Werte hier sind Spiel.
+
