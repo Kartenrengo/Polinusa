@@ -290,3 +290,14 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 - **Tippen auf Krabben, Schmetterlinge, Seevögel** gibt noch kein Wort. Vorsicht: Je mehr Flächen zum Tippen, desto
   eher nehmen sie Tipps auf Häuser weg.
 - **Echtes Handy:** Ratten, Flughunde und die neue Schildkröte auf einem echten Gerät ansehen (bisher nur im Test-Browser).
+
+## Offen aus „Mehr Details“ (Version 99)
+
+- **Treibgut:** Der Talisman treibt nicht (er wird aus Harz geschnitzt). Ein Seevogel sitzt nur auf manchen Stämmen und fliegt
+  nicht auf, wenn man nah kommt.
+- **Strand:** Wellenspitzen sind fest gezeichnet, nur die vorhandene Brandung (`drawBeachWash`) bewegt sich.
+- **See:** Sonnenglitzern gibt es nur in der Lagune, nicht auf dem offenen Meer. Korallenköpfe unter klarem Wasser sind noch die
+  alten Bilder. Festgemachte Kanus haben nur Bindungen, noch keine eigenen Paddel am Ufer.
+- **Dorf:** Noch kein Fischnetz, das im Wind schwingt, und kein Rauchgeschwärzter Giebel je Feuerstelle (nur Ruß am Dach).
+- **Auf einem echten Handy prüfen:** Bildzeiten mit den neuen Details.
+

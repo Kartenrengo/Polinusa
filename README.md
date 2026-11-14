@@ -2169,3 +2169,29 @@ frei erfunden. Wo und wie oft man sie sieht, ist Spiel.
 - **Antippen erschreckt ihn:** Er zieht sich sofort zurück, hält die große Schere vor den Eingang, die Muschel zittert; nach
   einem Moment lugt er vorsichtig heraus und verschwindet. Eine Blase erzählt von ihm.
 
+
+
+## Mehr Details (Version 100)
+
+Der Wunsch: mehr Feinheit in allem. Alles im gleichen Tuschestil, ruhig, und das Handy bleibt flüssig.
+
+- **Treibgut:** Jede Art sieht anders aus. Die Kokosnuss hat Fasern und manchmal einen Keim. Der Stamm hat Rinde, Aststummel,
+  Seepocken und eine Tangsträhne; manchmal ruht ein Vogel darauf. Ein abgebrochener Ast trägt ein paar Blätter. Das Wrackteil ist
+  mit Sennit gebunden. Das Kauri-Harz glänzt weich und funkelt. Neu: ein Bündel Pandanusblätter (gibt Palmwedel) und ein
+  Büschel Tang mit Muscheln (gibt Muscheln). Jedes Stück wippt leicht, hat einen kleinen Wellenring und funkelt ab und zu, damit
+  man merkt: antippen. Wenn es am Strand ankommt, läuft eine kleine Schaumlinie hoch.
+- **Strand:** Spülsaum aus Tang, Schaumspitze am Wasser, Kiesel, Muscheln, Krabbenlöcher mit Sandhäufchen, Kokosnüsse und
+  Schalen unter den Palmen, Laub und Brotfrüchte unter den Bäumen, Fußspuren zu den Kanus. Das meiste bleibt bewusst leer,
+  damit das Auge ruht. Alles ist fest in die Grundebene gezeichnet (ein Pfad je Insel), kostet pro Bild fast nichts.
+- **Häuser und Dorf:** Schnurbindungen an den Pfosten. Manche Häuser haben eine Reuse oder ein Netz am Dachrand, eine
+  gerollte Matte an der Tür oder Ruß am Dach über der Feuerstelle; andere nichts. Der Dorfplatz hat einen Steinring und eine
+  abgetretene Mitte.
+- **Kanus und See:** Schnurbindungen an den Auslegerbalken und an der Plattform, ein Paddel im Boot. In der Lagune treiben ein
+  paar Blätter.
+- **Gärten:** Ein Grabstock und ein geflochtener Korb am Rand mancher Taro- und Yamsfelder.
+- **Schnell bleiben:** Feines kommt nur nah heran (`lod` „near“) und bei guter Bildrate (`quality`); bei weniger Bewegung steht
+  alles still. Gleiches Haus, gleiche Details (nach der Nummer des Hauses); nur wenige Spielarten, damit nicht viele Bilder nötig sind.
+- **Test:** `tests/rules.test.js` zeichnet alle neuen Details in jedem Abstand und jeder Qualität ohne Fehler.
+
+**Belegt oder Spiel.** Belegt: Kokosnüsse mit Faserhülle, Pandanusblätter für Matten, Sennit-Bindungen an Auslegerkanus, Reusen,
+Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf dem Stamm sind Spielidee. Wo genau was liegt, ist Spiel.

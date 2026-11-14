@@ -601,6 +601,24 @@ const r = await p.evaluate(()=>{
       const rb = eyes.find(e => e.kind === 'regenbogen'); want(!!rb, 'rainbow shows after the rain'); msgs.length = 0; delete eyeSaid.regenbogen; want(rb && hitEye({x:rb.x, y:rb.y}) && msgs.length === 1, 'a tap on a sight gives a word');
       B2.rainUntil = tick - 40; ctx.save(); drawEyes(ctx, view(1e4), 5000); ctx.restore(); want(!eyes.some(e => e.kind === 'regenbogen'), 'rainbow fades away'); lod = keepL; quality = keepQ; opts.night = keepN; cam.z = keepZ; B2.rainUntil = 0; }
     window.toast = toast0; }
+  // more detail (Version 99): every kind of drift, the shore, houses, fields and the lagoon draw at every distance and quality without error
+  { const H = isl('heimat'), T = isl('tochter'), keepL = lod, keepQ = quality, keepZ = cam.z, keepD = drift, keepFx = driftFx, fails = [], pt = shorePoint(H) || {x:H.center.x + 300, y:H.center.y};
+    const kinds = Object.keys(DRIFT); want(['blaetter', 'muscheln', 'stamm', 'kokos', 'kauri', 'wrack'].every(k => kinds.includes(k)), 'detail: drift kinds');
+    drift = kinds.map((k, i) => ({id:i + 1, k, x:pt.x + i * 9, y:pt.y, t0:tick, shore:i % 2 ? H.id : undefined})); driftFx = [{x:pt.x, y:pt.y, t0:performance.now() - 300, dur:2400, ashore:5}];
+    for (const L of ['far', 'mid', 'near']) for (const q of [0, 1, 2]){
+      lod = L; quality = q; cam.x = pt.x; cam.y = pt.y; cam.z = L === 'far' ? .4 : L === 'mid' ? .9 : 4; const v = view(1e4);
+      for (let n = 0; n < 3; n++){ ctx.save(); try { if (L !== 'far') drawDrift(ctx, v, performance.now() + n * 1700);
+        for (const I of [H, T]){ I._gl = null; drawGroundDetail(ctx, I); if (L === 'near') drawIsland(ctx, I, v); }
+        for (const b of H.buildings) drawBuilding(ctx, b, H); if (L !== 'far') drawLagoonLife(ctx, v, performance.now() + n * 900); } catch (e){ fails.push(L + ' q' + q + ': ' + e.message); } ctx.restore(); } }
+    want(!fails.length, 'detail draws: ' + fails.slice(0, 2).join(' | '));
+    for (const shape of ['hw', 'hr', 'hg', 'hl']) for (let dt = 0; dt < 4; dt++){ const a = artOf('haus', {shape, dt, hid:dt % 3, roof:'#C9A85A'}); want(a.length > 50 && !/undefined|NaN/.test(a), 'detail: house art ' + shape + dt); }
+    for (let fd = 0; fd < 4; fd++) for (const k of ['taro', 'yams']){ const a = artOf(k, {fd}); want(!/undefined|NaN/.test(a), 'detail: field art ' + k + fd); }
+    // the new drift gives its goods
+    setActive(H.id); const keepS = {...H.stock}; H.stock.dach = 0; H.stock.muschel = 0; const dd = {id:90, k:'blaetter', x:pt.x, y:pt.y, t0:tick, shore:H.id}, d2 = {id:91, k:'muscheln', x:pt.x, y:pt.y, t0:tick, shore:H.id}; drift = [dd, d2];
+    collectDrift(dd); collectDrift(d2); want(H.stock.dach === 3 && H.stock.muschel === 2, 'detail: pandanus bundle and shells give their goods'); Object.assign(H.stock, keepS);
+    // a piece that reaches the beach leaves a line of foam
+    drift = [{id:92, k:'stamm', x:H.center.x, y:H.center.y, t0:tick, shore:H.id}]; driftFx = []; lod = 'near'; driftTick(); want(driftFx.some(q => q.ashore === 92), 'detail: foam where it comes ashore');
+    drift = keepD; driftFx = keepFx; lod = keepL; quality = keepQ; cam.z = keepZ; applyCam(); }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }
