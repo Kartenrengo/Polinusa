@@ -2082,3 +2082,12 @@ Das Häuptlingshaus bleibt, wie es war.
   Gezeichnet wird nur, was im Bild ist; bei „weit“ nichts; mit wenig Bildrate (Stufe 0) nur Blumen und Kränze, still.
   Tests: `tests/rules.test.js` (Stufen, Belohnungen, einmal feiern, Freischaltung, Speichern, alle Hingucker in jedem Abstand
   ohne Fehler); der Handy-Test hat jetzt ein schönes Dorf.
+
+## Das Maskottchen: ein Einsiedlerkrebs (Version 96)
+
+- Ein kleiner **Einsiedlerkrebs** in einer Muschel mit Lapita-Muster kommt etwa alle ein bis zwei Minuten unter der Tagesleiste
+  hervor: Die Augen klappen hoch, er winkt mit der Schere, blinzelt und zieht sich wieder in seine Muschel zurück.
+- Antippen lässt ihn hüpfen, und eine Blase sagt, wer er ist. Auf See (vor der Landung) und im Menü zeigt er sich nicht. Wer
+  weniger Bewegung eingestellt hat, sieht ihn still.
+- Einsiedlerkrebse leben an den Stränden aller Inseln Ozeaniens (belegt). Die Muschel mit Lapita-Muster ist Spiel.
+

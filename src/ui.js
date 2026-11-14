@@ -1457,4 +1457,31 @@ document.addEventListener('click', e => {
   if (el && tipNow(el)){ e.preventDefault(); e.stopPropagation(); if (!$('tip').hidden && tipFor === el){ hideTip(); return; } showTip(el); return; }   // a second tap closes it
   if (!e.target.closest('#tip')) hideTip();
 }, true);
+/* ---------- the mascot: a little hermit crab in a shell stamped like a Lapita pot. Now and then it climbs out of the day bar's
+   top edge, its eyes pop up, it waves a claw, blinks, and goes back into its shell and down again. A tap makes it hop and says
+   who it is. It never shows while the clan is still at sea, and it stays still for those who want less motion. */
+const MASCOT = {first:40000, gap:[60000, 120000], show:5200};
+const CRAB_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"`, eye = (x, y) => `<circle cx="${x}" cy="${y}" r="4.4" fill="${I}"/><circle cx="${x - 1.5}" cy="${y - 1.7}" r="1.6" fill="#fff"/>`;
+  return `<svg viewBox="0 0 100 100"><g class="c-legs"><path d="M20 76L14 90M28 78L24 92M38 78L38 92" ${S} stroke="#D9583E" stroke-width="3.4"/></g>` +
+    `<g class="c-body"><path d="M18 60Q16 50 26 50Q40 52 40 66Q38 80 26 80Q16 78 18 60Z" fill="#E36A4C" ${S}/><ellipse cx="22" cy="68" rx="4.5" ry="2.6" fill="#F2A08F"/><path d="M26 70Q29 72 32 70" fill="none" stroke="${I}" stroke-width="1.6" stroke-linecap="round"/>` +
+    `<g class="c-eyes"><path d="M24 50L22 36M32 51L34 36" ${S} stroke-width="2"/>${eye(22, 33)}${eye(35, 33)}<g class="c-lids"><rect x="16" y="28" width="12" height="10" rx="5" fill="#E36A4C"/><rect x="29" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g></g>` +
+    `<g class="c-claw"><path d="M8 62Q2 56 6 50Q12 46 16 52L12 56L18 58Q16 66 8 62Z" fill="#E36A4C" ${S}/></g></g>` +
+    `<g class="c-shell"><path d="M44 26Q74 18 82 46Q88 72 62 80Q40 84 34 64Q30 46 44 26Z" fill="#F3D9A0" ${S}/><path d="M48 32Q70 28 74 48Q76 66 60 70Q46 72 44 60Q43 50 54 48Q64 48 62 58" fill="none" stroke="${I}" stroke-width="2" stroke-linecap="round"/>` +
+    `<g fill="#A84A2C"><circle cx="58" cy="36" r="1.5"/><circle cx="64" cy="37" r="1.5"/><circle cx="70" cy="41" r="1.5"/><circle cx="74" cy="47" r="1.5"/><circle cx="76" cy="54" r="1.5"/><circle cx="75" cy="61" r="1.5"/></g><path d="M50 52l4 4l4-4l4 4" fill="none" stroke="#A84A2C" stroke-width="1.5"/></g></svg>`; })();
+let mascotAt = 0, mascotOn = 0;
+function mascotTick(now){
+  const M = $('mascot'); if (!M) return;
+  if (!M.firstChild.innerHTML) M.firstChild.innerHTML = CRAB_SVG;
+  if (!mascotAt) mascotAt = now + MASCOT.first;
+  if (mascotOn && now - mascotOn > MASCOT.show){ mascotOn = 0; M.classList.remove('peek', 'hop'); }
+  if (mascotOn || now < mascotAt || landing || document.hidden || sheetKind === 'menu') return;
+  mascotAt = now + MASCOT.gap[0] + Math.random() * (MASCOT.gap[1] - MASCOT.gap[0]);
+  // somewhere on the top edge, not where the sun or the moon stands
+  const H = $('hudbar'), w = H.offsetWidth, sun = parseFloat(($('dayMark') || {}).style ? $('dayMark').style.left : '') || -99;
+  let x = 0; for (let i = 0; i < 6; i++){ x = w * (.32 + Math.random() * .5); if (Math.abs(x - sun) > 50) break; }
+  M.style.left = Math.round(x - 23) + 'px'; M.classList.toggle('flip', Math.random() < .5);
+  M.classList.remove('peek'); void M.offsetWidth; M.classList.add('peek'); mascotOn = now;
+}
+$('mascot').addEventListener('click', e => { e.stopPropagation(); const M = $('mascot'); if (!mascotOn) return; M.classList.remove('hop'); void M.offsetWidth; M.classList.add('hop');
+  M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Wird sie zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });
 
