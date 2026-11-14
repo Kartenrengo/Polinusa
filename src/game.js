@@ -1402,7 +1402,7 @@ const fireShort = I => { const F = fireFore(I); return F.n > 0 && F.fuel < F.n; 
    them, what their house step wants, room, the village's share of work and free time, a feast, a beautiful village.
    Very content people work a little faster, discontent ones slower (mealOf). The top bar shows the village's average;
    a tap shows the least content person, why, and what helps. */
-const SAT = {fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8, orders:[-4, -8], stores:5, spare:4, variety:4, sameFood:-3};
+const SAT = {wish:6, fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8, orders:[-4, -8], stores:5, spare:4, variety:4, sameFood:-3};
 const ZEAL_SAT_TXT = ['viel Freizeit', '', 'viel Arbeit'];
 /* what is the same for everyone in the village (worked out once for a round of satTick):
    open building sites per grown-up, full stores, little to do, the kinds of food in store */
@@ -1433,6 +1433,7 @@ function satOf(I, p, nd = needsOf(I), C = satCtx(I, nd)){
   if (C.spare && a === 'adult') add('frei', SAT.spare, 'Zeit für sich');
   if (C.kinds >= 3) add('sorten', SAT.variety, 'abwechslungsreich'); else if (C.kinds === 1) add('sorten', SAT.sameFood, 'immer dasselbe');
   if (I.joyUntil > tick) add('fest', SAT.feast, 'Fest');
+  if (I.wishOk && f && I.wishOk[f.id] > tick) add('wunsch', SAT.wish, 'Wunsch erfüllt');
   if (I.fernAt != null && tick - I.fernAt < 2 * DAY_TICKS) add('fern', SAT.fern, 'Feines aus der Ferne');   // a canoe of a daughter brought what the island cannot make
   { const g = giftsHeld().size; if (g) add('gaben', Math.min(5, g), 'Gaben des Clans'); }
   if (nd.atMax && a === 'adult') add('voll', SAT.full, 'Insel voll: will fort');
@@ -1577,7 +1578,8 @@ function econ(){
     if ((tick + 30) % DAY_TICKS === DUSK_AT) fireTick(I);
     if (tick % 15 === 0) satTick(I);
     if (I.id === active) whaleTick();
-    eldersTick(I);   // a daughter village led by its elders
+    eldersTick(I);   // a daughter village asks you in need
+    if (tick % 10 === 3) wishTick(I);   // the families wish for something
     I.owe = I.owe || {};
     for (const N of NEEDS){
       if (!needActive(I, N) || MEAL_NEEDS.has(N.k)) continue;

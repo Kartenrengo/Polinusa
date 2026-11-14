@@ -136,7 +136,7 @@ function lifeEvent(p, what, detail = ''){
 }
 const STORY_TEXT = {
   geb:() => 'wird geboren', kam:d => `kommt mit dem Kanu ${d}`, kind:d => `bekommt ein Kind: ${d}`, arb:d => `fängt bei ${d} an zu arbeiten`, tat:() => 'bekommt das Tatau',
-  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', gru:d => `gründet das Dorf ${d} und wird ein Ahn des Dorfes`, wal:() => 'sieht in der Nacht den Lichtwal', alt:() => 'wird alt und sitzt jetzt vor dem Haus'
+  hoch:d => `heiratet ${d}`, nav:d => `wird Navigator: ${d}`, sturm:d => d || 'übersteht einen Sturm', haupt:() => 'wird Häuptling', gru:d => `gründet das Dorf ${d} und wird ein Ahn des Dorfes`, wal:() => 'sieht in der Nacht den Lichtwal', wunsch:d => `freut sich: Die Familie bekam ${d}`, alt:() => 'wird alt und sitzt jetzt vor dem Haus'
 };
 const storyOf = p => (p.ev || []).filter(e => STORY_TEXT[e[1]]).map(e => ({year:yearOf(e[0]) + 1, text:STORY_TEXT[e[1]](e[2])}));
 /* once in a while: who has started to work, who has grown old */
@@ -146,17 +146,19 @@ function storyTick(I){
     if (stageOf(p) === 'old' && (p.ev || []).length && !p.ev.some(e => e[1] === 'alt')) lifeEvent(p, 'alt');
   }
 }
-/* ---------- the elders of a daughter village step in only when it is in need (I.rat, on by default for every village
-   but the first; the overview turns it off or on): once a minute, when water or food will not last until the morning,
-   people sleep without a roof or a storm comes, they build the harvest house or a place for food, a hut, tie the roofs or
-   call the rain. Everything else the player builds.
+/* ---------- the elders of a daughter village never act alone. When it is in need (I.rat, on by default for every village
+   but the first; the overview turns it off or on) they ask you, once a minute at most: water or food will not last until
+   the morning, people sleep without a roof, a storm comes. The request (I.ask = {k, why, at}) stands as a small bubble over
+   the village and as a line at the top of the overview, with "Ja" (they do what they would have done, from the store of that
+   village) and "Nein" (not asked again for a day). It goes when its cause is gone. Everything else the player builds.
    And at every dawn a daughter sends a small canoe to the mother village with what it has to spare (packTick). */
 const ELDERS = {every:30}, PACK = {max:8, from:.6, keep:.45, mother:.85};
 const SPEC_GOODS = new Set(Object.keys(SPEC_OF_KIND).map(q => KINDS[q].prod).filter(Boolean));   // what only special ground makes
 const eldersOn = I => !!I && I.settled && !I.clan && (I.rat ?? I.id !== 'heimat');
-function eldersBuild(I, kind){
+/* dry: only asks whether it could be built now (nothing paid, nothing placed) */
+function eldersBuild(I, kind, dry = false){
   const K = KINDS[kind]; if (!K || !unlocked(kind) || K.fixed || !K.on.includes(I.type)) return false;
-  if (K.craft){ const h = homesOf(I).find(q => famOfHome(I, q) && !craftOf(I, q) && !craftWhy(I, q, kind)); if (!h) return false; setCraft(I, h, kind); return true; }
+  if (K.craft){ const h = homesOf(I).find(q => famOfHome(I, q) && !craftOf(I, q) && !craftWhy(I, q, kind)); if (!h) return false; if (!dry) setCraft(I, h, kind); return true; }
   if (I.buildings.some(b => b.bt && !KINDS[b.kind].plant)) return false;   // one site at a time, like a careful player
   if (K.max && I.buildings.filter(b => b.kind === kind).length >= K.max) return false;
   if (!hasLife(I, kind) || (K.spring && !I.river) || (SPEC_OF_KIND[kind] && specOf(I) !== SPEC_OF_KIND[kind]) || (K.dep && !depsOf(I, K.dep).length)) return false;
@@ -166,24 +168,52 @@ function eldersBuild(I, kind){
   if (K.crew && !HOME_KINDS.has(kind) && !staffOf(I).free && placesOf(I).some(b => b.idle && b.idle.why === 'crew')) return false;
   const c = costOf(kind, I); if (!canPay(I, c)) return false;
   const p = findSpot(I, kind, startSpot(I, K)); if (!p) return false;
+  if (dry) return true;
   pay(I, c); const b = addB(I, kind, p, variant(kind), tick); if (K.bt) b.bt = K.bt; clearStumps(I, b); I.staff = null;
   (I.ratLog = I.ratLog || []).unshift({t:tick, k:kind}); I.ratLog.length = Math.min(I.ratLog.length, 4);
-  if (I.id === active && !awayQuiet){ invalidate(); syncWalkers(); note(`Der Rat von ${I.name} lässt bauen: ${K.n}.`); }
+  if (!awayQuiet){ invalidate(); syncWalkers(); if (I.id === active) note(`${I.name}: ${K.n} wird gebaut.`); }
   return true;
 }
-function eldersTick(I, force = false){
-  if (!eldersOn(I) || (!force && tick % ELDERS.every !== 7)) return;
-  if (!I.ratSaid && !awayQuiet){ I.ratSaid = true; note(`Der Rat von ${I.name} hilft dem jungen Dorf nur in der Not: Wasser, Essen, Dächer. Alles andere baust du.`); }
+/* what the elders would do now, and why (the first thing that is wanting and could be done), or null */
+function askCause(I){
   const A = adviceOf(I) || {}, F = mealFore(I), has = k => I.buildings.some(b => b.kind === k);
-  if (A.tie){ tieRoofs(I); return; }   // a storm is coming: the roofs
-  if (A.rain && !rainState(I)){ rainDance(I); return; }   // no water: the rain dance (one it cannot hold does not stop the rest)
+  const dry = (k, why) => eldersBuild(I, k, true) ? {k, why} : null;
+  if (A.tie) return {k:'tie', why:'Ein Sturm kommt, die Dächer sind lose'};
+  if (A.rain && !rainState(I)) return {k:'rain', why:'Wasser reicht nicht bis morgen'};
   // no water or food for the next morning: the harvest house, a second one for green nuts, a place for food
-  if (!has('ernte') && (F.water < F.n + 2 || F.food < F.n + 2)){ eldersBuild(I, 'ernte'); return; }
-  if (F.water < F.n && !I.river && I.buildings.filter(b => b.kind === 'ernte').length < 2 && eldersBuild(I, 'ernte')) return;
-  if (F.food < F.n && !has(foodBuild(I)) && eldersBuild(I, foodBuild(I))) return;
+  if (!has('ernte') && (F.water < F.n + 2 || F.food < F.n + 2)) return dry('ernte', F.water < F.n + 2 ? 'Wasser reicht nicht bis morgen' : 'Essen reicht nicht bis morgen');
+  if (F.water < F.n && !I.river && I.buildings.filter(b => b.kind === 'ernte').length < 2){ const c = dry('ernte', 'Wasser reicht nicht bis morgen'); if (c) return c; }
+  if (F.food < F.n && !has(foodBuild(I))){ const c = dry(foodBuild(I), 'Essen reicht nicht bis morgen'); if (c) return c; }
   // people sleeping without a roof: one hut
-  if (roofless(I) && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind))) eldersBuild(I, 'haus');
+  if (roofless(I) && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind))) return dry('haus', `${roofless(I)} ${roofless(I) === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach`);
+  return null;
 }
+const ASK_NO = 180;   // ticks (one day) a "no" holds
+const askShown = I => I && I.ask && !(I.ask.no > tick) ? I.ask : null;
+const askName = k => k === 'tie' ? 'Dächer festbinden' : k === 'rain' ? 'Regentanz' : KINDS[k].craft ? `Hauswerk: ${KINDS[k].craft}` : `${KINDS[k].n} bauen`;
+const askYesText = k => k === 'tie' ? 'Ja, festbinden' : k === 'rain' ? 'Ja, tanzen' : 'Ja, bauen';
+function eldersTick(I, force = false){
+  if (!I || !I.settled) return;
+  if (!eldersOn(I)){ if (I.ask) I.ask = null; return; }
+  if (I.ask && I.ask.k === 'tie' && !(I.storm && tick < I.storm.at && !I.storm.tie)) I.ask = null;   // the storm is over, or the roofs are tied
+  if (!force && tick % ELDERS.every !== 7) return;
+  if (!I.ratSaid && !awayQuiet){ I.ratSaid = true; hush(`Der Rat von ${I.name} fragt dich in der Not: Wasser, Essen, Dächer. Alles andere baust du.`); }
+  const c = askCause(I), a = I.ask;
+  if (!c){ I.ask = null; return; }
+  if (a && a.k === c.k){ a.why = c.why; if (a.no && a.no <= tick) delete a.no; return; }   // the same request stands; a "no" that has run out asks again
+  I.ask = {k:c.k, why:c.why, at:tick};
+  hush(`Bitte aus ${I.name}: ${askName(c.k)}. ${c.why}.`);
+}
+/* the answer: "Ja" does what the elders would have done; "Nein" holds the request back for a day */
+function askYes(I){
+  const a = askShown(I); if (!a) return false;
+  const c = askCause(I);
+  if (!c || c.k !== a.k){ I.ask = null; toast('Das ist nicht mehr nötig.', 2400, false); return false; }
+  const ok = a.k === 'tie' ? (tieRoofs(I), true) : a.k === 'rain' ? rainDance(I) : eldersBuild(I, a.k);
+  if (!ok){ toast('Das geht gerade nicht.', 2400, false); return false; }
+  I.ask = null; I.staff = null; I._fore = null; return true;
+}
+function askNo(I){ if (I && I.ask) I.ask.no = tick + ASK_NO; }
 /* what a daughter can spare: goods it has plenty of, the ones the mother lacks first; never food or water it will need
    itself tomorrow morning, never fuel for its own night fires */
 function packOf(I, M){
@@ -374,4 +404,55 @@ function drawPalmDrops(now){
     if (a > .5 && a < 1.9){ c.save(); c.globalAlpha = Math.min(1, (a - .5) * 4) * (a > 1.6 ? (1.9 - a) / .3 : 1); c.font = `700 ${(9 / Math.max(1, cam.z * .6)).toFixed(1)}px sans-serif`; c.textAlign = 'center'; c.fillStyle = '#2B1D14'; c.fillText('+1 ' + G1[d.k], d.x, d.y1 - 14 - (a - .5) * 6); c.restore(); }
   }
   c.globalAlpha = 1;
+}
+
+/* ---------- the wishes of the families. In every village of your own (the mother village too) one family wishes for
+   something that makes the village nicer or livelier, every six to ten minutes, while no wish is open: a flower bed, a
+   drum, a dance place, a feast, more free time. I.wish = {k, f, at, until, n}. It shows as a bubble over the house of that
+   family and as a line in its sheet. Met within two days, the family is content for three days more (SAT.wish, satOf) and
+   one of them has it in their story. Not met, it simply fades: no penalty. */
+const WISH = {first:[180, 300], gap:[180, 300], life:360, joy:540, kinds:['hibiskus', 'blumen', 'fackel', 'trommel', 'tanzplatz', 'pfosten']};
+const WISH_TXT = {blumen:'ein Blumenbeet', hibiskus:'Hibiskus', fackel:'eine Fackel', trommel:'eine Trommel', tanzplatz:'einen Tanzplatz', pfosten:'einen Ahnenpfosten', feast:'ein Fest', zeit:'mehr Freizeit'};
+const wishBtn = k => k === 'feast' ? 'Feiern' : k === 'zeit' ? 'Ja, Freizeit' : 'Bauen';
+const wishRand = (I, a, b, salt = 0) => Math.floor(a + rng((seed + tick * 7919 + I.pop * 31 + salt) >>> 0)() * (b - a + 1));
+const wishCount = (I, k) => I.buildings.filter(b => b.kind === k).length;
+function wishPick(I){
+  const fs = famsOf(I).filter(f => f.home && homeOk(I, findB(f.home)) && membersOf(I, f).some(isAdult)); if (!fs.length) return null;
+  const opts = [];
+  for (const k of WISH.kinds){ const K = KINDS[k]; if (!K || !unlocked(k) || !K.on.includes(I.type) || (K.max && wishCount(I, k) >= K.max) || !hasLife(I, k) || I.buildings.some(b => b.kind === k && b.bt) || !canPay(I, costOf(k, I))) continue; opts.push(k); }
+  if (opts.length > 1){ const lo = Math.min(...opts.map(k => wishCount(I, k))); for (let i = opts.length - 1; i >= 0; i--) if (wishCount(I, opts[i]) > lo + 1) opts.splice(i, 1); }   // what is still rare comes first
+  if (feastsOpen() && !feastState(I, FEASTS[0])) opts.push('feast');
+  if ((I.zeal ?? 1) !== 0) opts.push('zeit');
+  if (!opts.length) return null;
+  const k = opts[wishRand(I, 0, opts.length - 1, 1)], f = fs[wishRand(I, 0, fs.length - 1, 2)];
+  return {k, f:f.id, at:tick, until:tick + WISH.life, n:wishCount(I, k)};
+}
+const wishMet = (I, w) => w.k === 'feast' ? (I.feastAt || 0) >= w.at && I.feastAt > 0 : w.k === 'zeit' ? I.zeal === 0 : wishCount(I, w.k) > w.n;
+function wishTick(I){
+  if (!I || !I.settled || I.clan) return;
+  const w = I.wish, next = () => { I.wishAt = tick + wishRand(I, WISH.gap[0], WISH.gap[1], 3); };
+  if (w){
+    const f = famOf(I, w.f);
+    if (f && wishMet(I, w)){
+      I.wish = null; next(); (I.wishOk = I.wishOk || {})[w.f] = tick + WISH.joy;
+      for (const q in I.wishOk) if (I.wishOk[q] <= tick) delete I.wishOk[q];
+      const p = membersOf(I, f).find(isAdult) || membersOf(I, f)[0]; if (p) lifeEvent(p, 'wunsch', WISH_TXT[w.k]);
+      stats.wuensche = (stats.wuensche || 0) + 1; I._sat = null;
+      const h = f.home && findB(f.home); if (h && !awayQuiet) heartAt(I, h);
+      hush(`${famName(f)} auf ${I.name} freut sich: Der Wunsch nach ${WISH_TXT[w.k]} ist erfüllt.`);
+    } else if (!f || tick >= w.until){ I.wish = null; next(); }   // it fades
+    return;
+  }
+  if (I.wishAt == null){ I.wishAt = tick + wishRand(I, WISH.first[0], WISH.first[1]); return; }
+  if (tick < I.wishAt) return;
+  const n = wishPick(I); if (!n){ I.wishAt = tick + 60; return; }
+  I.wish = n; const f = famOf(I, n.f); hush(`${famName(f)} auf ${I.name} wünscht sich ${WISH_TXT[n.k]}.`);
+}
+/* the wish of the family that lives in this house, or null */
+const wishOfHome = (I, b) => { const w = I && I.wish, f = w && famOfHome(I, b); return f && w.f === f.id ? w : null; };
+/* the button in the house: build it, open the feast, or give free time */
+function wishGo(I, w){
+  if (w.k === 'feast'){ const c = centerOf(I); if (c){ sheetData = null; setActive(I.id); select(c); } return; }
+  if (w.k === 'zeit'){ I.zeal = 0; I.staff = null; syncWalkers(); updateHUD(); toast(`${I.name}: Viel Freizeit.`, 2000, false); if (sheetKind) renderSheet(); save(); return; }
+  setActive(I.id); startPlace(w.k);
 }

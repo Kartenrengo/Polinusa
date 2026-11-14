@@ -596,11 +596,25 @@ function houseMarkup(I, b, withHead = true){
   const fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out').concat(fn.filter(n => n.state === 'low'));
   h += `<p class="sec needsec">Was die Familie braucht</p><div class="needtiles n${fn.length}">${fn.map(n => needTile(I, n, b)).join('')}</div>`;
   const sl = stormLine(I, b); if (sl) h += sl; else if (lack.length) h += nextStep(I, lack[0], b);
+  h += wishLine(I, b);
   const ws = upgradeWays(I, b);
   if (ws.length){ const seaOk = ws.length > 1 && unlocked('werft') && onShore(I, b), ready = w => upgradeSteps(I, b, nd.list, w).ready;
     const pick = sheetData && ws.includes(sheetData.way) && (sheetData.way !== 'see' || seaOk) ? sheetData.way : seaOk && !ready('hand') && ready('see') ? 'see' : ws[0];
     h += riseBlock(I, b, upgradeSteps(I, b, nd.list, pick), t, fn); }
   return h;
+}
+/* the wish of the family of this house: one short line with the button that starts it */
+function wishLine(I, b){
+  const w = wishOfHome(I, b); if (!w) return '';
+  const ic = w.k === 'feast' ? icon('mana') : w.k === 'zeit' ? icon('idle') : bIcon(w.k);
+  return `<div class="nextline wish"><span class="what">${ic}<b>Wunsch:</b> ${WISH_TXT[w.k]}</span><button class="chip way" type="button" data-act="wish" data-b="${b.id}">${wishBtn(w.k)}</button></div>`;
+}
+/* a request of the elders of a village, the same line over the overview: what and why, with Ja and Nein */
+function askLine(I){
+  const a = askShown(I); if (!a) return '';
+  const ic = a.k === 'tie' ? icon('sturm') : a.k === 'rain' ? icon('wasser') : KINDS[a.k].craft ? icon(KINDS[a.k].prod) : bIcon(a.k);
+  const cost = a.k === 'tie' || a.k === 'rain' ? '' : KINDS[a.k].craft ? '' : ` <span class="to">${costText(costOf(a.k, I))}</span>`;
+  return `<div class="nextline ask"><span class="what">${ic}<b>Bitte: ${askName(a.k)}</b> ${a.why}.${cost}</span><span class="chips"><button class="chip way primary" type="button" data-act="askyes" data-i="${I.id}">${askYesText(a.k)}</button><button class="chip way" type="button" data-act="askno" data-i="${I.id}">Nein</button></span></div>`;
 }
 /* ---------- the village centre: the house by the plaza. Three tabs: the village (feasts, the rain dance, the knucklebones),
    the store with every good by name, and the family that lives there. */
@@ -613,7 +627,7 @@ function centerMarkup(I, b){
   if (tab === 'werk') return h + werkMarkup(I);
   if (tab === 'lager'){ const F = mealFore(I), mm = F.food < F.n || F.water < F.n;
     return h + `<p class="sub${mm ? ' meal-bad' : ''}">Morgenmahl: ${F.n} Menschen essen und trinken je eine Portion. Bis dahin gibt es etwa ${F.food} Essen und ${F.water} Wasser.</p>` + storeTiles(I) + `<div class="rowx"><span class="sub">Platz für ${storeCap(I)} je Ware. Antippen zeigt, woher sie kommt.</span></div>`; }
-  return h + villageMarkup(I, b);
+  return h + wishLine(I, b) + villageMarkup(I, b);
 }
 const KNOCHEN_IC = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href="#ic-knochen"/></svg>';
 function villageMarkup(I, b){
@@ -659,6 +673,7 @@ function villageGoal(I, nd){
 function needsMarkup(I){
   const tab = (sheetData && sheetData.tab) || 'leute', nd = needsOf(I);
   let h = head(I.name, `${LEVEL_NAMES[I.lvl || 1]} · ${I.pop} Bewohner · Platz für ${nd.cap}`);
+  h += askLine(I);
   h += epochCord();
   h += `<div class="tabs" role="tablist">${[['leute', 'Bewohner'], ['arbeit', 'Arbeit'], ['insel', 'Insel'], ['netz', 'Netz']].map(([k, n]) => `<button class="tab" role="tab" type="button" data-act="tab" data-v="${k}" aria-selected="${tab === k}">${n}</button>`).join('')}</div>`;
   return h + (tab === 'arbeit' ? workTab(I, nd) : tab === 'insel' ? isleTab(I, nd) : tab === 'netz' ? netTab(I) : peopleTab(I, nd));
@@ -708,7 +723,7 @@ function zealPersonMarkup(I, p, extra = ''){
    what pulls them down and what helps: the share of work and free time for everyone, their house, food, water, fuel */
 const SAT_BANDS = ['gut', 'mittel', 'schlecht'], satBand = v => v >= 70 ? 'gut' : v >= 45 ? 'mittel' : 'schlecht';
 const SAT_FACE = {gut:['M6.6 11.8Q10 15 13.4 11.8', '#F3D98A'], mittel:['M6.8 12.9H13.2', '#E9DCC0'], schlecht:['M6.6 14Q10 11.2 13.4 14', '#E8A88A']};
-const SAT_ICON = {fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen', bau:'beile', vorrat:'proviant', frei:'idle', sorten:'essen'};
+const SAT_ICON = {fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen', bau:'beile', vorrat:'proviant', frei:'idle', sorten:'essen', wunsch:'schoen'};
 function satHelp(I, p, w){
   const f = famOf(I, p.h), h = f && f.home && findB(f.home);
   if (w.k === 'essen') return {a:'ware', k:'nahrung', t:'Mehr Essen'};
@@ -747,7 +762,7 @@ const netTab = I => ratMarkup(I) + giftsMarkup() + teachMarkup();
 function ratMarkup(I){
   if (!I.settled || I.clan) return '';
   const on = eldersOn(I), last = (I.ratLog || [])[0], P = I.packLast, M = isl('heimat');
-  const what = on ? `Der Rat hilft ${I.name} nur in der Not: Erntehaus, Wasser und Essen für den Morgen, eine Hütte für die ohne Dach, Dächer im Sturm.${last ? ` Zuletzt: ${KINDS[last.k].n}.` : ''} Alles andere baust du.` : 'Der Rat hält sich heraus. Alles baust du.';
+  const what = on ? `Der Rat fragt dich in der Not: Erntehaus, Wasser und Essen für den Morgen, eine Hütte für die ohne Dach, Dächer im Sturm. Er tut nichts ohne dein Ja.${last ? ` Zuletzt: ${KINDS[last.k].n}.` : ''} Alles andere baust du.` : 'Der Rat hält sich heraus. Alles baust du.';
   const hp = I.helps ? `<p class="sub">${M.name} half ${I.helps}-mal mit Holz, Wedeln, Wasser oder Essen.</p>` : "", pk = hp + (I.id === "heimat" ? (M.packs ? `<p class="sub">${M.packs} ${M.packs === 1 ? 'Kanu brachte' : 'Kanus brachten'} Gaben der Tochterdörfer.</p>` : '') : on ? `<p class="sub">${P ? `Letztes Kanu nach ${M.name}: ${packText(P.g)}.` : `Jeden Morgen schickt ${I.name} ein Kanu mit dem, was übrig ist, nach ${M.name}.`}</p>` : '');
   return `<div class="ratrow"><span class="nm">${icon('pop')}<b>${on ? 'Rat in der Not' : 'Ohne Rat'}</b></span><button class="chip" type="button" data-act="rat" aria-pressed="${on}">${on ? 'Rat aus' : 'Rat an'}</button></div><p class="sub">${what}</p>${pk}`;
 }
@@ -1250,7 +1265,7 @@ function sheetSig(){
   if (sheetGone()) return 'gone';
   if (sheetKind === 'quest') return quest + ':' + (QUESTS[quest] ? QUESTS[quest].n() : '');
   if (sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); return sh && sh.immig ? Math.ceil((tick - (sh.askAt || tick)) / 5) + ':' + needsOf(isl(sh.to)).list.map(n => n.state).join('') : 'gone'; }
-  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, sheetData && sheetData.tab, readyHomes(I, nd.list).length, I.autoUp, homesOf(I).map(tierOf).join(''), active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, famsOf(I).map(f => f.home).join(), (I.people || []).map(p => p.job).join('.'), I.handWork, I.noUpgrade, !!immigFor(I), kinState(I), linesOf(I).length, Math.floor(tick / 5), [...presentAt(I).values()].join(':'), sf.free, sf.short, ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
+  if (sheetKind === 'needs' || sheetKind === 'store' || sheetKind === 'mana'){ const I = isl(active), nd = needsOf(I); const sf = staffOf(I); return [sheetKind, I.ask ? I.ask.k + (I.ask.no > tick ? 'n' : '') : '', sheetData && sheetData.tab, readyHomes(I, nd.list).length, I.autoUp, homesOf(I).map(tierOf).join(''), active, I.pop, I.lvl, Math.floor(mana), nd.cap, sf.free, sf.build, famsOf(I).map(f => f.home).join(), (I.people || []).map(p => p.job).join('.'), I.handWork, I.noUpgrade, !!immigFor(I), kinState(I), linesOf(I).length, Math.floor(tick / 5), [...presentAt(I).values()].join(':'), sf.free, sf.short, ...GOODS.map(k => I.stock[k] || 0), ...I.buildings.map(b => b.idle ? b.idle.why : ''), wildWord(wildOf(I)), !!I.tapu, (I.life || []).join('+'), motifsOf(I).join('+')].join(); }
   if (sheetKind === 'clan'){ const T = isl(sheetData.id), r = routes.find(q => q.a === T.id || q.b === T.id); return [r && r.knots, T.debt >= 1, kin(T), bondsWith(T), !!weddingCheck(T).ok].join(); }
   if (sheetKind === 'fam'){ const I = isl(sheetData.id), f = I && famOf(I, sheetData.f); if (!f) return 'gone'; return [f.home, f.home && canUpgrade(I, findB(f.home)), famTier(I, f), membersOf(I, f).map(p => p.id + stageOf(p)).join(), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(), famWork(I, f)].join(); }
   if (sheetKind === 'ware'){ const I = isl(sheetData.id), sf = staffOf(I); return [I.stock[sheetData.k], ...[...sf.crewP].map(([b, ids]) => b.id + ':' + ids.join('.')), ...I.buildings.map(b => b.idle ? b.idle.why : '')].join(); }
@@ -1272,7 +1287,7 @@ function sheetSig(){
   const hall = b.kind === 'halle' ? [Math.floor(mana), tick - (I.feastAt || 0) < FEAST_PAUSE, ...FEASTS.map(F => canPay(I, F.cost)), festivalState(I), festivalParts(I).map(p => p.ok).join(), guestsFor().length].join() : '';
   const here = walkers.filter(w => w.isl === I.id && w.job && w.job.b === b).map(w => w.name + w.on + w.leg).join('');
   const fam = HOME_KINDS.has(b.kind) ? (f => f ? [f.id, membersOf(I, f).length, famTier(I, f), famNeeds(I, f, needsOf(I).list).map(n => n.state).join(''), famWork(I, f), canUpgrade(I, b)].join(':') : 'leer' + !!immigFor(I))(famOfHome(I, b)) : (I.people || []).filter(p => p.job === b.id).map(p => p.id).join('.') + ':' + staffOf(I).free + ':' + (choiceOf(b) || '') + ':' + Math.round((I.reefLife ?? 1) * 10);
-  return ['a' + age, b.bt, b.boat, b.got, b.prio, Math.ceil((b.grow || 0) / 15), b.ys, Math.round(b.kept || 0), Math.round((b.sown || 0) * 10), moonOf(), (staffOf(I).queue || []).indexOf(b.id), here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
+  return ['a' + age, b.bt, b.boat, b.got, b.prio, Math.ceil((b.grow || 0) / 15), b.ys, Math.round(b.kept || 0), Math.round((b.sown || 0) * 10), moonOf(), (staffOf(I).queue || []).indexOf(b.id), here, fam, (staffOf(I).crewP.get(b) || []).join('.'), Math.round((b.soil ?? 1) * 20), b.fallow, b.idle && b.idle.why, (w => w ? w.k : '')(wishOfHome(I, b)), crewAt(I, b), capOf(b), KINDS[b.kind].trees ? treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).length : '', yard, staffOf(I).yard, hall].join();
 }
 let sliding = false;   // while a slider is dragged the sheet is not drawn anew, or the drag would break off
 $('sheetBody').addEventListener('input', e => { const el = e.target; if (!el.matches('input[type=range][data-act]')) return; sliding = true; slideTo(el); updateHUD(); });
@@ -1296,6 +1311,8 @@ const zealChanged = I => { I.staff = null; I._sat = null; I._mf = null; save(); 
 $('sheetBody').addEventListener('click', e => {
   const btn = e.target.closest('button'); if (!btn) return;
   const act = btn.dataset.act;
+  if (act === 'askyes' || act === 'askno'){ const I = isl(btn.dataset.i); if (I){ if (act === 'askyes') askYes(I); else askNo(I); updateHUD(); renderSheet(); save(); } return; }
+  if (act === 'wish' && sheetKind === 'info'){ const b = findB(+btn.dataset.b), I = b && islOfB(b.id), w = I && wishOfHome(I, b); if (w) wishGo(I, w); return; }
   if (act === 'foodopen'){ foodOpen = !foodOpen; renderSheet(); return; }
   if (act === 'zealfollow'){ const I = isl(sheetData && sheetData.id), p = I && pById(I, +btn.dataset.p); if (p){ delete p.zeal; zealChanged(I); } return; }
   if (act === 'zealall'){ const I = isl(btn.dataset.i); for (const p of I.people || []) delete p.zeal; zealChanged(I); return; }
@@ -1350,7 +1367,7 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'fam'){ const I0 = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), f0 = I0 && famOf(I0, +btn.dataset.f), hb = f0 && f0.home && findB(f0.home); if (hb){ select(hb); return; } openSheet('fam', {id:sheetKind === 'info' ? islOfB(sheetData.id).id : sheetData && sheetData.id && isl(sheetData.id) ? sheetData.id : active, f:+btn.dataset.f}); return; }
   if (act === 'who'){ focusPerson(+btn.dataset.p); return; }
   if (act === 'satopen'){ openSheet('sat', {id:active}); return; }
-  if (act === 'rat'){ const I = sheetData && sheetData.id && isl(sheetData.id) || isl(active); I.rat = !eldersOn(I); renderSheet(); save(); toast(I.rat ? `Der Rat hilft ${I.name} in der Not.` : `Auf ${I.name} hält sich der Rat heraus.`, 2400, false); return; }
+  if (act === 'rat'){ const I = sheetData && sheetData.id && isl(sheetData.id) || isl(active); I.rat = !eldersOn(I); renderSheet(); save(); toast(I.rat ? `Der Rat fragt dich auf ${I.name} in der Not.` : `Auf ${I.name} hält sich der Rat heraus.`, 2400, false); return; }
   if (sheetKind === 'person' && act === 'jobpick'){ sheetData = {...sheetData, pick:!sheetData.pick}; renderSheet(); return; }
   if (sheetKind === 'person' && act === 'setjob'){ const I = isl(sheetData.id), p = I && (I.people || []).find(q => q.id === sheetData.p), b = findB(+btn.dataset.b), r = chooseJob(I, p, b);
     if (r){ toast(`${p.n}: Stammplatz ${placeName(b)}.${r.swap ? ` ${r.swap.n} tauscht${r.swap.job && r.old ? ` und geht zu ${placeName(r.old)}` : ' und ist jetzt frei'}.` : ''}`, 3200, false); sheetData = {...sheetData, pick:false}; updateHUD(); renderSheet(); save(); checkQuest(); }

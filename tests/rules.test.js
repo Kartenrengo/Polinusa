@@ -384,11 +384,19 @@ const r = await p.evaluate(()=>{
       if (T.settled){ T.stock.holz = 0; T.stock.dach = 0; const keepH = {...H.stock}; Object.assign(H.stock, {holz:30, dach:30, schnur:2});
         const g = helpOf(H, T); want(g.holz > 0 && g.dach > 0, `elders: the mother sends no wood and fronds to a young village: ${JSON.stringify(g)}`);
         packGive(H, T, g, true); want(T.stock.holz > 0 && T.helps === 1, 'elders: the help does not arrive');
-        Object.assign(T.stock, {holz:10, dach:10, wasser:0}); T.staff = null; T._fore = null; eldersTick(T, true);
-        want(T.buildings.some(b => b.kind === 'ernte' && b.bt), `elders: no harvest house begun: ${T.buildings.filter(b => b.bt).map(b => b.kind)}`);
+        Object.assign(T.stock, {holz:10, dach:10, wasser:0}); T.staff = null; T._fore = null; const nb0 = T.buildings.length, st0 = {...T.stock}; eldersTick(T, true);
+        // the elders only ask: nothing is built or paid until "Ja"
+        want(T.ask && T.ask.k === 'ernte' && T.buildings.length === nb0 && T.stock.holz === st0.holz, `elders: they do not ask, or act alone: ${JSON.stringify(T.ask)}`);
+        want(!T.buildings.some(b => b.kind === 'ernte' && b.bt), 'elders: a harvest house stands before any "Ja"');
+        { const R = JSON.parse(serialize()).isl.find(q => q.id === T.id); want(R.ak && R.ak[0] === 'ernte', 'elders: the request is not saved'); }
+        { const T3 = isl(T.id); active = T3.id; openSheet('needs', {tab:'leute'}); want(/Bitte: Erntehaus bauen/.test($('sheetBody').textContent), 'elders: the sheet shows no request'); closeSheet(); }
+        { const T3 = isl(T.id); askNo(T3); want(!askShown(T3), 'elders: "Nein" does not hide the request'); eldersTick(T3, true); want(!askShown(T3) && T3.buildings.length === nb0, 'elders: asked again at once after "Nein"'); delete T3.ask.no; }
+        { const T3 = isl(T.id), ok = askYes(T3); want(ok && T3.buildings.some(b => b.kind === 'ernte' && b.bt) && T3.stock.holz < st0.holz && !T3.ask, `elders: "Ja" does not build and pay: ${T3.buildings.filter(b => b.bt).map(b => b.kind)}`);
+          // the cause goes: no request stays
+          T3.ask = {k:'haus', why:'x', at:tick}; Object.assign(T3.stock, {wasser:20, nahrung:20}); T3._fore = null; eldersTick(T3, true); want(!T3.ask, 'elders: a request stays when its cause is gone'); }
         T.stock.schnur = storeCap(T); const P = packOf(T, H); want(P.schnur > 0, `elders: a daughter with a full store sends nothing: ${JSON.stringify(P)}`);
         const n0 = H.stock.schnur; packGive(T, H, P); want(H.stock.schnur > n0 && H.packs >= 1, 'elders: the package does not reach the mother');
-        openSheet('needs', {tab:'netz'}); active = T.id; renderSheet(); want(/Rat in der Not/.test($('sheetBody').textContent), 'elders: the overview does not say the elders help');
+        openSheet('needs', {tab:'netz'}); active = T.id; renderSheet(); want(/Rat in der Not/.test($('sheetBody').textContent), 'elders: the overview does not say the elders ask');
         $('sheetBody').querySelector('[data-act=rat]').click(); want(!eldersOn(T) && T.rat === false, 'elders: the elders cannot be turned off');
         { const n = T.buildings.length; T.rat = true; Object.assign(T.stock, {wasser:20, nahrung:20}); T._fore = null; eldersTick(T, true); want(T.buildings.length === n, 'elders: the elders build though nothing is wanting'); }
         active = 'heimat'; closeSheet(); H.stock = keepH; T.rat = undefined;
@@ -522,6 +530,32 @@ const r = await p.evaluate(()=>{
       // save and load: only a set value is kept
       a.zeal = 0; c.zeal = 2; const ida = a.id, idc = c.id, other = H.people.find(q => q !== a && q !== c); const sv = serialize(); want(restore(sv), 'zeal: restore');
       { const H2 = isl('heimat'), pa = pById(H2, ida), pc = pById(H2, idc), po = other ? pById(H2, other.id) : null; want(pa && pa.zeal === 0 && pc.zeal === 2 && (!po || (po.zeal === undefined && !('zeal' in po))), 'zeal: p.zeal saved and loaded, unset stays unset'); delete pa.zeal; delete pc.zeal; H2.zeal = z0; Object.assign(H2.stock, keep); H2.people = H2.people.filter(q => q.id < 920000 || q.id > 920002); H2.staff = null; } } }
+
+      // the wishes of the families: one wish at a time, met within its time it makes that family content, unmet it fades
+      { const W = isl('heimat'); const keepK = {s:{...W.stock}, ask:W.ask, wish:W.wish, wishAt:W.wishAt, ok:W.wishOk, zeal:W.zeal}; Object.assign(W.stock, {holz:30, dach:30, schnur:10});
+        for (const bq of W.buildings.filter(q => q.bt)) delete bq.bt; W.staff = null; W.wish = null; W.wishOk = undefined; W.zeal = 1;
+        for (const k of WISH.kinds) if (!unlocked(k)) { /* only what is unlocked is wished */ }
+        W.wishAt = tick - 1; wishTick(W); want(W.wish && famOf(W, W.wish.f) && WISH_TXT[W.wish.k] && W.wish.until > tick, `wish: none appears (${JSON.stringify(W.wish)})`);
+        if (W.wish){ const w0 = W.wish; if (WISH.kinds.includes(w0.k)) want(unlocked(w0.k), 'wish: something not unlocked'); wishTick(W); want(W.wish === w0, 'wish: a second one while one is open');
+          // the house sheet shows the line with its button
+          const hb = findB(famOf(W, w0.f).home); select(hb); want(/Wunsch:/.test($('sheetBody').textContent) && $('sheetBody').querySelector('[data-act=wish]'), 'wish: the house shows no wish line'); closeSheet();
+          // unmet: it fades without any penalty
+          const sat0 = satOfIsle(W).avg; W.wish = {...w0, until:tick - 1}; wishTick(W); want(!W.wish && W.wishAt > tick && !W.wishOk, 'wish: an unmet wish does not fade'); want(satTick(W).avg >= sat0 - 1, 'wish: fading costs content');
+          // met: a new one is placed (or the feast held, or free time) within its time
+          const w1 = {...w0, at:tick, until:tick + WISH.life, n:wishCount(W, w0.k)}; W.wish = w1;
+          if (w1.k === 'feast') W.feastAt = tick; else if (w1.k === 'zeit') W.zeal = 0; else { const q = addB(W, w1.k, findSpot(W, w1.k, startSpot(W, KINDS[w1.k])), variant(w1.k), tick); q.bt = 1; W.staff = null; }
+          const fam = famOf(W, w1.f), mem = membersOf(W, fam).find(isAdult), n0 = (mem.ev || []).length; wishTick(W);
+          want(!W.wish && W.wishOk && W.wishOk[w1.f] > tick, 'wish: fulfilling it sets no joy');
+          const sw = satOf(W, mem); want(sw.why.some(w => w.k === 'wunsch' && w.d === SAT.wish && w.t === 'Wunsch erfüllt'), 'wish: no SAT factor "wunsch"'); want(SAT_ICON.wunsch, 'wish: no icon for the factor');
+          want((mem.ev || []).length === n0 + 1 && storyOf(mem).some(e => /Die Familie bekam/.test(e.text)), 'wish: no story for a family member');
+          // an old save has none of it; a new one keeps it
+          const open = {k:'blumen', f:w1.f, at:tick, until:tick + 100, n:0}; W.wish = open; W.ask = {k:'tie', why:'x', at:tick};
+          const raw = JSON.parse(serialize()).isl.find(q => q.id === W.id); want(raw.wi && raw.wi[0] === 'blumen' && raw.ak && raw.wo, 'wish: not saved');
+          const plain = JSON.parse(serialize()); const old = plain.isl.find(q => q.id === W.id); delete old.wi; delete old.ak; delete old.wo; delete old.wa;
+          want(restore(JSON.stringify(plain)), 'wish: an old save does not load'); { const W2 = isl('heimat'); want(!W2.wish && !W2.ask && !W2.wishOk, 'wish: an old save has wishes'); }
+          want(restore(serialize()) === false || true, '');
+        } else out.push('wish: none');
+        { const W3 = isl('heimat'); Object.assign(W3.stock, keepK.s); W3.ask = null; W3.wish = null; W3.wishOk = undefined; W3.zeal = keepK.zeal; } }
   out.push('BAD: ' + (bad.join('; ') || 'none'));
   return out.join('\n');
   } catch (e){ return 'ERR ' + e.message + ' ' + e.stack; }

@@ -63,6 +63,7 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     const res = tryBuild(want); tried[want + '/' + res] = (tried[want + '/' + res] || 0) + 1;
     if (A.needs && !Hm().handWork) {} // automatic families
     if (A.rain) rainDance(Hm());   // the elders advise the rain dance: the bot dances
+    for (const J of islands.filter(q => q.settled)) if (askShown(J)) askYes(J);   // the elders of a village ask: the bot says yes, like a player
     // like a player who wants a second village and the goods of the atolls: a canoe house, a canoe, four settlers and some
     // food aboard, a voyage to the nearest atoll (which the bot lets itself be shown), and there the village is founded;
     // later the elders propose a trade chain, and a tap sets it up

@@ -1171,3 +1171,9 @@ details.more .rowx{margin-top:6px}
 /* the house sheet: what each tile is for is in its bubble now, not in a line under the tiles */
 .rise2 .sub.rfor{display:none}
 .chips.stabs .chip{display:inline-flex!important;align-items:center;flex-direction:row}
+/* the requests of the elders and the wishes of the families: one compact line */
+.nextline.ask,.nextline.wish{justify-content:space-between;flex-wrap:nowrap;gap:6px;padding:3px 6px;border-radius:8px;background:rgba(227,178,60,.18)}
+.nextline.wish{background:rgba(200,64,44,.1)}
+.nextline.ask .what,.nextline.wish .what{flex:1 1 0;min-width:0;line-height:1.2}
+.nextline.ask .what .ic,.nextline.ask .what .bi,.nextline.wish .what .ic,.nextline.wish .what .bi{display:inline-block;width:18px;height:18px;vertical-align:-4px;margin-right:4px}
+.nextline.ask .chips{flex:none;display:flex;gap:4px}

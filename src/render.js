@@ -2054,6 +2054,12 @@ const PLANT_ART = {palme:'palm', pandanus:'pan', baum:'tree'};
 /* An idle workshop shows what it lacks: a good, or the plants it needs close by */
 const idleBubble = w => w.why === 'use' ? ['need|' + w.k, needBubble(w.k)] : w.why === 'crew' ? ['need|pop', needBubble('pop')] : w.why === 'boat' || w.why === 'carving' ? ['need|einbaum', needBubble('einbaum')] : w.why === 'space' ? ['need|sapling', needBubble('sapling')] :
   w.why === 'wind' || w.why === 'storm' ? ['need|wind', needBubble('sturm')] : w.why === 'night' ? ['need|night', needBubble('plejaden')] : w.why === 'fallow' ? ['need|soil', bubbleArt('<use href="#tuft" transform="translate(0 -5) scale(1.3)"/>')] : w.why === 'nuts' ? ['idle|palme', bubbleArt('<use href="#palm" transform="translate(0 -3.2) scale(.36)"/>')] : w.why === 'trees' ? ['idle|wald', bubbleArt('<use href="#wt0" transform="translate(0 -3) scale(.38)"/>')] : PLANT_ART[[].concat(w.kind)[0]] ? ['idle|' + w.kind, bubbleArt(`<use href="#${PLANT_ART[[].concat(w.kind)[0]]}" transform="translate(0 -3.2) scale(.36)"/>`)] : ['need|tapa', needBubble('tapa')];
+/* a request of the elders (yellow) and the wish of a family (rose): the building or the thing asked for, in a bubble */
+const askArt = k => { if (k === 'tie' || k === 'rain' || k === 'feast' || k === 'zeit') return `<use href="#ic-${k === 'tie' ? 'schnur' : k === 'rain' ? 'sturm' : k === 'feast' ? 'mana' : 'idle'}" transform="translate(-4.6 -12.8) scale(.46)"/>`;
+  const K = KINDS[k], v = (K.vb || '-17 -29 34 33').split(' ').map(Number), sc = Math.min(9.4 / v[3], 9.4 / v[2]);
+  return `<g transform="translate(${fx(-(v[0] + v[2] / 2) * sc)} ${fx(-8.2 - (v[1] + v[3] / 2) * sc)}) scale(${fx(sc * 100) / 100})">${iconMarkup(K.craft ? 'haus' : k)}</g>`; };
+const askBubble = k => bubbleArt(askArt(k)).replace('#F4ECD8', '#F7DFA0');
+const wishBubble = k => bubbleArt(askArt(k)).replace('#F4ECD8', '#F6D2D8');
 /* every bubble drawn this frame, so a tap on it leads to what helps (see hitBubble) */
 let bubbleHits = [];
 const hitBubble = p => bubbleHits.filter(q => Math.hypot(p.x - q.x, p.y - q.y) < q.r).sort((a, b) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(p.x - b.x, p.y - b.y))[0] || null;
@@ -2098,6 +2104,15 @@ function drawNeeds(c, v, now){
       if (up){ bub('h' + b.id, b.x, by + bob * .6, s * 1.1 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 420 + b.id)) * .06), reduced ? 0 : Math.sin(now / 900 + b.id) * .08, 'need|up', UP_BUBBLE); hit(b.x, by, () => select(b)); }
       else { bub('h' + b.id, b.x, by, s, 0, 'need|' + k, needBubble(k)); const kk = k; hit(b.x, by, () => needGo(I, kk, HOME_KINDS.has(b.kind) ? b : null)); }
     }
+  }
+  // the elders ask (over the village centre), a family wishes (beside its roof): both pulse a little; a tap opens the line with the answer
+  for (const I of islands){
+    if (!I.settled || !boxIn(I.box, v)) continue;
+    const a = askShown(I), cz = a && centerOf(I);
+    if (a){ const x = cz ? cz.x : I.center.x, y = (cz ? cz.y - KINDS[cz.kind].hy * ((cz.v && cz.v.scale) || 1) : I.center.y) - 16 + (reduced ? 0 : Math.sin(now / 520) * .9);
+      if (ptIn(x, y, v)){ bub('a' + I.id, x, y, s * 1.15 * (reduced ? 1 : 1 + Math.max(0, Math.sin(now / 380)) * .07), reduced ? 0 : Math.sin(now / 800) * .06, 'ask|' + a.k, askBubble(a.k)); const id = I.id; hit(x, y, () => { setActive(id); openSheet('needs', {tab:'leute'}); }); } }
+    const w = I.wish, f = w && famOf(I, w.f), b = f && f.home && findB(f.home);
+    if (b && ptIn(b.x, b.y, v)){ const sc = (b.v && b.v.scale) || 1, wy = b.y - KINDS[b.kind].hy * sc - 14 + (reduced ? 0 : Math.sin(now / 700 + b.id) * .8); bub('w' + b.id, b.x + 9, wy, s, 0, 'wish|' + w.k, wishBubble(w.k)); const bb = b; hit(b.x + 9, wy, () => select(bb)); }
   }
   // hunger has lasted a while: over the house of the family that would go first, its canoe, rocking
   for (const I of islands){

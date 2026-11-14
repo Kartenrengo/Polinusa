@@ -113,9 +113,14 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 - **Noch ohne Übergang:** Figuren, die sterben oder fortziehen, und Kanus, die verschwinden, blenden nicht aus.
 - **Feuer bei neuen Häusern:** Ein Haus, das nach der Dämmerung fertig wird, leuchtet, hat aber noch kein Feuer.
 
+## Offen aus der Runde „Das Volk braucht dich“ (Version 95)
+
+- **Wunsch „Kanufahrt zu einer bekannten Insel“** ist noch nicht gebaut; ebenso „Freizeit für eine Woche“ (der Regler bleibt
+  stehen, bis der Spieler ihn zurückstellt).
+
 ## Offen aus der Runde „Rat in der Not“ (Version 79/80)
 
-- **Der Rat hilft nur in der Not** (Wasser, Essen, Dach, Sturm). Ein Dorf, um das sich niemand kümmert, überlebt, wächst
+- **Der Rat fragt nur in der Not** (Wasser, Essen, Dach, Sturm; seit Version 95 baut er nichts ohne dein Ja). Ein Dorf, um das sich niemand kümmert, überlebt, wächst
   aber nicht (im Test: 3 Menschen bleiben 3). Version 79 ließ ihn alles bauen (3 auf 14 in 40 Minuten); das nahm zu
   viel aus der Hand. Stellschrauben `ELDERS`, `PACK`, `HELP` in `kin.js`.
 - **Kanus der Pakete** gehen beim Speichern unterwegs verloren; die Waren nicht, sie wandern erst bei der Ankunft.

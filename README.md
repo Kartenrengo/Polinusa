@@ -2029,3 +2029,27 @@ Das Häuptlingshaus bleibt, wie es war.
   weg. Derselbe Satz steht in der Blase (Kachel halten). So bleibt das Blatt kurz.
 - Die Blase bricht lange Wörter um, damit kein Text über ihren Rand läuft.
 
+
+## Das Volk braucht dich (Version 95)
+
+- **Die Ältesten bauen nichts mehr allein.** In einem Tochterdorf fragen sie dich in der Not: Erntehaus, ein Platz für Essen,
+  eine Hütte, Dächer festbinden, Regentanz. Die Bitte steht als gelbe Blase über dem Dorf (Tippen öffnet die Übersicht)
+  und als eine Zeile ganz oben in der Übersicht, mit „Ja, bauen“ und „Nein“.
+  - **Ja:** Sie tun genau das, was sie früher von selbst taten. Es wird aus dem Lager dieses Dorfes bezahlt.
+  - **Nein:** Einen Tag lang fragen sie nicht noch einmal.
+  - Ist der Grund weg (Wasser da, Sturm vorbei), ist auch die Bitte weg. Nur ein Satz im Muschelhorn, kein Aufpoppen.
+  - Die Pakete am Morgen und die Hilfe der Mutter bleiben, wie sie waren. Im Spielstand steht die Bitte nur, wenn es eine gibt.
+- **Wünsche der Familien** (Mutterdorf und eigene Dörfer): Alle sechs bis zehn Minuten wünscht sich eine Familie etwas, wenn
+  gerade kein Wunsch offen ist: ein Blumenbeet, Hibiskus, eine Fackel, eine Trommel, einen Tanzplatz, einen Ahnenpfosten,
+  ein Fest oder mehr Freizeit.
+  - Eine rosa Blase mit dem Bild steht neben dem Dach. In ihrem Haus steht eine Zeile mit dem Knopf „Bauen“ (oder „Feiern“,
+    „Ja, Freizeit“). Beim Dorfzentrum steht die Zeile oben im Reiter „Dorf“.
+  - **Erfüllt** in zwei Tagen: Die Familie ist drei Tage lang um 6 zufriedener („Wunsch erfüllt“), und einer von ihnen hat es
+    in seiner Lebensgeschichte.
+  - **Nicht erfüllt:** Der Wunsch verblasst. Keine Strafe, kein Stress. Stellschrauben `WISH` in `kin.js`, `SAT.wish`.
+  - „Mehr Freizeit“ stellt den Regler des Dorfes auf „Viel Freizeit“. Zurück stellst du ihn selbst.
+- **Was sonst von selbst geschieht (geprüft):** Im Mutterdorf baut nichts neue Häuser oder Plätze allein. Häuser steigen nur mit
+  „Von selbst ausbauen“ (`I.autoUp`, am Anfang aus). Der Rat im Mutterdorf ist aus. Es bleiben nur kleine Dinge, die nichts
+  Neues hinstellen: Die Quelle erscheint, wo ein Bach fließt (`ensureSpring`). Eine gefällte Palme wächst nach. Ein Haus, das
+  der Sturm zerstört hat, wird neu gebaut, sobald das Holz da ist (`payRebuilds`). Die Familien flicken ihre Dächer.
+- Die Reise mit dem Kanu zu einer bekannten Insel als Wunsch ist noch nicht gebaut (siehe IDEEN.md).
