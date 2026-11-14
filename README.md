@@ -2231,3 +2231,13 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
 - Die Leiste ist so etwa ein Drittel niedriger, und mehr Karte ist zu sehen. Auf sehr kleinen Handys fallen „/Platz“ und der Punkt
   neben den Menschen weg, damit der Inselname Platz hat.
 
+
+## Krebs und Skink auf der neuen Leiste (Version 104)
+
+- **Der Krebs sitzt jetzt auf dem Musterband** zwischen den beiden Reihen. Er klettert von unten die Leiste hoch, setzt sich
+  auf das Band und schaut, dann klettert er wieder hinunter. In einem zweiten Spiel lugt er hinter dem Band hervor wie hinter
+  einem Zaun, winkt, läuft ein Stück daran entlang und taucht wieder ab.
+- **Kein Rest mehr beim Verstecken:** Hängt der Krebs kopfüber, schnitt das Verstecken bisher die falsche Seite ab, und oben
+  im Schild blieb ein Stück Muschel zu sehen. Jetzt dreht der Schnitt mit dem Krebs mit.
+- **Der Skink kommt etwas öfter:** zuerst nach etwa drei Minuten, dann alle fünf bis zehn Minuten (vorher acht bis fünfzehn).
+  Er kommt nie, solange der Krebs draußen ist.

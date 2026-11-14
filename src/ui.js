@@ -1474,23 +1474,24 @@ document.addEventListener('click', e => {
 const MASCOT = {first:75000, gap:[150000, 270000], S:36, toastGap:240000};
 /* Its little plays with the bar, as key frames: [time ms, dx, y share of the bar's height, y share of its own size, turn
    (90 looks up, -90 down), flip (faces right), dy pixels, clip ('u': only below the bar's lower edge, as if behind it; 't':
-   only below the top edge), what it does]. What it does: 'o' out of the shell, 'w' waves, 'k' walks, 'b' blinks, 'n' knocks
+   only below the top edge; 'm': only above the pattern band between the rows, as if behind it), what it does]. The y share
+   may also be 'm' (the pattern band) or 'c' (the conch). What it does: 'o' out of the shell, 'w' waves, 'k' walks, 'b' blinks, 'n' knocks
    on the bar from below (the bar jumps a little), 't' taps the conch of the news (it nods), 'r' reads (eyes down), 'c' looks
    at the conch and at its own shell, 's' shy (ducks in at once). A play has an anchor: anywhere on the bar ('bar'), under the
    conch button ('conch') or at the message that has just come ('toast'). Hermit crabs are shy: they come out slowly, duck
    back at once, look about a long while, then scuttle sideways in short bursts. */
 const CRAB_PLAYS = [
   // it slides down from behind the bar's lower edge and hangs from it upside down, holding on with its legs; it looks about,
-  // works along the edge hand over hand, waves, swings up onto the bar, sits and looks, climbs down over the edge again,
+  // works along the edge hand over hand, waves, climbs up the front onto the pattern band between the two rows, sits on it and looks, climbs down again,
   // hangs on a bit further and pulls itself back up behind the edge
   {at:'bar', k:[[0, 0, 1, -.5, 180, 0, 0, 'u', ''], [900, 0, 1, .4, 180, 0, 0, '', ''], [1700, 0, 1, .4, 180, 0, 0, '', 'o'], [2300, 0, 1, .4, 180, 0, 0, '', 's'], [3200, 0, 1, .4, 180, 0, 0, '', 'o'],
    [4100, 0, 1, .4, 180, 0, 0, '', 'ob'], [4700, 0, 1, .4, 180, 0, 0, '', 'ok'], [6600, 50, 1, .4, 180, 0, 0, '', 'o'], [7300, 50, 1, .4, 180, 0, 0, '', 'ow'], [8100, 50, 1, .4, 180, 0, 0, '', 'ok'],
-   [9300, 50, 1, -.55, 90, 0, 0, '', 'ok'], [10500, 50, .62, 0, 90, 0, 0, '', 'ok'], [11000, 50, .62, 0, 0, 0, 0, '', 'o'], [12400, 50, .62, 0, 0, 0, 0, '', 'ob'],
-   [13000, 50, .62, 0, -90, 0, 0, '', 'ok'], [14100, 50, 1, -.55, -90, 0, 0, '', 'ok'], [15000, 50, 1, .4, -180, 0, 0, '', 'ok'], [16600, 92, 1, .4, -180, 0, 0, '', 'o'], [17300, 92, 1, .4, -180, 0, 0, '', 's'], [18200, 92, 1, -.5, -180, 0, 0, 'u', '']]},
-  // from behind the top edge it creeps down over the bar, waves on the lower rim, climbs over the edge and hangs from it,
-  // works along it and pulls itself up behind it
-  {at:'bar', k:[[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [3200, 0, .66, 0, -90, 0, 0, '', 'ok'], [3800, 0, .66, 0, -8, 0, 0, '', 'o'], [4600, 0, .66, 0, 0, 1, 0, '', 'ob'], [5300, 0, .66, 0, 0, 1, 0, '', 'ow'],
-   [6000, 0, .66, 0, -90, 0, 0, '', 'ok'], [7000, 0, 1, -.55, -90, 0, 0, '', 'ok'], [7900, 0, 1, .4, -180, 0, 0, '', 'ok'], [9700, 46, 1, .4, -180, 0, 0, '', 'ob'], [10400, 46, 1, .4, -180, 0, 0, '', 's'], [11300, 46, 1, -.5, -180, 0, 0, 'u', '']]},
+   [9300, 50, 1, -.55, 90, 0, 0, '', 'ok'], [10500, 50, 'm', .1, 90, 0, 0, '', 'ok'], [11100, 50, 'm', -.41, 0, 0, 0, '', 'o'], [12500, 50, 'm', -.41, 0, 0, 0, '', 'ob'],
+   [13100, 50, 'm', .1, -90, 0, 0, '', 'ok'], [14100, 50, 1, -.55, -90, 0, 0, '', 'ok'], [15000, 50, 1, .4, -180, 0, 0, '', 'ok'], [16600, 92, 1, .4, -180, 0, 0, '', 'o'], [17300, 92, 1, .4, -180, 0, 0, '', 's'], [18200, 92, 1, -.5, -180, 0, 0, 'u', '']]},
+  // it pops up from behind the pattern band as from behind a fence, looks about, waves, ducks once, sidles along the band,
+  // blinks and drops back behind it
+  {at:'bar', k:[[0, 0, 'm', .5, 0, 1, 0, 'm', ''], [1100, 0, 'm', -.41, 0, 1, 0, '', ''], [1800, 0, 'm', -.41, 0, 1, 0, '', 'o'], [2600, 0, 'm', -.41, 0, 1, 0, '', 'ob'], [3300, 0, 'm', -.41, 0, 1, 0, '', 'ow'],
+   [4100, 0, 'm', -.41, 0, 1, 0, '', 's'], [4900, 0, 'm', -.41, 0, 1, 0, '', 'o'], [5600, 0, 'm', -.41, 0, 1, 0, '', 'ok'], [7400, 46, 'm', -.41, 0, 1, 0, '', 'ob'], [8200, 46, 'm', -.41, 0, 1, 0, '', 's'], [9000, 46, 'm', .5, 0, 1, 0, 'm', '']]},
   // hanging under the bar it knocks on it from below with its big claw, the bar jumps, it listens, knocks again, waves, hides
   {at:'bar', k:[[0, 0, 1, -.5, 180, 0, 0, 'u', ''], [900, 0, 1, .4, 180, 0, 0, '', 'o'], [1900, 0, 1, .4, 180, 0, 0, '', 'ob'], [2400, 0, 1, .4, 180, 0, 0, '', 'on'], [3400, 0, 1, .4, 180, 0, 0, '', 'o'],
    [4300, 0, 1, .4, 180, 0, 0, '', 'on'], [5100, 0, 1, .4, 180, 0, 0, '', 'ow'], [6100, 0, 1, .4, 180, 0, 0, '', 's'], [7000, 0, 1, -.5, 180, 0, 0, 'u', '']]},
@@ -1519,17 +1520,26 @@ const CRAB_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="
     `<g class="c-shell"><path d="M44 26Q74 17 83 46Q89 72 62 81Q40 85 34 64Q30 46 44 26Z" fill="#F3D9A0" ${S}/><path d="M60 27Q80 32 82 52Q81 72 64 79Q74 66 74 50Q72 36 60 27Z" fill="#E2C384"/>` +
     `<path d="M48 32Q70 28 74 48Q76 66 60 70Q46 72 44 60Q43 50 54 48Q64 48 62 58Q60 63 55 61" fill="none" stroke="${I}" stroke-width="1.9" stroke-linecap="round"/>${dots}` +
     `<path d="M48 54l3 3l3-3l3 3l3-3" fill="none" stroke="#A84A2C" stroke-width="1.4"/><path d="M38 66Q40 74 46 78" fill="none" stroke="#C9A866" stroke-width="2"/><path d="M50 30Q55 28 58 29" fill="none" stroke="#FFF6DE" stroke-width="2" stroke-linecap="round" opacity=".8"/></g></g></svg>`; })();
-let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotY = 0, crabEls = null, crabOut = 0, crabBlinkAt = 0, crabToastAt = -1e9, crabPrev = '', crabNow = null;
+let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotY = 0, mascotBand = 40, crabEls = null, crabOut = 0, crabBlinkAt = 0, crabToastAt = -1e9, crabPrev = '', crabNow = null;
 const crabSm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 function crabStart(P, now){
   const H = $('hudbar'), w = H.offsetWidth, hb = H.getBoundingClientRect(), sun = parseFloat($('dayMark').style.left) || -99;
   if (P.at === 'conch'){ const c = $('newsBtn').getBoundingClientRect(); mascotX = c.left + c.width / 2 - hb.left; mascotY = c.top + c.height / 2 - hb.top; }
   else if (P.at === 'toast'){ const t = $('toast').getBoundingClientRect(); mascotX = clamp(t.left + t.width * .78 - hb.left, 40, w - 30); }
   else for (let i = 0; i < 6; i++){ mascotX = w * (.38 + Math.random() * .45); if (Math.abs(mascotX - sun) > 60) break; }
+  const g = H.querySelector('.hud-goods'); if (g && g.offsetHeight) mascotBand = g.getBoundingClientRect().top - hb.top + 4.5;   // the middle of the pattern band
   mascotPlay = P; mascotOn = now; crabOut = 0; crabPrev = '';
 }
 /* a message: now and then the crab comes to read it (not every time, it is shy) */
 function crabOnToast(){ const now = performance.now(); if (mascotOn || reduced || landing || now - crabToastAt < MASCOT.toastGap || now < MASCOT.first || Math.random() > .5) return; crabToastAt = now; setTimeout(() => { if (!mascotOn && !$('toast').hidden) crabStart(CRAB_PLAYS[4], performance.now()); }, 500); }
+/* hiding behind an edge: 'u' shows only what is below the bar's lower edge, 't' only below the top edge, 'm' only above the
+   pattern band (popping up from behind it). The clip works in the crab's own turned frame, so the side it cuts turns with it. */
+function crabClip(clip, top, rot, HH, S){
+  if (!clip) return 'none';
+  const lim = clip === 'u' ? HH - 3 : clip === 't' ? 0 : mascotBand + 2, cut = clip === 'm' ? Math.max(0, top + S - lim) : Math.max(0, lim - top);
+  const q = ((Math.round(rot / 90) % 4) + 4) % 4, side = clip === 'm' ? [2, 1, 0, 3][q] : [0, 3, 2, 1][q], v = ['-20px', '-20px', '-20px', '-20px'];
+  v[side] = Math.min(S, cut).toFixed(1) + 'px'; return `inset(${v.join(' ')})`;
+}
 function mascotTick(now){
   const M = $('mascot'); if (!M) return;
   if (!M.firstChild.innerHTML){ M.firstChild.innerHTML = CRAB_SVG; crabEls = null; }
@@ -1540,13 +1550,13 @@ function mascotTick(now){
     if (t > end){ mascotOn = 0; M.className = ''; M.style.clipPath = ''; crabOut = 0; crabNow = null; return; }
     let i = 0; while (i < P.length - 2 && P[i + 1][0] <= t) i++;
     const A = P[i], B = P[i + 1], dur = Math.max(1, B[0] - A[0]), raw = clamp((t - A[0]) / dur, 0, 1), H = $('hudbar'), HH = H.offsetHeight, S = MASCOT.S, does = A[8];
-    const at = K => ({x:mascotX + K[1], y:(K[2] === 'c' ? mascotY : K[2] * HH) + K[3] * S + (K[6] || 0)}), pa = at(A), pb = at(B), dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
+    const at = K => ({x:mascotX + K[1], y:(K[2] === 'c' ? mascotY : K[2] === 'm' ? mascotBand : K[2] * HH) + K[3] * S + (K[6] || 0)}), pa = at(A), pb = at(B), dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
     const walk = does.includes('k') && dist > 2, steps = Math.max(1, Math.round(dist / 4.5)), ph = raw * steps, f = ph - Math.floor(ph), burst = Math.min(1, f * 1.7);
     const u = walk ? (Math.floor(ph) + crabSm(burst)) / steps : crabSm(raw), lift = walk ? Math.sin(Math.PI * burst) * 1.3 : 0;
     const x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u - lift, rot = A[4] + (B[4] - A[4]) * crabSm(raw) + (walk ? Math.sin(ph * Math.PI * 2) * 3 : 0), flip = A[5], clip = A[7] || B[7];   // hiding behind the edge, or coming out from behind it
     crabNow = {x, y, rot, flip, clip};
     M.style.transform = `translate(${(x - S / 2).toFixed(1)}px,${(y - S / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scaleX(${flip ? -1 : 1})`;
-    const top = y - S / 2; M.style.clipPath = clip === 'u' ? `inset(${Math.max(0, HH - 3 - top).toFixed(1)}px -20px -20px -20px)` : clip === 't' ? `inset(${Math.max(0, -top).toFixed(1)}px -20px -20px -20px)` : 'none';
+    M.style.clipPath = crabClip(clip, y - S / 2, rot, HH, S);
     if (!M.classList.contains('on')) M.classList.add('on');
     // things it does to the bar, once at the start of a key frame
     const key = i + does; if (key !== crabPrev){ crabPrev = key;
@@ -1580,13 +1590,13 @@ function mascotTick(now){
 }
 $('mascot').addEventListener('click', e => { e.stopPropagation(); if (!mascotOn || !crabNow) return; const H = $('hudbar'), HH = H.offsetHeight, S = MASCOT.S, n = crabNow, y = n.y, dx = n.x - mascotX, c = n.clip;
   // startled: in at once, the shell trembles; then a careful peep, then away
-  const K = (t, d) => [t, dx, 0, 0, n.rot, n.flip, y, c, d]; mascotPlay = {at:'bar', k:[K(0, 's'), K(1300, ''), K(2300, 'o'), K(3400, 'ob'), K(3900, 's'), [4800, dx, 1, -.55, Math.abs(n.rot) > 90 ? n.rot : 0, n.flip, 0, 'u', '']]}; mascotOn = performance.now(); crabPrev = '';
+  const K = (t, d) => [t, dx, 0, 0, n.rot, n.flip, y, c, d]; mascotPlay = {at:'bar', k:[K(0, 's'), K(1300, ''), K(2300, 'o'), K(3400, 'ob'), K(3900, 's'), y < mascotBand + 2 && Math.abs(n.rot) < 45 ? [4800, dx, 'm', .5, 0, n.flip, 0, 'm', ''] : [4800, dx, 1, -.55, Math.abs(n.rot) > 90 ? n.rot : 0, n.flip, 0, 'u', '']]}; mascotOn = performance.now(); crabPrev = '';
   const M = $('mascot'); M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Erschreckt er sich, zieht er sich hinein und hält die große Schere vor den Eingang. Wird die Muschel zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });
 /* ---------- a little skink with a blue tail (Emoia, the blue-tailed skink of the islands), even shyer and rarer than the
-   crab: every eight to fifteen minutes it darts across the bar in quick bursts, stops, bobs its head, flicks its tail, and
+   crab: every five to ten minutes it darts across the bar in quick bursts, stops, bobs its head, flicks its tail, and
    is gone over the side. It never comes while the crab is out. Key frames: [ms, x share of the width (may be off it), y
    share of the height, turn, what it does: 'r' runs, 'b' bobs, 'f' flicks the tail, 'l' licks]. */
-const LIZ = {first:240000, gap:[480000, 900000], S:40};
+const LIZ = {first:180000, gap:[330000, 600000], S:40};   // every five to ten minutes
 const LIZ_PLAYS = [
   [[0, -.08, .55, 0, 'r'], [700, .22, .5, -6, 'r'], [1500, .22, .5, -6, 'b'], [2300, .22, .5, -6, ''], [2700, .48, .62, 8, 'r'], [3500, .48, .62, 8, 'fl'], [4500, .48, .62, 8, 'b'], [5100, 1.1, .45, -4, 'r']],
   [[0, 1.08, .4, 180, 'r'], [600, .7, .46, 186, 'r'], [1500, .7, .46, 186, 'f'], [2100, .7, .46, 186, 'b'], [2500, .42, .7, 172, 'r'], [3600, .42, .7, 172, 'l'], [4200, -.12, .55, 180, 'r']],
