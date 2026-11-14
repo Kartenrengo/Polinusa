@@ -84,8 +84,8 @@ Reihenfolge (jeder Schritt einzeln spielbar, der Bot misst ihn):
 
 ## Offen aus der Runde „Noch feiner“ (Version 84)
 
-- ~~**Hunde**~~ **neu gezeichnet in Version 85.** Schweineköpfe sind noch etwas groß.
-- **Schildkröte in der Lagune** ist im Bild noch nicht gesehen worden.
+- ~~**Hunde**~~ **neu gezeichnet in Version 85.** ~~Schweineköpfe sind noch etwas groß.~~ **kleiner in Version 97.**
+- ~~**Schildkröte in der Lagune** ist im Bild noch nicht gesehen worden.~~ **neu gezeichnet und im Bild geprüft in Version 97.**
 - **Schläfer vor den Häusern** gibt es nicht (sie gehen ins Haus); sichtbares Schlafen wäre eine Spieländerung.
 - **Kosten:** Bei höchster Qualität zeichnet das Spiel wieder etwas mehr (etwa 10 bis 13 %); die Bildraten-Steuerung fängt
   es ab. Auf einem echten Handy ansehen.
@@ -279,3 +279,14 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
   Tipp); eine Schildkröte, die am Strand Eier legt, auch bei den Hingucker-Tippern; Fregattvögel hoch über der Insel in großen Kreisen.
 - **Schönheit und Clans:** Gäste im Kanu könnten bei „Berühmt“ eine kleine Gabe bringen. Bisher kommen sie nur zum Schauen.
 - **Handy prüfen:** Die Blumen, Kränze und Hingucker nur im Test-Browser gemessen, nicht auf einem echten Handy.
+
+## Offen nach der Tierprüfung (Version 97)
+
+- **Hund kratzt sich:** Die Haltung (eine Hinterpfote am Ohr) sieht noch wie ein Stock quer über dem Körper aus. Fein zeichnen.
+- **Tiere im Schlaf und Familienleben:** Hunde, die sich nachts vor dem Haus einrollen, Küken beim Huhn, Ferkel beim Schwein.
+- **Fregattvögel und Seeschwalben als ganze Vögel:** Von oben sind sie nur Flügelstriche mit kleinem Körper. Ein echter
+  Vogel mit Kopf wäre nur im Sinkflug über dem Wasser nötig.
+- **Glühwürmchen** sind klein und schwach; sie brauchen auf dem Handy nicht mehr, vielleicht ein wenig größer bei Nacht.
+- **Tippen auf Krabben, Schmetterlinge, Seevögel** gibt noch kein Wort. Vorsicht: Je mehr Flächen zum Tippen, desto
+  eher nehmen sie Tipps auf Häuser weg.
+- **Echtes Handy:** Ratten, Flughunde und die neue Schildkröte auf einem echten Gerät ansehen (bisher nur im Test-Browser).

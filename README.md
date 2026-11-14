@@ -39,7 +39,7 @@ jede Klammer zu ist (eine Klammer zu viel ließ den Browser still eine Regel ver
 danach) und ob keine Funktion zweimal heißt (die Dateien teilen sich einen Namensraum, die spätere ersetzt still die
 frühere). Dann sagen die
 Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, ist da; jede Aufgabe und Stufe nennt Gebäude, die
-es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki),
+es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki), `tiere` (jedes Tier zeichnet in jedem Abstand, bei jeder Qualität, an jedem Tageszeitpunkt und mit weniger Bewegung ohne Fehler; nur Hund, Schwein und Huhn im Dorf),
 `build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
 Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
 jede Animation), `music` (die Töne der Musik und echte Klangknoten, siehe „Der Soundtrack“), `soak` (Stürme, Stärken, Stammplätze, Handel, Speichern und Laden, Musik, alles durcheinander 1500 Takte lang), `save` (Neuladen, kaputter Spielstand, Laden aus Text, zwei Spielstände), `phone`
@@ -1825,6 +1825,12 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 | Zuerst vom Wilden leben: Schildkröten, Seevögel, Großfußhühner, die bald verschwinden | ja, durch Knochen in den frühesten Schichten |
 | Wachszeiten der Pflanzen | aus der Botanik; im Spiel verkürzt |
 | Delfine am Riff, Riffreiher am Strand, Geckos an den Hauspfosten, springende Fische, Schmetterlinge | Tiere, die auf den Inseln heimisch sind; dass man sie am Dorf sah, ist glaubhaft, im Einzelnen nicht belegt |
+| Hund, Schwein, Huhn laufen im Dorf; Maße im Bild: Hund etwa Hüfte, Schwein etwas kleiner, Huhn Knie | belegt, dass die Siedler sie mitbrachten (siehe oben); die Größen im Bild sind Spiel |
+| Die Pazifische Ratte (Kiore), nachts am Lager | belegt: Sie kam in den Kanus mit und fraß Eier und Saat. Dass man sie nachts am Speicher sieht, ist glaubhaft, im Einzelnen Spiel |
+| Flughunde, die am Abend ausfliegen | belegt als heimisch (Flughunde gibt es seit Urzeiten auf den Inseln Westpolynesiens und Melanesiens); der Flug über dem Dorf ist Spiel |
+| Meeresschildkröten, Delfine, Wale, fliegende Fische, Seevögel (Tölpel, Fregattvogel, Seeschwalbe), Landkrabben, Einsiedlerkrebs | belegt als heimisch und als Nahrung (Knochen von Schildkröten und Seevögeln in den frühesten Schichten); wo und wie oft man sie im Bild sieht, ist Spiel |
+| Der Lichtwal | **frei erfunden**, nicht aus einer Überlieferung. Er ist Spiel, nur zum Staunen |
+| Keine Katzen, Ziegen, Rinder, Pferde, Schafe | Sie kamen erst mit den Europäern. Im Spiel gibt es sie nicht (ein Test prüft, dass im Dorf nur Hund, Schwein und Huhn laufen) |
 | Blumen an den Wegen, Blütenkränze an den Häusern | Blüten als Schmuck kennt man aus späteren Berichten (Tonga, Samoa); für die Lapita vermutet |
 | Bänder aus Tapa an den Dächern | vermutet; Tapa ist aus Tonga und Samoa gut bekannt, für die frühen Lapita unsicher |
 | Glühwürmchen zwischen den Blumen | nur Stimmung, eine Freiheit des Spiels; nicht belegt |
@@ -2104,3 +2110,37 @@ Das Häuptlingshaus bleibt, wie es war.
   Kochsteine), Feuer (Kokosschalen, Brennholz, Bauholz in der Reihenfolge, in der sie brennen), Bauen (Bauholz, Wedel, Fasern,
   Schnur, Harz, Kalk), Hausrat (Töpfe, Matten, Öl, Tapa, Werkzeug, Tiere) und Meer (Proviant, Muscheln, Haken, Schätze).
 
+## Die Tiere geprüft (Version 97)
+
+**Was ich geprüft habe.** Alle Tiere im Spiel, eins nach dem anderen, in einem Bild mit einem Menschen daneben: Hund, Schwein,
+Huhn, Landkrabbe, Seevögel (Tölpel, Fregattvogel, Seeschwalbe), Wal und Lichtwal, Delfine, Schildkröte, fliegende Fische,
+Lagunenleben, Schmetterlinge, Glühwürmchen, Riffreiher, Gecko, Einsiedlerkrebs. Dazu: Wo sie stehen, wie sie sich bewegen, wie
+oft man sie in zehn Minuten sieht, ob sie bei weniger Bewegung und niedriger Qualität schlank bleiben. Ratten gab es nur als
+Zahl im Lager. Flughunde standen nur in einem Ereignistext.
+
+**Was sich geändert hat.**
+- **Größen:** Das Huhn ist jetzt kleiner (reicht zum Knie), das Schwein etwas kleiner als der Hund, sein Kopf kleiner
+  (erledigt: „Schweineköpfe sind groß“). Die Landkrabbe ist kleiner, der Gecko und der Riffreiher auch, die Schmetterlinge
+  ebenso. Der Wal ist größer, so lang wie drei Kanus. Die Schildkröte ist kleiner.
+- **Die Schildkröte** ist neu gezeichnet (Tuschelinie, Kopf, Panzer mit Feldern) und taucht in jeder Lagune auf, nicht mehr nur
+  in jeder zweiten. Sie ist jetzt im Bild gesehen worden (erledigt).
+- **Ratten sind jetzt zu sehen:** In der Dämmerung und nachts huscht eine Ratte (zwei ohne Speicher) zum Speicher, Erntehaus oder
+  Feld, knabbert und läuft fort. Mit zwei Speichern sieht man keine mehr. Ein Tippen sagt, was sie ist.
+- **Flughunde** fliegen an manchen Abenden in der Dämmerung über das Dorf. Sie sind heimisch, nicht mitgebracht.
+- **Seevögel** haben einen kleinen Körper zwischen den Flügeln; der Fregattvogel ist etwas kleiner. Die Vögel an den
+  Fischgründen sind feiner gezeichnet.
+- **Fliegende Fische** sind kleine Fische mit Flossen, nicht mehr weiße Striche.
+- **Tippen:** Hund, Schwein, Huhn, Ratte, Wal, Delfine auf See, Meeresschildkröten und Flughunde geben jetzt ein Wort. Die
+  Tippfläche der Dorftiere ist eng, damit sie keine Tipps auf Häuser und Menschen wegnehmen.
+- **Plätze:** Tiere laufen nicht mehr über den Festplatz und werden nie im Wasser geboren. Delfine springen am Riff nur noch dort,
+  wo der ganze Sprung über Wasser geht.
+- **Wie oft (zehn Minuten Spiel, Nahsicht):** Wale zogen vorher alle 25 Sekunden durchs Bild, jetzt etwa fünf- bis sechsmal.
+  Delfine am Riff: vorher 1 bis 4, jetzt 4 bis 6. Der Lichtwal kommt etwas öfter (etwa einmal in 25 Minuten). Reiher (3),
+  springende Fische (15 bis 18), Gecko (immer am gleichen Haus) sind gleich geblieben.
+- **Nur eine Auswahl an Tieren im Dorf:** Hund, Schwein, Huhn. Ein Test hält das fest, damit keine Katze oder Ziege hineinkommt.
+- **Neuer Test** `tests/tiere.test.js`: Jedes Tier zeichnet in jedem Abstand, bei jeder Qualität, bei Tag, Dämmerung und Nacht,
+  mit und ohne weniger Bewegung, ohne Fehler.
+
+**Belegt oder Spiel.** Siehe „Was belegt ist und was später“: Hund, Schwein, Huhn und Ratte kamen mit den Kanus (belegt). Seevögel,
+Flughunde, Geckos, Landkrabben, Schildkröten, Riffische, Delfine, Wale und der Riffreiher sind heimisch (belegt). Der Lichtwal ist
+frei erfunden. Wo und wie oft man sie sieht, ist Spiel.

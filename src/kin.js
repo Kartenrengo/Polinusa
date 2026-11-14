@@ -342,7 +342,7 @@ function teachMarkup(){
 /* ---------- the light whale. Not from any people's tradition: an invented creature of this game, to leave room for
    wonder. On some nights a whale of soft light swims past a village on the open water; who taps it, tells of it. */
 let lightWhale = null;
-const WHALE = {chance:1 / 420, life:45000, mana:2};
+const WHALE = {chance:1 / 260, life:45000, mana:2};
 function whaleTick(){
   if (lightWhale || awayQuiet || !opts.night || nightLevel() < .3 || Math.random() > WHALE.chance) return;
   const I = isl(active); if (!I || !I.settled) return;

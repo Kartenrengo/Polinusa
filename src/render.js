@@ -484,7 +484,7 @@ const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4
    with narrow wings that beats fast; and the noddy and booby of the old shape */
 const FRIG1 = new Path2D('M-7.6 1.2L-3.4-1.9L0 .2L3.4-1.9L7.6 1.2M0 .2L-.7 2.2M0 .2L.7 2.2'), FRIG2 = new Path2D('M-7.2.5L-3.4-.7L0 .2L3.4-.7L7.2.5M0 .2L-.7 2.2M0 .2L.7 2.2');
 const TERN1 = new Path2D('M-4.2-.2q2-1.9 4.2.2q2.1-2.1 4.2-.2'), TERN2 = new Path2D('M-4-.1q2-.6 4 .1q2-.8 4-.1');
-const birdOf = (k, t) => { const kind = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0; return {p:birdPath(kind, t, k * 1.7), s:kind === 1 ? 1.25 : kind === 2 ? .7 : 1, w:kind === 1 ? 1.1 : 1.3 - (kind === 2 ? .1 : 0)}; };
+const birdOf = (k, t) => { const kind = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0; return {p:birdPath(kind, t, k * 1.7), s:kind === 1 ? 1.05 : kind === 2 ? .7 : .85, w:kind === 1 ? 1.1 : 1.3 - (kind === 2 ? .1 : 0)}; };
 function drawAnim(c, now){
   const v = view(40), ph = (now % 3400) / 3400 * TAU, a = reduced ? .4 : .41 - .29 * Math.cos(ph), dy = reduced ? 0 : 1.5 * Math.cos(ph);
   for (const I of islands){
@@ -730,7 +730,7 @@ function drawButterflies(c, v, now){
         const sd = (b.id * 7 + k * 13) % 17, f = .35 + sd * .02, rest = Math.sin(t * .4 + sd) > .82;   // now and then it sits still
         const x = b.x + (rest ? 2 : Math.cos(t * f * 2.1 + sd) * 7 + Math.sin(t * f * 3.3) * 2), y = b.y - 4 + (rest ? -1 : Math.sin(t * f * 2.9 + sd) * 3.5 - 3 - Math.abs(Math.sin(t * 1.7 + sd)) * 2);
         const flap = rest ? .25 + .2 * Math.abs(Math.sin(t * 2 + sd)) : .2 + .8 * Math.abs(Math.sin(t * 17 + sd)), col = BUTTERFLY_COL[sd % BUTTERFLY_COL.length];
-        c.save(); c.translate(x, y); c.rotate(Math.sin(t * f * 2.1 + sd) * .4); c.fillStyle = col; c.strokeStyle = '#2B1D14'; c.lineWidth = .22;
+        c.save(); c.translate(x, y); c.rotate(Math.sin(t * f * 2.1 + sd) * .4); c.scale(.68, .68); c.fillStyle = col; c.strokeStyle = '#2B1D14'; c.lineWidth = .22;
         for (const d of [-1, 1]){ c.save(); c.scale(d * flap, 1); c.beginPath(); c.ellipse(.75, -.35, .8, .55, -.5, 0, TAU); c.ellipse(.6, .45, .55, .4, .4, 0, TAU); c.fill(); c.stroke(); c.restore(); }
         c.fillStyle = '#2B1D14'; c.fillRect(-.12, -.7, .24, 1.4); c.restore();
       }
@@ -927,7 +927,7 @@ let whale = null, nextWhale = 0;
 function drawWhales(c, v, now){
   if (reduced) return;
   if (!whale && now > nextWhale){
-    nextWhale = now + (seasonOf().id === 'passat' ? 7000 : 26000) + Math.random() * 14000;
+    nextWhale = now + (seasonOf().id === 'passat' ? 50000 : 110000) + Math.random() * 50000;   // humpbacks pass in the trade-wind season: now and then, not every half minute
     for (let i = 0; i < 8; i++){
       const p = {x:v.x0 + (v.x1 - v.x0) * (.15 + Math.random() * .7), y:v.y0 + (v.y1 - v.y0) * (.15 + Math.random() * .7)};
       if (revealed(p) && islands.every(I => !boxIn(I.box, {x0:p.x - 50, y0:p.y - 50, x1:p.x + 50, y1:p.y + 50}))){ whale = {x:p.x, y:p.y, t0:now, dir:Math.random() < .5 ? -1 : 1}; break; }
@@ -935,9 +935,10 @@ function drawWhales(c, v, now){
     if (!whale) nextWhale = now + 2500;   // no open water in sight yet, look again soon
   }
   if (!whale) return;
-  const t = (now - whale.t0) / 1000, k = clamp(.9 / cam.z, 1, 2.6);
+  const t = (now - whale.t0) / 1000, k = clamp(.9 / cam.z, 1, 2.6) * 1.6;   // a whale is as long as three canoes
   if (t > 8){ whale = null; return; }
   const x = whale.x + whale.dir * t * 3 * k, y = whale.y;
+  if (t < 5.6) eyeAdd('wal', x, y - 2 * k, 14 * k, 'Ein Wal zieht vorbei. Sie kommen jedes Jahr in diese Gewässer.');
   c.save(); c.translate(x, y); c.scale(k * whale.dir, k);
   if (t < 5.6){ const up = Math.min(1, t / 1, (5.6 - t) / .8); c.globalAlpha = up; blit(c, 'whale', '<use href="#whale"/>'); if (t > 1.2 && t < 3.2){ c.globalAlpha = 1 - Math.abs(t - 2.2); c.translate(-6, -3); blit(c, 'spout', '<use href="#spout"/>'); } }
   else { c.globalAlpha = Math.min(1, (8 - t) / .8); c.translate(-10, 0); blit(c, 'fluke', '<use href="#fluke"/>'); }
@@ -960,18 +961,17 @@ function drawSeaLife(c, v, now){
       for (let i = 0; i < 3; i++){
         const T = (t + i * .9 + h * 9) % 5.2; if (T > 1.3) continue;
         const f = T / 1.3, x = p.x + dir * (drift + i * 9 + f * 16) , y = p.y + i * 5 - Math.sin(f * Math.PI) * 6;
-        put(c, x, y, k * .9, dir, (f - .5) * 1.1 * dir, 'dolphin', '<use href="#dolphin"/>');
+        put(c, x, y, k * .9, dir, (f - .5) * 1.1 * dir, 'dolphin', '<use href="#dolphin"/>'); if (f > .1 && f < .9) eyeAdd('delfin', x, y, 10 * k, 'Delfine springen vor dem Bug. Sie bringen den Fischern Glück.');
         if (f > .85 || f < .1) stroke(c, ellipse(x, y + 3, 3.4 * k, 1.1 * k), '#F4FBFA', .7, [.5, .8], 'round', .8);
       }
     } else if (kind === 'turtle'){
       const a = t * .05 + h * 20, x = p.x + Math.cos(a) * 40, y = p.y + Math.sin(a) * 22, up = Math.sin(t * .4 + h * 30) > -.2;
-      if (up){ c.save(); c.globalAlpha = .9; put(c, x, y, k * .9, Math.cos(a + Math.PI / 2) < 0 ? -1 : 1, 0, 'turtle', '<use href="#turtle"/>'); c.restore(); }
+      if (up){ c.save(); c.globalAlpha = .9; put(c, x, y, k * .9, Math.cos(a + Math.PI / 2) < 0 ? -1 : 1, 0, 'turtle', '<use href="#turtle"/>'); c.restore(); eyeAdd('schildkroete', x, y, 7 * k, 'Eine Meeresschildkröte. Sie schwimmt weit und kehrt zum Strand zurück, an dem sie schlüpfte.'); }
     } else {
       // flying fish: a little shoal skims off the water in flat arcs, then is gone
       const T = (t + h * 13) % 7; if (T > 1.6) continue;
-      const dir = hsh(cy, cx) < .5 ? -1 : 1, P = new Path2D();
-      for (let i = 0; i < 5; i++){ const f = clamp(T / 1.6 - i * .06, 0, 1); if (!f || f >= 1) continue; const x = p.x + dir * (f * 60 + i * 4), y = p.y + i * 3 - Math.sin(f * Math.PI) * 5; P.moveTo(x - 2.4 * dir, y); P.lineTo(x + 2.4 * dir, y - .4); }
-      stroke(c, P, '#E8F2F4', 1.6, null, 'round', .9);
+      const dir = hsh(cy, cx) < .5 ? -1 : 1;
+      for (let i = 0; i < 5; i++){ const f = clamp(T / 1.6 - i * .06, 0, 1); if (!f || f >= 1) continue; drawFlyingFish(c, p.x + dir * (f * 60 + i * 4), p.y + i * 3 - Math.sin(f * Math.PI) * 5, dir, f, k); }
     }
   }
   // seabirds over the fishing grounds of the villages: they circle and dive where the fish are
@@ -982,11 +982,19 @@ function drawSeaLife(c, v, now){
       const w = waterNear(I, b), gx = w.x + (w.x - b.x) * 1.6, gy = w.y + (w.y - b.y) * 1.6 + 10; if (!ptIn(gx, gy, v)) continue;
       for (let i = 0; i < 4; i++){
         const a = t * (.7 + i * .13) + i * 1.7 + b.id, dive = (t + i * 1.3 + b.id) % 6 < .5, x = gx + Math.cos(a) * 14, y = gy + Math.sin(a) * 6 - (dive ? 0 : 10);
-        c.save(); c.translate(x, y); c.scale(.75, .75); stroke(c, birdPath(0, t * 1000, i * 3), '#2B1D14', 1.3, null, 'round', .85); c.restore();
+        c.save(); c.translate(x, y); c.scale(.6, .6); stroke(c, birdPath(i % 3 === 1 ? 2 : 0, t * 1000, i * 3), '#2B1D14', 1.5, null, 'round', .85); c.restore();
         if (dive) stroke(c, ellipse(x, y + 2, 2.4, .8), '#F4FBFA', .7, null, 'round', .8);
       }
     }
   }
+}
+/* a flying fish in the air: a slim silvery body, the long breast fins spread like wings, the tail forked */
+const FLYFISH_BODY = new Path2D('M-2 0Q-.6-.7 1.6-.3Q2.2 0 1.6.3Q-.6.7-2 0ZM-2 0L-3-.7L-2.8 0L-3 .7Z'), FLYFISH_WING = new Path2D('M.6-.2L-.4-1.9L-1.4-.2Z');
+function drawFlyingFish(c, x, y, dir, f, k){
+  c.save(); c.translate(x, y); c.rotate((f - .5) * .5 * dir); c.scale(dir * k * .8, k * .8);
+  c.fillStyle = '#EAF3F5'; c.lineWidth = .3; c.strokeStyle = '#2B1D14'; c.lineJoin = 'round';
+  c.fill(FLYFISH_BODY); c.stroke(FLYFISH_BODY); c.globalAlpha = .85; c.fill(FLYFISH_WING); c.stroke(FLYFISH_WING);
+  c.restore();
 }
 /* Clouds of the trade winds, drawn like everything else: an ink outline, flat colour, a shaded underside and a few
    strokes inside. Each one grows, stands a while and dissolves again (out there in tens of minutes, here in a minute or
@@ -2041,10 +2049,14 @@ function drawWork(c, v){
   }
 }
 const MAT = roundRect(-3.2, -.9, 6.4, 1.8, .6), MAT_L = roundRect(-5.8, -2.4, 11.6, 3, .8);
+const CRIT_SIZE = {dog:1, pig:.82, chicken:.7};   // against a grown person (about 11 high): a dog reaches the hip, a pig is a little smaller, a hen reaches the knee
+const CRIT_SAY = {dog:'Ein Hund. Die Siedler brachten Hunde in den Kanus mit. Er läuft den Leuten nach.', pig:'Ein Schwein. Es kam im Kanu und wühlt im Boden.', chicken:'Ein Huhn. Auch Hühner kamen in den Kanus mit. Es pickt nach Körnern.'};
 function drawCritter(c, a){
-  if (!reduced && lod !== 'far'){ c.save(); c.translate(a.x, a.y); if (a.left) c.scale(-1, 1); critterLive(c, a, worldNow); c.restore(); return; }   // moves with what it does (worldmotion.js)
+  const k = CRIT_SIZE[a.kind] || 1;
+  if (lod !== 'far') eyeAdd(a.kind, a.x, a.y - 2.2, 5, CRIT_SAY[a.kind], true);   // a tap on it gives a word (hingucker.js)
+  if (!reduced && lod !== 'far'){ c.save(); c.translate(a.x, a.y); if (a.left) c.scale(-1, 1); c.scale(k, k); critterLive(c, a, worldNow); c.restore(); return; }   // moves with what it does (worldmotion.js)
   const hop = a.moving && !reduced ? -Math.abs(Math.sin(a.phase)) * (a.kind === 'chicken' ? .9 : .5) : 0;
-  c.save(); c.translate(a.x, a.y + hop); if (a.left) c.scale(-1, 1); if (a.kind === 'chicken' && a.peck > 0) c.rotate(.35);
+  c.save(); c.translate(a.x, a.y + hop); if (a.left) c.scale(-1, 1); c.scale(k, k); if (a.kind === 'chicken' && a.peck > 0) c.rotate(.35);
   blit(c, 'cr|' + a.kind, `<use href="#${a.kind}"/>`); c.restore();
 }
 /* What an island lacks floats as a small bubble over some of its houses; a heart rises when someone moves in */
@@ -2584,10 +2596,11 @@ function birdWing(kind, u){
   const g = q / 5; P = new Path2D();
   if (kind === 1){   // frigatebird: long angled wings and a forked tail
     const el = -1.9 - 1 * g, tip = g > 0 ? 1.2 - 4.6 * g : 1.2 - 2.4 * g;
-    P.moveTo(-7.6, tip); P.lineTo(-3.4, el); P.lineTo(0, .2); P.lineTo(3.4, el); P.lineTo(7.6, tip); P.moveTo(0, .2); P.lineTo(-.7, 2.2); P.moveTo(0, .2); P.lineTo(.7, 2.2);
+    P.moveTo(-7.6, tip); P.lineTo(-3.4, el); P.lineTo(0, .2); P.lineTo(3.4, el); P.lineTo(7.6, tip); P.moveTo(0, -1.1); P.lineTo(0, .2); P.lineTo(-.7, 2.2); P.moveTo(0, .2); P.lineTo(.7, 2.2);   // wings, a short body, the forked tail
   } else {
     const B = BIRD_SHAPE[kind], tip = g > 0 ? -B.up * g : -B.dn * g, ct = -B.arch + (g > 0 ? 1.6 * g : .4 * g);
     P.moveTo(-B.S, tip); P.quadraticCurveTo(-B.S / 2, ct, 0, 0); P.quadraticCurveTo(B.S / 2, ct, B.S, tip);
+    P.moveTo(0, -.9); P.lineTo(0, 1.1);   // the body between the wings
   }
   BIRD_CACHE.set(key, P); return P;
 }

@@ -75,9 +75,9 @@ function drawSailLive(c, s, outer, mx, lift, now){
 /* ---------- turtles in the lagoon: they come up to breathe, the head lifts, rings spread, then they dive and only a shadow
    goes on. In the nesting months (the storm season) more of them come, and oftener. */
 function drawLagoonTurtle(c, I, lp, now){
-  const t = now / 1000, nest = seasonOf().id === 'sturm', cx = I.center.x | 0, many = nest ? 2 : ((cx % 2 === 0) ? 1 : 0);
+  const t = now / 1000, nest = seasonOf().id === 'sturm', cx = I.center.x | 0, many = nest ? 2 : 1;   // every lagoon has one; in the rains, when the turtles come to lay, two
   for (let k = 0; k < many; k++){
-    const per = (nest ? 13 : 18) + hsh(cx, k + 3) * 5, ph = ((t / per + hsh(cx, k + 9)) % 1 + 1) % 1;
+    const per = (nest ? 13 : (cx % 2 === 0) ? 18 : 34) + hsh(cx, k + 3) * 5, ph = ((t / per + hsh(cx, k + 9)) % 1 + 1) % 1;
     const up = ph > .72 ? 1 : ph > .6 ? (ph - .6) / .12 : ph < .1 ? 1 - ph / .1 : 0;
     const q = alongLoop(lp, -t * 2.4 + lp.len * (.25 + k * .5)), x = q.x + Math.sin(q.a) * 6, y = q.y - Math.cos(q.a) * 6;
     const rock = reduced ? 0 : Math.sin(t * 2 + k) * .06 * up;
@@ -85,6 +85,7 @@ function drawLagoonTurtle(c, I, lp, now){
     c.save(); c.translate(x, y); c.rotate(q.a + Math.PI + rock); c.scale(.9 + .1 * up, (.9 + .1 * up) * (1 + Math.sin(t * 2.6 + k) * .04));
     c.globalAlpha = .18 + .82 * up; if (up < .99){ c.fillStyle = 'rgba(30,74,90,.5)'; c.beginPath(); c.ellipse(0, 0, 4.4, 3.2, 0, 0, TAU); c.fill(); }
     blit(c, 'turtle', '<use href="#turtle"/>'); c.restore(); c.globalAlpha = 1;
+    if (up > .5) eyeAdd('schildkroete', x, y, 6, 'Eine Schildkröte in der Lagune. Sie taucht auf, um Luft zu holen.');
     // rings where it breaks the surface and where it goes down
     const ringAt = (age, X, Y) => { if (age < 0 || age > 1) return; stroke(c, ellipse(X, Y + 1, 1 + age * 7, .4 + age * 2.6, 0), '#F4FBFA', .5, null, null, (1 - age) * .75); if (age > .15) stroke(c, ellipse(X, Y + 1, .6 + age * 4.5, .25 + age * 1.5, 0), '#F4FBFA', .4, null, null, (1 - age) * .5); };
     ringAt((ph - .6) / .22, x, y); ringAt(ph / .2, x, y);
@@ -101,6 +102,22 @@ function shoreLoop(I){
   const pts = L.poly, cum = [0]; for (let i = 1; i <= pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i % pts.length].x - pts[i - 1].x, pts[i % pts.length].y - pts[i - 1].y));
   return I._sl = {pts, cum, len:cum[cum.length - 1]};
 }
+/* one land crab (x, y: its feet; k: which; mv: scuttling; t: seconds; night 0..1) */
+function drawCrabAt(c, x, y, k, mv, t, night){
+  c.save(); c.translate(x, y); c.scale(.62, .62); c.globalAlpha = 1 - night * .4;   // a land crab is a hand wide, a quarter of a hip
+  c.fillStyle = 'rgba(31,20,13,.18)'; c.beginPath(); c.ellipse(0, .9, 2, .6, 0, 0, TAU); c.fill();
+  // legs: three a side, scuttling
+  const w = mv ? t * 38 + k : 0; c.strokeStyle = INKC; c.lineWidth = .4; c.lineCap = 'round'; c.beginPath();
+  for (let i = 0; i < 3; i++) for (const sg of [-1, 1]){ const sw = Math.sin(w + i * 2 + (sg > 0 ? 0 : 3.1)) * (mv ? .5 : .06); c.moveTo(sg * 1, -.1 + i * .2); c.lineTo(sg * (2.1 + sw), .6 + i * .2 - Math.abs(sw) * .2); }
+  c.stroke();
+  c.fillStyle = '#C9553A'; c.fill(CRAB_BODY); stroke(c, CRAB_BODY, INKC, .4, null, 'round');
+  // claws up, eyes on stalks
+  const cl = mv ? Math.sin(t * 20 + k) * .25 : Math.sin(t * 1.4 + k * 2) * .12;
+  c.beginPath(); c.moveTo(-1.3, -.9); c.lineTo(-2.3, -2 + cl); c.moveTo(1.3, -.9); c.lineTo(2.3, -2 - cl); c.stroke();
+  c.fillStyle = '#E37A55'; for (const sg of [-1, 1]){ c.beginPath(); c.arc(sg * 2.4, -2.2 + cl * sg * -1, .55, 0, TAU); c.fill(); c.lineWidth = .3; c.stroke(); }
+  c.fillStyle = INKC; c.fillRect(-.6, -1.8, .3, .5); c.fillRect(.3, -1.8, .3, .5);
+  c.restore();
+}
 function drawBeachCrabs(c, v, now){
   const t = now / 1000, night = nightLevel();
   for (const I of islands){
@@ -112,20 +129,47 @@ function drawBeachCrabs(c, v, now){
       const q = alongLoop(lp, d), a = Math.atan2(I.center.y - q.y, I.center.x - q.x), x = q.x + Math.cos(a) * 3.4, y = q.y + Math.sin(a) * 3.4;
       if (!ptIn(x, y, v) || !landAt(I, {x, y})) continue;
       const f = (t / per + sd * 6) % 1, mv = f > .6 && f < .86, face = Math.cos(q.a) * (k % 2 ? -1 : 1) >= 0 ? 1 : -1;
-      c.save(); c.translate(x, y); c.globalAlpha = 1 - night * .4;
-      c.fillStyle = 'rgba(31,20,13,.18)'; c.beginPath(); c.ellipse(0, .9, 2, .6, 0, 0, TAU); c.fill();
-      // legs: three a side, scuttling
-      const w = mv ? t * 38 + k : 0; c.strokeStyle = INKC; c.lineWidth = .4; c.lineCap = 'round'; c.beginPath();
-      for (let i = 0; i < 3; i++) for (const sg of [-1, 1]){ const sw = Math.sin(w + i * 2 + (sg > 0 ? 0 : 3.1)) * (mv ? .5 : .06); c.moveTo(sg * 1, -.1 + i * .2); c.lineTo(sg * (2.1 + sw), .6 + i * .2 - Math.abs(sw) * .2); }
-      c.stroke();
-      c.fillStyle = '#C9553A'; c.fill(CRAB_BODY); stroke(c, CRAB_BODY, INKC, .4, null, 'round');
-      // claws up, eyes on stalks
-      const cl = mv ? Math.sin(t * 20 + k) * .25 : Math.sin(t * 1.4 + k * 2) * .12;
-      c.beginPath(); c.moveTo(-1.3, -.9); c.lineTo(-2.3, -2 + cl); c.moveTo(1.3, -.9); c.lineTo(2.3, -2 - cl); c.stroke();
-      c.fillStyle = '#E37A55'; for (const sg of [-1, 1]){ c.beginPath(); c.arc(sg * 2.4, -2.2 + cl * sg * -1, .55, 0, TAU); c.fill(); c.lineWidth = .3; c.stroke(); }
-      c.fillStyle = INKC; c.fillRect(-.6, -1.8, .3, .5); c.fillRect(.3, -1.8, .3, .5);
-      c.restore();
+      drawCrabAt(c, x, y, k, mv, t, night);
     }
+  }
+}
+
+/* ---------- rats. The Pacific rat (kiore) came along in the canoes, hidden in the baskets. It does not show by day: at dusk and
+   in the night a rat or two slips out of the edge of the village, runs to a store, a harvest house or a field, nibbles and
+   is gone. Where a storehouse on posts with rat guards stands, there is one rat less (see ratGuard, game.js). It is only
+   a small sight, so it is drawn only close up. */
+const RAT_AT = new Set(['ernte', 'speicher', 'taro', 'pulaka']);
+function drawRatAt(c, x, y, face, mv, t, sd){
+  c.save(); c.translate(x, y); c.scale(face, 1); c.lineCap = 'round'; c.lineJoin = 'round';
+  const g = mv ? t * 30 + sd * 9 : 0, bob = mv ? -Math.abs(Math.sin(g)) * .18 : 0, sniff = mv ? 0 : Math.sin(t * 9 + sd * 5) * .12;
+  c.fillStyle = 'rgba(31,20,13,.2)'; c.beginPath(); c.ellipse(0, .35, 2, .5, 0, 0, TAU); c.fill();
+  const T = new Path2D(); T.moveTo(-1.6, -.9 + bob); T.quadraticCurveTo(-3.1, -.2 + Math.sin(t * 3 + sd) * .4, -4, -1.2 + Math.sin(t * 2.3 + sd * 3) * .5);   // the long bare tail
+  stroke(c, T, INKC, .75, null, 'round'); stroke(c, T, '#C7A898', .38, null, 'round');
+  if (mv) for (const [lx, ph] of [[-1, 0], [.9, Math.PI]]){ const sw = Math.sin(g + ph) * .7; critLine(c, lx, -.5 + bob, lx + sw, .1, INKC, .45); }
+  else { critLine(c, -.8, -.5, -.9, .1, INKC, .45); critLine(c, .8, -.5, .9, .1, INKC, .45); }
+  c.fillStyle = '#6E5C4E'; c.beginPath(); c.ellipse(-.1, -.95 + bob, 1.65, .85, 0, 0, TAU); c.fill(); c.lineWidth = .35; c.strokeStyle = INKC; c.stroke();
+  c.save(); c.translate(1.5, -.95 + bob + sniff); const H = new Path2D(); H.moveTo(-.5, -.6); H.quadraticCurveTo(.9, -.7, 1.55, -.15); H.lineTo(.9, .3); H.quadraticCurveTo(-.2, .6, -.6, .3); H.closePath();
+  c.fillStyle = '#7A6656'; c.fill(H); c.stroke(H);
+  c.fillStyle = '#C99B90'; c.beginPath(); c.arc(-.1, -.85, .36, 0, TAU); c.fill(); c.lineWidth = .22; c.stroke();   // the round ear
+  c.fillStyle = INKC; c.beginPath(); c.arc(.45, -.28, .13, 0, TAU); c.arc(1.5, -.05, .12, 0, TAU); c.fill();   // eye, nose
+  c.restore(); c.restore();
+}
+function drawRats(c, I, v, now){
+  const night = nightLevel(), dp = dayPhase(), dim = Math.max(night * 1.6, dp < .1 ? 1 - dp / .1 : 0);
+  if (dim < .25 || (I.stock.nahrung || 0) < 1) return;
+  const guard = ratGuard(I); if (!guard) return;
+  const spots = I.buildings.filter(b => !b.bt && RAT_AT.has(b.kind)); if (!spots.length) return;
+  const t = now / 1000, n = guard === 1 ? 2 : 1;
+  for (let k = 0; k < n; k++){
+    const b = spots[(k * 5 + (I.center.x | 0)) % spots.length], per = 15 + k * 6, u = (t / per + hsh(k, I.center.y | 0)) % 1;
+    const K = KINDS[b.kind], a = hsh(k + 3, b.id) * TAU, ex = Math.cos(a) * 16, ey = Math.sin(a) * 8, bx = b.x + Math.cos(a) * K.r * .5, by = b.y + 3 + Math.sin(a) * 2;
+    let f = 0, mv = false;   // 0 at the edge .. 1 at the food
+    if (u < .5 || u > .94) continue;
+    if (u < .58){ f = (u - .5) / .08; mv = true; } else if (u < .86) f = 1; else { f = 1 - (u - .86) / .08; mv = true; }
+    const x = bx + ex * (1 - f), y = by + ey * (1 - f);
+    if (!ptIn(x, y, v)) continue;
+    c.globalAlpha = Math.min(1, dim * 1.4); drawRatAt(c, x, y, (u < .86) === (ex > 0) ? -1 : 1, mv, t, k);   // towards the food, then away c.globalAlpha = 1;
+    eyeAdd('ratte', x, y - 1, 3.5, 'Eine Ratte. Sie kam heimlich im Kanu mit und frisst nachts am Vorrat. Ein Speicher auf Pfosten hält sie fern.', true);
   }
 }
 
@@ -300,17 +344,17 @@ function pigLive(c, now, s, mv, hh){
   const leg = (x, ph) => { const sw = pose === 'trot' ? Math.sin(g + ph) * 1 : 0, lf = pose === 'trot' ? Math.max(0, Math.cos(g + ph)) * .5 : 0; critLine(c, x, -1.2 + bob, x + sw, .5 - lf, INKC, .95); };
   leg(-3.2, Math.PI); leg(2.8, 0); leg(-1.6, 0); leg(1.4, Math.PI);
   c.save(); c.translate(0, bob); c.rotate(roll);
-  c.fillStyle = BODY; c.beginPath(); c.ellipse(0, -2.2, 4, 2.4, 0, 0, TAU); c.fill(); c.lineWidth = .55; c.strokeStyle = INKC; c.stroke();
+  c.fillStyle = BODY; c.beginPath(); c.ellipse(0, -2.2, 3.9, 2.25, 0, 0, TAU); c.fill(); c.lineWidth = .55; c.strokeStyle = INKC; c.stroke();
   // the curly tail
   c.save(); c.translate(-3.9, -2.6); c.rotate(Math.sin(t * (pose === 'trot' ? 10 : 3) + s) * .35); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-1.1, -.6, -.6, -1.4); c.quadraticCurveTo(-.2, -1.8, -.8, -1.2); c.lineWidth = .5; c.stroke(); c.restore();
   // head: down at the ground while rooting, the snout working
   const hd = pose === 'root' ? .62 + Math.sin(t * 9 + s) * .08 : pose === 'trot' ? .12 + Math.sin(g * 2) * .05 : Math.sin(t * 1.1 + s) * .06;
   c.save(); c.translate(2.9, -2.5); c.rotate(hd); c.translate(-2.9, 2.5);
-  c.fillStyle = BODY; c.beginPath(); c.ellipse(3.4, -2.5, 1.9, 1.55, 0, 0, TAU); c.fill(); c.lineWidth = .45; c.stroke();
-  c.fillStyle = SNOUT; c.beginPath(); c.ellipse(4.9 + (pose === 'root' ? Math.sin(t * 14) * .15 : 0), -2.4, 1, .85, 0, 0, TAU); c.fill(); c.lineWidth = .4; c.stroke();
+  c.fillStyle = BODY; c.beginPath(); c.ellipse(3.3, -2.4, 1.45, 1.2, 0, 0, TAU); c.fill(); c.lineWidth = .45; c.stroke();
+  c.fillStyle = SNOUT; c.beginPath(); c.ellipse(4.4 + (pose === 'root' ? Math.sin(t * 14) * .15 : 0), -2.3, .8, .65, 0, 0, TAU); c.fill(); c.lineWidth = .4; c.stroke();
   c.save(); c.translate(3.1, -3.8); c.rotate(pose === 'ear' ? Math.sin(t * 18) * .35 : Math.sin(t * 1.7 + s) * .05); c.translate(-3.1, 3.8);
-  c.fillStyle = BODY; c.beginPath(); c.moveTo(2.2, -3.8); c.lineTo(3.2, -5.4); c.lineTo(3.7, -3.6); c.closePath(); c.fill(); c.lineWidth = .4; c.stroke(); c.restore();
-  c.fillStyle = '#F1EBD9'; c.beginPath(); c.arc(4, -3, .22, 0, TAU); c.fill();
+  c.fillStyle = BODY; c.beginPath(); c.moveTo(2.5, -3.5); c.lineTo(3.3, -4.7); c.lineTo(3.8, -3.4); c.closePath(); c.fill(); c.lineWidth = .4; c.stroke(); c.restore();
+  c.fillStyle = '#F1EBD9'; c.beginPath(); c.arc(3.8, -2.85, .2, 0, TAU); c.fill();
   c.restore(); c.restore();
   if (pose === 'root'){   // earth flies up from the snout
     const nx = 7 * Math.cos(.35) + 0, base = 5.6; c.fillStyle = '#7A5A38';

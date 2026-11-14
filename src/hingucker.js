@@ -12,10 +12,10 @@ let petals = [], eyes = [];   // petals in the air; what can be tapped this fram
 const eyeSaid = {};
 
 /* ---------- a tap on a sight gives a word (cheap: only what was drawn in the last frame can be hit) */
-const eyeAdd = (kind, x, y, r, say) => { eyes.push({kind, x, y, r, say}); };
+const eyeAdd = (kind, x, y, r, say, tight) => { eyes.push({kind, x, y, r, say, tight}); };   // tight: only the thing itself counts, not a finger's width round it (a hen between the houses)
 function hitEye(p){
   for (const e of eyes){
-    if (Math.hypot(p.x - e.x, (p.y - e.y) * 1.2) > Math.max(e.r, 16 / cam.z)) continue;
+    if (Math.hypot(p.x - e.x, (p.y - e.y) * 1.2) > (e.tight ? e.r : Math.max(e.r, 16 / cam.z))) continue;
     const n = performance.now(); if (eyeSaid[e.kind] === undefined || n - eyeSaid[e.kind] > 9000){ eyeSaid[e.kind] = n; toast(e.say, 2600, false); }
     return true;
   }
@@ -62,7 +62,7 @@ function bloomPts(I){
 const BUT_COL = ['#E8913A', '#F3D35A', '#F6F1E6', '#7FB6C8'];
 function butterflyAt(c, x0, y0, t, sd){
   const f = .3 + (sd % 7) * .03, x = x0 + Math.cos(t * f * 2.1 + sd) * 9 + Math.sin(t * f * 3.3 + sd) * 2.5, y = y0 - 5 + Math.sin(t * f * 2.9 + sd) * 4 - Math.abs(Math.sin(t * 1.7 + sd)) * 2, flap = .2 + .8 * Math.abs(Math.sin(t * 17 + sd));
-  c.save(); c.translate(x, y); c.rotate(Math.sin(t * f * 2.1 + sd) * .4); c.fillStyle = BUT_COL[sd % BUT_COL.length]; c.strokeStyle = INKC; c.lineWidth = .22;
+  c.save(); c.translate(x, y); c.rotate(Math.sin(t * f * 2.1 + sd) * .4); c.scale(.68, .68); c.fillStyle = BUT_COL[sd % BUT_COL.length];   // a butterfly is a hand's width, not a quarter of a person c.strokeStyle = INKC; c.lineWidth = .22;
   for (const d of [-1, 1]){ c.save(); c.scale(d * flap, 1); c.beginPath(); c.ellipse(.75, -.35, .8, .55, -.5, 0, TAU); c.ellipse(.6, .45, .55, .4, .4, 0, TAU); c.fill(); c.stroke(); c.restore(); }
   c.fillStyle = INKC; c.fillRect(-.12, -.7, .24, 1.4); c.restore();
 }
@@ -119,6 +119,7 @@ function drawBeautyTop(c, v, now){
   drawPetals(c, now);
   if (lod === 'far') return;
   if (!reduced && quality && lod === 'near' && nightLevel() < .2) for (const I of islands) if (lived(I) && boxIn(I.box, v)) drawGecko(c, I, v, now);   // on the roofs: after the houses are drawn
+  if (!reduced && quality) for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawFlughunde(c, I, v, now); if (lod === 'near') drawRats(c, I, v, now); }   // fruit bats at dusk, rats at night (worldmotion.js)
   const t = reduced ? 0 : now / 1000, W = wind(), dir = W.tx >= 0 ? 1 : -1;
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v) || !beautyFx(I).bunting) continue;
@@ -163,9 +164,10 @@ const ringAt = (c, x, y, age, big) => { if (age < 0 || age > 1) return; stroke(c
 
 /* a pod leaps off the reef, one after the other, now and then (not every minute) */
 function drawReefDolphins(c, I, lp, v, now){
-  const sd = hsh(I.center.x | 0, I.center.y | 0), S = slotOf(now, 58 + sd * 24, sd * 90); if (S.f > 5 || hsh(S.n, sd * 9 + 3) > .55) return;
-  const base = alongLoop(lp, hsh(S.n, sd * 5 + 1) * lp.len), a = Math.atan2(base.y - I.center.y, base.x - I.center.x), dir = Math.cos(base.a) < 0 ? -1 : 1;
+  const sd = hsh(I.center.x | 0, I.center.y | 0), S = slotOf(now, 40 + sd * 20, sd * 90); if (S.f > 5 || hsh(S.n, sd * 9 + 3) > .6) return;
+  const base = alongLoop(lp, hsh(S.n, sd * 5 + 1) * lp.len), a = Math.atan2(base.y - I.center.y, base.x - I.center.x), dir0 = Math.cos(base.a) < 0 ? -1 : 1;
   const ox = base.x + Math.cos(a) * 12, oy = base.y + Math.sin(a) * 9; if (!ptIn(ox, oy, v) || landAt(I, {x:ox, y:oy})) return;
+  const wet = d => !landAt(I, {x:ox + d * 50, y:oy + 10}) && !landAt(I, {x:ox + d * 25, y:oy + 5}), dir = wet(dir0) ? dir0 : wet(-dir0) ? -dir0 : 0; if (!dir) return;   // the whole leap over water, whichever way it fits
   for (let i = 0; i < 3; i++){
     const T = S.f - i * .7; if (T < 0 || T > 3) continue;
     const f = clamp(T / 1.25, 0, 1), x = ox + dir * (i * 15 + f * 20), y = oy + i * 5 - Math.sin(f * Math.PI) * 9;
@@ -207,7 +209,7 @@ function drawHeron(c, I, v, now){
   // the cycle: stands, a slow step, strike, lifts the catch, swallows, stands
   const strike = T > 13 && T < 14.4 ? Math.sin((T - 13) / 1.4 * Math.PI) : 0, catchUp = T > 14 && T < 17.5 ? 1 : 0, step = T > 9 && T < 11 ? Math.sin((T - 9) / 2 * Math.PI) : 0;
   const look = Math.sin(now / 1900 + sd * 9) * .5 + (T > 4 && T < 6 ? .8 : 0);
-  c.save(); c.translate(x + face * step * 1.4, y); c.scale(face * .74, .74); c.globalAlpha = al;
+  c.save(); c.translate(x + face * step * 1.4, y); c.scale(face * .55, .55); c.globalAlpha = al;
   c.fillStyle = 'rgba(31,20,13,.18)'; c.beginPath(); c.ellipse(0, .4, 3, .8, 0, 0, TAU); c.fill();
   c.lineCap = 'round'; c.lineJoin = 'round';
   const leg = (dx, lift) => { critLine(c, dx, -3.4 - lift * .5, dx + (lift ? .6 : 0), .2 - lift, INKC, .75); critLine(c, dx, -3.4 - lift * .5, dx + (lift ? .6 : 0), .2 - lift, '#C9A83A', .32); };
@@ -226,7 +228,7 @@ function drawHeron(c, I, v, now){
   c.restore();
   stroke(c, ellipse(x, y + .6, 2.4, .7), '#F4FBFA', .4, null, null, .55 * al);   // the shallows round its legs
   if (T > 13 && T < 15) ringAt(c, x + face * 4, y + 1, (T - 13) / 2, 4);
-  eyeAdd('reiher', x, y - 5, 8, 'Ein Riffreiher. Er steht ganz still und wartet auf einen Fisch.');
+  eyeAdd('reiher', x, y - 4, 7, 'Ein Riffreiher. Er steht ganz still und wartet auf einen Fisch.');
 }
 
 /* a gecko clings to the post of a house: still, a head bob, a quick run up or down, still again. Some houses have one. */
@@ -235,7 +237,7 @@ function drawGecko(c, I, v, now){
     if (b.bt || b.at || (b.kind !== 'pfahl' && b.kind !== 'haus') || b.id % 7 !== 1 || !ptIn(b.x, b.y, v)) continue;
     const K = KINDS[b.kind], sc = (b.v && b.v.scale) || 1, S = slotOf(now, 16, b.id * 3.7), T = S.f, run = T > 9 && T < 9.7 ? (T - 9) / .7 : T > 12.2 && T < 12.8 ? 1 - (T - 12.2) / .6 : T >= 9.7 && T <= 12.2 ? 1 : 0;
     const x = b.x - K.r * .86 * sc * (b.v && b.v.mirror ? -1 : 1), y = b.y - K.hy * sc * (.5 + .22 * run), moving = (T > 9 && T < 9.7) || (T > 12.2 && T < 12.8), bob = !moving && T > 3 && T < 5 ? Math.sin(T * 9) * .25 : 0;
-    c.save(); c.translate(x, y); c.scale(.62, .62); c.rotate(moving ? 0 : bob * .1); c.lineCap = 'round'; c.lineJoin = 'round';
+    c.save(); c.translate(x, y); c.scale(.42, .42); c.rotate(moving ? 0 : bob * .1); c.lineCap = 'round'; c.lineJoin = 'round';
     // a slim body, a rounder head with big eyes, thin bent legs with round toe pads, a tapering tail that curls
     const body = new Path2D(); body.moveTo(0, -1.1); body.bezierCurveTo(.85, -.7, .8, .6, .3, 1.5); body.lineTo(-.3, 1.5); body.bezierCurveTo(-.8, .6, -.85, -.7, 0, -1.1);
     const head = new Path2D(); head.ellipse(0, -1.85, .85, .95, 0, 0, TAU);
@@ -250,6 +252,29 @@ function drawGecko(c, I, v, now){
     if (T > 5.5 && T < 6.2){ stroke(c, new Path2D('M0-2.7V-3.4'), '#C8402C', .3, null, 'round'); }   // a flick of the tongue
     c.restore();
     eyeAdd('gecko', x, y, 6, 'Ein Gecko am Dach. Er fängt die Mücken.');
+  }
+}
+
+/* fruit bats (flying foxes, native to these islands): at dusk, on some evenings, a few leave the trees and cross the village in
+   slow wing beats, high up, dark against the pink sky. They are drawn from the same dark ink as the rest. */
+const BAT_WING = new Map();
+function batWing(g){
+  const q = Math.round(clamp(g, -1, 1) * 4); let P = BAT_WING.get(q); if (P) return P; const h = q / 4;
+  P = new Path2D(`M0-.3L1.5 ${-1.3 - 1.2 * h}L3.6 ${-.5 - 2.6 * h}Q3.2 ${.5 - 1.6 * h} 2.5 ${.7 - h}Q1.9 ${.2 - .6 * h} 1.3 ${.8 - .4 * h}Q.7 .3 0 .9Z`); BAT_WING.set(q, P); return P;
+}
+function drawFlughunde(c, I, v, now){
+  const u = (dayPhase() - .62) / .13; if (u < 0 || u > 1 || !opts.night) return;
+  const day = Math.floor((tick + 30) / DAY_TICKS), sd = hsh(day, (I.center.x | 0) % 97 + 5); if (sd > .7) return;   // not every evening
+  const w = I.box.x1 - I.box.x0, dir = sd < .35 ? 1 : -1, e = u * u * (3 - 2 * u), al = Math.min(1, u * 8, (1 - u) * 8), t = now / 1000;
+  for (let k = 0; k < 4; k++){
+    const x = dir > 0 ? I.box.x0 - 25 + (w + 50) * (e - k * .035) : I.box.x1 + 25 - (w + 50) * (e - k * .035), y = I.center.y - 34 - k * 4 + Math.sin(t * .8 + k * 2) * 3 + (k % 2) * 6;
+    if (e - k * .035 < 0 || e - k * .035 > 1 || !ptIn(x, y, v)) continue;
+    const g = Math.sin(t * 5.5 + k * 1.7) * .9, W = batWing(g);
+    c.save(); c.translate(x, y); c.globalAlpha = al * .92; c.lineJoin = 'round'; c.fillStyle = '#34261F'; c.strokeStyle = '#1B120C'; c.lineWidth = .28;
+    for (const sg of [-1, 1]){ c.save(); c.scale(sg * dir, 1); c.fill(W); c.stroke(W); c.restore(); }
+    c.beginPath(); c.ellipse(0, .1, .55, 1, 0, 0, TAU); c.fill(); c.stroke(); c.beginPath(); c.arc(dir * .1, -1, .5, 0, TAU); c.fill(); c.stroke();   // body and fox-like head
+    c.restore();
+    if (k === 0) eyeAdd('flughund', x, y, 9, 'Flughunde. Am Abend fliegen sie aus und suchen reife Früchte.');
   }
 }
 

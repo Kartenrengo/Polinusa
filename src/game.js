@@ -597,7 +597,8 @@ function syncCritters(){
     const want = homes.length ? {dog:clamp(Math.ceil(pop / 12), 1, 3), chicken:clamp(Math.ceil(pop / 6), 1, 6), pig:Math.min(4, pens + (I.clan ? 1 : 0))} : {dog:0, chicken:0, pig:0};
     for (const kind of Object.keys(CRITTER)){
       const have = mine.filter(a => a.kind === kind);
-      for (let i = have.length; i < want[kind]; i++){ const h = homes[Math.floor(Math.random() * homes.length)]; critters.push({isl:I.id, kind, home:h, x:h.x + (Math.random() - .5) * 12, y:h.y + 7, tx:h.x, ty:h.y + 7, wait:Math.random() * 2000, left:Math.random() < .5, moving:false, phase:0, peck:0}); }
+      for (let i = have.length; i < want[kind]; i++){ const h = homes[Math.floor(Math.random() * homes.length)]; let q = {x:h.x + (Math.random() - .5) * 12, y:h.y + 7}; for (let n = 0; n < 8 && (!landAt(I, q) || onPlaza(I, q)); n++) q = {x:h.x + (Math.random() - .5) * 16, y:h.y + 3 + Math.random() * 8};   // on land and off the square
+        critters.push({isl:I.id, kind, home:h, x:q.x, y:q.y, tx:q.x, ty:q.y, wait:Math.random() * 2000, left:Math.random() < .5, moving:false, phase:0, peck:0}); }
       if (have.length > want[kind]){ const drop = new Set(have.slice(want[kind])); critters = critters.filter(a => !drop.has(a)); }
     }
   }
@@ -619,7 +620,10 @@ function stepCritters(dt){
       if (p && landOf(I, p) === L){ a.tx = p.x; a.ty = p.y; }
       a.wait = C.wait[0] + Math.random() * (C.wait[1] - C.wait[0]); continue;
     }
-    const v = Math.min(d, dt * C.v); a.x += dx / d * v; a.y += dy / d * v; a.moving = true; a.left = dx < 0; a.phase += v * 1.6;
+    const v = Math.min(d, dt * C.v), nx = a.x + dx / d * v, ny = a.y + dy / d * v;
+    // the way home may cross the square: they stop at its edge instead of trotting over it (one that stands on it, steps off)
+    if (onPlaza(isl(a.isl), {x:nx, y:ny}) && !onPlaza(isl(a.isl), a)){ a.tx = a.x; a.ty = a.y; a.wait = 600; continue; }
+    a.x = nx; a.y = ny; a.moving = true; a.left = dx < 0; a.phase += v * 1.6;
   }
 }
 /* Where to next. Wherever the way leaves the land, across a lagoon or a bay, they paddle a dugout; a few steps into
