@@ -2210,3 +2210,16 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
   sicher heimkamen, ist eine gut begründete Annahme aus Fahrtsimulationen (vermutet, Irwin). Wie gut Lapita-Kanus am Wind
   segeln konnten und welche Segel sie hatten, ist nicht belegt; die Werte hier sind Spiel.
 
+## Der Krebs hangelt sich, ein Skink huscht (Version 102)
+
+- **Der Einsiedlerkrebs läuft nicht mehr halb verdeckt unter der Leiste.** Er rutscht hinter der unteren Kante hervor und
+  hängt sich kopfüber an sie, die Beine an der Kante, und hangelt sich an ihr entlang. Er schwingt sich hinauf auf die Leiste,
+  sitzt, schaut, klettert über die Kante wieder hinunter, hangelt weiter und zieht sich hinter die Kante zurück. Auch das
+  Anklopfen und der Weg zur großen Muschel gehen jetzt hängend an der Kante. Er versteckt sich nur noch hinter der Kante,
+  nie mehr halb darunter.
+- **Neu: ein Blauschwanzskink**, noch seltener als der Krebs: frühestens nach vier Minuten, dann alle acht bis fünfzehn
+  Minuten, nie zugleich mit dem Krebs. Er huscht in schnellen Schüben über die Leiste, der Körper schlängelt, die Beine wirbeln;
+  er hält an, nickt mit dem Kopf, schlägt mit dem blauen Schwanz, züngelt und ist über den Rand verschwunden. Antippen lässt
+  ihn sofort davonflitzen, eine Blase erzählt von ihm.
+- Blauschwanzskinke (Emoia) leben auf fast allen Inseln Ozeaniens (belegt).
+

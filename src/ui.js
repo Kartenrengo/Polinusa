@@ -1480,21 +1480,26 @@ const MASCOT = {first:75000, gap:[150000, 270000], S:36, toastGap:240000};
    conch button ('conch') or at the message that has just come ('toast'). Hermit crabs are shy: they come out slowly, duck
    back at once, look about a long while, then scuttle sideways in short bursts. */
 const CRAB_PLAYS = [
-  {at:'bar', k:[[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [900, 0, 1, .42, 0, 0, 0, 'u', ''], [1700, 0, 1, .42, 0, 0, 0, 'u', 'o'], [2300, 0, 1, .42, 0, 0, 0, 'u', 's'], [3300, 0, 1, .42, 0, 0, 0, 'u', 'o'],
-   [4400, 0, 1, .42, 0, 0, 0, 'u', 'ob'], [5200, 0, 1, .42, 0, 0, 0, 'u', 'ok'], [7000, -44, 1, .42, 0, 0, 0, 'u', 'o'], [7700, -44, 1, .42, 0, 0, 0, 'u', 'ow'], [8600, -44, 1, .42, 0, 0, 0, 'u', 'ok'],
-   [9300, -44, 1, .2, 70, 0, 0, '', 'ok'], [10800, -44, .58, 0, 90, 0, 0, '', 'ok'], [11300, -44, .58, 0, 10, 0, 0, '', 'o'], [12600, -44, .58, 0, 0, 0, 0, '', 'ob'],
-   [13300, -44, .58, 0, -80, 0, 0, '', 'ok'], [14800, -44, 1, .42, -90, 0, 0, 'u', 'ok'], [15300, -44, 1, .42, 0, 0, 0, 'u', 's'], [16300, -44, 1, -.6, 0, 0, 0, 'u', '']]},
-  // from behind the top edge it creeps down over the bar, waves on the lower rim, drops onto the map, looks, hides
-  {at:'bar', k:[[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [3200, 0, .7, 0, -90, 0, 0, '', 'ok'], [3800, 0, .7, 0, -8, 0, 0, '', 'o'], [4600, 0, .7, 0, 0, 1, 0, '', 'ob'], [5300, 0, .7, 0, 0, 1, 0, '', 'ow'],
-   [6200, 0, .7, 0, 0, 1, 0, '', 'o'], [6700, 20, 1, .42, 0, 1, -12, '', 'o'], [7900, 20, 1, .42, 0, 1, 0, 'u', 'ob'], [8600, 20, 1, .42, 0, 1, 0, 'u', 's'], [9600, 20, 1, -.6, 0, 1, 0, 'u', '']]},
-  // under the bar it knocks on it from below, the bar jumps, it listens, knocks again, waves and hides
-  {at:'bar', k:[[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [900, 0, 1, .36, 0, 0, 0, 'u', 'o'], [1900, 0, 1, .36, 0, 0, 0, 'u', 'ob'], [2400, 0, 1, .36, 0, 0, 0, 'u', 'on'], [3400, 0, 1, .36, 0, 0, 0, 'u', 'o'],
-   [4300, 0, 1, .36, 0, 0, 0, 'u', 'on'], [5100, 0, 1, .36, 0, 0, 0, 'u', 'ow'], [6100, 0, 1, .36, 0, 0, 0, 'u', 's'], [7000, 0, 1, -.6, 0, 0, 0, 'u', '']]},
-  // it finds the big conch of the news: walks to it under the bar, climbs up, taps it (the conch nods), looks from the big
-  // conch to its own little shell and back, decides it is too big, climbs down and hides
-  {at:'conch', k:[[0, -70, 1, -.6, 0, 1, 0, 'u', ''], [900, -70, 1, .42, 0, 1, 0, 'u', 'o'], [1700, -70, 1, .42, 0, 1, 0, 'u', 'ob'], [3400, -8, 1, .42, 0, 1, 0, 'u', 'ok'],
-   [4200, -8, .85, 0, 80, 1, 0, '', 'ok'], [6600, -8, 'c', .55, 90, 1, 0, '', 'ok'], [7200, -24, 'c', .1, 0, 1, 0, '', 'o'], [7800, -24, 'c', .1, 0, 1, 0, '', 'ot'], [8600, -24, 'c', .1, 0, 1, 0, '', 'oc'],
-   [10000, -24, 'c', .1, 0, 1, 0, '', 'ob'], [10600, -24, 'c', .1, 0, 1, 0, '', 'ot'], [11300, -24, 'c', .1, -80, 1, 0, '', 'ok'], [13600, -24, 1, .42, -90, 1, 0, 'u', 'ok'], [14100, -24, 1, .42, 0, 1, 0, 'u', 's'], [15000, -24, 1, -.6, 0, 1, 0, 'u', '']]},
+  // it slides down from behind the bar's lower edge and hangs from it upside down, holding on with its legs; it looks about,
+  // works along the edge hand over hand, waves, swings up onto the bar, sits and looks, climbs down over the edge again,
+  // hangs on a bit further and pulls itself back up behind the edge
+  {at:'bar', k:[[0, 0, 1, -.5, 180, 0, 0, 'u', ''], [900, 0, 1, .4, 180, 0, 0, '', ''], [1700, 0, 1, .4, 180, 0, 0, '', 'o'], [2300, 0, 1, .4, 180, 0, 0, '', 's'], [3200, 0, 1, .4, 180, 0, 0, '', 'o'],
+   [4100, 0, 1, .4, 180, 0, 0, '', 'ob'], [4700, 0, 1, .4, 180, 0, 0, '', 'ok'], [6600, 50, 1, .4, 180, 0, 0, '', 'o'], [7300, 50, 1, .4, 180, 0, 0, '', 'ow'], [8100, 50, 1, .4, 180, 0, 0, '', 'ok'],
+   [9300, 50, 1, -.55, 90, 0, 0, '', 'ok'], [10500, 50, .62, 0, 90, 0, 0, '', 'ok'], [11000, 50, .62, 0, 0, 0, 0, '', 'o'], [12400, 50, .62, 0, 0, 0, 0, '', 'ob'],
+   [13000, 50, .62, 0, -90, 0, 0, '', 'ok'], [14100, 50, 1, -.55, -90, 0, 0, '', 'ok'], [15000, 50, 1, .4, -180, 0, 0, '', 'ok'], [16600, 92, 1, .4, -180, 0, 0, '', 'o'], [17300, 92, 1, .4, -180, 0, 0, '', 's'], [18200, 92, 1, -.5, -180, 0, 0, 'u', '']]},
+  // from behind the top edge it creeps down over the bar, waves on the lower rim, climbs over the edge and hangs from it,
+  // works along it and pulls itself up behind it
+  {at:'bar', k:[[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [3200, 0, .66, 0, -90, 0, 0, '', 'ok'], [3800, 0, .66, 0, -8, 0, 0, '', 'o'], [4600, 0, .66, 0, 0, 1, 0, '', 'ob'], [5300, 0, .66, 0, 0, 1, 0, '', 'ow'],
+   [6000, 0, .66, 0, -90, 0, 0, '', 'ok'], [7000, 0, 1, -.55, -90, 0, 0, '', 'ok'], [7900, 0, 1, .4, -180, 0, 0, '', 'ok'], [9700, 46, 1, .4, -180, 0, 0, '', 'ob'], [10400, 46, 1, .4, -180, 0, 0, '', 's'], [11300, 46, 1, -.5, -180, 0, 0, 'u', '']]},
+  // hanging under the bar it knocks on it from below with its big claw, the bar jumps, it listens, knocks again, waves, hides
+  {at:'bar', k:[[0, 0, 1, -.5, 180, 0, 0, 'u', ''], [900, 0, 1, .4, 180, 0, 0, '', 'o'], [1900, 0, 1, .4, 180, 0, 0, '', 'ob'], [2400, 0, 1, .4, 180, 0, 0, '', 'on'], [3400, 0, 1, .4, 180, 0, 0, '', 'o'],
+   [4300, 0, 1, .4, 180, 0, 0, '', 'on'], [5100, 0, 1, .4, 180, 0, 0, '', 'ow'], [6100, 0, 1, .4, 180, 0, 0, '', 's'], [7000, 0, 1, -.5, 180, 0, 0, 'u', '']]},
+  // it finds the big conch of the news: hangs along under the bar to it, climbs up, taps it (the conch nods), looks from the
+  // big conch to its own little shell and back, decides it is too big, climbs down over the edge and hides behind it
+  {at:'conch', k:[[0, -80, 1, -.5, 180, 0, 0, 'u', ''], [900, -80, 1, .4, 180, 0, 0, '', 'o'], [1700, -80, 1, .4, 180, 0, 0, '', 'ob'], [3600, -24, 1, .4, 180, 0, 0, '', 'ok'],
+   [4600, -24, 1, -.55, 90, 0, 0, '', 'ok'], [6800, -24, 'c', .55, 90, 0, 0, '', 'ok'], [7300, -24, 'c', .1, 0, 1, 0, '', 'o'], [7900, -24, 'c', .1, 0, 1, 0, '', 'ot'], [8700, -24, 'c', .1, 0, 1, 0, '', 'oc'],
+   [10100, -24, 'c', .1, 0, 1, 0, '', 'ob'], [10700, -24, 'c', .1, 0, 1, 0, '', 'ot'], [11400, -24, 'c', .1, -90, 0, 0, '', 'ok'], [13600, -24, 1, -.55, -90, 0, 0, '', 'ok'], [14500, -24, 1, .4, -180, 0, 0, '', 'o'],
+   [15200, -24, 1, .4, -180, 0, 0, '', 's'], [16100, -24, 1, -.5, -180, 0, 0, 'u', '']]},
   // a message has come: it peeps out from under the bar and sits on the message to read it, then ducks away
   {at:'toast', k:[[0, -30, 1, -.6, 0, 1, 0, 'u', ''], [700, -30, 1, .1, 0, 1, 10, 'u', 'o'], [1300, -30, 1, .1, 0, 1, 10, 'u', 'or'], [3400, -30, 1, .1, 0, 1, 10, 'u', 'orb'], [4300, -30, 1, .1, 0, 1, 10, 'u', 's'], [5000, -30, 1, -.6, 0, 1, 0, 'u', '']]}];
 /* A hermit crab: a big right claw (it shuts the shell with it) and a small left one, two pairs of walking legs, eyes on
@@ -1538,7 +1543,7 @@ function mascotTick(now){
     const at = K => ({x:mascotX + K[1], y:(K[2] === 'c' ? mascotY : K[2] * HH) + K[3] * S + (K[6] || 0)}), pa = at(A), pb = at(B), dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
     const walk = does.includes('k') && dist > 2, steps = Math.max(1, Math.round(dist / 4.5)), ph = raw * steps, f = ph - Math.floor(ph), burst = Math.min(1, f * 1.7);
     const u = walk ? (Math.floor(ph) + crabSm(burst)) / steps : crabSm(raw), lift = walk ? Math.sin(Math.PI * burst) * 1.3 : 0;
-    const x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u - lift, rot = A[4] + (B[4] - A[4]) * crabSm(raw) + (walk ? Math.sin(ph * Math.PI * 2) * 3 : 0), flip = A[5], clip = A[7];
+    const x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u - lift, rot = A[4] + (B[4] - A[4]) * crabSm(raw) + (walk ? Math.sin(ph * Math.PI * 2) * 3 : 0), flip = A[5], clip = A[7] || B[7];   // hiding behind the edge, or coming out from behind it
     crabNow = {x, y, rot, flip, clip};
     M.style.transform = `translate(${(x - S / 2).toFixed(1)}px,${(y - S / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scaleX(${flip ? -1 : 1})`;
     const top = y - S / 2; M.style.clipPath = clip === 'u' ? `inset(${Math.max(0, HH - 3 - top).toFixed(1)}px -20px -20px -20px)` : clip === 't' ? `inset(${Math.max(0, -top).toFixed(1)}px -20px -20px -20px)` : 'none';
@@ -1571,10 +1576,54 @@ function mascotTick(now){
   }
   if (now < mascotAt || landing || document.hidden || sheetKind === 'menu' || reduced) return;
   mascotAt = now + MASCOT.gap[0] + Math.random() * (MASCOT.gap[1] - MASCOT.gap[0]);
-  const pick = Math.random(); crabStart(CRAB_PLAYS[pick < .3 ? 0 : pick < .5 ? 1 : pick < .7 ? 2 : 3], now);
+  const pick = Math.random(); crabStart(CRAB_PLAYS[pick < .35 ? 0 : pick < .55 ? 1 : pick < .75 ? 2 : 3], now);
 }
 $('mascot').addEventListener('click', e => { e.stopPropagation(); if (!mascotOn || !crabNow) return; const H = $('hudbar'), HH = H.offsetHeight, S = MASCOT.S, n = crabNow, y = n.y, dx = n.x - mascotX, c = n.clip;
   // startled: in at once, the shell trembles; then a careful peep, then away
-  const K = (t, d) => [t, dx, 0, 0, n.rot, n.flip, y, c, d]; mascotPlay = {at:'bar', k:[K(0, 's'), K(1300, ''), K(2300, 'o'), K(3400, 'ob'), K(3900, 's'), [4800, dx, 1, -.6, 0, n.flip, 0, 'u', '']]}; mascotOn = performance.now(); crabPrev = '';
+  const K = (t, d) => [t, dx, 0, 0, n.rot, n.flip, y, c, d]; mascotPlay = {at:'bar', k:[K(0, 's'), K(1300, ''), K(2300, 'o'), K(3400, 'ob'), K(3900, 's'), [4800, dx, 1, -.55, Math.abs(n.rot) > 90 ? n.rot : 0, n.flip, 0, 'u', '']]}; mascotOn = performance.now(); crabPrev = '';
   const M = $('mascot'); M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Erschreckt er sich, zieht er sich hinein und hält die große Schere vor den Eingang. Wird die Muschel zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });
+/* ---------- a little skink with a blue tail (Emoia, the blue-tailed skink of the islands), even shyer and rarer than the
+   crab: every eight to fifteen minutes it darts across the bar in quick bursts, stops, bobs its head, flicks its tail, and
+   is gone over the side. It never comes while the crab is out. Key frames: [ms, x share of the width (may be off it), y
+   share of the height, turn, what it does: 'r' runs, 'b' bobs, 'f' flicks the tail, 'l' licks]. */
+const LIZ = {first:240000, gap:[480000, 900000], S:40};
+const LIZ_PLAYS = [
+  [[0, -.08, .55, 0, 'r'], [700, .22, .5, -6, 'r'], [1500, .22, .5, -6, 'b'], [2300, .22, .5, -6, ''], [2700, .48, .62, 8, 'r'], [3500, .48, .62, 8, 'fl'], [4500, .48, .62, 8, 'b'], [5100, 1.1, .45, -4, 'r']],
+  [[0, 1.08, .4, 180, 'r'], [600, .7, .46, 186, 'r'], [1500, .7, .46, 186, 'f'], [2100, .7, .46, 186, 'b'], [2500, .42, .7, 172, 'r'], [3600, .42, .7, 172, 'l'], [4200, -.12, .55, 180, 'r']],
+  [[0, -.08, .3, 10, 'r'], [900, .36, .32, 0, 'r'], [1800, .36, .32, 0, 'bf'], [2900, .36, .32, 0, ''], [3200, .62, .78, 30, 'r'], [3900, .62, .78, 30, 'b'], [4600, 1.1, .7, 0, 'r']]];
+const LIZ_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"`;
+  return `<svg viewBox="-50 -20 100 40"><g class="z-tail"><path d="M-12 1Q-30 2 -46 -4Q-30 6 -12 5Z" fill="#3E8FC4" ${S}/><path d="M-20 2.4Q-30 3 -40 -1" fill="none" stroke="#9FD3F0" stroke-width="1.2"/></g>` +
+    `<g class="z-legs"><path class="z-l0" d="M8 -3L12 -11L16 -12M8 5L12 12L16 13" fill="none" ${S} stroke="#6B4A2C" stroke-width="2.2"/><path class="z-l1" d="M-8 -3L-12 -11L-8 -13M-8 5L-12 12L-8 14" fill="none" ${S} stroke="#6B4A2C" stroke-width="2.2"/></g>` +
+    `<path d="M-14 1Q-14 -5 0 -5Q12 -5 16 -3Q24 -4 28 0Q24 5 16 4Q12 6 0 6Q-14 6 -14 1Z" fill="#8A6038" ${S}/><path d="M-10 -1.5H14M-10 3H14" stroke="#E9D3A3" stroke-width="1.3"/><path d="M-10 .8H16" stroke="#4A3020" stroke-width="1.1"/>` +
+    `<circle cx="23" cy="-1.5" r="1.5" fill="${I}"/><circle cx="22.6" cy="-2" r=".5" fill="#fff"/><path class="z-tongue" d="M28 .4L33 .4L35 -1M33 .4L35 1.8" fill="none" stroke="#C8402C" stroke-width="1" opacity="0"/></svg>`; })();
+let lizAt = 0, lizOn = 0, lizPlay = null, lizEls = null;
+function lizardTick(now){
+  const Z = $('lizard'); if (!Z) return;
+  if (!Z.innerHTML){ Z.innerHTML = LIZ_SVG; lizEls = {tail:Z.querySelector('.z-tail'), l0:Z.querySelector('.z-l0'), l1:Z.querySelector('.z-l1'), tongue:Z.querySelector('.z-tongue'), svg:Z.querySelector('svg')}; }
+  if (!lizAt) lizAt = now + LIZ.first;
+  if (lizOn){
+    const P = lizPlay, t = now - lizOn; if (t > P[P.length - 1][0]){ lizOn = 0; Z.className = ''; return; }
+    let i = 0; while (i < P.length - 2 && P[i + 1][0] <= t) i++;
+    const A = P[i], B = P[i + 1], raw = clamp((t - A[0]) / Math.max(1, B[0] - A[0]), 0, 1), H = $('hudbar'), W = H.offsetWidth, HH = H.offsetHeight, run = A[4].includes('r');
+    const u = run ? raw : crabSm(raw), x = (A[1] + (B[1] - A[1]) * u) * W, y = (A[2] + (B[2] - A[2]) * u) * HH, ts = now / 1000;
+    const wig = run ? Math.sin(ts * 40) * 7 : 0, rot = A[3] + (B[3] - A[3]) * crabSm(raw) + wig * .6;
+    Z.style.transform = `translate(${(x - LIZ.S / 2).toFixed(1)}px,${(y - LIZ.S / 4).toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`;
+    if (!Z.classList.contains('on')) Z.classList.add('on');
+    // a skink runs with its body swinging side to side and its legs a blur; at rest it bobs its head, flicks its tail, licks
+    const E = lizEls, bob = A[4].includes('b') ? Math.max(0, Math.sin(raw * Math.PI * 6)) * 3 : 0, fl = A[4].includes('f') ? Math.sin(raw * Math.PI * 8) * 18 : 0;
+    E.tail.setAttribute('transform', `rotate(${(wig * -2.2 + fl).toFixed(1)} -12 3)`);
+    E.l0.setAttribute('transform', `rotate(${(run ? Math.sin(ts * 45) * 30 : 0).toFixed(1)} 8 1)`); E.l1.setAttribute('transform', `rotate(${(run ? -Math.sin(ts * 45) * 30 : 0).toFixed(1)} -8 1)`);
+    E.svg.style.transform = `translateY(${(-bob).toFixed(1)}px)`;
+    E.tongue.setAttribute('opacity', A[4].includes('l') && Math.sin(ts * 14) > .3 ? 1 : 0);
+    return;
+  }
+  if (now < lizAt || mascotOn || landing || document.hidden || sheetKind === 'menu' || reduced) return;
+  lizAt = now + LIZ.gap[0] + Math.random() * (LIZ.gap[1] - LIZ.gap[0]);
+  lizPlay = LIZ_PLAYS[Math.floor(Math.random() * LIZ_PLAYS.length)]; lizOn = now;
+}
+$('lizard').addEventListener('click', e => { e.stopPropagation(); if (!lizOn) return; lizPlay = lizPlay.slice(); const t = performance.now() - lizOn;
+  // startled: it dashes off at once over the nearest side
+  const H = $('hudbar'), x = parseFloat(($('lizard').style.transform.match(/translate\(([-\d.]+)px/) || [])[1]) / H.offsetWidth || .5;
+  lizPlay = [[0, x, .5, 0, 'r'], [450, x < .5 ? -.15 : 1.15, .5, x < .5 ? 180 : 0, 'r']]; lizOn = performance.now();
+  $('lizard').dataset.tip = '<b>Ein Blauschwanzskink.</b> Diese kleinen Echsen leben auf fast allen Inseln Ozeaniens. Fasst man sie am Schwanz, werfen sie ihn ab und wachsen ihn neu.'; showTip($('lizard')); });
 
