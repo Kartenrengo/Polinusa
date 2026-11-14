@@ -47,11 +47,12 @@ function bloomPts(I){
   for (const b of I.buildings){
     if (b.bt || b.at || !(HOME_KINDS.has(b.kind) || b.kind === 'halle' || b.kind === 'ahnenhaus')) continue;
     const K = KINDS[b.kind], sc = (b.v && b.v.scale) || 1;
-    for (let k = 0; k < 3; k++) pts.push({x:b.x + (k - 1) * K.r * .9 * sc + (hsh(b.id, k) - .5) * 3, y:b.y + K.r * .55 * sc + 1 + hsh(b.id, k + 4) * 2, k:Math.floor(hsh(b.id, k + 9) * BLOOM_COL.length), s:.9 + hsh(b.id, k + 2) * .4});
+    if (b.id % 2) continue;   // not every house: a few flowers, not a carpet
+    for (let k = 0; k < 1; k++) pts.push({x:b.x + (k - 1) * K.r * .9 * sc + (hsh(b.id, k) - .5) * 3, y:b.y + K.r * .55 * sc + 1 + hsh(b.id, k + 4) * 2, k:Math.floor(hsh(b.id, k + 9) * BLOOM_COL.length), s:.9 + hsh(b.id, k + 2) * .4});
   }
   if (g){
-    for (let i = 0; i < g.lv.length && pts.length < 110; i++){
-      if (g.lv[i] < 2 && !g.road[i]) continue; if (hsh(i, 5) > .26) continue;
+    for (let i = 0; i < g.lv.length && pts.length < 28; i++){
+      if (g.lv[i] < 2 && !g.road[i]) continue; if (hsh(i, 5) > .07) continue;
       const cx = g.x0 + (i % g.w + .5) * WEAR_CELL, cy = g.y0 + (Math.floor(i / g.w) + .5) * WEAR_CELL, a = hsh(i, 6) * TAU;   // a little to the side of the path
       add(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 4, i);
     }
@@ -231,10 +232,10 @@ function drawHeron(c, I, v, now){
 /* a gecko clings to the post of a house: still, a head bob, a quick run up or down, still again. Some houses have one. */
 function drawGecko(c, I, v, now){
   for (const b of I.buildings){
-    if (b.bt || b.at || (b.kind !== 'pfahl' && b.kind !== 'haus') || b.id % 4 !== 1 || !ptIn(b.x, b.y, v)) continue;
+    if (b.bt || b.at || (b.kind !== 'pfahl' && b.kind !== 'haus') || b.id % 7 !== 1 || !ptIn(b.x, b.y, v)) continue;
     const K = KINDS[b.kind], sc = (b.v && b.v.scale) || 1, S = slotOf(now, 16, b.id * 3.7), T = S.f, run = T > 9 && T < 9.7 ? (T - 9) / .7 : T > 12.2 && T < 12.8 ? 1 - (T - 12.2) / .6 : T >= 9.7 && T <= 12.2 ? 1 : 0;
     const x = b.x - K.r * .86 * sc * (b.v && b.v.mirror ? -1 : 1), y = b.y - K.hy * sc * (.5 + .22 * run), moving = (T > 9 && T < 9.7) || (T > 12.2 && T < 12.8), bob = !moving && T > 3 && T < 5 ? Math.sin(T * 9) * .25 : 0;
-    c.save(); c.translate(x, y); c.scale(1.15, 1.15); c.rotate(moving ? 0 : bob * .1); c.lineCap = 'round'; c.lineJoin = 'round';
+    c.save(); c.translate(x, y); c.scale(.62, .62); c.rotate(moving ? 0 : bob * .1); c.lineCap = 'round'; c.lineJoin = 'round';
     // a slim body, a rounder head with big eyes, thin bent legs with round toe pads, a tapering tail that curls
     const body = new Path2D(); body.moveTo(0, -1.1); body.bezierCurveTo(.85, -.7, .8, .6, .3, 1.5); body.lineTo(-.3, 1.5); body.bezierCurveTo(-.8, .6, -.85, -.7, 0, -1.1);
     const head = new Path2D(); head.ellipse(0, -1.85, .85, .95, 0, 0, TAU);

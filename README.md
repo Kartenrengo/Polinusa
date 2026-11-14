@@ -2085,9 +2085,22 @@ Das Häuptlingshaus bleibt, wie es war.
 
 ## Das Maskottchen: ein Einsiedlerkrebs (Version 96)
 
-- Ein kleiner **Einsiedlerkrebs** in einer Muschel mit Lapita-Muster kommt etwa alle ein bis zwei Minuten unter der Tagesleiste
-  hervor: Die Augen klappen hoch, er winkt mit der Schere, blinzelt und zieht sich wieder in seine Muschel zurück.
+- Ein kleiner **Einsiedlerkrebs** in einer Muschel mit Lapita-Muster spielt etwa alle ein bis zwei Minuten mit der Tagesleiste.
+  Drei kleine Stücke wechseln sich ab: Er kommt unter der Leiste hervor, winkt, krabbelt unten entlang, klettert auf die Leiste,
+  schaut sich um und verschwindet wieder dahinter. Oder er kommt oben hinter der Leiste hervor, krabbelt über sie hinunter,
+  winkt am unteren Rand und hüpft auf die Karte. Oder nur seine Muschel liegt da, er schaut heraus und zieht sich zurück.
 - Antippen lässt ihn hüpfen, und eine Blase sagt, wer er ist. Auf See (vor der Landung) und im Menü zeigt er sich nicht. Wer
   weniger Bewegung eingestellt hat, sieht ihn still.
 - Einsiedlerkrebse leben an den Stränden aller Inseln Ozeaniens (belegt). Die Muschel mit Lapita-Muster ist Spiel.
+
+## Feinschliff (Version 96)
+
+- **Kleinere Geckos**, und nur an jedem siebten Haus. **Weniger Blumen:** an jedem zweiten Haus eine, an den Wegen nur ein paar.
+- **Das Baumenü zeigt wieder die Namen** unter den Bildern.
+- **Kacheln erklären sich beim Antippen:** Ein Tippen auf eine Kachel (im Haus, am Arbeitsplatz, im Lager, beim Ausbau) zeigt
+  sofort die Blase mit Name und Satz. Was die Kachel vorher tat (ins Lager, Erntehaus bauen, Dach flicken …), ist jetzt ein
+  Knopf in der Blase.
+- **Das Lager hat fünf Reiter nach dem, wofür etwas da ist:** Täglich (Essen, Wasser, Gekochtes, Brennstoff, Blätter,
+  Kochsteine), Feuer (Kokosschalen, Brennholz, Bauholz in der Reihenfolge, in der sie brennen), Bauen (Bauholz, Wedel, Fasern,
+  Schnur, Harz, Kalk), Hausrat (Töpfe, Matten, Öl, Tapa, Werkzeug, Tiere) und Meer (Proviant, Muscheln, Haken, Schätze).
 

@@ -1139,7 +1139,7 @@ details.more .rowx{margin-top:6px}
 .hud-who .top-right{gap:12px}
 @media (max-width:350px){.hud-who .top-right{gap:6px}}
 /* names only on demand: the pictures stay, the words under them go; a tap or a held press shows them in a bubble (see showTip) */
-.hud-goods .gl,.hud-who .top-right > button::after,.ntile > small,.rtile > small,.ftile > small,.tile > small.nm,.mt > small,.bbtn.bk .bn{display:none!important}
+.hud-goods .gl,.hud-who .top-right > button::after,.ntile > small,.rtile > small,.ftile > small,.tile > small.nm,.mt > small{display:none!important}
 .hud-who .top-right > button{padding-bottom:0!important;height:30px}
 .hud-who .isle{padding-bottom:0}
 .hud-who{min-height:30px}
@@ -1177,29 +1177,30 @@ details.more .rowx{margin-top:6px}
 .nextline.ask .what,.nextline.wish .what{flex:1 1 0;min-width:0;line-height:1.2}
 .nextline.ask .what .ic,.nextline.ask .what .bi,.nextline.wish .what .ic,.nextline.wish .what .bi{display:inline-block;width:18px;height:18px;vertical-align:-4px;margin-right:4px}
 .nextline.ask .chips{flex:none;display:flex;gap:4px}
-/* the mascot: a hermit crab climbs out from under the bar's lower edge onto the map (a window that hides it while it is behind the bar) */
-#mascot{position:absolute;top:calc(100% - 3px);width:46px;height:44px;overflow:hidden;z-index:3;pointer-events:none;left:60%}
-#mascot .mc{position:absolute;left:0;top:0;width:46px;height:46px;transform:translateY(-110%);display:block}
-#mascot.flip .mc{transform:translateY(-110%) scaleX(-1)}
-#mascot.peek{pointer-events:auto;cursor:pointer}
+/* the mascot: a hermit crab plays with the bar: up from under it, over it, along its edge, into its shell (see CRAB_PLAYS) */
+#mascot{position:absolute;left:0;top:0;width:34px;height:34px;z-index:7;pointer-events:none;display:none;transform-origin:50% 50%;will-change:transform}
+#mascot.on{display:block;pointer-events:auto;cursor:pointer}
+#mascot .mc{display:block;width:100%;height:100%}
 #mascot svg{display:block;width:100%;height:100%;overflow:visible}
-#mascot.peek .mc{animation:crabPeek 5.2s ease-in-out both}
-#mascot.peek.flip .mc{animation-name:crabPeekF}
-@keyframes crabPeek{0%{transform:translateY(-110%)}12%,84%{transform:translateY(0)}100%{transform:translateY(-110%)}}
-@keyframes crabPeekF{0%{transform:translateY(-110%) scaleX(-1)}12%,84%{transform:translateY(0) scaleX(-1)}100%{transform:translateY(-110%) scaleX(-1)}}
-#mascot .c-body{transform-box:fill-box;transform-origin:100% 50%}
-#mascot.peek .c-body{animation:crabBody 5.2s ease-in-out both}
-@keyframes crabBody{0%,10%{transform:translate(14px,6px) scale(.6)}20%,76%{transform:none}88%,100%{transform:translate(14px,6px) scale(.6)}}
-#mascot .c-eyes{transform-box:fill-box;transform-origin:50% 100%}
-#mascot.peek .c-eyes{animation:crabEyes 5.2s ease-out both}
-@keyframes crabEyes{0%,18%{transform:scaleY(.15)}24%{transform:scaleY(1.15)}28%,74%{transform:scaleY(1)}80%,100%{transform:scaleY(.15)}}
+#mascot .c-crab{transform-box:view-box;transform-origin:62px 58px;transform:translate(14px,6px) scale(.35);transition:transform .3s ease-in-out}
+#mascot.out .c-crab{transform:none}
+#mascot .c-eyes{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(.2);transition:transform .25s ease-out .15s}
+#mascot.out .c-eyes{transform:none}
 #mascot .c-lids{opacity:0}
-#mascot.peek .c-lids{animation:crabBlink 5.2s linear both}
-@keyframes crabBlink{0%,50%{opacity:0}52%,55%{opacity:1}57%,100%{opacity:0}}
+#mascot.blink .c-lids{animation:crabBlink2 .9s linear}
+@keyframes crabBlink2{0%,40%{opacity:0}45%,60%{opacity:1}65%,100%{opacity:0}}
 #mascot .c-claw{transform-box:fill-box;transform-origin:85% 70%}
-#mascot.peek .c-claw{animation:crabWave 5.2s ease-in-out both}
-@keyframes crabWave{0%,30%{transform:rotate(0)}36%{transform:rotate(-28deg)}42%{transform:rotate(6deg)}48%{transform:rotate(-28deg)}54%,100%{transform:rotate(0)}}
-#mascot.hop .mc svg{animation:crabHop .45s ease-out}
-@keyframes crabHop{0%{transform:translateY(0)}40%{transform:translateY(-9px) rotate(-6deg)}100%{transform:none}}
+#mascot.wave .c-claw{animation:crabWave2 .55s ease-in-out infinite}
+@keyframes crabWave2{0%,100%{transform:rotate(0)}50%{transform:rotate(-30deg)}}
+#mascot .c-legs{transform-box:fill-box;transform-origin:50% 0}
+#mascot.walk .c-legs{animation:crabLegs .22s linear infinite}
+@keyframes crabLegs{0%,100%{transform:skewX(14deg)}50%{transform:skewX(-14deg)}}
+#mascot.walk svg{animation:crabBob .22s linear infinite}
+@keyframes crabBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+#mascot.hop svg{animation:crabHop .45s ease-out}
 body.landing #mascot{display:none}
 @media (prefers-reduced-motion:reduce){#mascot.peek .mc,#mascot.peek .c-body,#mascot.peek .c-eyes,#mascot.peek .c-claw,#mascot.peek .c-lids{animation:none;transform:none}#mascot.peek.flip .mc{transform:scaleX(-1)}}
+.chips.stabs .chip{padding:0 7px;font-size:12px;gap:3px}
+.chips.stabs .chip .ic{width:14px;height:14px;margin-right:0}
+@media (max-width:350px){.chips.stabs .chip .ic{display:none}.chips.stabs .chip{padding:0 6px}}
+@keyframes crabHop{0%{transform:translateY(0)}40%{transform:translateY(-9px) rotate(-6deg)}100%{transform:none}}

@@ -884,8 +884,11 @@ function storeMarkup(I){
 let foodOpen = false;   // the single foods are folded into one tile "Essen"; a tap unfolds them
 /* The store in tabs: what is used up every day, the fuel for the night fires in the order it burns, the building stuff, and
    the crafts. Names and what a good is for come in the bubble (hold a tile); a tap shows where it comes from. */
-const STORE_TABS = [['tag', 'Täglich'], ['brenn', 'Brennmaterial'], ['bau', 'Bauen'], ['werk', 'Handwerk']];
-const BAU_GOODS = ['holz', 'dach', 'faser', 'schnur'], FUEL_WHY = {schalen:'brennen zuerst. Kommen vom Erntehaus, beim Nüsse-Schälen.', reisig:'brennt als Zweites. Kinder und Alte sammeln es.', holz:'brennt erst, wenn nichts anderes da ist. Eigentlich zum Bauen.'};
+/* five groups, by what a good is for: every day (food, water, cooked food, the oven's leaves and stones), the fire at night,
+   building, the house and its crafts, and the sea and treasures */
+const STORE_TABS = [['tag', 'Täglich'], ['brenn', 'Feuer'], ['bau', 'Bauen'], ['werk', 'Hausrat'], ['see', 'Meer']];
+const TAG_GOODS = ['wasser', 'speisen', 'blaetter', 'steine'], SEA_GOODS = ['proviant', 'muschel', 'haken', 'perlmutt', 'federn', 'tabua', 'kauri', 'talisman', 'schmuck', 'hauer'];
+const BAU_GOODS = ['holz', 'dach', 'faser', 'schnur', 'harz', 'kalk'], FUEL_WHY = {schalen:'brennen zuerst. Kommen vom Erntehaus, beim Nüsse-Schälen.', reisig:'brennt als Zweites. Kinder und Alte sammeln es.', holz:'brennt erst, wenn nichts anderes da ist. Eigentlich zum Bauen.'};
 let storeTab = 'tag';
 function storeTiles(I){
   const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, day = dailyNeed(I, nd), rate = k => {
@@ -898,15 +901,15 @@ function storeTiles(I){
     return `<button class="tile ${cls}" type="button" data-act="ware" data-k="${g.k}" aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute" data-tip="${esc(`<b>${GN[g.k]}</b> ${g.have} da${Math.abs(net) >= .05 ? `, ${net > 0 ? '+' : '−'}${perMin(Math.abs(net))} pro Minute` : ''}. ${why(g.k)}`)}">${n ? `<em class="ord">${n}</em>` : ''}${icon(g.k)}<b>${g.have}</b><small class="nm">${shortGN(g.k)}</small>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`; };
   const fnet = food.make - food.use, fcls = Math.abs(fnet) < .05 ? '' : fnet > 0 ? 'up' : 'down', ffull = Math.min(1, food.have / (cap * FOODS.length / 3));
   const sum = `<button class="tile ${fcls} sum" type="button" data-act="foodopen" aria-expanded="${foodOpen}" aria-label="Essen: ${food.have}, ${kinds.length} Sorten. Antippen ${foodOpen ? 'faltet zu' : 'zeigt jede Sorte'}" data-tip="${esc(`<b>Essen</b> ${food.have} da, ${kinds.length} Sorten. ${why('essen')} Drei Sorten machen zufrieden.`)}">${icon('essen')}<b>${food.have}</b><span class="kinds">${kinds.map(g => icon(g.k)).join('')}</span><span class="flow">${fcls ? (fnet > 0 ? '▲' : '▼') + perMin(Math.abs(fnet)) : '·'}</span><i class="fill" style="width:${Math.round(ffull * 100)}%"></i></button>`;
-  const tabs = `<div class="chips stabs" role="tablist">${STORE_TABS.map(([k, n]) => `<button class="chip${storeTab === k ? ' on' : ''}" role="tab" type="button" data-act="stab" data-v="${k}" aria-selected="${storeTab === k}">${k === 'brenn' ? icon('brenn') : ''}${n}</button>`).join('')}</div>`;
+  const tabs = `<div class="chips stabs" role="tablist">${STORE_TABS.map(([k, n]) => `<button class="chip${storeTab === k ? ' on' : ''}" role="tab" type="button" data-act="stab" data-v="${k}" aria-selected="${storeTab === k}">${icon({tag:'essen', brenn:'brenn', bau:'holz', werk:'toepfe', see:'muschel'}[k])}${n}</button>`).join('')}</div>`;
   const by = k => all.find(g => g.k === k) || rate(k);
   let body = '';
-  if (storeTab === 'tag') body = `<div class="tiles">${sum}${foodOpen ? foods.map(g => tile(g)).join('') : ''}${['wasser', 'speisen'].filter(k => k !== 'speisen' || dailyGoods(I, nd).includes('speisen')).map(k => tile(by(k))).join('')}${(g => `<button class="tile" type="button" data-act="stab" data-v="brenn" aria-label="Brennstoff: ${g.have}. Antippen zeigt das Brennmaterial" data-tip="${esc(`<b>Brennstoff</b> ${g.have} da. ${why('brenn')}`)}">${icon('brenn')}<b>${g.have}</b><span class="flow">›</span></button>`)(rate('brenn'))}</div><p class="sub">Halten zeigt, wofür. ${day.essen} Menschen essen und trinken jeden Morgen.</p>`;
+  if (storeTab === 'tag') body = `<div class="tiles">${sum}${foodOpen ? foods.map(g => tile(g)).join('') : ''}${TAG_GOODS.filter(k => k === 'wasser' || (k === 'speisen' && dailyGoods(I, nd).includes('speisen')) || (all.find(g => g.k === k) && (by(k).have || by(k).make || by(k).use))).map(k => tile(by(k))).join('')}${(g => `<button class="tile" type="button" data-act="stab" data-v="brenn" aria-label="Brennstoff: ${g.have}. Antippen zeigt das Brennmaterial" data-tip="${esc(`<b>Brennstoff</b> ${g.have} da. ${why('brenn')}`)}">${icon('brenn')}<b>${g.have}</b><span class="flow">›</span></button>`)(rate('brenn'))}</div><p class="sub">Tippen zeigt, wofür. ${day.essen} Menschen essen und trinken jeden Morgen.</p>`;
   else if (storeTab === 'brenn'){ const F = fireFore(I);
     body = `<div class="tiles">${GROUPS.brenn.map((k, i) => tile(by(k), i + 1)).join('')}</div><p class="sub${F.n && F.fuel < F.n ? ' meal-bad' : ''}">Heute Nacht: ${F.n} Feuer, eins je Haus. Es brennt der Reihe nach: 1, 2, dann 3.</p>`; }
   else if (storeTab === 'bau') body = `<div class="tiles">${BAU_GOODS.map(k => tile(by(k))).join('')}</div>`;
-  else { const rest = all.filter(g => !BAU_GOODS.includes(g.k) && !GROUPS.brenn.includes(g.k) && !['wasser', 'speisen'].includes(g.k) && (g.have || g.make || g.use));
-    body = rest.length ? `<div class="tiles">${rest.map(g => tile(g)).join('')}</div>` : '<p class="sub">Noch nichts. Hier liegen später Töpfe, Matten, Öl und mehr.</p>'; }
+  else { const sea = storeTab === 'see', rest = all.filter(g => !BAU_GOODS.includes(g.k) && !GROUPS.brenn.includes(g.k) && !TAG_GOODS.includes(g.k) && SEA_GOODS.includes(g.k) === sea && (g.have || g.make || g.use));
+    body = rest.length ? `<div class="tiles">${rest.map(g => tile(g)).join('')}</div>` : `<p class="sub">Noch nichts. ${sea ? 'Hier liegen Proviant, Muscheln und Schätze von der See.' : 'Hier liegen Töpfe, Matten, Öl, Tapa und Werkzeug.'}</p>`; }
   return tabs + body;
 }
 /* Standing sheet: what mana is for, and the feasts this island can hold */
@@ -1429,16 +1432,21 @@ function select(b){ const craft = b.at && findB(b.at); if (craft) b = craft; sel
 /* ---------- names only on demand. Tiles, goods and buttons show their picture; the name and a line about it pop up in a little
    bubble: at a tap where the tap does nothing else (a picture, a good in the bar), or when held a moment on a button that does
    something when tapped (then the tap is not done). The text is the element's data-tip, else its aria-label. */
-const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .hud-who .top-right > button, .sattile, .kinds', TIP_HOLD = 380;
-let tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0;
-const tipNow = el => el.matches('.hud-goods .g') || (!el.matches('button') && !el.closest('button'));   // a tap shows the name only where a tap does nothing else
+const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .hud-who .top-right > button, .sattile, .kinds, #mascot', TIP_HOLD = 380;
+/* tiles: a tap shows what the picture is at once; what the tile did before (go to the store, build, mend the roof …) is a
+   button in the bubble. Buttons in the bar and in the build menu keep their tap; held, they show the bubble. */
+const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds';
+const TIP_GO = {ware:'Woher ›', store:'Lager ›', hint:'Bauen ›', roof:'Dach flicken ›', fleetbar:'Kanus ›', foodopen:'Sorten ›', stab:'Zeigen ›', goto:'Hin ›', craftpick:'Wählen ›'};
+let tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0, tipPass = null;
+const tipNow = el => el.matches(TIP_TAP) || (!el.matches('button') && !el.closest('button'));
 function showTip(el){
   const t = $('tip'), txt = el.dataset.tip || esc(el.getAttribute('aria-label') || ''); if (!txt) return;
-  t.innerHTML = `<span>${txt}</span>` + (el.matches('.hud-goods .g') ? '<button class="tipgo" type="button">Alle Waren ›</button>' : '');
+  const act = el.matches('.hud-goods .g') ? 'store' : el.dataset.act || (el.closest('[data-act]') && el.closest('[data-act]') !== el ? '' : ''), go = el.matches('.hud-goods .g') ? 'Alle Waren ›' : act ? TIP_GO[act] || 'Öffnen ›' : '';
+  t.innerHTML = `<span>${txt}</span>` + (go ? `<button class="tipgo" type="button">${go}</button>` : '');
   t.hidden = false; tipFor = el; const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
   const x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), below = r.bottom + 8 + h < innerHeight - 8;
   t.style.left = x + 'px'; t.style.top = (below ? r.bottom + 8 : r.top - h - 8) + 'px'; t.style.setProperty('--ax', (r.left + r.width / 2 - x) + 'px'); t.dataset.side = below ? 'below' : 'above';
-  t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); clearTimeout(tipHide); tipHide = setTimeout(hideTip, 4500);
+  t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); clearTimeout(tipHide); tipHide = setTimeout(hideTip, 6000);
 }
 function hideTip(){ const t = $('tip'); if (t) t.hidden = true; tipFor = null; clearTimeout(tipHide); }
 document.addEventListener('pointerdown', e => {
@@ -1451,37 +1459,68 @@ document.addEventListener('pointerup', () => clearTimeout(tipHold), true);
 document.addEventListener('pointercancel', () => clearTimeout(tipHold), true);
 document.addEventListener('contextmenu', e => { if (e.target.closest(TIP_SEL)) e.preventDefault(); }, true);
 document.addEventListener('click', e => {
-  if (e.target.closest('.tipgo')){ e.stopPropagation(); hideTip(); $('storeBtn').click(); return; }
+  if (e.target.closest('.tipgo')){ e.stopPropagation(); const el = tipFor; hideTip(); if (!el) return; if (el.matches('.hud-goods .g')) $('storeBtn').click(); else { tipPass = el; el.click(); tipPass = null; } return; }
   if (tipEat){ tipEat = false; e.preventDefault(); e.stopPropagation(); return; }   // held: the name was shown, the tap is not done
   const el = e.target.closest(TIP_SEL);
+  if (el && el === tipPass) return;   // the bubble's button: do what the tile does
+  if (el && el.id === 'mascot') return;
   if (el && tipNow(el)){ e.preventDefault(); e.stopPropagation(); if (!$('tip').hidden && tipFor === el){ hideTip(); return; } showTip(el); return; }   // a second tap closes it
   if (!e.target.closest('#tip')) hideTip();
 }, true);
 /* ---------- the mascot: a little hermit crab in a shell stamped like a Lapita pot. Now and then it climbs out of the day bar's
    top edge, its eyes pop up, it waves a claw, blinks, and goes back into its shell and down again. A tap makes it hop and says
    who it is. It never shows while the clan is still at sea, and it stays still for those who want less motion. */
-const MASCOT = {first:40000, gap:[60000, 120000], show:5200};
+const MASCOT = {first:30000, gap:[55000, 110000], S:34};
+/* Its little plays with the bar, as key frames: time (ms), the crab's middle (x, y) in the bar's frame, its turn (90 looks
+   up, -90 down), flip (walks to the right), the clip ('u': only below the bar's lower edge, as if behind the bar; 't': only
+   below the top edge) and what it does ('o' out of the shell, 'w' waves, 'k' walks, 'b' blinks). x is a share of the width,
+   y a share of the height; d* are pixels added. */
+const CRAB_PLAYS = [
+  // up from under the bar, a wave, along under the edge, up onto the bar, a look round, back down and behind the edge
+  [[0, 0, 1, -.6, 0, 0, 0, 'u', ''], [700, 0, 1, .45, 0, 0, 0, 'u', ''], [1000, 0, 1, .45, 0, 0, 0, 'u', 'o'], [1300, 0, 1, .45, 0, 0, 0, 'u', 'ow'], [2300, 0, 1, .45, 0, 0, 0, 'u', 'ob'],
+   [2600, 0, 1, .45, 0, 0, 0, 'u', 'ok'], [3800, -60, 1, .45, 0, 0, 0, 'u', 'ok'], [4300, -60, 1, .45, 90, 0, 0, '', 'ok'], [5600, -60, .55, 0, 90, 0, 0, '', 'ok'],
+   [6000, -60, .55, 0, 0, 0, 0, '', 'o'], [6700, -60, .55, 0, 0, 0, 0, '', 'ob'], [7200, -60, .55, 0, -90, 0, 0, '', 'ok'], [8400, -60, 1, .45, -90, 0, 0, 'u', 'ok'],
+   [8800, -60, 1, .45, 0, 0, 0, 'u', ''], [9500, -60, 1, -.6, 0, 0, 0, 'u', '']],
+  // from behind the top edge down over the bar, a wave on the lower rim, a hop down onto the map, into the shell and behind the edge
+  [[0, 0, 0, -.6, -90, 0, 0, 't', 'ok'], [2600, 0, .72, 0, -90, 0, 0, '', 'ok'], [3000, 0, .72, 0, 0, 0, 0, '', 'o'], [3300, 0, .72, 0, 0, 1, 0, '', 'ow'], [4300, 0, .72, 0, 0, 1, 0, '', 'o'],
+   [4800, 26, 1, .45, 0, 1, -14, '', 'o'], [5600, 26, 1, .45, 0, 1, 0, 'u', 'ob'], [6400, 26, 1, .45, 0, 1, 0, 'u', ''], [7100, 26, 1, -.6, 0, 1, 0, 'u', '']],
+  // a shell lies under the bar: it rocks, the crab peeps out, waves, ducks back in and the shell slides away
+  [[0, 0, 1, -.6, 0, 1, 0, 'u', ''], [700, 0, 1, .45, 0, 1, 0, 'u', ''], [1500, 0, 1, .45, 0, 1, 0, 'u', ''], [1800, 0, 1, .45, 0, 1, 0, 'u', 'o'], [2100, 0, 1, .45, 0, 1, 0, 'u', 'ow'],
+   [3300, 0, 1, .45, 0, 1, 0, 'u', 'ob'], [3900, 0, 1, .45, 0, 1, 0, 'u', ''], [4600, 30, 1, -.6, 0, 1, 0, 'u', '']]];
 const CRAB_SVG = (() => { const I = '#2B1D14', S = `stroke="${I}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"`, eye = (x, y) => `<circle cx="${x}" cy="${y}" r="4.4" fill="${I}"/><circle cx="${x - 1.5}" cy="${y - 1.7}" r="1.6" fill="#fff"/>`;
-  return `<svg viewBox="0 0 100 100"><g class="c-legs"><path d="M20 76L14 90M28 78L24 92M38 78L38 92" ${S} stroke="#D9583E" stroke-width="3.4"/></g>` +
-    `<g class="c-body"><path d="M18 60Q16 50 26 50Q40 52 40 66Q38 80 26 80Q16 78 18 60Z" fill="#E36A4C" ${S}/><ellipse cx="22" cy="68" rx="4.5" ry="2.6" fill="#F2A08F"/><path d="M26 70Q29 72 32 70" fill="none" stroke="${I}" stroke-width="1.6" stroke-linecap="round"/>` +
+  return `<svg viewBox="0 0 100 100"><g class="c-crab"><g class="c-legs"><path d="M20 76L14 90M28 78L24 92M38 78L38 92" ${S} stroke="#D9583E" stroke-width="3.4"/></g>` +
+    `<path d="M18 60Q16 50 26 50Q40 52 40 66Q38 80 26 80Q16 78 18 60Z" fill="#E36A4C" ${S}/><ellipse cx="22" cy="68" rx="4.5" ry="2.6" fill="#F2A08F"/><path d="M26 70Q29 72 32 70" fill="none" stroke="${I}" stroke-width="1.6" stroke-linecap="round"/>` +
     `<g class="c-eyes"><path d="M24 50L22 36M32 51L34 36" ${S} stroke-width="2"/>${eye(22, 33)}${eye(35, 33)}<g class="c-lids"><rect x="16" y="28" width="12" height="10" rx="5" fill="#E36A4C"/><rect x="29" y="28" width="12" height="10" rx="5" fill="#E36A4C"/></g></g>` +
     `<g class="c-claw"><path d="M8 62Q2 56 6 50Q12 46 16 52L12 56L18 58Q16 66 8 62Z" fill="#E36A4C" ${S}/></g></g>` +
     `<g class="c-shell"><path d="M44 26Q74 18 82 46Q88 72 62 80Q40 84 34 64Q30 46 44 26Z" fill="#F3D9A0" ${S}/><path d="M48 32Q70 28 74 48Q76 66 60 70Q46 72 44 60Q43 50 54 48Q64 48 62 58" fill="none" stroke="${I}" stroke-width="2" stroke-linecap="round"/>` +
     `<g fill="#A84A2C"><circle cx="58" cy="36" r="1.5"/><circle cx="64" cy="37" r="1.5"/><circle cx="70" cy="41" r="1.5"/><circle cx="74" cy="47" r="1.5"/><circle cx="76" cy="54" r="1.5"/><circle cx="75" cy="61" r="1.5"/></g><path d="M50 52l4 4l4-4l4 4" fill="none" stroke="#A84A2C" stroke-width="1.5"/></g></svg>`; })();
-let mascotAt = 0, mascotOn = 0;
+let mascotAt = 0, mascotOn = 0, mascotPlay = null, mascotX = 0, mascotLast = '';
+
 function mascotTick(now){
   const M = $('mascot'); if (!M) return;
   if (!M.firstChild.innerHTML) M.firstChild.innerHTML = CRAB_SVG;
   if (!mascotAt) mascotAt = now + MASCOT.first;
-  if (mascotOn && now - mascotOn > MASCOT.show){ mascotOn = 0; M.classList.remove('peek', 'hop'); }
-  if (mascotOn || now < mascotAt || landing || document.hidden || sheetKind === 'menu') return;
+  if (mascotOn){
+    const P = mascotPlay, t = now - mascotOn, end = P[P.length - 1][0];
+    if (t > end){ mascotOn = 0; M.className = ''; M.style.clipPath = ''; return; }
+    let i = 0; while (i < P.length - 2 && P[i + 1][0] <= t) i++;
+    const A = P[i], B = P[i + 1], u = easeIO(clamp((t - A[0]) / Math.max(1, B[0] - A[0]), 0, 1)), H = $('hudbar'), W = H.offsetWidth, HH = H.offsetHeight, S = MASCOT.S;
+    const at = K => ({x:mascotX + K[1] + (K[6] || 0) * 0, y:K[2] * HH + K[3] * S + (K[6] || 0)});
+    const pa = at(A), pb = at(B), x = pa.x + (pb.x - pa.x) * u, y = pa.y + (pb.y - pa.y) * u, rot = A[4] + (B[4] - A[4]) * u, flip = A[5], clip = A[7], does = A[8];
+    M.style.transform = `translate(${(x - S / 2).toFixed(1)}px,${(y - S / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scaleX(${flip ? -1 : 1})`;
+    // the clip, in the crab's own box (before its turn, which is fine: it only turns where nothing is clipped)
+    const top = y - S / 2; M.style.clipPath = clip === 'u' ? `inset(${Math.max(0, HH - 3 - top).toFixed(1)}px -20px -20px -20px)` : clip === 't' ? `inset(${Math.max(0, -top).toFixed(1)}px -20px -20px -20px)` : 'none';
+    const cls = 'on' + (does.includes('o') ? ' out' : '') + (does.includes('w') ? ' wave' : '') + (does.includes('k') ? ' walk' : '') + (does.includes('b') ? ' blink' : '');
+    if (cls !== mascotLast){ M.className = cls; mascotLast = cls; }
+    return;
+  }
+  if (now < mascotAt || landing || document.hidden || sheetKind === 'menu' || reduced) return;
   mascotAt = now + MASCOT.gap[0] + Math.random() * (MASCOT.gap[1] - MASCOT.gap[0]);
-  // somewhere on the top edge, not where the sun or the moon stands
-  const H = $('hudbar'), w = H.offsetWidth, sun = parseFloat(($('dayMark') || {}).style ? $('dayMark').style.left : '') || -99;
-  let x = 0; for (let i = 0; i < 6; i++){ x = w * (.32 + Math.random() * .5); if (Math.abs(x - sun) > 50) break; }
-  M.style.left = Math.round(x - 23) + 'px'; M.classList.toggle('flip', Math.random() < .5);
-  M.classList.remove('peek'); void M.offsetWidth; M.classList.add('peek'); mascotOn = now;
+  // a play, somewhere along the bar, not where the sun or the moon stands
+  const H = $('hudbar'), w = H.offsetWidth, sun = parseFloat($('dayMark').style.left) || -99;
+  for (let i = 0; i < 6; i++){ mascotX = w * (.38 + Math.random() * .45); if (Math.abs(mascotX - sun) > 60) break; }
+  mascotPlay = CRAB_PLAYS[Math.floor(Math.random() * CRAB_PLAYS.length)]; mascotOn = now; mascotLast = '';
 }
-$('mascot').addEventListener('click', e => { e.stopPropagation(); const M = $('mascot'); if (!mascotOn) return; M.classList.remove('hop'); void M.offsetWidth; M.classList.add('hop');
+$('mascot').addEventListener('click', e => { e.stopPropagation(); const M = $('mascot'); if (!mascotOn) return; M.classList.remove('hop'); void M.offsetWidth; M.classList.add('hop'); mascotLast = '';
   M.dataset.tip = '<b>Der Einsiedlerkrebs</b> wohnt in einer alten Muschel mit Lapita-Muster. Wird sie zu eng, sucht er sich eine größere.'; showTip(M); if (typeof sfx === 'function') sfx('tap'); });
 
