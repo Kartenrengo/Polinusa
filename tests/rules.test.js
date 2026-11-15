@@ -452,15 +452,16 @@ const r = await p.evaluate(()=>{
       setCraft(H, h, 'schnur'); want(upgradeSteps(H, h, needsOf(H).list, 'hand').steps.find(q => q.k === 'werk').ok, 'ways: Hauswerk not seen'); setCraft(H, h, null);
       // seafarers: needs, room, name
       rich(); want(upgradeHouse(H, h, 'see') && wayOf(h) === 'see' && h.t === 2 && houseName(h) === 'Seefahrerhaus' && homeCapMax(H, h) === 7, 'ways: not a seafarer house after the step');
-      want(['fisch', 'proviant', 'schnur'].every(k => famNeeds(H, f, needsOf(H).list).some(n => n.k === k && n.state === 'ok')), 'ways: seafarers want fish, provisions and sennit');
+      want(['fisch', 'schnur'].every(k => famNeeds(H, f, needsOf(H).list).some(n => n.k === k && n.state === 'ok')) && !SEA.see.add.includes('proviant'), 'ways: seafarers want fish and sennit (not provisions, which the explorers take)');
+      { const hp = addB(H, 'pfahl', {x:H.center.x, y:H.center.y}, {}, tick); want(onShore(H, hp), 'ways: a stilt house stands in the lagoon, so it is near the shore'); H.buildings.splice(H.buildings.indexOf(hp), 1); }
       { const keepF = [H.stock.fisch, H.stock.meeres]; H.stock.fisch = 0; H.stock.meeres = 0; want(famNeeds(H, f, needsOf(H).list).find(n => n.k === 'fisch').state === 'out', 'ways: no fish, no state out'); [H.stock.fisch, H.stock.meeres] = keepF; }
       want(famLabel(H, f) === 'Seefahrerhaus' && famTier(H, f) === 2, 'ways: family label');
       // the grown-ups of the seafarer houses speed up the canoes of their island
       { const sh = makeShip('oc', H); ships.push(sh); const v1 = speedOf(sh), n1 = seafarers(H); h.way = ''; const v0 = speedOf(sh); h.way = 'see';
         want(n1 > 0 && v1 > v0 * 1.02 && v1 <= v0 * (1 + SEA_SPEED_MAX) + 1e-9, `ways: seafarers do not speed up canoes (${v0.toFixed(2)} -> ${v1.toFixed(2)}, ${n1} adults)`); ships.length = ships0; }
       // falling back after half a minute without a good of the step
-      rich(); H.stock.proviant = 0; tierTick(H, needsOf(H).list, true); tierTick(H, needsOf(H).list, true); const still = wayOf(h) === 'see'; tierTick(H, needsOf(H).list, true);
-      want(still && wayOf(h) === '' && h.t === 2, `ways: a seafarer house falls back after 30 ticks without provisions (${wayOf(h)})`);
+      rich(); H.stock.fisch = 0; H.stock.meeres = 0; tierTick(H, needsOf(H).list, true); tierTick(H, needsOf(H).list, true); const still = wayOf(h) === 'see'; tierTick(H, needsOf(H).list, true);
+      want(still && wayOf(h) === '' && h.t === 2, `ways: a seafarer house falls back after 30 ticks without fish (${wayOf(h)})`);
       // old ways stay: tier 3 is the craftsmen's house
       h.t = 3; want(wayOf(h) === 'hand' && houseName(h) === 'Handwerkerhaus' && tierOf(h) === 3 && famLabel(H, f) === 'Handwerkerhaus', 'ways: old tier 3 is not a craftsmen house');
       h.t = 2; delete h.way;
@@ -490,7 +491,7 @@ const r = await p.evaluate(()=>{
       // the house sheet shows the choice, compactly, and the sea way only at the shore
       delete h.way; h.t = 2; near(shore); rich(); H.keep = 0; loreCache = null; closeSheet(); openSheet('info', {id:h.id, tab:'haus'}); let bodyT = $('sheetBody').textContent; const ways = document.querySelectorAll('#sheetBody [data-act=way]');
       want(ways.length === 2 && /Handwerkerhaus/.test(bodyT) && /Seefahrerhaus/.test(bodyT), `ways: the choice is not shown (${ways.length})`);
-      if (box){ near(box); renderSheet(); bodyT = $('sheetBody').textContent; want(!document.querySelector('#sheetBody [data-act=way]') && /nur nah am Strand/.test(bodyT), 'ways: inland says why not'); near(shore); }
+      if (box){ near(box); renderSheet(); bodyT = $('sheetBody').textContent; want(!document.querySelector('#sheetBody [data-act=way]') && /nur am Strand oder in der Lagune/.test(bodyT), 'ways: inland says why not'); near(shore); }
       closeSheet(); openSheet('needs', {tab:'leute'}); want(/Handwerkerhaus/.test($('sheetBody').textContent), 'ways: overview lacks the craftsmen row'); closeSheet();
       // auto-rise: craftsmen, but the sea way near the shore while there are more canoes than seafarer houses
       rich(); setCraft(H, h, 'schnur'); rich(); const aw0 = autoWay(H, h, needsOf(H).list);

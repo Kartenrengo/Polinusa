@@ -1226,3 +1226,21 @@ body.landing #lizard{display:none}
 #hudbar .hud-row #sidectl .round{width:34px;height:34px}
 @media (max-width:350px){#hudbar .hud-row .hud-who .isle-name{font-size:14px}#hudbar .hud-row .hud-who .top-right{gap:4px}#hudbar .hud-row #compass svg{width:24px;height:24px}#hudbar .hud-row #sidectl .round{width:30px;height:30px}.hud-who .pop b{font-size:13.5px}}
 @media (max-width:350px){#hudbar .hud-row .hud-who #popCap,#hudbar .hud-row .hud-who .pop .dot{display:none}#hudbar .hud-row .hud-who .isle{min-width:54px}#hudbar .hud-row .hud-who .top-right .ic{width:15px;height:15px}#hudbar .hud-row{gap:4px}}
+/* Version 106: the work tab as a grid of small tiles: building with its count, the flow in pictograms, the colour says
+   whether it runs; words only when something is wrong (held, the bubble says it all) */
+.list.werk.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:6px 0 0}
+.list.werk.wgrid li{min-height:0;padding:0;display:block}
+.list.werk.wgrid .wgo{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px 4px;height:100%;text-align:center;position:relative}
+.list.werk.wgrid .wnm{position:relative;justify-content:center}
+.list.werk.wgrid .wnm .bi{width:30px;height:30px}
+.list.werk.wgrid .wnm em{position:absolute;right:-12px;top:-3px;font:800 11px/1 var(--font-ui);font-style:normal;background:var(--ink);color:#FBF3E1;border-radius:7px;padding:2px 4px}
+.list.werk.wgrid .wfl{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:1px}
+.list.werk.wgrid .wi{display:inline-flex;font-style:normal}
+.list.werk.wgrid .wi .ic{width:15px;height:15px}
+.list.werk.wgrid .wi.out{border-radius:50%;box-shadow:0 0 0 1.5px #B3261E;background:#F6D5CC}
+.list.werk.wgrid .marr{font:800 12px/1 var(--font-ui);color:var(--muted);margin:0 1px}
+.list.werk.wgrid .wst{font:800 9.5px/1.05 var(--font-ui);text-transform:uppercase;letter-spacing:.02em;color:#B3261E;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list.werk.wgrid .wgo.low .wst{color:#9A6A12}
+.list.werk.wgrid li{background-image:var(--e1)}
+.list.werk.wgrid li:has(.wgo.ok){background-image:var(--eok)}
+.list.werk.wgrid li:has(.wgo.out){background-color:rgba(179,38,30,.07)!important}

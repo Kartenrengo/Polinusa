@@ -6,7 +6,7 @@
    with room for children, and the family wants cooked food. From there two ways lead on. The craft way: a family that runs
    a household craft (Hauswerk) and has pots, mats and coconut oil in store gets the house of the craftsmen, the tufunga of
    later times; its craft works a quarter faster. The sea way, only for a house near the shore: the house of seafarers (fish,
-   provisions and sennit in store), of navigators (a navigator in the family, and mats) and of the Wissende, the keepers of
+   and sennit in store), of navigators (a navigator in the family, and mats) and of the Wissende, the keepers of
    star paths and genealogies (tapa). There was no writing: they kept it all in memory. The chief's house is the last step. Families are named after the woman
    who founded them; Lapita households most likely lived where the women's families lived. */
 const HOME_KINDS = new Set(['haus', 'pfahl', 'fale']);
@@ -20,13 +20,13 @@ const MASTER_GOODS = ['toepfe', 'matten', 'oel'];
 /* The sea way (b.t stays 2, b.way names the step): what each step wants in store besides the family house's needs, and costs.
    Kept apart from TIERS: these are goods that must lie in store (not flows), checked by seaHave. */
 const SEA = {
-  see:{n:'Seefahrerhaus', fam:'Seefahrerfamilie', ic:'einbaum', rank:1, cap:7, cost:{holz:3, dach:2, schnur:2}, add:['fisch', 'proviant', 'schnur'], does:'Ihre Kanus fahren schneller und überstehen Böen besser.'},
+  see:{n:'Seefahrerhaus', fam:'Seefahrerfamilie', ic:'einbaum', rank:1, cap:7, cost:{holz:3, dach:2, schnur:2}, add:['fisch', 'schnur'], does:'Ihre Kanus fahren schneller und überstehen Böen besser.'},
   nav:{n:'Navigatorenhaus', fam:'Navigatorenfamilie', ic:'plejaden', rank:2, cap:8, cost:{holz:2, dach:2, matten:2}, add:['matten'], does:'Ihre Navigatoren lernen anderthalbmal so schnell.'},
   wis:{n:'Haus der Wissenden', fam:'Wissende', ic:'mana', rank:3, cap:8, cost:{holz:2, dach:3, schnur:2}, add:['tapa'], does:'Sie bewahren den Sternenpfad, auch wenn der Navigator stirbt. Etwas Ansehen.'}
 };
 const SEA_ORDER = ['see', 'nav', 'wis'];
 const WAYS_DEEP = false;   // for now the sea way ends at the seafarer house; navigators and Wissende come later (IDEEN.md). Saved deeper steps read as seafarers.
-const SEA_NEAR = 18;   // a house is near the shore when its foot is no further from the water's edge than a coast building's (see check in world.js)
+const SEA_NEAR = 32;   // a house is near the shore when its foot is at most this far from the water's edge (the beach and the row behind it)
 const WIS_MANA = 1;    // standing a house of the Wissende adds every 15 ticks, up to what a village's beauty gives
 const SEA_SPEED = .03, SEA_SPEED_MAX = .12, SEA_SQUALL = .75;   // canoes: per seafarer adult, at most; chance of a squall with seafarers at home
 const NAV_FAST = 1.5;
@@ -46,8 +46,8 @@ const seaGoods = way => SEA[way] ? SEA_ORDER.slice(0, SEA[way].rank).flatMap(w =
 const seaHave = (I, k) => k === 'fisch' ? (I.stock.fisch || 0) + (I.stock.meeres || 0) : haveOf(I, k);   // fish counts with seafood
 const houseName = b => SEA[wayOf(b)] ? SEA[wayOf(b)].n : TIERS[tierOf(b)].n;
 const houseFam = b => SEA[wayOf(b)] ? SEA[wayOf(b)].fam : TIERS[tierOf(b)].fam;
-/* near the shore: the same test as for a building that belongs on the beach */
-function onShore(I, b){ const L = b && landAt(I, b); return !!L && polyDist({x:b.x, y:b.y}, L.poly) <= SEA_NEAR; }
+/* near the shore: a house on the beach or the row behind it; a stilt house stands in the lagoon itself */
+function onShore(I, b){ if (b && b.kind === 'pfahl') return true; const L = b && landAt(I, b); return !!L && polyDist({x:b.x, y:b.y}, L.poly) <= SEA_NEAR; }
 const CHIEF_GOODS = TIERS[4].needs.filter(k => !TIERS[3].needs.includes(k));
 /* Room in a house, as in Anno: every need met brings room for one more. A hut holds 2, with food and water 4; a family
    house 4 to 6 with cooked food, a master's house 4 to 8, the chief's house 4 to 10, by how many of their goods are in
@@ -222,7 +222,7 @@ function famNeeds(I, f, list){
    lies in store; its new goods must be there too. You tap the house and "Ausbauen" (or let houses rise by themselves).
    A hut is bound anew with fibre and sennit: a family house, with room for children. From the family house two ways lead on:
    the house of craftsmen (the family runs a Hauswerk; pots, mats and coconut oil in store) or, near the shore, the house of
-   seafarers (fish, provisions, sennit), then of navigators (a navigator in the family; mats), then of the Wissende (a
+   seafarers (fish, sennit), then of navigators (a navigator in the family; mats), then of the Wissende (a
    navigator of the second level; tapa). A house falls back a step when one of its goods has run out for half a minute; the
    sennit of a family house holds. */
 const WAY_NEXT = {'':'fam', fam:'hand', ...(WAYS_DEEP ? {see:'nav', nav:'wis'} : {})};   // the step after, by where the house stands; fam also leads to 'see'

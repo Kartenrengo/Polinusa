@@ -275,6 +275,7 @@ function ghostRender(){
   const m = $('placeMsg'); m.textContent = !ok ? msg : few ? `Nur ${n} von ${K.near.n} ${NEAR_PL[K.near.kind]} in der Nähe, so steht sie still.` : K.near ? `Passt, ${n} ${NEAR_PL[K.near.kind]} in der Nähe.` :
     bare ? (tn ? `Nur ${tn} Bäume in Reichweite.` : 'Hier stehen keine Bäume in Reichweite.') : K.trees ? `Passt, ${tn} Bäume in Reichweite.` : mode === 'move' ? 'Passt.' : 'Passt. Tippe auf Bauen.';
   if (ok && bare) placing.msg = m.textContent;
+  if (ok && placing.kind === 'haus' && unlocked('werft') && onShore(I, placing)) m.textContent += ' Nah am Strand: kann später ein Seefahrerhaus werden.';
   // a workplace on an islet where nobody lives needs a dugout from a jetty
   const homes = new Set(I.buildings.filter(b => b.kind === 'haus' && !b.bt).map(b => landOf(I, b))), L = landOf(I, placing);
   const away = ok && I.atoll && K.crew && homes.size && L >= 0 && !homes.has(L), lg = lagoonOf(I), spare = lg.jetties.length * KINDS.steg.serves - lg.need.length;
@@ -334,12 +335,15 @@ function werkMarkup(I){
   if (!ws.length) return `<p class="sub">Noch keine Werkstatt auf ${I.name}.</p>`;
   const groups = []; for (const b of ws){ const g = groups.find(q => q.k === b.kind); if (g) g.l.push(b); else groups.push({k:b.kind, l:[b]}); }
   groups.sort((a, c) => a.l.every(b => b.bt) - c.l.every(b => b.bt));
-  return `<ul class="list werk">${groups.map(g => { const K = KINDS[g.k], done = g.l.filter(b => !b.bt), b0 = done[0] || g.l[0];
+  return `<ul class="list werk wgrid">${groups.map(g => { const K = KINDS[g.k], done = g.l.filter(b => !b.bt), b0 = done[0] || g.l[0];
     let w = null, run = 0; for (const b of done){ const q = b.idle || workState(I, b); if (q) w = w || q; else run++; }
     const st = !done.length ? ['low', 'wird gebaut'] : w && !run ? ['out', shortWhy(w)] : w ? ['low', `${run} von ${done.length} laufen`] : ['ok', 'läuft'];
-    const outs = (K.picks ? [prodOf(b0)] : [K.prod]).filter(Boolean).map(k => miniTile('made', k, k, ''));
-    const ins = Object.entries(K.use || {}).map(([k, v]) => miniTile(groupHave(I, k) >= v ? 'ok' : 'out', k, GROUPS[k] ? groupNext(I, k) : k, v));
-    return `<li class="wrow"><button class="wgo" type="button" data-act="goto" data-b="${b0.id}" aria-label="${K.n}: ${st[1]}. Hingehen"><span class="wnm">${bIcon(g.k)}<b>${g.l.length > 1 ? g.l.length + '× ' : ''}${K.s}</b></span><span class="wfl">${ins.join('')}<span class="mgrp">${ins.length ? '<span class="marr">→</span>' : ''}${outs.join('')}</span></span><span class="state ${st[0]}">${st[1]}</span></button></li>`; }).join('')}</ul>`;
+    // a small tile per kind: the building with how many, what goes in (red when it is missing) and what comes out; the
+    // colour says whether it runs; the words only when something is wrong, and in full when held
+    const outs = (K.picks ? [prodOf(b0)] : [K.prod]).filter(Boolean), ins = Object.entries(K.use || {});
+    const flow = ins.map(([k, v]) => `<i class="wi${groupHave(I, k) >= v ? '' : ' out'}">${icon(GROUPS[k] ? groupNext(I, k) : k)}</i>`).join('') + (ins.length ? '<span class="marr">›</span>' : '') + outs.map(k => `<i class="wi">${icon(k)}</i>`).join('');
+    const tip = `<b>${g.l.length > 1 ? g.l.length + '× ' : ''}${K.n}</b>: ${st[1]}.${ins.length ? ' Braucht ' + andList(ins.map(([k]) => GN[k] || k)) + '.' : ''}${outs.length ? ' Macht ' + andList(outs.map(k => GN[k] || k)) + '.' : ''}`;
+    return `<li class="wrow"><button class="wgo wt ${st[0]}" type="button" data-act="goto" data-b="${b0.id}" data-tip="${esc(tip)}" aria-label="${K.n}: ${st[1]}. Hingehen"><span class="wnm">${bIcon(g.k)}${g.l.length > 1 ? `<em>${g.l.length}</em>` : ''}</span><span class="wfl">${flow}</span>${st[0] === 'ok' ? '' : `<span class="wst">${st[1]}</span>`}</button></li>`; }).join('')}</ul>`;
 }
 function showPlaceBar(){
   const K = KINDS[placing.kind], I = isl(placing.island);
@@ -568,7 +572,7 @@ function waysRow(I, b, u){
   const sea = u.ways.includes('see'), near = sea && onShore(I, b);
   if (u.ways.length < 2 || !unlocked('werft')) return '';
   const btn = w => `<button class="chip wbtn${w === u.way ? ' on' : ''}" type="button" data-act="way" data-w="${w}" aria-pressed="${w === u.way}">${icon(WAY_IC[w])}<span class="wl">${wayName(w)}</span><span class="ws">${w === 'see' ? 'Seefahrt' : 'Handwerk'}</span></button>`;
-  return near ? `<div class="ways" role="group" aria-label="Weg wählen">${btn('hand')}${btn('see')}</div>` : `<p class="sub wayno">${icon('einbaum')}Seefahrerhaus: nur nah am Strand.</p>`;
+  return near ? `<div class="ways" role="group" aria-label="Weg wählen">${btn('hand')}${btn('see')}</div>` : `<p class="sub wayno">${icon('einbaum')}Seefahrerhaus: nur am Strand oder in der Lagune.</p>`;
 }
 function riseBlock(I, b, u, t, fn){
   const need = new Map(), tileR = (k, label, txt, ok, act, far, ic, why) => `<${act ? 'button' : 'span'} class="rtile ${ok ? 'ok' : 'out'}${far ? ' far' : ''}" ${act ? `type="button" ${act}` : 'role="img"'} aria-label="${label}: ${txt}${why ? ', ' + why : ''}${far ? ', kommt per Kanu' : ''}" title="${why || label}">${icon(ic || k)}<small>${label}</small><b>${txt}</b></${act ? 'button' : 'span'}>`;
@@ -769,7 +773,12 @@ function ratMarkup(I){
 }
 /* A person: who, what they do now, where they work, how their day is shared, and the village's slider */
 /* on a person's tile in the house: the short name of the place (Fischer, not Fischerhütte), so four fit in a row */
-const jobShort = (I, p) => { const b = p.job && findB(p.job); return isAdult(p) && b && !b.at && !loanWord(I, p) && !(staffOf(I).restP || []).includes(p.id) ? KINDS[b.kind].s : personWork(I, p); };
+/* a person's work in one or two short words for the chips in a house: the place, and a word when they are away from it
+   (the full words are on the person's sheet and read out to screen readers) */
+const jobShort = (I, p) => { const b = p.job && findB(p.job), t = p.loan && findB(p.loan);
+  if (!isAdult(p) || !b || b.at) return isAdult(p) && t ? (t.bt ? 'baut' : HOME_KINDS.has(t.kind) ? 'Dach' : 'hilft') : personWork(I, p);
+  const away = t ? (t.bt ? 'baut' : HOME_KINDS.has(t.kind) ? 'Dach' : 'hilft') : (staffOf(I).restP || []).includes(p.id) ? 'Pause' : '';
+  return away ? `${KINDS[b.kind].s} · ${away}` : KINDS[b.kind].s; };
 function personMarkup(){
   const I = sheetData && isl(sheetData.id), p = I && I.people && I.people.find(q => q.id === sheetData.p); if (!p) return '';
   const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
@@ -890,6 +899,8 @@ let foodOpen = false;   // the single foods are folded into one tile "Essen"; a 
 const STORE_TABS = [['tag', 'Täglich'], ['brenn', 'Feuer'], ['bau', 'Bauen'], ['werk', 'Hausrat'], ['see', 'Meer']];
 const TAG_GOODS = ['wasser', 'speisen', 'blaetter', 'steine'], SEA_GOODS = ['proviant', 'muschel', 'haken', 'perlmutt', 'federn', 'tabua', 'kauri', 'talisman', 'schmuck', 'hauer'];
 const BAU_GOODS = ['holz', 'dach', 'faser', 'schnur', 'harz', 'kalk'], FUEL_WHY = {schalen:'brennen zuerst. Kommen vom Erntehaus, beim Nüsse-Schälen.', reisig:'brennt als Zweites. Kinder und Alte sammeln es.', holz:'brennt erst, wenn nichts anderes da ist. Eigentlich zum Bauen.'};
+/* wood and palm fronds: what every building and every roof needs, so they stand with the daily goods */
+const BASE_GOODS = ['holz', 'dach'], BASE_WHY = {holz:'braucht jeder Bau und jede Ausbesserung. Kommt vom Holzfäller.', dach:'decken jedes Dach und jeden Neubau. Kommen vom Erntehaus.'};
 let storeTab = 'tag';
 function storeTiles(I){
   const nd = needsOf(I), cap = storeCap(I), back = I._back && tick - I._back.at < 150 ? I._back.d : null, day = dailyNeed(I, nd), rate = k => {
@@ -897,7 +908,7 @@ function storeTiles(I){
     return {k, make, use:FOODS.includes(k) ? workUse(I, k) : use, have};
   }, all = GOODS.map(rate).filter(g => !FOODS.includes(g.k) && (g.have || g.make || g.use || BAU_GOODS.includes(g.k) || GROUPS.brenn.includes(g.k)));
   const foods = FOODS.map(rate).filter(g => g.have || g.make || g.use), kinds = foods.filter(g => g.have > 0), food = rate('essen');
-  const why = k => DAILY_WHY[k] ? DAILY_WHY[k](day[k] || 0) + '.' : FUEL_WHY[k] ? `${GN[k]} ${FUEL_WHY[k]}` : '';
+  const why = k => DAILY_WHY[k] ? DAILY_WHY[k](day[k] || 0) + '.' : storeTab !== 'brenn' && BASE_WHY[k] ? `${GN[k]} ${BASE_WHY[k]}` : FUEL_WHY[k] ? `${GN[k]} ${FUEL_WHY[k]}` : '';
   const tile = (g, n = '') => { const net = g.make - g.use, cls = Math.abs(net) < .05 ? '' : net > 0 ? 'up' : 'down', full = Math.min(1, g.have / cap);
     return `<button class="tile ${cls}" type="button" data-act="ware" data-k="${g.k}" aria-label="${GN[g.k]}: ${g.have}, ${net >= 0 ? 'plus' : 'minus'} ${perMin(Math.abs(net))} pro Minute" data-tip="${esc(`<b>${GN[g.k]}</b> ${g.have} da${Math.abs(net) >= .05 ? `, ${net > 0 ? '+' : '−'}${perMin(Math.abs(net))} pro Minute` : ''}. ${why(g.k)}`)}">${n ? `<em class="ord">${n}</em>` : ''}${icon(g.k)}<b>${g.have}</b><small class="nm">${shortGN(g.k)}</small>${back && back[g.k] ? `<s>${back[g.k][0]}</s>` : ''}<span class="flow">${cls ? (net > 0 ? '▲' : '▼') + perMin(Math.abs(net)) : '·'}</span><i class="fill" style="width:${Math.round(full * 100)}%"></i></button>`; };
   const fnet = food.make - food.use, fcls = Math.abs(fnet) < .05 ? '' : fnet > 0 ? 'up' : 'down', ffull = Math.min(1, food.have / (cap * FOODS.length / 3));
@@ -905,7 +916,7 @@ function storeTiles(I){
   const tabs = `<div class="chips stabs" role="tablist">${STORE_TABS.map(([k, n]) => `<button class="chip${storeTab === k ? ' on' : ''}" role="tab" type="button" data-act="stab" data-v="${k}" aria-selected="${storeTab === k}">${icon({tag:'essen', brenn:'brenn', bau:'holz', werk:'toepfe', see:'muschel'}[k])}${n}</button>`).join('')}</div>`;
   const by = k => all.find(g => g.k === k) || rate(k);
   let body = '';
-  if (storeTab === 'tag') body = `<div class="tiles">${sum}${foodOpen ? foods.map(g => tile(g)).join('') : ''}${TAG_GOODS.filter(k => k === 'wasser' || (k === 'speisen' && dailyGoods(I, nd).includes('speisen')) || (all.find(g => g.k === k) && (by(k).have || by(k).make || by(k).use))).map(k => tile(by(k))).join('')}${(g => `<button class="tile" type="button" data-act="stab" data-v="brenn" aria-label="Brennstoff: ${g.have}. Antippen zeigt das Brennmaterial" data-tip="${esc(`<b>Brennstoff</b> ${g.have} da. ${why('brenn')}`)}">${icon('brenn')}<b>${g.have}</b><span class="flow">›</span></button>`)(rate('brenn'))}</div><p class="sub">Tippen zeigt, wofür. ${day.essen} Menschen essen und trinken jeden Morgen.</p>`;
+  if (storeTab === 'tag') body = `<div class="tiles">${sum}${foodOpen ? foods.map(g => tile(g)).join('') : ''}${TAG_GOODS.filter(k => k === 'wasser' || (k === 'speisen' && dailyGoods(I, nd).includes('speisen')) || (all.find(g => g.k === k) && (by(k).have || by(k).make || by(k).use))).map(k => tile(by(k))).join('')}${(g => `<button class="tile" type="button" data-act="stab" data-v="brenn" aria-label="Brennstoff: ${g.have}. Antippen zeigt das Brennmaterial" data-tip="${esc(`<b>Brennstoff</b> ${g.have} da. ${why('brenn')}`)}">${icon('brenn')}<b>${g.have}</b><span class="flow">›</span></button>`)(rate('brenn'))}${BASE_GOODS.map(k => tile(by(k))).join('')}</div><p class="sub">Tippen zeigt, wofür. ${day.essen} Menschen essen und trinken jeden Morgen.</p>`;
   else if (storeTab === 'brenn'){ const F = fireFore(I);
     body = `<div class="tiles">${GROUPS.brenn.map((k, i) => tile(by(k), i + 1)).join('')}</div><p class="sub${F.n && F.fuel < F.n ? ' meal-bad' : ''}">Heute Nacht: ${F.n} Feuer, eins je Haus. Es brennt der Reihe nach: 1, 2, dann 3.</p>`; }
   else if (storeTab === 'bau') body = `<div class="tiles">${BAU_GOODS.map(k => tile(by(k))).join('')}</div>`;
@@ -1433,7 +1444,7 @@ function select(b){ const craft = b.at && findB(b.at); if (craft) b = craft; sel
 /* ---------- names only on demand. Tiles, goods and buttons show their picture; the name and a line about it pop up in a little
    bubble: at a tap where the tap does nothing else (a picture, a good in the bar), or when held a moment on a button that does
    something when tapped (then the tap is not done). The text is the element's data-tip, else its aria-label. */
-const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .hud-who .top-right > button, .sattile, .kinds, #mascot, #compass', TIP_HOLD = 380;
+const TIP_SEL = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .wt, .hud-who .top-right > button, .sattile, .kinds, #mascot, #compass', TIP_HOLD = 380;
 /* tiles: a tap shows what the picture is at once; what the tile did before (go to the store, build, mend the roof …) is a
    button in the bubble. Buttons in the bar and in the build menu keep their tap; held, they show the bubble. */
 const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds';
