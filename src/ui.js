@@ -1608,7 +1608,7 @@ $('mascot').addEventListener('click', e => { e.stopPropagation(); if (!mascotOn 
 /* ---------- a little skink with a blue tail (Emoia, the blue-tailed skink of the islands), even shyer and rarer than the
    crab: every five to ten minutes it darts across the bar in quick bursts, stops, turns its head, flicks its tail, and
    is gone over the side. It never comes while the crab is out. Key frames: [ms, x share of the width (may be off it), y
-   share of the height, turn, what it does: 'r' runs, 'b' looks about, 'f' flicks the tail tip, 'l' tastes the air]. */
+   share of the height, turn, what it does: 'r' runs, 'b' looks about, 'f' flicks the tail tip, 'l' tastes the air, 'S' basks]. */
 const LIZ = {first:180000, gap:[330000, 600000], S:66};   // every five to ten minutes; S: its length on screen, nose to tail tip
 const LIZ_PLAYS = [
   [[0, -.08, .55, 0, 'r'], [700, .22, .5, -6, 'r'], [1500, .22, .5, -6, 'b'], [2300, .22, .5, -6, ''], [2700, .48, .62, 8, 'r'], [3500, .48, .62, 8, 'fl'], [4500, .48, .62, 8, 'b'], [5100, 1.1, .45, -4, 'r']],
@@ -1623,30 +1623,35 @@ const LIZ_SS = [0, 1.2, 2.6, 4.2, 6, 8, 10, 12.5, 15, 18, 21, 24, 27, 30, 33, 36
 const lizW = s => s < 6 ? 1 + 2.9 * Math.sin(s / 6 * Math.PI / 2) : s < 10 ? 3.9 - .35 * (s - 6) / 4 : s < 24 ? 3.55 + 1.15 * Math.sin((s - 10) / 14 * Math.PI / 2) : s < 37 ? 4.7 - 1 * (s - 24) / 13 : Math.max(.22, 3.7 * Math.pow(1 - (s - 37) / 63, 1.1));
 const LIZ_SVG = (() => { const I = '#2B1D14';
   return `<svg viewBox="-72 -20 104 40"><defs><linearGradient id="zSkin" gradientUnits="userSpaceOnUse" x1="28" y1="0" x2="-46" y2="0"><stop offset="0" stop-color="#6B4E36"/><stop offset=".22" stop-color="#4A3424"/><stop offset=".5" stop-color="#3A2A1C"/><stop offset=".68" stop-color="#2D5E8C"/><stop offset="1" stop-color="#4DB8EE"/></linearGradient></defs>` +
-    `<path class="z-legs" fill="none" stroke="#3D2B1D" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path class="z-toes" fill="none" stroke="${I}" stroke-width=".55" stroke-linecap="round"/>` +
+    `<ellipse class="z-glow" cx="2" cy="0" rx="34" ry="11" fill="#FFD45E" opacity="0"/><path class="z-legs" fill="none" stroke="#3D2B1D" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path class="z-toes" fill="none" stroke="${I}" stroke-width=".55" stroke-linecap="round"/>` +
     `<path class="z-tongue" fill="none" stroke="#D2453A" stroke-width=".7" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>` +
     `<path class="z-body" fill="url(#zSkin)" stroke="${I}" stroke-width="1" stroke-linejoin="round"/>` +
     `<path class="z-side" fill="none" stroke="#D8C48E" stroke-width=".75" stroke-linecap="round"/><path class="z-mid" fill="none" stroke="#EADBA9" stroke-width=".95" stroke-linecap="round"/>` +
     `<path class="z-gloss" fill="none" stroke="#fff" stroke-width=".7" stroke-linecap="round" opacity=".35"/><path class="z-ring" fill="#E2CF98"/><path class="z-eyes" fill="${I}"/><path class="z-glint" fill="#fff"/></svg>`; })();
 /* one frame of the body: run 0..1, ph the stride phase, turn of the head (-1..1), flick of the tail tip, curl at rest */
-function lizShape(E, run, ph, turn, flick, curl){
-  const P = LIZ_SS.map(s => { const k = s / 100, wave = Math.sin(Math.PI * 2 * s / 58 - ph) * 3 * (.3 + .7 * k) * run, rest = (1 - run) * (curl * k * k * 9 + (s > 55 ? flick * (s - 55) / 45 : 0) + (s < 14 ? turn * (14 - s) / 14 * 2.2 : 0));
-    return {s, x:28 - s, y:wave + rest, w:lizW(s)}; });
+function lizShape(E, run, ph, turn, flick, curl, bask = 0, ts = 0){
+  // basking (bask 1): the body flattens and widens to catch the sun, it breathes slowly, the tail lies out straight
+  const flat = 1 + bask * (.16 + Math.sin(ts * 4.2) * .03);
+  const P = LIZ_SS.map(s => { const k = s / 100, wave = Math.sin(Math.PI * 2 * s / 58 - ph) * 3 * (.3 + .7 * k) * run, rest = (1 - run) * (curl * (1 - .8 * bask) * k * k * 9 + (s > 55 ? flick * (s - 55) / 45 : 0) + (s < 14 ? turn * (14 - s) / 14 * 2.2 : 0));
+    return {s, x:28 - s, y:wave + rest, w:lizW(s) * (s < 40 ? flat : 1 + (flat - 1) * .4)}; });
   P.forEach((p, i) => { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)], fx = a.x - b.x || 1, fy = a.y - b.y, l = Math.hypot(fx, fy); p.fx = fx / l; p.fy = fy / l; p.nx = p.fy; p.ny = -p.fx; });
   const at = (p, o) => `${(p.x + p.nx * o).toFixed(2)} ${(p.y + p.ny * o).toFixed(2)}`, line = (a, b, o) => 'M' + P.filter(p => p.s >= a && p.s <= b).map(p => at(p, o(p))).join('L');
   const h = P[0];
   E.body.setAttribute('d', `M${(h.x + h.fx * 1.1).toFixed(2)} ${(h.y + h.fy * 1.1).toFixed(2)}L` + P.map(p => at(p, p.w)).join('L') + 'L' + P.slice().reverse().map(p => at(p, -p.w)).join('L') + 'Z');
   E.mid.setAttribute('d', line(2.6, 72, () => 0)); E.side.setAttribute('d', line(6, 46, p => p.w * .58) + line(6, 46, p => -p.w * .58));
-  E.gloss.setAttribute('d', line(12.5, 36, p => p.w * .82));
-  const e = P[3], eo = e.w * .78; E.eyes.setAttribute('d', [eo, -eo].map(o => { const x = e.x + e.nx * o, y = e.y + e.ny * o; return `M${(x + .9).toFixed(2)} ${y.toFixed(2)}a.9 .9 0 1 0 -1.8 0a.9 .9 0 1 0 1.8 0`; }).join(''));
+  E.gloss.setAttribute('d', line(12.5, bask > .3 ? 60 : 36, p => p.w * .82)); E.gloss.setAttribute('opacity', (.35 + .35 * bask).toFixed(2));   // warm and shining in the sun
+  const e = P[3], eo = e.w * .78; E.eyes.setAttribute('d', [eo, -eo].map(o => { const x = e.x + e.nx * o, y = e.y + e.ny * o; const ry = (.9 * (1 - .7 * bask)).toFixed(2); return `M${(x + .9).toFixed(2)} ${y.toFixed(2)}a.9 ${ry} 0 1 0 -1.8 0a.9 ${ry} 0 1 0 1.8 0`; }).join(''));   // eyes half shut in the sun
   E.ring.setAttribute('d', [eo, -eo].map(o => { const x = e.x + e.nx * o, y = e.y + e.ny * o; return `M${(x + 1.35).toFixed(2)} ${y.toFixed(2)}a1.35 1.35 0 1 0 -2.7 0a1.35 1.35 0 1 0 2.7 0`; }).join(''));
+  E.glint.setAttribute('opacity', bask > .5 ? 0 : 1);
   E.glint.setAttribute('d', [eo, -eo].map(o => { const x = e.x + e.nx * o + .25, y = e.y + e.ny * o - .3; return `M${(x + .3).toFixed(2)} ${y.toFixed(2)}a.3 .3 0 1 0 -.6 0a.3 .3 0 1 0 .6 0`; }).join(''));
   const tx = h.x + h.fx * 1.1, ty = h.y + h.fy * 1.1, rot = (dx, dy, a) => [dx * Math.cos(a) - dy * Math.sin(a), dx * Math.sin(a) + dy * Math.cos(a)];
   const t1 = [tx + h.fx * 3.6, ty + h.fy * 3.6], fA = rot(h.fx * 1.6, h.fy * 1.6, .5), fB = rot(h.fx * 1.6, h.fy * 1.6, -.5);
   E.tongue.setAttribute('d', `M${tx.toFixed(2)} ${ty.toFixed(2)}L${t1[0].toFixed(2)} ${t1[1].toFixed(2)}l${fA[0].toFixed(2)} ${fA[1].toFixed(2)}M${t1[0].toFixed(2)} ${t1[1].toFixed(2)}l${fB[0].toFixed(2)} ${fB[1].toFixed(2)}`);
   // legs: [spine point, side, upper and lower angle (degrees from straight out, + towards the head), lengths, toe lengths]
-  const sw = Math.sin(ph) * 34 * run, LEGS = [[7, 1, -12 + sw, 55 + sw * .8, 4, 3.5, [1.5, 2, 2.4, 2.2, 1.4]], [7, -1, -12 - sw, 55 - sw * .8, 4, 3.5, [1.6, 2.1, 2.5, 2.3, 1.5]],
-    [15, 1, 24 - sw, -48 - sw * .8, 5, 4.2, [1.6, 2.3, 2.9, 3.4, 1.9]], [15, -1, 24 + sw, -48 + sw * .8, 5, 4.2, [1.7, 2.4, 3, 3.5, 2]]];
+  // basking, the legs lie flat out to the sides
+  const sw = Math.sin(ph) * 34 * run, fu = -12 + 20 * bask, fl = 55 - 25 * bask, hu = 24 - 18 * bask, hl = -48 + 20 * bask;
+  const LEGS = [[7, 1, fu + sw, fl + sw * .8, 4, 3.5, [1.5, 2, 2.4, 2.2, 1.4]], [7, -1, fu - sw, fl - sw * .8, 4, 3.5, [1.6, 2.1, 2.5, 2.3, 1.5]],
+    [15, 1, hu - sw, hl - sw * .8, 5, 4.2, [1.6, 2.3, 2.9, 3.4, 1.9]], [15, -1, hu + sw, hl + sw * .8, 5, 4.2, [1.7, 2.4, 3, 3.5, 2]]];
   let legs = '', toes = '';
   for (const [k, side, au, al, lu, ll, T] of LEGS){ const p = P[k], nx = p.nx * side, ny = p.ny * side, dir = a => { a *= Math.PI / 180; return [nx * Math.cos(a) + p.fx * Math.sin(a), ny * Math.cos(a) + p.fy * Math.sin(a)]; };
     const x0 = p.x + nx * p.w * .75, y0 = p.y + ny * p.w * .75, u = dir(au), x1 = x0 + u[0] * lu, y1 = y0 + u[1] * lu, v = dir(al), x2 = x1 + v[0] * ll, y2 = y1 + v[1] * ll;
@@ -1654,10 +1659,16 @@ function lizShape(E, run, ph, turn, flick, curl){
     T.forEach((len, q) => { const d = dir(al + (q - 2) * 26 * Math.sign(al)); toes += `M${x2.toFixed(2)} ${y2.toFixed(2)}l${(d[0] * len).toFixed(2)} ${(d[1] * len).toFixed(2)}`; }); }
   E.legs.setAttribute('d', legs); E.toes.setAttribute('d', toes);
 }
-let lizAt = 0, lizOn = 0, lizPlay = null, lizEls = null, lizRun = 0, lizPh = 0, lizCurl = .6, lizLast = 0;
+/* the skink runs to the spot of the bar right under the sun, stops, looks about, and basks a while: flat, legs out, eyes half
+   shut, breathing slowly; then it darts off over the other side */
+function lizSunPlay(){
+  const W = $('hudbar').offsetWidth || 390, sx = clamp((parseFloat($('dayMark').style.left) || W / 2) / W, .2, .8), left = sx > .5, from = left ? -.08 : 1.08, to = left ? 1.1 : -.12, r = left ? 0 : 180, d = left ? -1 : 1;
+  return [[0, from, .55, r, 'r'], [900, sx + d * .06, .36, r - 6, 'r'], [1300, sx + d * .06, .36, r - 6, 'b'], [1900, sx + d * .06, .36, r - 6, 'r'], [2300, sx, .34, r - 3, 'S'], [6800, sx, .34, r - 3, 'Sb'], [7600, sx, .34, r - 3, 'fl'], [8300, sx, .34, r - 3, 'r'], [9100, to, .5, r, 'r']];
+}
+let lizAt = 0, lizOn = 0, lizPlay = null, lizEls = null, lizRun = 0, lizPh = 0, lizCurl = .6, lizLast = 0, lizBask = 0;
 function lizardTick(now){
   const Z = $('lizard'); if (!Z) return;
-  if (!Z.innerHTML){ Z.innerHTML = LIZ_SVG; const q = c => Z.querySelector('.z-' + c); lizEls = {ring:q('ring'), body:q('body'), mid:q('mid'), side:q('side'), gloss:q('gloss'), eyes:q('eyes'), glint:q('glint'), tongue:q('tongue'), legs:q('legs'), toes:q('toes')};
+  if (!Z.innerHTML){ Z.innerHTML = LIZ_SVG; const q = c => Z.querySelector('.z-' + c); lizEls = {glow:q('glow'), ring:q('ring'), body:q('body'), mid:q('mid'), side:q('side'), gloss:q('gloss'), eyes:q('eyes'), glint:q('glint'), tongue:q('tongue'), legs:q('legs'), toes:q('toes')};
     Z.style.width = LIZ.S + 'px'; Z.style.height = (LIZ.S * 40 / 104).toFixed(1) + 'px'; }
   if (!lizAt) lizAt = now + LIZ.first;
   if (lizOn){
@@ -1671,13 +1682,16 @@ function lizardTick(now){
     // running: a wave down the body and fast diagonal strides; resting: it looks about ('b'), flicks the tail tip ('f'), tastes the air ('l')
     const dt = clamp(now - lizLast, 0, 50); lizLast = now; lizRun += ((run ? 1 : 0) - lizRun) * Math.min(1, dt * (run ? .02 : .011)); if (run) lizPh += dt * .046;   // about seven strides a second
     const turn = A[4].includes('b') ? Math.sin(raw * Math.PI * 3) : 0, flick = A[4].includes('f') ? Math.sin(ts * 26) * 3.2 * Math.sin(raw * Math.PI) : 0;
-    lizShape(E, lizRun, lizPh, turn, flick, lizCurl);
+    lizBask += ((A[4].includes('S') ? 1 : 0) - lizBask) * Math.min(1, dt * (A[4].includes('S') ? .003 : .008));
+    lizShape(E, lizRun, lizPh, turn, flick, lizCurl, lizBask, ts);
+    E.glow.setAttribute('opacity', (lizBask * (.28 + Math.sin(ts * 2) * .06)).toFixed(3));   // a warm patch of sun where it lies
     E.tongue.setAttribute('opacity', A[4].includes('l') && Math.sin(ts * 14) > .3 ? 1 : 0);
     return;
   }
   if (now < lizAt || mascotOn || landing || document.hidden || sheetKind === 'menu' || reduced) return;
   lizAt = now + LIZ.gap[0] + Math.random() * (LIZ.gap[1] - LIZ.gap[0]);
-  lizPlay = LIZ_PLAYS[Math.floor(Math.random() * LIZ_PLAYS.length)]; lizOn = now; lizCurl = (Math.random() < .5 ? -1 : 1) * (.4 + Math.random() * .5);
+  if (dayPhase() > DAY_END){ lizAt = now + 60000; return; }   // skinks are out by day only; at night it tries again a minute later
+  lizPlay = Math.random() < .55 ? lizSunPlay() : LIZ_PLAYS[Math.floor(Math.random() * LIZ_PLAYS.length)]; lizOn = now; lizCurl = (Math.random() < .5 ? -1 : 1) * (.4 + Math.random() * .5);
 }
 $('lizard').addEventListener('click', e => { e.stopPropagation(); if (!lizOn) return; lizPlay = lizPlay.slice(); const t = performance.now() - lizOn;
   // startled: it dashes off at once over the nearest side
