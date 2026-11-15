@@ -613,11 +613,18 @@ function seatedFig(c, look, old, x, y, s = 1){
   c.save(); c.beginPath(); c.rect(x - 7 * s, y - 16 * s, 14 * s, 15.2 * s); c.clip();   // only what rises above the gunwale
   c.translate(x, y + 3.1 * s); c.scale(s * .92, s * .92); blit(c, 'fig|' + look + (old ? 'o' : ''), () => figureArt(look, old)); c.restore();
 }
+/* the paddler's hands: one on the top of the shaft, one lower down; the elbows go out */
+function paddleArms(c, x, y, s, bx, by){
+  const gx = x + 1.1 * s, gy = y - 4.6 * s, lx = gx + (bx - gx) * .5, ly = gy + (by - gy) * .5;
+  limb(c, x + 1.6 * s, y - 2.9 * s, x + 2.9 * s, y - 1.8 * s, lx, ly, undefined, undefined, SKINS[1], .55 * s);
+  limb(c, x - 1.6 * s, y - 2.9 * s, x - 1.1 * s, y - 4.6 * s, gx, gy, undefined, undefined, SKINS[1], .55 * s);
+}
 function paddleStroke(c, x, y, s, now, ph){
   const a = reduced ? 0 : Math.sin(now / 340 + ph), bx = x + (3.4 + a * 1.7) * s, by = y + (1.5 - Math.max(0, -a) * .5) * s;
   const p = new Path2D(); p.moveTo(x + 1.1 * s, y - 4.6 * s); p.lineTo(bx, by);
   stroke(c, p, '#2B1D14', .8 * s, null, 'round'); stroke(c, p, '#9C7246', .36 * s, null, 'round');
   c.fillStyle = '#9C7246'; const bl = ellipse(bx, by + .2 * s, .55 * s, 1.15 * s); c.fill(bl); stroke(c, bl, '#2B1D14', .3 * s);
+  if (quality && lod === 'near') paddleArms(c, x, y, s, bx, by);
   if (!reduced && a > .55) stroke(c, ellipse(bx - .6 * s, by + 1.2 * s, 1.4 * s, .45 * s), '#F4FBFA', .4 * s, [.4, .7], 'round', .85);   // the water swirls behind the blade
   if (!reduced && quality && lod === 'near') paddleSplash(c, x, y, s, now, ph);
   if (!reduced && a < -.3 && lod === 'near'){ const q = (-a - .3) / .7; c.fillStyle = '#F4FBFA';   // drops run off the blade as it comes out of the water
@@ -1184,7 +1191,7 @@ function drawPeople(c, v, now){
     // someone sitting on a mat in front of a house (restMat): sitting down and getting up are eased; children are smaller
     if (le > .01){ c.translate(4.6 * le, -1.3 * le); c.rotate(-Math.PI / 2 * le); }
     if (se > .005) c.scale(1, 1 - .22 * se - .045 * Math.sin(se * Math.PI) * (w.sit && (!w.moving || w.busy) ? 1 : -1));
-    if (w.child) c.scale(.7, .7);
+    if (w.child) c.scale(.7, .7); else if (P) c.scale(P.bw, P.bh);
     // a load: on the head or the shoulder, or two baskets on a carrying pole; builders drag a log behind them
     const drag = w.carry === 'holz' && w.pole && w.job && BUILD_JOBS.has(w.job.type), pole = !drag && w.pole && POLE_LOADS.has(w.carry);
     if (drag) dragLog(c, w, now); else if (w.carry && LOAD_BACK.has(w.carry)) blit(c, 'load|' + w.carry, LOADS[w.carry]);
@@ -1192,13 +1199,17 @@ function drawPeople(c, v, now){
     const at = w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3, show = (at || w.dance || w.hop || w.cheer) && w.fx && w.fx[0] !== '~';
     w._sq = 0; const ln = show && LEAN[w.fx] ? LEAN[w.fx](reduced ? .35 : now / 1000 + (w.x % 7), w, now) : 0; w._ln = ln;
     if (ln){ c.save(); c.rotate(ln); if (w._sq) c.scale(1, w._sq); }
-    if (P) drawWalkerBody(c, w, P); else blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
     const torch = w.job && w.job.type === 'fish' && torchOn(w), tool = w.old ? 'stab' : !torch && !w.carry && w.job && !(at && NOTOOL.has(w.fx)) && w.job.tool;
+    if (P){   // the hand holds the tool and moves with the stroke: it is lifted in the wind-up and comes down with the strike
+      const gs = tool && at && !reduced && SWING.has(w.fx) ? workBeat(w, now).sw : 0; P.gsw = gs; P.gdx = gs * .5; P.gdy = gs < 0 ? gs * 1.2 : gs * .5;
+      limbPose(w, P, now, tool, at, torch, drag, pole); drawWalkerBody(c, w, P);
+    } else blit(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old));
     // at work the adze and the digging stick swing with the stroke (workBeat); the old one's staff swings with the step
     const stab = P && tool === 'stab' && P.stab; if (stab){ c.save(); c.translate(1.9, -7.4); c.rotate(stab); c.translate(-1.9, 7.4); }
-    if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? workBeat(w, now).sw * .4 : 0; if (sw){ c.save(); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
+    if (tool){ const sw = at && !reduced && SWING.has(w.fx) ? workBeat(w, now).sw * .4 : 0; if (sw){ c.save(); if (P) c.translate(P.gdx, P.gdy); c.translate(1.3, -4.2); c.rotate(sw); c.translate(-1.3, 4.2); } blit(c, 'tool|' + tool, TOOLS[tool]); if (sw) c.restore(); }
     if (stab) c.restore();
     if (torch) torchHeld(c, w, now, at, P);
+    if (P){ c.save(); c.translate(P.upDx, P.upDy); armDraw(c, P.near, w); c.restore(); }   // the near arm in front of the body and the tool
     if (ln) c.restore();
     if (show) workFx(c, w, now);
     if (pole) poleLoads(c, w, P ? P.swing : 0, P ? P.pole : 0); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag){ if (P) headLoad(c, w, P); else blit(c, 'load|' + w.carry, LOADS[w.carry]); }
@@ -1254,6 +1265,10 @@ function drawSwimmer(c, w, now){
       c.save(); c.translate(-4.4, -.9); c.rotate(Math.PI / 2); c.scale(.8, .95); figOf(c, w); c.restore();
       const a = reduced ? 0 : Math.sin(t / 260 + ph);
       for (const side of [-1, 1]){ const k = side * a; if (k > .4) drop(2.4 + k * 1.5, side * 1.5 + .4, .45, .9); }
+      if (quality && !reduced && lod === 'near') for (const side of [-1, 1]){   // each arm reaches forward and pulls back in turn
+        const k = Math.sin(t / 260 + ph + (side > 0 ? 0 : Math.PI)), yy = -.9 + side * 1.15, hx = 3.6 + k * 2.2;
+        limb(c, 1.5, yy, 2.4 + k * 1.1, yy + side * .55, hx, yy + side * .35, undefined, undefined, SKINS[+w.look[0]] || SKINS[0], .55);
+      }
       ring(-5.6, .2, 2.2, .6);
       c.restore();
     }
@@ -1281,7 +1296,16 @@ function drawSwimmer(c, w, now){
     // head and shoulders over the water, the arms reach forward in turn
     c.save(); c.beginPath(); c.rect(-6, -14, 12, 14); c.clip(); c.translate(0, 6.4 * s); c.scale(s * dir, s); figOf(c, w); c.restore();
     const a = reduced ? 0 : Math.sin(t / 330 + ph), moving = w.moving;
-    if (moving && a > .6) drop(dir * 4.6, -.2, .45, .9);   // no arms: only the splash of each stroke
+    if (moving && a > .6) drop(dir * 4.6, -.2, .45, .9);   // the splash of each stroke
+    if (quality && !reduced && lod === 'near'){   // the arms reach forward over the water in turn, then pull under
+      const sk = SKINS[+w.look[0]] || SKINS[0];
+      for (let i = 0; i < 2; i++){
+        const q = ((t / (moving ? 700 : 1500) + ph / 6.3 + i * .5) % 1) * 2;
+        if (q >= 1 && moving) continue;
+        const u = moving ? q : Math.sin(q * Math.PI), hx = moving ? dir * (-1 + 5.6 * u) : (i ? -2.9 : 2.9) * s, hy = moving ? -Math.sin(u * Math.PI) * 2.2 * s : (.3 - u * .5) * s, sx = (i ? -1.5 : 1.5) * s;   // treading water: the hands wave under the surface
+        limb(c, sx, -.2 * s, (sx + hx) / 2, (-.2 * s + hy) / 2 - .6 * s, hx, hy, undefined, undefined, sk, .55 * s);
+      }
+    }
     ring(0, .2, 3.4 * s + (reduced ? 0 : (t / 900 + ph) % 1 * 1.4), .75);
     if (moving) stroke(c, ellipse(-dir * 4.5, .3, 2.4, .6), '#F4FBFA', .4, [.4, .7], 'round', .55);   // the wake
   }
@@ -1468,7 +1492,8 @@ function walkerPose(w, now, up){
   if (fineFrame !== frameNo){ fineFrame = frameNo; finePeople = 0; }
   if (++finePeople > FINE_MAX[quality]) return null;
   const sd = w._sd ?? (w._sd = Math.random()), mv = !!w.moving, left = !!w.left;
-  const P = w._pose || (w._pose = {}); P.sx = left ? -1 : 1; P.bob = P.rot = P.lean = P.skew = P.upDy = P.upRot = P.ldRot = P.stab = P.swing = 0; P.breath = 1; P.blink = false;
+  const P = w._pose || (w._pose = {}); P.sx = left ? -1 : 1; P.bob = P.rot = P.lean = P.skew = P.upDy = P.upRot = P.ldRot = P.stab = P.swing = 0; P.breath = 1; P.blink = false; P.gait = 0; P.dnc = 0; P.step = 0;
+  if (P.bh === undefined){ P.bh = w.child ? 1 : .96 + ((sd * 13) % 1) * .09; P.bw = w.child ? 1 : .95 + ((sd * 29) % 1) * .1; }   // a little variety in build
   // turning: over about 150 ms the figure goes through a narrow width instead of flipping
   if (w._tl === undefined || now - (w._seen || 0) > 600) w._tl = left;
   w._seen = now;
@@ -1481,6 +1506,7 @@ function walkerPose(w, now, up){
   const gt = w._g ?? (mv ? 1 : 0);   // the step eases in and out (fxWalkers): bob and sway fade rather than switch
   if (mv || gt > .02){
     const ph = w.phase * (w.old ? .8 : 1), s = Math.sin(ph), a = Math.abs(s);
+    P.step = ph; P.gait = plain ? 0 : gt; P.dnc = (w.dance || w.hop) ? 1 : 0;
     P.bob = -a * (w.old ? .45 : w.child ? .95 + .4 * Math.cos(ph / 2) : .7);   // children skip: every other step is higher
     P.rot = s * (w.old ? .03 : .05);
     if (!plain){
@@ -1506,15 +1532,79 @@ function walkerPose(w, now, up){
 function drawWalkerBody(c, w, P){
   const K = w.look + (w.old ? 'o' : ''), q2 = quality >= 2;
   c.save(); if (P.skew){ c.translate(0, -WAIST); c.transform(1, 0, P.skew, 1, 0, 0); c.translate(0, WAIST); }   // the wrap sways around the waist
-  if (q2){ blit(c, 'figlx|' + K, () => figureArt(w.look, w.old, 'lowx')); hemFringe(c, w, P); }   // the hem fringe swings on its own
-  else blit(c, 'figl|' + K, () => figureArt(w.look, w.old, 'low'));
+  blit(c, 'figls|' + K, () => figureArt(w.look, w.old, 'lowsx')); hemFringe(c, w, P);   // the short wrap; the hem fringe swings on its own
   c.restore();
+  legsDraw(c, w, P);
   c.save(); c.translate(0, -WAIST); if (P.upRot) c.rotate(P.upRot); if (P.breath !== 1) c.scale(1, P.breath); c.translate(P.upDx, WAIST + P.upDy);
+  if (P.far) armDraw(c, P.far, w, -1);   // the far arm goes behind the torso
   if (P.hs !== 1) c.scale(P.hs, 1);   // head and shoulders turn to a neighbour
   blit(c, 'figun|' + K, () => figureArt(w.look, w.old, 'upn'));   // without the hair knot, flower or long hair: they swing apart
   if (q2){ if (+w.look[1] % 2) shellSwing(c, P); faceFx(c, w, P); } else if (P.blink) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
   hairSwing(c, w, P);
   c.restore();
+}
+/* ---------- legs and arms, close up (the far figure stays a plain carved one). The legs show under the short wrap: they stride
+   against each other (the foot that is not planted lifts and the knee bends), the arms swing against the legs, and hold
+   what the person works with: tool grips, the basket on the head, the pole, a torch. The upper body, far arm and legs are
+   drawn in drawWalkerBody; the near arm after the tool, in drawPeople (limbPose says where the hands go). */
+const ARM_L = 3.15, SH_X = 1.75, SH_Y = -6.5, GRIP = {toki:[1.3, -4.2], ko:[1.7, -4.6], speer:[1.6, -5.2], stab:[1.9, -6.3]};
+function limb(c, x0, y0, x1, y1, x2, y2, x3, y3, skin, lw){
+  c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.lineTo(x2, y2); if (x3 !== undefined) c.lineTo(x3, y3);
+  c.lineJoin = c.lineCap = 'round'; c.strokeStyle = '#2B1D14'; c.lineWidth = lw + .55; c.stroke(); c.strokeStyle = skin; c.lineWidth = lw; c.stroke();
+}
+function legsDraw(c, w, P){
+  const skin = SKINS[+w.look[0]] || SKINS[0], g = P.gait, k = w.old ? .55 : w.child ? .8 : 1, ph = P.step;
+  for (let i = 0; i < 2; i++){
+    const hx = i ? -.8 : .8, sn = Math.sin(ph + i * Math.PI), lift = g && sn > 0 ? sn : 0;
+    let fx = hx + Math.cos(ph + i * Math.PI) * 1.05 * k * g, fy = g ? -P.bob * (1 - lift) - lift * .9 : 0;
+    if (P.dnc){ const d = Math.sin(ph * 2 + i * Math.PI); fy = d > 0 ? -d * .8 : 0; fx = hx + d * .25; }
+    else if (!g){ fx = hx + (i ? -.05 : .05); }
+    const kx = (hx + fx) / 2 + (lift ? .3 * lift : 0), ky = (-1.6 + fy) / 2 - lift * .35;
+    limb(c, hx, -1.6, kx, ky, fx, fy, fx + .6, fy, skin, .62);
+  }
+}
+/* where the hands go; fills P.near and P.far (or null: no arm) in the frame of the body, not shifted by the sway of the upper body */
+function limbPose(w, P, now, tool, at, torch, drag, pole){
+  const A = P.na || (P.na = {hx:0, hy:0, sx:SH_X, sy:SH_Y, side:1}), F = P.fa || (P.fa = {hx:0, hy:0, sx:-SH_X, sy:SH_Y, side:-1});
+  const sd = w._sd, ph = P.step, g = P.gait, t = now / 1000, kid = w.child, ox = -P.upDx, oy = -P.upDy;
+  let na = 0, fa = 0;   // swing angles of the hanging arms: forward is +
+  if (g){ const a = (w.old ? .22 : kid ? .6 : .5) * g * Math.cos(ph); na = -a; fa = a; }
+  const br = Math.sin(now / 1300 + sd * 20) * .035; na += br; fa -= br;
+  let nx = SH_X + .3 + Math.sin(na) * 3, ny = SH_Y + Math.cos(na) * 3, fx = -SH_X - .3 + Math.sin(fa) * 3, fy = SH_Y + Math.cos(fa) * 3;
+  const sing = MOUTH_FX[w.fx], busy = at && w.fx && !w.dance && !w.hop;
+  if (w.dance || w.hop || w.cheer){
+    const a = t * (w.hop ? 7 : 4.4) + sd * 6, big = w.fx === 'clap' || w.fx === 'clapd';
+    if (big){ nx = 1.1 + Math.sin(a * 2) * .7; ny = -5.6 + Math.cos(a * 2) * .3; fx = -.8 - Math.sin(a * 2) * .7; fy = ny; }
+    else { nx = 2.8 + Math.sin(a) * 1.3; ny = -9.2 + Math.cos(a) * 1.1; fx = -2.8 - Math.sin(a + 1.2) * 1.3; fy = -9.2 + Math.cos(a + 1.2) * 1.1; }
+  } else if (tool && GRIP[tool]){
+    const G = GRIP[tool]; let gx = G[0] + (P.gdx || 0), gy = G[1] + (P.gdy || 0);
+    if (tool === 'stab'){ gx = 1.9 - 1.1 * Math.sin(P.stab); gy = -7.4 + 1.1 * Math.cos(P.stab); }
+    nx = gx + ox; ny = gy + oy;
+    if (at){ const k = P.gsw || 0; fx = -SH_X - .2 + k * .5; fy = SH_Y + 2.9 - Math.max(0, k) * .3; }
+  } else if (torch){ nx = 2.1 + ox; ny = -4.2 + oy; }
+  else if (w.carry && !LOAD_BACK.has(w.carry) && !drag){
+    if (pole){ nx = 3 + ox; ny = -7.6 + oy; fx = -3.1; fy = -7.5; } else { nx = 2.2; ny = -9.9 + P.ldDy; }   // a hand up at the basket, the other swings
+  } else if (w.carry && LOAD_BACK.has(w.carry) && !drag){ nx = 1.3; ny = -7.7; }
+  else if (busy && !sing){
+    const D = WORK[w.fx], B = D && !reduced ? workBeat(w, now) : null;
+    let rx = 0, ry = 0, ry2 = 0;
+    if (B){ if (D.m === 'rub'){ rx = B.r * .9; ry = ry2 = 0; } else if (D.m === 'hit'){ ry = ry2 = B.sw * -.9; } else if (D.m === 'nod'){ rx = Math.sin(B.p * TAU * 4) * .35; ry = Math.sin(B.p * TAU * 3) * .3; ry2 = -ry; } else { ry = ry2 = -B.sw; } }
+    else { const s = Math.sin(now / 260 + sd * 9); ry = -Math.max(0, s) * .9; ry2 = -Math.max(0, -s) * .9; }
+    nx = 3.5 + rx; ny = -2.3 + ry; fx = 2.7 - rx * .6; fy = -2.5 + ry2;
+  } else if (busy && sing === 'talk'){
+    const gs = talkGate(w, now) ? Math.sin(now / 520 + sd * 30) : 0; nx = 2.7 + gs * .5; ny = -5.4 + (gs > .3 ? -gs * 1.4 : 0);
+  } else if (busy && sing === 'chew'){ const s = Math.max(0, Math.sin(now / 1100 + sd * 11)); nx = 1.7 - s * .1; ny = -4.2 - s * 3.3; }
+  A.hx = nx; A.hy = ny; F.hx = fx; F.hy = fy;
+  P.near = A; P.far = F;
+}
+/* an arm from the shoulder to the hand in two bones; the elbow bends outwards */
+function armDraw(c, A, w){
+  const sx = A.sx, sy = A.sy; let dx = A.hx - sx, dy = A.hy - sy, d = Math.hypot(dx, dy) || .01, hx = A.hx, hy = A.hy;
+  if (d > ARM_L){ hx = sx + dx * ARM_L / d; hy = sy + dy * ARM_L / d; dx = hx - sx; dy = hy - sy; d = ARM_L; }
+  const b = Math.sqrt(Math.max(0, ARM_L * ARM_L / 4 - d * d / 4)) * .85;
+  let ex = (sx + hx) / 2 + (-dy / d) * b, ey = (sy + hy) / 2 + (dx / d) * b;
+  if ((ex - (sx + hx) / 2) * A.side < 0){ ex = (sx + hx) / 2 - (-dy / d) * b; ey = (sy + hy) / 2 - (dx / d) * b; }
+  limb(c, sx, sy, ex, ey, hx, hy, undefined, undefined, SKINS[+w.look[0]] || SKINS[0], .6);
 }
 /* a load on the head follows the upper body and sways against the step */
 function headLoad(c, w, P){
