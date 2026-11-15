@@ -1280,3 +1280,6 @@ body.landing #lizard{display:none}
 .ltiles .lt.life small{font-size:9.5px;color:#3F6A22}
 .hold.mini .hc{height:22px}
 .hold.mini .hc .ic{width:14px;height:14px}
+/* the big goal as a small line under the task or advice; a tap opens it */
+.quest .q-g{display:block;grid-column:1/-1;margin-top:3px;padding-top:3px;border-top:1px dashed rgba(62,36,22,.3);font:800 11px/1.2 var(--font-ui);color:#3F6A22;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.quest .q-g[hidden]{display:none}

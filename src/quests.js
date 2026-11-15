@@ -289,16 +289,38 @@ function followAdvice(A){
   if (A.fleet){ setBar('fleet'); return; }
   if (A.build) hintBuild(A.build);
 }
+/* The big goal, always in sight: the next age of the village and how to get there; then the great voyage, the star path in
+   Hawaiki and the second voyage. It stands as a small line on the task card and as its own sheet ('ziel'). */
+const goalNew = S => S.kinds.slice(0, 3).map(k => (KINDS[k] || SHIPS[k] || {n:k}).n).join(', ');
+function goalOf(){
+  const now = stageNow(), next = STAGES[now + 1], pk = peakPop();
+  if (next && !next.gate) return {t:next.n, short:`${next.n} · ${pk}/${next.pop}`, d:`Wachst auf ${next.pop} Menschen, jetzt sind es ${pk}. Dann neu: ${goalNew(next)}.`, f:pk / next.pop};
+  if (!hawaiki()){ const far = islands.some(I => I.discovered && I.center.x > FAR_X), dc = fleetOf('dc') > 0;
+    return {t:'Die große Fahrt', short:`Die große Fahrt · ${far ? 'Land gesichtet' : dc ? 'Doppelkanu da' : 'Doppelkanu bauen'}`, d:'Baut ein Doppelkanu, erkundet weit nach Osten bis zu den Fernen Inseln und gründet dort ein Dorf. Damit beginnt Hawaiki, eine neue Zeit.', f:far ? .66 : dc ? .33 : .1}; }
+  if (!pauseOver()){ const l = navLore().lvl; return {t:'Den Sternenpfad lernen', short:`Sternenpfad · Navigator ${l}/3`, d:`In Hawaiki lernt ein Navigator den Sternenpfad (jetzt Stufe ${l} von 3). Dann kann das Reisekanu gebaut werden, das als einziges über die Leere See kommt.`, f:l / 3}; }
+  if (!morningVillage()) return {t:'Die zweite Fahrt', short:`Die zweite Fahrt · ${morningSeen() ? 'Land gesichtet' : 'über die Leere See'}`, d:'Mit dem Reisekanu über die Leere See zu den Inseln des Morgens, und dort ein Dorf gründen.', f:morningSeen() ? .6 : .3};
+  return {t:'Alle Fahrten vollbracht', short:'Alle Fahrten vollbracht', d:'Das Volk lebt auf vielen Inseln. Baut weiter aus, feiert und handelt.', f:1};
+}
+function goalMarkup(){
+  const G = goalOf();
+  return head('Das große Ziel', G.t) + epochCord() + `<p><b>${G.d}</b></p><span class="mbar big"><i style="width:${clamp(G.f, 0, 1) * 100}%"></i></span>` +
+    `<p class="sub">Der Weg des Dorfes: Mit mehr Menschen kommen neue Zeiten und Gebäude. Dann die große Fahrt nach Osten, in Hawaiki der Sternenpfad, zuletzt die zweite Fahrt zu den Inseln des Morgens.</p>`;
+}
 function renderQuest(){
   const el = $('quest'), I = isl(active), A = !landing && I && I.settled ? (quest < QUESTS.length ? adviceOf(I, true) : adviceOf(I)) : null;
-  const show = (quest < QUESTS.length || A) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;
-  el.hidden = !show; curAdvice = A; el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
+  const G = !landing && I && I.settled ? goalOf() : null;
+  const show = (quest < QUESTS.length || A || G) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;
+  el.hidden = !show; curAdvice = A; { const g = el.querySelector('.q-g'); if (g){ g.hidden = !G || (!A && quest >= QUESTS.length); g.textContent = G ? `Ziel › ${G.short}` : ''; } } el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
   // a new task or new advice slides in, so the eye catches that something changed
   { const key = A ? A.key || A.t : 'q' + quest; if (el.dataset.k !== key){ if (el.dataset.k && !reduced){ el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); } el.dataset.k = key; } }
   if (A){
     el.querySelector('.q-n').textContent = A.urgent ? 'Jetzt' : 'Die Alten';
     el.querySelector('.q-t').textContent = A.t; el.querySelector('.q-d').textContent = A.d; el.querySelector('.q-p').textContent = A.go || 'Zeigen ›';
     el.querySelector('.q-bar i').style.width = '0%'; el.setAttribute('aria-label', `Rat der Ältesten: ${A.t}. ${A.d}`); return;
+  }
+  if (quest >= QUESTS.length){   // nothing to do right now: the big goal itself
+    el.querySelector('.q-n').textContent = 'Ziel'; el.querySelector('.q-t').textContent = G.t; el.querySelector('.q-d').textContent = G.d; el.querySelector('.q-p').textContent = 'Mehr ›';
+    el.querySelector('.q-bar i').style.width = (clamp(G.f, 0, 1) * 100) + '%'; el.setAttribute('aria-label', `Großes Ziel: ${G.t}. ${G.d}`); return;
   }
   const Q = QUESTS[quest], n = clamp(Q.n(), 0, Q.of);
   el.querySelector('.q-n').textContent = `${quest + 1}/${QUESTS.length}`;
@@ -375,4 +397,4 @@ setInterval(() => {
   const r = t.getBoundingClientRect(), a = $('app').getBoundingClientRect(); if (r.right < a.left + 8 || r.left > a.right - 8){ fingerEl.hidden = true; return; }
   fingerEl.hidden = false; fingerEl.style.left = (r.left - a.left + r.width / 2 - 14) + 'px'; fingerEl.style.top = (r.top - a.top - 36) + 'px';
 }, 300);
-$('quest').addEventListener('click', () => { if (curAdvice){ toast(curAdvice.d, 3600, false); followAdvice(curAdvice); return; } openSheet('quest'); });
+$('quest').addEventListener('click', e => { if (e.target.closest('.q-g') || (!curAdvice && quest >= QUESTS.length)){ openSheet('ziel'); return; } if (curAdvice){ toast(curAdvice.d, 3600, false); followAdvice(curAdvice); return; } openSheet('quest'); });

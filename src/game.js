@@ -1767,6 +1767,7 @@ function signAt(p){
 const ptrs = new Map(); let ges = null;
 mapC.addEventListener('pointerdown', e => {
   closeNews();
+  if (e.isPrimary || e.pointerType === 'mouse') ptrs.clear();   // a new touch: a finger whose lifting was lost must not turn this drag into a pinch
   try { mapC.setPointerCapture(e.pointerId); } catch (err){} ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); camAnim = null;
   if (ptrs.size === 1){
     const wp = toWorld(e.clientX, e.clientY);
@@ -1787,11 +1788,12 @@ mapC.addEventListener('pointermove', e => {
 });
 function endPtr(e){
   if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId);
-  if (ges && ges.type === 'tap' && ptrs.size === 0 && performance.now() - ges.t < 600) onTap(toWorld(e.clientX, e.clientY));
+  // a tap only when the finger stayed put: a quick swipe whose moves came late is a pan, not a tap (a tap on an island zooms in)
+  if (ges && ges.type === 'tap' && ptrs.size === 0 && performance.now() - ges.t < 600 && Math.hypot(e.clientX - ges.sx, e.clientY - ges.sy) <= 10) onTap(toWorld(e.clientX, e.clientY));
   if (ptrs.size === 0) ges = null;
   else if (ges && ges.type === 'pinch'){ const [q] = [...ptrs.values()]; ges = {type:'pan', sx:q.x, sy:q.y, cx:cam.x, cy:cam.y}; }
 }
-mapC.addEventListener('pointerup', endPtr); mapC.addEventListener('pointercancel', endPtr);
+mapC.addEventListener('pointerup', endPtr); mapC.addEventListener('pointercancel', endPtr); mapC.addEventListener('lostpointercapture', endPtr);
 mapC.addEventListener('wheel', e => { e.preventDefault(); zoomAt(cam.z * Math.exp(-e.deltaY * .0016), e.clientX, e.clientY, toWorld(e.clientX, e.clientY)); }, {passive:false});
 mapC.addEventListener('keydown', e => {
   const s = 70 / cam.z, vc = visCenter();

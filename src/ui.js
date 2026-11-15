@@ -1261,6 +1261,8 @@ function renderSheet(){
     h += eventMarkup();
   } else if (sheetKind === 'chronik'){
     h += chronikMarkup();
+  } else if (sheetKind === 'ziel'){
+    h += goalMarkup();
   } else if (sheetKind === 'finale'){
     h += finaleMarkup();
   } else if (sheetKind === 'menu'){

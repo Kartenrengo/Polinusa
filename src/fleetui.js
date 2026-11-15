@@ -40,7 +40,7 @@ function shipMarkup(s){
   const aboard = `An Bord: ${[s.people ? `${s.people} Siedler` : '', cargoLoad(s) ? giftText(s.cargo) : '', life.length ? andList(life.map(id => LIFE[id].s)) : ''].filter(Boolean).join(', ') || 'nichts'}.`;
   // the loading list is folded away by default, so the map stays free for steering
   // the hold at a glance, as in Anno: its places and what fills them; in our own port a tap on Beladen opens the store
-  h += holdView(s) + (P && P.settled && s.route == null ? `<div class="rowx"><span class="sub">${aboard}</span><button class="btn primary" type="button" data-act="load">Beladen</button></div>` : '');
+  h += holdView(s) + (P && P.settled && s.route == null ? `<div class="rowx"><span class="sub">${aboard}</span><button class="btn primary" type="button" data-act="load">Beladen</button></div>` : cargoLoad(s) && s.route == null && !(P && P.clan) ? `<div class="rowx"><span class="sub">${aboard}</span>${dumpBtn()}</div>` : '');
   if (s.route != null) h += `<div class="rowx"><span></span><button class="btn" type="button" data-act="unassign">Aus der Kette nehmen</button></div>`;
   if (P && !P.settled && !P.clan){ const hl = hutLack(s, P), hut = !Object.keys(hl).length, ok = s.people >= SETTLE.people && mana >= manaNeeded() && hut;
     h += `<div class="rowx"><span class="sub">${s.people < SETTLE.people ? `Für ein Dorf braucht es ${SETTLE.people} Siedler an Bord.` : !hut ? `Für das erste Haus fehlen an Bord ${giftText(hl)}.` : mana >= manaNeeded() ? 'Hier kann ein Dorf entstehen.' : `Es braucht Ansehen ${manaNeeded()}, jetzt ${Math.floor(mana)}.`}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Dorf gründen</button></div>`; }
@@ -66,8 +66,10 @@ function holdView(s){
   while (cells.length < S.cap) cells.push('<span class="hc free" aria-hidden="true"></span>');
   return `<div class="hold mini${S.cap > 12 ? ' big' : ''}" role="group" aria-label="Laderaum ${roomUsed(s)} von ${S.cap}${s.people ? `, ${s.people} Siedler` : ''}">${cells.join('')}</div>`;
 }
+/* throwing the load overboard, as in Anno: a first tap asks, a second throws the goods (not the settlers) into the sea */
+const dumpBtn = () => `<button class="btn small dump" type="button" data-act="dump">${sheetData.dumpAsk ? 'Wirklich über Bord?' : 'Über Bord werfen'}</button>`;
 function holdMarkup(s, P){
-  const S = SHIPS[s.kind], load = roomUsed(s), life = s.life || [], step = sheetData.step || 5, free = S.cap - load;
+  const S = SHIPS[s.kind], load = roomUsed(s), life = s.life || [], step = sheetData.step || 5, free = S.cap - load, stuck = GOODS.some(k => s.cargo[k] > 0 && (P.stock[k] || 0) >= storeCap(P));   // a good the full store cannot take back
   const cells = [];
   for (const k of GOODS) for (let n = 0; n < (s.cargo[k] || 0); n++) cells.push({k, first:n === 0, n:s.cargo[k]});
   for (const id of life) for (let n = 0; n < LIFE_LOAD; n++) cells.push({life:id, first:n === 0});
@@ -85,7 +87,7 @@ function holdMarkup(s, P){
     `<div class="holdbar"><span class="seats" role="group" aria-label="Siedler ${s.people} von ${S.people}">${seats}</span><span class="sub"><b>${load}</b>/${S.cap}</span><span class="chips steps" role="group" aria-label="Wie viel je Tippen">${steps}</span></div>` +
     `<p class="sec">Lager ${P.name}</p><div class="ltiles">${tiles || '<span class="sub">Nichts im Lager.</span>'}${lifeTiles(s, P, load)}</div>` +
     `${s.people ? `<p class="sub">Siedler an Bord: Nimm Holz und Nahrung mit, damit sie gleich bauen und essen können.</p>` : ''}` +
-    `<div class="rowx"><span></span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
+    `<div class="rowx"><span>${stuck ? dumpBtn() : ''}</span><span class="chips"><button class="btn" type="button" data-act="unload" ${load || s.people ? '' : 'disabled'}>Alles ausladen</button><button class="btn primary" type="button" data-act="fold">Fertig</button></span></div>`;
 }
 /* Life for new land: the canoe plants and a pair of pigs, each taking two places. Whatever grows on this island can go. */
 function lifeMarkup(s, P, load){
@@ -223,7 +225,10 @@ function fleetAct(act, btn, quiet = false){
     else if (act === 'life' && P && P.settled) toggleLife(s, P, k);
     else if (act === 'cg+' && P && (P.stock[k] || 0) > 0 && roomUsed(s) < SHIPS[s.kind].cap){ s.cargo[k] = (s.cargo[k] || 0) + 1; P.stock[k]--; }
     else if (act === 'cg-' && P && s.cargo[k] > 0 && (P.stock[k] || 0) < storeCap(P)){ s.cargo[k]--; if (!s.cargo[k]) delete s.cargo[k]; P.stock[k] = Math.min(storeCap(P), (P.stock[k] || 0) + 1); }
+    else if (act === 'cgo' && P && P.settled && k && (P.stock[k] || 0) >= storeCap(P)){ toast(`Lager auf ${P.name} voll: ${GN[k]} passt nicht zurück. Unten: Über Bord werfen.`, 3000, false); return true; }
     else if (act === 'cgn' || act === 'cgo'){ const n = sheetData.step || 5; for (let i = 0; i < n; i++){ const before = s.cargo[k] || 0; fleetAct(act === 'cgn' ? 'cg+' : 'cg-', btn, true); if ((s.cargo[k] || 0) === before) break; } }   // a handful at a time, as in Anno
+    else if (act === 'dump'){ if (!sheetData.dumpAsk){ sheetData = {...sheetData, dumpAsk:true}; renderSheet(); return true; }
+      const was = giftText(s.cargo); s.cargo = {}; s.full = false; sheetData = {...sheetData, dumpAsk:false}; toast(`${was} über Bord geworfen.`, 2400, false); }
     else if (act === 'cstep'){ sheetData = {...sheetData, step:+btn.dataset.v}; renderSheet(); return true; }
     else if (act === 'unload') unloadAll(s);
     else if (act === 'shipmore' || act === 'shipless'){ sheetData = {...sheetData, mini:act === 'shipless'}; renderSheet(); measure(); return true; }

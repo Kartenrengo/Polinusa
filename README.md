@@ -2308,3 +2308,17 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   Bildchen. Tippen auf ein Bildchen lädt eine Handvoll ein (1, 5 oder alles, was passt), Tippen auf einen Platz im Rumpf lädt es
   wieder aus. Pflanzen und Tiere fürs neue Land stehen als grüne Bildchen dabei und belegen je zwei Plätze. Gedrückt halten sagt,
   was ein Bildchen ist. Auch ohne Beladen zeigt das Kanu-Blatt den Laderaum als Bild. Das Blatt scrollt nicht mehr.
+
+## Zoom, Über Bord und das große Ziel (Version 108)
+
+- **Kein Zoom mehr beim Wischen:** Ein schnelles Wischen über die Insel galt manchmal als Tippen, und Tippen auf die eigene
+  Insel fliegt in die Nahansicht. Jetzt zählt nur ein Tippen, bei dem der Finger an seinem Platz bleibt. Außerdem konnte ein
+  „verlorener“ Finger hängen bleiben; dann wurde das nächste Wischen zum Zwei-Finger-Zoom. Ein neues Berühren räumt das auf.
+- **Ladung über Bord werfen, wie bei Anno:** Ist das Lager voll, passt die Ware nicht zurück. Dann sagt das Spiel das, und unten
+  steht „Über Bord werfen“. Der erste Tipp fragt nach, der zweite wirft die Waren ins Meer (die Siedler nicht). Auf See und vor
+  fremden Inseln geht das auch.
+- **Das große Ziel immer im Blick:** Unter jeder Aufgabe und jedem Rat steht eine kleine grüne Zeile „Ziel › …“, etwa
+  „Zeit der Feste · 31/40“ oder „Die große Fahrt · Doppelkanu bauen“. Ist gerade nichts zu tun, zeigt die Karte das Ziel selbst.
+  Ein Tipp öffnet das Blatt „Das große Ziel“: der Weg des Dorfes als Knotenschnur, was als Nächstes kommt und wie weit es ist.
+  Die Ziele der Reihe nach: mehr Menschen und neue Zeiten, dann die große Fahrt nach Osten (Hawaiki), dort den Sternenpfad
+  lernen, zuletzt die zweite Fahrt über die Leere See zu den Inseln des Morgens.
