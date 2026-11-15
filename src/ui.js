@@ -267,7 +267,7 @@ $('toast').addEventListener('click', () => { if (news.length && news[0].msg === 
 function ghostRender(){
   if (!placing){ requestDraw(); return; }
   const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
-  if (placing.kind === 'steg' && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
+  if ((placing.kind === 'steg' || placing.kind === 'werft') && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
   placing.ok = ok; placing.msg = msg;
   // workshops that need plants close by can stand anywhere, but the bar says whether they will run
   const K = KINDS[placing.kind], n = K.near ? nearCount(I, K.near.kind, placing.x, placing.y, K.near.r) : 0, few = K.near && n < K.near.n;
@@ -278,8 +278,8 @@ function ghostRender(){
   if (ok && placing.kind === 'haus' && unlocked('werft') && onShore(I, placing)) m.textContent += ' Nah am Strand: kann später ein Seefahrerhaus werden.';
   // a workplace on an islet where nobody lives needs a dugout from a jetty
   const homes = new Set(I.buildings.filter(b => b.kind === 'haus' && !b.bt).map(b => landOf(I, b))), L = landOf(I, placing);
-  const away = ok && I.atoll && K.crew && homes.size && L >= 0 && !homes.has(L), lg = lagoonOf(I), spare = lg.jetties.length * KINDS.steg.serves - lg.need.length;
-  if (away && spare <= 0) m.textContent = 'Auf diesem Motu wohnt niemand. Ohne Kanusteg kommt keiner zur Arbeit.';
+  const away = ok && I.atoll && K.crew && homes.size && L >= 0 && !homes.has(L), lg = lagoonOf(I), spare = lg.cap - lg.need.length;
+  if (away && spare <= 0) m.textContent = 'Auf diesem Motu wohnt niemand. Ohne Kanuhaus mit Einbaum kommt keiner zur Arbeit.';
   m.classList.toggle('bad', !ok || few || bare || (away && spare <= 0));
   $('placeOk').disabled = !ok || (mode === 'place' && !canPay(I, costOf(placing.kind, I)));
   requestDraw();
@@ -370,6 +370,8 @@ function confirmPlace(){
   if (placing && placing.founding){ confirmFounding(); return; }
   if (!placing || !placing.ok) return;
   const I = isl(placing.island), K = KINDS[placing.kind];
+  // the village goes on while the ghost stands there: the elders may have built on this very spot since it was last checked
+  const why = check(placing.kind, I, placing.x, placing.y, placing.moveId); if (why){ ghostRender(); toast(why + '.', 2600, false); return; }
   if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); moveCraft(I, b); I.staff = null; syncWalkers(); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
   const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`, 2600, false); return; }
   // nothing stands at once: a building site waits for builders, a young plant grows
@@ -510,7 +512,7 @@ const seatIc = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><use href
 /* what a person does, as the picture of the place: the building they work at (dashed when they build it), a child, or idle */
 function workPic(I, p){
   if (!isAdult(p)) return stageOf(p) === 'kid' ? icon('kind') : '';
-  const site = [...staffOf(I).crewP].find(([q, ids]) => (q.bt || (q.kind === 'werft' && I.yard)) && ids.includes(p.id));
+  const site = [...staffOf(I).crewP].find(([q, ids]) => (q.bt || yardWorks(I, q)) && ids.includes(p.id));
   if (site) return `<span class="wk site">${bIcon(site[0].kind)}</span>`;
   const b = p.job && findB(p.job); return b ? (b.at ? `<span class="wk craft">${icon(KINDS[b.kind].prod)}</span>` : bIcon(b.kind)) : icon('idle');
 }
@@ -1002,12 +1004,12 @@ function crewMarkup(I, b, horn = '', bare = false){
   const sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl) return '';
   const K = KINDS[b.kind], sf = staffOf(I), ids = (sf.crewP.get(b) || []), byId = id => I.people.find(p => p.id === id);
   // the order of the marks: own people here, own people away, guests; the people in the same order
-  const own = (sf.home && sf.home.get(b)) || [], site = b.bt || (b.kind === 'werft' && I.yard);
+  const own = (sf.home && sf.home.get(b)) || [], site = b.bt || yardWorks(I, b);
   const people = site ? ids.map(byId).filter(Boolean) : [...own.filter(id => ids.includes(id)), ...own.filter(id => !ids.includes(id)), ...ids.filter(id => !own.includes(id))].map(byId).filter(Boolean);
   const chips = sl.map((k, i) => { const p = people[i]; return p ? `<button class="who ${k}" type="button" data-act="who" data-p="${p.id}">${pipH(k)}${p.n}${k.startsWith('aid') ? '<small>hilft</small>' : k === 'away' ? `<small>${loanWord(I, p) || restWord(I, b)}</small>` : ''}</button>` : `<span class="who ${k}">${pipH(k)}${k === 'off' ? 'zu' : 'frei'}</span>`; }).join('');
   const nh = sl.filter(k => k.startsWith('aid')).length;
   // building sites and the canoe house are worked by whoever is free, or by those called from their work
-  if (b.bt || (b.kind === 'werft' && I.yard)) return `<div class="crew">${chips}<span class="grow"></span>${horn}</div>`;
+  if (b.bt || yardWorks(I, b)) return `<div class="crew">${chips}<span class="grow"></span>${horn}</div>`;
   const here = (I.people || []).filter(p => p.job === b.id).length, free = staffOf(I).free;
   if (!bare) horn += keepBtn(b);
   const ctl = `<span class="grow"></span><span class="step"><button type="button" data-act="workdel" aria-label="Eine Person abziehen" ${here ? '' : 'disabled'}>−</button><button type="button" data-act="workadd" aria-label="Eine Person schicken" ${here < crewOf(b) ? '' : 'disabled'}>+</button></span>`;
@@ -1015,7 +1017,7 @@ function crewMarkup(I, b, horn = '', bare = false){
 }
 /* the long sentences about the people of a place: folded under "Mehr dazu" */
 function crewNote(I, b){
-  const K = KINDS[b.kind], sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl || b.bt || (b.kind === 'werft' && I.yard)) return '';
+  const K = KINDS[b.kind], sl = slotsOf(I, b, staffOf(I), presentAt(I)); if (!sl || b.bt || yardWorks(I, b)) return '';
   const nh = sl.filter(k => k.startsWith('aid')).length, free = staffOf(I).free;
   return `${K.crew ? `${K.crew} ${K.crew === 1 ? 'fester Platz' : 'feste Plätze'}${nh ? `, dazu ${nh} ${nh === 1 ? 'Helfer' : 'Helfer'}: Wer frei ist, hilft, wo etwas knapp ist` : ''}. ` : ''}${K.team ? TEAM[K.team].text : ''}${free ? ` ${free} frei.` : ''}`.trim();
 }
@@ -1119,7 +1121,7 @@ function infoMarkup(I, b){
     const f = 1 - b.boat / K.canoe;
     line = `${crewAt(I, b) ? st('ok', 'Einbaum wird geschnitzt') : st('out', 'niemand schnitzt')}<span>${Math.round(f * 100)} %</span>`;
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
-    more.unshift(b.kind === 'steg' ? 'Erst wenn der Einbaum fertig ist, fährt er zu den Pfahlhäusern.' : 'Erst wenn der Einbaum fertig ist, fahren die Fischer hinaus.');
+    more.unshift(b.kind === 'steg' || b.kind === 'werft' ? 'Erst wenn der Einbaum fertig ist, fährt er zu den Pfahlhäusern' + (b.kind === 'werft' ? ', und im Kanuhaus werden Schiffe gebaut.' : '.') : 'Erst wenn der Einbaum fertig ist, fahren die Fischer hinaus.');
   } else if (K.prod || K.plants){
     const w = b.idle || workState(I, b), rate = PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, K.crew ? crewAt(I, b) || 0 : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(groupNext(I, k))}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
     const by = byOf(b) ? Object.entries(byOf(b)).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') : '';
@@ -1156,7 +1158,7 @@ function infoMarkup(I, b){
   { const sb = b.idle && b.idle.site && findB(b.idle.site);   // the place whose people build: a button to their site instead of a sentence
     if (b.idle && (b.idle.why === 'crew' || b.idle.why === 'bau') && sb) why +=  `<div class="chips stillrow"><span class="sub">bauen:</span><button class="chip way" type="button" data-act="goto" data-b="${sb.id}">${bIcon(sb.kind)}${KINDS[sb.kind].n}</button></div>`; }
   // one tight block: the state with the conch and "Bleiben" on its line, then what it takes and makes beside its people
-  const site = b.bt || (b.kind === 'werft' && I.yard), crewed = working || b.boat > 0, tight = crewed && !site && KINDS[b.kind].crew > 0;
+  const site = b.bt || yardWorks(I, b), crewed = working || b.boat > 0, tight = crewed && !site && KINDS[b.kind].crew > 0;
   if (tight) more.unshift(crewNote(I, b));
   const keep = tight ? `<div class="rowx"><span class="sub">Bleiben: von hier wird niemand ausgeliehen.</span>${keepBtn(b)}</div>` : '';
   return [(line || tight ? `<div class="stat">${line}${tight ? `<span class="grow"></span>${horn}` : ''}</div>` : '') + `<div class="workgrid">${bar}${crewed ? `<div class="crewbox">${crewMarkup(I, b, tight ? '' : horn, tight)}</div>` : ''}</div>` + why, `<details class="more"${sheetData.more || sheetData.confirm ? ' open' : ''}><summary>Mehr dazu</summary>${more.filter(Boolean).map(t => `<p class="sub">${t}</p>`).join('')}${keep}</details>`];

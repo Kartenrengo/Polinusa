@@ -82,8 +82,8 @@ function jobFor(I, b, i){
   const K = KINDS[b.kind], side = i % 2 ? -1 : 1, job = (type, x, y, more) => ({key:type + ':' + b.id + '#' + i, type, b, i, x, y, ...more});
   if (HOME_KINDS.has(b.kind) && !b.bt) return job(I.storm && I.storm.tie && tick < I.storm.at ? 'tie' : 'mend', b.x + side * (K.r * .6), b.y + 4, {});   // a storm is coming: the roof tied down; else a worn roof covered anew
   if (b.bt) return job('site', b.x + 6 * side, b.y + 5, {tool:groundSite(b.kind) ? 'ko' : 'toki'});   // a field is dug with the digging stick, a house built with the adze
-  if (b.kind === 'werft' && I.yard){ const h = yardSpot(b); return job('yard', h.x + (i - 1) * 7, h.y + 3, {tool:'toki'}); }
-  if (b.boat > 0){ const h = dugSpot(b); return job('carve', h.x + 3 - i * 6, h.y + 2, {tool:'toki'}); }
+  if (b.boat > 0){ const h = dugSpot(b); return job('carve', h.x + 3 - i * 6, h.y + 2, {tool:'toki'}); }   // the dugout comes first, also at the canoe house
+  if (yardWorks(I, b)){ const h = yardSpot(b); return job('yard', h.x + (i - 1) * 7, h.y + 3, {tool:'toki'}); }
   if (b.kind === 'faeller'){ const t = b.cutAt && b.cutAt.st === 0 && I.trees.includes(b.cutAt) ? b.cutAt : nearestTree(I, b); return t ? (i % 2 ? job('pull', t.x - 7, t.y + 2, {tree:t}) : job('chop', t.x + 4, t.y + 3, {load:'holz', tool:'toki', tree:t})) : job('wait', b.x + 5 * side, b.y + 6, {tool:'toki'}); }
   if (b.kind === 'ernte' && i % 2 === 0){ const pl = palmFor(I, b); if (pl) return job('climb', pl.x + 1.5, pl.y + 2, {palm:pl, load:PICK_LOAD[prodOf(b)] || 'nuss', drop:{x:b.x + 4, y:b.y + 5}}); }
   if (b.kind === 'pflanzer'){ const t = b.plantAt && b.plantAt.st === 2 ? b.plantAt : null; return job('plant', b.x, b.y + 4, {drop:t ? {x:t.x + 3, y:t.y + 2} : {x:b.x + 26, y:b.y + 8}, load:'setzling', tool:'ko'}); }
@@ -97,27 +97,33 @@ const nearestTree = (I, b) => treesNear(I, b.x, b.y, KINDS[b.kind].trees.r).sort
 const palmsNear = (I, b) => I.buildings.filter(q => q.kind === 'palme' && !q.bt && Math.hypot(q.x - b.x, q.y - b.y) < KINDS[b.kind].near.r).sort((p, q) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(q.x - b.x, q.y - b.y));
 function palmFor(I, b){ const P = palmsNear(I, b).slice(0, 6); return P.length ? P[(b._pi || 0) % P.length] : null; }
 const yardSpot = b => ({x:b.x + 11, y:b.y + 12});
+/* The canoe house builds a ship only once its own dugout is carved (it has a jetty like the old Kanusteg) */
+const yardWorks = (I, b) => b.kind === 'werft' && !!I.yard && !(b.boat > 0);
+/* The jetty of the canoe house points seaward (v.rot); its dugout lies a little along it */
+const jettyAt = (b, d, off = 0) => { const a = ((b.v && b.v.rot) || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return {x:b.x + c * d - s * off, y:b.y + 5 + s * d + c * off}; };
 /* Reef gatherers stay in the shallows, a few steps off the beach */
 function wadeSpot(I, b){
   const w = waterNear(I, b), L = I.lands.reduce((m, q) => polyDist(w, q.poly) < polyDist(w, m.poly) ? q : m), s = nearestOn(L.poly, w), d = Math.hypot(w.x - s.x, w.y - s.y) || 1;
   return {x:s.x + (w.x - s.x) / d * 5, y:s.y + (w.y - s.y) / d * 5};
 }
-const dugSpot = b => b.kind === 'steg' ? {x:b.x + 2, y:b.y + 7} : {x:b.x - 9, y:b.y + 7};
+const dugSpot = b => b.kind === 'steg' ? {x:b.x + 2, y:b.y + 7} : b.kind === 'werft' ? jettyAt(b, 20, 6) : {x:b.x - 9, y:b.y + 7};
 /* A clan's village: its people carry from their workshops, about one figure for six people */
 function clanJobs(I){
   const jobs = []; for (const b of I.buildings) if (JOB_LOAD[b.kind] && !b.bt) jobs.push({key:'carry:' + b.id, type:'carry', b, x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]});
   return jobs.slice(0, Math.round(popOf(I) / 6));
 }
 /* ---------- the lagoon: stilt houses, fish traps and workplaces on an islet without houses are reached by dugout.
-   Each jetty has one dugout and serves four of them, the oldest first. A jetty serves only once its dugout is carved. */
+   Each jetty has one dugout and serves a number of them (KINDS.serves), the oldest first: the canoe house, and the old Kanusteg
+   of earlier saves. A jetty serves only once its dugout is carved. */
 function lagoonOf(I){
   const key = I.buildings.map(b => b.bt ? 0 : b.x + b.y + (b.boat > 0 ? .5 : 0)).join();
   if (I._lg && I._lg.key === key) return I._lg;
   const homes = new Set(I.buildings.filter(b => !b.bt && (b.kind === 'haus' || b.kind === 'halle')).map(b => landOf(I, b)));
   const far = b => !!I.atoll && !KINDS[b.kind].water && !!KINDS[b.kind].crew && homes.size > 0 && !homes.has(landOf(I, b));
   const need = I.buildings.filter(b => !b.bt && (KINDS[b.kind].water || far(b)));
-  const jetties = I.buildings.filter(b => b.kind === 'steg' && !b.bt && !(b.boat > 0));
-  return I._lg = {key, need, jetties, served:new Set(need.slice(0, jetties.length * KINDS.steg.serves)), far:new Set(need.filter(far))};
+  const jetties = I.buildings.filter(b => KINDS[b.kind].serves && !b.bt && !(b.boat > 0)), slots = [];
+  let n = 0; for (const j of jetties){ slots.push([n, n + KINDS[j.kind].serves]); n += KINDS[j.kind].serves; }
+  return I._lg = {key, need, jetties, slots, cap:n, served:new Set(need.slice(0, n)), far:new Set(need.filter(far))};
 }
 const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) && !lg.served.has(b); };
 /* ---------- work force. Every grown-up works, children and the old do not. Each person has a place (homes.js); whoever
@@ -1108,7 +1114,7 @@ function workState(I, b){
   const K = KINDS[b.kind];
   if (b.kind === 'ernte' && NUT_PICKS.has(prodOf(b)) && nutsOf(I, b) < 1) return {why:'nuts', kind:'palme', text:`Die Palmen ringsum sind abgeerntet. Jede Palme trägt etwa eine Nuss pro Minute: Pflanzt mehr Palmen, oder holt Essen vom Meer und vom Feld.`};
   if (SEA_KINDS.has(b.kind) && cycloneOver(I)) return {why:'storm', text:'Sturm: Niemand fährt hinaus, die Kanus liegen an Land.'};
-  if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Ein Kanusteg bringt die Leute hin, jeder Steg für bis zu 4 Plätze.'};
+  if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Das Kanuhaus bringt die Leute mit seinem Einbaum hin, für bis zu 8 Plätze.'};
   if (K.crew && I.settled && !crewAt(I, b)){
     const site = staffOf(I).pulled.get(b);
     if (site) return {why:'bau', site:site.id, text:`Die Leute von hier bauen gerade: ${site.bt ? KINDS[site.kind].n : I.yard ? SHIPS[I.yard.kind].n : KINDS[site.kind].n}. Danach geht die Arbeit hier weiter.`};
@@ -1544,7 +1550,7 @@ function econ(){
     for (const b of I.buildings){
       if (!(b.boat > 0)) continue;
       const q = Math.floor((1 - b.boat / KINDS[b.kind].canoe) * 3); if (q !== b._q){ b._q = q; invalidate(); }
-      if (b.boat <= .001){ delete b.boat; invalidate(); syncWalkers(); if (I.id === active) toast(`Der Einbaum ${b.kind === 'steg' ? 'am Kanusteg' : 'der Fischer'} ist fertig.${b.kind === 'fisch' ? ' Jetzt fahren sie hinaus.' : ''}`, 2600); }
+      if (b.boat <= .001){ delete b.boat; invalidate(); syncWalkers(); if (I.id === active) toast(`Der Einbaum ${b.kind === 'steg' || b.kind === 'werft' ? 'am Steg' : 'der Fischer'} ist fertig.${b.kind === 'fisch' ? ' Jetzt fahren sie hinaus.' : ''}`, 2600); }
     }
     for (const b of I.buildings) if (b.bt){ const q = Math.floor((1 - b.bt / KINDS[b.kind].bt) * 10); if (q !== b._q){ b._q = q; invalidate(); } }
     for (const b of I.buildings){
@@ -1712,9 +1718,10 @@ function heartAt(I, at){
 }
 
 /* ---------- hit tests and input */
+/* a field or plaza under a house: the house wins a tap (a flat thing counts as farther away) */
 function hitBuilding(p){
   if (lod === 'far') return null; let best = null, bd = Infinity;
-  for (const I of islands){ if (!I.settled) continue; for (const b of I.buildings){ if (b.at) continue; const K = KINDS[b.kind]; const d = Math.hypot(p.x - b.x, p.y - (b.y - K.hy * .6)); const lim = Math.max(K.r + 3, 14 / cam.z); if (d < lim && d < bd){ bd = d; best = b; } } }
+  for (const I of islands){ if (!I.settled) continue; for (const b of I.buildings){ if (b.at) continue; const K = KINDS[b.kind]; const d = Math.hypot(p.x - b.x, p.y - (b.y - K.hy * .6)) + (FLAT.has(b.kind) ? K.r * .5 : 0); const lim = Math.max(K.r + 3, 14 / cam.z); if (d < lim && d < bd){ bd = d; best = b; } } }
   return best;
 }
 function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }

@@ -189,8 +189,8 @@ function makeShip(kind, I, o = {}){
   const s = {id:nextShip++, kind, own:true, name:'', port:I.id, last:I.id, cargo:{}, life:[], people:0, path:[], pi:0, state:'moored', route:null, x:I.harbor.x, y:I.harbor.y, hx:1, hy:0, dist:0, ...o};
   const m = moorSpot(I, s); s.x = m.x; s.y = m.y; ships.push(s); return s;
 }
-/* The atoll area opens only with a finished Kanusteg whose dugout is finished: the lagoon passes are shallow reef */
-const atollReady = () => islands.some(I => I.settled && !I.clan && I.buildings.some(b => b.kind === 'steg' && !b.bt && !(b.boat > 0)));
+/* The atoll area opens only with a finished Kanuhaus (or old Kanusteg) whose dugout is finished: the lagoon passes are shallow reef */
+const atollReady = () => islands.some(I => I.settled && !I.clan && I.buildings.some(b => KINDS[b.kind].serves && !b.bt && !(b.boat > 0)));
 /* is this a place in the atoll area that the clan does not yet know the way to? */
 function atollShut(dest){
   if (atollReady()) return false;
@@ -203,7 +203,7 @@ function sailTo(s, dest, quiet, force){
   // past the Weite See only the double canoe goes; an outrigger is not made for days of open sea
   if (s.own && s.kind === 'oc' && goal.x > FAR_X){ if (!quiet) toast('Über die Weite See zu den Fernen Inseln fährt nur das Doppelkanu.', 3200, false); return false; }
   if (s.own && s.kind !== 'vaka' && goal.x > EMPTY_X + 150){ if (!quiet) toast('Über die Leere See fährt nur das Reisekanu.', 3200, false); return false; }
-  if (s.own && !s.founder && !force && atollShut(dest)){ if (!quiet) toast('Ins Atoll erst mit Kanusteg und Einbaum. Sie kennen den Weg durchs flache Riff.', 3600, false); return false; }
+  if (s.own && !s.founder && !force && atollShut(dest)){ if (!quiet) toast('Ins Atoll erst mit Kanuhaus und Einbaum. Sie kennen den Weg durchs flache Riff.', 3600, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
   s.path = laneOf(s, curvePath(s, path)); s.pi = 0; s.dist0 = s.state === 'sail' && s.dist0 != null ? s.dist0 : s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
@@ -429,7 +429,7 @@ function assignRoute(s, ri){
   const r = routes[ri];
   if (s.kind === 'oc' && [r.a, r.b].some(id => isl(id).center.x > FAR_X)){ toast('Über die Weite See fährt nur das Doppelkanu.', 3000, false); return; }
   if (s.kind !== 'vaka' && [r.a, r.b].some(id => isl(id).center.x > EMPTY_X)){ toast('Über die Leere See fährt nur das Reisekanu.', 3000, false); return; }
-  if (atollShut({isl:r.a}) || atollShut({isl:r.b})){ toast('Ins Atoll erst mit Kanusteg und Einbaum.', 3000, false); return; }
+  if (atollShut({isl:r.a}) || atollShut({isl:r.b})){ toast('Ins Atoll erst mit Kanuhaus und Einbaum.', 3000, false); return; }
   s.auto = false; s.route = ri; s.tripFrom = null; s.noWay = 0;
   if (s.state !== 'sail' && (s.port === r.a || s.port === r.b)) routeArrive(s);
   else if (!sailTo(s, {isl:r.a}, true)){ s.route = null; toast(`${s.name || 'Das Kanu'} findet keinen Weg zur Kette.`, 3000, false); return; }   // no way: it must not sit there as if it were on a chain

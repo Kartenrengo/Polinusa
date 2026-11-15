@@ -2252,3 +2252,34 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
   hinten rechts), etwa sieben Schritte in der Sekunde. In der Ruhe liegt der Schwanz in einem weichen Bogen; er dreht den Kopf,
   zuckt mit der Schwanzspitze oder züngelt. Er nickt nicht mehr, denn Skinke machen keine Liegestütze wie Agamen.
 - Er ist etwas länger als vorher (rund 66 Pixel), bleibt aber klein und scheu.
+
+## Handel, Erkunden, Kanuhaus und Hausansicht (Version 106)
+
+- **Seefahrerhaus geht jetzt:** „Nah am Strand“ heißt jetzt bis 32 Schritte vom Wasser (vorher 18, also fast nur der Sand).
+  Ein Pfahlhaus in der Lagune zählt immer als strandnah. Das Seefahrerhaus will nur noch Fisch und Schnur im Lager, keinen
+  Proviant mehr: Den nehmen die Erkunder mit, und sonst fiel das Haus bei jeder Fahrt zurück. Beim Bauen eines Hauses sagt die
+  Leiste, ob es später ein Seefahrerhaus werden kann.
+- **Handel wie bei Anno:** Eine Handelskette wartet nie. Ist ein Lager voll, lädt das Kanu nur ab, was passt, behält den Rest an
+  Bord und fährt weiter. Je Ware lässt sich einstellen, wie viel im Lager bleibt („nimmt alles“, „lässt 5“ …). Das Blatt
+  zeigt nur die gewählten Waren als Zeilen; alles andere im Lager steht als kleine Bildchen zum Antippen darunter.
+- **Kanus bleiben nicht mehr hängen:** Findet ein Kanu keinen Weg zur Kette, verlässt es sie nach ein paar Versuchen mit einer
+  Nachricht, statt ewig zu warten. Kanus, die nach dem Laden auf See oder im Hafen „auf einer Kette“ lagen, fahren wieder los.
+  Gehen beim Laden Ketten verloren, rutschen die anderen nicht mehr durcheinander. Beim Kreuzen schaukelt das Kanu nicht mehr
+  auf der Stelle.
+- **Erkunden länger und an neue Orte:** Ein Proviant reicht jetzt 14 statt 5 Takte; 24 Proviant halten etwa 11 Minuten auf See
+  (vorher 4). Das Kanu merkt sich seine letzten 40 Wegpunkte und fährt lieber dahin, wo noch Nebel liegt und wo es nicht gerade
+  war. Es kehrt rechtzeitig um. Im Probelauf: Fahrten gut doppelt so lang, fast dreimal so viele neue Orte, keine Fahrt mehr ohne
+  Proviant auf See (vorher 5 von 9).
+- **Kanusteg und Kanuhaus sind eins:** Das Kanuhaus hat jetzt einen Steg mit Einbaum. Ist der Einbaum fertig, bringt er Leute zu
+  bis zu 8 Pfahlhäusern oder Plätzen auf anderen Motu und öffnet den Kanus den Weg ins Atoll. Erst danach baut das Kanuhaus
+  Schiffe. Der Kanusteg steht nicht mehr im Baumenü. Alte Spielstände: Ein fertiger Steg auf einer Insel ohne Kanuhaus wird zum
+  Kanuhaus; sonst bleibt der alte Steg stehen und arbeitet weiter.
+- **Weniger Übereinander:** Die Matte eines Hauswerks zählt jetzt beim Platzprüfen mit, Baumstümpfe unter neuen Bauten
+  verschwinden, und vor dem Bauen wird der Platz noch einmal geprüft (die Alten könnten ihn gerade belegt haben). Flaches wie
+  Felder und Platz wird zuerst gezeichnet, gleich hohe Dinge flackern nicht mehr, und Tippen trifft das Haus statt des Feldes
+  darunter.
+- **Hausansicht knapper:** Im Dorfzentrum ist „Werk“ jetzt ein Raster kleiner Kacheln (Gebäude mit Anzahl, was hinein- und
+  herausgeht als Bildchen, Farbe für läuft oder steht; Worte nur, wenn etwas fehlt, ganz beim Gedrückthalten). Im Haus stehen
+  unter den Namen nur noch kurze Worte („Holz · hilft“ statt abgeschnittener Sätze).
+- **Holz und Palmwedel im Lager unter „Täglich“:** Jeder Bau und jedes Dach braucht sie, darum stehen sie dort neben den
+  Tageswaren.

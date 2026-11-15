@@ -117,7 +117,7 @@ function steerShip(s){ closeSheet(); selectShip(s); flyTo(s.x, s.y, Math.max(cam
 function yardMarkup(I){
   if (I.yard){
     const S = SHIPS[I.yard.kind], f = 1 - I.yard.left / S.bt, w = staffOf(I).yard, here = presentAt(I).get(I.buildings.find(b => b.kind === 'werft')) || 0, k = yardStep(I.yard), [n, t] = k ? YARD_STEPS[I.yard.kind][k - 1] : YARD_WOOD, secs = here ? I.yard.left * YARD_CREW / here * TICK / 1000 : 0;
-    const state = !w ? '<span class="state out">ruht, keine Leute</span>' : !here ? '<span class="state low">Bauleute kommen</span>' : '';
+    const carving = I.buildings.some(b => b.kind === 'werft' && b.boat > 0), state = carving ? '<span class="state low">erst wird der Einbaum geschnitzt</span>' : !w ? '<span class="state out">ruht, keine Leute</span>' : !here ? '<span class="state low">Bauleute kommen</span>' : '';
     return `<div class="stat"><b>${S.n} · Schritt ${k + 1}/6 · ${n}</b>${state}</div><span class="mbar big"><i style="width:${f * 100}%"></i></span>` +
       `<div class="stat"><span class="sub">${t}</span>${here ? `<span>noch ${secsText(secs)}</span>` : ''}</div>` + `<div class="rtiles"><span class="rtile ${(I.yard.got || 0) >= S.cost.holz ? 'ok' : 'out'}" role="img" aria-label="Holz am Platz: ${I.yard.got || 0} von ${S.cost.holz}">${icon('holz')}<small>Holz am Platz</small><b>${I.yard.got || 0}/${S.cost.holz}</b></span></div>`;
   }

@@ -301,3 +301,14 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 - **Dorf:** Noch kein Fischnetz, das im Wind schwingt, und kein Rauchgeschwärzter Giebel je Feuerstelle (nur Ruß am Dach).
 - **Auf einem echten Handy prüfen:** Bildzeiten mit den neuen Details.
 
+
+## Offen nach Version 106
+
+- **Hausansicht scrollen:** Verstanden als „nicht scrollen müssen“. Die Hausansicht passt weiter ohne Scrollen; „Werk“ im
+  Dorfzentrum ist jetzt knapp. Falls doch ein längeres, scrollbares Blatt gewünscht war: hier nachfragen.
+- **Pfahlhäuser je Insel:** Ein Kanuhaus bedient bis zu 8 Pfahlhäuser oder ferne Plätze, und es gibt nur eines je Insel. Früher
+  ließ sich mit mehr Stegen mehr bauen. Beobachten, ob 8 reicht.
+- **Handelsblatt:** Mit vielen Waren auf beiden Seiten scrollt es noch etwas. Eine Idee: die Bildchen zum Dazunehmen einklappen.
+- **Alte Überlappungen:** Gebäude, die in alten Spielständen schon übereinander stehen, werden beim Laden nicht auseinandergerückt.
+- **Ware, die nirgends passt:** Sind beide Lager voll, bleibt die Ware an Bord und belegt Platz. Das Kanu fährt weiter.
+- **Langer Bot:** Einmal meldete der Wächter „Bauleute 13-mal gewechselt“ an einem Haus; in neun weiteren Läufen nicht wieder.

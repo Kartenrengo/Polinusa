@@ -17,11 +17,12 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
     if (h){ setCraft(I, h, kind); return 'craft'; } if (!placeWhy(I, kind) || I.buildings.some(b => b.kind === 'haus' && b.bt)) return 'nohouse'; const at = craftPlace(I, kind); if (!at || !canPay(I, costOf('haus', I))) return 'poor';
     startPlace('haus'); if (!placing) return 'refused'; const q = findSpot(I, 'haus', at); if (q){ placing.x = q.x; placing.y = q.y; ghostRender(); } const ok = placing.ok; if (ok) confirmPlace(); if (placing) endPlace(); return ok ? 'hut' : 'nospot'; };
   const tryBuild = kind => { if (kind && KINDS[kind] && KINDS[kind].craft && unlocked(kind)) return tryCraft(kind); if (!kind || !KINDS[kind] || !unlocked(kind)) return 'locked'; const I = isl(active); if (I.buildings.some(b => b.kind === kind && b.bt)) return 'site'; if (kind !== 'haus' && I.buildings.filter(b => b.kind === kind).length >= 3) return 'enough'; const c = costOf(kind, I); if (!canPay(I, c)) return 'poor'; startPlace(kind); if (!placing) return 'refused'; if (!placing.ok){ const q = findSpot(I, kind, placing); if (q){ placing.x = q.x; placing.y = q.y; ghostRender(); } } const ok = placing && placing.ok; if (ok) confirmPlace(); if (placing) endPlace(); return ok ? 'ok' : 'nospot'; };
-  let crowd = new Set(), now = new Set();
+  let crowd = new Set(), now = new Set(); const ovl = new Set();
   const check = tag => { crowd = now; now = new Set(); for (const I of islands.filter(J => J.settled)){
       if (I.pop !== (I.people || []).length) bad.push(`${tag} ${I.name} pop ${I.pop} people ${(I.people || []).length}`);
       for (const k of GOODS){ const v = I.stock[k] || 0; if (!(v >= 0) || v > storeCap(I)) bad.push(`${tag} ${I.name} ${k}=${v}`); }
       for (const q of I.people || []) if (!famOf(I, q.h)) bad.push(`${tag} ${q.n} without family`);
+      for (const [x, y, d, lim] of overlaps(I)) if (!ovl.has(x.id + ':' + y.id)){ ovl.add(x.id + ':' + y.id); bad.push(`${tag} ${I.name}: ${x.kind}#${x.id} and ${y.kind}#${y.id} overlap (${d | 0} < ${lim | 0}${x.bt || y.bt ? ', site' : ''})`); }
       // a house may be too full for a moment when needs drop (one moves out every half minute); not for five minutes on end
       for (const f of famsOf(I)) if (f.home){ const h = findB(f.home); if (!h) bad.push(`${tag} family ${f.n} without its house`); else if (membersOf(I, f).length > homeCap(I, h) + 1){ if (crowd.has(f.id)) bad.push(`${tag} family ${f.n} crowded for 5 min`); now.add(f.id); } }
     } };
@@ -71,7 +72,6 @@ const r = await p.evaluate(async ([SEED, MIN])=>{
       if (H.buildings.some(b => b.kind === 'werft' && !b.bt) && !H.yard && !ships.some(q => q.own)){ for (const k of ['beile', 'harz']) H.stock[k] = Math.max(H.stock[k] || 0, 1);   // the stone adze and the resin come from places the bot does not reach: they are given
         if (canPay(H, SHIPS.oc.cost)) startYard(H, 'oc'); }
       const sh = ships.find(q => q.own && q.kind !== 'vaka'), many = islands.filter(J => J.settled).length;
-      if (sh && many === 1 && sh.state !== 'sail' && !atollReady() && !H.buildings.some(b => b.kind === 'steg')){ const r = tryBuild('steg'); tried['steg/' + r] = (tried['steg/' + r] || 0) + 1; }   // the atoll area opens with a Kanusteg and its dugout
       if (sh && many === 1 && sh.state !== 'sail' && atollReady()){
         if (sh.port === H.id && sh.people === 0 && H.pop >= SETTLE.keep + SETTLE.people + 2){
           sheetKind = 'ship'; sheetData = {id:sh.id}; for (let i = 0; i < SETTLE.people; i++) fleetAct('pp+', {dataset:{}}, true); for (const [k, n] of [['holz', 4], ['dach', 5], ['nahrung', 2], ['wasser', 1]]) for (let i = 0; i < n; i++) fleetAct('cg+', {dataset:{k}}, true); sheetKind = null; sheetData = null;

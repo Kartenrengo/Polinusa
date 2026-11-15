@@ -592,7 +592,7 @@ function staff(I){
   const rank = b => b.prio ? -1 : urgent(b) ? 0 : b.kind === 'haus' && roofNeed ? 1 : 2;
   const all = I.buildings.filter(q => q.bt && !KINDS[q.kind].plant && !q.unpaid).sort((a, b) => rank(a) - rank(b) || a.id - b.id), lim = builders(I) + all.filter(q => q.prio).length;   // a called site comes on top, it does not stop one already worked
   const want = all.slice(0, lim).map(b => [b, SITE_CREW]);
-  const yardB = I.yard && I.buildings.find(b => b.kind === 'werft' && !b.bt); if (yardB) want.push([yardB, YARD_CREW]);
+  const yardB = I.yard && I.buildings.find(b => b.kind === 'werft' && !b.bt && !(b.boat > 0)); if (yardB) want.push([yardB, YARD_CREW]);
   let yard = 0;
   if (want.length){
     // whose work can wait best: a full store first, then a good in plenty, crafts before wood, wood before food and water
@@ -702,7 +702,7 @@ function loanWord(I, p){
   const t = p.loan && findB(p.loan); if (!t) return '';
   if (HOME_KINDS.has(t.kind) && !t.bt) return I.storm && I.storm.tie && tick < I.storm.at ? 'bindet ein Dach fest' : 'deckt das Dach neu';
   if (t.bt) return `baut ${KINDS[t.kind].n}`;
-  if (t.kind === 'werft' && I.yard) return `baut ${SHIPS[I.yard.kind].n}`;
+  if (yardWorks(I, t)) return `baut ${SHIPS[I.yard.kind].n}`;
   return `hilft bei ${placeName(t)}`;
 }
 /* why a place rests for a while, so its people do something else meanwhile */
@@ -729,7 +729,12 @@ function focusPerson(pid){
    works like the old workshop: same hands, same recipe. */
 const craftOf = (I, h) => I.buildings.find(b => b.at === h.id) || null;
 const placeName = b => b.at ? KINDS[b.kind].craft : KINDS[b.kind].n;
-const craftSpot = h => { const s = h.v && h.v.mirror ? -1 : 1; return {x:h.x + s * (KINDS[h.kind].r + 4), y:h.y + 5}; };
+/* The mat of a household craft lies beside its house, on the side of its mirror first; if that is taken (a building, a tree, the
+   water) on the other side, in front or behind. None free: the house has no room for a craft. */
+const matSpots = h => { const s = h.v && h.v.mirror ? -1 : 1, d = KINDS[h.kind].r + 4; return [[s * d, 5], [-s * d, 5], [s * d * .8, 17], [-s * d * .8, 17], [0, -(d + 2)]].map(([x, y]) => ({x:h.x + x, y:h.y + y})); };
+const matFree = (I, h, p) => !!landAt(I, p) && !treeAt(I, p.x, p.y, (CRAFT_R + TREE_R) * .8) && !I.buildings.some(b => b !== h && b.at !== h.id && Math.hypot(b.x - p.x, b.y - p.y) < (radiusOf(b) + CRAFT_R) * .8);
+const craftSpot = (h, I = islOfB(h.id)) => { const L = matSpots(h); return (I && L.find(p => matFree(I, h, p))) || L[0]; };
+const craftBlocked = (I, h) => !matSpots(h).some(p => matFree(I, h, p));
 const doIt = k => KINDS[k].craft ? `Lass eine Familie ${CRAFT_DO[k] || KINDS[k].craft}` : `Baue ${KINDS[k].n}`;
 /* what speaks against a craft on this island at all ('' when nothing does) */
 function craftIsle(I, k){
@@ -745,7 +750,7 @@ const craftsHere = I => CRAFT_KINDS.filter(k => !craftIsle(I, k));
 /* and against it in this house: its place */
 function craftWhy(I, h, k){
   const K = KINDS[k], why = craftIsle(I, k); if (why) return why;
-  const p = craftSpot(h);
+  const p = craftSpot(h, I); if (craftBlocked(I, h)) return 'neben dem Haus ist kein Platz';
   if (K.dep && !depNear(I, K.dep, p.x, p.y, K.depR)) return `nur in einem Haus nah am ${DEPOSITS[K.dep].n}`;
   if (K.near && nearCount(I, K.near.kind, p.x, p.y, K.near.r) < K.near.n) return `braucht ${K.near.n} ${NEAR_PL[K.near.kind]} nah am Haus`;
   return '';
@@ -761,7 +766,7 @@ function craftPlace(I, k){
 }
 function setCraft(I, h, k){
   const old = craftOf(I, h); if (old) I.buildings = I.buildings.filter(b => b !== old);
-  if (k && !(old && old.kind === k) && !craftWhy(I, h, k)){ const b = addB(I, k, craftSpot(h), {}, tick); b.at = h.id; }
+  if (k && !(old && old.kind === k) && !craftWhy(I, h, k)){ const b = addB(I, k, craftSpot(h, I), {}, tick); b.at = h.id; }
   I.staff = null; syncWalkers(); invalidate();
 }
 /* The village centre: the house by the plaza, the first one of the village. The family that founded the village lives in
@@ -784,12 +789,12 @@ function oldShops(I){
     I.buildings = I.buildings.filter(b => b !== s); I.staff = null;
     if (s.bt) continue;   // a workshop not yet built is simply given up
     const homes = I.buildings.filter(h => HOME_KINDS.has(h.kind) && !h.bt && !craftOf(I, h)).sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y));
-    const h = homes.find(q => !craftWhy(I, q, s.kind)) || homes[0];
+    const h = homes.find(q => !craftWhy(I, q, s.kind)) || homes.find(q => !craftBlocked(I, q)) || homes[0];
     if (!h){ if (I.id === active) note(`${KINDS[s.kind].n} ist aufgelöst: ${KINDS[s.kind].craft} macht jetzt eine Familie zu Hause. Alle Häuser haben schon ein Hauswerk.`); continue; }
-    const b = addB(I, s.kind, craftSpot(h), {}, tick); b.at = h.id; if (s.prio) b.prio = true;
+    const b = addB(I, s.kind, craftSpot(h, I), {}, tick); b.at = h.id; if (s.prio) b.prio = true;
     for (const p of I.people || []) if (p.job === s.id) p.job = 0;
     if (I.id === active) note(`${KINDS[s.kind].n} ist jetzt Hauswerk: ${KINDS[s.kind].craft} bei ${(f => f ? famName(f) : 'einer Familie')(famOfHome(I, h))}.`);
   }
   syncWalkers(); invalidate();
 }
-function moveCraft(I, h){ const c = craftOf(I, h); if (!c) return; if (craftWhy(I, h, c.kind)){ setCraft(I, h, null); return; } const p = craftSpot(h); c.x = p.x; c.y = p.y; }
+function moveCraft(I, h){ const c = craftOf(I, h); if (!c) return; if (craftWhy(I, h, c.kind)){ setCraft(I, h, null); return; } const p = craftSpot(h, I); c.x = p.x; c.y = p.y; }

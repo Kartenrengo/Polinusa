@@ -179,12 +179,12 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {shape:HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, fd:b.kind === 'taro' || b.kind === 'yams' ? Math.floor(hsh(b.id || 0, 5) * 4) : 0, dt:b.kind === 'haus' ? [0, 1, 2, 3, 0][Math.floor(hsh(b.id || 0, 3) * 5)] : 0, hid:b.kind === 'haus' ? (b.id || 0) % 3 : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, sea:b.kind === 'haus' ? seaRank(b) : 0, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {rot:b.kind === 'werft' ? Math.round(v.rot || 0) : 0, shape:HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, fd:b.kind === 'taro' || b.kind === 'yams' ? Math.floor(hsh(b.id || 0, 5) * 4) : 0, dt:b.kind === 'haus' ? [0, 1, 2, 3, 0][Math.floor(hsh(b.id || 0, 3) * 5)] : 0, hid:b.kind === 'haus' ? (b.id || 0) % 3 : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, sea:b.kind === 'haus' ? seaRank(b) : 0, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b._fo != null ? b._fo : b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.dt || ''}|${o.hid || ''}|${o.fd || ''}|${o.lvl || ''}|${boat || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}|${o.sea || ''}|${o.yam}`, art = () => artOf(b.kind, o);
+  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.dt || ''}|${o.hid || ''}|${o.fd || ''}|${o.lvl || ''}|${boat || ''}|${o.rot || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}|${o.sea || ''}|${o.yam}`, art = () => artOf(b.kind, o);
   const sc = t.s * (chief ? 1.12 : 1) * grown;
   // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
   if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
@@ -442,7 +442,10 @@ function drawObjects(c, area){
     if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v) && !(storm && (b.kind === 'palme' || b.kind === 'pandanus'))) all.push([b, I]);
     for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) all.push([t, null]);
   }
-  all.sort((a, b) => a[0].y - b[0].y);
+  // flat things (fields, plaza, spring) lie under everything; the rest from back to front, a tie broken by x and id so that
+  // two things on one line never swap places from one frame to the next
+  const flat = o => o.kind && FLAT.has(o.kind) ? 0 : 1;
+  all.sort((a, b) => flat(a[0]) - flat(b[0]) || a[0].y - b[0].y || a[0].x - b[0].x || (a[0].id || 0) - (b[0].id || 0));
   // first every shadow on the ground, then the things themselves, so no shadow lies over a roof; what sways is drawn later
   const sh = sunShadow(); if (sh.alpha > 0) for (const [b, I] of all){ if (I){ if (b.id !== movingId) drawBuilding(c, b, I, 1, sh); } else drawTree(c, b, sh); }
   for (const [b, I] of all){ if (I){ if (!(sw && SWAY_KINDS.has(b.kind)) && !b._fx) drawBuilding(c, b, I, b.id === movingId ? .25 : 1); } else if (!swT || b.st === 1) drawTree(c, b); }
@@ -1066,6 +1069,7 @@ function waterNear(I, b){
   if (b._wp && b._wp.k === b.x + b.y) return b._wp;
   let p = {x:b.x, y:b.y + 4};
   if (b.kind === 'steg'){ const a = ((b.v && b.v.rot) || 0) * Math.PI / 180; p = {x:b.x + Math.cos(a) * 30, y:b.y + Math.sin(a) * 30 + 2}; }
+  else if (b.kind === 'werft') p = jettyAt(b, 40);   // the tip of its jetty
   else if (!KINDS[b.kind].water){
     const c = I.atoll ? {x:I.atoll.cx, y:I.atoll.cy} : I.center, out = I.atoll && !(b.kind === 'steg' && !inLagoonSide(I, b)) ? -1 : 1, d = Math.hypot(b.x - c.x, b.y - c.y) || 1, ux = (b.x - c.x) / d * out, uy = (b.y - c.y) / d * out;
     for (let k = 4; k < 60; k += 2){ const q = {x:b.x + ux * k, y:b.y + uy * k}; if (!landAt(I, q) && I.lands.every(L => polyDist(q, L.poly) > 5)){ p = q; break; } }
@@ -1078,7 +1082,7 @@ function drawDugouts(c, v, now){
     if (!I.settled || !boxIn(I.box, v)) continue;
     const lg = lagoonOf(I), served = [...lg.served];
     lg.jetties.forEach((j, n) => {
-      const A = waterNear(I, j), goals = served.slice(n * KINDS.steg.serves, (n + 1) * KINDS.steg.serves).map(b => waterNear(I, b)).filter(B => !overLand(A, B, 1));
+      const A = waterNear(I, j), goals = served.slice(lg.slots[n][0], lg.slots[n][1]).map(b => waterNear(I, b)).filter(B => !overLand(A, B, 1));
       const ferry = figureLook(j.id * 13 + 7);   // the ferryman of this jetty
       if (!goals.length){ drawDugout(c, A.x, A.y, false, 0, ferry, false, now, j.id, false); return; }
       // each crossing swings out in a bow, as far as the water allows
@@ -1137,7 +1141,7 @@ function drawPeople(c, v, now){
     for (const t of I.trees) if (t.st !== 1 && !near.has(t) && t.y > w.y && t.y - w.y < 24 && Math.abs(t.x - w.x) < 9) near.set(t, null);
   }
   for (const b of near.keys()) items.push([b.y, b]);
-  items.sort((a, b) => a[0] - b[0]);
+  items.sort((a, b) => a[0] - b[0] || a[1].x - b[1].x || (a[1].id || 0) - (b[1].id || 0));
   const sh = sunShadow();
   if (sh.alpha > 0) for (const w of vis){
     if (w.ride || w.boat || w.lie || (w.paddle || w.swim) && !landAt(isl(w.isl), w)) continue;
@@ -2015,8 +2019,8 @@ const MARK = new Path2D('M-2.3-18.2Q0-18.8 2.4-18.1L.2-14.6Q-.4-15.6-2.3-18.2Z')
 function slotsOf(I, b, sf, on){
   const K = KINDS[b.kind]; let n, open;
   if (b.bt){ if (K.plant) return null; n = open = SITE_CREW; }
-  else if (b.kind === 'werft'){ if (!I.yard) return null; n = open = YARD_CREW; }
   else if (b.boat > 0) n = open = 1;
+  else if (b.kind === 'werft'){ if (!I.yard) return null; n = open = YARD_CREW; }
   else if (K.crew){
     // a place always shows its fixed places: its own people at work, its own people away (building, helping elsewhere: they
     // come back), then guests who help here (smaller, with a plus), then the free places
@@ -2040,7 +2044,7 @@ function drawWork(c, v){
       if ((lod !== 'near' && b.id !== selectedId) || !ptIn(b.x, b.y, v)) continue;
       if (!sf){ sf = staffOf(I); on = presentAt(I); }
       const sl = slotsOf(I, b, sf, on); if (!sl) continue;
-      const K = KINDS[b.kind], step = b.kind === 'werft' && I.yard ? `${yardStep(I.yard) + 1}/6` : '', w = sl.length * 5 + 3 + (step ? 12 : 0), top = b.bt ? K.hy * Math.max(.35, 1 - b.bt / K.bt) : K.hy * ((b.v && b.v.scale) || 1);
+      const K = KINDS[b.kind], step = yardWorks(I, b) ? `${yardStep(I.yard) + 1}/6` : '', w = sl.length * 5 + 3 + (step ? 12 : 0), top = b.bt ? K.hy * Math.max(.35, 1 - b.bt / K.bt) : K.hy * ((b.v && b.v.scale) || 1);
       c.save(); c.translate(b.x, b.y - top - 4); c.scale(s, s);
       const p = tagPath(-w / 2, -7.4, w, 8.4, b.id); c.globalAlpha = .92; c.fillStyle = '#F4ECD8'; c.fill(p); c.globalAlpha = 1; stroke(c, p, '#3E2416', .6, null, 'round');
       sl.forEach((k, i) => { c.save(); c.translate(-w / 2 + 4 + i * 5, -.9); blit(c, 'pip|' + k, PIP[k]); c.restore(); });

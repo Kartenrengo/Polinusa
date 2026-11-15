@@ -12,7 +12,12 @@ let walkers = [], mana = 0;   // mana: the clan's standing, from feasts, gifts a
 const isl = id => islands.find(I => I.id === id);
 function findB(id){ for (const I of islands){ const b = I.buildings.find(x => x.id === id); if (b) return b; } return null; }
 function islOfB(id){ return islands.find(I => I.buildings.some(b => b.id === id)); }
-function addB(I, kind, p, v = {}, born = 0){ const b = {id:nextId++, kind, x:fx(p.x), y:fx(p.y), born, v}; I.buildings.push(b); return b; }
+function addB(I, kind, p, v = {}, born = 0){
+  const b = {id:nextId++, kind, x:fx(p.x), y:fx(p.y), born, v}; I.buildings.push(b);
+  if (kind === 'werft' && v.rot == null && I.lands && I.lands.length) v.rot = seaward(I, b);   // the jetty of the canoe house points to the water
+  if (I.trees && I.trees.length) clearStumps(I, b);   // a stump under the new building would sprout again through its roof
+  return b;
+}
 const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>> 0) || 1;
 
 /* A new game: the clan is still at sea in its voyaging canoe, off two high islands and an atoll. The village is founded
@@ -175,6 +180,7 @@ function restore(raw){
       if (I.treasure && d.ts != null) I.treasure.left = d.ts;
       I.wearSaved = d.wr || null; I._wg = null; I._wp = null;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
+    for (const I of islands) migrateJetty(I);
     for (const I of islands) if (I.clan && !I.buildings.length) seedClan(I, rng(seed ^ (I.center.x | 0)));
     const routeAt = new Map();   // old place in the list -> new place (a chain to a lost island is dropped, the canoes on it keep their right chain)
     routes = (s.routes || []).filter((r, i) => isl(r.a) && isl(r.b) && (routeAt.set(i, routeAt.size), true)).map(r => ({a:r.a, b:r.b, knots:r.knots | 0, lastGift:r.lg || 0, plan:{a:{}, b:{}, ...(r.plan || {})}, keep:{a:{}, b:{}, ...(r.kp || {})}}));
@@ -198,14 +204,26 @@ function restore(raw){
 const liveLines = () => { const used = new Set(); for (const I of islands) for (const p of I.people || []) used.add(p.ln); for (const s of ships) for (const p of s.folk || []) used.add(p.ln); return Object.fromEntries(Object.entries(LINES).filter(([id]) => used.has(+id))); };
 /* Saves name the current task by id */
 // a game saved before Hawaiki came after the great voyage stood at the chief's village before the voyage: it goes on with the voyage
-const questFromSave = s => { const old = s.qo || 0, id = s.qid === 'chief' && !old ? 'tauchen' : (s.qid === 'kultur' || s.qid === 'done') && old < 3 ? 'sterne' : s.qid; return id === 'done' ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === id)); };   // and those past the chief's village go on with the long pause
+/* The Kanusteg is gone from the build list: the canoe house has the jetty and the dugout now. A finished old jetty on an island
+   without a canoe house becomes one (same id and dugout, moved to the nearest free spot on the beach, pointing to the water).
+   If there is no room, or a canoe house stands already, it stays as it was and serves as before (a legacy kind). */
+function migrateJetty(I){
+  if (!I.settled || I.clan || !KINDS.werft.on.includes(I.type) || I.buildings.some(b => b.kind === 'werft')) return;
+  const st = I.buildings.filter(b => b.kind === 'steg' && !b.bt).sort((a, c) => (a.boat > 0) - (c.boat > 0) || a.id - c.id)[0]; if (!st) return;
+  const rest = I.buildings; I.buildings = rest.filter(b => b !== st);
+  const p = findSpot(I, 'werft', st);
+  I.buildings = rest;
+  if (!p) return;
+  st.kind = 'werft'; st.x = fx(p.x); st.y = fx(p.y); st.v = {mirror:0}; st.v.rot = seaward(I, st); delete st._wp; I.staff = null; I._lg = null;
+}
+const questFromSave = s => { const old = s.qo || 0, id = s.qid === 'lagune' ? 'beile' : s.qid === 'chief' && !old ? 'tauchen' : (s.qid === 'kultur' || s.qid === 'done') && old < 3 ? 'sterne' : s.qid; return id === 'done' ? QUESTS.length : Math.max(0, QUESTS.findIndex(Q => Q.id === id)); };   // and those past the chief's village go on with the long pause
 /* Two games side by side. Each slot keeps its own save and its own copies; slot 1 is the save from before there were
    slots. The slot in play is remembered. A save carries a short summary for the menu (sum). */
 const SLOTS = 2;
 /* A save is never lost to a new version of the game. Before a new version saves for the first time, every slot is copied
    aside as it was ("vor dem Update"), and a save that cannot be read is put aside instead of being written over. The menu
    offers both again. */
-const GAME_V = 105, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
+const GAME_V = 106, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
 let lastLoadErr = '';
 function keptOf(key){ try { const o = JSON.parse(localStorage.getItem(key) || 'null'); return o && o.raw ? o : null; } catch (e){ return null; } }
 function keepAside(n, raw){ try { const k = keptOf(keepKey(n)); if (!k || k.raw !== raw) localStorage.setItem(keepKey(n), JSON.stringify({at:Date.now(), why:lastLoadErr, raw})); } catch (e){} }
