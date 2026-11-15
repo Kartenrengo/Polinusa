@@ -2283,3 +2283,28 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
   unter den Namen nur noch kurze Worte („Holz · hilft“ statt abgeschnittener Sätze).
 - **Holz und Palmwedel im Lager unter „Täglich“:** Jeder Bau und jedes Dach braucht sie, darum stehen sie dort neben den
   Tageswaren.
+
+## Alles, was sich bewegt, feiner (Version 107)
+
+Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwachen Handys und weit weg bleibt es wie vorher.
+
+- **Menschen:** bleiben, wie sie waren. Arme und Beine wurden kurz probiert und wieder herausgenommen.
+- **Kanus:** Sie krängen mit dem Wind, am meisten bei Wind von der Seite. Der Bug wirft Gischt, hinten schäumt es, das Kielwasser
+  beginnt am echten Bug. Der Ausleger zieht eine Schaumspur. Beim Wenden schlägt das Krabbenscheren-Segel. Kanus vor Anker ziehen
+  Ringe. Einbäume heben und senken sich, beim Paddeln mit Bugwelle.
+- **Meer:** Ein Wal taucht als Schatten auf, bläst zweimal, krümmt den Rücken und hebt beim Abtauchen die Fluke. Delfine springen
+  mit der Nase voran und landen mit Spritzern. Fliegende Fische hüpfen dreimal übers Wasser, jedes Mal flacher. Schildkröten
+  rudern mit den Vorderflossen und heben zum Atmen den Kopf. Fischschwärme in der Lagune schwimmen zusammen, einer blitzt silbern.
+- **Tiere an Land und in der Luft:** Vögel schlagen mit nachgebenden Flügelspitzen und legen sich in die Kurve; Noddi, Seeschwalbe
+  und Fregattvogel haben ihre eigenen Schwänze. Flughunde haben Flughäute mit Fingerknochen. Schmetterlinge flattern unruhig und
+  gleiten dazwischen. Geckos drehen den Kopf und haben Haftzehen. Krabben laufen mit Kniegelenken, winken mit der Schere und
+  verschwinden in ihren Löchern im Sand. Ratten schlängeln den Schwanz, Hühner scharren mit einem Fuß.
+- **Umgebung:** Rauch steigt in ungleichen Wolken auf und wird dünner. Das Festfeuer hat Glut, zwei Scheite und mehr Funken. Die
+  Wolken sind rund auf flachem Grund, mit Schatten unten und Licht oben, und neigen sich mit dem Wind.
+- **Der Skink sonnt sich:** Oft läuft er zu der Stelle der Leiste genau unter der Sonne, legt sich flach hin, streckt die Beine zur
+  Seite, schließt halb die Augen und atmet langsam, in einem warmen Lichtfleck. Skinke sind tagaktiv: Nachts kommt er nicht.
+- **Kanu beladen wie bei Anno:** Statt einer langen Liste mit einem Schieber je Ware zeigt das Blatt den Laderaum als Reihe von
+  Plätzen im Rumpf, jeder in der Farbe seiner Ware, und daneben die Sitze für Siedler. Darunter liegt das Lager der Insel als
+  Bildchen. Tippen auf ein Bildchen lädt eine Handvoll ein (1, 5 oder alles, was passt), Tippen auf einen Platz im Rumpf lädt es
+  wieder aus. Pflanzen und Tiere fürs neue Land stehen als grüne Bildchen dabei und belegen je zwei Plätze. Gedrückt halten sagt,
+  was ein Bildchen ist. Auch ohne Beladen zeigt das Kanu-Blatt den Laderaum als Bild. Das Blatt scrollt nicht mehr.

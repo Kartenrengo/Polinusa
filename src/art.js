@@ -405,11 +405,6 @@ function figureArt(look, old, part){
   const low = `<ellipse cy=".2" rx="2.8" ry=".85" fill="#1F140D" opacity=".25"/>` +
     `<path d="M-1.5-3.9H1.5L2.4-.5Q0 .2-2.4-.5Z" fill="${w0}" ${ink}/>` +
     `<path d="M-1.95-2Q0-1.5 1.95-2" fill="none" stroke="${w1}" stroke-width=".7"/><path d="M-1.2-1.15h.01M0-1h.01M1.2-1.15h.01" stroke="${w1}" stroke-width=".5" stroke-linecap="round"/>`;
-  // close up the wrap ends higher: the legs show below it (render.js legsDraw)
-  const lows = `<ellipse cy=".2" rx="2.8" ry=".85" fill="#1F140D" opacity=".25"/>` +
-    `<path d="M-1.5-3.9H1.5L2.3-1.9Q0-1.3-2.3-1.9Z" fill="${w0}" ${ink}/>` +
-    `<path d="M-1.85-3.1Q0-2.6 1.85-3.1" fill="none" stroke="${w1}" stroke-width=".6"/><path d="M-1.2-2.4h.01M0-2.25h.01M1.2-2.4h.01" stroke="${w1}" stroke-width=".45" stroke-linecap="round"/>`;
-  if (part === 'lowsx') return lows;     // the short wrap, without fringe (hemFringe draws it)
   if (part === 'lowx') return low;       // without the hem fringe: close up it is drawn by hand (render.js hemFringe)
   const fringe = `<path d="M-1.7-.35v.55M-.85-.2v.66M0-.15v.55M.85-.2v.66M1.7-.35v.55" stroke="${w1}" stroke-width=".38" stroke-linecap="round"/>`;
   if (part === 'low') return low + fringe;
