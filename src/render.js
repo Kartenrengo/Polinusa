@@ -488,7 +488,7 @@ const HEART = new Path2D('M0 0C-3-2.5-4-5-2-6C-1-6.6 0-5.8 0-5C0-5.8 1-6.6 2-6C4
    with narrow wings that beats fast; and the noddy and booby of the old shape */
 const FRIG1 = new Path2D('M-7.6 1.2L-3.4-1.9L0 .2L3.4-1.9L7.6 1.2M0 .2L-.7 2.2M0 .2L.7 2.2'), FRIG2 = new Path2D('M-7.2.5L-3.4-.7L0 .2L3.4-.7L7.2.5M0 .2L-.7 2.2M0 .2L.7 2.2');
 const TERN1 = new Path2D('M-4.2-.2q2-1.9 4.2.2q2.1-2.1 4.2-.2'), TERN2 = new Path2D('M-4-.1q2-.6 4 .1q2-.8 4-.1');
-const birdOf = (k, t) => { const kind = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0; return {p:birdPath(kind, t, k * 1.7), s:kind === 1 ? 1.05 : kind === 2 ? .7 : .85, w:kind === 1 ? 1.1 : 1.3 - (kind === 2 ? .1 : 0)}; };
+const birdOf = (k, t) => { const kind = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0; return {p:birdPath(kind, t, k * 1.7, k % 2 ? 1 : -1), s:kind === 1 ? 1.05 : kind === 2 ? .7 : .85, w:kind === 1 ? 1.1 : 1.3 - (kind === 2 ? .1 : 0)}; };
 function drawAnim(c, now){
   const v = view(40), ph = (now % 3400) / 3400 * TAU, a = reduced ? .4 : .41 - .29 * Math.cos(ph), dy = reduced ? 0 : 1.5 * Math.cos(ph);
   for (const I of islands){
@@ -503,7 +503,8 @@ function drawAnim(c, now){
     const w = (I.box.x1 - I.box.x0) * .4, h = (I.box.y1 - I.box.y0) * .32, n = 1 + Math.round(wildOf(I) * wildKeep(I) * 6);
     for (let k = 0; k < n; k++){
       const a = now / (9000 + k * 2300) * (k % 2 ? -1 : 1) + k * 2.4 + I.center.x, rr = k < 2 ? 1 : .45 + (k * 7 % 5) / 8, x = I.center.x + Math.cos(a) * w * rr, y = I.center.y + Math.sin(a) * h * rr - 24 - (k % 3) * 6;
-      const B = birdOf(k, now), bank = (k % 2 ? -1 : 1) * (.2 + .07 * Math.sin(now / 1300 + k)); c.save(); c.translate(x, y); c.rotate(bank); c.scale(B.s, B.s); stroke(c, B.p, '#2B1D14', B.w / B.s, null, 'round', .85); c.restore();
+      const B = birdOf(k, now), bank = (k % 2 ? -1 : 1) * (.2 + .07 * Math.sin(now / 1300 + k)); if (lod === 'near'){ c.fillStyle = 'rgba(31,20,13,.07)'; c.beginPath(); c.ellipse(x + 3, y + 26 + (k % 3) * 6, 4 * B.s, 1.2 * B.s, 0, 0, TAU); c.fill(); }   // its shadow on the land below
+      c.save(); c.translate(x, y); c.rotate(bank); c.scale(B.s, B.s); stroke(c, B.p, '#2B1D14', B.w / B.s, null, 'round', .85); c.restore();
     }
   }
   // smoke from the cooking fires: at dawn, when everyone eats (see mealTick), from every house where a family lives, then
@@ -720,7 +721,7 @@ function drawBoatFig(c, w, now){
     if (g < .25) for (let k = 0; k < 3; k++){ c.fillStyle = '#F4FBFA'; c.beginPath(); c.arc(x + d * (9 + k - 1), y + 1.4 - g * 6, .35, 0, TAU); c.fill(); }
   }
   // sea birds circle over the canoe, as they gather over a shoal: the old sign where the fish are
-  for (let k = 0; k < 2; k++){ const a = now / 2600 * (k ? -1 : 1) + k * 2.6 + w.x; c.save(); c.translate(x + Math.cos(a) * 12, y - 18 + Math.sin(a) * 4 - k * 3); c.scale(.55, .55); stroke(c, birdPath(0, now, k * 2 + w.x), '#2B1D14', 1.4, null, 'round', .8); c.restore(); }
+  for (let k = 0; k < 2; k++){ const a = now / 2600 * (k ? -1 : 1) + k * 2.6 + w.x; c.save(); c.translate(x + Math.cos(a) * 12, y - 18 + Math.sin(a) * 4 - k * 3); c.scale(.55, .55); stroke(c, birdPath(0, now, k * 2 + w.x, k ? -1 : 1), '#2B1D14', 1.4, null, 'round', .8); c.restore(); }
 }
 const WADE = ellipse(0, .3, 3, 1.3);
 const glint = (x, y, r) => { const p = new Path2D(); p.moveTo(x - r, y); p.lineTo(x + r, y); p.moveTo(x, y - r * .7); p.lineTo(x, y + r * .7); return p; };
@@ -733,18 +734,33 @@ const smooth01 = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 /* By day butterflies flutter over the flowers, the hibiscus and the gardens: each loops on its own path, the wings beat,
    now and then it rests a moment on a blossom */
 const BUTTERFLY_KINDS = new Set(['blumen', 'hibiskus', 'garten', 'kurkumagarten', 'bananen']), BUTTERFLY_COL = ['#E8913A', '#F3D35A', '#F6F1E6', '#7FB6C8'];
+const BFLY = {x:0, y:0}, BFLY_FORE = new Path2D('M0-.1C.5-1 1.5-1.2 1.7-.5C1.8 .1 1 .3 0 .1Z'), BFLY_HIND = new Path2D('M0 .1C.7 .1 1.3 .5 1.1 1C.8 1.3 .2 .9 0 .3Z');
+/* the flight is no loop: a drifting, dipping line made of smooth noise, quick short darts now and then; it stops over the blossom */
+function bflyAt(b, sd, t){
+  const u = t * (.5 + sd * .02) + sd * 9, dart = Math.pow(Math.max(0, Math.sin(t * .9 + sd * 3)), 6);
+  BFLY.x = b.x + (flick(u, sd + 1) - .5) * 17 + Math.sin(t * 2.3 + sd) * 1.2 + dart * 2.5;
+  BFLY.y = b.y - 7 + (flick(u * 1.2 + 40, sd + 2) - .5) * 8 + Math.sin(t * 5.1 + sd) * .9 - dart * 1.5;
+}
 function drawButterflies(c, v, now){
-  const t = now / 1000;
+  const t = now / 1000, near = lod === 'near';
   for (const I of islands){ if (!I.settled || !boxIn(I.box, v)) continue;
     for (const b of I.buildings){
       if (!BUTTERFLY_KINDS.has(b.kind) || b.bt || !ptIn(b.x, b.y, v)) continue;
       for (let k = 0; k < (b.kind === 'blumen' ? 2 : 1); k++){
-        const sd = (b.id * 7 + k * 13) % 17, f = .35 + sd * .02, rest = Math.sin(t * .4 + sd) > .82;   // now and then it sits still
-        const x = b.x + (rest ? 2 : Math.cos(t * f * 2.1 + sd) * 7 + Math.sin(t * f * 3.3) * 2), y = b.y - 4 + (rest ? -1 : Math.sin(t * f * 2.9 + sd) * 3.5 - 3 - Math.abs(Math.sin(t * 1.7 + sd)) * 2);
-        const flap = rest ? .25 + .2 * Math.abs(Math.sin(t * 2 + sd)) : .2 + .8 * Math.abs(Math.sin(t * 17 + sd)), col = BUTTERFLY_COL[sd % BUTTERFLY_COL.length];
-        c.save(); c.translate(x, y); c.rotate(Math.sin(t * f * 2.1 + sd) * .4); c.scale(.68, .68); c.fillStyle = col; c.strokeStyle = '#2B1D14'; c.lineWidth = .22;
-        for (const d of [-1, 1]){ c.save(); c.scale(d * flap, 1); c.beginPath(); c.ellipse(.75, -.35, .8, .55, -.5, 0, TAU); c.ellipse(.6, .45, .55, .4, .4, 0, TAU); c.fill(); c.stroke(); c.restore(); }
-        c.fillStyle = '#2B1D14'; c.fillRect(-.12, -.7, .24, 1.4); c.restore();
+        const sd = (b.id * 7 + k * 13) % 17, rest = Math.sin(t * .4 + sd) > .82;   // now and then it sits still
+        let x, y, rot;
+        if (rest){ x = b.x + 2; y = b.y - 5; rot = Math.sin(t * .7 + sd) * .1 - .3; }
+        else { bflyAt(b, sd, t); x = BFLY.x; y = BFLY.y; bflyAt(b, sd, t + .12); rot = clamp(Math.atan2(BFLY.y - y, BFLY.x - x), -.8, .8) * .5; }
+        // the wings beat in bursts with a glide between; seen from the side the pair opens and closes
+        const burst = Math.sin(t * 2.6 + sd * 2), flap = rest ? .25 + .2 * Math.abs(Math.sin(t * 2 + sd)) : burst > -.4 ? .15 + .85 * Math.abs(Math.sin(t * 15 + sd)) : .7 + .1 * Math.sin(t * 3 + sd), col = BUTTERFLY_COL[sd % BUTTERFLY_COL.length];
+        c.save(); c.translate(x, y); c.rotate(rot); c.scale(.68, .68); c.fillStyle = col; c.strokeStyle = '#2B1D14'; c.lineWidth = .22; c.lineJoin = 'round';
+        const lift = rest ? 0 : -Math.max(0, Math.sin(t * 15 + sd)) * .25 * (burst > -.4 ? 1 : 0);   // the body bobs with the beat
+        c.translate(0, lift);
+        for (const d of [-1, 1]){ c.save(); c.scale(d * flap, 1); c.fill(BFLY_FORE); c.stroke(BFLY_FORE); c.fill(BFLY_HIND); c.stroke(BFLY_HIND);
+          if (near){ c.fillStyle = sd % 3 ? '#2B1D14' : '#FBF4E2'; c.beginPath(); c.arc(1.05, -.35, .17, 0, TAU); c.arc(.6, .6, .12, 0, TAU); c.fill(); c.fillStyle = col; } c.restore(); }
+        c.fillStyle = '#2B1D14'; c.fillRect(-.12, -.7, .24, 1.4);
+        if (near){ c.lineWidth = .14; c.beginPath(); c.moveTo(-.05, -.7); c.lineTo(-.45, -1.35 + Math.sin(t * 6 + sd) * .1); c.moveTo(.05, -.7); c.lineTo(.45, -1.35 - Math.sin(t * 6 + sd) * .1); c.stroke(); }   // the feelers
+        c.restore();
       }
     } }
 }
@@ -994,7 +1010,7 @@ function drawSeaLife(c, v, now){
       const w = waterNear(I, b), gx = w.x + (w.x - b.x) * 1.6, gy = w.y + (w.y - b.y) * 1.6 + 10; if (!ptIn(gx, gy, v)) continue;
       for (let i = 0; i < 4; i++){
         const a = t * (.7 + i * .13) + i * 1.7 + b.id, dive = (t + i * 1.3 + b.id) % 6 < .5, x = gx + Math.cos(a) * 14, y = gy + Math.sin(a) * 6 - (dive ? 0 : 10);
-        c.save(); c.translate(x, y); c.scale(.6, .6); stroke(c, birdPath(i % 3 === 1 ? 2 : 0, t * 1000, i * 3), '#2B1D14', 1.5, null, 'round', .85); c.restore();
+        c.save(); c.translate(x, y); c.scale(.6, .6); stroke(c, birdPath(i % 3 === 1 ? 2 : 0, t * 1000, i * 3, 1), '#2B1D14', 1.5, null, 'round', .85); c.restore();
         if (dive) stroke(c, ellipse(x, y + 2, 2.4, .8), '#F4FBFA', .7, null, 'round', .8);
       }
     }
@@ -1020,20 +1036,20 @@ const cloudArt = new Map();
    middle towering; a few strokes inside where billows overlap */
 function cloudShape(seed){
   const key = seed % 24; if (cloudArt.has(key)) return cloudArt.get(key);
-  const r = rng(seed * 7919 + 17), n = 5 + Math.floor(r() * 2), x0 = -50, x1 = 50, step = (x1 - x0) / n, P = new Path2D(), inner = new Path2D(), base = new Path2D();
-  P.moveTo(x0, 0);
-  for (let i = 1; i <= 5; i++) P.lineTo(x0 + (x1 - x0) * i / 5, (r() - .5) * 1.2);
-  const top = Math.floor(n / 2) - (r() < .5 ? 0 : 1);
-  let x = x1, y = 0;
+  // round billows (circles on a flat base), bigger and higher towards the middle; the outline runs over their tops from joint to joint
+  const r = rng(seed * 7919 + 17), n = 5 + Math.floor(r() * 2), P = new Path2D(), inner = new Path2D(), base = new Path2D(), cs = [];
+  for (let i = 0; i < n; i++){ const x = -39 + 78 * i / (n - 1) + (r() - .5) * 4, hump = 1 - Math.abs(x) / 56, rad = 9 + hump * 10 + r() * 4 + (i === Math.floor(n / 2) - (r() < .5 ? 0 : 1) ? 3 : 0); cs.push({x, rad, y:-rad * .52}); }
+  const joint = (A, B) => { const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy), a = (A.rad * A.rad - B.rad * B.rad + d * d) / (2 * d), h = Math.sqrt(Math.max(0, A.rad * A.rad - a * a)), mx = A.x + dx * a / d, my = A.y + dy * a / d; return {x:mx + dy / d * h * (dy / d > 0 ? 1 : 1) * 1, y:my - dx / d * h}; };
+  const J = []; for (let i = 0; i < n - 1; i++){ const q = joint(cs[i], cs[i + 1]); J.push(q); }
+  const f = cs[0], l = cs[n - 1], xl = f.x - Math.sqrt(Math.max(0, f.rad * f.rad - f.y * f.y)), xr = l.x + Math.sqrt(Math.max(0, l.rad * l.rad - l.y * l.y));
+  P.moveTo(xl, 0); let ang = Math.atan2(-f.y, xl - f.x);
   for (let i = 0; i < n; i++){
-    const xn = x - step, mid = (x + xn) / 2, hump = 1 - Math.abs(mid) / 55, yn = i === n - 1 ? 0 : -(3 + hump * 11 + r() * 3);
-    const b = step * (.5 + .45 * hump) * (n - 1 - i === top ? 1.2 : 1) * (.9 + r() * .2);
-    P.bezierCurveTo(x - step * .02, y - b * 1.35, xn + step * .02, yn - b * 1.35, xn, yn);
-    if (i > 0 && i < n - 1 && r() < .75){ const cx = xn + step * .15, cy = yn - b * .25; inner.moveTo(cx - 4, cy + 3); inner.quadraticCurveTo(cx - 1, cy - 2, cx + 4, cy - 1); }
-    x = xn; y = yn;
+    const C = cs[i], to = i < n - 1 ? Math.atan2(J[i].y - C.y, J[i].x - C.x) : Math.atan2(-C.y, xr - C.x);
+    let e = to; while (e < ang) e += TAU; P.arc(C.x, C.y, C.rad, ang, e, false);
+    if (i < n - 1){ ang = Math.atan2(J[i].y - cs[i + 1].y, J[i].x - cs[i + 1].x); if (i > 0 || r() < .85){ inner.moveTo(J[i].x + 1.2, J[i].y + 2); inner.quadraticCurveTo(J[i].x - 2.2, J[i].y + 6, J[i].x + 1, J[i].y + 10.5); } }
   }
   P.closePath();
-  base.moveTo(x0 + 8, -4); base.quadraticCurveTo(0, -1.5, x1 - 8, -4);
+  base.moveTo(xl + 8, -4); base.quadraticCurveTo(0, -1.5, xr - 8, -4);
   const o = {P, inner, base}; cloudArt.set(key, o); return o;
 }
 const smooth01c = f => f <= 0 ? 0 : f >= 1 ? 1 : f * f * (3 - 2 * f);
@@ -1060,9 +1076,12 @@ function drawWeather(c, v, now){
       }
       // the cloud: cream or grey, a shaded underside, the ink line that breaks up while it dissolves
       const a = (wet ? .9 : .84) * grow * (1 - night * .45), gone = ph > .72 ? (ph - .72) / .28 : 0;
-      c.save(); c.translate(cx, cy); c.scale(sc, sc); c.globalAlpha = a;
+      const br = reduced ? 0 : Math.sin(t * .11 + r3 * 40 + gen) * .045, bh = reduced ? 0 : Math.sin(t * .08 + r1 * 30) * .06;   // the cloud slowly breathes: wider and lower, then narrower and taller, the head leaning with the wind
+      c.save(); c.translate(cx, cy); c.transform(sc * (1 + br), 0, -W.tx * W.str * .08 * sc, sc * (1 + bh), 0, 0); c.globalAlpha = a;
       c.fillStyle = wet ? '#D3D4CC' : '#F7F1E3'; c.fill(shape.P);
-      c.save(); c.clip(shape.P); c.fillStyle = wet ? '#A9AEA9' : '#DCDCD0'; c.fillRect(-60, -9, 120, 12); c.restore();
+      c.save(); c.clip(shape.P); c.fillStyle = wet ? '#B4B8B1' : '#E8E4D6'; c.fillRect(-60, -15, 120, 18); c.fillStyle = wet ? '#A9AEA9' : '#DCDCD0'; c.fillRect(-60, -9, 120, 12);   // two bands of shade on the underside
+      if (!wet){ c.globalAlpha = a * .7; c.fillStyle = '#FFFDF6'; c.beginPath(); c.ellipse(-8 - W.tx * 6, -24, 22, 7, -.15, 0, TAU); c.ellipse(16 - W.tx * 6, -17, 11, 4, -.2, 0, TAU); c.fill(); }   // sun on the crown
+      c.restore(); c.globalAlpha = a;
       if (wet && quality && lod !== 'far') cloudChurn(c, shape.P, now, gen + k, a);   // storm clouds roll
       c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#2B1D14'; c.lineWidth = 1.1 / sc;
       if (gone > 0) c.setLineDash([(8 - gone * 6) / sc * 2, (1 + gone * 9) / sc * 2]); else c.setLineDash([]);
@@ -2687,16 +2706,21 @@ function drawBending(c, w, now, near, amp, H){
 
 /* ---------- birds: wing beats in bursts, in between they glide. The wing is a curve whose tips follow the beat. */
 const BIRD_SHAPE = [{S:5, arch:3.2, up:3.4, dn:2.6}, null, {S:4.2, arch:1.9, up:2.6, dn:1.8}], BIRD_CACHE = new Map();
-function birdWing(kind, u){
-  const q = Math.round(clamp(u, -1, 1) * 5), key = kind * 16 + q + 5; let P = BIRD_CACHE.get(key); if (P) return P;
-  const g = q / 5; P = new Path2D();
-  if (kind === 1){   // frigatebird: long angled wings and a forked tail
-    const el = -1.9 - 1 * g, tip = g > 0 ? 1.2 - 4.6 * g : 1.2 - 2.4 * g;
-    P.moveTo(-7.6, tip); P.lineTo(-3.4, el); P.lineTo(0, .2); P.lineTo(3.4, el); P.lineTo(7.6, tip); P.moveTo(0, -1.1); P.lineTo(0, .2); P.lineTo(-.7, 2.2); P.moveTo(0, .2); P.lineTo(.7, 2.2);   // wings, a short body, the forked tail
+/* u: the beat (-1 down .. 1 up), lag: -1/0/1 the wing is on its way up/still/down (the tip trails the wrist, so the wing bends
+   against the stroke), roll: -1/0/1 a bank, the inner wing drops and the outer one lifts */
+function birdWing(kind, u, lag = 0, roll = 0){
+  const q = Math.round(clamp(u, -1, 1) * 5), key = ((kind * 16 + q + 5) * 3 + lag + 1) * 3 + roll + 1; let P = BIRD_CACHE.get(key); if (P) return P;
+  const g = q / 5, tl = lag * .8; P = new Path2D();
+  if (kind === 1){   // frigatebird: long angled wings, an elbow, a forked tail
+    const el = -1.9 - 1 * g, tip = (g > 0 ? 1.2 - 4.6 * g : 1.2 - 2.4 * g) + tl * 1.4;
+    for (const sg of [-1, 1]){ const rl = roll * sg * -1.1; P.moveTo(0, .2); P.lineTo(sg * 3.4, el + rl * .5); P.lineTo(sg * 6.2, (el + tip) / 2 + .4 + rl); P.lineTo(sg * 7.8, tip + rl * 1.4 + .5); }
+    P.moveTo(0, -1.2); P.lineTo(0, .2); P.moveTo(0, .2); P.lineTo(-.8, 2.5); P.moveTo(0, .2); P.lineTo(.8, 2.5); P.moveTo(0, .2); P.lineTo(0, 1.4);   // body, forked tail
   } else {
-    const B = BIRD_SHAPE[kind], tip = g > 0 ? -B.up * g : -B.dn * g, ct = -B.arch + (g > 0 ? 1.6 * g : .4 * g);
-    P.moveTo(-B.S, tip); P.quadraticCurveTo(-B.S / 2, ct, 0, 0); P.quadraticCurveTo(B.S / 2, ct, B.S, tip);
+    const B = BIRD_SHAPE[kind], tip = (g > 0 ? -B.up * g : -B.dn * g) + tl * 1.2, ct = -B.arch + (g > 0 ? 1.6 * g : .4 * g) + tl * .6;
+    for (const sg of [-1, 1]){ const rl = roll * sg * -1; P.moveTo(0, 0); P.quadraticCurveTo(sg * B.S / 2, ct + rl * .4, sg * B.S, tip + rl * 1.1); }
     P.moveTo(0, -.9); P.lineTo(0, 1.1);   // the body between the wings
+    if (kind === 2){ P.moveTo(0, 1.1); P.lineTo(-.55, 2.2); P.moveTo(0, 1.1); P.lineTo(.55, 2.2); }   // the tern's forked tail
+    else { P.moveTo(-.45, 1.9); P.lineTo(0, 1.1); P.lineTo(.45, 1.9); }   // the noddy's wedge
   }
   BIRD_CACHE.set(key, P); return P;
 }
@@ -2707,7 +2731,11 @@ function birdU(kind, t, seed){
   if (m < share){ const e = Math.min(1, m / share * 6, (1 - m / share) * 6); return Math.sin(t / 1000 * hz * TAU + seed) * (.35 + .65 * e); }
   return .1 * Math.sin(t / 900 + seed) - .06;   // gliding: the wings held still, only a slight tremble
 }
-const birdPath = (kind, t, seed) => birdWing(kind, reduced ? 0 : birdU(kind, t, seed || 0));
+const birdPath = (kind, t, seed, roll = 0) => {
+  if (reduced) return birdWing(kind, 0);
+  const u = birdU(kind, t, seed || 0), d = u - birdU(kind, t - 70, seed || 0);
+  return birdWing(kind, u, d > .12 ? 1 : d < -.12 ? -1 : 0, roll);
+};
 
 /* ---------- the open sea: rows of wave marks that rise and fade in turn, the wavefront running slowly across */
 function seaRows(ctx, P, v, ox, oy, t, a){

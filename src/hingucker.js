@@ -219,7 +219,8 @@ function drawHeron(c, I, v, now){
   c.fillStyle = '#5B6B78'; c.fill(B); c.lineWidth = .4; c.strokeStyle = INKC; c.stroke(B);
   stroke(c, new Path2D('M-2.6-4.6Q-1-5.6 .6-5'), '#8C9CA8', .5, null, 'round');
   // the neck: from the shoulder up in an S, or stretched down for the strike
-  const hx = 2.2 + strike * 3.6 + look * .3, hy = -9.6 + strike * 8.4 + Math.sin(now / 2300 + sd) * .15, N = new Path2D(); N.moveTo(1.1, -5.4); N.bezierCurveTo(-.3 + strike * 1.5, -7, 3 - strike, -7.6 + strike * 4, hx, hy);
+  const coil = T > 12 && T < 13 ? Math.sin((T - 12) * Math.PI) : 0;   // the neck draws back before the strike
+  const hx = 2.2 + strike * 3.6 + look * .3 - coil * 1.1, hy = -9.6 + strike * 8.4 + coil * .9 + Math.sin(now / 2300 + sd) * .15, N = new Path2D(); N.moveTo(1.1, -5.4); N.bezierCurveTo(-.3 + strike * 1.5, -7, 3 - strike, -7.6 + strike * 4, hx, hy);
   stroke(c, N, INKC, 1.25, null, 'round'); stroke(c, N, '#6E7E8A', .65, null, 'round');
   c.fillStyle = '#5B6B78'; c.beginPath(); c.arc(hx, hy, .8, 0, TAU); c.fill(); c.lineWidth = .3; c.stroke();
   const bt = new Path2D(); bt.moveTo(hx + .5, hy - .25); bt.lineTo(hx + 3.1, hy + .2 + strike * .4); bt.lineTo(hx + .5, hy + .45); bt.closePath(); c.fillStyle = '#D9A441'; c.fill(bt); c.lineWidth = .25; c.stroke(bt);
@@ -237,19 +238,22 @@ function drawGecko(c, I, v, now){
     if (b.bt || b.at || (b.kind !== 'pfahl' && b.kind !== 'haus') || b.id % 7 !== 1 || !ptIn(b.x, b.y, v)) continue;
     const K = KINDS[b.kind], sc = (b.v && b.v.scale) || 1, S = slotOf(now, 16, b.id * 3.7), T = S.f, run = T > 9 && T < 9.7 ? (T - 9) / .7 : T > 12.2 && T < 12.8 ? 1 - (T - 12.2) / .6 : T >= 9.7 && T <= 12.2 ? 1 : 0;
     const x = b.x - K.r * .86 * sc * (b.v && b.v.mirror ? -1 : 1), y = b.y - K.hy * sc * (.5 + .22 * run), moving = (T > 9 && T < 9.7) || (T > 12.2 && T < 12.8), bob = !moving && T > 3 && T < 5 ? Math.sin(T * 9) * .25 : 0;
-    c.save(); c.translate(x, y); c.scale(.42, .42); c.rotate(moving ? 0 : bob * .1); c.lineCap = 'round'; c.lineJoin = 'round';
+    const turn = moving ? 0 : Math.sin(T * 1.3 + b.id) * (T > 2 && T < 6 ? .35 : .12), flick = T > 6.6 && T < 7.6 ? Math.sin((T - 6.6) * 16) * .9 : 0, wig = moving ? Math.sin(now / 55 + b.id) * .09 : 0;   // head turns, tail flicks, the body runs in an S
+    c.save(); c.translate(x, y); c.scale(.42, .42); c.rotate(moving ? wig : bob * .1); c.lineCap = 'round'; c.lineJoin = 'round';
     // a slim body, a rounder head with big eyes, thin bent legs with round toe pads, a tapering tail that curls
     const body = new Path2D(); body.moveTo(0, -1.1); body.bezierCurveTo(.85, -.7, .8, .6, .3, 1.5); body.lineTo(-.3, 1.5); body.bezierCurveTo(-.8, .6, -.85, -.7, 0, -1.1);
     const head = new Path2D(); head.ellipse(0, -1.85, .85, .95, 0, 0, TAU);
-    const lg = new Path2D(), toes = new Path2D(); for (const [yy, sg] of [[-.8, -1], [-.8, 1], [.7, -1], [.7, 1]]){ const w = moving ? Math.sin(now / 50 + yy + sg) * .3 : 0; lg.moveTo(sg * .5, yy); lg.lineTo(sg * 1.35, yy - .5 + w); lg.lineTo(sg * 1.75, yy + .15 + w); toes.moveTo(sg * 1.75 + .32, yy + .15 + w); toes.arc(sg * 1.75, yy + .15 + w, .32, 0, TAU); }
-    const tl = new Path2D(); tl.moveTo(0, 1.4); tl.bezierCurveTo(.1, 2.6, -.9 + Math.sin(now / 700 + b.id) * .25, 3.2, -1.2, 4); tl.bezierCurveTo(-1.4, 4.4, -.9, 4.6, -.7, 4.2);
+    const lg = new Path2D(), toes = new Path2D(); for (const [yy, sg] of [[-.8, -1], [-.8, 1], [.7, -1], [.7, 1]]){ const w = moving ? Math.sin(now / 50 + yy + sg) * .3 : 0; lg.moveTo(sg * .5, yy); lg.lineTo(sg * 1.35, yy - .5 + w); lg.lineTo(sg * 1.75, yy + .15 + w); toes.moveTo(sg * 1.75 + .32, yy + .15 + w); toes.arc(sg * 1.75, yy + .15 + w, .32, 0, TAU); for (const dy of [-.5, 0, .5]){ toes.moveTo(sg * 1.75, yy + .15 + w); toes.lineTo(sg * 2.3, yy + .15 + w + dy); } }   // a round pad and three toes
+    const tl = new Path2D(); tl.moveTo(0, 1.4); tl.bezierCurveTo(.1, 2.6, -.9 + Math.sin(now / 700 + b.id) * .25 + flick * .5, 3.2, -1.2 + flick * .8, 4); tl.bezierCurveTo(-1.4 + flick * .8, 4.4, -.9 + flick, 4.6, -.7 + flick, 4.2);
     stroke(c, tl, INKC, 1.05, null, 'round'); stroke(c, tl, '#8DA05A', .5, null, 'round'); stroke(c, lg, INKC, .75, null, 'round'); stroke(c, lg, '#8DA05A', .32, null, 'round');
     c.fillStyle = '#9DB066'; c.fill(toes); c.lineWidth = .22; c.strokeStyle = INKC; c.stroke(toes);
-    c.fillStyle = '#9DB066'; c.fill(body); c.lineWidth = .32; c.stroke(body); c.fill(head); c.stroke(head);
+    c.fillStyle = '#9DB066'; c.fill(body); c.lineWidth = .32; c.stroke(body);
     c.fillStyle = '#B9C98A'; c.beginPath(); c.arc(0, -.1, .22, 0, TAU); c.arc(.0, .55, .18, 0, TAU); c.fill();   // pale spots on the back
+    c.save(); c.translate(0, -1.1); c.rotate(turn); c.translate(0, 1.1); c.fillStyle = '#9DB066'; c.fill(head); c.lineWidth = .32; c.strokeStyle = INKC; c.stroke(head);
     c.fillStyle = '#F3D35A'; c.beginPath(); c.arc(-.45, -2.1, .3, 0, TAU); c.arc(.45, -2.1, .3, 0, TAU); c.fill(); c.lineWidth = .15; c.stroke();
     c.fillStyle = INKC; c.beginPath(); c.arc(-.45, -2.1, .13, 0, TAU); c.arc(.45, -2.1, .13, 0, TAU); c.fill();
-    if (T > 5.5 && T < 6.2){ stroke(c, new Path2D('M0-2.7V-3.4'), '#C8402C', .3, null, 'round'); }   // a flick of the tongue
+    if (T > 5.5 && T < 6.2){ stroke(c, new Path2D('M0-2.7V-3.1L-.2-3.5M0-3.1L.2-3.5'), '#C8402C', .3, null, 'round'); }   // a flick of the forked tongue
+    c.restore();
     c.restore();
     eyeAdd('gecko', x, y, 6, 'Ein Gecko am Dach. Er fängt die Mücken.');
   }
@@ -258,9 +262,25 @@ function drawGecko(c, I, v, now){
 /* fruit bats (flying foxes, native to these islands): at dusk, on some evenings, a few leave the trees and cross the village in
    slow wing beats, high up, dark against the pink sky. They are drawn from the same dark ink as the rest. */
 const BAT_WING = new Map();
-function batWing(g){
-  const q = Math.round(clamp(g, -1, 1) * 4); let P = BAT_WING.get(q); if (P) return P; const h = q / 4;
-  P = new Path2D(`M0-.3L1.5 ${-1.3 - 1.2 * h}L3.6 ${-.5 - 2.6 * h}Q3.2 ${.5 - 1.6 * h} 2.5 ${.7 - h}Q1.9 ${.2 - .6 * h} 1.3 ${.8 - .4 * h}Q.7 .3 0 .9Z`); BAT_WING.set(q, P); return P;
+/* the wing of a flying fox: an arm, a wrist, long fingers spread under a thin membrane with a scalloped rear edge. g: -1 (down) .. 1 (up);
+   lag: the fingers trail the wrist on the stroke. {m: the membrane, r: the finger bones} */
+function batWing(g, lag = 0){
+  const q = Math.round(clamp(g, -1, 1) * 4), key = q * 3 + lag; let P = BAT_WING.get(key); if (P) return P; const h = q / 4, l = lag * .5;
+  const wx = 1.5, wy = -1.3 - 1.2 * h, tx = 3.6 - .3 * Math.abs(h), ty = -.5 - 2.6 * h + l, f2x = 3.1, f2y = .1 - 1.7 * h + l * .8, f3x = 2.2, f3y = .6 - h * .9 + l * .5, f4x = 1.2, f4y = .8 - .5 * h;
+  const m = new Path2D(`M0-.3L${wx} ${wy}L${tx} ${ty}Q${tx - .3} ${(ty + f2y) / 2 + .4} ${f2x} ${f2y}Q${(f2x + f3x) / 2} ${(f2y + f3y) / 2 + .5} ${f3x} ${f3y}Q${(f3x + f4x) / 2} ${(f3y + f4y) / 2 + .5} ${f4x} ${f4y}Q.6 ${f4y + .3} 0 .9Z`);
+  const r = new Path2D(`M${wx} ${wy}L${f2x} ${f2y}M${wx} ${wy}L${f3x} ${f3y}M${wx} ${wy}L${f4x} ${f4y}`);
+  P = {m, r}; BAT_WING.set(key, P); return P;
+}
+function drawBatAt(c, x, y, dir, t, k, al){   // a flying fox seen from the side-front, wings beating slowly, the body bobbing against them
+  const ph = t * 5.5 + k * 1.7, g = Math.sin(ph) * .9, gl = Math.sin(ph - .5) * .9, d = g - gl, W = batWing(g, d > .1 ? 1 : d < -.1 ? -1 : 0), bob = -g * .45, near = lod === 'near';
+  c.save(); c.translate(x, y + bob); c.rotate(Math.sin(t * .9 + k) * .06); c.globalAlpha = al * .92; c.lineJoin = 'round'; c.lineCap = 'round'; c.fillStyle = '#34261F'; c.strokeStyle = '#1B120C'; c.lineWidth = .28;
+  for (const sg of [-1, 1]){ c.save(); c.scale(sg * dir, 1); c.fill(W.m); c.stroke(W.m); if (near){ c.strokeStyle = 'rgba(120,84,60,.55)'; c.lineWidth = .16; c.stroke(W.r); c.strokeStyle = '#1B120C'; c.lineWidth = .28; } c.restore(); }
+  c.beginPath(); c.ellipse(0, .1, .55, 1, 0, 0, TAU); c.fill(); c.stroke();   // the body
+  c.fillStyle = '#6B4A34'; c.beginPath(); c.ellipse(0, -.15, .38, .55, 0, 0, TAU); c.fill();   // a lighter, furry mantle
+  c.fillStyle = '#34261F'; c.beginPath(); c.arc(dir * .1, -1, .5, 0, TAU); c.fill(); c.stroke();   // the fox-like head
+  c.beginPath(); c.moveTo(dir * -.15, -1.35); c.lineTo(dir * -.05, -1.9); c.lineTo(dir * .25, -1.45); c.moveTo(dir * .3, -1.4); c.lineTo(dir * .5, -1.85); c.lineTo(dir * .5, -1.25); c.fill(); c.stroke();   // ears
+  if (near){ c.fillStyle = '#E8B04A'; c.beginPath(); c.arc(dir * .26, -1.05, .1, 0, TAU); c.fill(); c.strokeStyle = '#1B120C'; c.lineWidth = .24; c.beginPath(); c.moveTo(dir * .3, -.9); c.lineTo(dir * .7, -.75); c.stroke(); }   // an eye, the snout
+  c.restore();
 }
 function drawFlughunde(c, I, v, now){
   const u = (dayPhase() - .62) / .13; if (u < 0 || u > 1 || !opts.night) return;
@@ -269,11 +289,7 @@ function drawFlughunde(c, I, v, now){
   for (let k = 0; k < 4; k++){
     const x = dir > 0 ? I.box.x0 - 25 + (w + 50) * (e - k * .035) : I.box.x1 + 25 - (w + 50) * (e - k * .035), y = I.center.y - 34 - k * 4 + Math.sin(t * .8 + k * 2) * 3 + (k % 2) * 6;
     if (e - k * .035 < 0 || e - k * .035 > 1 || !ptIn(x, y, v)) continue;
-    const g = Math.sin(t * 5.5 + k * 1.7) * .9, W = batWing(g);
-    c.save(); c.translate(x, y); c.globalAlpha = al * .92; c.lineJoin = 'round'; c.fillStyle = '#34261F'; c.strokeStyle = '#1B120C'; c.lineWidth = .28;
-    for (const sg of [-1, 1]){ c.save(); c.scale(sg * dir, 1); c.fill(W); c.stroke(W); c.restore(); }
-    c.beginPath(); c.ellipse(0, .1, .55, 1, 0, 0, TAU); c.fill(); c.stroke(); c.beginPath(); c.arc(dir * .1, -1, .5, 0, TAU); c.fill(); c.stroke();   // body and fox-like head
-    c.restore();
+    drawBatAt(c, x, y, dir, t, k, al);
     if (k === 0) eyeAdd('flughund', x, y, 9, 'Flughunde. Am Abend fliegen sie aus und suchen reife Früchte.');
   }
 }

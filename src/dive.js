@@ -150,13 +150,19 @@ function driftWeed(c, x0, y0, len, dir, t, id, fine){
   for (const [col, w] of [[DRIFT_INK, 1.05], ['#5F7A3A', .62]]){ c.strokeStyle = col; c.lineWidth = w; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.stroke(); }
   c.fillStyle = '#7E9A4A'; for (let i = 2; i < n; i += 2){ c.beginPath(); c.arc(pts[i][0], pts[i][1] - .5, .32, 0, TAU); c.fill(); }   // air bladders
 }
-function driftBird(c, x, y, t, id){   // a gull or tern resting on the log, now and then it turns its head
-  const turn = Math.sin(t * .5 + id) > .8 ? -1 : 1; c.save(); c.translate(x, y); c.scale(turn, 1); c.lineWidth = .35; c.strokeStyle = DRIFT_INK;
-  c.fillStyle = '#F2EFE6'; c.beginPath(); c.moveTo(-2.4, -.2); c.quadraticCurveTo(-1.8, -2.4, .6, -2.1); c.quadraticCurveTo(2, -1.9, 1.9, -.2); c.quadraticCurveTo(0, .5, -2.4, -.2); c.fill(); c.stroke();   // body
-  c.fillStyle = '#8F9AA0'; c.beginPath(); c.moveTo(-1.8, -1.2); c.quadraticCurveTo(-.4, -2.4, 1, -1.5); c.quadraticCurveTo(-.2, -.7, -1.8, -1.2); c.fill(); c.stroke();   // folded wing
-  c.fillStyle = '#F2EFE6'; c.beginPath(); c.arc(1.7, -2.4, .85, 0, TAU); c.fill(); c.stroke();   // head
-  c.fillStyle = '#E8A23A'; c.beginPath(); c.moveTo(2.4, -2.5); c.lineTo(3.5, -2.2); c.lineTo(2.4, -2); c.closePath(); c.fill(); c.stroke();
-  c.fillStyle = DRIFT_INK; c.beginPath(); c.arc(1.9, -2.6, .2, 0, TAU); c.fill(); c.restore();
+function driftBird(c, x, y, t, id){   // a gull or tern resting on the log: it breathes, turns its head, preens and now and then stretches a wing
+  const turn = Math.sin(t * .5 + id) > .8 ? -1 : 1, T = (t + id * 3.1) % 11, pre = T > 5 && T < 7 ? Math.sin((T - 5) / 2 * Math.PI) : 0, wing = T > 8 && T < 9 ? Math.sin((T - 8) * Math.PI) : 0;
+  const br = Math.sin(t * 2.2 + id) * .06, hx = 1.7 - pre * 1.3, hy = -2.4 + br + pre * 1.1 + Math.sin(t * 7 + id) * pre * .12;   // the head dips to the breast while it preens
+  c.save(); c.translate(x, y); c.scale(turn, 1); c.lineWidth = .35; c.strokeStyle = DRIFT_INK; c.lineJoin = 'round';
+  const tail = new Path2D(); tail.moveTo(-2.2, -.9); tail.lineTo(-3.8, -.4 + Math.sin(t * 1.3 + id * 2) * .15 * (T > 2 && T < 3 ? 3 : 1)); tail.lineTo(-2.3, -.1); c.fillStyle = '#8F9AA0'; c.fill(tail); c.stroke(tail);   // the tail wags
+  c.strokeStyle = '#B9733A'; c.lineWidth = .3; c.beginPath(); c.moveTo(-.2, -.2); c.lineTo(-.2, .5); c.moveTo(.7, -.2); c.lineTo(.8, .5); c.stroke(); c.strokeStyle = DRIFT_INK; c.lineWidth = .35;   // orange legs
+  c.fillStyle = '#F2EFE6'; c.beginPath(); c.moveTo(-2.4, -.2); c.quadraticCurveTo(-1.8, -2.4 + br, .6, -2.1 + br); c.quadraticCurveTo(2, -1.9, 1.9, -.2); c.quadraticCurveTo(0, .5, -2.4, -.2); c.fill(); c.stroke();   // body
+  c.fillStyle = '#8F9AA0'; c.save(); c.translate(-1.8, -1.2); c.rotate(-wing * .55); c.translate(1.8, 1.2); c.beginPath(); c.moveTo(-1.8, -1.2); c.quadraticCurveTo(-.4, -2.4 - wing * .9, 1, -1.5); c.quadraticCurveTo(-.2, -.7, -1.8, -1.2); c.fill(); c.stroke();   // folded wing, the tip crossing at the back
+  c.strokeStyle = '#2B1D14'; c.beginPath(); c.moveTo(-2.9, -.7); c.lineTo(-1.5, -1); c.stroke(); c.restore(); c.strokeStyle = DRIFT_INK;
+  c.fillStyle = '#F2EFE6'; c.beginPath(); c.arc(hx, hy, .85, 0, TAU); c.fill(); c.stroke();   // head
+  c.fillStyle = '#E8A23A'; c.beginPath(); c.moveTo(hx + .7, hy - .1); c.lineTo(hx + 1.8, hy + .2 + pre * .5); c.lineTo(hx + .7, hy + .4); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = DRIFT_INK; if (Math.sin(t * 1.9 + id * 5) > .96) { c.fillRect(hx + .1, hy - .25, .4, .1); } else { c.beginPath(); c.arc(hx + .25, hy - .2, .2, 0, TAU); c.fill(); }
+  c.restore();
 }
 function driftSpark(c, x, y, p, s){   // a four-pointed twinkle
   c.strokeStyle = `rgba(255,250,225,${(.9 * p).toFixed(2)})`; c.lineWidth = .4; c.lineCap = 'round'; const a = s * p;

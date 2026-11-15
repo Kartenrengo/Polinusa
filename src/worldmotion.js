@@ -102,20 +102,36 @@ function shoreLoop(I){
   const pts = L.poly, cum = [0]; for (let i = 1; i <= pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i % pts.length].x - pts[i - 1].x, pts[i % pts.length].y - pts[i - 1].y));
   return I._sl = {pts, cum, len:cum[cum.length - 1]};
 }
-/* one land crab (x, y: its feet; k: which; mv: scuttling; t: seconds; night 0..1) */
-function drawCrabAt(c, x, y, k, mv, t, night){
+/* one land crab (x, y: its feet; k: which; mv: scuttling; t: seconds; night 0..1; sink 0..1: how far it has gone down its hole) */
+function drawCrabAt(c, x, y, k, mv, t, night, sink = 0, hole = 0){
   c.save(); c.translate(x, y); c.scale(.62, .62); c.globalAlpha = 1 - night * .4;   // a land crab is a hand wide, a quarter of a hip
-  c.fillStyle = 'rgba(31,20,13,.18)'; c.beginPath(); c.ellipse(0, .9, 2, .6, 0, 0, TAU); c.fill();
-  // legs: three a side, scuttling
-  const w = mv ? t * 38 + k : 0; c.strokeStyle = INKC; c.lineWidth = .4; c.lineCap = 'round'; c.beginPath();
-  for (let i = 0; i < 3; i++) for (const sg of [-1, 1]){ const sw = Math.sin(w + i * 2 + (sg > 0 ? 0 : 3.1)) * (mv ? .5 : .06); c.moveTo(sg * 1, -.1 + i * .2); c.lineTo(sg * (2.1 + sw), .6 + i * .2 - Math.abs(sw) * .2); }
+  if (hole > 0){   // the burrow: a dark mouth with a lip of thrown-up sand
+    c.globalAlpha *= hole; c.fillStyle = 'rgba(166,128,86,.7)'; c.beginPath(); c.ellipse(0, .8, 2.7, .95, 0, 0, TAU); c.fill(); c.fillStyle = '#2E1E12'; c.beginPath(); c.ellipse(0, .85, 1.9, .6, 0, 0, TAU); c.fill(); c.globalAlpha = (1 - night * .4);
+  }
+  if (sink > 0){ c.beginPath(); c.rect(-6, -12, 12, 12.9); c.clip(); c.translate(0, sink * 3.4); }   // down the hole: only what is above the ground shows
+  else { c.fillStyle = 'rgba(31,20,13,.18)'; c.beginPath(); c.ellipse(0, .9, 2, .6, 0, 0, TAU); c.fill(); }
+  const w = mv ? t * 38 + k : 0, still = !mv;
+  c.strokeStyle = INKC; c.lineWidth = .4; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath();
+  // legs: three a side with a knee; on a run the legs on the two sides work in turn, the lead ones reach, the trailing ones push
+  for (let i = 0; i < 3; i++) for (const sg of [-1, 1]){
+    const ph = w + i * 2 + (sg > 0 ? 0 : 3.1), sw = Math.sin(ph) * (mv ? .5 : .05), lf = mv ? Math.max(0, Math.cos(ph)) * .45 : 0;
+    c.moveTo(sg * 1, -.1 + i * .2); c.lineTo(sg * (1.9 + sw * .4), -.9 + i * .15 - lf); c.lineTo(sg * (2.4 + sw), .6 + i * .2 - lf * .6);
+  }
   c.stroke();
   c.fillStyle = '#C9553A'; c.fill(CRAB_BODY); stroke(c, CRAB_BODY, INKC, .4, null, 'round');
-  // claws up, eyes on stalks
-  const cl = mv ? Math.sin(t * 20 + k) * .25 : Math.sin(t * 1.4 + k * 2) * .12;
-  c.beginPath(); c.moveTo(-1.3, -.9); c.lineTo(-2.3, -2 + cl); c.moveTo(1.3, -.9); c.lineTo(2.3, -2 - cl); c.stroke();
-  c.fillStyle = '#E37A55'; for (const sg of [-1, 1]){ c.beginPath(); c.arc(sg * 2.4, -2.2 + cl * sg * -1, .55, 0, TAU); c.fill(); c.lineWidth = .3; c.stroke(); }
-  c.fillStyle = INKC; c.fillRect(-.6, -1.8, .3, .5); c.fillRect(.3, -1.8, .3, .5);
+  c.fillStyle = '#DE7452'; c.beginPath(); c.ellipse(-.3, -.85, .8, .35, -.2, 0, TAU); c.fill();   // light on the shell
+  // claws: held up and out on a run, in rest the big one beckons, now and then the small one grooms the mouth
+  const beck = still ? Math.sin(t * 3.2 + k * 2) : Math.sin(t * 20 + k) * .5;
+  for (const sg of [-1, 1]){
+    const big = sg > 0 === (k % 2 === 0), up = (big ? (still ? beck * .9 + .6 : beck) : (still ? Math.sin(t * 1.4 + k) * .2 : -beck * .4)), ex = sg * 2.3, ey = -1.5 - up * .5, cx = sg * 2.9, cy = ey - (big ? 1.2 : .8) - up * .3, r = big ? .85 : .55, op = big && still ? .3 + .3 * Math.abs(beck) : .15;
+    c.beginPath(); c.moveTo(sg * 1.3, -.9); c.lineTo(ex, ey); c.lineTo(cx, cy + .3); c.stroke();
+    c.fillStyle = '#E37A55'; c.beginPath(); c.ellipse(cx, cy, r * .7, r, sg * .25, 0, TAU); c.fill(); c.lineWidth = .3; c.stroke();
+    c.fillStyle = '#2E1E12'; c.beginPath(); c.moveTo(cx, cy - r * .35); c.lineTo(cx + sg * op, cy - r * 1.05); c.lineTo(cx - sg * op * .2, cy - r * 1.05); c.closePath(); c.fill(); c.lineWidth = .4;   // the pincer's gap
+  }
+  // eyes on stalks that turn and peep
+  const pe = still ? Math.sin(t * 1.1 + k) * .2 : 0;
+  c.strokeStyle = INKC; c.lineWidth = .3; c.beginPath(); c.moveTo(-.55, -1.3); c.lineTo(-.7 + pe, -2.1); c.moveTo(.55, -1.3); c.lineTo(.7 + pe, -2.1); c.stroke();
+  c.fillStyle = INKC; c.beginPath(); c.arc(-.7 + pe, -2.2, .28, 0, TAU); c.arc(.7 + pe, -2.2, .28, 0, TAU); c.fill();
   c.restore();
 }
 function drawBeachCrabs(c, v, now){
@@ -129,7 +145,8 @@ function drawBeachCrabs(c, v, now){
       const q = alongLoop(lp, d), a = Math.atan2(I.center.y - q.y, I.center.x - q.x), x = q.x + Math.cos(a) * 3.4, y = q.y + Math.sin(a) * 3.4;
       if (!ptIn(x, y, v) || !landAt(I, {x, y})) continue;
       const f = (t / per + sd * 6) % 1, mv = f > .6 && f < .86, face = Math.cos(q.a) * (k % 2 ? -1 : 1) >= 0 ? 1 : -1;
-      drawCrabAt(c, x, y, k, mv, t, night);
+      let sink = 0, hole = 0; if (hsh(k, sd * 7) < .6){ const g = f > .12 && f < .58 ? 1 : 0; hole = g || (f > .06 && f < .64) ? Math.min(1, (f - .06) * 40, (.64 - f) * 40) : 0; sink = f < .1 ? 0 : f < .22 ? (f - .1) / .12 : f < .44 ? 1 : f < .56 ? 1 - (f - .44) / .12 : 0; }   // some dive into their burrow for a while
+      drawCrabAt(c, x, y, k, mv, t, night, sink, hole);
     }
   }
 }
@@ -143,15 +160,16 @@ function drawRatAt(c, x, y, face, mv, t, sd){
   c.save(); c.translate(x, y); c.scale(face, 1); c.lineCap = 'round'; c.lineJoin = 'round';
   const g = mv ? t * 30 + sd * 9 : 0, bob = mv ? -Math.abs(Math.sin(g)) * .18 : 0, sniff = mv ? 0 : Math.sin(t * 9 + sd * 5) * .12;
   c.fillStyle = 'rgba(31,20,13,.2)'; c.beginPath(); c.ellipse(0, .35, 2, .5, 0, 0, TAU); c.fill();
-  const T = new Path2D(); T.moveTo(-1.6, -.9 + bob); T.quadraticCurveTo(-3.1, -.2 + Math.sin(t * 3 + sd) * .4, -4, -1.2 + Math.sin(t * 2.3 + sd * 3) * .5);   // the long bare tail
+  const T = new Path2D(), tw = mv ? t * 14 : t * 2.3, ta = mv ? .5 : .4; T.moveTo(-1.6, -.9 + bob); T.bezierCurveTo(-2.6, -.4 + Math.sin(tw + sd) * ta * .6, -3.2, -1.1 + Math.sin(tw - .9 + sd) * ta, -4.1, -.5 + Math.sin(tw - 1.8 + sd) * ta * 1.3);   // the long bare tail, an S that follows the body
   stroke(c, T, INKC, .75, null, 'round'); stroke(c, T, '#C7A898', .38, null, 'round');
   if (mv) for (const [lx, ph] of [[-1, 0], [.9, Math.PI]]){ const sw = Math.sin(g + ph) * .7; critLine(c, lx, -.5 + bob, lx + sw, .1, INKC, .45); }
   else { critLine(c, -.8, -.5, -.9, .1, INKC, .45); critLine(c, .8, -.5, .9, .1, INKC, .45); }
-  c.fillStyle = '#6E5C4E'; c.beginPath(); c.ellipse(-.1, -.95 + bob, 1.65, .85, 0, 0, TAU); c.fill(); c.lineWidth = .35; c.strokeStyle = INKC; c.stroke();
+  c.fillStyle = '#6E5C4E'; c.beginPath(); c.ellipse(-.1, -.95 + bob, 1.65 + (mv ? Math.sin(g) * .14 : 0), .85 - (mv ? Math.sin(g) * .06 : 0), 0, 0, TAU); c.fill(); c.lineWidth = .35; c.strokeStyle = INKC; c.stroke();
   c.save(); c.translate(1.5, -.95 + bob + sniff); const H = new Path2D(); H.moveTo(-.5, -.6); H.quadraticCurveTo(.9, -.7, 1.55, -.15); H.lineTo(.9, .3); H.quadraticCurveTo(-.2, .6, -.6, .3); H.closePath();
   c.fillStyle = '#7A6656'; c.fill(H); c.stroke(H);
   c.fillStyle = '#C99B90'; c.beginPath(); c.arc(-.1, -.85, .36, 0, TAU); c.fill(); c.lineWidth = .22; c.stroke();   // the round ear
   c.fillStyle = INKC; c.beginPath(); c.arc(.45, -.28, .13, 0, TAU); c.arc(1.5, -.05, .12, 0, TAU); c.fill();   // eye, nose
+  { const wh = Math.sin(t * 22 + sd) * .18; c.strokeStyle = 'rgba(43,29,20,.7)'; c.lineWidth = .12; c.beginPath(); c.moveTo(1.3, -.05); c.lineTo(2.2, -.4 + wh); c.moveTo(1.3, .05); c.lineTo(2.2, .3 - wh); c.stroke(); }   // whiskers
   c.restore(); c.restore();
 }
 function drawRats(c, I, v, now){
@@ -176,15 +194,19 @@ function drawRats(c, I, v, now){
 /* ---------- smoke: soft puffs that rise in a lazy curl, widen and thin out. A strong wind lays the column over and drags it
    off faster, a calm lets it stand and curl; gusts bend it for a moment. (x0, y0: the mouth; lit 0..1; k: size) */
 function drawPlume(c, x0, y0, id, lit, now, k = 1, dark = 0){
-  const W = wind(), t = now / 1000, gust = .75 + .5 * (.5 + .5 * Math.sin(t * .9 + x0 * .03)), str = W.str, N = 5;
+  const W = wind(), t = now / 1000, gust = .75 + .5 * (.5 + .5 * Math.sin(t * .9 + x0 * .03)), str = W.str, fine = lod === 'near' && quality, N = fine ? 7 : 5, per = 2900 - 500 * str;
   for (let i = 0; i < N; i++){
-    const q = (now / (2900 - 500 * str) + id * .37 + i / N) % 1, r = (1 + q * 3.4) * k, rise = q * (19 - 7 * str) * k;
-    const drift = q * q * (10 + 26 * str) * gust * k, curl = Math.sin(q * 6.5 + id * 1.9 + t * .5) * (.4 + q * 2.1) * (1.15 - str * .6) * k;
+    const cyc = now / per + id * .37 + i / N, gen = Math.floor(cyc), q = cyc - gen, jr = .85 + hsh(gen, id * 3 + i) * .35, jx = (hsh(gen, id * 5 + i + 1) - .5) * 1.4 * q;   // every puff is its own size and starts a little aside
+    const r = (1 + q * 3.4) * k * jr, rise = q * (19 - 7 * str) * k * (.92 + hsh(gen, id + i * 7) * .16);
+    const drift = q * q * (10 + 26 * str) * gust * k, curl = Math.sin(q * 6.5 + id * 1.9 + t * .5 + i * .4) * (.4 + q * 2.1) * (1.15 - str * .6) * k;
     const a = Math.min(1, lit * 1.25) * Math.pow(1 - q, 1.2) * (.9 - str * .22) * Math.min(1, q * 7);
     c.globalAlpha = a; c.fillStyle = dark ? (i % 2 ? '#B9B4A8' : '#9E998E') : (i % 2 ? '#F6F1E6' : '#E9E2D3');
-    const px = x0 + W.tx * drift + curl, py = y0 - rise + W.ty * drift * .4;
-    c.beginPath(); c.ellipse(px, py, r, r * .78, curl * .12, 0, TAU); c.fill();
-    c.globalAlpha = a * .6; c.strokeStyle = INKC; c.lineWidth = .4; c.stroke();
+    const px = x0 + W.tx * drift + curl + jx, py = y0 - rise + W.ty * drift * .4;
+    c.beginPath(); c.ellipse(px, py, r, r * .78, curl * .12, 0, TAU);
+    if (fine && q > .15){ const rr = r * .62; c.moveTo(px + r * .5 + rr, py - r * .3); c.ellipse(px + r * .5, py - r * .3, rr, rr * .8, 0, 0, TAU); }   // a second lobe: the puff billows as it widens
+    c.fill();
+    c.globalAlpha = a * (.35 + .35 * (1 - q)); c.strokeStyle = INKC; c.lineWidth = .4; c.stroke();
+    if (fine && q > .2 && q < .8){ c.globalAlpha = a * .5; c.fillStyle = dark ? '#8A857B' : '#D6CEBB'; c.beginPath(); c.ellipse(px - r * .2, py + r * .3, r * .6, r * .3, 0, 0, TAU); c.fill(); }   // the shaded underside
   }
   c.globalAlpha = 1;
 }
@@ -262,6 +284,7 @@ function drawHouseFlags(c, v, now){
     }
   }
 }
+const FIRE_LOGS = [[new Path2D('M-3.8 1.1L3.4-.5'), '#8C5F3E'], [new Path2D('M3.8 1L-3.2-.4'), '#7A5434']];
 /* the feast fire in front of the house: a fire that flares in turns, higher tongues, sparks that fly off with the wind, a plume of smoke */
 function drawFeastFire(c, h, now){
   const W = wind(), t = now / 1000, id = h.id, fx = h.x, fy = h.y + 24;
@@ -273,6 +296,9 @@ function drawFeastFire(c, h, now){
     const R = 11 + flare * 8; c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(0, -1, 0, 0, -1, R); g.addColorStop(0, `rgba(255,170,70,${.28 + flare * .25})`); g.addColorStop(1, 'rgba(255,120,50,0)');
     c.fillStyle = g; c.beginPath(); c.ellipse(0, -1, R, R * .75, 0, 0, TAU); c.fill(); c.globalCompositeOperation = 'source-over';
   }
+  if (lod !== 'far'){   // a bed of coals and two logs under the flames
+    c.fillStyle = '#5A3A24'; c.beginPath(); c.ellipse(0, .2, 4.2, 1.2, 0, 0, TAU); c.fill(); c.fillStyle = reduced ? '#D0612E' : `rgba(${220 + flick(t * 3, id) * 30 | 0},${90 + flick(t * 3.7, id + 2) * 60 | 0},40,1)`; c.beginPath(); c.ellipse(0, .1, 3, .8, 0, 0, TAU); c.fill();
+    for (const [P, col] of FIRE_LOGS){ stroke(c, P, INKC, 1.5, null, 'round'); stroke(c, P, col, .8, null, 'round'); } }
   const tongues = [[0, 1.05, 1, '#E0803A'], [-2.2, .75, .85, '#D0612E'], [2.3, .7, .8, '#EC9A44'], [-1, .9, .7, '#EC9A44'], [1.2, .85, .7, '#D0612E']];
   tongues.forEach(([dx, hs, ws, col], i) => {
     const hh = reduced ? hs : hs * (.85 + .3 * flick(t * 2.6 + i * 3.1, id * 3 + i)) * fl, lean = reduced ? 0 : (flick(t * 1.6 + i * 7, id + 40 + i) - .5) * .3 + W.tx * .1 * W.str;
@@ -281,7 +307,7 @@ function drawFeastFire(c, h, now){
   });
   if (!reduced && lod === 'near'){   // sparks fly up, wavering, and are carried off
     c.fillStyle = '#FFD27A';
-    for (let i = 0; i < 4; i++){ const per = 3.2 + hsh(i, id) * 2, q = ((t + hsh(i, id + 3) * 4) / per) % 1, sx = Math.sin(q * 7 + i * 2) * 1.8 + (hsh(i, id + 8) - .5) * 4 * q + W.tx * q * q * 14 * (.4 + W.str), sy = -5 - q * (13 + flare * 9 + hsh(i, id + 9) * 5);
+    for (let i = 0, ns = quality ? 7 : 4; i < ns; i++){ const per = 3.2 + hsh(i, id) * 2, q = ((t + hsh(i, id + 3) * 4) / per) % 1, sx = Math.sin(q * 7 + i * 2) * 1.8 + (hsh(i, id + 8) - .5) * 4 * q + W.tx * q * q * 14 * (.4 + W.str), sy = -5 - q * (13 + flare * 9 + hsh(i, id + 9) * 5);
       c.globalAlpha = (1 - q) * (.55 + flare * .45); c.beginPath(); c.arc(sx, sy, .55 * (1 - q * .5), 0, TAU); c.fill(); }
     c.globalAlpha = 1;
   }
@@ -368,9 +394,11 @@ function chickenLive(c, now, s, mv, hh, a){
   let jy = 0, flap = 0; if (hop){ const f = (t * .7 + s) % 1; if (f < .22){ const u = f / .22; jy = -Math.sin(u * Math.PI) * 3.2; flap = Math.sin(u * Math.PI) } }
   else if (mv) jy = -Math.abs(Math.sin(g * .5)) * .5;
   c.fillStyle = 'rgba(31,20,13,.2)'; c.beginPath(); c.ellipse(.2, .3, 2 - (jy < 0 ? -jy * .15 : 0), .6, 0, 0, TAU); c.fill();
-  const lg = ph => { const sw = mv ? Math.sin(g + ph) * 1 : 0, lf = mv ? Math.max(0, Math.cos(g + ph)) * .5 : 0; return [sw, lf]; };
+  const scratch = !mv && !hop && hh >= .66 && hh < .84, sc = Math.sin(t * 7 + s);   // one foot rakes back over the ground
+  const lg = ph => { if (scratch && ph === 0) return [-Math.max(0, -sc) * 1.3, Math.max(0, sc) * .9]; const sw = mv ? Math.sin(g + ph) * 1 : 0, lf = mv ? Math.max(0, Math.cos(g + ph)) * .5 : 0; return [sw, lf]; };
   for (const [x, ph] of [[-.6, 0], [.6, Math.PI]]){ const [sw, lf] = lg(ph); critLine(c, x, -1 + jy, x + sw, .3 - lf + jy * .75, LEG, .5); }
-  c.save(); c.translate(0, jy); c.translate(.2, -1.4); c.rotate(.1 + pk * .45 + (mv ? .1 : 0)); c.translate(-.2, 1.4);
+  if (scratch && sc < -.3){ c.fillStyle = 'rgba(150,118,80,.8)'; for (let i = 0; i < 3; i++){ c.beginPath(); c.arc(-1.4 - i * .5, -.3 - (i % 2) * .5 - (-sc - .3) * .6, .22, 0, TAU); c.fill(); } }
+  c.save(); c.translate(0, jy); c.translate(.2, -1.4); c.rotate(.1 + pk * .45 + (mv ? .1 : 0) + (scratch ? .2 : 0)); c.translate(-.2, 1.4);
   c.fillStyle = '#2F5A3E'; c.beginPath(); c.moveTo(-2, -2.6); c.quadraticCurveTo(-3.6 + Math.sin(t * 3 + s) * .2, -3.8 + flap * -.8, -3.2, -5.2); c.quadraticCurveTo(-2.2, -4.2, -1.4, -3.6); c.fill(); c.lineWidth = .35; c.strokeStyle = INKC; c.stroke();
   c.fillStyle = RED; c.fill(CHICK_P.body); stroke(c, CHICK_P.body, INKC, .4, null, 'round');
   // the wing
