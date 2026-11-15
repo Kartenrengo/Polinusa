@@ -311,4 +311,4 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 - **Handelsblatt:** Mit vielen Waren auf beiden Seiten scrollt es noch etwas. Eine Idee: die Bildchen zum Dazunehmen einklappen.
 - **Alte Überlappungen:** Gebäude, die in alten Spielständen schon übereinander stehen, werden beim Laden nicht auseinandergerückt.
 - **Ware, die nirgends passt:** Sind beide Lager voll, bleibt die Ware an Bord und belegt Platz. Das Kanu fährt weiter.
-- **Langer Bot:** Einmal meldete der Wächter „Bauleute 13-mal gewechselt“ an einem Haus; in neun weiteren Läufen nicht wieder.
+- ~~**Langer Bot:** Einmal meldete der Wächter „Bauleute 13-mal gewechselt“ an einem Haus.~~ **behoben in Version 109.**

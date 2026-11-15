@@ -2322,3 +2322,10 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   Ein Tipp öffnet das Blatt „Das große Ziel“: der Weg des Dorfes als Knotenschnur, was als Nächstes kommt und wie weit es ist.
   Die Ziele der Reihe nach: mehr Menschen und neue Zeiten, dann die große Fahrt nach Osten (Hawaiki), dort den Sternenpfad
   lernen, zuletzt die zweite Fahrt über die Leere See zu den Inseln des Morgens.
+
+## Bauleute bleiben bei ihrer Baustelle (Version 109)
+
+- Ein freier Helfer auf einer Baustelle bekam bei jeder Zählung (alle paar Sekunden) neu einen Platz zugeteilt, oft ein
+  Hauswerk, und von dort durfte die Baustelle ihn nicht zurückholen. Dann sprang ein anderer Freier ein, beim nächsten Mal wieder
+  der erste: Die Bauleute wechselten ständig, und der Bau stand still. Jetzt bleibt so ein Helfer bei seiner Baustelle, bis sie
+  fertig ist. Der lange Bot hatte das ab und zu gemeldet; in 18 Läufen danach nicht mehr.
