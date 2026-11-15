@@ -559,6 +559,7 @@ function staff(I){
     const n = count.get(b) || 0; if (n >= crewOf(b)){ p.job = 0; continue; } count.set(b, n + 1);
     if (pmap.has(b.id)){ const l = at.get(b) || []; l.push(p); at.set(b, l); } else away.push(p);
   }
+  const hadJob = new Set(I.people.filter(p => p.job).map(p => p.id));   // who had a place before this count hands out the free ones
   craftFirst(I, places, at, adults);
   if (autoWork(I)) autoAssign(I, places, at, adults, fit, away); else autoAssign(I, places.filter(b => b.at), at, adults, fit);   // a household craft finds its hands even when the rest is given by hand
   // a place called with the conch (b.prio) is filled at once: first by whoever is free, then from the place that can wait best
@@ -608,7 +609,10 @@ function staff(I){
       for (const pid of mem[s.id] || []){
         if (use.length >= n) break; const p = adults.find(q => q.id === pid); if (!p || taken.has(p)) continue;
         const i = pool.indexOf(p); if (i >= 0){ pool.splice(i, 1); use.push(p); continue; }
-        const b = [...at.keys()].find(q => at.get(q).includes(p)), l = b && at.get(b); if (l && !b.prio && !b.at && !b.keep){ l.splice(l.indexOf(p), 1); use.push(p); pulled.set(b, s); }
+        // a builder who was free and was just handed a place in this count (a household craft too) stays at the site: before,
+        // every count gave a different free person the place and the site, and the builders swapped every few seconds
+        const b = [...at.keys()].find(q => at.get(q).includes(p)), l = b && at.get(b), fresh = !hadJob.has(p.id);
+        if (l && !b.prio && (fresh || (!b.at && !b.keep))){ l.splice(l.indexOf(p), 1); use.push(p); if (fresh) p.job = 0; else pulled.set(b, s); }
       }
       use.push(...pool.splice(0, n - use.length));
       // for a site that ends the shortage, or one called with the conch, even a place of a short good gives hands, never one
