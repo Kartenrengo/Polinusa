@@ -9,6 +9,7 @@ const slider = (act, k, n, max, label) => `<span class="slide"><input type="rang
 function shipStatus(s){
   const r = s.route != null ? routes[s.route] : null;
   if (s.auto) return s.state === 'sail' && s.dest && s.dest.isl ? `Erkundet von selbst, holt Proviant auf ${isl(s.dest.isl).name}.` : 'Erkundet von selbst.';
+  if (r && s.noWay) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}. Findet keinen Weg, versucht es weiter.`;
   if (r) return `In der Handelskette ${isl(r.a).name} – ${isl(r.b).name}.${s.full ? ` An Bord: ${giftText(s.cargo)}. Lager auf ${s.fullAt} voll.` : ''}`;
   if (s.state === 'sail') return s.dest && s.dest.isl ? `Unterwegs nach ${isl(s.dest.isl).name}.` : 'Unterwegs auf See.';
   if (s.state === 'sea') return 'Liegt auf offener See vor Anker.';
@@ -84,11 +85,14 @@ function routeMarkup(ri){
   if (free.length) h += `<div class="rowx"><span class="sub">Freie Kanus im Hafen:</span><span class="chips">${free.map(s => `<button class="chip" type="button" data-act="assignS" data-s="${s.id}">${s.name}</button>`).join('')}</span></div>`;
   else if (!on.length) h += `<p class="sub">Bau im Kanuhaus ein Auslegerkanu und bring es nach ${mineEnd.name}, dann kannst du es hier einsetzen.</p>`;
   const side = (from, to, key) => {
-    const plan = r.plan[key] || (r.plan[key] = {}), goods = GOODS.filter(k => (from.stock[k] || 0) > 0 || plan[k]), cap = 24, sum = Object.values(plan).reduce((a, b) => a + b, 0);
-    return `<p><b>Von ${from.name} nach ${to.name}</b> <span class="sub">${to.clan ? 'als Gabe' : ''}</span></p>` + (goods.length ? `<ul class="list needs">${goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}</small></span>${slider('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) + Math.max(0, cap - sum), GN[k])}</li>`).join('')}</ul>` : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
+    const plan = r.plan[key] || (r.plan[key] = {}), goods = GOODS.filter(k => (from.stock[k] || 0) > 0 || plan[k]), cap = on.length ? Math.max(...on.map(s => SHIPS[s.kind].cap)) : 24, sum = Object.values(plan).reduce((a, b) => a + b, 0);
+    // under the name: what lies in store, and (for goods that are loaded here) how much stays behind; one tap steps it on
+    const keepChip = k => plan[k] && !from.clan ? ` · <button class="chip" type="button" data-act="kp" data-k="${key}:${k}" title="So viel bleibt im Lager, nur der Rest wird geladen">${routeKeep(r, key, k) ? `lässt ${routeKeep(r, key, k)}` : 'nimmt alles'}</button>` : '';
+    return `<p><b>Von ${from.name} nach ${to.name}</b> <span class="sub">${to.clan ? 'als Gabe' : ''}</span></p>` + (goods.length ? `<ul class="list needs">${goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}${keepChip(k)}</small></span>${slider('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) + Math.max(0, cap - sum), GN[k])}</li>`).join('')}</ul>` : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
   };
   if (A.settled) h += side(A, B, 'a');
   if (B.settled) h += side(B, A, 'b');
+  if (!C) h += `<p class="sub">Ist ein Lager voll, bleibt der Rest an Bord und das Kanu fährt weiter. Es wartet nie.</p>`;
   if (C) h += `<p class="sub">Sie antworten später mit ${clanMakes(C).map(k => GN[k]).join(' und ')}. Was sie schätzen: ${clanWants(C).map(k => GN[k]).join(', ')}. ${kin(A.clan ? A : B) ? 'Sie stempeln euer Muster: Eure Gaben zählen mehr.' : 'Töpfe in der Gabe bringen ihnen euer Muster, dann zählen eure Gaben mehr.'}</p>`;
   return h;
 }
@@ -193,6 +197,7 @@ function fleetAct(act, btn, quiet = false){
     if (act === 'route'){ sheetData.r = +btn.dataset.r; }
     else if (act === 'assignS'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) assignRoute(s, sheetData.r); }
     else if (act === 'unassign'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) unassign(s); }
+    else if (act === 'kp'){ const [key, k] = btn.dataset.k.split(':'), kp = (r.keep || (r.keep = {a:{}, b:{}}))[key] || (r.keep[key] = {}), cap = storeCap(isl(key === 'a' ? r.a : r.b)), n = ((kp[k] | 0) + 5) % (cap + 5 > 25 ? 25 : cap + 5); if (n) kp[k] = n; else delete kp[k]; }   // 0, 5, 10, 15, 20, then back to nothing
     else if (act === 'pl+' || act === 'pl-'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}); plan[k] = Math.max(0, (plan[k] || 0) + (act === 'pl+' ? 1 : -1)); if (!plan[k]) delete plan[k]; }
     else return false;
     if (!quiet){ renderSheet(); save(); } return true;

@@ -143,7 +143,7 @@ const unpackP = ([id, n, b, l, a, nv, w, f, sp, sx, h, job, ln, wk, tt, ev, zl])
 function serialize(){
   const keep = I => I.discovered || I.settled || I.clan || I.buildings.length;
   return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), sum:saveSum(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:3, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
-    routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan})),
+    routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan, kp:r.keep})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
     isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0, bm:I.bmax,
       fy:I.festYear, ya:I.yamAt || undefined, kp:I.keep || undefined, zl:I.zeal != null && I.zeal !== 1 ? I.zeal : undefined, dr:I.drought || 0, gr:I.grace || undefined, rf:I.reefLife != null ? Math.round(I.reefLife * 1000) / 1000 : undefined, ia:I.immigAt || undefined, au:I.autoUp ? 1 : undefined, rt:I.rat != null ? (I.rat ? 1 : 0) : undefined, hp:I.helps || undefined, pk:I.packs || undefined, rs:I.ratSaid ? 1 : undefined, ak:I.ask ? [I.ask.k, I.ask.why, I.ask.at, I.ask.no || 0] : undefined, wi:I.wish ? [I.wish.k, I.wish.f, I.wish.at, I.wish.until, I.wish.n] : undefined, wa:I.wishAt || undefined, wo:I.wishOk && Object.keys(I.wishOk).length ? Object.entries(I.wishOk).filter(([, u]) => u > tick) : undefined, ba:I.birthAcc ? Math.round(I.birthAcc) : undefined, ra:I.rainAt || undefined, sg:I.str || undefined, sa:I.strAt || undefined, sm:I.storm ? [I.storm.at, I.storm.tie ? 1 : 0, I.storm.tied] : undefined, ru:I.rainUntil && I.rainUntil + MOON > tick ? I.rainUntil : undefined, lb:I.lastBirth != null ? I.lastBirth : undefined, rh:I.rahui || false, rx:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
@@ -152,7 +152,7 @@ function serialize(){
       ppl:I.people ? I.people.map(packP) : undefined, anc:I.ahnen && I.ahnen.length ? I.ahnen : undefined, an:I.ahnenN || undefined, chf:I.chief || undefined, chl:I.chiefs && I.chiefs.length ? I.chiefs : undefined,
       nm:I.custom ? I.name : undefined, ts:I.treasure ? I.treasure.left : undefined, wr:I._wg ? wearCode(I._wg) : I.wearSaved || undefined,
       tr:I.treesSaved ? I.trees.map(t => [t.x, t.y, t.v, t.m, t.s, t.st, t.w, t.g]) : undefined, fm:I.fams && I.fams.length ? I.fams.map(f => [f.id, f.n, f.home || 0, f.job || 0]) : undefined, hw:I.handWork ? 1 : undefined, rl:I.rl || undefined, b:I.buildings.map(b => [b.id, b.kind, b.x, b.y, b.born, b.v, b.bt ? Math.round(b.bt * 100) / 100 : 0, b.boat ? Math.round(b.boat * 100) / 100 : 0, b.got || 0, b.soil != null ? Math.round(b.soil * 100) / 100 : null, b.fallow ? 1 : 0, b.t || 0, b.want || 0, b.prio ? 1 : 0, b.grow > 0 ? Math.round(b.grow) : 0, b.ys || b.kept ? [b.ys || 0, Math.round((b.sown || 0) * 100) / 100, Math.round(b.kept || 0)] : 0, b.at || 0, b.keep ? 1 : 0, b.rw ? Math.round(b.rw * 1000) / 1000 : 0, b.rf != null ? b.rf : null, b.nuts != null ? Math.round(b.nuts * 10) / 10 : null, b.unpaid || null, b.way || 0])})),
-    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, fl:s.full, fa:s.full ? s.fullAt : undefined, au:s.auto || undefined, lv:s.life && s.life.length ? s.life : undefined, fk:s.folk && s.folk.length ? s.folk.map(packP) : undefined}))});
+    ships:ships.filter(s => s.own).map(s => ({id:s.id, kind:s.kind, name:s.name, x:Math.round(s.x), y:Math.round(s.y), port:s.port, last:s.last, cargo:s.cargo, people:s.people, dest:s.dest, route:s.route, state:s.state, hungry:!!s.hungry, tf:s.tripFrom || null, fl:s.full, fa:s.full ? s.fullAt : undefined, au:s.auto || undefined, lv:s.life && s.life.length ? s.life : undefined, fk:s.folk && s.folk.length ? s.folk.map(packP) : undefined, vs:s.vis && s.vis.length ? s.vis.map(q => [q.x, q.y]) : undefined}))});
 }
 function restore(raw){
   try {
@@ -176,14 +176,16 @@ function restore(raw){
       I.wearSaved = d.wr || null; I._wg = null; I._wp = null;
       if (d.tr){ I.trees = d.tr.map(([x, y, v, m, sc, st, w, g]) => ({x, y, v, m, s:sc, st, w, g})); I.treesSaved = I.treeWork = true; I._tp = null; } }
     for (const I of islands) if (I.clan && !I.buildings.length) seedClan(I, rng(seed ^ (I.center.x | 0)));
-    routes = (s.routes || []).filter(r => isl(r.a) && isl(r.b)).map(r => ({a:r.a, b:r.b, knots:r.knots | 0, lastGift:r.lg || 0, plan:r.plan || {a:{}, b:{}}}));
+    const routeAt = new Map();   // old place in the list -> new place (a chain to a lost island is dropped, the canoes on it keep their right chain)
+    routes = (s.routes || []).filter((r, i) => isl(r.a) && isl(r.b) && (routeAt.set(i, routeAt.size), true)).map(r => ({a:r.a, b:r.b, knots:r.knots | 0, lastGift:r.lg || 0, plan:{a:{}, b:{}, ...(r.plan || {})}, keep:{a:{}, b:{}, ...(r.kp || {})}}));
     fogHoles = (s.fog || []).map(([cx, cy, rx, ry, sd]) => ({cx, cy, rx, ry, seed:sd}));
     ships = []; selShip = null;
     for (const o of s.ships || []){
       if (o.port && !isl(o.port)) o.port = null;
-      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, full:o.fl, fullAt:o.fa, auto:!!o.au, life:(o.lv || []).filter(id => LIFE[id]), folk:(o.fk || []).map(unpackP)};
+      if (o.route != null) o.route = routeAt.has(o.route) ? routeAt.get(o.route) : null;
+      const sh = {...o, own:true, path:[], pi:0, hx:1, hy:0, dist:0, tripFrom:o.tf, full:o.fl, fullAt:o.fa, auto:!!o.au, life:(o.lv || []).filter(id => LIFE[id]), folk:(o.fk || []).map(unpackP), vis:(o.vs || []).map(([x, y]) => ({x, y}))};
       ships.push(sh);
-      if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))) sailTo(sh, sh.dest, false, true); else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
+      if (sh.state === 'sail' && sh.dest && !(sh.dest.isl && !isl(sh.dest.isl))){ if (!sailTo(sh, sh.dest, true, true)) sh.state = sh.port ? 'moored' : 'sea'; } else if (sh.state === 'sail' || sh.state === 'wait') sh.state = sh.port ? 'moored' : 'sea';
       if (sh.route != null && !routes[sh.route]) sh.route = null;
       if (sh.route != null && sh.state === 'moored') sh.state = 'wait', sh.wait = 800;
     }

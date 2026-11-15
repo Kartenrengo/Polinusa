@@ -166,7 +166,7 @@ function moorSpot(I, s){
    before it, 90 the wind across (fastest), 180 straight into it. Into the wind (beyond SAIL.noGo) no canoe sails: it tacks,
    a zigzag of legs about 50 degrees off the wind, and loses way at each turn. In a calm the crew paddles, slowly. The
    outrigger canoe has paddlers aboard anyway and minds the wind less than a double canoe under its big mat sail. */
-const SAIL = {noGo:130, run:.86, beam:1.14, close:.8, calm:.2, paddle:.42, lane:32, look:100, turn:600};
+const SAIL = {noGo:130, run:.86, beam:1.14, close:.8, calm:.2, paddle:.42, lane:32, look:100, turn:600, hold:1500};
 const pointOf = (hx, hy, W = wind()) => Math.acos(clamp(hx * W.tx + hy * W.ty, -1, 1)) * 180 / Math.PI;
 function windFactor(s, hx = s.hx || 0, hy = s.hy || 0){
   const W = wind(); if (W.str < SAIL.calm) return SAIL.paddle;
@@ -212,25 +212,43 @@ function sailTo(s, dest, quiet, force){
 const sight = s => SHIPS[s.kind].vision * (s.kind !== 'oc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
 /* ---------- the double canoe explores on its own: out to the edge of the known sea, turning home in time to take on
    new provisions, and out again, until you stop it or no provisions are left at home */
-const dayPx = () => SHIPS.dc.speed * .85 * voyageDay() * TICK / 1000;   // how far a double canoe gets in one day at sea
+const dayPx = () => SHIPS.dc.speed * .72 * voyageDay() * TICK / 1000;   // how far a double canoe gets in one day at sea
 const homeFor = s => { const own = islands.filter(I => I.settled); return own.reduce((m, I) => Math.hypot(I.harbor.x - s.x, I.harbor.y - s.y) < Math.hypot(m.harbor.x - s.x, m.harbor.y - s.y) ? I : m, own[0]); };
 function fogShare(p, r){ let n = revealed(p) ? 0 : 2; for (let k = 0; k < 12; k++){ const a = k / 12 * TAU; if (!revealed({x:p.x + Math.cos(a) * r, y:p.y + Math.sin(a) * r})) n++; } return n / 14; }
+/* Where the canoe has been lately, as a short list of points. Exploring steers away from them, so it does not sail the same
+   routes again and again. It is kept across trips and saved. */
+const VIS_MAX = 40, VIS_NEAR = 420;
+function noteVisit(s, p){
+  const v = s.vis || (s.vis = []), l = v[v.length - 1];
+  if (l && Math.hypot(l.x - p.x, l.y - p.y) < 60) return;
+  v.push({x:Math.round(p.x), y:Math.round(p.y)}); if (v.length > VIS_MAX) v.shift();
+}
+/* how much of this place the canoe has seen lately: 0 for fresh sea, about 1 for a spot it passed a moment ago */
+const staleness = (s, p) => (s.vis || []).reduce((n, q, i, a) => n + Math.max(0, 1 - Math.hypot(q.x - p.x, q.y - p.y) / VIS_NEAR) * (.5 + .5 * (i + 1) / a.length), 0);
 function frontier(s, H){
-  // places in the fog nearby that can be reached and left again with the provisions on board, much unknown sea first,
-  // a little drawn to the east, where the Weite See leads to the Ferne Inseln
-  const reach = (s.cargo.proviant || 0) * dayPx(), cand = [];
-  for (const R of [220, 340, 480, 640, 820]) for (let k = 0; k < 28; k++){
-    const a = k / 28 * TAU + R, p = {x:s.x + Math.cos(a) * R, y:s.y + Math.sin(a) * R * .9};
+  // places in the fog nearby that can be reached and left again with the provisions on board: much unknown sea first, and
+  // sea the canoe has not been to lately; a little drawn to the east, where the Weite See leads to the Ferne Inseln.
+  // The place is chosen with a bit of luck, so two trips from the same harbour do not go the same way.
+  const reach = (s.cargo.proviant || 0) * dayPx(), cand = [], turn = Math.random() * TAU;
+  for (const R of [220, 340, 480, 640, 820, 1050, 1300, 1600]) for (let k = 0; k < 28; k++){
+    const a = k / 28 * TAU + turn + R, p = {x:s.x + Math.cos(a) * R, y:s.y + Math.sin(a) * R * .9};
     if (p.x < 60 || p.y < 60 || p.x > (s.kind === 'vaka' ? W : EMPTY_X + 100) - 60 || p.y > H_SEA - 60 || islands.some(I => onIsland(I, p)) || atollShut(p)) continue;
     const f = fogShare(p, 120); if (f < .35) continue;
     const out = Math.hypot(p.x - s.x, p.y - s.y), back = Math.hypot(p.x - H.harbor.x, p.y - H.harbor.y);
-    if ((out + back) * 1.3 + dayPx() * 2 > reach) continue;
+    if ((out + back) * 1.4 + dayPx() * 2 > reach) continue;   // out there and home again, with two days to spare
     const hint = navHints().some(h => Math.hypot(h.I.center.x - p.x, h.I.center.y - p.y) < 320);   // birds or clouds point that way
-    cand.push({p, score:f * 100 - out * .04 + p.x / W * 12 + (hint ? 70 : 0)});
+    cand.push({p, score:f * 100 - out * .025 + p.x / W * 12 + (hint ? 70 : 0) - staleness(s, p) * 60 + Math.random() * 20});
   }
   cand.sort((a, b) => b.score - a.score);
-  for (const c of cand.slice(0, 4)) if (findPath(s, c.p)) return c.p;
+  for (const c of cand.slice(0, 6)) if (findPath(s, c.p)){ noteVisit(s, c.p); return c.p; }
   return null;
+}
+/* Underway the crew counts the provisions every day: when what is left would only just do for the way home (the sea is
+   rarely as kind as the plan), the canoe turns for home at once, wherever it is */
+function autoHome(s){
+  if (!s.auto || s.state !== 'sail' || (s.dest && s.dest.isl)) return;
+  const H = homeFor(s); if (!H) return;
+  if ((s.cargo.proviant || 0) * dayPx() < Math.hypot(H.harbor.x - s.x, H.harbor.y - s.y) * 1.5 + dayPx() * 1.5) sailTo(s, {isl:H.id}, true);
 }
 const AUTO_LOAD = 24;
 function autoNext(s){
@@ -277,7 +295,9 @@ function stepShips(now, dt){
   for (let i = ships.length - 1; i >= 0; i--){
     const s = ships[i];
     if (s.race){ stepRace(s, now); continue; }
-    if (s.state === 'wait'){ s.wait -= dt; if (s.wait <= 0) routeDepart(s); continue; }
+    if (s.route != null && s.state !== 'sail' && s.state !== 'wait'){   // on a chain, lying about: it takes up its loop again
+      if (!routes[s.route]) s.route = null; else { s.state = 'wait'; s.wait = 600; continue; } }
+    if (s.state === 'wait'){ if (!(s.wait > 0)) s.wait = 0; s.wait -= dt; if (s.wait <= 0) routeDepart(s); continue; }
     if (s.auto && s.state !== 'sail'){ s.autoWait = (s.autoWait || 0) + dt; if (s.autoWait > 1500){ s.autoWait = 0; autoNext(s); } continue; }
     if (s.state !== 'sail') continue;
     // a canoe gathers way slowly and glides in to land; it turns gradually instead of flipping round
@@ -298,7 +318,7 @@ function stepShips(now, dt){
       if (s.hy < -.25) s.up = true; else if (s.hy > .25) s.up = false;
       // the wake: where it has just been
       const tr = s.trail || (s.trail = []), lt = tr[tr.length - 1]; if (!lt || Math.hypot(s.x - lt.x, s.y - lt.y) > 5){ tr.push({x:s.x, y:s.y}); if (tr.length > 18) tr.shift(); } }
-    if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (exploreAt(s.x, s.y, sight(s)) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
+    if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (s.auto) noteVisit(s, s); if (exploreAt(s.x, s.y, sight(s)) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
     if (s.pi >= s.path.length) arriveShip(s);
   }
 }
@@ -310,7 +330,12 @@ function sailLeg(s, ease, dt){
   let j = s.pi, acc = 0, px = s.x, py = s.y; while (j < s.path.length - 1 && acc < SAIL.look){ acc += Math.hypot(s.path[j].x - px, s.path[j].y - py); px = s.path[j].x; py = s.path[j].y; j++; }
   const T = s.path[Math.min(j, s.path.length - 1)]; if (!T) return false;
   const tx = T.x - s.x, ty = T.y - s.y, td = Math.hypot(tx, ty); if (td < 26) return false;   // close in, they paddle the last bit straight
-  const dx = tx / td, dy = ty / td; if (pointOf(dx, dy, W) < SAIL.noGo){ s.lat = 0; return false; }
+  const dx = tx / td, dy = ty / td;
+  // the look-ahead point can swing in and out of the eye of the wind from one step to the next; a canoe that changes its mind
+  // every step only rocks on the spot. So it keeps its mode for a moment before it may change it.
+  let want = pointOf(dx, dy, W) >= SAIL.noGo; s.modeHold = Math.max(0, (s.modeHold || 0) - dt);
+  if (want !== !!s.tackMode){ if (s.modeHold > 0) want = !!s.tackMode; else { s.tackMode = want; s.modeHold = SAIL.hold; } }
+  if (!want){ s.lat = 0; return false; }
   s.tacking = true; if (!s.tack) s.tack = Math.random() < .5 ? 1 : -1;
   const a = Math.atan2(-W.ty, -W.tx), off = (180 - SAIL.noGo + 4) * Math.PI / 180, leg = sg => ({x:Math.cos(a + sg * off), y:Math.sin(a + sg * off)});
   let h = leg(s.tack); const step = speedOf(s, h.x, h.y) * ease * dt / 1000 * (s.turnLeft > 0 ? .4 : 1); s.turnLeft = Math.max(0, (s.turnLeft || 0) - dt);
@@ -395,41 +420,57 @@ function settleFrom(s){
     if (F.length && !awayQuiet) note(`${andList(F.slice(0, 3).map(p => p.n))} gründen ${T.name}. Sie werden die Ahnen des Dorfes.`); }
 }
 
-/* ---------- trade chains: a canoe on a chain unloads, loads what the chain says, waits a moment and sails on */
+/* ---------- trade chains, as in Anno: a chain is a loop of stops. At each stop the canoe unloads what fits and loads what
+   the chain says, waits a moment and sails on. It never waits for a store and never blocks:
+   - a full store takes what fits, the rest stays aboard and goes on round the loop;
+   - an empty or low store gives what is there; a keep amount (r.keep) leaves that much in the store;
+   - a canoe that cannot find its way on drops out of the chain after a few tries, so nothing waits for ever. */
 function assignRoute(s, ri){
   const r = routes[ri];
   if (s.kind === 'oc' && [r.a, r.b].some(id => isl(id).center.x > FAR_X)){ toast('Über die Weite See fährt nur das Doppelkanu.', 3000, false); return; }
   if (s.kind !== 'vaka' && [r.a, r.b].some(id => isl(id).center.x > EMPTY_X)){ toast('Über die Leere See fährt nur das Reisekanu.', 3000, false); return; }
   if (atollShut({isl:r.a}) || atollShut({isl:r.b})){ toast('Ins Atoll erst mit Kanusteg und Einbaum.', 3000, false); return; }
-  s.auto = false; s.route = ri; s.tripFrom = null;
-  if (s.port === r.a || s.port === r.b) routeArrive(s); else sailTo(s, {isl:r.a});
+  s.auto = false; s.route = ri; s.tripFrom = null; s.noWay = 0;
+  if (s.state !== 'sail' && (s.port === r.a || s.port === r.b)) routeArrive(s);
+  else if (!sailTo(s, {isl:r.a}, true)){ s.route = null; toast(`${s.name || 'Das Kanu'} findet keinen Weg zur Kette.`, 3000, false); return; }   // no way: it must not sit there as if it were on a chain
   save();
 }
-function unassign(s){ s.route = null; s.full = false; if (s.state === 'wait') s.state = 'moored'; save(); }
+function unassign(s){ s.route = null; s.full = false; s.noWay = 0; if (s.state === 'wait') s.state = 'moored'; save(); }
+/* what a stop leaves in its store when it loads: the keep amount of the chain */
+const routeKeep = (r, side, k) => Math.max(0, ((r.keep || {})[side] || {})[k] | 0);
 function routeArrive(s){
-  const r = routes[s.route], here = isl(s.port);
+  const r = routes[s.route]; if (!r){ s.route = null; s.state = 'moored'; return; }   // the chain is gone
+  const here = isl(s.port), side = here.id === r.a ? 'a' : 'b';
   if (s.tripFrom && s.tripFrom !== here.id && !here.clan){ r.knots = Math.min(12, r.knots + 1); invalidate(); }
   if (here.clan){ if (cargoLoad(s)) receiveGift(here, s.cargo, s.tripFrom || s.last, r); s.cargo = {}; }
-  const plan = r.plan[here.id === r.a ? 'a' : 'b'] || {};
+  const plan = r.plan[side] || {};
   if (!here.clan){
     // what does not fit stays aboard; goods this port sends on are not unloaded here
     // (a good both ends send is unloaded wherever it fits, or it would go round and round)
-    const other = r.plan[here.id === r.a ? 'b' : 'a'] || {}, left = {}, out = {}; for (const k in plan) if (!(k in other)) out[k] = 1;
+    const oPlan = r.plan[side === 'a' ? 'b' : 'a'] || {}, left = {}, out = {}; for (const k in plan) if (!(k in oPlan)) out[k] = 1;
     const rest = unloadFit(s, here, out); for (const k in rest) left[k] = rest[k];
     const mark = Object.keys(left).sort().map(k => k + left[k]).join('');
     if (mark && mark !== s.full) toast(`Lager auf ${here.name} voll: ${giftText(left)} bleiben an Bord.`, 3200);
     s.full = mark || undefined; s.fullAt = mark ? here.name : undefined;
   } else { s.full = undefined; s.fullAt = undefined; }
   if (here.settled){
+    // load what the chain says, as far as there is something above the keep amount and room on board
     let room = SHIPS[s.kind].cap - roomUsed(s);
-    for (const [k, v] of Object.entries(plan)){ const q = Math.min(v - (s.cargo[k] || 0), here.stock[k] || 0, room); if (q > 0){ s.cargo[k] = (s.cargo[k] || 0) + q; here.stock[k] -= q; room -= q; } }
+    for (const [k, v] of Object.entries(plan)){
+      const q = Math.min(v - (s.cargo[k] || 0), Math.max(0, (here.stock[k] || 0) - routeKeep(r, side, k)), room);
+      if (q > 0){ s.cargo[k] = (s.cargo[k] || 0) + q; here.stock[k] -= q; room -= q; }
+    }
   }
-  s.state = 'wait'; s.wait = 1500; s.tripFrom = here.id;
+  s.state = 'wait'; s.wait = 1500; s.tripFrom = here.id; s.noWay = 0;
   updateHUD(); if (sheetKind) renderSheet(); checkQuest();
 }
 function routeDepart(s){
   const r = routes[s.route]; if (!r){ s.state = 'moored'; s.route = null; return; }
-  if (!sailTo(s, {isl:s.port === r.a ? r.b : r.a}, true)) s.wait = 1500;   // no way yet: wait and try again
+  const to = isl(s.port === r.a ? r.b : r.a);
+  if (to && sailTo(s, {isl:to.id}, true)){ s.noWay = 0; return; }
+  // no way (the atoll shut again, a coast in the way): wait and try again, but not for ever
+  s.wait = 1500; s.noWay = (s.noWay || 0) + 1;
+  if (s.noWay >= 6){ const nm = s.name || 'Das Kanu'; unassign(s); toast(`${nm} findet keinen Weg${to ? ` nach ${to.name}` : ''} und verlässt die Kette.`, 4200); if (sheetKind) renderSheet(); }
 }
 
 /* ---------- canoe houses build one canoe at a time */
@@ -465,7 +506,7 @@ function feedCrews(){
   if (tick % voyageDay()) return;
   for (const s of ships){
     if (!s.own || s.kind === 'oc' || s.route != null || s.state === 'moored') continue;   // at anchor off any island the crew eats ashore
-    if ((s.cargo.proviant || 0) > 0){ s.fed = (s.fed || 0) + 1; if (!(hasGift('schildkroete') && s.fed % 4 === 0)) s.cargo.proviant--; squall(s); continue; }   // turtles and their eggs: every fourth day from the sea
+    if ((s.cargo.proviant || 0) > 0){ s.fed = (s.fed || 0) + 1; if (!(hasGift('schildkroete') && s.fed % 4 === 0)) s.cargo.proviant--; squall(s); autoHome(s); continue; }   // turtles and their eggs: every fourth day from the sea
     if (s.hungry) continue;
     s.hungry = true;
     const home = homeFor(s); if (!home) continue;

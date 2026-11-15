@@ -149,7 +149,7 @@ const SITE_K = {crew:SITE_CREW, team:'pair'}, YARD_K = {crew:YARD_CREW, team:'pa
 const STUMP_TICKS = 360, GROW_TICKS = 150;   // a stump sprouts again after twelve minutes by itself, a young tree needs five to grow
 const CANOE = SHIPS.dc.cost;
 const SETTLE = {people:4, keep:4};   // a new village needs at least 4 settlers, and 4 must stay behind
-const VOYAGE_DAY = 5, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 provision every 5 ticks; each colony after the first two needs 8 more standing
+const VOYAGE_DAY = 14, MANA_PER_COLONY = 8;   // at sea a double canoe eats 1 provision every 14 ticks (24 provisions last 11 minutes); each colony after the first two needs 8 more standing
 
 /* What people use up, per resident and minute. Food is food: taro, breadfruit and pulaka from the fields, fish, seafood
    and coconuts all count, and people eat what there is most of. lvl: who wants it, by the step of their house: 1 every
