@@ -88,7 +88,11 @@ function routeMarkup(ri){
     const plan = r.plan[key] || (r.plan[key] = {}), goods = GOODS.filter(k => (from.stock[k] || 0) > 0 || plan[k]), cap = on.length ? Math.max(...on.map(s => SHIPS[s.kind].cap)) : 24, sum = Object.values(plan).reduce((a, b) => a + b, 0);
     // under the name: what lies in store, and (for goods that are loaded here) how much stays behind; one tap steps it on
     const keepChip = k => plan[k] && !from.clan ? ` · <button class="chip" type="button" data-act="kp" data-k="${key}:${k}" title="So viel bleibt im Lager, nur der Rest wird geladen">${routeKeep(r, key, k) ? `lässt ${routeKeep(r, key, k)}` : 'nimmt alles'}</button>` : '';
-    return `<p><b>Von ${from.name} nach ${to.name}</b> <span class="sub">${to.clan ? 'als Gabe' : ''}</span></p>` + (goods.length ? `<ul class="list needs">${goods.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}${keepChip(k)}</small></span>${slider('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) + Math.max(0, cap - sum), GN[k])}</li>`).join('')}</ul>` : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
+    // as in Anno: only the goods on the list stand as rows; what else lies in store waits as small pictures to tap in
+    const set = goods.filter(k => plan[k]), add = goods.filter(k => !plan[k]);
+    return `<p class="rside"><b>${from.name}</b><span class="rarr">${icon('einbaum')}›</span><b>${to.name}</b><span class="sub">${to.clan ? 'als Gabe' : `${sum} von ${cap} Plätzen`}</span></p>` +
+      (set.length ? `<ul class="list needs rset">${set.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}${keepChip(k)}</small></span>${slider('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) + Math.max(0, cap - sum), GN[k])}</li>`).join('')}</ul>` : '') +
+      (add.length ? `<div class="radd" role="group" aria-label="Ware dazunehmen"><span class="sub">${set.length ? 'Dazu:' : 'Ware wählen:'}</span>${add.map(k => `<button class="chip padd" type="button" data-act="pladd" data-k="${key}:${k}" aria-label="${GN[k]} dazunehmen, im Lager ${from.stock[k] || 0}"${sum >= cap ? ' disabled' : ''}>${icon(k)}<small>${from.stock[k] || 0}</small></button>`).join('')}</div>` : set.length ? '' : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
   };
   if (A.settled) h += side(A, B, 'a');
   if (B.settled) h += side(B, A, 'b');
@@ -198,6 +202,7 @@ function fleetAct(act, btn, quiet = false){
     else if (act === 'assignS'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) assignRoute(s, sheetData.r); }
     else if (act === 'unassign'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) unassign(s); }
     else if (act === 'kp'){ const [key, k] = btn.dataset.k.split(':'), kp = (r.keep || (r.keep = {a:{}, b:{}}))[key] || (r.keep[key] = {}), cap = storeCap(isl(key === 'a' ? r.a : r.b)), n = ((kp[k] | 0) + 5) % (cap + 5 > 25 ? 25 : cap + 5); if (n) kp[k] = n; else delete kp[k]; }   // 0, 5, 10, 15, 20, then back to nothing
+    else if (act === 'pladd'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}), on = ships.filter(q => q.own && q.route === sheetData.r), cap = on.length ? Math.max(...on.map(q => SHIPS[q.kind].cap)) : 24, left = cap - Object.values(plan).reduce((x, y) => x + y, 0); if (left > 0) plan[k] = Math.min(5, left); }
     else if (act === 'pl+' || act === 'pl-'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}); plan[k] = Math.max(0, (plan[k] || 0) + (act === 'pl+' ? 1 : -1)); if (!plan[k]) delete plan[k]; }
     else return false;
     if (!quiet){ renderSheet(); save(); } return true;

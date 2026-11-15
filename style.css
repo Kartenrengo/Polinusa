@@ -1244,3 +1244,15 @@ body.landing #lizard{display:none}
 .list.werk.wgrid li{background-image:var(--e1)}
 .list.werk.wgrid li:has(.wgo.ok){background-image:var(--eok)}
 .list.werk.wgrid li:has(.wgo.out){background-color:rgba(179,38,30,.07)!important}
+/* the trade chain: the chosen goods as rows, the rest as small pictures to tap in */
+.rside{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.rside .ic{width:18px;height:18px}
+.radd{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:4px 0 6px}
+.radd .padd{display:inline-flex;align-items:center;gap:2px;min-width:44px;min-height:32px;padding:2px 6px}
+.radd .padd .ic{width:18px;height:18px}
+.radd .padd small{font:700 11px/1 var(--font-ui);color:var(--muted)}
+.radd .padd:disabled{opacity:.4}
+.rside{flex-wrap:nowrap}
+.rside b{white-space:nowrap}
+.rside .rarr{display:inline-flex;align-items:center;gap:1px;font-weight:800;color:var(--muted)}
+.rside .sub{margin-left:auto;white-space:nowrap}
