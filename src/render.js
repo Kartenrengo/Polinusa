@@ -560,7 +560,7 @@ function drawLagoonLife(c, v, now){
   for (const I of islands){
     if (!I.discovered || !boxIn(I.box, v)) continue;
     const lp = lagoonLoop(I);
-    for (let k = 0; k < 2; k++){ const q = alongLoop(lp, reduced || !quality ? t * 7 + k * lp.len / 2 + I.center.x : t * 2.2 + dartAt(t, k * .37, 4.6) * 1.8 + k * lp.len / 2 + I.center.x); put(c, q.x, q.y, 1, 1, q.a, 'fishes', '<use href="#fishes"/>'); }
+    for (let k = 0; k < 2; k++){ const q = alongLoop(lp, reduced || !quality ? t * 7 + k * lp.len / 2 + I.center.x : t * 2.2 + dartAt(t, k * .37, 4.6) * 1.8 + k * lp.len / 2 + I.center.x); if (!reduced && quality && lod === 'near') fishSchool(c, q.x, q.y, q.a, t, k + I.center.x); else put(c, q.x, q.y, 1, 1, q.a, 'fishes', '<use href="#fishes"/>'); }
     if (!reduced && quality && lod === 'near') drawFishShadows(c, I, lp, now);
     // the sun glints on the lagoon
     if (!reduced && nightLevel() < .3) for (let k = 0; k < 7; k++){
@@ -634,16 +634,20 @@ function paddleStroke(c, x, y, s, now, ph){
 }
 function drawDugout(c, x, y, left, rock, look, old, now, ph, paddling){
   c.save(); c.translate(x, y); if (left) c.scale(-1, 1); if (rock) c.rotate(rock);
+  if (!reduced && lod !== 'far') dugoutHeave(c, now, ph, paddling);   // lifts and settles on the water (seamotion.js)
   seatedFig(c, look, old, -.6, -.2);
   blit(c, 'einbaumH', '<use href="#einbaumH"/>');
+  if (paddling && !reduced && quality && lod === 'near') dugoutFoam(c, now, ph, 1);
   if (paddling) paddleStroke(c, -.6, -.2, 1, now, ph);
   c.restore();
 }
 /* two in one canoe: the steersman at the stern paddles, the fisher sits at the bow */
 function drawDugout2(c, x, y, left, rock, look, old, look2, old2, now, ph, paddling){
   c.save(); c.translate(x, y); if (left) c.scale(-1, 1); if (rock) c.rotate(rock);
+  if (!reduced && lod !== 'far') dugoutHeave(c, now, ph, paddling);
   seatedFig(c, look2, old2, 3.8, -.4, .94); seatedFig(c, look, old, -3.8, -.1);
   c.save(); c.scale(1.5, 1); blit(c, 'einbaumH', '<use href="#einbaumH"/>'); c.restore();
+  if (paddling && !reduced && quality && lod === 'near') dugoutFoam(c, now, ph, 1.5);
   if (paddling) paddleStroke(c, -3.8, -.1, 1, now, ph);
   c.restore();
 }
@@ -967,8 +971,10 @@ function drawWhales(c, v, now){
   if (t > 8){ whale = null; return; }
   const x = whale.x + whale.dir * t * 3 * k, y = whale.y;
   if (t < 5.6) eyeAdd('wal', x, y - 2 * k, 14 * k, 'Ein Wal zieht vorbei. Sie kommen jedes Jahr in diese Gewässer.');
+  if (quality) whaleRings(c, whale, t, k);   // rings along its way, the splash where it sinks (seamotion.js)
   c.save(); c.translate(x, y); c.scale(k * whale.dir, k);
-  if (t < 5.6){ const up = Math.min(1, t / 1, (5.6 - t) / .8); c.globalAlpha = up; blit(c, 'whale', '<use href="#whale"/>'); if (t > 1.2 && t < 3.2){ c.globalAlpha = 1 - Math.abs(t - 2.2); c.translate(-6, -3); blit(c, 'spout', '<use href="#spout"/>'); } }
+  if (quality) whaleLive(c, t, k);   // rises, blows twice, arches over and dives, the fluke last
+  else if (t < 5.6){ const up = Math.min(1, t / 1, (5.6 - t) / .8); c.globalAlpha = up; blit(c, 'whale', '<use href="#whale"/>'); if (t > 1.2 && t < 3.2){ c.globalAlpha = 1 - Math.abs(t - 2.2); c.translate(-6, -3); blit(c, 'spout', '<use href="#spout"/>'); } }
   else { c.globalAlpha = Math.min(1, (8 - t) / .8); c.translate(-10, 0); blit(c, 'fluke', '<use href="#fluke"/>'); }
   c.restore();
 }
@@ -988,18 +994,18 @@ function drawSeaLife(c, v, now){
       const dir = hsh(cx, cy) < .5 ? -1 : 1, drift = ((t * 4 + h * 400) % 120) - 60;
       for (let i = 0; i < 3; i++){
         const T = (t + i * .9 + h * 9) % 5.2; if (T > 1.3) continue;
-        const f = T / 1.3, x = p.x + dir * (drift + i * 9 + f * 16) , y = p.y + i * 5 - Math.sin(f * Math.PI) * 6;
-        put(c, x, y, k * .9, dir, (f - .5) * 1.1 * dir, 'dolphin', '<use href="#dolphin"/>'); if (f > .1 && f < .9) eyeAdd('delfin', x, y, 10 * k, 'Delfine springen vor dem Bug. Sie bringen den Fischern Glück.');
-        if (f > .85 || f < .1) stroke(c, ellipse(x, y + 3, 3.4 * k, 1.1 * k), '#F4FBFA', .7, [.5, .8], 'round', .8);
+        const f = T / 1.3, ox = p.x + dir * (drift + i * 9), oy = p.y + i * 5, x = ox + dir * f * 16, y = oy - Math.sin(f * Math.PI) * 6;
+        dolphinLeap(c, ox, oy, dir, f, 16, 6, k * .9); if (f > .1 && f < .9) eyeAdd('delfin', x, y, 10 * k, 'Delfine springen vor dem Bug. Sie bringen den Fischern Glück.');
+        if (f < .22) splashAt(c, ox, oy + 1.5, f / .22, k * .9); else if (f > .8) splashAt(c, ox + dir * 16, oy + 1.5, (f - .8) / .2, k * .9);   // spray where it leaves and where it lands
       }
     } else if (kind === 'turtle'){
       const a = t * .05 + h * 20, x = p.x + Math.cos(a) * 40, y = p.y + Math.sin(a) * 22, up = Math.sin(t * .4 + h * 30) > -.2;
-      if (up){ c.save(); c.globalAlpha = .9; put(c, x, y, k * .9, Math.cos(a + Math.PI / 2) < 0 ? -1 : 1, 0, 'turtle', '<use href="#turtle"/>'); c.restore(); eyeAdd('schildkroete', x, y, 7 * k, 'Eine Meeresschildkröte. Sie schwimmt weit und kehrt zum Strand zurück, an dem sie schlüpfte.'); }
+      if (up){ c.save(); c.globalAlpha = .9; if (!reduced && quality && lod === 'near'){ c.translate(x, y); c.scale(k * .9 * (Math.cos(a + Math.PI / 2) < 0 ? -1 : 1), k * .9); turtleLive(c, t, h * 7, 0); } else put(c, x, y, k * .9, Math.cos(a + Math.PI / 2) < 0 ? -1 : 1, 0, 'turtle', '<use href="#turtle"/>'); c.restore(); eyeAdd('schildkroete', x, y, 7 * k, 'Eine Meeresschildkröte. Sie schwimmt weit und kehrt zum Strand zurück, an dem sie schlüpfte.'); }
     } else {
       // flying fish: a little shoal skims off the water in flat arcs, then is gone
       const T = (t + h * 13) % 7; if (T > 1.6) continue;
       const dir = hsh(cy, cx) < .5 ? -1 : 1;
-      for (let i = 0; i < 5; i++){ const f = clamp(T / 1.6 - i * .06, 0, 1); if (!f || f >= 1) continue; drawFlyingFish(c, p.x + dir * (f * 60 + i * 4), p.y + i * 3 - Math.sin(f * Math.PI) * 5, dir, f, k); }
+      for (let i = 0; i < 5; i++){ const f = clamp(T / 1.6 - i * .06, 0, 1); if (!f || f >= 1) continue; flyingFishRun(c, p.x + dir * (f * 60 + i * 4), p.y + i * 3, dir, f, k); }
     }
   }
   // seabirds over the fishing grounds of the villages: they circle and dive where the fish are
@@ -1016,14 +1022,8 @@ function drawSeaLife(c, v, now){
     }
   }
 }
-/* a flying fish in the air: a slim silvery body, the long breast fins spread like wings, the tail forked */
+/* a flying fish in the air: a slim silvery body, the long breast fins spread like wings, the tail forked (drawn by flyingFishRun, seamotion.js) */
 const FLYFISH_BODY = new Path2D('M-2 0Q-.6-.7 1.6-.3Q2.2 0 1.6.3Q-.6.7-2 0ZM-2 0L-3-.7L-2.8 0L-3 .7Z'), FLYFISH_WING = new Path2D('M.6-.2L-.4-1.9L-1.4-.2Z');
-function drawFlyingFish(c, x, y, dir, f, k){
-  c.save(); c.translate(x, y); c.rotate((f - .5) * .5 * dir); c.scale(dir * k * .8, k * .8);
-  c.fillStyle = '#EAF3F5'; c.lineWidth = .3; c.strokeStyle = '#2B1D14'; c.lineJoin = 'round';
-  c.fill(FLYFISH_BODY); c.stroke(FLYFISH_BODY); c.globalAlpha = .85; c.fill(FLYFISH_WING); c.stroke(FLYFISH_WING);
-  c.restore();
-}
 /* Clouds of the trade winds, drawn like everything else: an ink outline, flat colour, a shaded underside and a few
    strokes inside. Each one grows, stands a while and dissolves again (out there in tens of minutes, here in a minute or
    two); while it dissolves its outline breaks up. It drifts with the wind, its shadow lies on the sea and the land below.
@@ -2341,33 +2341,28 @@ function drawTop(c, now){
     if (!far && !reduced && s.state === 'sail') for (let k = 0; k < 2; k++){
       const t = (now + s.id * 777 + k * 2300) % 4600; if (t > 1200) continue;
       const f = t / 1200, hx = s.hx || 1, hy = s.hy || 0, side = k ? 11 : -11, x = s.x + hx * (8 + f * 14) - hy * side, y = s.y + hy * (8 + f * 14) + hx * side - Math.sin(f * Math.PI) * 4;
-      put(c, x, y, 1, hx < 0 ? -1 : 1, (f - .5) * 1.1 * (hx < 0 ? -1 : 1), 'dolphin', '<use href="#dolphin"/>');
-      if (f > .85) stroke(c, ellipse(x + hx * 3, y + 4, 3, 1), '#F4ECD8', .6, [.5, .8], 'round', .8);
+      const ox = s.x + hx * 8 - hy * side, oy = s.y + hy * 8 + hx * side;
+      const L = 6 + 8 * Math.abs(hx), dx = hx < 0 ? -1 : 1; dolphinLeap(c, ox, oy, dx, f, L, 4, 1, 14 * hy); if (f < .2) splashAt(c, ox, oy + 1.2, f / .2, 1); else if (f > .8) splashAt(c, ox + dx * L, oy + 14 * hy + 1.2, (f - .8) / .2, 1);
     }
     // the wake: a fading white trail where the canoe has just been
     if (!far && !reduced && s.state === 'sail' && s.trail && s.trail.length > 2){ const tr = s.trail, n = tr.length;
       for (let i = 1; i < n; i++){ const a = tr[i - 1], b = tr[i], f = i / n, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, w = (1 - f) * 5 + 1.5, px = -dy / d * w, py = dx / d * w;
         const p = new Path2D(); p.moveTo(a.x + px, a.y + py); p.lineTo(b.x + px * .8, b.y + py * .8); p.moveTo(a.x - px, a.y - py); p.lineTo(b.x - px * .8, b.y - py * .8);
         stroke(c, p, '#F4FBFA', 1.1, null, 'round', f * .55); } }
-    if (!far && !reduced && quality && s.state === 'sail') drawVWake(c, s.x + (s.hx || 1) * 9 * ks, s.y + (s.hy || 0) * 5 * ks + 1, s.hx || 1, s.hy || 0, .6 + wind().str * .4, now, 1.5 * ks);
-    // spray at the bow, more when the wind is strong; the canoe leans into a turn
-    if (!far && !reduced && s.state === 'sail'){
-      const hx = s.hx || 1, hy = s.hy || 0, str = wind().str, bx = s.x + hx * 11 * ks, by = s.y + hy * 6 * ks + 1;
-      for (let i = 0; i < 3; i++){ const f = (now / 420 + i / 3 + s.id * .37) % 1, side = i % 2 ? 1 : -1, P = new Path2D();
-        const x = bx - hx * f * 6 - hy * side * (2 + f * 4), y = by - hy * f * 4 + hx * side * (1 + f * 2) - Math.sin(f * Math.PI) * (2 + str * 3);
-        P.moveTo(x - 1.4, y); P.quadraticCurveTo(x, y - 1.6, x + 1.4, y); stroke(c, P, '#F4FBFA', .9, null, 'round', (1 - f) * (.5 + str * .4)); }
-    }
+    if (!far && !reduced && quality && s.state === 'sail') { const B = bowOf(s); drawVWake(c, s.x + B.x * .75 * ks, s.y + B.y * .75 * ks + 1.4, s.hx || 1, s.hy || 0, .6 + wind().str * .4, now, 1.5 * ks); }
+    // spray at the bow, more when the swell tips it down and the wind is strong; foam where the hull has passed (seamotion.js)
+    if (!far && !reduced && s.state === 'sail'){ bowSpray(c, s, ks, now); if (quality) sternFoam(c, s, ks, now); }
     { const a = Math.atan2(s.hy || 0, s.hx || 1), d = s._ha == null ? 0 : Math.atan2(Math.sin(a - s._ha), Math.cos(a - s._ha)); s._ha = a; s.heel = (s.heel || 0) * .92 + clamp(d * 6, -.12, .12) * .08; }
-    const mo = quality ? mooringOf(s, now) : null; if (mo) drawMoorLine(c, s, mo, ks);   // a moored canoe tugs at its line
+    const mo = quality ? mooringOf(s, now) : null; if (mo){ drawMoorLine(c, s, mo, ks); if (lod === 'near') mooringRipples(c, s, s.x + mo.ox, s.y + mo.oy, ks, now); }   // a moored canoe tugs at its line, rings go out round the hull
     c.save(); c.translate(s.x + (mo ? mo.ox : 0), s.y + (mo ? mo.oy : 0)); c.scale(ks, ks);
     if (s === S){ const t = reduced ? .5 : (now % 1600) / 1600; sketch(c, 0, 1, 16 + 3 * t, 8 + 1.5 * t, s.id * 5, '#F4ECD8', 2.2, .95); }
     // the canoe's shadow on the water, the sail's longest
     const sh = far ? null : sunShadow();
     if (sh && sh.alpha > 0){ c.save(); c.transform(1, 0, sh.c, sh.d, 0, 0); if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blitShadow(c, 'oc', '<use href="#oc"/>', sh.alpha * .55); } else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1); blitShadow(c, up ? 'dc' : 'dcIn', up ? '<use href="#dc"/>' : '<use href="#dcIn"/>', sh.alpha * .55); } c.restore(); }
     // the swell rocks the canoe, it heels in a turn
-    c.save(); if (!reduced && !far){ c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .03 : .015) + (s.state === 'sail' ? (s.heel || 0) : 0)); if (quality) canoeSwell(c, s, now); }
+    c.save(); if (!reduced && !far){ c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .03 : .015) + (s.state === 'sail' ? (s.heel || 0) + windHeel(s, now) : 0)); if (quality) canoeSwell(c, s, now); }
     const crew = !far && cam.z > .45 && !s.race;   // close enough to see who is aboard
-    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>');
+    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); if (!far && !reduced && quality && s.state === 'sail') floatWash(c, s, now);
       // two paddlers in the hull of the outrigger canoe
       if (crew) for (let k = 0; k < 2; k++){ const px = k ? 4.6 : -4.4; seatedFig(c, crewLook(s, k), false, px, -.9, .82); if (s.state === 'sail') paddleStroke(c, px, -.9, .82, now, s.id + k * 1.7); } }
     else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1); if (s.kind === 'vaka') c.scale(1.25, 1.25);   // the voyaging canoe: a bigger double canoe

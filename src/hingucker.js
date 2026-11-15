@@ -171,10 +171,10 @@ function drawReefDolphins(c, I, lp, v, now){
   for (let i = 0; i < 3; i++){
     const T = S.f - i * .7; if (T < 0 || T > 3) continue;
     const f = clamp(T / 1.25, 0, 1), x = ox + dir * (i * 15 + f * 20), y = oy + i * 5 - Math.sin(f * Math.PI) * 9;
-    if (T < 1.25) put(c, x, y, 1.15, dir, (f - .5) * 1.25 * dir, 'dolphin', '<use href="#dolphin"/>');
-    if (T < .3) ringAt(c, ox + dir * i * 15, oy + i * 5 + 1.5, T / .3, 6);
+    if (T < 1.25) dolphinLeap(c, ox + dir * i * 15, oy + i * 5, dir, f, 20, 9, 1.15);   // the nose follows the arc, drops run off (seamotion.js)
+    if (T < .3){ ringAt(c, ox + dir * i * 15, oy + i * 5 + 1.5, T / .3, 6); splashAt(c, ox + dir * i * 15, oy + i * 5 + 1.5, T / .3, 1.1); }
     const lx = ox + dir * (i * 15 + 20), ly = oy + i * 5 + 1.5, landT = T - 1.25;
-    if (landT > -.08 && landT < .35){ const q = clamp(landT / .35, 0, 1); c.fillStyle = '#F4FBFA'; for (let k = 0; k < 4; k++){ c.globalAlpha = (1 - q) * .9; c.beginPath(); c.arc(lx + (k - 1.5) * 1.3, ly - Math.sin(q * Math.PI) * (2 + k % 2 * 1.6), .42, 0, TAU); c.fill(); } c.globalAlpha = 1; }
+    if (landT > -.08 && landT < .45) splashAt(c, lx, ly, clamp((landT + .08) / .53, 0, 1), 1.2, 6);
     if (landT > 0) ringAt(c, lx, ly, landT / 1.6, 8);
     if (T > .2 && T < 1.1) eyeAdd('delfin', x, y, 12, 'Delfine springen vor dem Riff. Sie bringen den Fischern Glück.');
   }
@@ -188,12 +188,14 @@ function drawFishLeaps(c, I, lp, v, now){
   for (let i = 0; i < 5; i++){
     const T = S.f - i * .09; if (T < 0) continue; const f = T / .75, x0 = px + dir * (i * 2.6 - 4), y0 = py + (i % 2) * 2 - 1;
     if (f < 1){
-      const x = x0 + dir * f * 7, y = y0 - Math.sin(f * Math.PI) * (3.6 + i % 3 * .7), rot = (f - .5) * 1.5 * dir;
+      const x = x0 + dir * f * 7, y = y0 - Math.sin(f * Math.PI) * (3.6 + i % 3 * .7), rot = leapAng(f, 7, 4, dir) * .75;
       c.save(); c.translate(x, y); c.rotate(rot); c.scale(dir, 1); c.fillStyle = '#E8F2F4';
       c.beginPath(); c.ellipse(0, 0, 1.6, .55, 0, 0, TAU); c.moveTo(-1.4, 0); c.lineTo(-2.4, -.6); c.lineTo(-2.4, .6); c.closePath(); c.fill(); c.lineWidth = .22; c.strokeStyle = INKC; c.stroke(); c.restore();
       if (i % 2 === 0 && f > .1 && f < .85) stroke(c, glint(x, y - 1, 1), '#FFFFFF', .5, null, 'round', .7 * Math.sin(f * Math.PI));
+      if (f < .14) splashAt(c, x0, y0 + .8, f / .14, .7, 3);   // the water flies up where they break out
     }
     if (f > .85) ringAt(c, x0 + dir * 7, y0 + .8, (f - .85) / 1.4, 3.6);
+    if (f > .85 && f < 1.35) splashAt(c, x0 + dir * 7, y0 + .8, (f - .85) / .5, .7, 3);
     if (i === 2 && f > .1 && f < .9) eyeAdd('fische', x0 + dir * f * 7, y0, 9, 'Ein Fischschwarm springt aus dem Wasser. Etwas Großes jagt ihn.');
   }
 }

@@ -49,10 +49,11 @@ const q3 = (a, b, c2, d, t) => { const u = 1 - t; return u * u * u * a + 3 * u *
 function drawSailLive(c, s, outer, mx, lift, now){
   const W = wind(), t = now / 1000 + s.id * 1.7, moving = s.state === 'sail', dot = (s.hx || 0) * W.tx + (s.hy || 0) * W.ty;
   const full = moving ? clamp(.5 + .3 * W.str + .5 * dot, .12, 1) : .35, gust = .5 + .5 * Math.sin(t * .8) * Math.sin(t * .37 + 1);
-  const luff = clamp((1.05 - full) * (.6 + .6 * gust) + (moving ? 0 : .3), 0, 1), fa = .3 + 1.7 * luff;   // fa: how much the free edge flaps
+  const luff = clamp((1.05 - full) * (.6 + .6 * gust) + (moving ? 0 : .3) + (s.turnLeft > 0 ? .55 : 0) + (s.tacking ? .12 : 0), 0, 1), fa = .3 + 1.7 * luff;   // fa: how much the free edge flaps
   const Bx = 8 + Math.sin(t * 6.7) * fa * 1.2 + (1 - luff) * 1.6, By = -22 + Math.cos(t * 5.9) * fa * .8, Tx = -2 + (1 - luff) * 1.4, Ty = -16 - full * 3 + Math.sin(t * 5.3) * luff * 1.8;
   const c1x = 6 + Math.sin(t * 8.3) * fa * 1.4 + full * 2, c2x = 3.5 + Math.sin(t * 8.3 - 1.5) * fa * 1.5 + full * 1.4;
   const Ax = -10 + Math.sin(t * 4) * luff * .5, Ay = -24;
+  c.save(); { const ln = sailLean(s, outer, mx) * (.7 + .6 * gust); if (ln) c.transform(1, 0, ln, 1, 0, 0); }   // the sail leans to the lee with the wind
   const P = new Path2D(); P.moveTo(0, 0); P.quadraticCurveTo(-6 - full * .8, -10, Ax, Ay); P.quadraticCurveTo(Tx, Ty, Bx, By); P.bezierCurveTo(c1x, -16, c2x, -8, 0, 0); P.closePath();
   c.fillStyle = '#A84A2C'; c.fill(P); c.lineJoin = 'round'; stroke(c, P, INKC, 1, null, 'round');
   // the seams, following the cloth
@@ -70,6 +71,7 @@ function drawSailLive(c, s, outer, mx, lift, now){
     top.closePath(); c.fillStyle = '#F3D9A0'; c.fill(top); stroke(c, top, INKC, .5, null, 'round');
     stroke(c, new Path2D(`M${sg * len * .15} .2L${tipx * .8} ${tipy * .8}`), '#A84A2C', .5, null, 'round'); c.restore();
   }
+  c.restore();
 }
 
 /* ---------- turtles in the lagoon: they come up to breathe, the head lifts, rings spread, then they dive and only a shadow
@@ -84,7 +86,7 @@ function drawLagoonTurtle(c, I, lp, now){
     // under water: a dim, dark shape
     c.save(); c.translate(x, y); c.rotate(q.a + Math.PI + rock); c.scale(.9 + .1 * up, (.9 + .1 * up) * (1 + Math.sin(t * 2.6 + k) * .04));
     c.globalAlpha = .18 + .82 * up; if (up < .99){ c.fillStyle = 'rgba(30,74,90,.5)'; c.beginPath(); c.ellipse(0, 0, 4.4, 3.2, 0, 0, TAU); c.fill(); }
-    blit(c, 'turtle', '<use href="#turtle"/>'); c.restore(); c.globalAlpha = 1;
+    turtleLive(c, t, cx + k * 2.7, up); c.restore(); c.globalAlpha = 1;   // the flippers row, the head bobs (seamotion.js)
     if (up > .5) eyeAdd('schildkroete', x, y, 6, 'Eine Schildkröte in der Lagune. Sie taucht auf, um Luft zu holen.');
     // rings where it breaks the surface and where it goes down
     const ringAt = (age, X, Y) => { if (age < 0 || age > 1) return; stroke(c, ellipse(X, Y + 1, 1 + age * 7, .4 + age * 2.6, 0), '#F4FBFA', .5, null, null, (1 - age) * .75); if (age > .15) stroke(c, ellipse(X, Y + 1, .6 + age * 4.5, .25 + age * 1.5, 0), '#F4FBFA', .4, null, null, (1 - age) * .5); };
