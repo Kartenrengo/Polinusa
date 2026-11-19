@@ -449,7 +449,7 @@ const CRAFT_R = 5, radiusOf = b => b.at ? CRAFT_R : KINDS[b.kind].r;
 /* Two buildings of one island that stand closer than the placement rule allows (see check) */
 function overlaps(I, slack = .5){
   const L = [], B = I.buildings;
-  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++){ const d = Math.hypot(B[i].x - B[j].x, B[i].y - B[j].y), lim = (radiusOf(B[i]) + radiusOf(B[j])) * gapOf(I); if (d < lim - slack) L.push([B[i], B[j], d, lim]); }
+  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++){ if (B[i].at === B[j].id || B[j].at === B[i].id) continue; const d = Math.hypot(B[i].x - B[j].x, B[i].y - B[j].y), lim = (radiusOf(B[i]) + radiusOf(B[j])) * gapOf(I); if (d < lim - slack) L.push([B[i], B[j], d, lim]); }
   return L;
 }
 function findSpot(I, kind, from){

@@ -736,8 +736,10 @@ const craftOf = (I, h) => I.buildings.find(b => b.at === h.id) || null;
 const placeName = b => b.at ? KINDS[b.kind].craft : KINDS[b.kind].n;
 /* The mat of a household craft lies beside its house, on the side of its mirror first; if that is taken (a building, a tree, the
    water) on the other side, in front or behind. None free: the house has no room for a craft. */
-const matSpots = h => { const s = h.v && h.v.mirror ? -1 : 1, d = KINDS[h.kind].r + 4; return [[s * d, 5], [-s * d, 5], [s * d * .8, 17], [-s * d * .8, 17], [0, -(d + 2)]].map(([x, y]) => ({x:h.x + x, y:h.y + y})); };
-const matFree = (I, h, p) => !!landAt(I, p) && !treeAt(I, p.x, p.y, (CRAFT_R + TREE_R) * .8) && !I.buildings.some(b => b !== h && b.at !== h.id && Math.hypot(b.x - p.x, b.y - p.y) < (radiusOf(b) + CRAFT_R) * .8);
+const onDeck = h => h.kind === 'pfahl' || (h.kind === 'haus' && tierOf(h) >= 3);   // a floor to work on: the platform over the lagoon, the raised floor of the craftsmen
+const matSpots = h => { const s = h.v && h.v.mirror ? -1 : 1, d = KINDS[h.kind].r + 4, deck = onDeck(h) ? [[-s * 4 * ((h.v && h.v.scale) || 1), 2.5]] : [];
+  return [...deck, [s * d, 5], [-s * d, 5], [s * d * .8, 17], [-s * d * .8, 17], [0, -(d + 2)]].map(([x, y]) => ({x:h.x + x, y:h.y + y})); };
+const matFree = (I, h, p) => Math.hypot(p.x - h.x, p.y - h.y) < 9 ? onDeck(h) : !!landAt(I, p) && !treeAt(I, p.x, p.y, (CRAFT_R + TREE_R) * .8) && !I.buildings.some(b => b !== h && b.at !== h.id && Math.hypot(b.x - p.x, b.y - p.y) < (radiusOf(b) + CRAFT_R) * .8);
 const craftSpot = (h, I = islOfB(h.id)) => { const L = matSpots(h); return (I && L.find(p => matFree(I, h, p))) || L[0]; };
 const craftBlocked = (I, h) => !matSpots(h).some(p => matFree(I, h, p));
 const doIt = k => KINDS[k].craft ? `Lass eine Familie ${CRAFT_DO[k] || KINDS[k].craft}` : `Baue ${KINDS[k].n}`;
@@ -761,7 +763,7 @@ function craftWhy(I, h, k){
   if (K.coast && !nearShore(I, p)) return 'nur in einem Haus am Strand';
   return '';
 }
-const nearShore = (I, p) => { const L = landAt(I, p); return !!L && polyDist(p, L.poly) < 26; };   // lime and shell rings by the reef
+const nearShore = (I, p) => { const L = landAt(I, p); return L ? polyDist(p, L.poly) < 26 : inLagoon(I, p); };   // lime and shell rings by the reef
 const placeWhy = (I, k) => { const K = KINDS[k]; return !craftIsle(I, k) && (K.dep || K.near || K.coast); };   // a house elsewhere would do
 /* where a house for a craft would have to stand: by the clay, among the pandanus, beside the mulberry */
 function craftPlace(I, k){

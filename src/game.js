@@ -807,7 +807,7 @@ function villageLife(I, w){
       if (w.child && ph > .69){ w.sit = false; w.lie = true; w.fx = null; } else w.fx = lookOf(FIRE_FX, w);
       w.wait = 7000 + Math.random() * 7000; return true;
     }
-    if (home){ goTo(I, w, home.x + rnd(6), home.y + 6); w.sit = true; w.wait = 6000 + Math.random() * 6000; return true; } return false; }
+    if (home){ const wet = home.kind === 'pfahl'; goTo(I, w, home.x + rnd(wet ? 8 : 6), home.y + (wet ? 2 : 6)); w.deck = wet ? home.id : 0; w.sit = true; w.wait = 6000 + Math.random() * 6000; return true; } return false; }   // on a stilt house: up on its platform
   if (ph > .5 && hall && !w.child && Math.random() < .7){ near(hall, w.old ? 9 : 16, .5); w.sit = true; w.wait = 5000 + Math.random() * 5000; there(TALK_FX.halle); return true; }
   if (ph > .25 && ph < .4 && !w.child && Math.random() < .6){ const u = I.buildings.filter(b => b.kind === 'umu' && !b.bt); if (u.length){ near(u[Math.floor(Math.random() * u.length)], 10, .5); w.sit = true; w.wait = 4000 + Math.random() * 3000; there(TALK_FX.umu); return true; } }
   if (w.child && hall && playersOf(I, 'drum').some(q => q.play.ph === 'do') && Math.random() < .7){ near(hall, 14, .45); w.hop = true; w.fx = lookOf(HOP_FX, w); w.wait = 2500 + Math.random() * 2500; return true; }   // the drum sounds: the children dance
@@ -830,9 +830,9 @@ function sleepLeg(I, w){
   const p = personOf(w), f = p && famOf(I, p.h), home = (f && f.home && findB(f.home)) || I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
   if (!home){ w.asleep = true; w.wait = 3000; return; }
   const out = home.kind !== 'platz' && sleepsOut(I, w), side = pidOf(w) % 2 ? 1 : -1;
-  const hx = out ? home.x + side * (9 + pidOf(w) % 4) : home.x + 2, hy = out ? home.y + 9 : home.y + 5;
+  const wet = home.kind === 'pfahl', hx = out ? home.x + side * ((wet ? 4 : 9) + pidOf(w) % 4) : home.x + 2, hy = out ? home.y + (wet ? 2 : 9) : home.y + 5;   // over the lagoon the mat lies on the platform
   if (Math.hypot(w.x - hx, w.y - hy) > 4){ goTo(I, w, hx + rnd(out ? 1 : 2), hy + rnd(1)); w.toBed = true; return; }
-  w.asleep = true; w.toBed = false; w.sit = false; w.out = out; w.lie = out; w.left = side < 0; w.fx = null; w.busy = null; w.wait = 2500 + Math.random() * 1500;
+  w.asleep = true; w.toBed = false; w.sit = false; w.out = out; w.lie = out; w.deck = wet && out ? home.id : 0; w.left = side < 0; w.fx = null; w.busy = null; w.wait = 2500 + Math.random() * 1500;
 }
 function nextLeg(w){
   const I = isl(w.isl);
@@ -847,11 +847,11 @@ function nextLeg(w){
   }
   // night: to bed; morning: back to work
   if (I.settled && sleepFor(w) && !(I.feastEnd > tick) && !w.boat && !w.ride && !w.swim && !(w.job && (w.job.type === 'fish' || w.job.type === 'tie'))){ if (w.play) endPlay(w); w.carry = null; sleepLeg(I, w); return; }
-  if (w.asleep || w.toBed){ w.asleep = false; w.toBed = false; w.out = false; w.lie = false; if (w.job){ w.leg = 'back'; w.bout = false; } }
+  if (w.asleep || w.toBed){ w.asleep = false; w.toBed = false; w.out = false; w.lie = false; w.deck = 0; if (w.job){ w.leg = 'back'; w.bout = false; } }
   // dusk: work ends and people go home; the evening by the fire or the house (villageLife); only the night fishers go out
   if (I.settled && opts.night && dayPhase() > .66 && w.job && !(I.feastEnd > tick) && !w.boat && !w.ride && !w.swim && w.job.type !== 'fish' && w.job.type !== 'tie' && !BUILD_JOBS.has(w.job.type)){   // builders finish the day's work
     if (w.play) endPlay(w); w.carry = null; w.eve = true; if (villageLife(I, w)) return;
-  } else if (w.eve){ w.eve = false; w.sit = false; w.lie = false; if (w.job){ w.leg = 'back'; w.bout = false; } }
+  } else if (w.eve){ w.eve = false; w.sit = false; w.lie = false; w.deck = 0; if (w.job){ w.leg = 'back'; w.bout = false; } }
   if (w.job){
     if (w.play && !OFF_OK.has(w.job.type)){ endPlay(w); if (w.leg !== 'go'){ w.on = false; w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } }   // sent to other work meanwhile: go there now
     if (w.play){ if (playLeg(I, w)) return; if (offNow(I, w, w.job.type) && startPlay(I, w)){ w.play.off = true; return; } if (!w.on){ w.leg = 'go'; goTo(I, w, w.job.x, w.job.y); return; } w.leg = 'back'; w.bout = false; }

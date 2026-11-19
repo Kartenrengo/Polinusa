@@ -324,7 +324,8 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 
 ## Offen nach Version 113
 
-- **Reddit-Beitrag zur Spielgröße** ließ sich nicht abrufen (Reddit sperrt den Abruf). Wenn der Text kommt, abgleichen.
+- ~~**Reddit-Beitrag zur Spielgröße**~~ **abgeglichen** (Voidstruck, 299 kB): siehe README, Version 113.
+- **Arbeiter auf der Plattform** springen beim Ankommen hinauf; eine Leiter-Bewegung fehlt noch.
 - **Namen kürzen (Terser)** würde die Datei noch etwa halbieren; das Werkzeug war hier nicht erreichbar.
 - **Hauswerk-Liste im Haus** ist mit 17 Arten lang. Nur die Arten zeigen, die auf der Insel gehen, tut sie schon; beobachten,
   ob die Wahl auf dem Handy übersichtlich bleibt.

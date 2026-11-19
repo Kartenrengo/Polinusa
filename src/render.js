@@ -150,7 +150,35 @@ function blitShadow(c, key, art, alpha){
 function putShadow(c, x, y, s, m, rot, key, art, sh){
   c.save(); c.translate(x, y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (rot) c.rotate(rot); c.scale(s * m, s); blitShadow(c, key, art, sh.alpha); c.restore();
 }
-const craftArt = k => `<ellipse cx="0" cy="1.6" rx="9" ry="3.6" fill="#D8BF86" stroke="#2B1D14" stroke-width=".55"/><path d="M-6.4 .5H6.4M-7.6 1.7H7.6M-6.4 2.9H6.4" stroke="#A8864E" stroke-width=".4" stroke-dasharray="1.2 .8"/><use href="#ic-${KINDS[k].prod}" transform="translate(.5 -6) scale(.44)"/>`;
+/* A household craft is drawn as the work itself, small enough for the floor of a house: a mat and on it what the family
+   makes and works with. Earth oven, pit and lime fire are drawn as they are, only smaller. */
+const CM = '#2B1D14', CMAT = `<rect x="-6.6" y="-1.4" width="13.2" height="4.4" rx=".7" fill="url(#pWeave)" stroke="${CM}" stroke-width=".4"/>`;
+const coil = (x, y, r = 1.7) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#C9A866" stroke="${CM}" stroke-width=".35"/><circle cx="${x}" cy="${y}" r="${r * .5}" fill="none" stroke="#8A6A3A" stroke-width=".3"/>`;
+const CRAFT_ART = {
+  schnur:CMAT + coil(-3.4, .6) + coil(-.6, 1.2, 1.4) + `<path d="M2 1.8q2-1.6 4.4-.4" fill="none" stroke="#C9A866" stroke-width="1.1" stroke-linecap="round"/><path d="M2.4 .2l3.4-1.2M2.6 .6l3.6-.6" stroke="#B89A62" stroke-width=".35"/>`,
+  flecht:`<rect x="-6.6" y="-1.4" width="9" height="4.4" rx=".5" fill="url(#pWeave)" stroke="${CM}" stroke-width=".4"/><path d="M2.4-1L6.8-1.8M2.4.4L7.2.2M2.4 1.8L6.6 2.6M2.4-.3L7-.6" stroke="#D6C08A" stroke-width=".7" stroke-linecap="round"/><path d="M2.4-1.4V3" stroke="${CM}" stroke-width=".35"/>`,
+  weberin:`<rect x="-6.6" y="-1.4" width="9.4" height="4.4" rx=".4" fill="#E8D8A8" stroke="${CM}" stroke-width=".4"/><path d="M-6.2-.4H2.4M-6.2.6H2.4M-6.2 1.6H2.4" stroke="#C9AE70" stroke-width=".25"/><path d="M-5.6 2.6h7.6" stroke="#A84A2C" stroke-width=".4"/><path d="M2.8-.8L7-1.2M2.8.6L7.4.6M2.8 2L7 2.6" stroke="#E8D8A8" stroke-width=".55" stroke-linecap="round"/>`,
+  toepfer:CMAT + `<g transform="translate(-3.2 1.8) scale(.34)"><use href="#pt"/></g><g transform="translate(.2 2.2) scale(.28)"><use href="#pt"/></g><ellipse cx="4.2" cy="1.2" rx="1.8" ry="1.2" fill="#B5643A" stroke="${CM}" stroke-width=".35"/><path d="M3.2.8q1-.6 2 0" fill="none" stroke="#8A4A2A" stroke-width=".3"/>`,
+  hakenmacher:CMAT + `<rect x="-5.4" y="-.6" width="4.4" height="2.4" rx=".6" fill="#8E8A80" stroke="${CM}" stroke-width=".35"/><path d="M1 .2q0 2 1.6 1.8q1.2-.2.8-1.4M3.8-.2q0 2 1.6 1.8q1.2-.2.8-1.4" fill="none" stroke="#F1E6CF" stroke-width=".7" stroke-linecap="round"/><ellipse cx="-3.4" cy="2.4" rx="1" ry=".6" fill="#F4ECD8" stroke="${CM}" stroke-width=".25"/>`,
+  schnitzer:CMAT + `<path d="M-5 0Q-1.4 3.6 2.2 0Z" fill="#8C5C36" stroke="${CM}" stroke-width=".4"/><path d="M-4.6.1H1.8" stroke="#C99A5C" stroke-width=".5"/><path d="M3.6 2.4l1.4-.6M4.6 1l1.2.4M3.4.6l.8-.8" stroke="#D2A66E" stroke-width=".55" stroke-linecap="round"/>`,
+  oelhuette:CMAT + `<path d="M-6 0H0L-.8 2.4H-5.2Z" fill="#8C5C36" stroke="${CM}" stroke-width=".4"/><path d="M-5.4.6H-.6" stroke="#E8C25A" stroke-width=".8"/><path d="M1.4 1.6Q2.8 3.2 4.2 1.6ZM3.8 2.2Q5.2 3.8 6.6 2.2Z" fill="#6B4428" stroke="${CM}" stroke-width=".3"/><path d="M1.4 1.6H4.2M3.8 2.2H6.6" stroke="#F4ECD8" stroke-width=".5"/>`,
+  klopf:`<rect x="-6.4" y="-.4" width="12.8" height="2.2" rx="1.1" fill="#8C5C36" stroke="${CM}" stroke-width=".4"/><rect x="-4.6" y="-1.2" width="7.4" height="1.4" fill="#E9DCC0" stroke="${CM}" stroke-width=".3"/><path d="M3.2-2.6L6.8 1" stroke="${CM}" stroke-width="1.3" stroke-linecap="round"/><path d="M3.2-2.6L6.8 1" stroke="#B08048" stroke-width=".6" stroke-linecap="round"/>`,
+  malerin:`<rect x="-6.6" y="-1.6" width="9.6" height="4.6" fill="#E9DCC0" stroke="${CM}" stroke-width=".4"/><path d="M-5.6-.4l1-.8l1 .8l1-.8l1 .8l1-.8l1 .8M-5.6 1.6h7.4" fill="none" stroke="#7A4A2A" stroke-width=".45"/><path d="M-5.6.6h7.4" stroke="#D9A021" stroke-width=".5"/><ellipse cx="5" cy="1.2" rx="1.5" ry="1" fill="#D9A021" stroke="${CM}" stroke-width=".3"/>`,
+  duftoel:CMAT + `<path d="M-4 1.8Q-5.6 1.6-5.4-.2Q-5-1.6-4-1.4V-2.4H-3.4V-1.4Q-2.4-1.6-2.2-.2Q-2.2 1.6-4 1.8Z" fill="#C9A866" stroke="${CM}" stroke-width=".35"/><path d="M-1 1.8Q-2.4 1.6-2.2.2Q-1.8-1-1-.9V-1.8H-.5V-.9Q.4-1 .6.2Q.6 1.6-1 1.8Z" fill="#B08A4E" stroke="${CM}" stroke-width=".35"/><circle cx="3" cy="1" r=".9" fill="#E86A8A"/><circle cx="4.8" cy="1.8" r=".9" fill="#F4ECD8"/><circle cx="4.4" cy=".2" r=".8" fill="#E8A43A"/>`,
+  harzer:CMAT + `<path d="M-5 .4Q-3 3-1 .4Z" fill="#6B4428" stroke="${CM}" stroke-width=".35"/><path d="M-4.6.6H-1.4" stroke="#E8C25A" stroke-width=".7"/><path d="M1 .6Q2.6 2.8 4.2.6Z" fill="#6B4428" stroke="${CM}" stroke-width=".35"/><path d="M1.4.8H3.8" stroke="#E8C25A" stroke-width=".6"/>`,
+  beil:CMAT + `<rect x="-5.8" y="-.8" width="6.6" height="3" rx=".5" fill="#B9AE98" stroke="${CM}" stroke-width=".35"/><path d="M-4.6.4H-.4" stroke="#D8CFBC" stroke-width=".5"/><path d="M2 2.2L3.4-.6L4.8 2.2Z" fill="#5E5A54" stroke="${CM}" stroke-width=".35"/><path d="M4.6 2.4L5.6.2L6.4 2.4Z" fill="#6E6A62" stroke="${CM}" stroke-width=".3"/>`,
+  klingen:CMAT + `<path d="M-5.4 1.8L-4-1L-1.8-.6L-1.2 1.8Z" fill="#2A2730" stroke="${CM}" stroke-width=".35"/><path d="M-4.2-.4L-2.4.2" stroke="#6A6A80" stroke-width=".35"/><path d="M1 1.4l1.4-1.6l.4 1.8ZM3.4 2l1.2-1.4l.6 1.6ZM5 .8l.9-1l.3 1.2Z" fill="#3A3742" stroke="${CM}" stroke-width=".25"/>`,
+  schmuck:CMAT + `<circle cx="-3.6" cy=".8" r="1.5" fill="none" stroke="#F4ECD8" stroke-width=".9"/><circle cx="-.4" cy="1.4" r="1.3" fill="none" stroke="#EADFC6" stroke-width=".8"/><path d="M3.6 2.4V-2.6M2.2-1.2H5" stroke="#8C5C36" stroke-width=".6"/><path d="M2.6-1.2Q3.6-.2 4.6-1.2" fill="none" stroke="#C9A866" stroke-width=".35"/>`
+};
+const craftArt = k => CRAFT_ART[k] || `<g transform="scale(.62)">${artOf(k, {roof:ROOF_NEW, craft:true})}</g>`;   // earth oven, fermenting pit, lime fire: the thing itself, smaller
+/* a craft on the floor of a house: on the platform over the lagoon or the raised floor of a craftsman's house. It stands
+   just in front of the house; drawn and worked on up there. lift: how far up, 0 when it lies on the ground beside. */
+/* someone of a stilt house sitting or asleep on its platform: how far up */
+function deckLift(w){ const h = findB(w.deck); if (!h || Math.hypot(w.x - h.x, w.y - h.y) > 12) return 0; return 10.6 * ((h.v && h.v.scale) || 1) + (w.y - h.y); }
+function craftLift(b){
+  const h = b.at && findB(b.at); if (!h || Math.hypot(b.x - h.x, b.y - h.y) > 9) return 0;
+  const s = (h.v && h.v.scale) || 1; return h.kind === 'pfahl' ? 10.6 * s + (b.y - h.y) : tierOf(h) >= 3 ? 5.6 * s + (b.y - h.y) : 0;
+}
 /* the village centre: a carved post beside the house with a streamer of bark cloth that flies with the wind (painted
    with the ground layer, so it does not flutter, but it turns with the wind) */
 function drawCenterMark(c, b){
@@ -175,7 +203,7 @@ function drawRainCall(c, v, now){
   }
 }
 function drawBuilding(c, b, I, alpha = 1, sh = null){
-  if (b.at){ if (!sh) put(c, b.x, b.y, 1, 1, 0, 'craft|' + b.kind, craftArt(b.kind), alpha); return; }
+  if (b.at){ if (!sh){ const up = craftLift(b); put(c, b.x, b.y - up, up ? .78 : 1, 1, 0, 'craft|' + b.kind, craftArt(b.kind), alpha); } return; }
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
@@ -1207,7 +1235,7 @@ function drawPeople(c, v, now){
     // a nap in the shade: lying down on a mat takes a moment, then slow breathing, closed eyes
     const lk = lieOf(w, now), le = smooth01(lk), sk = sitOf(w, now), se = smooth01(sk);
     if (w.lie && !w.moving){
-      c.save(); c.translate(w.x, w.y); if (w.left) c.scale(-1, 1); const ga = c.globalAlpha; c.globalAlpha = ga * Math.min(1, le * 1.8); c.fillStyle = '#DCC48C'; c.fill(MAT_L); stroke(c, MAT_L, '#2B1D14', .35); c.globalAlpha = ga;
+      c.save(); c.translate(w.x, w.y - (w.deck ? deckLift(w) : 0)); if (w.left) c.scale(-1, 1); const ga = c.globalAlpha; c.globalAlpha = ga * Math.min(1, le * 1.8); c.fillStyle = '#DCC48C'; c.fill(MAT_L); stroke(c, MAT_L, '#2B1D14', .35); c.globalAlpha = ga;
       if (w.child) c.scale(.7, .7);
       c.save(); c.translate(4.6 * le, -1.3 * le); c.rotate(-Math.PI / 2 * le); c.scale(1 - .2 * le + (reduced ? 0 : Math.sin(now / 1700 + w.phase) * .03 * le), 1 + (reduced ? 0 : Math.sin(now / 1700 + w.phase) * .012 * le)); figOf(c, w);
       if (le > .85 && !reduced && quality >= 2 && cam.z >= BODY_Z) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
@@ -1215,13 +1243,14 @@ function drawPeople(c, v, now){
       if (!reduced && le > .9 && !w.asleep && !(opts.night && dayPhase() > .62)){ const q = ((now / 2600) + w.x * .1) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2.2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', -4.6 + q * 2, -3 - q * 6); c.globalAlpha = 1; }
       c.restore(); continue;
     }
-    restMat(c, w, sk, lk);   // the mat stays where it was while somebody gets up
     const up = CLIMB_FX.has(w.fx) && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
+    const deck = up ? 0 : w.deck ? (w.moving ? 0 : deckLift(w)) : w.job && w.job.b.at && Math.hypot(w.x - w.job.x, w.y - w.job.y) < 7 ? craftLift(w.job.b) + (w.y - w.job.b.y) : 0;   // at work, sitting or asleep up on the floor of a house
+    if (deck){ c.save(); c.translate(0, -deck); restMat(c, w, sk, lk); c.restore(); } else restMat(c, w, sk, lk);   // the mat stays where it was while somebody gets up
     const P = walkerPose(w, now, up), dir = w.left ? -1 : 1;
     const gg = w._g ?? (w.moving ? 1 : 0), bob = P ? P.bob : gg > .02 && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) * gg : 0, rot = P ? P.rot + P.lean * dir : gg > .02 && !reduced && !up ? Math.sin(w.phase) * .05 * gg : 0;
     // up at the crown a nut drops now and then
     if (up > 12 && !reduced){ const f = (now / 900 + w.x) % 1; c.fillStyle = '#7A5434'; c.beginPath(); c.arc(w.x + 3, w.y - up - 2 + f * (up + 1), .9, 0, TAU); c.fill(); }
-    c.save(); c.translate(w.x + (w._fa < 1 && !reduced ? (w.asleep ? 1 : -1) * dir * (1 - w._fa) * 2.4 : 0), w.y + bob - up + (w._fa < 1 && !reduced ? (1 - w._fa) * .8 : 0)); if (rot) c.rotate(rot); if (P ? P.sx !== 1 : w.left) c.scale(P ? P.sx : -1, 1);
+    c.save(); c.translate(w.x + (w._fa < 1 && !reduced ? (w.asleep ? 1 : -1) * dir * (1 - w._fa) * 2.4 : 0), w.y + bob - up - (deck > 0 ? deck : 0) + (w._fa < 1 && !reduced ? (1 - w._fa) * .8 : 0)); if (rot) c.rotate(rot); if (P ? P.sx !== 1 : w.left) c.scale(P ? P.sx : -1, 1);
     // someone sitting on a mat in front of a house (restMat): sitting down and getting up are eased; children are smaller
     if (le > .01){ c.translate(4.6 * le, -1.3 * le); c.rotate(-Math.PI / 2 * le); }
     if (se > .005) c.scale(1, 1 - .22 * se - .045 * Math.sin(se * Math.PI) * (w.sit && (!w.moving || w.busy) ? 1 : -1));

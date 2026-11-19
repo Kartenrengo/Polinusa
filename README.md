@@ -2417,6 +2417,13 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   - **Handwerkerhaus:** auf kurzen Pfosten mit Stufe, hohes dichtes Dach, ein Band mit Lapita-Zähnen unter der Traufe,
     Töpfe und Matten auf dem Boden; mit langen gekreuzten Firstenden oder breit mit geschwungenem First.
   - Auf Pfählen in der Lagune steht dasselbe Haus auf einer Plattform mit Leiter und kleinem Kanu.
+- **Hauswerk zum Zusehen:** Jedes Hauswerk ist als die Arbeit selbst gezeichnet statt als Bildchen auf einer Matte: Rollen
+  Sennit und Fasern, eine halbe Matte mit losen Streifen, Töpfe und ein Klumpen Ton, Schleifstein und Haken, der Klopfbalken
+  mit Rindenbahn und Schlegel, Tapa mit Farbe, Ölrinne und Kokosschalen, Kalebassen und Blüten, Schleifplatte und Beilklingen,
+  Obsidian mit Abschlägen, Muschelringe und Pumpbohrer. Bei Pfahlhäusern und Handwerkerhäusern liegt das Hauswerk **auf der
+  Plattform** bzw. dem Holzboden vor der Tür, und die Leute arbeiten dort oben. Auf der Plattform eines Pfahlhauses sitzt die
+  Familie auch am Abend, und wer draußen schläft, schläft dort statt im Wasser. Pfahlhäuser können jetzt auch ein Hauswerk
+  haben (vorher fand sich neben ihnen kein Platz an Land).
 - **Gedrückthalten** auf einem Haus zeigt eine Blase mit Name, Stufe als Punkte und Familie; bei einem Arbeitsplatz, was er macht.
 - **Jeder Arbeitsplatz in zwei Formen:** die kleine Hütte oder ein offenes Pultdach über einer Matte; der Speicher auch mit
   Kerbstamm-Leiter und Yams davor, die Fischerhütte auch mit Netz und Reuse. Das Zeichen der Arbeit bleibt (Nusshaufen,
@@ -2436,9 +2443,13 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
 
 ### Wie klein kann das Spiel sein?
 
-Sehr kleine Browserspiele (etwa beim Wettbewerb js13k mit 13 KB) zeichnen alles mit Code, statt Bilder zu laden, nutzen
-keine Bibliotheken und schicken den Code durch einen Minifier, der auch alle Namen kürzt, und durch einen Packer wie
-Roadroller. Polinusa macht das Erste schon: Es gibt kein einziges Bild, alles ist SVG und Canvas aus Code. Übertragbar ist:
+Vorbild war ein Beitrag über „Voidstruck“: ein Weltraumspiel mit 150 Millionen Sternsystemen in einer einzigen HTML-Datei von
+299 kB, ohne Bilder, Modelle, Tondateien oder Bibliotheken; alles entsteht aus einem Startwert. Sehr kleine Browserspiele
+zeichnen alles mit Code, statt Bilder zu laden, und schicken den Code durch einen Minifier, der auch alle Namen kürzt.
+Polinusa macht das Wichtigste schon genauso: kein einziges Bild, keine Bibliothek, Klang und Musik aus dem Browser
+(Web Audio), Inseln und Welt aus einem Startwert. Größer ist es vor allem, weil sehr viel Spiel darin steckt (Wirtschaft,
+Familien, Hunderte gezeichnete Dinge) und weil der Quelltext mit langen Namen und vielen Erklärungen geschrieben ist.
+Übertragbar ist:
 
 - Kommentare und Einrückung weglassen: gemacht, ein Sechstel kleiner.
 - Namen kürzen (Terser): würde die Datei wohl noch einmal etwa halbieren. Das braucht ein Werkzeug aus dem npm-Verzeichnis,
