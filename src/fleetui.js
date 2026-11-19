@@ -20,7 +20,8 @@ function shipMarkup(s){
   const S = SHIPS[s.kind], P = s.port && s.state !== 'sail' ? isl(s.port) : null, load = roomUsed(s), life = s.life || [];
   // under way the sheet stays small, so the sea is free to tap; "Mehr" opens all of it
   const mini = sheetData.mini ?? (s.state === 'sail' || s.state === 'sea' || s.route != null);
-  if (mini) return head(s.name, shipStatus(s)) + `<div class="rowx"><span class="sub">Tippe aufs Meer oder eine Insel.</span><span class="chips">${s.route != null ? '<button class="chip" type="button" data-act="unassign">Aus der Kette</button>' : ''}<button class="chip" type="button" data-act="shipmore">Mehr</button></span></div>`;
+  if (mini){ const home = islands.some(I => I.settled) && !(P && P.settled);
+    return head(s.name, shipStatus(s)) + `<div class="rowx"><span class="sub">Tippe aufs Meer oder eine Insel.</span><span class="chips">${s.state === 'sail' ? '<button class="chip" type="button" data-act="halt">Halt</button>' : ''}${home ? '<button class="chip" type="button" data-act="homeship">Heim</button>' : ''}${s.route != null ? '<button class="chip" type="button" data-act="unassign">Aus der Kette</button>' : ''}<button class="chip" type="button" data-act="shipmore">Mehr</button></span></div>`; }
   let h = head(s.name, shipStatus(s));
   // loading in our own port: only the hold and the store, as in Anno
   if (P && P.settled && s.route == null && sheetData.load){ h += holdMarkup(s, P);
@@ -112,31 +113,35 @@ function provisionNote(s, P){
   return `<div class="stat">${ready}${pv ? `<span>${icon('proviant')}${pv}, reicht etwa ${secsText(pv * secs)} auf See</span>` : ''}</div>` +
     `<p class="sub"><b>Proviant</b> kommt aus der Gärgrube, gegorene Brotfrucht, die monatelang hält. Ins Unbekannte fährt man nur damit, ohne Siedler und Waren; alle ${secs} s isst die Mannschaft 1.${pits ? '' : ' Hier gibt es noch keine Gärgrube (sie braucht 2 Brotfruchtbäume daneben).'}</p>`;
 }
-/* A trade chain: canoes on it, and what each end sends to the other */
+/* A trade chain, compact as in Anno: the canoes on it as small chips, then the two ends side by side. Each end lists what it
+   loads (icon: keep amount, − number +); everything the other end loaded is unloaded here by itself. Words are in the bubbles. */
 function routeMarkup(ri){
   const r = routes[ri], A = isl(r.a), B = isl(r.b), on = ships.filter(s => s.own && s.route === ri);
   const C = A.clan || B.clan, mineEnd = A.clan ? B : A;
-  let h = head(C ? `Schnur ${clanZum(C)}` : `Handelskette ${A.name} – ${B.name}`, `${r.knots} Knoten. Jede Fahrt knüpft einen dazu, dann geht es schneller.`);
+  let h = head(C ? `Schnur ${clanZum(C)}` : `${A.name} – ${B.name}`, `${r.knots} Knoten`);
   const all = routes.map((q, i) => [q, i]).filter(([q]) => q.a === active || q.b === active);
   if (all.length > 1) h += `<div class="chips" role="group" aria-label="Kette">${all.map(([q, i]) => `<button class="chip" type="button" data-act="route" data-r="${i}" aria-pressed="${i === ri}">${isl(q.a === active ? q.b : q.a).name}</button>`).join('')}</div>`;
-  h += on.length ? `<ul class="list needs">${on.map(s => `<li>${shipIcon(s.kind)}<span class="nm">${s.name}<small>${shipStatus(s)}</small></span><button class="btn small" type="button" data-act="unassign" data-s="${s.id}">Abziehen</button></li>`).join('')}</ul>` : `<p class="sub">Noch fährt hier kein Kanu.</p>`;
+  const word = s => s.noWay ? 'findet keinen Weg' : s.full ? `Lager auf ${s.fullAt} voll` : s.state === 'sail' ? 'fährt' : 'wartet im Hafen';
   const free = ships.filter(s => s.own && s.route == null && s.state !== 'sail' && (s.port === r.a || s.port === r.b));
-  if (free.length) h += `<div class="rowx"><span class="sub">Freie Kanus im Hafen:</span><span class="chips">${free.map(s => `<button class="chip" type="button" data-act="assignS" data-s="${s.id}">${s.name}</button>`).join('')}</span></div>`;
-  else if (!on.length) h += `<p class="sub">Bau im Kanuhaus ein Auslegerkanu und bring es nach ${mineEnd.name}, dann kannst du es hier einsetzen.</p>`;
+  h += `<div class="rboats" role="group" aria-label="Kanus der Kette">` +
+    on.map(s => `<button class="rc rboat${s.noWay || s.full ? ' warn' : ''}" type="button" data-act="unassign" data-s="${s.id}" data-tip="${esc(`<b>${s.name}</b> ${word(s)}.${cargoLoad(s) ? ` An Bord: ${giftText(s.cargo)}.` : ''} Tippen zieht es von der Kette ab.`)}" aria-label="${s.name}, ${word(s)}, abziehen">${shipIcon(s.kind)}<small>${s.name}</small><i class="dot ${s.state === 'sail' ? 'go' : ''}"></i></button>`).join('') +
+    free.map(s => `<button class="rc rboat free" type="button" data-act="assignS" data-s="${s.id}" data-tip="${esc(`<b>${s.name}</b> liegt im Hafen. Tippen setzt es auf diese Kette.`)}" aria-label="${s.name} einsetzen">${shipIcon(s.kind)}<small>+ ${s.name}</small></button>`).join('') +
+    (on.length || free.length ? '' : `<span class="rc rnone sub" data-tip="${esc(`Bau im Kanuhaus ein Auslegerkanu und bring es nach ${mineEnd.name}, dann kannst du es hier einsetzen.`)}">Kein Kanu${icon('einbaum')}</span>`) +
+    `<span class="rc rhelp" role="img" aria-label="Hilfe" data-tip="${esc(C ? `Sie antworten später mit ${clanMakes(C).map(k => GN[k]).join(' und ')}. Was sie schätzen: ${clanWants(C).map(k => GN[k]).join(', ')}. ${kin(A.clan ? A : B) ? 'Sie stempeln euer Muster: Eure Gaben zählen mehr.' : 'Töpfe in der Gabe bringen ihnen euer Muster, dann zählen eure Gaben mehr.'}` : 'Jede Fahrt knüpft einen Knoten dazu, dann geht es schneller. Was das andere Ende lädt, wird hier ausgeladen. Ist ein Lager voll, bleibt der Rest an Bord und das Kanu fährt weiter. Es wartet nie.')}">?</span></div>`;
+  const cap = on.length ? Math.max(...on.map(s => SHIPS[s.kind].cap)) : 24;
   const side = (from, to, key) => {
-    const plan = r.plan[key] || (r.plan[key] = {}), goods = GOODS.filter(k => (from.stock[k] || 0) > 0 || plan[k]), cap = on.length ? Math.max(...on.map(s => SHIPS[s.kind].cap)) : 24, sum = Object.values(plan).reduce((a, b) => a + b, 0);
-    // under the name: what lies in store, and (for goods that are loaded here) how much stays behind; one tap steps it on
-    const keepChip = k => plan[k] && !from.clan ? ` · <button class="chip" type="button" data-act="kp" data-k="${key}:${k}" title="So viel bleibt im Lager, nur der Rest wird geladen">${routeKeep(r, key, k) ? `lässt ${routeKeep(r, key, k)}` : 'nimmt alles'}</button>` : '';
-    // as in Anno: only the goods on the list stand as rows; what else lies in store waits as small pictures to tap in
+    const plan = r.plan[key] || (r.plan[key] = {}), goods = GOODS.filter(k => (from.stock[k] || 0) > 0 || plan[k]), sum = Object.values(plan).reduce((a, b) => a + b, 0);
     const set = goods.filter(k => plan[k]), add = goods.filter(k => !plan[k]);
-    return `<p class="rside"><b>${from.name}</b><span class="rarr">${icon('einbaum')}›</span><b>${to.name}</b><span class="sub">${to.clan ? 'als Gabe' : `${sum} von ${cap} Plätzen`}</span></p>` +
-      (set.length ? `<ul class="list needs rset">${set.map(k => `<li>${icon(k)}<span class="nm">${GN[k]}<small>Lager ${from.stock[k] || 0}${keepChip(k)}</small></span>${slider('pl', key + ':' + k, plan[k] || 0, (plan[k] || 0) + Math.max(0, cap - sum), GN[k])}</li>`).join('')}</ul>` : '') +
-      (add.length ? `<div class="radd" role="group" aria-label="Ware dazunehmen"><span class="sub">${set.length ? 'Dazu:' : 'Ware wählen:'}</span>${add.map(k => `<button class="chip padd" type="button" data-act="pladd" data-k="${key}:${k}" aria-label="${GN[k]} dazunehmen, im Lager ${from.stock[k] || 0}"${sum >= cap ? ' disabled' : ''}>${icon(k)}<small>${from.stock[k] || 0}</small></button>`).join('')}</div>` : set.length ? '' : `<p class="sub">Auf ${from.name} liegt gerade nichts.</p>`);
+    const row = k => { const kp = routeKeep(r, key, k), n = plan[k];
+      return `<li class="rrow"><button class="rc rk${kp ? ' on' : ''}" type="button" ${from.clan ? 'disabled' : `data-act="kp" data-k="${key}:${k}"`} data-tip="${esc(`<b>${GN[k]}</b>, ${from.stock[k] || 0} im Lager. ${from.clan ? '' : `Tippen: ${kp ? `${kp} bleiben im Lager` : 'nimmt alles'}; weiter tippen ändert es.`}`)}" aria-label="${GN[k]}, Lager ${from.stock[k] || 0}, ${kp ? `lässt ${kp}` : 'nimmt alles'}">${icon(k)}${kp ? `<b>${kp}</b>` : ''}</button>` +
+        `<span class="rn"><button class="rc rm" type="button" data-act="pl-" data-k="${key}:${k}" aria-label="${GN[k]} weniger">−</button><button class="rc rv" type="button" data-act="pl5" data-k="${key}:${k}" data-tip="${esc(`<b>${n} ${GN[k]}</b> je Fahrt. Tippen: 5 mehr.`)}" aria-label="${GN[k]} ${n}, fünf mehr">${n}</button><button class="rc rm" type="button" data-act="pl+" data-k="${key}:${k}" aria-label="${GN[k]} mehr" ${sum >= cap ? 'disabled' : ''}>+</button></span></li>`; };
+    return `<section class="rend" aria-label="${from.name}"><p class="rname"><b>${from.name}</b><span class="sub" data-tip="${esc(`Lädt hier: ${to.clan ? 'als Gabe' : `${sum} von ${cap} Plätzen`}`)}">${to.clan ? 'Gabe' : `${sum}/${cap}`}</span></p>` +
+      (set.length ? `<ul class="rlist">${set.map(row).join('')}</ul>` : `<p class="sub rempty">${from.stock && goods.length ? 'Ware wählen' : 'Lager leer'}</p>`) +
+      (add.length ? (set.length && sheetData.pick !== key ? `<button class="rc rplus" type="button" data-act="plopen" data-k="${key}" data-tip="${esc('<b>Ware dazunehmen</b>. Tippen zeigt, was im Lager liegt.')}" aria-label="Ware dazunehmen"${sum >= cap ? ' disabled' : ''}>+ Ware</button>` : `<div class="radd" role="group" aria-label="Ware dazunehmen">${add.map(k => `<button class="rc padd" type="button" data-act="pladd" data-k="${key}:${k}" data-tip="${esc(`<b>${GN[k]}</b> ${from.stock[k] || 0} im Lager. Tippen nimmt es in die Ladung.`)}" aria-label="${GN[k]} dazunehmen, im Lager ${from.stock[k] || 0}"${sum >= cap ? ' disabled' : ''}>${icon(k)}<small>${from.stock[k] || 0}</small></button>`).join('')}</div>`) : '') + `</section>`;
   };
-  if (A.settled) h += side(A, B, 'a');
-  if (B.settled) h += side(B, A, 'b');
-  if (!C) h += `<p class="sub">Ist ein Lager voll, bleibt der Rest an Bord und das Kanu fährt weiter. Es wartet nie.</p>`;
-  if (C) h += `<p class="sub">Sie antworten später mit ${clanMakes(C).map(k => GN[k]).join(' und ')}. Was sie schätzen: ${clanWants(C).map(k => GN[k]).join(', ')}. ${kin(A.clan ? A : B) ? 'Sie stempeln euer Muster: Eure Gaben zählen mehr.' : 'Töpfe in der Gabe bringen ihnen euer Muster, dann zählen eure Gaben mehr.'}</p>`;
+  const ends = [A.settled ? side(A, B, 'a') : '', B.settled ? side(B, A, 'b') : ''].filter(Boolean);
+  h += `<div class="rends${ends.length === 1 ? ' one' : ''}">${ends.join('<span class="rmid" aria-hidden="true">⇄</span>')}</div>`;
+  if (C) h += `<p class="sub rwant">${icon('schnur')}Sie schätzen: ${clanWants(C).map(k => `<span class="rc" role="img" aria-label="${GN[k]}" data-tip="${GN[k]}">${icon(k)}</span>`).join('')}</p>`;
   return h;
 }
 function openRoute(ri){ const r = routes[ri]; if (isl(r.a).settled && r.a !== active && r.b !== active) setActive(r.a); selectedId = null; invalidate(); openSheet('route', {r:ri}); }
@@ -218,6 +223,8 @@ function fleetAct(act, btn, quiet = false){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return false;
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
     if (act === 'auto'){ setAuto(s, !s.auto); return true; }
+    if (act === 'halt'){ haltShip(s); toast(`${s.name} hält an.`, 1800, false); renderSheet(); return true; }
+    if (act === 'homeship'){ homeShip(s); renderSheet(); return true; }
     if (act === 'dive'){ startDive(s); renderSheet(); return true; }
     if (act === 'undive'){ stopDive(s, 'Die Mannschaft hört auf.'); renderSheet(); return true; }
     if (act === 'pp+' && P && P.pop > SETTLE.keep && s.people < SHIPS[s.kind].people){ syncPeople(P); const q = nextSettler(P, s); if (q){ P.people.splice(P.people.indexOf(q), 1); (s.folk = s.folk || []).push(q); } s.people++; P.pop--; P.staff = null; syncWalkers(); }
@@ -242,12 +249,15 @@ function fleetAct(act, btn, quiet = false){
   }
   if (sheetKind === 'route'){
     const r = routes[sheetData.r];
-    if (act === 'route'){ sheetData.r = +btn.dataset.r; }
+    if (act === 'route'){ sheetData = {...sheetData, r:+btn.dataset.r, pick:null}; }
     else if (act === 'assignS'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) assignRoute(s, sheetData.r); }
     else if (act === 'unassign'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) unassign(s); }
     else if (act === 'kp'){ const [key, k] = btn.dataset.k.split(':'), kp = (r.keep || (r.keep = {a:{}, b:{}}))[key] || (r.keep[key] = {}), cap = storeCap(isl(key === 'a' ? r.a : r.b)), n = ((kp[k] | 0) + 5) % (cap + 5 > 25 ? 25 : cap + 5); if (n) kp[k] = n; else delete kp[k]; }   // 0, 5, 10, 15, 20, then back to nothing
-    else if (act === 'pladd'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}), on = ships.filter(q => q.own && q.route === sheetData.r), cap = on.length ? Math.max(...on.map(q => SHIPS[q.kind].cap)) : 24, left = cap - Object.values(plan).reduce((x, y) => x + y, 0); if (left > 0) plan[k] = Math.min(5, left); }
-    else if (act === 'pl+' || act === 'pl-'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}); plan[k] = Math.max(0, (plan[k] || 0) + (act === 'pl+' ? 1 : -1)); if (!plan[k]) delete plan[k]; }
+    else if (act === 'plopen'){ sheetData = {...sheetData, pick:btn.dataset.k}; }
+    else if (act === 'pladd'){ sheetData = {...sheetData, pick:null};  const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}), on = ships.filter(q => q.own && q.route === sheetData.r), cap = on.length ? Math.max(...on.map(q => SHIPS[q.kind].cap)) : 24, left = cap - Object.values(plan).reduce((x, y) => x + y, 0); if (left > 0) plan[k] = Math.min(5, left); }
+    else if (act === 'pl+' || act === 'pl-' || act === 'pl5'){ const [key, k] = btn.dataset.k.split(':'), plan = r.plan[key] || (r.plan[key] = {}), on = ships.filter(q => q.own && q.route === sheetData.r), cap = on.length ? Math.max(...on.map(q => SHIPS[q.kind].cap)) : 24, left = cap - Object.values(plan).reduce((x, y) => x + y, 0);
+      const n = plan[k] || 0; plan[k] = act === 'pl-' ? Math.max(0, n - 1) : act === 'pl+' ? n + Math.min(1, Math.max(0, left)) : left <= 0 ? 0 : n + Math.min(5, left);   // + and − by one, a tap on the number by five (at the top it starts over)
+      if (!plan[k]) delete plan[k]; }
     else return false;
     if (!quiet){ renderSheet(); save(); } return true;
   }

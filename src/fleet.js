@@ -119,10 +119,22 @@ function curvePath(a, pts){
   return sm.slice(1);
 }
 
+/* The way is rounded once more: points about every 8 px, then each is pulled towards the middle of its neighbours a number of
+   times, so no bend is sharper than a canoe can turn. Ends stay where they are. Whatever would touch land is left as it was. */
+function roundWay(path){
+  if (path.length < 3) return path;
+  let pts = [path[0]]; for (let i = 1; i < path.length; i++){ const a = path[i - 1], b = path[i], d = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.round(d / 8)); for (let k = 1; k <= n; k++) pts.push({x:a.x + (b.x - a.x) * k / n, y:a.y + (b.y - a.y) * k / n}); }
+  for (const rounds of [14, 7, 3]){
+    let q = pts; for (let r = 0; r < rounds; r++){ const nx = [q[0]]; for (let i = 1; i < q.length - 1; i++) nx.push({x:(q[i - 1].x + 2 * q[i].x + q[i + 1].x) / 4, y:(q[i - 1].y + 2 * q[i].y + q[i + 1].y) / 4}); nx.push(q[q.length - 1]); q = nx; }
+    let ok = true; for (let i = 1; i < q.length && ok; i++) if (overLand(q[i - 1], q[i], 1.5)) ok = false;
+    if (ok) return q.slice(1);
+  }
+  return path;
+}
 /* Canoes on the same water keep to their own lane, a little to the side, so they do not sail through each other */
 function laneOf(s, path){
   const off = ((s.id % 3) - 1) * 9; if (!off || path.length < 3) return path;
-  const out = path.map((p, i) => { if (i === 0 || i === path.length - 1) return p; const a = path[i - 1], b = path[i + 1], d = Math.hypot(b.x - a.x, b.y - a.y) || 1; return {x:p.x - (b.y - a.y) / d * off, y:p.y + (b.x - a.x) / d * off}; });
+  const out = path.map((p, i) => { if (i === 0 || i === path.length - 1) return p; const a = path[i - 1], b = path[i + 1], d = Math.hypot(b.x - a.x, b.y - a.y) || 1; const k = Math.min(1, Math.min(i, path.length - 1 - i) / 6) * off; return {x:p.x - (b.y - a.y) / d * k, y:p.y + (b.x - a.x) / d * k}; });   // the lane eases in and out, no jump at either end
   for (let i = 1; i < out.length; i++) if (overLand(out[i - 1], out[i], 1.5)) return path;
   return out;
 }
@@ -163,10 +175,10 @@ function moorSpot(I, s){
 }
 /* With the wind a canoe runs fast, against it slowly; the double canoe's big sail feels it more */
 /* ---------- sailing by the wind. th is the angle between where the canoe heads and where the wind blows to: 0 running
-   before it, 90 the wind across (fastest), 180 straight into it. Into the wind (beyond SAIL.noGo) no canoe sails: it tacks,
-   a zigzag of legs about 50 degrees off the wind, and loses way at each turn. In a calm the crew paddles, slowly. The
+   before it, 90 the wind across (fastest), 180 straight into it (slowest). The canoe keeps its smooth course and only
+   gains or loses speed; no zigzag. In a calm the crew paddles, slowly. The
    outrigger canoe has paddlers aboard anyway and minds the wind less than a double canoe under its big mat sail. */
-const SAIL = {noGo:130, run:.86, beam:1.14, close:.8, calm:.2, paddle:.42, lane:32, look:100, turn:600, hold:1500};
+const SAIL = {noGo:130, run:.86, beam:1.14, close:.8, calm:.2, paddle:.42};
 const pointOf = (hx, hy, W = wind()) => Math.acos(clamp(hx * W.tx + hy * W.ty, -1, 1)) * 180 / Math.PI;
 function windFactor(s, hx = s.hx || 0, hy = s.hy || 0){
   const W = wind(); if (W.str < SAIL.calm) return SAIL.paddle;
@@ -176,8 +188,8 @@ function windFactor(s, hx = s.hx || 0, hy = s.hy || 0){
 }
 /* how the canoe sails right now, in a word for its sheet */
 const sailWord = s => { if (s.state !== 'sail') return ''; const W = wind(); if (W.str < SAIL.calm) return 'Flaute: die Mannschaft paddelt';
-  if (s.tacking) return 'Gegenwind: es kreuzt im Zickzack'; const th = pointOf(s.hx || 0, s.hy || 0, W);
-  return th < 50 ? 'Rückenwind' : th < 115 ? 'Halber Wind: am schnellsten' : 'Hart am Wind'; };
+  const th = pointOf(s.hx || 0, s.hy || 0, W);
+  return th < 50 ? 'Rückenwind' : th < 115 ? 'Halber Wind: am schnellsten' : 'Gegenwind: langsamer'; };
 /* the grown-ups of the seafarer families are the canoe crews of their island: a few more paddles, a sure hand on the sail */
 const seaCrew = s => { const I = s.own && isl(s.port || s.last); return I ? seafarers(I) : 0; };
 const seaF = s => 1 + Math.min(SEA_SPEED_MAX, SEA_SPEED * seaCrew(s));
@@ -206,7 +218,10 @@ function sailTo(s, dest, quiet, force){
   if (s.own && !s.founder && !force && atollShut(dest)){ if (!quiet) toast('Ins Atoll erst mit Kanuhaus und Einbaum. Sie kennen den Weg durchs flache Riff.', 3600, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
-  s.path = laneOf(s, curvePath(s, path)); s.pi = 0; s.dist0 = s.state === 'sail' && s.dist0 != null ? s.dist0 : s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
+  // redirected under way: it first carries on a little the way it heads, then bends round (no sudden turn)
+  if (s.state === 'sail' && s.hx != null && path.length){ const q = {x:s.x + s.hx * 42, y:s.y + s.hy * 42}, d = Math.hypot(path[0].x - s.x, path[0].y - s.y) || 1;
+    if ((path[0].x - s.x) * s.hx / d + (path[0].y - s.y) * s.hy / d < .9 && d > 60 && !overLand(s, q, 2)) path.unshift(q); }
+  s.path = laneOf(s, roundWay([{x:s.x, y:s.y}, ...curvePath(s, path)])); s.pi = 0; s.dist0 = s.state === 'sail' && s.dist0 != null ? s.dist0 : s.dist; s.dest = dest; s.state = 'sail'; s.gathered = false; s.port = null; s.lastReveal = s.lastReveal || {x:s.x, y:s.y};
   requestDraw(); return true;
 }
 const sight = s => SHIPS[s.kind].vision * (s.kind !== 'oc' && navLore().lvl >= 3 ? 1.25 : 1);   // the star path lets the navigator see further
@@ -303,8 +318,7 @@ function stepShips(now, dt){
     // a canoe gathers way slowly and glides in to land; it turns gradually instead of flipping round
     const end = s.path[s.path.length - 1], rem = end ? Math.hypot(end.x - s.x, end.y - s.y) : 0, e0 = clamp(Math.min((s.dist - (s.dist0 || 0) + 8) / 60, (rem + 6) / 70), 0, 1), ease = .28 + .72 * e0 * e0 * (3 - 2 * e0);   // it pushes off slowly, gathers way, and slows to a glide before it lands
     const x0 = s.x, y0 = s.y;
-    if (!sailLeg(s, ease, dt)){
-      let step = speedOf(s) * ease * dt / 1000;
+    { let step = speedOf(s) * ease * dt / 1000;   // the wind changes only the speed; the way itself is a smooth curve
       while (step > 0 && s.pi < s.path.length){
         const t = s.path[s.pi], dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy);
         if (d <= step){ s.x = t.x; s.y = t.y; s.pi++; step -= d; s.dist += d; }
@@ -321,34 +335,6 @@ function stepShips(now, dt){
     if (s.own){ const lr = s.lastReveal || (s.lastReveal = {x:s.x, y:s.y}); if (Math.hypot(s.x - lr.x, s.y - lr.y) > 70){ s.lastReveal = {x:s.x, y:s.y}; if (s.auto) noteVisit(s, s); if (exploreAt(s.x, s.y, sight(s)) && s.dest && s.pi < s.path.length) sailTo(s, s.dest, true); } }
     if (s.pi >= s.path.length) arriveShip(s);
   }
-}
-/* Into the wind: the canoe looks a little ahead along its way, and if that lies in the eye of the wind it sails a leg about
-   50 degrees off the wind on one side, then turns (it loses way while the sail goes over) and sails the other leg, never
-   straying more than SAIL.lane from its way and never onto land or reef. Returns false when it can simply sail straight. */
-function sailLeg(s, ease, dt){
-  const W = wind(); s.tacking = false; if (W.str < SAIL.calm || s.race || s.founder){ s.lat = 0; return false; }
-  let j = s.pi, acc = 0, px = s.x, py = s.y; while (j < s.path.length - 1 && acc < SAIL.look){ acc += Math.hypot(s.path[j].x - px, s.path[j].y - py); px = s.path[j].x; py = s.path[j].y; j++; }
-  const T = s.path[Math.min(j, s.path.length - 1)]; if (!T) return false;
-  const tx = T.x - s.x, ty = T.y - s.y, td = Math.hypot(tx, ty); if (td < 26) return false;   // close in, they paddle the last bit straight
-  const dx = tx / td, dy = ty / td;
-  // the look-ahead point can swing in and out of the eye of the wind from one step to the next; a canoe that changes its mind
-  // every step only rocks on the spot. So it keeps its mode for a moment before it may change it.
-  let want = pointOf(dx, dy, W) >= SAIL.noGo; s.modeHold = Math.max(0, (s.modeHold || 0) - dt);
-  if (want !== !!s.tackMode){ if (s.modeHold > 0) want = !!s.tackMode; else { s.tackMode = want; s.modeHold = SAIL.hold; } }
-  if (!want){ s.lat = 0; return false; }
-  s.tacking = true; if (!s.tack) s.tack = Math.random() < .5 ? 1 : -1;
-  const a = Math.atan2(-W.ty, -W.tx), off = (180 - SAIL.noGo + 4) * Math.PI / 180, leg = sg => ({x:Math.cos(a + sg * off), y:Math.sin(a + sg * off)});
-  let h = leg(s.tack); const step = speedOf(s, h.x, h.y) * ease * dt / 1000 * (s.turnLeft > 0 ? .4 : 1); s.turnLeft = Math.max(0, (s.turnLeft || 0) - dt);
-  const ahead = q => !overLand({x:s.x, y:s.y}, {x:s.x + q.x * Math.max(14, step * 3), y:s.y + q.y * Math.max(14, step * 3)}, 2);
-  // which side of its way it is on: turn when it has strayed far enough, or when land is ahead
-  s.lat = (s.lat || 0) + (h.x * -dy + h.y * dx) * step;
-  if (Math.abs(s.lat) > SAIL.lane && Math.sign(s.lat) === Math.sign(h.x * -dy + h.y * dx) || !ahead(h)){
-    const o = leg(-s.tack); if (ahead(o)){ s.tack = -s.tack; h = o; s.turnLeft = SAIL.turn; } else if (!ahead(h)) return false;   // both ways blocked: it is pushed along straight
-  }
-  s.x += h.x * step; s.y += h.y * step; s.dist += step * Math.max(0, h.x * dx + h.y * dy);
-  // the way points it has come past are behind it now
-  while (s.pi < s.path.length - 1){ const q = s.path[s.pi], qx = q.x - s.x, qy = q.y - s.y; if (Math.hypot(qx, qy) < 12 || qx * dx + qy * dy < 0) s.pi++; else break; }
-  return true;
 }
 function arriveShip(s){
   const d = s.dest; s.path = []; s.dest = null;
@@ -534,12 +520,34 @@ function clanShip(T, toId, cargo, guest, life = []){
 /* ---------- steering: tap a canoe, then tap the sea or an island */
 function selectShip(s){ selShip = s; mode = 'steer'; openSheet('ship', {id:s.id}); requestDraw(); }
 function hitShip(p){ const lim = Math.max(12, 18 / cam.z); let best = null, bd = lim; for (const s of ships){ if (!s.own && !revealed(s)) continue; const d = Math.hypot(p.x - s.x, p.y - (s.y - 6)); if (d < bd){ bd = d; best = s; } } return best; }
+/* While steering every tap belongs to the canoe: a tap on another canoe of ours switches to it, a tap on the selected one lets it go,
+   anything else (sea, island, house, bubble) is the new target. Called first from onTap; true when the tap is used up. */
+function steerOnTap(p){
+  if (mode !== 'steer' || !selShip) return false;
+  const sh = hitShip(p);
+  if (sh && sh.own){ if (sh === selShip) closeSheet(); else { closeSheet(); selectShip(sh); } return true; }
+  steerTap(p); return true;
+}
+/* how long the canoe still needs to its target, in seconds as the player lives them */
+function etaOf(s){
+  let d = 0, x = s.x, y = s.y; for (let i = s.pi; i < s.path.length; i++){ d += Math.hypot(s.path[i].x - x, s.path[i].y - y); x = s.path[i].x; y = s.path[i].y; }
+  return d / Math.max(1, speedOf(s) * .9 * (typeof gameSpeed === 'number' ? gameSpeed : 1));
+}
+/* Halt: the canoe lies at anchor where it is. Heim: back to the nearest village of ours. */
+function haltShip(s){
+  if (s.state !== 'sail') return; if (s.route != null) unassign(s); s.auto = false;
+  s.path = []; s.pi = 0; s.dest = null; s.state = 'sea'; s.port = null; s.tradeWant = null; requestDraw(); save();
+}
+function homeShip(s){
+  const H = homeFor(s); if (!H) return; if (s.route != null) unassign(s); s.auto = false;
+  if (sailTo(s, {isl:H.id})) toast(`${s.name} fährt heim nach ${H.name}.`, 2400, false);
+}
 function steerTap(p){
   const s = selShip; if (!s) return;
   if (s.auto){ s.auto = false; toast(`${s.name} erkundet nicht mehr von selbst.`, 2200, false); }
   const I = islands.find(J => J.discovered && onIsland(J, p));
   if (s.race) return;
-  if (I){ if (s.route != null) unassign(s); if (sailTo(s, {isl:I.id})) toast(`${s.name} fährt nach ${I.name}.`, 2600, false); renderSheet(); save(); return; }
+  if (I){ if (s.route != null) unassign(s); if (sailTo(s, {isl:I.id})) toast(`${s.name} fährt nach ${I.name}.`, 2600, false); keepMini(); renderSheet(); save(); return; }
   const open = revealed(p);
   if (!open && !SHIPS[s.kind].fog){ toast('Ins Unbekannte fährt nur das Doppelkanu.', 2600, false); return; }
   if (!open && !(s.cargo.proviant > 0)){ toast('Ohne Proviant an Bord fährt die Mannschaft nicht ins Unbekannte. Proviant kommt aus der Gärgrube.', 3600, false); return; }
@@ -547,8 +555,9 @@ function steerTap(p){
   if (!open && (s.people || (s.life && s.life.length) || GOODS.some(k => k !== 'proviant' && s.cargo[k] > 0))){ toast('Ins Unbekannte nimmt man nur Proviant mit. Lade Siedler, Setzlinge, Tiere und andere Waren erst aus.', 3600, false); return; }
   if (s.route != null) unassign(s);
   if (sailTo(s, {x:p.x, y:p.y})) toast(open ? `${s.name} fährt los.` : `${s.name} fährt ins Unbekannte.`, 2600, false);
-  renderSheet(); save();
+  keepMini(); renderSheet(); save();
 }
+const keepMini = () => { if (sheetKind === 'ship') sheetData = {...sheetData, mini:true}; };   // the small sheet stays, so the sea stays free to tap
 
 /* ---------- the canoe race at the feast of the Pleiades: once round the lagoon */
 function racePath(I){

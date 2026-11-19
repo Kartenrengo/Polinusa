@@ -78,10 +78,10 @@ const {PAGE} = require('./lib');
         want(restore(raw) && ships[0].route === ri && routes[ri].keep.a.holz === 3, 'save: chain or keep amount lost');
         const o = JSON.parse(raw); o.routes.unshift({a:'nirgends', b:H.id, knots:1, lg:0}); o.ships[0].route = ri + 1; want(restore(JSON.stringify(o)) && ships[0].route === ri, 'save: chain index shifted when a chain is dropped');
         out.push('stuck cases ok');
-        // a long wait in the wind: the canoe does not rock on the spot (the mode of sailing is kept for a moment)
-        ships.length = 0; s = makeShip('dc', H); const a = {x:H.harbor.x, y:H.harbor.y}; let flips = 0, pt = false;
-        sailTo(s, {isl:T.id}, true); for (let i = 0; i < 4000 && s.state === 'sail'; i++){ stepShips(performance.now(), 100); if (s.tacking !== pt){ flips++; pt = s.tacking; } }
-        want(s.state !== 'sail', 'sail: did not arrive'); want(flips < 40, `sail: it changed its mind ${flips} times`);
+        // a long trip in the wind: no zigzag, the heading changes smoothly and never flips back
+        ships.length = 0; s = makeShip('dc', H); let px = s.x, py = s.y, pa = null, maxTurn = 0, rev = 0;
+        sailTo(s, {isl:T.id}, true); for (let i = 0; i < 4000 && s.state === 'sail'; i++){ stepShips(performance.now(), 100); if (Math.hypot(s.x - px, s.y - py) > .01){ const a2 = Math.atan2(s.y - py, s.x - px); if (pa != null){ const d = Math.abs(Math.atan2(Math.sin(a2 - pa), Math.cos(a2 - pa))) * 180 / Math.PI; maxTurn = Math.max(maxTurn, d); if (d > 120) rev++; } pa = a2; px = s.x; py = s.y; } }
+        want(s.state !== 'sail', 'sail: did not arrive'); want(maxTurn < 20 && !rev, `sail: heading jumped ${maxTurn.toFixed(1)} degrees in one step, ${rev} reversals`);
       }
       out.push('BAD: ' + (bad.join('; ') || 'none'));
       return out.join('\n');

@@ -1734,6 +1734,7 @@ function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) 
 function onTap(p){
   if (landing && !landing.found){ landingTap(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
+  if (steerOnTap(p)) return;   // steering: every tap is the canoe's target (fleet.js)
   // a bubble over a house or a workplace: what it lacks, and where that comes from
   { const q = hitBubble(p); if (q){ q.go(); return; } }
   if (hitWhale(p)){ seeWhale(); return; }

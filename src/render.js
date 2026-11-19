@@ -2244,6 +2244,10 @@ function drawTop(c, now){
     stroke(c, p, '#F4ECD8', 2.4 / Math.min(1, cam.z), [.1, 7 / Math.min(1, cam.z)], 'round', .95);
     // where it is going: a cross as the navigators scratched it
     const e = S.path[S.path.length - 1], q = 4 * ks, X = new Path2D(); X.moveTo(e.x - q, e.y - q * .6); X.lineTo(e.x + q, e.y + q * .5); X.moveTo(e.x + q * .9, e.y - q * .7); X.lineTo(e.x - q * .8, e.y + q * .6); stroke(c, X, '#F4ECD8', 2.2, null, 'round', .95);
+    // a ring that breathes round the target, and how long the way still takes
+    { const f = reduced ? .5 : (performance.now() % 1800) / 1800; sketch(c, e.x, e.y + 1, (6 + 7 * f) * ks, (3 + 3.5 * f) * ks, 3, '#F4ECD8', 1.6, .9 * (1 - f * .7));
+      const sec = etaOf(S), txt = secsText(sec), k = clamp(1 / cam.z, .8, 2.6); c.save(); c.font = '800 10px "Alegreya Sans", "Trebuchet MS", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      const w = c.measureText(txt).width + 8, hx = e.x, hy = e.y - 15 * k; c.translate(hx, hy); c.scale(k, k); c.fillStyle = 'rgba(43,29,20,.82)'; c.beginPath(); c.roundRect(-w / 2, -7, w, 14, 7); c.fill(); c.fillStyle = '#F4ECD8'; c.fillText(txt, 0, .5); c.restore(); }
   }
   for (const s of ships){
     if (!ptIn(s.x, s.y, v) || (!s.own && !revealed(s))) continue;
