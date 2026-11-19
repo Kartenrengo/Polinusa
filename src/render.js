@@ -1190,7 +1190,7 @@ function drawPeople(c, v, now){
       c.save(); c.translate(4.6 * le, -1.3 * le); c.rotate(-Math.PI / 2 * le); c.scale(1 - .2 * le + (reduced ? 0 : Math.sin(now / 1700 + w.phase) * .03 * le), 1 + (reduced ? 0 : Math.sin(now / 1700 + w.phase) * .012 * le)); figOf(c, w);
       if (le > .85 && !reduced && quality >= 2 && cam.z >= BODY_Z) blit(c, 'blink|' + w.look[0], () => blinkArt(w.look));
       c.restore();
-      if (!reduced && le > .9){ const q = ((now / 2600) + w.x * .1) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2.2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', -4.6 + q * 2, -3 - q * 6); c.globalAlpha = 1; }
+      if (!reduced && le > .9 && !w.asleep && !(opts.night && dayPhase() > .62)){ const q = ((now / 2600) + w.x * .1) % 1; c.globalAlpha = (1 - q) * .8; c.fillStyle = '#2B1D14'; c.font = `800 ${2.2 + q * 1.4}px "Alegreya Sans", sans-serif`; c.fillText('z', -4.6 + q * 2, -3 - q * 6); c.globalAlpha = 1; }
       c.restore(); continue;
     }
     restMat(c, w, sk, lk);   // the mat stays where it was while somebody gets up
@@ -2539,7 +2539,7 @@ let fxWalkAt = 0, fxWalkInit = false;
 function fxWalkers(now){
   const cold = now - fxWalkAt > 700, dt = cold ? 0 : Math.min(80, now - fxWalkAt), first = !fxWalkInit; fxWalkAt = now; fxWalkInit = true;
   for (const w of walkers){
-    const tf = w.asleep ? 0 : 1, tg = w.moving ? 1 : 0;
+    const tf = w.asleep && !w.out ? 0 : 1, tg = w.moving ? 1 : 0;   // who sleeps outside on a mat stays in sight
     if (w._fa === undefined) w._fa = cold || first ? tf : 0; else if (cold) w._fa = tf;
     if (w._g === undefined || cold) w._g = tg;
     if (w._fa !== tf){ w._fa = tf > w._fa ? Math.min(1, w._fa + dt / 380) : Math.max(0, w._fa - dt / 380); fxLive = true; }
