@@ -612,7 +612,8 @@ function staff(I){
         // a builder who was free and was just handed a place in this count (a household craft too) stays at the site: before,
         // every count gave a different free person the place and the site, and the builders swapped every few seconds
         const b = [...at.keys()].find(q => at.get(q).includes(p)), l = b && at.get(b), fresh = !hadJob.has(p.id);
-        if (l && !b.prio && (fresh || (!b.at && !b.keep))){ l.splice(l.indexOf(p), 1); use.push(p); if (fresh) p.job = 0; else pulled.set(b, s); }
+        if (fresh && !(b && b.prio)){ if (l) l.splice(l.indexOf(p), 1); p.job = 0; use.push(p); continue; }   // wherever the count put them, even off the list of places
+        if (l && !b.prio && !b.at && !b.keep){ l.splice(l.indexOf(p), 1); use.push(p); pulled.set(b, s); }
       }
       use.push(...pool.splice(0, n - use.length));
       // for a site that ends the shortage, or one called with the conch, even a place of a short good gives hands, never one
