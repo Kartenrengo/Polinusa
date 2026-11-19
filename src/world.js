@@ -439,17 +439,23 @@ function check(kind, I, x, y, ignoreId){
     for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
     if (kind === 'halle' && I.settled && !nearCount(I, 'platz', x, y, K.near.r)) return 'Das Versammlungshaus gehört an den Dorfplatz';
   }
-  for (const b of I.buildings){ if (b.id === ignoreId || (ignoreId && b.at === ignoreId)) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + radiusOf(b)) * gapOf(I)) return 'Zu eng'; }   // (a moved house does not stand in the way of its own mat)
+  for (const b of I.buildings){ if (b.id === ignoreId || (ignoreId && b.at === ignoreId)) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + radiusOf(b)) * gapOf(I) || floorsMeet(kind, x, y, b)) return 'Zu eng'; }   // (a moved house does not stand in the way of its own mat)
   return '';
 }
 /* A craft on a house mat (b.at) is small: it takes up room next to its house like anything else */
 /* Atoll islets are thin strips of sand: houses may stand closer to the water and closer together (people there build on every strip) */
 const ATOLL_EDGE = 2.5, gapOf = I => I.atoll ? .68 : .8;
+/* A dance floor is wide and flat: a circle does not hold it. Two floors, or a floor and anything that stands, must not touch
+   in its oval (half width, half depth). */
+const FLOOR_BOX = {tanzplatz:[20, 10.5]};
+const floorsMeet = (kind, x, y, b) => { const A = FLOOR_BOX[kind], B = FLOOR_BOX[b.kind]; if ((!A && !B) || b.at) return false;
+  const ka = A || [KINDS[kind].r * .9, KINDS[kind].r * .5], kb = B || [KINDS[b.kind].r * .9, KINDS[b.kind].r * .5];
+  return ((x - b.x) / (ka[0] + kb[0])) ** 2 + ((y - b.y) / (ka[1] + kb[1])) ** 2 < 1; };
 const CRAFT_R = 5, radiusOf = b => b.at ? CRAFT_R : KINDS[b.kind].r;
 /* Two buildings of one island that stand closer than the placement rule allows (see check) */
 function overlaps(I, slack = .5){
   const L = [], B = I.buildings;
-  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++){ if (B[i].at === B[j].id || B[j].at === B[i].id) continue; const d = Math.hypot(B[i].x - B[j].x, B[i].y - B[j].y), lim = (radiusOf(B[i]) + radiusOf(B[j])) * gapOf(I); if (d < lim - slack) L.push([B[i], B[j], d, lim]); }
+  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++){ if (B[i].at === B[j].id || B[j].at === B[i].id) continue; const d = Math.hypot(B[i].x - B[j].x, B[i].y - B[j].y), lim = (radiusOf(B[i]) + radiusOf(B[j])) * gapOf(I); if (d < lim - slack || (FLOOR_BOX[B[i].kind] && FLOOR_BOX[B[j].kind] && floorsMeet(B[i].kind, B[i].x, B[i].y, B[j]))) L.push([B[i], B[j], d, lim]); }
   return L;
 }
 function findSpot(I, kind, from){

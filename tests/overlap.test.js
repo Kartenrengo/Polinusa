@@ -55,6 +55,11 @@ const {PAGE} = require('./lib');
       { const J = isl('heimat'), pz = J.buildings.find(q => q.kind === 'platz'), a = {kind:'haus', x:pz.x, y:pz.y - 5, id:90001}, c = {kind:'speicher', x:pz.x + 3, y:pz.y - 5, id:90002};
         const all = [[c, J], [pz, J], [a, J]]; const flat = o => o.kind && FLAT.has(o.kind) ? 0 : 1; all.sort((x, y) => flat(x[0]) - flat(y[0]) || x[0].y - y[0].y || x[0].x - y[0].x || (x[0].id || 0) - (y[0].id || 0));
         want(all[0][0] === pz && all[1][0] === a && all[2][0] === c, 'draw: the plaza is not drawn first'); }
+      // dance floors are wide ovals: a second one beside the first, or one over a house, is refused; the chief's house stands on the ground
+      { const I = isl('heimat'), d0 = findSpot(I, 'tanzplatz', I.anchor || I.center);
+        if (d0){ const t = addB(I, 'tanzplatz', d0, {}, -9); for (const dx of [26, 30, 34]) want(!!check('tanzplatz', I, d0.x + dx, d0.y), `dance floor: a second one ${dx} to the side is allowed`);
+          want(!!check('haus', I, d0.x + 22, d0.y + 2), 'dance floor: a house on its edge is allowed'); I.buildings = I.buildings.filter(q => q !== t); }
+        want(!/#8E8A80/.test(artOf('fale', {roof:ROOF_NEW})) && !KINDS.fale.water, "chief's house: still on a platform or in the water"); }
       out.push('BAD: ' + (bad.join('; ') || 'none')); return out.join('\n');
     } catch (e){ return 'ERR ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' '); }
   });

@@ -2428,6 +2428,10 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   Pfahlhauses. Häuser direkt am Strand legen Sitz- und Schlafmatten Richtung Haus, Plätze am Feuer, am Erdofen und beim
   Plaudern rücken auf den Strand. Wer doch einmal im seichten Wasser stehen geblieben ist, steht auf und geht ans Ufer.
   Der neue Test `strand` lässt ein Dorf mit Häusern rund um den Strand einen Tag und Abend lang leben und zählt nach.
+- **Häuptlingshaus an Land, ohne Plattform:** Es steht wie jedes Haus der Zeit auf dem Boden, nur größer, auf festgetretener
+  Erde. Die Steinplattform ist weg (erhöhte Plattformen kommen erst später, siehe „Was belegt ist“).
+- **Tanzplätze überlappen nicht mehr:** Ein Tanzplatz ist ein breites Oval. Er wurde wie ein Kreis geprüft, darum konnten zwei
+  Tanzplätze nebeneinander ineinander ragen. Jetzt hält jeder Tanzplatz sein Oval frei, auch gegen Häuser.
 - **Gedrückthalten** auf einem Haus zeigt eine Blase mit Name, Stufe als Punkte und Familie; bei einem Arbeitsplatz, was er macht.
 - **Jeder Arbeitsplatz in zwei Formen:** die kleine Hütte oder ein offenes Pultdach über einer Matte; der Speicher auch mit
   Kerbstamm-Leiter und Yams davor, die Fischerhütte auch mit Netz und Reuse. Das Zeichen der Arbeit bleibt (Nusshaufen,
