@@ -407,7 +407,11 @@ function routeCurve(r){
   }
   return r._cv;
 }
+/* the trade chains show on the map only while the fleet is open (the fleet bar, a canoe or a chain sheet, steering) */
+const cordsShown = () => barMode === 'fleet' || sheetKind === 'fleet' || sheetKind === 'route' || sheetKind === 'ship' || mode === 'steer';
+let cordsWas = false;
 function drawCords(c){
+  if (!cordsShown()) return;
   const far = lod === 'far';
   for (const r of routes){
     const cv = routeCurve(r), p = r._p;
@@ -438,8 +442,7 @@ function drawObjects(c, area){
   const swT = sw && trees < 320; if (baseL.at) baseL.at.swT = swT;
   for (const I of islands){
     if (!seen(I) || !boxIn(I.box, v)) continue;
-    const storm = cycloneOver(I);   // in a cyclone the palms bend and are drawn moving (drawStormSea)
-    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v) && !(storm && (b.kind === 'palme' || b.kind === 'pandanus'))) all.push([b, I]);
+    if (I.discovered) for (const b of I.buildings) if (ptIn(b.x, b.y, v)) all.push([b, I]);   // in a cyclone the palms bend where they stand (drawBending)
     for (const t of I.trees || []) if (ptIn(t.x, t.y, v)) all.push([t, null]);
   }
   // flat things (fields, plaza, spring) lie under everything; the rest from back to front, a tie broken by x and id so that
@@ -890,10 +893,6 @@ function drawStormSea(c, v, now){
     const p = new Path2D(); p.moveTo(x - 5, y); p.quadraticCurveTo(x, y - 3.2, x + 5, y + .4);
     stroke(c, p, '#F4FBFA', 1.4, null, 'round', k * .8 * Math.sin(f * Math.PI));
   }
-  // the palms bend with the wind and whip back and forth
-  const lean = clamp(W.tx, -1, 1) * .2 * k, list = S.I.buildings.filter(b => (b.kind === 'palme' || b.kind === 'pandanus') && ptIn(b.x, b.y, v)).sort((a, b) => a.y - b.y);
-  for (const b of list){ const sw = reduced ? 0 : Math.sin(now / 240 + b.id * 1.7) * .08 * k + Math.sin(now / 610 + b.id) * .04 * k;
-    c.save(); c.translate(b.x, b.y); c.rotate(lean + sw); c.translate(-b.x, -b.y); drawBuilding(c, b, S.I); c.restore(); }
 }
 function drawStorm(now){
   const k = cycloneLevel(), S = stormSpot(); if (k <= .01 || !S) return;
@@ -1141,8 +1140,8 @@ function drawPeople(c, v, now){
     drawSwayDeco(c, v, now);
     for (const I of islands){
       if (!seen(I) || !boxIn(I.box, vv)) continue;
-      const storm = cycloneOver(I), front = I.buildings.filter(b => !FLAT.has(b.kind) && !SWAY_KINDS.has(b.kind) && ptIn(b.x, b.y, grow(v, 60))), mine = [];
-      if (I.discovered) for (const b of I.buildings) if (SWAY_KINDS.has(b.kind) && ptIn(b.x, b.y, vv) && !(storm && (b.kind === 'palme' || b.kind === 'pandanus'))){ near.set(b, I); sway.add(b); mine.push(b); }
+      const front = I.buildings.filter(b => !FLAT.has(b.kind) && !SWAY_KINDS.has(b.kind) && ptIn(b.x, b.y, grow(v, 60))), mine = [];
+      if (I.discovered) for (const b of I.buildings) if (SWAY_KINDS.has(b.kind) && ptIn(b.x, b.y, vv)){ near.set(b, I); sway.add(b); mine.push(b); }
       if (swT) for (const t of I.trees) if (t.st !== 1 && ptIn(t.x, t.y, vv)){ near.set(t, null); sway.add(t); mine.push(t); }
       for (const q of mine){
         for (const b of front) if (!near.has(b) && b.y > q.y && b.y - q.y < KINDS[b.kind].hy * ((b.v && b.v.scale) || 1) + 26 && Math.abs(b.x - q.x) < KINDS[b.kind].r + 12) near.set(b, I);
@@ -1159,6 +1158,22 @@ function drawPeople(c, v, now){
     }
     for (const t of I.trees) if (t.st !== 1 && !near.has(t) && t.y > w.y && t.y - w.y < 24 && Math.abs(t.x - w.x) < 9) near.set(t, null);
   }
+  // whatever is drawn again here paints over what stands in front of it unless that is drawn again too: so everything that
+  // stands in front of a redrawn thing and overlaps it joins, until nothing more does (a house in front of a swaying palm or
+  // of a house someone walks behind used to vanish behind them)
+  { const box = o => o.kind ? [KINDS[o.kind].r + 5, KINDS[o.kind].hy * 2 * ((o.v && o.v.scale) || 1) + 8] : [9, 26 * (o.s || 1)], vv = grow(v, 40), cand = [];
+    for (const I of new Set([...near.values()].filter(Boolean))){
+      for (const b of I.buildings) if (!FLAT.has(b.kind) && !near.has(b) && !b._fx && ptIn(b.x, b.y, vv)) cand.push([b, I]);
+      for (const t of I.trees || []) if (t.st !== 1 && !near.has(t) && ptIn(t.x, t.y, vv)) cand.push([t, null]);
+    }
+    let todo = [...near.keys()];
+    for (let round = 0; round < 6 && todo.length && cand.length; round++){
+      const next = [];
+      for (const o of todo){ const [ow] = box(o);
+        for (let i = cand.length - 1; i >= 0; i--){ const [q, I] = cand[i]; if (q.y <= o.y) continue; const [qw, qh] = box(q);
+          if (Math.abs(q.x - o.x) < ow + qw && q.y - qh < o.y){ near.set(q, I); next.push(q); cand.splice(i, 1); } } }
+      todo = next;
+    } }
   for (const b of near.keys()) items.push([b.y, b]);
   items.sort((a, b) => a[0] - b[0] || a[1].x - b[1].x || (a[1].id || 0) - (b[1].id || 0));
   const sh = sunShadow();
@@ -2577,6 +2592,7 @@ function blitLayer(L){
 }
 const stale = now => baseL.at && baseL.at.z !== cam.z && now - lastCamMove > 140;
 function draw(now){
+  { const cs = cordsShown(); if (cs !== cordsWas){ cordsWas = cs; baseL.dirty = true; } }   // the chains come and go with the fleet
   frameNo++; fxLive = false; worldNow = now; fxBuildScan(now);
   if (!fresh(baseL, now)) renderLayer(baseL, drawBase);
   if (!fresh(fogL, now)) renderLayer(fogL, drawFog);
@@ -2606,7 +2622,9 @@ function windLean(x, y, now, lag, amp, ripple){
    comes a moment later. Two drawings with a clip at the cut, joined so the trunk does not break. */
 function drawBending(c, w, now, near, amp, H){
   const sh = w._shake && now - w._shake < 900 ? Math.sin((now - w._shake) / 55) * .22 * (1 - (now - w._shake) / 900) : 0;   // a palm shaken by a double tap
-  const lean = windLean(w.x, w.y, now, 0, amp * .55) + sh * .4, lag = windLean(w.x, w.y, now, .22, amp * 1.25) + sh, s = H * .5;
+  // in a cyclone over this island the palms bow far with the wind and whip back and forth, where they stand
+  const sk = near && cyclone && cycloneOver(near) ? cycloneLevel() : 0, gust = sk ? clamp(wind().tx, -1, 1) * .32 * sk + (reduced ? 0 : Math.sin(now / 240 + (w.id || w.x) * 1.7) * .07 * sk) : 0;
+  const lean = windLean(w.x, w.y, now, 0, amp * .55) + sh * .4 + gust * .6, lag = windLean(w.x, w.y, now, .22, amp * 1.25) + sh + gust, s = H * .5;
   const draw = () => { if (w.kind) drawBuilding(c, w, near); else drawTree(c, w); };
   c.save(); c.translate(w.x, w.y); c.transform(1, 0, -lean, 1, 0, 0); c.beginPath(); c.rect(-90, -s - .8, 180, s + 90); c.clip(); c.translate(-w.x, -w.y); draw(); c.restore();
   c.save(); c.translate(w.x, w.y); c.transform(1, 0, -lag, 1, (lean - lag) * s, 0); c.beginPath(); c.rect(-90, -s - 160, 180, 160); c.clip(); c.translate(-w.x, -w.y); draw(); c.restore();
@@ -2664,12 +2682,14 @@ function seaRows(ctx, P, v, ox, oy, t, a){
 /* ---------- the reef: the swell rolls in towards it, breaks in foam and fades, one stretch after the other */
 function drawReefSurf(c, I, p, sk, now){
   const R = Math.max(I.box.x1 - I.box.x0, I.box.y1 - I.box.y0) / 2 || 100, cx = I.center.x, cy = I.center.y, per = (2900 - 1700 * sk) * 1.6, seed = (I.center.x * .013) % 1;
-  stroke(c, p.ring, '#F4EEDC', 5 + 8 * sk, null, null, .05 + .2 * sk);
-  for (let j = 0; j < 3; j++){
-    const f = ((now / per) + j / 3 + seed) % 1, e = Math.sin(Math.PI * f), env = e * e, s = 1 + (1 - f) * (6 + 8 * sk) / R;   // from the open sea to the reef
+  stroke(c, p.ring, '#F4EEDC', 5 + 2.5 * sk, null, null, .05 + .1 * sk);
+  // in a storm more and shorter breakers, not fatter ones: thick dashed strokes with round ends read as pale bars
+  const n = sk > .05 ? 5 : 3, dash = sk > .05 ? [22, 46] : [38, 82];
+  for (let j = 0; j < n; j++){
+    const f = ((now / per) + j / n + seed) % 1, e = Math.sin(Math.PI * f), env = e * e, s = 1 + (1 - f) * (6 + 5 * sk) / R;   // from the open sea to the reef
     c.save(); c.translate(cx, cy); c.scale(s, s); c.translate(-cx, -cy); c.lineDashOffset = -j * 41 - now / 260;
-    stroke(c, p.ring, '#F4EEDC', 2.4 + env * (4 + 5 * sk), [38, 82], 'round', env * (.3 + .22 * sk));   // the white water, thickest as the swell breaks
-    stroke(c, p.ring, '#FBF8EC', 1 + .5 * f, [38, 82], 'round', Math.max(0, f - .25) * 1.34 * (1 - f) * 2.2 * (.5 + .5 * sk) + env * .2);   // the crisp crest that runs ahead
+    stroke(c, p.ring, '#F4EEDC', 2.4 + env * (4 + 1.2 * sk), dash, 'round', env * (.3 + .1 * sk));   // the white water, thickest as the swell breaks
+    stroke(c, p.ring, '#FBF8EC', 1 + .5 * f, dash, 'round', Math.max(0, f - .25) * 1.34 * (1 - f) * 2.2 * (.5 + .5 * sk) + env * .2);   // the crisp crest that runs ahead
     c.restore();
   }
   c.lineDashOffset = -(now / (700 - 450 * sk)) % 3.7; stroke(c, p.ring, '#F4EEDC', 2, [.1, 3.6], 'round', .3 + .2 * sk); c.lineDashOffset = 0;

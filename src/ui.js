@@ -100,7 +100,7 @@ function fleetItems(){
 const fleetSig = () => own().map(s => s.id + s.state + s.route + (s.hungry ? 1 : 0) + s.name).join() + '|' + routes.map(r => r.a + r.b + r.knots).join();
 /* the groups of the build menu: what a building is for */
 const BGROUPS = [{id:'wohnen', n:'Wohnen'}, {id:'essen', n:'Essen', long:'Essen und Wasser'}, {id:'roh', n:'Rohstoffe'}, {id:'werk', n:'Handwerk'}, {id:'meer', n:'Meer'}, {id:'deco', n:'Schmuck'}];
-const BG_OF = {wohnen:'haus pfahl speicher halle fale ahnenhaus sternhaus', essen:'ernte taro yams pulaka pansammler bananen nussbaum baum palme huehnerhof pferch umu gaergrube quelle brunnen kavagarten', roh:'faeller pflanzer harzer kalkbrenner kurkumagarten garten schnur pandanus', werk:'toepfer beil klingen flecht schmuck oelhuette weberin malerin hakenmacher schnitzer duftoel klopf', meer:'fisch taucher steg werft'};
+const BG_OF = {wohnen:'haus speicher halle fale ahnenhaus sternhaus', essen:'ernte taro yams pulaka pansammler bananen nussbaum baum palme huehnerhof pferch umu gaergrube quelle brunnen kavagarten', roh:'faeller pflanzer harzer kalkbrenner kurkumagarten garten schnur pandanus', werk:'toepfer beil klingen flecht schmuck oelhuette weberin malerin hakenmacher schnitzer duftoel klopf', meer:'fisch taucher steg werft'};
 const BG_MAP = Object.fromEntries(Object.entries(BG_OF).flatMap(([g, l]) => l.split(' ').map(k => [k, g])));
 const buildGroup = k => DECO.includes(k) ? 'deco' : BG_MAP[k] || 'roh';
 function renderBuildBar(){
@@ -265,9 +265,14 @@ $('newsBtn').addEventListener('click', () => { if (newsOpen() && $('newsList').c
 $('toast').addEventListener('click', () => { if (news.length && news[0].msg === $('toast').textContent) openNews(); else foldToast(); });
 
 /* ---------- placing and moving */
+/* There is one house: set in the shallow water of the lagoon it stands on stilts (a Pfahlhaus), on land it is a hut. While
+   placing or moving, the ghost turns into the one or the other as it crosses the shore. */
+const homeKindAt = (I, p) => !landAt(I, p) && inLagoon(I, p) ? 'pfahl' : 'haus';
 function ghostRender(){
   if (!placing){ requestDraw(); return; }
-  const I = isl(placing.island), msg = check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
+  if (placing.kind === 'haus' || placing.kind === 'pfahl'){ const k = homeKindAt(isl(placing.island), placing);
+    if (k !== placing.kind){ placing.kind = k; if (mode === 'place') placing.v = variant(k); else placing.v = {...placing.v, shape:variant(k).shape}; showPlaceBar(); } }
+  const I = isl(placing.island), msg = placing.kind === 'pfahl' && !unlocked('pfahl') ? 'Auf Pfählen im Wasser bauen geht ab 20 Menschen' : check(placing.kind, I, placing.x, placing.y, placing.moveId), ok = !msg;
   if ((placing.kind === 'steg' || placing.kind === 'werft') && ok) placing.v = {...placing.v, rot:seaward(I, placing)};   // the jetty points to the water
   placing.ok = ok; placing.msg = msg;
   // workshops that need plants close by can stand anywhere, but the bar says whether they will run
@@ -369,7 +374,7 @@ function confirmPlace(){
   const I = isl(placing.island), K = KINDS[placing.kind];
   // the village goes on while the ghost stands there: the elders may have built on this very spot since it was last checked
   const why = check(placing.kind, I, placing.x, placing.y, placing.moveId); if (why){ ghostRender(); toast(why + '.', 2600, false); return; }
-  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); moveCraft(I, b); I.staff = null; syncWalkers(); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
+  if (mode === 'move'){ const b = findB(placing.moveId); if (b){ if ((b.kind === 'haus' || b.kind === 'pfahl') && placing.kind !== b.kind){ b.kind = placing.kind; I._lg = null; } b.x = fx(placing.x); b.y = fx(placing.y); b.v = placing.v; clearStumps(I, b); moveCraft(I, b); I.staff = null; syncWalkers(); } endPlace(); invalidate(); save(); toast(`${K.n} versetzt.`, 2600, false); return; }
   const c = costOf(placing.kind, I); if (!canPay(I, c)){ toast(`Zu wenig ${lacking(I, c)}.`, 2600, false); return; }
   // nothing stands at once: a building site waits for builders, a young plant grows
   pay(I, c); const b = addB(I, placing.kind, placing, placing.v, tick); if (K.bt) b.bt = K.bt; clearStumps(I, b);

@@ -57,6 +57,17 @@ const {PAGE} = require('./lib');
       want(!!check('pfahl', H, H.center.x, H.center.y), 'stilt: stands on dry land');
       delete hp[0].v.shape; renderAll();   // an old save without a look: drawn by its number
       restore(serialize()); const H2 = isl('heimat'); want(H2.buildings.filter(q => q.kind === 'pfahl').length === hp.length, 'stilt: lost in the save');
+      // 4b. one house: the build list has only the hut; set in the lagoon it stands on stilts, moved back to land it is a hut
+      { const H = isl('heimat'); want(!ORDER.includes('pfahl') && ORDER.includes('haus'), 'one house: the stilt house is still its own entry in the build list');
+        stats.peakPop = Math.max(stats.peakPop || 0, 25); setActive('heimat'); Object.assign(H.stock, {holz:200, dach:200, schnur:200});
+        const wet = findSpot(H, 'pfahl', startSpot(H, KINDS.pfahl)), dry = findSpot(H, 'haus', H.anchor || H.center);
+        startPlace('haus'); placing.x = wet.x; placing.y = wet.y; ghostRender(); want(placing.kind === 'pfahl' && placing.ok, `one house: in the lagoon the ghost is ${placing.kind}, ok ${placing.ok}`);
+        placing.x = dry.x; placing.y = dry.y; ghostRender(); want(placing.kind === 'haus' && placing.ok, `one house: on land the ghost is ${placing.kind}`);
+        placing.x = wet.x; placing.y = wet.y; ghostRender(); const n0 = H.buildings.filter(q => q.kind === 'pfahl').length; confirmPlace(); if (placing) endPlace();
+        want(H.buildings.filter(q => q.kind === 'pfahl').length === n0 + 1, 'one house: setting it in the water did not build a stilt house');
+        const st = H.buildings.filter(q => q.kind === 'pfahl').pop(); delete st.bt; select(st); startMove && startMove(st);
+        if (placing){ const d2 = findSpot(H, 'haus', H.anchor || H.center); placing.x = d2.x; placing.y = d2.y; ghostRender(); confirmPlace(); if (placing) endPlace(); want(st.kind === 'haus', 'one house: a stilt house moved onto land stays on stilts'); }
+        closeSheet(); }
       // 5. thin islets take the usual buildings: how much of an islet is open ground, on thirty atolls
       const kinds = ['haus', 'ernte', 'fisch', 'pansammler', 'schnur', 'umu', 'speicher', 'taucher', 'werft', 'flecht'];
       let ok = 0, all = 0, lands = 0, miss = 0;

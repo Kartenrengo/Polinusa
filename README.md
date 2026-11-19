@@ -2386,3 +2386,18 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
 - **Vermutet:** die genaue Form der Lapita-Pfahlhäuser (Grundriss und Dach sind nicht erhalten; die drei Formen folgen späteren
   Häusern der Region), Schlafen auf Matten vor dem Haus und der Abendkreis am Feuer (aus späterer Ethnographie, für die Lapita
   nicht direkt belegt).
+
+## Ein Haus, ruhige Sturmwellen, Handelswege nur in der Flotte (Version 112)
+
+- **Nur noch ein Haus in der Bauleiste.** Wo man es hinstellt, entscheidet: an Land eine Hütte, im flachen Wasser der Lagune
+  steht dasselbe Haus auf Pfählen. Der Umriss wechselt beim Schieben sofort. Im Wasser geht es ab 20 Menschen, wie bisher das
+  Pfahlhaus. Versetzt man ein Haus vom Wasser an Land oder umgekehrt, wechselt es mit. Die Aufgabe „Lagune“ heißt jetzt: eine
+  Hütte ins flache Wasser stellen.
+- **Sturm ohne Wellenflackern:** Die Brandung am Riff war im Sturm aus dicken, gestrichelten Bändern gezeichnet, die
+  übereinander sprangen. Jetzt laufen mehr, dünnere Brecher nacheinander heran. Palmen werden im Sturm nicht mehr in einem
+  eigenen Durchgang gezeichnet (sie lagen dabei über Häusern); sie biegen sich an ihrem Platz mit den Böen.
+- **Handelswege nur in der Flotte:** Die Linien der Handelsketten zwischen den Inseln erscheinen nur, wenn die Flotten-Leiste,
+  ein Kanu, eine Handelskette oder das Steuern offen ist. Sonst bleibt die Karte frei.
+- **Gebäude verschwinden nicht mehr hinter anderen:** Geht jemand an einem Haus vorbei, wird nur dieser Ausschnitt neu
+  gezeichnet. Ein Gebäude oder Baum davor, das in den Ausschnitt ragte, fehlte dabei manchmal, und das hintere schob sich davor.
+  Jetzt kommen alle Dinge, die sich dort überdecken, in der richtigen Reihenfolge mit.

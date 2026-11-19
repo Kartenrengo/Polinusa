@@ -306,9 +306,17 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 
 - **Hausansicht scrollen:** Verstanden als „nicht scrollen müssen“. Die Hausansicht passt weiter ohne Scrollen; „Werk“ im
   Dorfzentrum ist jetzt knapp. Falls doch ein längeres, scrollbares Blatt gewünscht war: hier nachfragen.
-- **Pfahlhäuser je Insel:** Ein Kanuhaus bedient bis zu 8 Pfahlhäuser oder ferne Plätze, und es gibt nur eines je Insel. Früher
-  ließ sich mit mehr Stegen mehr bauen. Beobachten, ob 8 reicht.
+- ~~**Pfahlhäuser je Insel:** Ein Kanuhaus bedient bis zu 8 Pfahlhäuser oder ferne Plätze.~~ **entfallen in Version 111:**
+  Pfahlhäuser gehen ohne Grenze; seit Version 112 ist es dasselbe Haus wie an Land.
 - **Handelsblatt:** Mit vielen Waren auf beiden Seiten scrollt es noch etwas. Eine Idee: die Bildchen zum Dazunehmen einklappen.
 - **Alte Überlappungen:** Gebäude, die in alten Spielständen schon übereinander stehen, werden beim Laden nicht auseinandergerückt.
 - **Ware, die nirgends passt:** Sind beide Lager voll, bleibt die Ware an Bord und belegt Platz. Das Kanu fährt weiter.
 - ~~**Langer Bot:** Einmal meldete der Wächter „Bauleute 13-mal gewechselt“ an einem Haus.~~ **behoben in Version 109.**
+
+## Offen nach Version 112: Häuser erkennbar wie bei Anno
+
+- **Vorschlag geschickt, noch nicht gebaut:** Jede Hausstufe mit eigenem Umriss, Baustoff und Schmuck (Hütte, Familienhaus,
+  Handwerkerhaus, Seefahrerhaus, Häuptlingshaus), an Land wie auf Pfählen gleich erkennbar. Jeder Arbeitsplatz mit einem
+  festen Zeichen (Erntehaus: Nusshaufen und Kletterschlinge; Holzfäller: Stammstapel und Dechsel; Fischerhütte: Netz und
+  Fischgestell; Speicher: Rattenscheiben). Jedes Gebäude mit mindestens zwei Formen. Wartet auf die Antwort zu Dachfarbe je
+  Stufe, Stufen-Bildchen, Plattform beim Häuptlingshaus und Reihenfolge.
