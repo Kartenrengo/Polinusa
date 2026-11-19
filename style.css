@@ -897,6 +897,14 @@ canvas.kor{width:auto;height:min(168px,24vh);max-width:100%;margin:4px auto}
 .place-inner{flex-wrap:wrap}
 .pflow{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-width:0}
 .pflow[hidden]{display:none}
+.pturn{flex:1 0 100%;display:flex;gap:8px}
+.pturn[hidden]{display:none}
+.pturn .btn{flex:1;max-width:140px}
+/* photo mode: the map alone, with a hint that fades out */
+body.photo::after{content:'Tippe auf die Karte: zurück';position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:8px 14px;border-radius:14px;background:rgba(244,236,216,.92);color:#2B1D14;font:800 14px/1 var(--font-ui);pointer-events:none;z-index:20;animation:phHint 4.2s forwards}
+@keyframes phHint{0%,70%{opacity:1}100%{opacity:0}}
+body.photo #toast{display:none!important}
+body.photo #hudbar,body.photo #top,body.photo #bottom,body.photo #place,body.photo #sheet,body.photo #quest,body.photo #seasonBtn,body.photo #newsList,body.photo #tip,body.photo #mascot,body.photo #lizard{display:none!important}
 .mlbl{font:800 9px/1 var(--font-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .marr{font:800 14px/1 var(--font-ui);color:var(--muted);flex:none}
 .mt{display:inline-flex;align-items:center;gap:2px;flex:none;padding:2px 4px;border-radius:8px;background:#E4EED6;box-shadow:inset 0 0 0 1.5px var(--ok);color:var(--ink)}

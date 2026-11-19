@@ -7,6 +7,7 @@ let awayQuiet = false, savedAt = 0, seed = 1, islands = [], routes = [], fogHole
 // landing: while the clan is still at sea and chooses where to settle (never saved); homeSwap: Talise was chosen as home
 let landing = null, homeSwap = 0;
 let tick = 0, nextId = 1, active = 'heimat';
+let photoMode = false;   // photo mode (schmuck.js): the bars are away
 let mode = 'idle', placing = null, selectedId = null, sheetKind = null, sheetData = null;
 let walkers = [], mana = 0;   // mana: the clan's standing, from feasts, gifts and a beautiful village
 const isl = id => islands.find(I => I.id === id);

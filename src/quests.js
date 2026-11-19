@@ -123,7 +123,7 @@ const STAGES = [
   {pop:0, n:'Ankunft', kinds:['haus', 'ernte', 'faeller', 'quelle', 'brunnen', 'fisch', 'pansammler', 'baum', 'palme']},
   {pop:8, n:'Gärten', kinds:['taro', 'yams', 'nussbaum', 'pulaka', 'pflanzer', 'speicher', 'huehnerhof', 'pandanus']},
   {pop:12, n:'Sennit und Erdofen', kinds:['schnur', 'umu', 'kalkbrenner', 'kurkumagarten', 'harzer']},
-  {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'hakenmacher', 'beil', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
+  {pop:20, n:'Töpfe und Werkzeug', kinds:['toepfer', 'hakenmacher', 'beil', 'pfahl', 'gaergrube', 'flecht', 'hibiskus', 'blumen', 'hecke', 'zaun', 'rand', 'pfad', 'gestell', 'fackel', 'werft', 'oc']},   // the canoe house comes when the master's houses want mats from the atolls
   {pop:30, n:'Ein Dorf', kinds:['oelhuette', 'dc', 'sternhaus', 'taucher', 'halle', 'pfosten']},
   {pop:40, n:'Zeit der Feste', kinds:['garten', 'klopf', 'pferch', 'trommel', 'tanzplatz', 'ahnenhaus', 'klingen', 'schmuck', 'bananen']},
   {pop:40, n:'Hawaiki', gate:() => hawaiki(), kinds:['kavagarten', 'weberin', 'malerin', 'duftoel', 'schnitzer', 'fale']},   // after the great voyage

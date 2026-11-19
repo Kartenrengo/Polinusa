@@ -86,9 +86,14 @@ const KINDS = {
   fackel:{n:'Fackel', s:'Fackel', on:['hoch','atoll'], bt:8, cost:{holz:1}, r:4, hy:14, beauty:1, info:'Leuchtet bei Festen am Abend.', vb:'-6 -19 12 21'},
   pfosten:{n:'Ahnenpfosten', s:'Pfosten', on:['hoch','atoll'], bt:24, cost:{holz:2}, r:6, hy:18, beauty:3, info:'Ein geschnitzter Pfosten mit dem Gesicht der Ahnen.', vb:'-7 -26 14 28'},
   trommel:{n:'Schlitztrommel', s:'Trommel', on:['hoch','atoll'], bt:24, cost:{holz:3}, r:8, hy:5, beauty:3, info:'Ein ausgehöhlter Stamm. Ruft das Dorf und gibt den Takt.', vb:'-13 -10 26 14'},
+  zaun:{n:'Flechtzaun', s:'Zaun', on:['hoch','atoll'], bt:0, cost:{holz:1}, r:3, hy:6, beauty:.2, rot:1, len:12, info:'Aus Pandanusstreifen geflochten.', vb:'-8 -11 16 13'},
+  hecke:{n:'Hibiskushecke', s:'Hecke', on:['hoch','atoll'], bt:6, cost:{}, r:3, hy:6, beauty:.25, rot:1, len:12, plant:true, info:'Hibiskus und Kroton in einer Reihe.', vb:'-9 -11 18 13'},
+  rand:{n:'Korallenrand', s:'Rand', on:['hoch','atoll'], bt:0, cost:{}, r:3, hy:2, beauty:.15, rot:1, len:12, info:'Weiße Korallensteine als Rand.', vb:'-8 -5 16 10'},
+  pfad:{n:'Trittsteine', s:'Trittsteine', on:['hoch','atoll'], bt:0, cost:{}, r:3, hy:1, beauty:.15, rot:1, len:12, info:'Flache Steine, auch bei Regen trocken.', vb:'-8 -5 16 10'},
+  gestell:{n:'Trockengestell', s:'Gestell', on:['hoch','atoll'], bt:0, cost:{holz:1}, r:5, hy:10, beauty:.2, rot:1, len:14, info:'Hier trocknen Matten und Fische.', vb:'-9 -14 18 16'},
   tanzplatz:{n:'Tanzplatz', s:'Tanzplatz', on:['hoch','atoll'], bt:30, cost:{holz:1, beile:1}, r:18, hy:2, beauty:4, info:'Festgestampfte Erde, mit Steinen eingefasst. Hier wird getanzt.', vb:'-21 -12 42 22'}
 };
-const ORDER = ['haus','ernte','faeller','quelle','brunnen','fisch','taro','yams','pulaka','pansammler','schnur','umu','pflanzer','speicher','huehnerhof','taucher','schnitzer','toepfer','hakenmacher','beil','flecht','oelhuette','gaergrube','harzer','kalkbrenner','kurkumagarten','weberin','malerin','duftoel','werft','sternhaus','pfahl','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','fale','ahnenhaus','palme','baum','nussbaum','pandanus','hibiskus','blumen','fackel','pfosten','trommel','tanzplatz','platz'];
+const ORDER = ['haus','ernte','faeller','quelle','brunnen','fisch','taro','yams','pulaka','pansammler','schnur','umu','pflanzer','speicher','huehnerhof','taucher','schnitzer','toepfer','hakenmacher','beil','flecht','oelhuette','gaergrube','harzer','kalkbrenner','kurkumagarten','weberin','malerin','duftoel','werft','sternhaus','pfahl','garten','klopf','pferch','bananen','kavagarten','klingen','schmuck','halle','fale','ahnenhaus','palme','baum','nussbaum','pandanus','hibiskus','blumen','hecke','zaun','rand','pfad','gestell','fackel','pfosten','trommel','tanzplatz','platz'];
 /* How the work goes with fewer hands than the place has room for. Zu zweit: one cuts while the other pulls the trunk aside,
    one steers the canoe while the other fishes; alone one gets a third done of what two do (felling trials with stone
    axes: with a helper bending the stem a tree needs three quarters fewer strokes). Hand in Hand: one prepares while the
@@ -135,7 +140,7 @@ const SPECS = {
 };
 const SPEC_OF_KIND = Object.fromEntries(Object.entries(SPECS).flatMap(([id, S]) => S.kinds.map(k => [k, id])));
 const FELL_WOOD = {palme:2, baum:3, nussbaum:4};   // a grown palm or breadfruit tree felled gives wood once, and what it bore is gone
-const DECO = ['hibiskus', 'blumen', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
+const DECO = ['hibiskus', 'blumen', 'hecke', 'zaun', 'rand', 'pfad', 'gestell', 'fackel', 'pfosten', 'trommel', 'tanzplatz'];   // only adorn the village: their own menu
 /* Canoes are built in the canoe house, take time, and then belong to the fleet. Free ones you steer yourself,
    others work a trade chain. Only the double canoe sails into the fog and eats provisions out there. */
 const SHIPS = {

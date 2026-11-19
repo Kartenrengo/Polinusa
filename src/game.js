@@ -1732,6 +1732,7 @@ function hitBuilding(p){
 function hitCord(p){ const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
+  if (photoIs()){ photoOff(); return; }
   if (landing && !landing.found){ landingTap(p); return; }
   if (mode === 'place' || mode === 'move'){ placing.x = p.x; placing.y = p.y; ghostRender(); return; }
   if (steerOnTap(p)) return;   // steering: every tap is the canoe's target (fleet.js)
@@ -1819,6 +1820,7 @@ $('buildList').addEventListener('click', e => { const b = e.target.closest('.bbt
   if (b.dataset.ship){ const sh = ships.find(q => q.id === +b.dataset.ship || q.id === b.dataset.ship); if (sh) steerShip(sh); return; }
   if (b.dataset.route){ openRoute(+b.dataset.route); return; }
   if (b.dataset.fleet){ openSheet('fleet'); return; }
+  if (b.dataset.photo){ photoOn(); return; }
   newKinds.delete(b.dataset.kind); b.classList.remove('new', 'hint'); startPlace(b.dataset.kind); });
 $('buildTabs').addEventListener('click', e => { const t = e.target.closest('[data-grp]'); if (!t) return; buildTab = t.dataset.grp; renderBuildBar(); });
 $('satBtn').addEventListener('click', () => openSheet('sat', {id:active}));

@@ -119,7 +119,7 @@ function renderBuildBar(){
   const list = all.filter(k => buildGroup(k) === buildTab);
   $('buildList').innerHTML = list.map(k => { const K = KINDS[k], ok = hasLife(I, k), c = costOf(k, I), L = K.life && LIFE[K.life];
     const cost = ok ? Object.entries(c).map(([g, v]) => `<i data-g="${g}" class="${groupHave(I, g) < v ? 'out' : ''}">${v}${icon(GROUPS[g] ? groupNext(I, g) : g)}</i>`).join('') || '<i>gratis</i>' : `<i class="why">Bring ${L.n} mit</i>`;
-    return `<button type="button" class="bbtn bk${newKinds.has(k) ? ' new' : ''}${ok ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${ok ? `kostet ${costText(c)}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span class="bn">${K.s}</span><span class="bc">${cost}</span></button>`; }).join('');
+    return `<button type="button" class="bbtn bk${newKinds.has(k) ? ' new' : ''}${ok ? '' : ' lack'}" data-kind="${k}" aria-pressed="false" aria-label="${K.n}, ${ok ? `kostet ${costText(c)}` : lifeMissing(I, k)}"><svg viewBox="${K.vb}" aria-hidden="true">${iconMarkup(k)}</svg><span class="bn">${K.s}</span><span class="bc">${cost}</span></button>`; }).join('') + (buildTab === 'deco' ? `<button type="button" class="bbtn" data-photo="1" aria-label="Fotomodus: alles ausblenden und das Dorf ansehen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.6 6.4H6.4L7.8 4.2H12.2L13.6 6.4H17.4V15.4H2.6Z" fill="#F3D9A0" stroke="#2B1D14" stroke-width="1" stroke-linejoin="round"/><circle cx="10" cy="10.6" r="3" fill="#9FB7C0" stroke="#2B1D14" stroke-width="1"/></svg><span class="bn">Foto</span></button>` : '');
   updateHUD();
 }
 function renameIsland(I, v){
@@ -317,7 +317,7 @@ function startSpot(I, K){
   return vc;
 }
 function startMove(b){
-  const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:b.v, moveId:b.id};
+  const I = islOfB(b.id); closeSheet(); mode = 'move'; placing = {kind:b.kind, island:I.id, x:b.x, y:b.y, v:{...b.v}, moveId:b.id};   // a copy: turning it must not turn the house before 'Hier hin'
   showPlaceBar(); invalidate(); ghostRender(); if (lod === 'far') flyTo(b.x, b.y, 1.6);
 }
 /* One compact row for the place bar: what a site takes (green in store, red missing) -> what it makes, and the crew */
@@ -350,7 +350,7 @@ function showPlaceBar(){
   const K = KINDS[placing.kind], I = isl(placing.island);
   $('placeName').textContent = (mode === 'move' ? 'Versetzen: ' : '') + K.n;
   const secs = Math.round(K.bt * TICK / 1000), c = costOf(placing.kind, I);
-  const facts = [Object.keys(c).length ? `Kostet ${costText(c)}` : '', K.plant ? `wächst ${secs} s` : `${secs} s Bauzeit`, K.crew ? `${K.crew} Arbeiter` : ''].filter(Boolean).join(', ');
+  const facts = [Object.keys(c).length ? `Kostet ${costText(c)}` : '', K.plant ? `wächst ${secs} s` : K.bt ? `${secs} s Bauzeit` : 'steht sofort', K.crew ? `${K.crew} Arbeiter` : ''].filter(Boolean).join(', ');
   const pf = mode === 'move' ? '' : miniFlow(I, K);
   $('placeFlow').innerHTML = pf; $('placeFlow').hidden = !pf;
   $('placeInfo').textContent = mode === 'move' ? 'Ziehen oder woanders hintippen.' : pf ? `${facts[0].toUpperCase() + facts.slice(1)}.` : `${facts[0].toUpperCase() + facts.slice(1)}. ${K.info}`;
@@ -358,12 +358,12 @@ function showPlaceBar(){
   if (mode !== 'move' && K.crew && !K.craft && !staffOf(I).free) $('placeInfo').textContent += ' Gerade ist niemand frei: Der Platz bleibt leer, bis eine Familie mehr da ist.';
   $('placeIc').setAttribute('viewBox', K.vb); $('placeIc').innerHTML = iconMarkup(placing.kind);
   $('placeOk').textContent = mode === 'move' ? 'Hier hin' : 'Bauen'; $('placeOk').disabled = false;
-  $('bottom').hidden = true; $('place').hidden = false; measure();
+  $('bottom').hidden = true; $('place').hidden = false; turnBar(); measure();
 }
 function endPlace(){
   if (placing && placing.founding) return;   // the meeting house must stand somewhere; there is no going back to sea
   const wasMove = mode === 'move'; mode = 'idle'; placing = null; ghostRender(); $('placeOk').disabled = false; $('placeOk').hidden = false; $('placeDone').hidden = false;
-  $('place').hidden = true; $('bottom').hidden = false; measure();
+  $('place').hidden = true; $('bottom').hidden = false; turnBar(); measure();
   for (const b of $('buildList').children) b.setAttribute('aria-pressed', 'false');
   if (wasMove) invalidate();
 }
@@ -379,8 +379,9 @@ function confirmPlace(){
   pay(I, c); const b = addB(I, placing.kind, placing, placing.v, tick); if (K.bt) b.bt = K.bt; clearStumps(I, b);
   invalidate(); updateHUD(); syncWalkers(); save(); checkQuest();
   const busy = !K.plant && !activeSites(I).includes(b);
-  toast(K.plant ? `${K.n} gepflanzt. Sie wächst jetzt.` : busy ? `Baustelle ${K.n}. Sie wartet auf Bauleute.` : `Baustelle ${K.n}. ${SITE_CREW} Bauleute holen Holz und bauen.`, 2600, false);
+  toast(K.plant ? `${K.n} gepflanzt. Sie wächst jetzt.` : !K.bt ? `${K.n} steht.` : busy ? `Baustelle ${K.n}. Sie wartet auf Bauleute.` : `Baustelle ${K.n}. ${SITE_CREW} Bauleute holen Holz und bauen.`, 2600, false);
   if (K.max || !canPay(I, c)){ endPlace(); return; }
+  if (K.rot){ lineNext(); return; }   // fine decorations go on in a line, turned the same way
   placing.v = variant(placing.kind); const p = findSpot(I, placing.kind, {x:placing.x + K.r * 2.2, y:placing.y}); if (p){ placing.x = p.x; placing.y = p.y; } ghostRender();
 }
 
@@ -1149,7 +1150,7 @@ function infoMarkup(I, b){
   }
   if (K.boost && !b.bt) more.push(tooled(I, K) ? `Mit ${GN[K.boost.k]} aus dem Lager geht es schnell. ${K.boost.k === 'schnur' ? 'Ein Netz' : 'Ein Beil'} hält für ${K.boost.per} ${GN[K.prod]}.` : `Ohne ${GN[K.boost.k]} geht es ${K.boost.slow === 2 ? 'nur halb so schnell' : 'langsamer'}.`);
   if (b.kind === 'fisch' && !b.bt && (unlocked('hakenmacher') || I.stock.haken > 0)) more.push((I.stock.haken || 0) > 0 ? `Mit Angelhaken aus Muschel fangen sie anderthalbmal so viel Fisch; ein Haken hält für etwa ${HOOK.per} Fische.` : 'Mit Angelhaken aus Muschel fingen sie mehr Fisch. Eine Familie kann sie schleifen.');
-  if (K.beauty && !b.bt) line += `<span>Schönheit +${K.beauty}</span>`;
+  if (K.beauty && !b.bt) line += `<span>Schönheit +${K.beauty < 1 ? 'ein wenig' : K.beauty}</span>`;
   if (b.kind === 'sternhaus') more.push('Stufe 1: Vögel zeigen, wo im Nebel Land liegt. Stufe 2: Wolken stehen über Inseln. Stufe 3: Der Proviant reicht länger, das Doppelkanu sieht weiter.',
     'Wer lernt, kommt eine Stufe weiter als sein Lehrer. Stufe 2 nach drei neuen Inseln, Stufe 3 nach sieben.');
   if (K.roof && !b.bt){ const age = roofAge(b); more.push(age < .34 ? 'Frisches Dach.' : age < .8 ? 'Das Dach wird grau.' : 'Altes Dach, bald erneuern.'); }
@@ -1270,7 +1271,7 @@ function renderSheet(){
     h += head('Menü', `Spielstand ${curSlot} · Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Spielstand ${curSlot} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu beginnen</button></span></div>`;
     else if (sheetData && sheetData.slotNew) h += `<div class="rowx"><span>Spielstand ${sheetData.slotNew} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="slotnew" data-n="${sheetData.slotNew}">Neu beginnen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="photo">Foto</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<p class="sec">Spielstände</p><ul class="list needs slots">${Array.from({length:SLOTS}, (_, i) => slotRow(i + 1)).join('')}</ul>` +
       keptMarkup() +
       `<p class="sec">Als Datei</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
@@ -1406,6 +1407,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'help'){ openSheet('intro'); return; }
     if (act === 'finale'){ openSheet('finale'); return; }
     if (act === 'chronik'){ openSheet('chronik'); return; }
+    if (act === 'photo'){ photoOn(); return; }
     if (act === 'sound'){ setSound(!opts.sound); renderSheet(); return; }
     if (act === 'music'){ setMusic(opts.music === false); renderSheet(); return; }
     if (act === 'mvol'){ cycleMusicVol(); renderSheet(); return; }

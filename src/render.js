@@ -539,7 +539,7 @@ function drawAnim(c, now){
   drawWork(c, v);
   if (!reduced) drawWeather(c, v, now);
   drawRainCall(c, v, now);
-  if (lod !== 'far') drawNeeds(c, v, now);
+  if (lod !== 'far' && !photoMode) drawNeeds(c, v, now);   // (photo mode: no bubbles)
   if (placing) drawGhost(c);
 }
 /* ---------- life on the water */
@@ -1130,7 +1130,7 @@ function drawSwayDeco(c, v, now){
     }
   }
 }
-const FLAT = new Set(['taro', 'platz', 'tanzplatz', 'pulaka', 'garten', 'kurkumagarten', 'kavagarten', 'brunnen', 'quelle']);
+const FLAT = new Set(['rand', 'pfad', 'taro', 'platz', 'tanzplatz', 'pulaka', 'garten', 'kurkumagarten', 'kavagarten', 'brunnen', 'quelle']);
 /* Figures bob and sway a little while they walk. Loads over the shoulder go behind the body, loads on the head in front. */
 function drawPeople(c, v, now){
   fxWalkers(now);

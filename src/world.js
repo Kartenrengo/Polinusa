@@ -377,7 +377,9 @@ const treeAt = (I, x, y, rad) => I.trees && I.trees.find(t => t.st !== 1 && Math
 const treesNear = (I, x, y, rad) => (I.trees || []).filter(t => t.st === 0 && t.w > 0 && Math.hypot(t.x - x, (t.y - y) * 1.25) < rad);
 const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => (Array.isArray(kind) ? kind.includes(b.kind) : b.kind === kind) && !b.bt && Math.hypot(b.x - x, b.y - y) < r).length;
 /* Beauty: what adorns an island, counted from finished decorations */
-const beautyOf = I => I.buildings.reduce((s, b) => s + (b.bt ? 0 : KINDS[b.kind].beauty || 0), 0) + Math.min(8, Math.floor(roadCells(I) / 25)) + Math.min(3, Object.keys(I.mot || {}).length);   // laid paths adorn the village too, and pots with patterns from elsewhere
+/* Beauty of the buildings: whole pieces count in full; fine pieces (fences, hedges, borders: beauty under 1) a fraction each, at most 6 in all */
+const fineBeauty = I => { let f = 0, s = 0; for (const b of I.buildings){ if (b.bt) continue; const q = KINDS[b.kind].beauty || 0; if (q < 1) f += q; else s += q; } return s + Math.min(6, Math.floor(f + 1e-9)); };
+const beautyOf = I => fineBeauty(I) + Math.min(8, Math.floor(roadCells(I) / 25)) + Math.min(3, Object.keys(I.mot || {}).length);   // laid paths adorn the village too, and pots with patterns from elsewhere
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
 function inLagoon(I, p){
   if (landAt(I, p)) return false;
@@ -442,5 +444,6 @@ function variant(kind, r = Math.random){
   else if (kind === 'taro') v.rot = Math.round(r() * 80);
   else if (kind === 'hibiskus') v.scale = fx(.85 + r() * .25);
   else if (kind === 'speicher') v.scale = fx(.75 + r() * .12);
+  else if (KINDS[kind].rot) Object.assign(v, {mirror:0, rot:0});   // fine decorations: turned in steps, placed in lines
   return v;
 }
