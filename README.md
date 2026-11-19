@@ -2475,3 +2475,23 @@ seit Version 110 in Stücken mit Balken.
   auf der Wetterseite und offenem Riff im Lee sind häufig; schwarzer Sand an Vulkanküsten.
 - **Vermutet:** Die Hausformen je Stufe (Wände, Pfosten, Firstenden, Lapita-Band) folgen späteren Häusern der Region; von
   Lapita-Häusern sind nur Pfostenlöcher erhalten.
+
+## Mehr Natürlichkeit: lange Arbeitsabfolgen, Weiler, weniger Zeichen, Wege (Version 114)
+
+- **Arbeit in langen Abfolgen:** Jede Arbeit hat jetzt 3 bis 8 Schritte in ihrer echten Reihenfolge statt zwei Bewegungen im
+  Wechsel. Jeder Arbeiter beginnt an einer anderen Stelle, ab und zu gibt es eine Pause (strecken, trinken, Schweiß abwischen).
+  Beispiele:
+  - **Töpfern:** Ton graben, kneten, in Wülsten aufbauen, mit Paddel und Amboss klopfen, mit dem Zahnstempel mustern,
+    die Muster mit Kalk füllen, im offenen Feuer brennen.
+  - **Sennit:** Kokosfasern lösen und klopfen, abziehen, auf dem Schenkel drehen, flechten, aufrollen.
+  - **Erdofen:** Steine heizen, Feuer, Blätter, Speisen einwickeln, mit Erde abdecken, öffnen.
+  - **Öl:** schälen, Nüsse spalten, raspeln, auspressen, abfüllen.
+  - Ebenso für Matten, Tapa, Haken, Beile, Klingen, Armringe, Felder, Erntehaus, Hühner und Schweine.
+- **Weiler statt Reihen:** Eine neue Hütte steht beim Bauen zuerst dort, wo ein kleiner Weiler wächst: neben zwei bis vier
+  Häusern. Ist ein Weiler voll, beginnt ein Stück weiter ein neuer. Verschieben kann man sie wie immer.
+- **Weniger Zeichen auf der Karte:** Wasser, Essen, Dach, Brennholz, Sturm, die Bitten der Alten, Wünsche der Familien und
+  Familien, die gehen wollen, zeigen sich immer. Alles andere erscheint erst nah herangezoomt, und dieselbe Sorge höchstens über
+  zwei Häusern; die Tafeln zeigen weiter alles.
+- **Kleine Wege:** Wer auf die Plattform eines Pfahlhauses oder den Boden eines Handwerkerhauses will, steigt auf den letzten
+  Schritten langsam hinauf, statt hochzuspringen. Töpfe, Schnurrollen und Speisepakete gehen an der Tragestange zum Speicher.
+  Kinder bleiben am Tag oft bei einem Elternteil, das arbeitet: Sie hocken neben der Matte und schauen zu.

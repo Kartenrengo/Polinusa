@@ -303,6 +303,13 @@ function startPlace(kind){
 }
 function startSpot(I, K){
   const vc = villageCenter(I);
+  // a new hut goes where a hamlet grows: beside a few houses (a family's houses stood together, two to four), not into a
+  // row; when the hamlets are full, a little way off, where a new one begins
+  if (K === KINDS.haus){ const hs = I.buildings.filter(b => b.kind === 'haus' || b.kind === 'fale'); let best = null, bs = -1e9;
+    for (const h of hs) for (let i = 0; i < 14; i++){ const far = i >= 10, a = i / (far ? 4 : 10) * TAU + hsh(h.id, i) * .6, d = far ? 52 + hsh(h.id, i + 7) * 14 : 23 + hsh(h.id, i + 7) * 9, p = {x:h.x + Math.cos(a) * d, y:h.y + Math.sin(a) * d * .75};
+      if (check('haus', I, p.x, p.y)) continue; const n = hs.filter(q => Math.hypot(q.x - p.x, q.y - p.y) < 40).length;
+      const sc = (n >= 1 && n <= 3 ? 100 : n >= 4 ? -200 : 40) - Math.hypot(p.x - vc.x, p.y - vc.y) * .5 + hsh(h.id + i, 3) * 15; if (sc > bs){ bs = sc; best = p; } }
+    if (best) return best; }
   const pick = list => list.reduce((m, q) => Math.hypot(q.x - vc.x, q.y - vc.y) < Math.hypot(m.x - vc.x, m.y - vc.y) ? q : m);
   // a spring by the stream, where it comes closest to the village
   if (K.spring && I.river){ const q = pick(I.river.slice(1, -1)); for (const d of [12, 16, 20, -12, -16, -20]){ const p = {x:q.x + d, y:q.y + d * .3}; if (!check('quelle', I, p.x, p.y)) return p; } return {x:q.x + 14, y:q.y}; }

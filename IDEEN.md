@@ -325,9 +325,14 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 ## Offen nach Version 113
 
 - ~~**Reddit-Beitrag zur Spielgröße**~~ **abgeglichen** (Voidstruck, 299 kB): siehe README, Version 113.
-- **Arbeiter auf der Plattform** springen beim Ankommen hinauf; eine Leiter-Bewegung fehlt noch.
+- ~~**Arbeiter auf der Plattform** springen beim Ankommen hinauf.~~ **Version 114:** Sie steigen langsam hinauf; eine echte Leiter-Bewegung (Hände an den Sprossen) fehlt noch.
 - **Namen kürzen (Terser)** würde die Datei noch etwa halbieren; das Werkzeug war hier nicht erreichbar.
 - **Hauswerk-Liste im Haus** ist mit 17 Arten lang. Nur die Arten zeigen, die auf der Insel gehen, tut sie schon; beobachten,
   ob die Wahl auf dem Handy übersichtlich bleibt.
 - **Clan-Dörfer** haben noch eigene Werkstätten (Schmuck, Flechten, Klingen); sie könnten auch Hauswerk an den Häusern zeigen.
 - **Test `build` wackelt:** „called workplace changed its people“ kommt in etwa einem von vier Läufen, schon seit Version 112. Ursache suchen.
+
+## Offen nach Version 114
+
+- **Ebbe und Flut** (Vorschlag 1) und **die Natur antwortet** (Vorschlag 2) sind noch nicht gebaut.
+- **Häuser leicht gedreht:** Die Zeichnungen sind von schräg vorn; drehen geht nur durch Spiegeln. Weiler wirken trotzdem unregelmäßig.

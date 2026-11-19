@@ -52,18 +52,36 @@ function answerGifts(){
 /* What each kind of work looks like (see workFx). Every activity has at least two looks, taken in turn, one per bout:
    the field is dug and the taro lifted, the pot built up in coils, beaten with paddle and anvil and stamped with the toothed
    stamp of Lapita, the bark peeled and beaten, the nut husked and opened. */
-const WORK_FX = {hakenmacher:['drill', 'file'], schnitzer:['hollow', 'polish'], yams:['dig', 'mound'], umu:['leaf', 'stones', 'wrap'], kalkbrenner:['pound', 'fire'],
-  kurkumagarten:['dig', 'lift'], huehnerhof:['feed', 'eggs'], weberin:['weave', 'strip'], malerin:['paint', 'rub'], duftoel:['stir', 'squeeze'], harzer:['tap', 'scrape'],
-  quelle:['water', 'pour'], brunnen:['water', 'pour'], sternhaus:['stars', 'point'], ernte:['husk', 'split'], oelhuette:['grate', 'squeeze'], bananen:['cut', 'trim'],
-  taro:['dig', 'lift'], pulaka:['dig', 'mulch'], kavagarten:['dig', 'pound'], toepfer:['pot', 'paddle', 'stamp'], beil:['grind', 'chip'], klingen:['knap', 'flake'],
-  flecht:['weave', 'strip'], schnur:['cord', 'braid'], klopf:['beat', 'peel'], schmuck:['drill', 'polish'], pferch:['feed', 'herd'], gaergrube:['leaf', 'wrap'],
-  pansammler:['pick', 'gather'], pflanzer:['plant', 'tamp']};
+const WORK_FX = {
+  // a pot: clay dug by the stream, kneaded, built up in coils, beaten with paddle and anvil, stamped with the toothed stamp, the
+  // stamped lines filled with white lime, fired in an open fire
+  toepfer:['dig', 'pound', 'pot', 'pot', 'paddle', 'stamp', 'rub', 'fire'],
+  // sennit: the husk soaked and beaten, the fibres stripped, rolled on the thigh, plaited, coiled up
+  schnur:['husk', 'beat', 'strip', 'cord', 'cord', 'braid', 'coil'],
+  flecht:['cut', 'strip', 'scrape', 'weave', 'weave', 'weave', 'trim'], weberin:['strip', 'scrape', 'strip', 'weave', 'weave', 'trim', 'rub'],
+  hakenmacher:['pick', 'chip', 'drill', 'drill', 'file', 'polish'], schnitzer:['chop', 'hollow', 'hollow', 'scrape', 'sand', 'polish'],
+  oelhuette:['husk', 'split', 'grate', 'grate', 'squeeze', 'squeeze', 'pour'], duftoel:['pick', 'stir', 'squeeze', 'stir', 'pour'],
+  klopf:['peel', 'scrape', 'beat', 'beat', 'beat', 'hang'], malerin:['stir', 'paint', 'paint', 'rub', 'paint', 'hang'],
+  // the earth oven: stones heated in a fire, food wrapped in leaves, laid on the stones, covered with leaves and earth, opened
+  umu:['stones', 'fire', 'leaf', 'wrap', 'mound', 'lift'], gaergrube:['peel', 'split', 'leaf', 'wrap', 'mound'],
+  harzer:['tap', 'scrape', 'tap', 'pour'], kalkbrenner:['gather', 'fire', 'fire', 'pound', 'pour'],
+  beil:['knap', 'chip', 'grind', 'grind', 'water', 'grind', 'polish'], klingen:['knap', 'flake', 'flake', 'file'], schmuck:['pick', 'chip', 'drill', 'grind', 'polish'],
+  ernte:['gather', 'husk', 'husk', 'split', 'pick'], pansammler:['pick', 'gather', 'cut'], bananen:['cut', 'trim', 'gather'],
+  taro:['dig', 'lift', 'trim', 'plant', 'mulch'], pulaka:['dig', 'mulch', 'lift', 'trim'], kavagarten:['dig', 'lift', 'pound'], kurkumagarten:['dig', 'lift', 'scrape', 'pound'],
+  yams:['dig', 'mound', 'lift', 'plant'], pflanzer:['dig', 'plant', 'tamp', 'water'],
+  huehnerhof:['feed', 'eggs', 'gather'], pferch:['feed', 'herd', 'water'], quelle:['water', 'pour', 'drink'], brunnen:['water', 'pour', 'drink'],
+  sternhaus:['stars', 'point', 'story']};
+/* now and then a pause in the work: a stretch, a drink, the sweat wiped off */
+const PAUSE_FX = ['stretch', 'drink', 'wipe'];
 /* the looks of the other kinds of work: in the forest, up the palm, in the shallows, at the fishers' hut, after a dive */
 const JOB_FX = {chop:['chop', 'wedge'], pull:['pull', 'coil'], climb:['climb', 'twist'], wade:['scoop', 'grope'], tie:['thatch', 'lash'], mend:['braid', 'thatch']};
 const FISH_FX = {net:['net', 'gut'], spear:['spear', 'stalk'], hang:['hang', 'turn']}, DIVE_FX = ['wring', 'coil'];
 const CLIMB_FX = new Set(['climb', 'twist']);
 /* one look after the other, now and then one skipped, so neighbours do not move in step */
 const lookOf = (L, w) => Array.isArray(L) ? L[(w.lk = (w.lk || 0) + 1 + (Math.random() < .25 ? 1 : 0)) % L.length] : L;
+/* the steps of a work in their order, from the first to the last and again; each worker starts somewhere else, and once in a
+   while there is a pause */
+const stepOf = (L, w) => { if (!Array.isArray(L)) return L; if (Math.random() < .07) return PAUSE_FX[Math.floor(Math.random() * 3)]; w.sq = ((w.sq ?? (pidOf(w) * 3)) + 1) % L.length; return L[w.sq]; };
 const SIT_FX = new Set(['stars', 'pot', 'grind', 'knap', 'weave', 'cord', 'drill', 'pound', 'husk', 'grate', 'paint', 'stir', 'net', 'file', 'polish', 'hollow', 'strip', 'rub', 'squeeze', 'braid', 'peel',
   'paddle', 'stamp', 'flake', 'chip', 'wrap', 'fire', 'gut', 'burn', 'wring', 'sand', 'split', 'stringshow', 'string', 'garland', 'story', 'drum', 'doze', 'nod', 'clap', 'kava', 'chat', 'eat', 'fan'])
 const JOB_LOAD = {hakenmacher:'muschel', schnitzer:'schale', umu:'paket', kalkbrenner:'stein', kurkumagarten:'taro', huehnerhof:'eier', weberin:'matte', malerin:'tapa', duftoel:'schale', pansammler:'frucht', harzer:'schale', quelle:'schale', brunnen:'schale', bananen:'frucht', ernte:'nuss', oelhuette:'schale', taro:'taro', pulaka:'taro', kavagarten:'taro', baum:'frucht', fisch:'fisch', toepfer:'topf', beil:'stein', flecht:'matte', schnur:'rolle', gaergrube:'paket', klingen:'obsidian', klopf:'tapa', pferch:'taro', schmuck:'muschel'};
@@ -813,6 +831,9 @@ function playLeg(I, w){
    for kava while the old tell the stories of the ancestors, at night everyone goes home. Children play on the plaza. */
 function villageLife(I, w){
   const ph = dayPhase(), near = (b, r, k) => { const a = Math.random() * TAU, q = dryAt(I, b.x + Math.cos(a) * r, b.y + 6 + Math.sin(a) * r * k, b); goTo(I, w, q.x, q.y); };
+  // a child by day often stays near a parent at work: squats beside the mat and watches, or trails behind
+  if (w.child && ph > .2 && ph < .6 && Math.random() < .35){ const p0 = personOf(w), par = p0 && walkers.find(q => q !== w && !q.child && q.isl === w.isl && !q.boat && !q.swim && !q.paddle && q.job && personOf(q) && personOf(q).h === p0.h);
+    if (par){ const q = dryAt(I, par.x + (Math.random() < .5 ? -1 : 1) * (4 + Math.random() * 3), par.y + 2 + Math.random() * 2, par); goTo(I, w, q.x, q.y); w.left = q.x > par.x; w.sit = Math.random() < .6; w.wait = 4000 + Math.random() * 4000; if (w.sit){ w.busy = {x:q.x, y:q.y}; w.fx = 'nod'; } return true; } }
   const p = personOf(w), f = p && famOf(I, p.h), home = f && f.home && findB(f.home), hall = I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
   const there = L => { w.busy = {x:w.tx, y:w.ty}; w.fx = lookOf(L, w); };   // what they do once they sit there
   // dusk: work is done, people come home. Some sit in a ring round the village fire on the plaza, talking, the old telling
@@ -951,7 +972,7 @@ function jobLeg(I, w, j){
     if (!w.bout){
       w.bout = true;
       // each kind of work looks its own (see workFx): crafts are done sitting on a mat, facing the workplace
-      w.fx = JOB_FX[T] ? lookOf(JOB_FX[T], w) : T === 'carry' || T === 'learn' ? lookOf(WORK_FX[j.b.kind], w) || null : null;
+      w.fx = JOB_FX[T] ? lookOf(JOB_FX[T], w) : T === 'carry' || T === 'learn' ? stepOf(WORK_FX[j.b.kind], w) || null : null;
       w.busy = w.fx ? {x:w.x, y:w.y} : null; w.sit = T === 'wait' ? Math.random() < .5 : SIT_FX.has(w.fx); if (w.fx && T === 'carry') w.left = j.b.x < w.x - 1;
       if ((T === 'pull' || T === 'chop') && j.tree) w.left = j.tree.x < w.x;
       const bt = BOUT[T]; w.wait = bt ? bt[0] + Math.random() * bt[1] : w.fx ? 2800 + Math.random() * 2200 : 900 + Math.random() * 1600; w.boutT = w.wait;

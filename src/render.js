@@ -1244,7 +1244,9 @@ function drawPeople(c, v, now){
       c.restore(); continue;
     }
     const up = CLIMB_FX.has(w.fx) && w.busy && Math.hypot(w.x - w.busy.x, w.y - w.busy.y) < 3 ? climbH(w) : 0;
-    const deck = up ? 0 : w.deck ? (w.moving ? 0 : deckLift(w)) : w.job && w.job.b.at && Math.hypot(w.x - w.job.x, w.y - w.job.y) < 7 ? craftLift(w.job.b) + (w.y - w.job.b.y) : 0;   // at work, sitting or asleep up on the floor of a house
+    // up the ladder onto the floor of a house: the last steps of the way rise slowly, as one climbs, instead of a jump
+    const rise = d => smooth01(clamp((12 - d) / 9, 0, 1));
+    const deck = up ? 0 : w.deck ? (w.moving ? deckLift(w) * rise(Math.hypot(w.x - w.tx, w.y - w.ty)) : deckLift(w)) : w.job && w.job.b.at && craftLift(w.job.b) > 0 ? (craftLift(w.job.b) + (w.y - w.job.b.y)) * rise(Math.hypot(w.x - w.job.x, w.y - w.job.y)) : 0;   // at work, sitting or asleep up on the floor of a house
     if (deck){ c.save(); c.translate(0, -deck); restMat(c, w, sk, lk); c.restore(); } else restMat(c, w, sk, lk);   // the mat stays where it was while somebody gets up
     const P = walkerPose(w, now, up), dir = w.left ? -1 : 1;
     const gg = w._g ?? (w.moving ? 1 : 0), bob = P ? P.bob : gg > .02 && !reduced && !up ? -Math.abs(Math.sin(w.phase)) * (w.child ? 1 : .7) * gg : 0, rot = P ? P.rot + P.lean * dir : gg > .02 && !reduced && !up ? Math.sin(w.phase) * .05 * gg : 0;
@@ -1380,7 +1382,7 @@ function drawFalls(c, v, now){
 }
 /* Carrying, two ways: baskets on the head, or two on a pole across the shoulder (as on the islands with heavy loads of taro
    and nuts); a builder drags a log behind on a rope, the dust rising where it scrapes */
-const POLE_LOADS = new Set(['taro', 'frucht', 'nuss', 'eier', 'muschel', 'stein', 'obsidian']);
+const POLE_LOADS = new Set(['taro', 'frucht', 'nuss', 'eier', 'muschel', 'stein', 'obsidian', 'topf', 'rolle', 'paket']);   // two loads on a yoke over the shoulder
 /* ---------- the bodies, close up: two halves (wrap, and torso with head) that move a little against each other. Far away the
    whole figure is one bitmap as before. */
 const BODY_Z = 1.6, WAIST = 3.9, FINE_MAX = [0, 14, 28];   // how many people a frame get the fine body, by drawing quality
@@ -2166,17 +2168,21 @@ function drawNeeds(c, v, now){
   const s = clamp(1 / cam.z, 1, 1.8); bubbleHits = []; fxBubbleStart();
   const bub = (id, x, y, sc, rot, key, art) => fxBubble(c, id, x, y, sc, rot, key, art, now);   // a bubble with memory: it pops in, changes by cross-fade and fades out
   const hit = (x, y, go) => bubbleHits.push({x, y:y - 7.5 * s, r:Math.max(8 * s, 12 / cam.z), go});
+  // Fewer signs, more village: what is urgent (water, food, a roof, a storm, the elders, a family leaving) always shows; the
+  // rest only close up, and of each kind of trouble at most two or three on an island (the sheets list them all)
+  const close = cam.z >= 2.2, URGENT = new Set(['wasser', 'essen', 'nahrung', 'dach', 'haus', 'brenn']);
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
-    let crewN = 0;   // places without people: two bubbles say it; a dozen of the same only clutter the village (the store lists them all)
+    let crewN = 0, idleN = 0;   // places without people: two bubbles say it; a dozen of the same only clutter the village (the store lists them all)
     for (const b of I.buildings){
       if (!b.idle || b.idle.why === 'full' || b.idle.why === 'way' || b.idle.why === 'rahui' || b.idle.why === 'grow' || b.idle.why === 'yam' || (b.idle.why === 'crew' && (lod === 'near' || ++crewN > 2)) || !ptIn(b.x, b.y, v)) continue;
+      if (!(b.idle.k && URGENT.has(b.idle.k)) && (!close || ++idleN > 3)) continue;
       const [key, art] = idleBubble(b.idle), bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, by = b.y - KINDS[b.kind].hy - 14 + bob, w = b.idle;
       bub('i' + b.id, b.x, by, s, 0, key, art); hit(b.x, by, () => w.why === 'use' && w.k ? needGo(I, w.k, b) : select(b));
     }
-    for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)){ bub('s' + b.id, b.x, b.y - 14, s, 0, 'need|soil', needBubble('soil')); hit(b.x, b.y - 14, () => select(b)); }
+    for (const b of I.buildings) if (close && KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)){ bub('s' + b.id, b.x, b.y - 14, s, 0, 'need|soil', needBubble('soil')); hit(b.x, b.y - 14, () => select(b)); }
     // over each house what its family lacks; over the meeting house a roof, while families sleep there without one
-    const list = needsOf(I).list, S = I.storm && tick < I.storm.at ? I.storm : null;
+    const list = needsOf(I).list, S = I.storm && tick < I.storm.at ? I.storm : null, seen = new Map();
     for (const b of I.buildings){
       if (!ptIn(b.x, b.y, v)) continue;
       // a cyclone on the way: over every loose roof a cord, shaking; a tap sends the people to the roofs
@@ -2186,7 +2192,9 @@ function drawNeeds(c, v, now){
       if ((b.kind === 'halle' && !b.bt || b.kind === 'platz' && !I.buildings.some(q => q.kind === 'halle' && !q.bt)) && roofless(I)) k = 'haus';
       else if (homeOk(I, b)){ const f = famOfHome(I, b); if (f){ const miss = famNeeds(I, f, list).filter(n => n.state === 'out'); if (miss.length) k = miss[Math.floor(now / 2400 + b.id) % miss.length].k; } }
       // a house that can rise shows the arrow, as in Anno
-      const up = !k && !I.autoUp && homeOk(I, b) && canUpgrade(I, b, list);
+      let up = !k && !I.autoUp && homeOk(I, b) && canUpgrade(I, b, list);
+      { const key = up ? 'up' : k, n = (seen.get(key) || 0) + 1; seen.set(key, n);
+        if (key && !URGENT.has(key) && (!close || n > 2)) { k = null; up = false; } else if (key && n > 3) { k = null; up = false; } }   // the same lack over every house says no more than over two
       if (!k && !up) continue;
       const bob = reduced ? 0 : Math.sin(now / 600 + b.id) * .8, sc = (b.v && b.v.scale) || 1;
       const by = b.y - KINDS[b.kind].hy * sc - 12 + bob;
