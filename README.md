@@ -39,7 +39,7 @@ jede Klammer zu ist (eine Klammer zu viel ließ den Browser still eine Regel ver
 danach) und ob keine Funktion zweimal heißt (die Dateien teilen sich einen Namensraum, die spätere ersetzt still die
 frühere). Dann sagen die
 Tests je „OK“ oder „FEHLER“: `data` (jedes Bild, auf das etwas zeigt, ist da; jede Aufgabe und Stufe nennt Gebäude, die
-es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki), `tiere` (jedes Tier zeichnet in jedem Abstand, bei jeder Qualität, an jedem Tageszeitpunkt und mit weniger Bewegung ohne Fehler; nur Hund, Schwein und Huhn im Dorf),
+es gibt; jede Art von Arbeit hat eine Zeichnung), `smoke` (landen wie ein Spieler, auch die gebündelte Datei), `strand` (niemand sitzt im Wasser), `rules` (Regeln, dazu Hauswerk, das Jahr und Hawaiki), `tiere` (jedes Tier zeichnet in jedem Abstand, bei jeder Qualität, an jedem Tageszeitpunkt und mit weniger Bewegung ohne Fehler; nur Hund, Schwein und Huhn im Dorf),
 `build` (sechs Baustellen zugleich werden in 20 Minuten fertig, auch mit Nächten, Vorrang, Felder werden gegraben), `life` (Wachszeit, Yamsjahr,
 Schlaf und Fackelfischen, Wild nach Jahreszeit, alles gespeichert), `play` (Freizeit, Feierabend,
 jede Animation), `music` (die Töne der Musik und echte Klangknoten, siehe „Der Soundtrack“), `soak` (Stürme, Stärken, Stammplätze, Handel, Speichern und Laden, Musik, alles durcheinander 1500 Takte lang), `save` (Neuladen, kaputter Spielstand, Laden aus Text, zwei Spielstände), `phone`
@@ -2424,6 +2424,10 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   Plattform** bzw. dem Holzboden vor der Tür, und die Leute arbeiten dort oben. Auf der Plattform eines Pfahlhauses sitzt die
   Familie auch am Abend, und wer draußen schläft, schläft dort statt im Wasser. Pfahlhäuser können jetzt auch ein Hauswerk
   haben (vorher fand sich neben ihnen kein Platz an Land).
+- **Keine Matte im Meer:** Wer sich setzt, hinlegt oder am Hauswerk arbeitet, tut das an Land oder auf der Plattform seines
+  Pfahlhauses. Häuser direkt am Strand legen Sitz- und Schlafmatten Richtung Haus, Plätze am Feuer, am Erdofen und beim
+  Plaudern rücken auf den Strand. Wer doch einmal im seichten Wasser stehen geblieben ist, steht auf und geht ans Ufer.
+  Der neue Test `strand` lässt ein Dorf mit Häusern rund um den Strand einen Tag und Abend lang leben und zählt nach.
 - **Gedrückthalten** auf einem Haus zeigt eine Blase mit Name, Stufe als Punkte und Familie; bei einem Arbeitsplatz, was er macht.
 - **Jeder Arbeitsplatz in zwei Formen:** die kleine Hütte oder ein offenes Pultdach über einer Matte; der Speicher auch mit
   Kerbstamm-Leiter und Yams davor, die Fischerhütte auch mit Netz und Reuse. Das Zeichen der Arbeit bleibt (Nusshaufen,

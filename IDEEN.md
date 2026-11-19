@@ -330,3 +330,4 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 - **Hauswerk-Liste im Haus** ist mit 17 Arten lang. Nur die Arten zeigen, die auf der Insel gehen, tut sie schon; beobachten,
   ob die Wahl auf dem Handy übersichtlich bleibt.
 - **Clan-Dörfer** haben noch eigene Werkstätten (Schmuck, Flechten, Klingen); sie könnten auch Hauswerk an den Häusern zeigen.
+- **Test `build` wackelt:** „called workplace changed its people“ kommt in etwa einem von vier Läufen, schon seit Version 112. Ursache suchen.

@@ -90,6 +90,9 @@ function jobFor(I, b, i){
   if (b.kind === 'fisch') return job('fish', b.x + 3 * side, b.y + 4, {load:'fisch', tool:'speer'});
   if (b.kind === 'taucher') return job('dive', b.x + 3 * side, b.y + 5, {load:'muschel'});
   if (b.kind === 'sternhaus') return job('learn', b.x + 11, b.y + 5, {});
+  if (b.at){ const h = findB(b.at), deck = h && onDeck(h) && Math.hypot(b.x - h.x, b.y - h.y) < 9;   // a household craft: on the floor of the house close together, on land never in the water
+    const q = deck ? {x:b.x + side * (2 + 1.5 * i), y:b.y + 1.5} : dryAt(I, b.x + side * (3 + 2 * i), b.y + 4, b);
+    return job('carry', q.x, q.y, {load:JOB_LOAD[b.kind] || null, tool:catOf(b) === 'essen' ? 'ko' : null}); }
   return job('carry', b.x + side * (3 + 2 * i), b.y + 4, {load:(K.picks ? PICK_LOAD[prodOf(b)] : JOB_LOAD[b.kind]) || null, tool:catOf(b) === 'essen' && b.kind !== 'ernte' ? 'ko' : null});
 }
 /* the tree the woodcutters work on, the nearest first; the palm a climber goes up next, one after the other */
@@ -634,6 +637,21 @@ function stepCritters(dt){
 /* Where to next. Wherever the way leaves the land they wade through the shallows: on an atoll that is the reef flat inside
    the ring (people wade from islet to islet), elsewhere short stretches. Only a long wet way is paddled in a dugout. */
 const WADE_MAX = 46, WADE_SLOW = .62;
+/* A place to sit or lie down on dry ground: from the wanted spot step toward the house (or the fire) until there is land
+   under it. Nobody spreads a mat in the sea. */
+function dryAt(I, x, y, to){
+  if (landAt(I, {x, y})) return {x, y};
+  for (let k = 1; k <= 8; k++){ const f = k / 8, p = {x:x + (to.x - x) * f, y:y + (to.y - y) * f}; if (landAt(I, p)) return p; }
+  return {x:to.x, y:to.y + 3};
+}
+/* the nearest dry spot to a point in the water: the closest point of the shore, a few steps up the beach */
+function dryNear(I, p){
+  let best = null, bd = Infinity, L0 = null;
+  for (const L of I.lands) for (const v of L.poly){ const d = Math.hypot(v.x - p.x, v.y - p.y); if (d < bd){ bd = d; best = v; L0 = L; } }
+  if (!best) return p; const c = L0.poly.reduce((a, v) => ({x:a.x + v.x / L0.poly.length, y:a.y + v.y / L0.poly.length}), {x:0, y:0}), d = Math.hypot(c.x - best.x, c.y - best.y) || 1;
+  for (const k of [6, 9, 13, 18]){ const q = {x:best.x + (c.x - best.x) / d * k, y:best.y + (c.y - best.y) / d * k}; if (landAt(I, q)) return q; }
+  return {x:best.x, y:best.y};
+}
 function goTo(I, w, x, y, wait = 0){
   w.tx = x; w.ty = y; w.wait = wait; w.sx = w.x; w.sy = w.y; w.swim = false;
   const wet = w.boat ? 0 : wetWay(I, w, {x, y});
@@ -794,7 +812,7 @@ function playLeg(I, w){
 /* The day in the village: at midday people gather by the earth oven, in the evening the grown-ups sit in the meeting house
    for kava while the old tell the stories of the ancestors, at night everyone goes home. Children play on the plaza. */
 function villageLife(I, w){
-  const ph = dayPhase(), near = (b, r, k) => { const a = Math.random() * TAU; goTo(I, w, b.x + Math.cos(a) * r, b.y + 6 + Math.sin(a) * r * k); };
+  const ph = dayPhase(), near = (b, r, k) => { const a = Math.random() * TAU, q = dryAt(I, b.x + Math.cos(a) * r, b.y + 6 + Math.sin(a) * r * k, b); goTo(I, w, q.x, q.y); };
   const p = personOf(w), f = p && famOf(I, p.h), home = f && f.home && findB(f.home), hall = I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
   const there = L => { w.busy = {x:w.tx, y:w.ty}; w.fx = lookOf(L, w); };   // what they do once they sit there
   // dusk: work is done, people come home. Some sit in a ring round the village fire on the plaza, talking, the old telling
@@ -803,11 +821,11 @@ function villageLife(I, w){
     const P = I.buildings.find(b => b.kind === 'platz' && !b.bt), lit = P && !(I.fire && I.fire.n && I.fire.cold >= I.fire.n), id = (p && p.id) || 0;
     if (lit && (nightOwl(w) || id % 2 === 0)){
       const a = ((id * 2.399) % TAU), R = (w.child ? 15 : 18) + (id % 3) * 2.5, fx = P.x + 4, fy = P.y + 1;
-      goTo(I, w, fx + Math.cos(a) * R, fy + Math.sin(a) * R * .5); w.left = Math.cos(a) > 0; w.sit = true; w.busy = {x:w.tx, y:w.ty};
+      { const q = dryAt(I, fx + Math.cos(a) * R, fy + Math.sin(a) * R * .5, {x:fx, y:fy}); goTo(I, w, q.x, q.y); } w.left = Math.cos(a) > 0; w.sit = true; w.busy = {x:w.tx, y:w.ty};
       if (w.child && ph > .69){ w.sit = false; w.lie = true; w.fx = null; } else w.fx = lookOf(FIRE_FX, w);
       w.wait = 7000 + Math.random() * 7000; return true;
     }
-    if (home){ const wet = home.kind === 'pfahl'; goTo(I, w, home.x + rnd(wet ? 8 : 6), home.y + (wet ? 2 : 6)); w.deck = wet ? home.id : 0; w.sit = true; w.wait = 6000 + Math.random() * 6000; return true; } return false; }   // on a stilt house: up on its platform
+    if (home){ const wet = home.kind === 'pfahl', q = wet ? {x:home.x + rnd(8), y:home.y + 2} : dryAt(I, home.x + rnd(6), home.y + 6, home); goTo(I, w, q.x, q.y); w.deck = wet ? home.id : 0; w.sit = true; w.wait = 6000 + Math.random() * 6000; return true; } return false; }   // on a stilt house: up on its platform
   if (ph > .5 && hall && !w.child && Math.random() < .7){ near(hall, w.old ? 9 : 16, .5); w.sit = true; w.wait = 5000 + Math.random() * 5000; there(TALK_FX.halle); return true; }
   if (ph > .25 && ph < .4 && !w.child && Math.random() < .6){ const u = I.buildings.filter(b => b.kind === 'umu' && !b.bt); if (u.length){ near(u[Math.floor(Math.random() * u.length)], 10, .5); w.sit = true; w.wait = 4000 + Math.random() * 3000; there(TALK_FX.umu); return true; } }
   if (w.child && hall && playersOf(I, 'drum').some(q => q.play.ph === 'do') && Math.random() < .7){ near(hall, 14, .45); w.hop = true; w.fx = lookOf(HOP_FX, w); w.wait = 2500 + Math.random() * 2500; return true; }   // the drum sounds: the children dance
@@ -830,7 +848,8 @@ function sleepLeg(I, w){
   const p = personOf(w), f = p && famOf(I, p.h), home = (f && f.home && findB(f.home)) || I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz');
   if (!home){ w.asleep = true; w.wait = 3000; return; }
   const out = home.kind !== 'platz' && sleepsOut(I, w), side = pidOf(w) % 2 ? 1 : -1;
-  const wet = home.kind === 'pfahl', hx = out ? home.x + side * ((wet ? 4 : 9) + pidOf(w) % 4) : home.x + 2, hy = out ? home.y + (wet ? 2 : 9) : home.y + 5;   // over the lagoon the mat lies on the platform
+  const wet = home.kind === 'pfahl', at = out && !wet ? dryAt(I, home.x + side * (9 + pidOf(w) % 4), home.y + 9, home) : null;   // over the lagoon the mat lies on the platform, on land never in the water
+  const hx = at ? at.x : out ? home.x + side * (4 + pidOf(w) % 4) : home.x + 2, hy = at ? at.y : out ? home.y + 2 : home.y + 5;
   if (Math.hypot(w.x - hx, w.y - hy) > 4){ goTo(I, w, hx + rnd(out ? 1 : 2), hy + rnd(1)); w.toBed = true; return; }
   w.asleep = true; w.toBed = false; w.sit = false; w.out = out; w.lie = out; w.deck = wet && out ? home.id : 0; w.left = side < 0; w.fx = null; w.busy = null; w.wait = 2500 + Math.random() * 1500;
 }
@@ -1064,6 +1083,16 @@ function stepWalkers(dt){
   for (const w of walkers) if (w.on && w.leg === 'work' && w.job && BUILD_JOBS.has(w.job.type) && !w.hurry){ const k = w.job.type === 'yard' ? 'y' + w.isl : w.job.b.id; at.set(k, (at.get(k) || 0) + 1); }
   for (const w of walkers){
     w.moving = false;
+    // whoever is going to sit or lie down does it on dry ground (or on the platform of a stilt house), never on a mat in the sea
+    if ((w.sit || w.lie) && !w.deck && !w.boat && !w.swim && !w.paddle && w.tx != null && w._dry !== w.tx + w.ty * 7 && !(w.job && (w.job.type === 'fish' || w.job.type === 'dive'))){
+      const I = isl(w.isl), deckJob = w.job && w.job.b.at && Math.hypot(w.tx - w.job.x, w.ty - w.job.y) < 7 && craftLift(w.job.b) > 0;
+      if (I && I.lands && !deckJob && !landAt(I, {x:w.tx, y:w.ty})){ const q = dryNear(I, {x:w.tx, y:w.ty}); if (w.busy && w.busy.x === w.tx && w.busy.y === w.ty) w.busy = {x:q.x, y:q.y}; w.tx = q.x; w.ty = q.y; if (w.wait > 0 && Math.hypot(w.x - q.x, w.y - q.y) > 2) w.wait = 0; }
+      w._dry = w.tx + w.ty * 7;
+    }
+    if ((w.sit || w.lie) && !w.deck && !w.boat && !w.swim && !w.paddle && w.wait > 0 && (w._dw = (w._dw || 0) + 1) % 3 === 0 && !(w.job && (w.job.type === 'fish' || w.job.type === 'dive'))){   // sat down where they stood, in the water: up and onto the beach
+      const I = isl(w.isl), deckJob = w.job && w.job.b.at && craftLift(w.job.b) > 0 && Math.hypot(w.x - w.job.x, w.y - w.job.y) < 7;
+      if (I && I.lands && !deckJob && !landAt(I, w)){ const q = dryNear(I, w), wt = w.wait; goTo(I, w, q.x, q.y); w.wait = 0; w._wt = wt; if (w.busy) w.busy = {x:q.x, y:q.y}; w._dry = q.x + q.y * 7; }
+    }
     // the second fisher sits in the canoe of the first
     if (w.ride){ const L = w.ride; if (L.boat && L.mate === w && walkers.includes(L)){ w.x = L.x; w.y = L.y; w.left = L.left; continue; } w.ride = null; w.boat = false; w.leg = 'work'; w.bout = false; w.wait = 200; }
     if (w.on && w.leg === 'work' && w.job && BUILD_JOBS.has(w.job.type) && !w.hurry) buildBit(w, dt, at.get(w.job.type === 'yard' ? 'y' + w.isl : w.job.b.id) || 1);
