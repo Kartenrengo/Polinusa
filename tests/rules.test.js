@@ -311,14 +311,11 @@ const r = await p.evaluate(()=>{
     { const A = islands.find(J => !J.settled && !J.clan && J.type === 'atoll'), saved = H.buildings.slice();
       if (A){ discover(A); exploreAt(A.center.x, A.center.y, 400); H.buildings = H.buildings.filter(q => q.kind !== 'steg' && q.kind !== 'werft');
         const cn = makeShip('oc', H), fd = makeShip('dc', H, {founder:true});
-        want(!atollReady() && !sailTo(cn, {isl:A.id}, true) && cn.state !== 'sail', 'atoll: a canoe sails in without a Kanuhaus');
-        want(!sailTo(cn, {x:A.atoll.cx, y:A.atoll.cy}, true), 'atoll: a canoe sails into the lagoon without a Kanuhaus');
+        want(sailTo(cn, {isl:A.id}, true) && cn.state === 'sail', 'atoll: a canoe does not sail in without a Kanuhaus');
+        want(sailTo(cn, {x:A.atoll.cx, y:A.atoll.cy}, true), 'atoll: a canoe does not sail into the lagoon without a Kanuhaus');
         want(sailTo(fd, {isl:A.id}, true), 'atoll: the founding canoe is blocked'); fd.state = 'moored';
         const st = {kind:'werft', x:H.harbor.x, y:H.harbor.y, bt:5, boat:3}; H.buildings.push(st);
-        want(!atollReady() && !sailTo(cn, {isl:A.id}, true), 'atoll: an unfinished Kanuhaus opens it'); st.bt = 0;
-        want(!atollReady(), 'atoll: a Kanuhaus without its Einbaum opens it'); st.boat = 0;
-        want(atollReady() && sailTo(cn, {isl:A.id}, true) && cn.state === 'sail', 'atoll: a finished Kanuhaus with Einbaum does not open it');
-        const lg0 = st.kind; st.kind = 'steg'; want(atollReady(), 'atoll: an old finished Kanusteg does not open it'); st.kind = lg0;
+        want(sailTo(cn, {isl:A.id}, true), 'atoll: an unfinished Kanuhaus changes the way in');
         for (const q of [cn, fd]) ships.splice(ships.indexOf(q), 1); H.buildings = saved; } }
     const T = islands.find(J => !J.settled && !J.clan && J.type === 'atoll') || islands.find(J => !J.settled && !J.clan);
     if (T){ discover(T); exploreAt(T.center.x, T.center.y, 400); settle(T, H, {pop:6, stock:{matten:12, nahrung:10, wasser:10}, folk:[], life:[]});

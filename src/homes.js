@@ -36,7 +36,7 @@ let nextFam = 1;
 const famsOf = I => I.fams || (I.fams = []);
 const famOf = (I, id) => famsOf(I).find(f => f.id === id) || null;
 const membersOf = (I, f) => (I.people || []).filter(p => p.h === f.id);
-const homeOk = (I, b) => !!b && !b.bt && HOME_KINDS.has(b.kind) && !(b.kind === 'pfahl' && unserved(I, b));
+const homeOk = (I, b) => !!b && !b.bt && HOME_KINDS.has(b.kind);
 const homesOf = I => I.buildings.filter(b => homeOk(I, b));
 const tierOf = b => !b ? 1 : b.kind === 'fale' ? 4 : b.t >= 2 ? Math.min(3, b.t) : 1;
 /* the way of a house above the family house: 'hand' (every b.t 3, also from old saves), 'see', 'nav', 'wis', or '' */
@@ -405,7 +405,7 @@ const WOMEN_WORK = new Set(['flecht', 'klopf', 'malerin', 'weberin', 'duftoel', 
 const MEN_WORK = new Set(['hakenmacher', 'schnitzer', 'fisch', 'taucher', 'faeller', 'beil', 'klingen', 'ernte', 'pferch', 'harzer', 'kalkbrenner', 'pflanzer']);
 const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK.has(b.kind) ? 'm' : null; return w ? ad.slice().sort((p, q) => (q.s === w) - (p.s === w)) : ad; };
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
-const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !unserved(I, b) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1) && !(b.nutRest && NUT_PICKS.has(prodOf(b)) && !b.prio));   // a growing garden needs nobody yet; a yam field only at planting; palms picked clean wait for nuts (unless called)
+const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1) && !(b.nutRest && NUT_PICKS.has(prodOf(b)) && !b.prio));   // a growing garden needs nobody yet; a yam field only at planting; palms picked clean wait for nuts (unless called)
 /* how many work at a place: its crew, or one who carves the dugout of a jetty (a jetty has no crew of its own) */
 const crewOf = b => KINDS[b.kind].crew || (b.boat > 0 ? 1 : 0);
 const autoWork = I => !I.handWork;
@@ -710,7 +710,7 @@ function loanWord(I, p){
   return `hilft bei ${placeName(t)}`;
 }
 /* why a place rests for a while, so its people do something else meanwhile */
-const restWord = (I, b) => b.grow > 0 ? 'wächst noch' : b.fallow ? 'Feld ruht' : KINDS[b.kind].yam && b.ys !== 1 ? 'Pflanzzeit kommt' : unserved(I, b) ? 'wartet aufs Kanu' : 'Pause';
+const restWord = (I, b) => b.grow > 0 ? 'wächst noch' : b.fallow ? 'Feld ruht' : KINDS[b.kind].yam && b.ys !== 1 ? 'Pflanzzeit kommt' : 'Pause';
 function famWork(I, f){
   const ad = famAdults(I, f); if (!ad.length) return 'ohne Erwachsene';
   const by = new Map(); for (const p of ad){ const w = personWork(I, p); by.set(w, (by.get(w) || 0) + 1); }

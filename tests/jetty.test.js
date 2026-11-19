@@ -1,4 +1,4 @@
-// The Kanuhaus has the jetty of the old Kanusteg: its dugout, the stilt houses it serves, the way into the atoll.
+// The Kanuhaus has the jetty of the old Kanusteg: its dugout (a ferry for show, it never blocks anything). Stilt houses and the atoll work without it.
 // An old save with a Kanusteg loads and works (a finished one becomes a Kanuhaus where none stands).
 const {chromium} = require('playwright');
 const {PAGE} = require('./lib');
@@ -21,12 +21,11 @@ const {PAGE} = require('./lib');
       const w = put('werft'); w.boat = KINDS.werft.canoe; want(w && typeof w.v.rot === 'number', 'werft: its jetty does not point anywhere');
       const ph = []; for (let i = 0; i < 10; i++){ const q = put('pfahl'); if (q) ph.push(q); }
       out.push(`stilt houses ${ph.length}`); want(ph.length >= 9, 'lagoon: room for only ' + ph.length + ' stilt houses');
-      I._lg = null; want(ph.every(q => unserved(I, q)) && !atollReady(), 'werft: serves before its dugout is carved');
-      want(workState(I, ph[0]).why === 'boat', 'werft: the stilt house does not say that a dugout is missing');
+      I._lg = null; want(ph.every(q => homeOk(I, q)) && lagoonOf(I).cap === 0, 'werft: a stilt house waits for the dugout');
+      want(!workState(I, ph[0]) || workState(I, ph[0]).why !== 'boat', 'werft: the stilt house says that a dugout is missing');
       I.staff = null; syncWalkers(); run(400);
       out.push(`dugout left ${w.boat || 0}`); want(!(w.boat > 0), 'werft: its dugout is never carved');
-      I._lg = null; want(ph.filter(q => !unserved(I, q)).length === KINDS.werft.serves, 'werft: serves ' + ph.filter(q => !unserved(I, q)).length + ' stilt houses, not ' + KINDS.werft.serves);
-      want(atollReady(), 'werft: a finished Kanuhaus with its dugout does not open the atoll');
+      I._lg = null; want(lagoonOf(I).served.size === KINDS.werft.serves && ph.every(q => homeOk(I, q)), 'werft: ferries ' + lagoonOf(I).served.size + ' places, not ' + KINDS.werft.serves + ', or a stilt house does not count');
       want(artOf('werft', {rot:40, boat:2}).includes('rotate(40)') && !/undefined|NaN/.test(artOf('werft', {rot:40, boat:2, canoe:'oc1'})), 'art: the Kanuhaus draws no jetty');
       renderAll();
       // the sheet of the Kanuhaus mentions the dugout while it is carved
@@ -34,12 +33,12 @@ const {PAGE} = require('./lib');
       // an old save: a finished Kanusteg and its stilt house, on an island without a Kanuhaus
       I.buildings = I.buildings.filter(q => q.kind !== 'werft' && q.kind !== 'pfahl'); I.staff = null; I._lg = null;
       const s0 = put('steg'); s0.boat = 0; const h0 = put('pfahl'); I._lg = null; const id0 = s0.id;
-      want(!unserved(I, h0), 'old save: a Kanusteg does not serve');
+      want(homeOk(I, h0), 'old save: the stilt house does not count');
       const raw = serialize(); want(restore(raw), 'old save: does not load'); I = isl('heimat');
       const wf = I.buildings.filter(q => q.kind === 'werft'), sg = I.buildings.filter(q => q.kind === 'steg');
       out.push(`after load: ${wf.length} Kanuhaus, ${sg.length} Kanusteg`);
       want(wf.length === 1 && !sg.length && wf[0].id === id0 && !wf[0].bt, 'old save: the Kanusteg did not become a Kanuhaus');
-      want(!unserved(I, I.buildings.find(q => q.kind === 'pfahl')) && atollReady(), 'old save: the stilt house or the atoll is not served after the change');
+      want(homeOk(I, I.buildings.find(q => q.kind === 'pfahl')), 'old save: the stilt house does not count after the change');
       want(overlaps(I).length === 0, 'old save: the new Kanuhaus overlaps ' + overlaps(I).map(q => q[0].kind + '/' + q[1].kind));
       run(20); renderAll();
       // a Kanusteg beside a Kanuhaus stays as it is and serves on

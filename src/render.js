@@ -179,7 +179,7 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {rot:b.kind === 'werft' ? Math.round(v.rot || 0) : 0, shape:HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, fd:b.kind === 'taro' || b.kind === 'yams' ? Math.floor(hsh(b.id || 0, 5) * 4) : 0, dt:b.kind === 'haus' ? [0, 1, 2, 3, 0][Math.floor(hsh(b.id || 0, 3) * 5)] : 0, hid:b.kind === 'haus' ? (b.id || 0) % 3 : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, sea:b.kind === 'haus' ? seaRank(b) : 0, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {rot:b.kind === 'werft' ? Math.round(v.rot || 0) : 0, shape:b.kind === 'pfahl' ? (STILT_SHAPES.includes(v.shape) ? v.shape : STILT_SHAPES[(b.id || 0) % 3]) : HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, fd:b.kind === 'taro' || b.kind === 'yams' ? Math.floor(hsh(b.id || 0, 5) * 4) : 0, dt:b.kind === 'haus' ? [0, 1, 2, 3, 0][Math.floor(hsh(b.id || 0, 3) * 5)] : 0, hid:b.kind === 'haus' ? (b.id || 0) % 3 : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, sea:b.kind === 'haus' ? seaRank(b) : 0, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
@@ -1163,7 +1163,7 @@ function drawPeople(c, v, now){
   items.sort((a, b) => a[0] - b[0] || a[1].x - b[1].x || (a[1].id || 0) - (b[1].id || 0));
   const sh = sunShadow();
   if (sh.alpha > 0) for (const w of vis){
-    if (w.ride || w.boat || w.lie || (w.paddle || w.swim) && !landAt(isl(w.isl), w)) continue;
+    if (w.ride || w.boat || w.lie || (w.paddle || w.swim || w.wade) && !landAt(isl(w.isl), w)) continue;
     c.save(); c.translate(w.x, w.y); c.transform(1, 0, sh.c, sh.d, 0, 0); if (w.left) c.scale(-1, 1);
     if (w.home) blitShadow(c, 'cr|' + w.kind, `<use href="#${w.kind}"/>`, sh.alpha);
     else { if (w.child) c.scale(.7, .7); if (w.sit && (!w.moving || w.busy)) c.scale(1, .78); blitShadow(c, 'fig|' + w.look + (w.old ? 'o' : ''), () => figureArt(w.look, w.old), sh.alpha * (w._fa ?? 1)); }
@@ -1221,7 +1221,7 @@ function drawPeople(c, v, now){
     if (ln) c.restore();
     if (show) workFx(c, w, now);
     if (pole) poleLoads(c, w, P ? P.swing : 0, P ? P.pole : 0); else if (w.carry && !LOAD_BACK.has(w.carry) && !drag){ if (P) headLoad(c, w, P); else blit(c, 'load|' + w.carry, LOADS[w.carry]); }
-    if (w.busy && w.job && w.job.type === 'wade'){ c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); }
+    if ((w.busy && w.job && w.job.type === 'wade') || (w.wade && w.moving && !landAt(isl(w.isl), w))){ c.fillStyle = '#79C6B8'; c.fill(WADE); stroke(c, ellipse(0, -.2, 3.6, 1.1), '#F4ECD8', .55, null, null, .9); }   // wading over the reef flat
     // who works at the selected place, or the one you tapped: a small mark over the head
     if (w === mk || (w.job && w.job.b.id === selectedId)){ c.fillStyle = w === mk ? '#D9A441' : '#F4ECD8'; c.fill(MARK); stroke(c, MARK, '#2B1D14', .55, null, 'round'); }
     c.restore();
@@ -2124,7 +2124,6 @@ function drawNeeds(c, v, now){
       bub('i' + b.id, b.x, by, s, 0, key, art); hit(b.x, by, () => w.why === 'use' && w.k ? needGo(I, w.k, b) : select(b));
     }
     for (const b of I.buildings) if (KINDS[b.kind].soil && !b.bt && !b.fallow && (b.soil ?? 1) < .35 && !b.idle && ptIn(b.x, b.y, v)){ bub('s' + b.id, b.x, b.y - 14, s, 0, 'need|soil', needBubble('soil')); hit(b.x, b.y - 14, () => select(b)); }
-    for (const b of lagoonOf(I).need) if (!lagoonOf(I).served.has(b) && !b.idle && ptIn(b.x, b.y, v)){ bub('l' + b.id, b.x, b.y - KINDS[b.kind].hy - 14, s, 0, 'need|einbaum', needBubble('einbaum')); hit(b.x, b.y - KINDS[b.kind].hy - 14, () => select(b)); }
     // over each house what its family lacks; over the meeting house a roof, while families sleep there without one
     const list = needsOf(I).list, S = I.storm && tick < I.storm.at ? I.storm : null;
     for (const b of I.buildings){

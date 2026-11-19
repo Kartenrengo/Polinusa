@@ -277,11 +277,7 @@ function ghostRender(){
     bare ? (tn ? `Nur ${tn} Bäume in Reichweite.` : 'Hier stehen keine Bäume in Reichweite.') : K.trees ? `Passt, ${tn} Bäume in Reichweite.` : mode === 'move' ? 'Passt.' : 'Passt. Tippe auf Bauen.';
   if (ok && bare) placing.msg = m.textContent;
   if (ok && placing.kind === 'haus' && unlocked('werft') && onShore(I, placing)) m.textContent += ' Nah am Strand: kann später ein Seefahrerhaus werden.';
-  // a workplace on an islet where nobody lives needs a dugout from a jetty
-  const homes = new Set(I.buildings.filter(b => b.kind === 'haus' && !b.bt).map(b => landOf(I, b))), L = landOf(I, placing);
-  const away = ok && I.atoll && K.crew && homes.size && L >= 0 && !homes.has(L), lg = lagoonOf(I), spare = lg.cap - lg.need.length;
-  if (away && spare <= 0) m.textContent = 'Auf diesem Motu wohnt niemand. Ohne Kanuhaus mit Einbaum kommt keiner zur Arbeit.';
-  m.classList.toggle('bad', !ok || few || bare || (away && spare <= 0));
+  m.classList.toggle('bad', !ok || few || bare);
   $('placeOk').disabled = !ok || (mode === 'place' && !canPay(I, costOf(placing.kind, I)));
   requestDraw();
 }
@@ -1127,7 +1123,7 @@ function infoMarkup(I, b){
     const f = 1 - b.boat / K.canoe;
     line = `${crewAt(I, b) ? st('ok', 'Einbaum wird geschnitzt') : st('out', 'niemand schnitzt')}<span>${Math.round(f * 100)} %</span>`;
     bar = `<span class="mbar big"><i style="width:${f * 100}%"></i></span>`;
-    more.unshift(b.kind === 'steg' || b.kind === 'werft' ? 'Erst wenn der Einbaum fertig ist, fährt er zu den Pfahlhäusern' + (b.kind === 'werft' ? ', und im Kanuhaus werden Schiffe gebaut.' : '.') : 'Erst wenn der Einbaum fertig ist, fahren die Fischer hinaus.');
+    more.unshift(b.kind === 'steg' || b.kind === 'werft' ? 'Erst wenn der Einbaum fertig ist, fährt er übers Wasser' + (b.kind === 'werft' ? ', und im Kanuhaus werden Schiffe gebaut.' : '.') : 'Erst wenn der Einbaum fertig ist, fahren die Fischer hinaus.');
   } else if (K.prod || K.plants){
     const w = b.idle || workState(I, b), rate = PER_MIN / K.every / slowOf(b) / pace(I, K) / (K.soil ? soilPace(b) : 1) * workSpeed(I, b, K.crew ? crewAt(I, b) || 0 : 1), uses = K.use ? Object.entries(K.use).map(([k, v]) => `${icon(groupNext(I, k))}${perMin(rate * v)}`).join('') + '<span class="arr">→</span>' : '';
     const by = byOf(b) ? Object.entries(byOf(b)).map(([k, v]) => `${icon(k)}${perMin(rate * v)}`).join('') : '';

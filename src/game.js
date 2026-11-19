@@ -112,20 +112,19 @@ function clanJobs(I){
   const jobs = []; for (const b of I.buildings) if (JOB_LOAD[b.kind] && !b.bt) jobs.push({key:'carry:' + b.id, type:'carry', b, x:b.x, y:b.y + 4, load:JOB_LOAD[b.kind]});
   return jobs.slice(0, Math.round(popOf(I) / 6));
 }
-/* ---------- the lagoon: stilt houses, fish traps and workplaces on an islet without houses are reached by dugout.
-   Each jetty has one dugout and serves a number of them (KINDS.serves), the oldest first: the canoe house, and the old Kanusteg
-   of earlier saves. A jetty serves only once its dugout is carved. */
+/* ---------- the lagoon: stilt houses and workplaces on an islet without houses are reached on foot or by the family's own canoe:
+   people wade over the reef flat (see goTo). Nothing waits for a dugout. The jetty of the Kanuhaus (and of the old Kanusteg)
+   keeps a dugout that ferries people for show: lagoonOf lists the places it crosses to, the oldest first (KINDS.serves each). */
 function lagoonOf(I){
   const key = I.buildings.map(b => b.bt ? 0 : b.x + b.y + (b.boat > 0 ? .5 : 0)).join();
   if (I._lg && I._lg.key === key) return I._lg;
   const homes = new Set(I.buildings.filter(b => !b.bt && (b.kind === 'haus' || b.kind === 'halle')).map(b => landOf(I, b)));
   const far = b => !!I.atoll && !KINDS[b.kind].water && !!KINDS[b.kind].crew && homes.size > 0 && !homes.has(landOf(I, b));
-  const need = I.buildings.filter(b => !b.bt && (KINDS[b.kind].water || far(b)));
+  const ferry = I.buildings.filter(b => !b.bt && (KINDS[b.kind].water || far(b)));
   const jetties = I.buildings.filter(b => KINDS[b.kind].serves && !b.bt && !(b.boat > 0)), slots = [];
   let n = 0; for (const j of jetties){ slots.push([n, n + KINDS[j.kind].serves]); n += KINDS[j.kind].serves; }
-  return I._lg = {key, need, jetties, slots, cap:n, served:new Set(need.slice(0, n)), far:new Set(need.filter(far))};
+  return I._lg = {key, jetties, slots, cap:n, served:new Set(ferry.slice(0, n))};
 }
-const unserved = (I, b) => { const lg = lagoonOf(I); return lg.need.includes(b) && !lg.served.has(b); };
 /* ---------- work force. Every grown-up works, children and the old do not. Each person has a place (homes.js); whoever
    builds is missing there and goes back once the site is done. */
 const WORK_SHARE = .7;
@@ -632,16 +631,19 @@ function stepCritters(dt){
     a.x = nx; a.y = ny; a.moving = true; a.left = dx < 0; a.phase += v * 1.6;
   }
 }
-/* Where to next. Wherever the way leaves the land, across a lagoon or a bay, they paddle a dugout; a few steps into
-   the shallows at either end they wade. */
+/* Where to next. Wherever the way leaves the land they wade through the shallows: on an atoll that is the reef flat inside
+   the ring (people wade from islet to islet), elsewhere short stretches. Only a long wet way is paddled in a dugout. */
+const WADE_MAX = 46, WADE_SLOW = .62;
 function goTo(I, w, x, y, wait = 0){
   w.tx = x; w.ty = y; w.wait = wait; w.sx = w.x; w.sy = w.y; w.swim = false;
-  w.paddle = !w.boat && wetWay(I, w, {x, y});
+  const wet = w.boat ? 0 : wetWay(I, w, {x, y});
+  w.wade = wet > 0 && (!!I.atoll || wet <= WADE_MAX); w.paddle = wet > 0 && !w.wade;
 }
+/* how many pixels of the straight way lie in water (0: dry, or too short to matter) */
 function wetWay(I, a, b){
-  const d = Math.hypot(b.x - a.x, b.y - a.y); if (d < 24) return false;
-  for (let s = 10; s < d - 10; s += 6){ const f = s / d; if (!landAt(I, {x:a.x + (b.x - a.x) * f, y:a.y + (b.y - a.y) * f})) return true; }
-  return false;
+  const d = Math.hypot(b.x - a.x, b.y - a.y); if (d < 24) return 0;
+  let n = 0; for (let s = 10; s < d - 10; s += 6){ const f = s / d; if (!landAt(I, {x:a.x + (b.x - a.x) * f, y:a.y + (b.y - a.y) * f})) n += 6; }
+  return n;
 }
 /* Fishers: out past the shallows, where nothing but water lies between */
 function fishingSpot(I, L, b){
@@ -1077,7 +1079,7 @@ function stepWalkers(dt){
     // feet wear the ground, children less as they run everywhere; on a laid path people walk faster
     const g = G[w.isl] || (G[w.isl] = wearGrid(isl(w.isl))), ci = w.boat || w.paddle || w.swim ? -1 : wearAt(g, w.x, w.y);
     w._sp = Math.min(1, (w._sp ?? 1) + dt / 300);   // starting and stopping ease: from standing it gathers pace, and the last steps are shorter
-    const v = Math.min(d, dt * (.3 + .7 * w._sp) * Math.min(1, .5 + d / 16) * (w.swim ? (w.play && w.play.ph === 'ride' ? .0085 : .0042) : w.boat || w.paddle ? .011 : w.carry ? (HEAVY_LOADS.has(w.carry) ? .0048 : .006) : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1)); w.x += dx / d * v; w.y += dy / d * v;
+    const v = Math.min(d, dt * (.3 + .7 * w._sp) * Math.min(1, .5 + d / 16) * (w.swim ? (w.play && w.play.ph === 'ride' ? .0085 : .0042) : w.boat || w.paddle ? .011 : w.carry ? (HEAVY_LOADS.has(w.carry) ? .0048 : .006) : w.old ? .0045 : .007) * (w.hurry ? 2.4 : w.child ? 1.7 : 1) * (w.job && w.job.b && w.job.b.prio ? 1.7 : 1) * (ci >= 0 && g.road[ci] ? 1.4 : 1) * (w.wade && !landAt(isl(w.isl), w) ? WADE_SLOW : 1)); w.x += dx / d * v; w.y += dy / d * v;
     // feet find the trodden way: a little to the side where the ground is more worn, so paths gather and bend as real ones do
     if (ci >= 0 && d > 14 && !w.child){
       const ux = dx / d, uy = dy / d, ax = w.x + ux * 7, ay = w.y + uy * 7, l = wearAt(g, ax - uy * 4.5, ay + ux * 4.5), r = wearAt(g, ax + uy * 4.5, ay - ux * 4.5);
@@ -1136,7 +1138,6 @@ function workState(I, b){
   const K = KINDS[b.kind];
   if (b.kind === 'ernte' && NUT_PICKS.has(prodOf(b)) && nutsOf(I, b) < 1) return {why:'nuts', kind:'palme', text:`Die Palmen ringsum sind abgeerntet. Jede Palme trägt etwa eine Nuss pro Minute: Pflanzt mehr Palmen, oder holt Essen vom Meer und vom Feld.`};
   if (SEA_KINDS.has(b.kind) && cycloneOver(I)) return {why:'storm', text:'Sturm: Niemand fährt hinaus, die Kanus liegen an Land.'};
-  if (I.settled && unserved(I, b)) return {why:'boat', text:'Kein Einbaum fährt hierher. Das Kanuhaus bringt die Leute mit seinem Einbaum hin, für bis zu 8 Plätze.'};
   if (K.crew && I.settled && !crewAt(I, b)){
     const site = staffOf(I).pulled.get(b);
     if (site) return {why:'bau', site:site.id, text:`Die Leute von hier bauen gerade: ${site.bt ? KINDS[site.kind].n : I.yard ? SHIPS[I.yard.kind].n : KINDS[site.kind].n}. Danach geht die Arbeit hier weiter.`};

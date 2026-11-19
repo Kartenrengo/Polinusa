@@ -383,9 +383,9 @@ const beautyOf = I => fineBeauty(I) + Math.min(8, Math.floor(roadCells(I) / 25))
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }
 function inLagoon(I, p){
   if (landAt(I, p)) return false;
-  for (const L of I.lands) if (polyDist(p, L.poly) < 5) return false;
-  if (I.atoll){ const a = I.atoll, e = ((p.x - a.cx) / a.rx) ** 2 + ((p.y - a.cy) / a.ry) ** 2; return e < .8; }
-  return inPoly(p, I.reef.poly) && polyDist(p, I.reef.poly) > 10;
+  for (const L of I.lands) if (polyDist(p, L.poly) < 3) return false;   // right at the beach, in the shallows
+  if (I.atoll){ const a = I.atoll, e = ((p.x - a.cx) / a.rx) ** 2 + ((p.y - a.cy) / a.ry) ** 2; return e < .92; }   // the reef flat inside the ring
+  return inPoly(p, I.reef.poly) && polyDist(p, I.reef.poly) > 5;   // anywhere on the reef flat of a high island
 }
 function onIsland(I, p){
   if (I.atoll){ const a = I.atoll; return ((p.x - a.cx) / a.rx) ** 2 + ((p.y - a.cy) / a.ry) ** 2 < 1.08; }
@@ -407,7 +407,7 @@ function check(kind, I, x, y, ignoreId){
   else {
     const L = landAt(I, p); if (!L) return 'Nur auf Land';
     const dEdge = polyDist(p, L.poly);
-    if (!K.beach && dEdge < 6) return 'Zu nah am Wasser';
+    if (!K.beach && dEdge < (I.atoll ? ATOLL_EDGE : 6)) return 'Zu nah am Wasser';
     if (K.coast && dEdge > 18) return `${K.n} gehört an den Strand`;
     if (K.inland && dEdge < K.inland) return `${K.n} braucht Platz in der Mitte des Landes`;
     if (K.spring && !(I.river && polyDist(p, I.river, false) < 28)) return I.river ? 'Eine Quelle gehört an den Bach' : 'Auf dieser Insel fließt kein Bach. Grüne Nüsse vom Erntehaus geben Wasser.';
@@ -418,15 +418,17 @@ function check(kind, I, x, y, ignoreId){
     for (const z of I.blocked) if (Math.hypot(x - z.x, y - z.y) < z.r) return 'Hier ist kein Platz';
     if (kind === 'halle' && I.settled && !nearCount(I, 'platz', x, y, K.near.r)) return 'Das Versammlungshaus gehört an den Dorfplatz';
   }
-  for (const b of I.buildings){ if (b.id === ignoreId || (ignoreId && b.at === ignoreId)) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + radiusOf(b)) * .8) return 'Zu eng'; }   // (a moved house does not stand in the way of its own mat)
+  for (const b of I.buildings){ if (b.id === ignoreId || (ignoreId && b.at === ignoreId)) continue; if (Math.hypot(b.x - x, b.y - y) < (K.r + radiusOf(b)) * gapOf(I)) return 'Zu eng'; }   // (a moved house does not stand in the way of its own mat)
   return '';
 }
 /* A craft on a house mat (b.at) is small: it takes up room next to its house like anything else */
+/* Atoll islets are thin strips of sand: houses may stand closer to the water and closer together (people there build on every strip) */
+const ATOLL_EDGE = 2.5, gapOf = I => I.atoll ? .68 : .8;
 const CRAFT_R = 5, radiusOf = b => b.at ? CRAFT_R : KINDS[b.kind].r;
 /* Two buildings of one island that stand closer than the placement rule allows (see check) */
 function overlaps(I, slack = .5){
   const L = [], B = I.buildings;
-  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++){ const d = Math.hypot(B[i].x - B[j].x, B[i].y - B[j].y), lim = (radiusOf(B[i]) + radiusOf(B[j])) * .8; if (d < lim - slack) L.push([B[i], B[j], d, lim]); }
+  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++){ const d = Math.hypot(B[i].x - B[j].x, B[i].y - B[j].y), lim = (radiusOf(B[i]) + radiusOf(B[j])) * gapOf(I); if (d < lim - slack) L.push([B[i], B[j], d, lim]); }
   return L;
 }
 function findSpot(I, kind, from){
@@ -438,7 +440,7 @@ function findSpot(I, kind, from){
 function variant(kind, r = Math.random){
   const v = {mirror:r() < .5 ? 1 : 0};
   if (kind === 'haus'){ const q = r(); Object.assign(v, {shape:q < .26 ? 'hr' : q < .44 ? 'hg' : q < .6 ? 'hl' : 'hw', scale:fx(.7 + r() * .18), tint:r() < .3 ? 1 : 0}); }
-  else if (kind === 'pfahl') v.scale = fx(.72 + r() * .14);
+  else if (kind === 'pfahl') Object.assign(v, {shape:STILT_SHAPES[Math.floor(r() * 3)], scale:fx(.72 + r() * .14)});
   else if (kind === 'palme' || kind === 'pandanus') v.scale = fx(.7 + r() * .22);
   else if (kind === 'baum' || kind === 'nussbaum') v.scale = fx(.85 + r() * .2);
   else if (kind === 'taro') v.rot = Math.round(r() * 80);
