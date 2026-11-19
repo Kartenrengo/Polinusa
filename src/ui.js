@@ -28,6 +28,7 @@ function edgeURL(seed, fill, stroke = '#3E2416', sw = 1.6, round = false){
 /* ---------- top bar */
 let lastStock = {};
 function updateHUD(){
+  if (awayQuiet) return;   // while the time away is caught up, nothing is drawn; catchUp updates the bar once at the end
   if (barMode === 'fleet' && fleetKey !== fleetSig()) renderBuildBar();
   document.body.classList.toggle('landing', !!landing);
   if (landing){ $('isleName').textContent = landing.found ? `Landung auf ${isl('heimat').name}` : 'Auf See im Ahnenkanu'; showWind(); $('moonUse').setAttribute('href', '#' + SEASON_ICON[seasonOf().id]); $('moonTxt').textContent = `${moonOf() + 1}. Mond`; return; }

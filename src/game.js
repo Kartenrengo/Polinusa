@@ -1320,6 +1320,11 @@ const burnFirst = (k, st) => k === 'brenn' ? GROUPS.brenn.find(q => (st[q] || 0)
 const ofNeed = (k, f) => needGoods(k).reduce((t, q) => t + f(q), 0);
 const haveOf = (I, k) => ofNeed(k, q => I.stock[q] || 0);
 function needsOf(I){
+  // catching up the time away asks the same island many times in one tick; the answer of that tick does (only then)
+  if (awayQuiet && I._ndAway && I._ndAway.t === tick) return I._ndAway.v;
+  const v = needsOfNow(I); if (awayQuiet) I._ndAway = {t:tick, v}; return v;
+}
+function needsOfNow(I){
   const list = NEEDS.filter(N => needActive(I, N)).map(N => {
     const use = needPop(I, N) * N.rate, work = ofNeed(N.k, q => workUse(I, q)), make = ofNeed(N.k, q => makeRate(I, q)), stock = haveOf(I, N.k), all = use + work;
     const state = make >= all ? 'ok' : stock > 0 ? 'low' : 'out';
@@ -1882,6 +1887,7 @@ let last = performance.now(), lastDraw = 0;
 /* The game's own clock: a tick every two seconds, at double speed every second */
 let gameSpeed = 1, clockAt = 0, clockAcc = 0;
 function gameClock(){
+  if (catching) return;   // the time away is being caught up in slices
   const now = performance.now(); clockAcc += Math.min(10000, now - (clockAt || now)) * gameSpeed; clockAt = now;
   let n = 0; while (clockAcc >= TICK && n < 4){ clockAcc -= TICK; try { econ(); } catch (e){ frameErr(e, 'econ'); } n++; }
   if (n === 4) clockAcc = Math.min(clockAcc, TICK);
@@ -1911,7 +1917,8 @@ function frame(now){
 }
 function frameBody(now){
   const dt = Math.min(64, now - last); last = now;
-  stepCam(now); camGuard(); if (ships.length){ stepShips(now, dt * gameSpeed); driftTouch(); } walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
+  if (catching){ if (now - lastDraw > 1500){ draw(now); lastDraw = now; } return; }   // catching up the time away: the map rests, the bar moves
+  stepCam(now); camGuard(); if (ships.length && !catching){ stepShips(now, dt * gameSpeed); driftTouch(); } if (!catching) walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
   try { audioTick(now); } catch (e){ frameErr(e, 'audio'); }
   if (!document.hidden){ dayRing(); mascotTick(now); lizardTick(now); }   // the sun glides round the bar, every frame (it only touches the page when it moved)
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
@@ -2000,31 +2007,58 @@ function awayMinute(I, R){
   feedAnimals(I, 30);
   // a minute away: children are born, families come to empty huts, the houses rise or fall
   birthTick(I, 30); immigTick(I); I.reefLife = Math.min(1, (I.reefLife ?? 1) + .0012 * 30);
-  for (let k = 0; k < 3; k++) tierTick(I, needsOf(I).list, true);   // while you are away nobody leaves a crowded house
+  { const nl = needsOf(I).list; for (let k = 0; k < 3; k++) tierTick(I, nl, true); }   // while you are away nobody leaves a crowded house
   syncPeople(I); lifeTick(I); navTick(I, 30);
 }
-function catchUp(ms){
+/* The time away is caught up in three parts: begin (what it was like before), steps of ticks, and the end (what it all
+   came to). catchUp does it all at once; catchUpAsync does it in small slices between frames with a bar on the screen, so a
+   long absence does not leave a blank page for many seconds. */
+function catchUpBegin(ms){
   if (landing) return null;   // before the landing no time passes
   ms = Math.min(AWAY_MAX, ms); const n = Math.floor(ms / TICK); if (n < 30) return null;
   const mine = islands.filter(I => I.settled), R = {ms, ticks:n, built:[], made:{}, fallow:new Set(), tapu:new Set(), w0:Object.fromEntries(mine.map(I => [I.id, wildOf(I)])), pop:mine.map(I => [I.id, I.pop]), found:islands.filter(I => I.discovered).length, ships:own().length, quest, chronik:Object.keys(chronik).length, years:yearOf()};
   const mana0 = mana, knots = routes.map(r => r.knots); R.st0 = Object.fromEntries(mine.map(I => [I.id, {...I.stock}]));
   awayQuiet = true; lifeLog = R.life = {born:0, came:0, grown:0, died:[], chiefs:[], nav:[], lost:[], gone:[], mot:[], fade:[]};
-  try {
-    for (let i = 1; i <= n; i++){
-      tick++; if ((tick + 30) % DAY_TICKS === 0) for (const I of islands) if (I.settled){ mealTick(I); packTick(I); }
-      if ((tick + 30) % DAY_TICKS === DUSK_AT) for (const I of islands) if (I.settled) fireTick(I);
-      if (ships.length){ stepShips(performance.now(), TICK); driftTouch(); } driftTick();
-      feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
-      if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I); }
-      if (i % 150 === 0){ chronikTick(); checkQuest(); }
-    }
-    chronikTick(); checkQuest();
-  } finally { awayQuiet = false; lifeLog = null; }
+  return {ms, n, i:0, mine, R, mana0, knots};
+}
+function catchUpStep(C){
+  if (C.i >= C.n) return false;
+  const i = ++C.i, R = C.R;
+  tick++; if ((tick + 30) % DAY_TICKS === 0) for (const I of islands) if (I.settled){ mealTick(I); packTick(I); }
+  if ((tick + 30) % DAY_TICKS === DUSK_AT) for (const I of islands) if (I.settled) fireTick(I);
+  if (ships.length && i % 3 === 0){ stepShips(performance.now(), TICK * 3); driftTouch(); } driftTick();   // the canoes in steps of three ticks: the same way, a third of the work
+  feedCrews(); stepTreasure(); stepYards(); answerGifts(); calendarTick();
+  if (i % 30 === 0){ for (const I of islands) if (I.settled) awayMinute(I, R); rollAhead(); for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I); }
+  if (i % 150 === 0){ chronikTick(); checkQuest(); }
+  return C.i < C.n;
+}
+function catchUpEnd(C){
+  const {R, mana0, knots} = C;
+  try { chronikTick(); checkQuest(); } finally { awayQuiet = false; lifeLog = null; }
   mana = Math.max(mana0, mana);   // standing does not fade while you are away; the chronicle may add to it
   routes.forEach((r, i) => { if (knots[i] != null) r.knots = Math.max(r.knots, knots[i]); });
   lastEconAt = performance.now(); walkAt = performance.now(); for (const I of islands){ I.staff = null; I._eroT = -1; }
   invalidate(true); syncWalkers(); updateHUD(); renderBuildBar(); save();
   return R;
+}
+function catchUp(ms){
+  const C = catchUpBegin(ms); if (!C) return null;
+  try { while (catchUpStep(C)); } catch (e){ awayQuiet = false; lifeLog = null; throw e; }
+  return catchUpEnd(C);
+}
+let catching = false;
+function catchUpAsync(ms, done){
+  const C = catchUpBegin(ms); if (!C){ done(null); return; }
+  if (C.n <= 600){ try { while (catchUpStep(C)); } catch (e){ awayQuiet = false; lifeLog = null; throw e; } done(catchUpEnd(C)); return; }   // up to 20 minutes: at once
+  catching = true; const el = $('catchup'); if (el){ el.hidden = false; el.querySelector('i').style.width = '0%'; }
+  const slice = () => {
+    const t0 = performance.now(); let more = true;
+    try { while (more && performance.now() - t0 < 150) more = catchUpStep(C); } catch (e){ more = false; frameErr(e, 'catchup'); }
+    if (el) el.querySelector('i').style.width = Math.round(C.i / C.n * 100) + '%';
+    if (more){ setTimeout(slice, 0); return; }
+    const R = catchUpEnd(C); catching = false; if (el) el.hidden = true; clockAt = performance.now(); clockAcc = 0; done(R);
+  };
+  setTimeout(slice, 30);
 }
 const awayTime = ms => { const m = Math.round(ms / 60000), h = Math.floor(m / 60); return h ? `${h} ${h === 1 ? 'Stunde' : 'Stunden'}${m % 60 ? ` ${m % 60} Minuten` : ''}` : `${m} Minuten`; };
 /* The report: what became of each village, what the canoes found, what the chronicle gained */
@@ -2075,7 +2109,7 @@ document.addEventListener('visibilitychange', () => {
   if (!hiddenAt) return;
   // back again: what the throttled clock did not manage while out of sight is made up now
   const el = Date.now() - hiddenAt, missing = Math.min(AWAY_MAX, el) - (tick - hiddenTick) * TICK; hiddenAt = 0;
-  if (el > 60000 && missing > 60000){ const R = catchUp(missing); if (R) welcomeBack(R); }
+  if (el > 60000 && missing > 60000 && !catching) catchUpAsync(missing, R => { if (R) welcomeBack(R); });
 });
 addEventListener('pagehide', () => save());
 /* a new game opens close to the landing place, a saved one shows home and the first atoll */
@@ -2094,9 +2128,8 @@ function switchSlot(n, fresh){
   let ok = false, raw = null; try { raw = fresh ? null : localStorage.getItem(slotKey(n)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup(); if (raw && !ok) keepAside(n, raw); } catch (e){ ok = false; }
   if (!ok){ newGame(); beginLanding(); toast(`Spielstand ${n}: ein neues Spiel mit neuen Inseln.`, 3000, false); return; }
   landing = null; document.body.classList.remove('landing');
-  const away = savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
   invalidate(true); renderAll(); updateHUD(); homeView(true); toast(`Spielstand ${n}: ${isl('heimat').name}.`, 2400, false);
-  if (away && away.ms >= 3 * 60000) welcomeBack(away);
+  if (savedAt && Date.now() > savedAt) catchUpAsync(Date.now() - savedAt, away => { if (away && away.ms >= 3 * 60000) welcomeBack(away); });
 }
 function start(data){
   injectDefs();
@@ -2106,7 +2139,7 @@ function start(data){
   // a game from the old rules is not carried over: the island economy works differently now
   let oldGame = false; try { for (const k of OLD_KEYS) if (localStorage.getItem(k)){ oldGame = true; localStorage.removeItem(k); } } catch (e){}
   if (!ok) newGame();
-  const away = ok && savedAt && Date.now() > savedAt ? catchUp(Date.now() - savedAt) : null;
+  const awayMs = ok && savedAt && Date.now() > savedAt ? Date.now() - savedAt : 0;   // caught up after the first picture, in slices
   renderAll(); measure(); homeView(ok);
   // fonts, patterns and the first bitmaps load before the first frame, so nothing pops in
   const fonts = document.fonts ? Promise.all([document.fonts.load(NAME_FONT), document.fonts.load(SUB_FONT)]).catch(() => {}) : null;
@@ -2114,7 +2147,7 @@ function start(data){
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
     invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
     if (!ok){ beginLanding(); if (unread) toast(`Spielstand ${unread} ließ sich nicht laden. Er ist sicher aufbewahrt: Menü, „Aufbewahrt“.`, 7000, false); else if (oldGame) toast('Neue Regeln für Haushalte und Rohstoffe: Das Spiel beginnt neu.', 6000); }
-    else if (away && away.ms >= 3 * 60000) welcomeBack(away);
+    else if (awayMs) catchUpAsync(awayMs, away => { if (away && away.ms >= 3 * 60000) welcomeBack(away); else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000); });
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);
   });
 }

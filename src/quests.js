@@ -307,6 +307,7 @@ function goalMarkup(){
     `<p class="sub">Der Weg des Dorfes: Mit mehr Menschen kommen neue Zeiten und Gebäude. Dann die große Fahrt nach Osten, in Hawaiki der Sternenpfad, zuletzt die zweite Fahrt zu den Inseln des Morgens.</p>`;
 }
 function renderQuest(){
+  if (awayQuiet) return;
   const el = $('quest'), I = isl(active), A = !landing && I && I.settled ? (quest < QUESTS.length ? adviceOf(I, true) : adviceOf(I)) : null;
   const G = !landing && I && I.settled ? goalOf() : null;
   const show = (quest < QUESTS.length || A || G) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;

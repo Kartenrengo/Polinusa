@@ -1283,3 +1283,8 @@ body.landing #lizard{display:none}
 /* the big goal as a small line under the task or advice; a tap opens it */
 .quest .q-g{display:block;grid-column:1/-1;margin-top:3px;padding-top:3px;border-top:1px dashed rgba(62,36,22,.3);font:800 11px/1.2 var(--font-ui);color:#3F6A22;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
 .quest .q-g[hidden]{display:none}
+/* catching up a long absence: the map stays, a quiet bar says the islands are living their missed hours */
+#catchup{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(43,29,20,.35);color:#FBF3E1;font:800 15px/1.2 var(--font-ui);text-shadow:0 1px 2px rgba(0,0,0,.4)}
+#catchup[hidden]{display:none}
+#catchup .cbar{width:min(260px,70vw);height:10px;border:2px solid #FBF3E1;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.15)}
+#catchup .cbar i{display:block;height:100%;width:0;background:#F3C86A;transition:width .15s linear}
