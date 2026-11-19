@@ -124,9 +124,12 @@ const LIFE_IDS = Object.keys(LIFE), LIFE_LOAD = 2;   // each takes two places in
 const LIFE_BASE = LIFE_IDS.filter(id => !LIFE[id].from && !LIFE[id].late);   // what the clan brought from the old land; the rest comes from other peoples, kava with Hawaiki
 for (const [id, L] of Object.entries(LIFE)) for (const k of L.kinds) KINDS[k].life = id;
 /* Household crafts (homes.js): work a family did at home, not in a workshop. They are not built on their own any more;
-   a house takes one of them up. CRAFT_DO is how the advice says it. */
-const CRAFTS = {schnur:'Sennit drehen', flecht:'Matten flechten', toepfer:'Töpfern', hakenmacher:'Angelhaken schleifen', schnitzer:'Schalen schnitzen', oelhuette:'Öl pressen', klopf:'Tapa klopfen', weberin:'Feine Matten flechten', malerin:'Tapa bemalen', duftoel:'Duftöl ansetzen'};
-const CRAFT_DO = {toepfer:'töpfern', weberin:'feine Matten flechten'};
+   a house takes one of them up. CRAFT_DO is how the advice says it. Since version 113 also the earth oven (every household
+   had its own umu), the pit for breadfruit, tapping resin, burning lime and grinding adzes, blades and shell rings: the
+   work of a family at its own place, by the rock, the trees or the beach. */
+const CRAFTS = {schnur:'Sennit drehen', flecht:'Matten flechten', toepfer:'Töpfern', hakenmacher:'Angelhaken schleifen', schnitzer:'Schalen schnitzen', oelhuette:'Öl pressen', klopf:'Tapa klopfen', weberin:'Feine Matten flechten', malerin:'Tapa bemalen', duftoel:'Duftöl ansetzen',
+  umu:'Im Erdofen kochen', gaergrube:'Brotfrucht einlagern', harzer:'Harz sammeln', kalkbrenner:'Kalk brennen', beil:'Beile schleifen', klingen:'Klingen schlagen', schmuck:'Armringe schleifen'};
+const CRAFT_DO = {toepfer:'töpfern', weberin:'feine Matten flechten', umu:'im Erdofen kochen', gaergrube:'Brotfrucht einlagern', beil:'Beile schleifen', klingen:'Klingen schlagen', schmuck:'Armringe schleifen', kalkbrenner:'Kalk brennen', harzer:'Harz sammeln'};
 for (const [k, n] of Object.entries(CRAFTS)) KINDS[k].craft = n;
 const CRAFT_KINDS = Object.keys(CRAFTS);
 /* What only some islands have: a ground that one plant needs, or shells found on one reef. The fine goods of the master
@@ -166,14 +169,14 @@ const NEEDS = [
   {k:'wasser', lvl:1, rate:1 / 6, hint:{hoch:'Baue eine Quelle am Bach. Grüne Kokosnüsse vom Erntehaus geben auch Wasser.', atoll:'Baue einen Brunnen in der Mitte des Motus. Grüne Kokosnüsse vom Erntehaus geben auch Wasser.'}},
   // the hearth fire of a family house: wood from the forest, or the shells of the coconuts
   {k:'brenn', lvl:1, rate:1 / 6, hint:{hoch:'Kokosschalen vom Erntehaus, Brennholz, das Kinder und Alte sammeln, und Holz vom Holzfäller brennen im Herd.', atoll:'Kokosschalen vom Erntehaus und Treibholz, das Kinder und Alte sammeln, brennen im Herd.'}},
-  {k:'speisen', lvl:2, rate:1 / 6, hint:{hoch:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.', atoll:'Baue einen Erdofen. Er braucht rohe Speisen, Brennstoff und Blätter.'}},
+  {k:'speisen', lvl:2, rate:1 / 6, hint:{hoch:'Lass eine Familie im Erdofen kochen (Hauswerk). Er braucht rohe Speisen, Brennstoff und Blätter.', atoll:'Lass eine Familie im Erdofen kochen (Hauswerk). Er braucht rohe Speisen, Brennstoff und Blätter.'}},
   {k:'toepfe', lvl:3, rate:.07, hint:{hoch:'Lass eine Familie am Ton töpfern.', atoll:'Töpfe gibt es nur auf hohen Inseln. Schick sie mit einem Kanu her.'}},
   {k:'matten', lvl:3, rate:.06, hint:{hoch:'Matten gibt es nur auf Atollen. Schick sie mit einem Kanu her.', atoll:'Lass eine Familie bei den Pandanus Matten flechten.'}},
   {k:'oel', lvl:3, rate:.04, hint:{hoch:'Das Erntehaus bringt Kokosnüsse, eine Familie presst Öl daraus.', atoll:'Das Erntehaus bringt Kokosnüsse, eine Familie presst Öl daraus.'}},
   {k:'tapa', lvl:4, rate:.3, hint:{hoch:'Pflanze einen Maulbeergarten an ein Haus; die Familie dort klopft Tapa.', atoll:'Tapa kommt von hohen Inseln.'}},
   {k:'schweine', lvl:4, rate:.2, hint:{hoch:'Baue einen Schweinepferch und gib den Tieren Futter.', atoll:'Schweine kommen von hohen Inseln.'}},
   {k:'kava', lvl:4, rate:.2, hint:{hoch:'Baue einen Kavagarten, oder tausche Kava beim Clan vom Maulbeerhain.', atoll:'Kava wächst auf hohen Inseln.'}},
-  {k:'schmuck', lvl:4, rate:.1, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt von einem Clan.', atoll:'Baue eine Schmuckschleiferei am Strand.'}},
+  {k:'schmuck', lvl:4, rate:.1, hint:{hoch:'Muschelschmuck entsteht auf Atollen oder kommt von einem Clan.', atoll:'Lass eine Familie am Strand Armringe schleifen (Hauswerk).'}},
   {k:'feinmatten', lvl:4, rate:.1, hint:{hoch:'Eine Familie flicht feine Matten. Sie braucht Matten.', atoll:'Eine Familie flicht feine Matten. Sie braucht Matten.'}},
   {k:'bemtapa', lvl:4, rate:.15, hint:{hoch:'Eine Familie bemalt Tapa. Sie braucht Tapa und Kurkuma.', atoll:'Bemalte Tapa kommt von hohen Inseln.'}},
   {k:'duftoel', lvl:4, rate:.15, hint:{hoch:'Eine Familie bei Blumen setzt Duftöl an.', atoll:'Eine Familie bei Blumen setzt Duftöl an.'}}

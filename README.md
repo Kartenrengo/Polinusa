@@ -183,10 +183,10 @@ ohne dass ein Dorf zusammenbricht.
 | --- | --- | --- |
 | Anfang | Ankunft | Hütte, Erntehaus, Holzfäller, Quelle, Brunnen, Fischerhütte, Pandanusfrüchte, Palme, Brotfrucht |
 | 8 Menschen | Gärten | Taro, Pulaka, Kanarinussbaum, Baumpflanzer, Speicher, Hühner, Pandanus |
-| 12 | Sennit und Erdofen | Sennit drehen (Hauswerk), Erdofen, Kalkbrenner, Kurkuma, Harz |
-| 20 | Töpfe und Werkzeug | Töpfern, Angelhaken schleifen und Matten flechten (Hauswerk), Beilwerkstatt, Steg, Pfahlhaus, Gärgrube, Blumen, **Kanuhaus und Auslegerkanu** |
+| 12 | Sennit und Erdofen | als Hauswerk: Sennit drehen, im Erdofen kochen, Kalk brennen, Harz sammeln; Kurkuma |
+| 20 | Töpfe und Werkzeug | als Hauswerk: Töpfern, Angelhaken und Beile schleifen, Matten flechten, Brotfrucht einlagern; Häuser auf Pfählen, Blumen, **Kanuhaus und Auslegerkanu** |
 | 30 | Ein Dorf | Öl pressen (Hauswerk), Doppelkanu, Navigatoren, Taucher, Versammlungshaus |
-| 40 | Zeit der Feste | Tapa klopfen (Hauswerk), Maulbeergarten, Schweine, Trommel, Tanzplatz, Ahnenhaus, Klingen, Schmuck, Bananen |
+| 40 | Zeit der Feste | als Hauswerk: Tapa klopfen, Klingen schlagen, Armringe schleifen; Maulbeergarten, Schweine, Trommel, Tanzplatz, Ahnenhaus, Bananen |
 | nach der großen Fahrt | **Hawaiki** | Kavagarten, Häuptlingshaus; als Hauswerk feine Matten, bemalte Tapa, Duftöl, Holzschalen |
 | in Hawaiki, mit dem Sternenpfad | **Die lange Pause** | Reisekanu |
 
@@ -214,12 +214,15 @@ Leere See und Inseln des Morgens stehen erst ab Hawaiki auf der Karte. Der Weg d
 
 **Hauswerk statt Werkstätten.** Sennit drehen, Matten flechten, töpfern, Öl pressen, Tapa klopfen, später auch feine
 Matten flechten, Tapa bemalen und Duftöl ansetzen: Das machten die Familien bei sich zu Hause, nicht in eigenen Hütten.
+Seit Version 113 auch: im Erdofen kochen (jede Familie hatte ihren eigenen), Brotfrucht in der Grube einlagern, Harz
+sammeln, Kalk brennen, Beile schleifen, Klingen schlagen und Armringe schleifen.
 Darum stehen diese Dinge nicht mehr in der Bauleiste. Auf der Tafel eines Hauses gibt es die Zeile **Hauswerk** mit einem
 Bild je Ware. Ein Tippen wählt das Hauswerk dieses Hauses, noch ein Tippen nimmt es weg. Ein Haus hat höchstens ein
 Hauswerk. Gearbeitet wird auf einer Matte vor dem Haus; zuerst arbeitet die eigene Familie, sonst hilft jemand, der frei
 ist. Auf dem gewählten Bild steht, wie viele arbeiten („1/1“), fehlt etwas, steht das Bild davon daneben. Der Ort zählt
-weiter: Töpfern geht nur in einem Haus nah am Ton, Matten flechten nur mit 2 Pandanus nah am Haus, Tapa klopfen nur bei
-einem Maulbeergarten, Duftöl nur bei Blumen. Ein Bild, das hier nicht geht, ist blass und sagt beim Tippen, warum.
+weiter: Töpfern geht nur in einem Haus nah am Ton, Beile nur am Basalt, Klingen nur am Obsidian, Matten flechten nur mit
+2 Pandanus nah am Haus, Tapa klopfen nur bei einem Maulbeergarten, Duftöl nur bei Blumen, Gärgrube und Harz nur bei
+Brotfruchtbäumen, Kalk und Armringe nur in einem Haus am Strand. Ein Bild, das hier nicht geht, ist blass und sagt beim Tippen, warum.
 Knöpfe wie „Hauswerk“ beim Rat oder bei einem fehlenden Knoten öffnen das passende Haus. Steht keines am richtigen Ort,
 öffnet sich die Bauleiste mit einer Hütte genau dort, etwa am Ton. Auch eine leere Hütte kann schon ihr Hauswerk wählen;
 dann arbeiten Leute aus anderen Familien dort, bis eine Familie einzieht. Wird das Haus versetzt, geht die Matte mit;
@@ -2401,3 +2404,55 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
 - **Gebäude verschwinden nicht mehr hinter anderen:** Geht jemand an einem Haus vorbei, wird nur dieser Ausschnitt neu
   gezeichnet. Ein Gebäude oder Baum davor, das in den Ausschnitt ragte, fehlte dabei manchmal, und das hintere schob sich davor.
   Jetzt kommen alle Dinge, die sich dort überdecken, in der richtigen Reihenfolge mit.
+
+## Häuser wie bei Anno, Hauswerk statt Hütten, verschiedene Inseln (Version 113)
+
+- **Jede Hausstufe sieht man von Weitem**, am Umriss und am Baustoff, nicht an der Farbe: Das Dach behält die natürliche
+  Farbe der Wedel und wird mit dem Alter grau.
+  - **Hütte:** ein niedriges Dach bis zum Boden, keine Wände; als Spitzdach oder als runde Kuppel.
+  - **Familienhaus:** Wände aus geflochtenen Matten, Satteldach mit gebundenem First, Tapa an der Tür, Kochsteine daneben;
+    kurz und hoch oder lang mit zwei Türen.
+  - **Seefahrerhaus:** ein langes, tiefes Dach wie ein Bootshaus mit Paddel und Netz, oder ein Haus mit einem Kanu davor;
+    Muscheln am First.
+  - **Handwerkerhaus:** auf kurzen Pfosten mit Stufe, hohes dichtes Dach, ein Band mit Lapita-Zähnen unter der Traufe,
+    Töpfe und Matten auf dem Boden; mit langen gekreuzten Firstenden oder breit mit geschwungenem First.
+  - Auf Pfählen in der Lagune steht dasselbe Haus auf einer Plattform mit Leiter und kleinem Kanu.
+- **Gedrückthalten** auf einem Haus zeigt eine Blase mit Name, Stufe als Punkte und Familie; bei einem Arbeitsplatz, was er macht.
+- **Jeder Arbeitsplatz in zwei Formen:** die kleine Hütte oder ein offenes Pultdach über einer Matte; der Speicher auch mit
+  Kerbstamm-Leiter und Yams davor, die Fischerhütte auch mit Netz und Reuse. Das Zeichen der Arbeit bleibt (Nusshaufen,
+  Stammstapel, Fischgestell, Rattenscheiben).
+- **Hauswerk statt Ressourcenhütten:** Erdofen, Gärgrube, Harzsammler, Kalkbrenner, Beilwerkstatt, Klingenschläger und
+  Schmuckschleiferei sind keine eigenen Bauten mehr. Eine Familie macht es zu Hause (siehe Hauswerk oben). Alte Bauten aus
+  früheren Spielständen werden beim Laden zum Hauswerk im nächsten freien Haus.
+- **Inseln verschieden:** In neuen Spielen (Welt 5) ist jedes Atoll anders: rund oder lang, schräg, mit Ausbuchtungen; ein Ring
+  vieler kleiner Motu, eine lange Sichel auf der Wetterseite oder wenige große Inseln. Hohe Inseln sind länger oder runder,
+  manche mit tiefer Bucht, das Riff mal weit draußen, mal dicht am Strand. Auch in alten Spielen hat jede Insel ihre Farben:
+  schwarzer Sand am Vulkan, weißer oder goldener Sand, satteres oder trockeneres Gras, eine türkisere oder tiefere Lagune.
+- **Brandung natürlicher:** Statt eines Rings, der rundum gleitet, brechen viele kurze Wellen, jede an ihrem Ort: Die Dünung
+  läuft an, bricht weiß und läuft als Schaum aus; benachbarte Stücke brechen nacheinander. Auf der Wetterseite sind die
+  Brecher groß, im Lee klein. Statt einer Perlenkette liegt unregelmäßiger Schaum auf dem Riff.
+- **Kleiner:** Die gebündelte Datei kommt ohne Kommentare und Einrückung aus (`tools/strip.mjs`; `--full` behält sie):
+  1190 statt 1434 KB, gepackt 367 statt 469 KB.
+
+### Wie klein kann das Spiel sein?
+
+Sehr kleine Browserspiele (etwa beim Wettbewerb js13k mit 13 KB) zeichnen alles mit Code, statt Bilder zu laden, nutzen
+keine Bibliotheken und schicken den Code durch einen Minifier, der auch alle Namen kürzt, und durch einen Packer wie
+Roadroller. Polinusa macht das Erste schon: Es gibt kein einziges Bild, alles ist SVG und Canvas aus Code. Übertragbar ist:
+
+- Kommentare und Einrückung weglassen: gemacht, ein Sechstel kleiner.
+- Namen kürzen (Terser): würde die Datei wohl noch einmal etwa halbieren. Das braucht ein Werkzeug aus dem npm-Verzeichnis,
+  das in dieser Umgebung nicht erreichbar war. Die Skripte teilen sich ihre Namen über Dateien hinweg; gekürzt werden
+  dürften nur Namen innerhalb einer Funktion.
+- Packer wie Roadroller: lohnt bei 13 KB, bei über 1 MB dauert das Entpacken auf dem Handy länger, als es spart.
+
+Für den Start zählt die Größe wenig: Gepackt sind es gut 360 KB. Länger dauert das Nachrechnen nach einer Pause; das läuft
+seit Version 110 in Stücken mit Balken.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Erdöfen (umu) an jedem Haushalt, Gärgruben für Brotfrucht, das Schleifen von Steinbeilen und Muschelringen als
+  Arbeit in Siedlungen (Werkplätze und Abfall an den Häusern, nicht in eigenen Werkstätten). Atolle mit einer langen Insel
+  auf der Wetterseite und offenem Riff im Lee sind häufig; schwarzer Sand an Vulkanküsten.
+- **Vermutet:** Die Hausformen je Stufe (Wände, Pfosten, Firstenden, Lapita-Band) folgen späteren Häusern der Region; von
+  Lapita-Häusern sind nur Pfostenlöcher erhalten.

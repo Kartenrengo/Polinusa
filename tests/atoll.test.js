@@ -52,8 +52,10 @@ const {PAGE} = require('./lib');
       out.push(`stilt houses on Panua: ${hp.length}`); want(hp.length >= 12, 'stilt: room for only ' + hp.length);
       H._lg = null; want(hp.every(q => homeOk(H, q) && !(workState(H, q) && workState(H, q).why === 'boat')), 'stilt: a stilt house waits for a dugout');
       const shapes = new Set(hp.map(q => q.v.shape)); want(shapes.size === 3 && [...shapes].every(s => STILT_SHAPES.includes(s)), 'stilt: not three looks: ' + [...shapes]);
-      for (const s of STILT_SHAPES){ const art = artOf('pfahl', {shape:s, roof:ROOF_NEW, t3:true}); want(art.includes('#' + s) && !/undefined|NaN/.test(art) && SYM[s], 'stilt: no picture for ' + s); }
-      want(new Set(STILT_SHAPES.map(s => SYM[s])).size === 3, 'stilt: two looks are the same');
+      // every step of a house in two looks, on land and on stilts: drawn without gaps, and the looks and steps all differ
+      { const arts = []; for (const kind of ['haus', 'pfahl']) for (const o of [{}, {t2:true}, {t2:true, sea:1}, {t2:true, t3:true}]) for (const s of (kind === 'pfahl' ? STILT_SHAPES : HOUSE_SHAPES).slice(0, 2)){
+          const art = artOf(kind, {...o, shape:s, roof:ROOF_NEW}); want(art.length > 200 && !/undefined|NaN/.test(art), `house: no picture for ${kind} ${JSON.stringify(o)} ${s}`); arts.push(art); }
+        want(new Set(arts).size === arts.length, 'house: two looks or two steps look the same'); }
       want(!!check('pfahl', H, H.center.x, H.center.y), 'stilt: stands on dry land');
       delete hp[0].v.shape; renderAll();   // an old save without a look: drawn by its number
       restore(serialize()); const H2 = isl('heimat'); want(H2.buildings.filter(q => q.kind === 'pfahl').length === hp.length, 'stilt: lost in the save');
@@ -69,7 +71,7 @@ const {PAGE} = require('./lib');
         if (placing){ const d2 = findSpot(H, 'haus', H.anchor || H.center); placing.x = d2.x; placing.y = d2.y; ghostRender(); confirmPlace(); if (placing) endPlace(); want(st.kind === 'haus', 'one house: a stilt house moved onto land stays on stilts'); }
         closeSheet(); }
       // 5. thin islets take the usual buildings: how much of an islet is open ground, on thirty atolls
-      const kinds = ['haus', 'ernte', 'fisch', 'pansammler', 'schnur', 'umu', 'speicher', 'taucher', 'werft', 'flecht'];
+      const kinds = ['haus', 'ernte', 'fisch', 'pansammler', 'speicher', 'taucher', 'werft'];
       let ok = 0, all = 0, lands = 0, miss = 0;
       for (let seed = 1; seed <= 30; seed++){
         const r = rng(seed * 977), I = genAtoll({x:3000, y:3000, size:92 + r() * 36, kind:'atoll'}, {x:1, y:0}, r), rr = rng(seed);

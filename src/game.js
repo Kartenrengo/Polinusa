@@ -1752,6 +1752,17 @@ function hitBuilding(p){
   for (const I of islands){ if (!I.settled) continue; for (const b of I.buildings){ if (b.at) continue; const K = KINDS[b.kind]; const d = Math.hypot(p.x - b.x, p.y - (b.y - K.hy * .6)) + (FLAT.has(b.kind) ? K.r * .5 : 0); const lim = Math.max(K.r + 3, 14 / cam.z); if (d < lim && d < bd){ bd = d; best = b; } } }
   return best;
 }
+/* Held still on a building, its name shows in a bubble, as Anno shows the step of a house: for a home the step as dots and the
+   family; for a workplace what it makes. The tap is not done. */
+const MAP_HOLD = 420;
+function holdAt(x, y){
+  const b = hitBuilding(toWorld(x, y)); if (!b || b.bt) return false;
+  const I = islOfB(b.id), K = KINDS[b.kind]; let txt;
+  if (HOME_KINDS.has(b.kind)){ const t = tierOf(b), f = I && famOfHome(I, b), wet = b.kind === 'pfahl' ? ' auf Pfählen' : '';
+    txt = `<b>${houseName(b)}${wet}</b> <span class="steps" aria-label="Stufe ${t} von 4">${[1, 2, 3, 4].map(i => `<i class="${i <= t ? 'on' : ''}"></i>`).join('')}</span>${f ? `<br>${famName(f)}` : '<br>leer'}`; }
+  else { const c = I && craftOf(I, b); txt = `<b>${K.n}</b>${K.prod ? ` ${icon(prodOf(b))}` : ''}${c ? `<br>Hauswerk: ${KINDS[c.kind].craft}` : ''}`; }
+  tipAtPoint(x, y, txt); return true;
+}
 function hitCord(p){ if (!cordsShown()) return -1; const lim = Math.max(9, 16 / cam.z); for (let i = 0; i < routes.length; i++){ for (const q of routeCurve(routes[i]).pts) if (Math.hypot(p.x - q.x, p.y - q.y) < lim) return i; } return -1; }
 function hitIsland(p){ return islands.find(I => I.discovered && onIsland(I, p)) || null; }
 function onTap(p){
@@ -1803,7 +1814,9 @@ mapC.addEventListener('pointerdown', e => {
     const wp = toWorld(e.clientX, e.clientY);
     const onGhost = placing && Math.hypot(wp.x - placing.x, wp.y - (placing.y - KINDS[placing.kind].hy * .6)) < Math.max(KINDS[placing.kind].r + 8, 26 / cam.z);
     ges = {type:onGhost ? 'ghost' : 'tap', sx:e.clientX, sy:e.clientY, t:performance.now(), cx:cam.x, cy:cam.y, gx:onGhost ? placing.x - wp.x : 0, gy:onGhost ? placing.y - wp.y : 0};
+    if (!onGhost && !placing){ const g = ges, x = e.clientX, y = e.clientY; g.hold = setTimeout(() => { if (ges === g && g.type === 'tap' && holdAt(x, y)) g.type = 'held'; }, MAP_HOLD); }   // held still on a house: its step
   } else if (ptrs.size === 2){
+    if (ges) clearTimeout(ges.hold);
     const [a, b] = [...ptrs.values()], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     ges = {type:'pinch', d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, z0:cam.z, w0:toWorld(mx, my)};
   }
@@ -1813,11 +1826,11 @@ mapC.addEventListener('pointermove', e => {
   if (ges.type === 'pinch' && ptrs.size >= 2){ const [a, b] = [...ptrs.values()]; zoomAt(ges.z0 * Math.hypot(a.x - b.x, a.y - b.y) / ges.d0, (a.x + b.x) / 2, (a.y + b.y) / 2, ges.w0); return; }
   if (ges.type === 'ghost'){ const wp = toWorld(e.clientX, e.clientY); placing.x = wp.x + ges.gx; placing.y = wp.y + ges.gy; ghostRender(); return; }
   const dx = e.clientX - ges.sx, dy = e.clientY - ges.sy;
-  if (ges.type === 'tap' && Math.hypot(dx, dy) > 8) ges.type = 'pan';
+  if (ges.type === 'tap' && Math.hypot(dx, dy) > 8){ ges.type = 'pan'; clearTimeout(ges.hold); }
   if (ges.type === 'pan'){ cam.x = ges.cx - dx / cam.z; cam.y = ges.cy - dy / cam.z; clampCam(); applyCam(); }
 });
 function endPtr(e){
-  if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId);
+  if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId); if (ges) clearTimeout(ges.hold);
   // a tap only when the finger stayed put: a quick swipe whose moves came late is a pan, not a tap (a tap on an island zooms in)
   if (ges && ges.type === 'tap' && ptrs.size === 0 && performance.now() - ges.t < 600 && Math.hypot(e.clientX - ges.sx, e.clientY - ges.sy) <= 10) onTap(toWorld(e.clientX, e.clientY));
   if (ptrs.size === 0) ges = null;

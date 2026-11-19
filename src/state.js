@@ -24,7 +24,7 @@ const newSeed = () => ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>>
 /* A new game: the clan is still at sea in its voyaging canoe, off two high islands and an atoll. The village is founded
    where the player chooses (foundHome). */
 function newGame(s = newSeed()){
-  seed = s; worldV = 4; homeSwap = 0; nextPid = 1; nextFam = 1; nextLine = 1; LINES = {}; drift = []; diveSpots = []; nextDrift = 1; home0 = makeWorld(seed, worldV); resetCaches();
+  seed = s; worldV = 5; homeSwap = 0; nextPid = 1; nextFam = 1; nextLine = 1; LINES = {}; drift = []; diveSpots = []; nextDrift = 1; home0 = makeWorld(seed, worldV); resetCaches();
   try { localStorage.removeItem(newsKey()); } catch (e){}   // a new game begins with an empty conch
   islands = home0.islands; routes = []; ships = []; nextShip = 1; selShip = null; cells = new Set(); tick = 0; nextId = 1; active = 'heimat'; quest = 0; mana = 0;
   stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0}; chronik = {}; nextEvent = 300; lastEvent = ''; eventNow = null;
@@ -224,7 +224,7 @@ const SLOTS = 2;
 /* A save is never lost to a new version of the game. Before a new version saves for the first time, every slot is copied
    aside as it was ("vor dem Update"), and a save that cannot be read is put aside instead of being written over. The menu
    offers both again. */
-const GAME_V = 112, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
+const GAME_V = 113, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
 let lastLoadErr = '';
 function keptOf(key){ try { const o = JSON.parse(localStorage.getItem(key) || 'null'); return o && o.raw ? o : null; } catch (e){ return null; } }
 function keepAside(n, raw){ try { const k = keptOf(keepKey(n)); if (!k || k.raw !== raw) localStorage.setItem(keepKey(n), JSON.stringify({at:Date.now(), why:lastLoadErr, raw})); } catch (e){} }

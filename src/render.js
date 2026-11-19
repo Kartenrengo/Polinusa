@@ -179,12 +179,12 @@ function drawBuilding(c, b, I, alpha = 1, sh = null){
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
   const boat = b.boat > 0 && K.canoe ? Math.min(2, Math.floor((1 - b.boat / K.canoe) * 3)) + 1 : 0;
-  const o = {rot:b.kind === 'werft' ? Math.round(v.rot || 0) : 0, shape:b.kind === 'pfahl' ? (STILT_SHAPES.includes(v.shape) ? v.shape : STILT_SHAPES[(b.id || 0) % 3]) : HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, fd:b.kind === 'taro' || b.kind === 'yams' ? Math.floor(hsh(b.id || 0, 5) * 4) : 0, dt:b.kind === 'haus' ? [0, 1, 2, 3, 0][Math.floor(hsh(b.id || 0, 3) * 5)] : 0, hid:b.kind === 'haus' ? (b.id || 0) % 3 : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, sea:b.kind === 'haus' ? seaRank(b) : 0, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
+  const o = {rot:b.kind === 'werft' ? Math.round(v.rot || 0) : 0, shape:b.kind === 'pfahl' ? (STILT_SHAPES.includes(v.shape) ? v.shape : STILT_SHAPES[(b.id || 0) % 3]) : HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', roof:K.roof ? roofColor(b) : '', canoe, chief, prop:b.kind === 'haus' ? (v.prop != null ? v.prop : (b.id || 0) % HOUSE_PROPS.length) : 0, fd:b.kind === 'taro' || b.kind === 'yams' ? Math.floor(hsh(b.id || 0, 5) * 4) : 0, dt:b.kind === 'haus' ? [0, 1, 2, 3, 0][Math.floor(hsh(b.id || 0, 3) * 5)] : 0, hid:b.kind === 'haus' ? (b.id || 0) % 3 : 0, lvl:b.kind === 'halle' && I ? I.lvl || 1 : 0, t2:b.t >= 2, t3:b.t >= 3, sea:HOME_KINDS.has(b.kind) ? seaRank(b) : 0, alt:!HOME_KINDS.has(b.kind) && hsh(b.id || 0, 9) < .5 ? 1 : 0, yam:b.kind === 'yams' && !b.bt ? (b.ys || 0) + (b.kept > 0 ? 'k' : '') : '', boat, dry:b.kind === 'fisch' && !!I, soil:K.soil || K.grow ? (b.grow > 0 ? 'y' : b.fallow ? 'f' : (b.soil ?? 1) < .45 ? 't' : '') : ''}, t = xformOf(b.kind, v);
   // young plants grow from a third of their size. A building site: first stakes and a cord mark the ground and the wood
   // is piled up, then the building rises from the ground as the builders work
   // progress is shown in ten steps, so the ground layer is only painted again when a step is reached
   const step = b._fo != null ? b._fo : b.bt ? Math.floor((1 - b.bt / K.bt) * 10) / 10 : 1, site = b.bt && !K.plant, f = site ? step : 1, grown = b.bt && K.plant ? .35 + .65 * step : 1;
-  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.dt || ''}|${o.hid || ''}|${o.fd || ''}|${o.lvl || ''}|${boat || ''}|${o.rot || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}|${o.sea || ''}|${o.yam}`, art = () => artOf(b.kind, o);
+  let key = `${b.kind}|${o.shape}|${o.roof}|${canoe}|${chief ? 1 : ''}|${o.prop || ''}|${o.dt || ''}|${o.hid || ''}|${o.fd || ''}|${o.lvl || ''}|${boat || ''}|${o.rot || ''}|${o.dry ? 'd' : ''}|${o.soil}|${o.t3 ? 3 : o.t2 ? 2 : ''}|${o.sea || ''}|${o.yam}|${o.alt || ''}`, art = () => artOf(b.kind, o);
   const sc = t.s * (chief ? 1.12 : 1) * grown;
   // when its look changes (a new roof, a field worn out, a canoe step), the old picture stays until the new one is painted
   if (!sh && hasReady(spriteOf(key, art))) b._sk = key;
@@ -265,7 +265,7 @@ function islandPaths(I){
   if (I._p) return I._p;
   const p = {lands:I.lands.map(L => new Path2D(L.d))};
   // the reef of an atoll is no drawn ellipse but wavers like the real thing; the passage is an uneven gap of deep water
-  p.ring = I.atoll ? loopPath(I.atoll.cx, I.atoll.cy, I.atoll.rx, I.atoll.ry, I.center.x | 0, .022, 44) : new Path2D(I.reef.d);
+  p.ring = I.atoll ? (I.atoll.lob ? new Path2D(smooth(Array.from({length:48}, (_, i) => { const q = I.R(i * 7.5, 1), j = 1 + (hsh(I.center.x | 0, i) - .5) * .02; return {x:I.atoll.cx + (q.x - I.atoll.cx) * j, y:I.atoll.cy + (q.y - I.atoll.cy) * j}; })).d) : loopPath(I.atoll.cx, I.atoll.cy, I.atoll.rx, I.atoll.ry, I.center.x | 0, .022, 44)) : new Path2D(I.reef.d);
   p.harbor = loopPath(I.harbor.x, I.harbor.y, 11, 7.5, I.center.y | 0, .18, 9);
   if (I.river) p.river = new Path2D(smoothOpen(I.river));
   if (I.delta){
@@ -287,11 +287,18 @@ function islandPaths(I){
   if (I.patches){ p.patches = new Path2D(); for (const q of I.patches) p.patches.addPath(loopPath(q.x, q.y, q.rx * 1.2, q.ry * 1.2, q.x * 3 + q.y | 0, .2, 7)); }
   return I._p = p;
 }
+/* each island its own colours, from where it lies: black sand on a volcano, white coral sand or golden sand elsewhere;
+   lusher or drier grass; a lagoon more turquoise, greener or deeper. Only colour: it fits old games too. */
+const ISLE_SAND = [['#E8D29E', '#D2B67C'], ['#F0E3C0', '#D9C79A'], ['#E6C68C', '#CDA86E']], ISLE_GRASS = ['#8DA757', '#7F9F4E', '#98AD5C'], ISLE_LAG = ['#79C6B8', '#82D0C2', '#6FBAB5', '#86C8AE'];
+function isleLook(I){
+  if (I._look) return I._look; const h = k => hsh(Math.round(I.center.x * 3 + I.center.y * 7), k);
+  return I._look = {sand:I.volcano ? ['#A89C86', '#857864'] : ISLE_SAND[Math.floor(h(1) * 3)], grass:ISLE_GRASS[Math.floor(h(2) * 3)], lag:ISLE_LAG[Math.floor(h(3) * 4)]};
+}
 function drawIsland(c, I, area){
-  const p = islandPaths(I);
+  const p = islandPaths(I), look = isleLook(I);
   stroke(c, p.ring, '#24505F', 16, null, null, .45);
-  fillWith(c, p.ring, '#79C6B8', 'pLag'); stroke(c, p.ring, '#4E9C9A', 8);
-  stroke(c, p.ring, '#F4EEDC', 2, [.1, 3.6], 'round');
+  fillWith(c, p.ring, look.lag, 'pLag'); stroke(c, p.ring, '#4E9C9A', 8);
+  stroke(c, p.ring, '#F4EEDC', 1.4, [.1, 2.4, .1, 5.8, .1, 1.6, .1, 7.4, .1, 3.2], 'round', .8);   // foam flecks on the reef edge, uneven like real foam
   c.save(); c.globalCompositeOperation = 'destination-out'; c.fill(p.harbor); c.restore();   // the passage is open sea
   if (p.patches){ c.fillStyle = '#4E9C9A'; c.fill(p.patches); stroke(c, p.patches, '#F3F8EE', .6, null, null, .7); }
   // silt clouds the water off each mouth and fades out into the lagoon
@@ -300,9 +307,9 @@ function drawIsland(c, I, area){
   if (I.delta) for (const q of I.delta.exits){ const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, 20); g.addColorStop(0, 'rgba(201,214,170,.75)'); g.addColorStop(1, 'rgba(201,214,170,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, 20, 0, TAU); c.fill(); }
   p.lands.forEach((L, i) => {
     stroke(c, L, '#F1F6EC', 4.4, null, null, .4);   // surf along the beach
-    fillWith(c, L, '#8DA757', 'pDots');
+    fillWith(c, L, look.grass, 'pDots');
     const tint = SEASON_TINT[seasonOf().id]; if (tint){ c.fillStyle = tint; c.fill(L); }   // dry grass in the lean months, lush and dark in the rains
-    c.save(); c.clip(L); stroke(c, L, '#E8D29E', I.atoll ? 11 : 15); stroke(c, L, '#D2B67C', 3.4);
+    c.save(); c.clip(L); stroke(c, L, look.sand[0], I.atoll ? 11 : 15); stroke(c, L, look.sand[1], 3.4);
     // fresh alluvial sand around the arms, fading into the grass; the arms run through it and end exactly where the land ends
     if (p.arms && i === 0){
       const f = I.delta.fan, g = c.createRadialGradient(f.x, f.y, 0, f.x, f.y, I.delta.reach);
@@ -1094,7 +1101,7 @@ function waterNear(I, b){
   }
   return b._wp = {x:p.x, y:p.y, k:b.x + b.y};
 }
-const inLagoonSide = (I, b) => { const a = I.atoll; return ((b.x - a.cx) / a.rx) ** 2 + ((b.y - a.cy) / a.ry) ** 2 < .78; };
+const inLagoonSide = (I, b) => atollE(I.atoll, b) < .78;
 function drawDugouts(c, v, now){
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
@@ -2680,19 +2687,39 @@ function seaRows(ctx, P, v, ox, oy, t, a){
 }
 
 /* ---------- the reef: the swell rolls in towards it, breaks in foam and fades, one stretch after the other */
+/* The surf on the reef. Not one ring that slides around, but many short breakers, each in its own place: a swell comes in from the
+   open sea, rises, breaks white along a stretch of the reef and leaves foam that spreads and fades. Neighbouring stretches break
+   one after another, so a wave peels along the reef. On the windward side the breakers are big, in the lee small and few. */
+function surfOf(I){
+  if (I._surf) return I._surf;
+  const pts = I.R ? Array.from({length:90}, (_, i) => I.R(i * 4, 1)) : (I.reef && I.reef.poly) || [], n = pts.length, cx = I.center.x, cy = I.center.y, r = rng((Math.round(cx * 5 + cy * 3) ^ 0x5f11) >>> 0);
+  const nm = pts.map((q, i) => { const a = pts[(i + n - 1) % n], b = pts[(i + 1) % n]; let x = b.y - a.y, y = a.x - b.x; const l = Math.hypot(x, y) || 1; x /= l; y /= l; if (x * (q.x - cx) + y * (q.y - cy) < 0){ x = -x; y = -y; } return {x, y}; });
+  const segs = []; let i = 0, run = 0;
+  while (i < n - 1){ const len = 2 + Math.floor(r() * 4), j = Math.min(n, i + len); segs.push({i0:i, i1:j, ph:run * .045 + r() * .12, per:.85 + r() * .3, k:.7 + r() * .5}); run += len; i = j + (r() < .35 ? 1 : 0); }
+  return I._surf = {pts, nm, segs, n};
+}
 function drawReefSurf(c, I, p, sk, now){
-  const R = Math.max(I.box.x1 - I.box.x0, I.box.y1 - I.box.y0) / 2 || 100, cx = I.center.x, cy = I.center.y, per = (2900 - 1700 * sk) * 1.6, seed = (I.center.x * .013) % 1;
-  stroke(c, p.ring, '#F4EEDC', 5 + 2.5 * sk, null, null, .05 + .1 * sk);
-  // in a storm more and shorter breakers, not fatter ones: thick dashed strokes with round ends read as pale bars
-  const n = sk > .05 ? 5 : 3, dash = sk > .05 ? [22, 46] : [38, 82];
-  for (let j = 0; j < n; j++){
-    const f = ((now / per) + j / n + seed) % 1, e = Math.sin(Math.PI * f), env = e * e, s = 1 + (1 - f) * (6 + 5 * sk) / R;   // from the open sea to the reef
-    c.save(); c.translate(cx, cy); c.scale(s, s); c.translate(-cx, -cy); c.lineDashOffset = -j * 41 - now / 260;
-    stroke(c, p.ring, '#F4EEDC', 2.4 + env * (4 + 1.2 * sk), dash, 'round', env * (.3 + .1 * sk));   // the white water, thickest as the swell breaks
-    stroke(c, p.ring, '#FBF8EC', 1 + .5 * f, dash, 'round', Math.max(0, f - .25) * 1.34 * (1 - f) * 2.2 * (.5 + .5 * sk) + env * .2);   // the crisp crest that runs ahead
-    c.restore();
+  const S = surfOf(I); if (!S.n) return;
+  const W = wind(), per = (3000 - 1600 * sk) * 1.5, t0 = now / per, P = S.pts, N = S.nm, n = S.n;
+  stroke(c, p.ring, '#F4EEDC', 5 + 2.5 * sk, null, null, .05 + .1 * sk);   // the reef flat always shows a little white
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.setLineDash([]);
+  const line = (sg, d, x0 = 0) => { const q = new Path2D(); for (let i = sg.i0; i <= sg.i1; i++){ const k = i % n, w = (i === sg.i0 || i === sg.i1) ? .4 : 1, x = P[k].x + N[k].x * d * w, y = P[k].y + N[k].y * d * w; i === sg.i0 ? q.moveTo(x, y) : q.lineTo(x, y); } return q; };
+  const g = c.globalAlpha;
+  for (const sg of S.segs){
+    const m = N[(sg.i0 + sg.i1 >> 1) % n], expo = .5 + .6 * Math.max(0, -(m.x * W.tx + m.y * W.ty)) * (.6 + .4 * W.str), big = Math.min(1.4, expo * sg.k * (1 + .9 * sk));   // windward: big; lee: small
+    if (big < .12) continue;
+    const f = ((t0 * sg.per + sg.ph) % 1 + 1) % 1;
+    if (f < .55){   // the swell rises and runs in: a thin line that thickens, then breaks white
+      const e = f / .55, d = (1 - e) * (7 + 6 * sk) + 1.2;
+      c.globalAlpha = g * Math.min(1, e * e * 1.05 * big); c.strokeStyle = '#FBF8EC'; c.lineWidth = .9 + e * e * 3.4 * big; c.stroke(line(sg, d));
+    } else {        // broken: white water spreads over the reef edge and fades
+      const e = (f - .55) / .45, d = 1.2 - e * 3.4;
+      c.globalAlpha = g * Math.min(1, (1 - e) * .9 * big); c.strokeStyle = '#F4EEDC'; c.lineWidth = (3 + e * 4.4) * big; c.stroke(line(sg, d));
+      c.globalAlpha = g * Math.min(1, (1 - e) * (1 - e) * .7 * big); c.strokeStyle = '#FFFFFF'; c.lineWidth = 1.1; c.stroke(line(sg, d + 1.6));
+    }
   }
-  c.lineDashOffset = -(now / (700 - 450 * sk)) % 3.7; stroke(c, p.ring, '#F4EEDC', 2, [.1, 3.6], 'round', .3 + .2 * sk); c.lineDashOffset = 0;
+  c.globalAlpha = g;
+  stroke(c, p.ring, '#F4EEDC', 1.3, [.1, 2.4, .1, 5.8, .1, 1.6, .1, 7.4, .1, 3.2], 'round', .3 + .2 * sk);   // foam caught on the reef line, in uneven flecks
 }
 
 /* ---------- the beach: a wash runs up the sand, slides back and leaves a thin wet line that dries (fine, close up only) */

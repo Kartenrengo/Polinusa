@@ -1156,6 +1156,9 @@ details.more .rowx{margin-top:6px}
 #tip{position:fixed;z-index:30;box-sizing:border-box;width:max-content;max-width:min(280px,calc(100vw - 16px));white-space:normal;text-align:left;padding:7px 10px;border-radius:12px;background:#F4ECD8;color:var(--ink);
   font:600 12.5px/1.3 var(--font-ui);box-shadow:0 0 0 1.5px #2B1D14,0 3px 0 rgba(43,29,20,.3);pointer-events:auto;--ax:50%}
 #tip b{font-weight:800}
+#tip .steps{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle}
+#tip .steps i{width:8px;height:8px;border-radius:50%;border:1.5px solid #2B1D14;box-sizing:border-box}
+#tip .steps i.on{background:#A84A2C}
 #tip::before{content:'';position:absolute;left:calc(var(--ax) - 6px);width:12px;height:12px;background:#F4ECD8;transform:rotate(45deg);box-shadow:-1.5px -1.5px 0 #2B1D14}
 #tip[data-side=below]::before{top:-6px}
 #tip[data-side=above]::before{bottom:-6px;box-shadow:1.5px 1.5px 0 #2B1D14}

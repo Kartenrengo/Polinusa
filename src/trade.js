@@ -5,7 +5,7 @@
    from the atolls), the elders propose a trade chain, and a tap sets it up: a canoe in the harbour sails there, and goes
    to and fro by itself with the goods one village wants and the other gives. */
 const STRENGTHS = {
-  toepfer:{n:'Töpfer', ic:'toepfe', kinds:['toepfer', 'beil', 'klingen', 'kalkbrenner'], text:'Töpferei, Beilwerkstatt, Klingenschläger und Kalkbrenner arbeiten ein Viertel schneller.'},
+  toepfer:{n:'Töpfer', ic:'toepfe', kinds:['toepfer', 'beil', 'klingen', 'kalkbrenner'], text:'Töpfern, Beile schleifen, Klingen schlagen und Kalk brennen gehen ein Viertel schneller.'},
   fischer:{n:'Fischer', ic:'fisch', kinds:['fisch', 'taucher', 'hakenmacher'], text:'Fischerhütten, Tauchplätze und Hakenschleifer arbeiten ein Viertel schneller.'},
   pflanzer:{n:'Pflanzer', ic:'nahrung', kinds:['ernte', 'taro', 'yams', 'pulaka', 'bananen', 'pansammler', 'pflanzer', 'harzer'], text:'Erntehaus und Felder arbeiten ein Viertel schneller.'},
   weberin:{n:'Weberinnen', ic:'matten', kinds:['flecht', 'schnur', 'weberin', 'malerin', 'klopf'], text:'Flechthütte, Seilerei, Weberei und Klopfhütte arbeiten ein Viertel schneller.'},

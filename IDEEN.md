@@ -315,8 +315,17 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 
 ## Offen nach Version 112: Häuser erkennbar wie bei Anno
 
-- **Vorschlag geschickt, noch nicht gebaut:** Jede Hausstufe mit eigenem Umriss, Baustoff und Schmuck (Hütte, Familienhaus,
+- ~~**Vorschlag geschickt, noch nicht gebaut:**~~ **gebaut in Version 113** (ohne Dachfarbe je Stufe, mit Gedrückthalten).
+  Offen: das Häuptlingshaus (fale) auf Plattform, wie im Vorschlag gefragt. **Vorschlag war:** Jede Hausstufe mit eigenem Umriss, Baustoff und Schmuck (Hütte, Familienhaus,
   Handwerkerhaus, Seefahrerhaus, Häuptlingshaus), an Land wie auf Pfählen gleich erkennbar. Jeder Arbeitsplatz mit einem
   festen Zeichen (Erntehaus: Nusshaufen und Kletterschlinge; Holzfäller: Stammstapel und Dechsel; Fischerhütte: Netz und
   Fischgestell; Speicher: Rattenscheiben). Jedes Gebäude mit mindestens zwei Formen. Wartet auf die Antwort zu Dachfarbe je
   Stufe, Stufen-Bildchen, Plattform beim Häuptlingshaus und Reihenfolge.
+
+## Offen nach Version 113
+
+- **Reddit-Beitrag zur Spielgröße** ließ sich nicht abrufen (Reddit sperrt den Abruf). Wenn der Text kommt, abgleichen.
+- **Namen kürzen (Terser)** würde die Datei noch etwa halbieren; das Werkzeug war hier nicht erreichbar.
+- **Hauswerk-Liste im Haus** ist mit 17 Arten lang. Nur die Arten zeigen, die auf der Insel gehen, tut sie schon; beobachten,
+  ob die Wahl auf dem Handy übersichtlich bleibt.
+- **Clan-Dörfer** haben noch eigene Werkstätten (Schmuck, Flechten, Klingen); sie könnten auch Hauswerk an den Häusern zeigen.

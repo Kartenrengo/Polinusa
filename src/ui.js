@@ -536,7 +536,8 @@ function craftRow(I, h){
   const cur = craftOf(I, h), ws = cur && cur.idle && !['way', 'grow'].includes(cur.idle.why) ? cur.idle : null, open = !!(sheetData && sheetData.crafts);
   const lack = ws && ws.k ? `<span class="cost out" role="img" aria-label="${ws.text}">${icon(ws.k)}</span>` : '';
   if (!open) return `<div class="crafts">${craftChip(I, h)}</div>`;
-  return `<div class="crafts open" role="group" aria-label="Hauswerk wählen"><span class="lbl">Hauswerk</span>${ks.map(k => { const K = KINDS[k], on = !!cur && cur.kind === k, why = on ? '' : craftWhy(I, h, k);
+  const show = ks.length > 10 ? ks.filter(k => (cur && cur.kind === k) || !craftWhy(I, h, k)) : ks;   // many kinds: only what goes at this house, so the sheet does not scroll
+  return `<div class="crafts open" role="group" aria-label="Hauswerk wählen"><span class="lbl">Hauswerk</span>${show.map(k => { const K = KINDS[k], on = !!cur && cur.kind === k, why = on ? '' : craftWhy(I, h, k);
     return `<button class="chip craft${why ? ' no' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${K.craft}${why ? `: ${why}` : ''}">${icon(K.prod)}<small>${K.craft}</small></button>`; }).join('')}<button class="chip" type="button" data-act="craftpick">Fertig</button></div>`;
 }
 /* ---------- a house at a glance, nothing to decode: who lives here and what each one does; what the family needs, one
@@ -1461,7 +1462,7 @@ const TIP_SEL = '.rc, .hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.b
    button in the bubble. Buttons in the bar and in the build menu keep their tap; held, they show the bubble. */
 const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds, .tier.slim';
 const TIP_GO = {ware:'Woher ›', store:'Lager ›', hint:'Bauen ›', roof:'Dach flicken ›', fleetbar:'Kanus ›', foodopen:'Sorten ›', stab:'Zeigen ›', goto:'Hin ›', craftpick:'Wählen ›'};
-let tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0, tipPass = null;
+let tipHeld = false, tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0, tipPass = null;
 const tipNow = el => el.matches(TIP_TAP) || (!el.matches('button') && !el.closest('button'));
 function showTip(el){
   const t = $('tip'), txt = el.dataset.tip || esc(el.getAttribute('aria-label') || ''); if (!txt) return;
@@ -1471,6 +1472,12 @@ function showTip(el){
   const x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), below = r.bottom + 8 + h < innerHeight - 8;
   t.style.left = x + 'px'; t.style.top = (below ? r.bottom + 8 : r.top - h - 8) + 'px'; t.style.setProperty('--ax', (r.left + r.width / 2 - x) + 'px'); t.dataset.side = below ? 'below' : 'above';
   t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); clearTimeout(tipHide); tipHide = setTimeout(hideTip, 6000);
+}
+/* the same bubble over a point of the map (a held house) */
+function tipAtPoint(x, y, html){
+  const t = $('tip'); t.innerHTML = `<span>${html}</span>`; t.hidden = false; tipFor = null; const w = t.offsetWidth, h = t.offsetHeight, px = clamp(x - w / 2, 8, innerWidth - w - 8), above = y - h - 28 > 8;
+  t.style.left = px + 'px'; t.style.top = (above ? y - h - 28 : y + 28) + 'px'; t.style.setProperty('--ax', (x - px) + 'px'); t.dataset.side = above ? 'above' : 'below';
+  t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); clearTimeout(tipHide); tipHide = setTimeout(hideTip, 3500); tipHeld = true;   // the click of letting go keeps it
 }
 function hideTip(){ const t = $('tip'); if (t) t.hidden = true; tipFor = null; clearTimeout(tipHide); }
 document.addEventListener('pointerdown', e => {
@@ -1489,6 +1496,7 @@ document.addEventListener('click', e => {
   if (el && el === tipPass) return;   // the bubble's button: do what the tile does
   if (el && el.id === 'mascot') return;
   if (el && tipNow(el)){ e.preventDefault(); e.stopPropagation(); if (!$('tip').hidden && tipFor === el){ hideTip(); return; } showTip(el); return; }   // a second tap closes it
+  if (tipHeld){ tipHeld = false; return; }
   if (!e.target.closest('#tip')) hideTip();
 }, true);
 /* ---------- the mascot: a little hermit crab in a shell stamped like a Lapita pot. Now and then it climbs out of the day bar's

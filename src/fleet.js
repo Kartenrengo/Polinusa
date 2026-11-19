@@ -551,7 +551,7 @@ const keepMini = () => { if (sheetKind === 'ship') sheetData = {...sheetData, mi
 
 /* ---------- the canoe race at the feast of the Pleiades: once round the lagoon */
 function racePath(I){
-  if (I.atoll) { const a = I.atoll, pts = []; for (let i = 0; i < 40; i++){ const t = i / 40 * TAU; pts.push({x:a.cx + Math.cos(t) * a.rx * .6, y:a.cy + Math.sin(t) * a.ry * .6}); } return pts; }
+  if (I.atoll) { const a = I.atoll, pts = []; for (let i = 0; i < 40; i++){ const t = i / 40 * TAU; pts.push(I.R ? I.R(i * 9, .6) : {x:a.cx + Math.cos(t) * a.rx * .6, y:a.cy + Math.sin(t) * a.ry * .6}); } return pts; }
   return I.reef.poly.filter((_, i) => i % 3 === 0).map(p => ({x:p.x + (I.center.x - p.x) * .1, y:p.y + (I.center.y - p.y) * .1}));
 }
 function startRace(I, list){

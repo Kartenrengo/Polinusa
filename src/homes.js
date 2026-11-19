@@ -758,15 +758,19 @@ function craftWhy(I, h, k){
   const p = craftSpot(h, I); if (craftBlocked(I, h)) return 'neben dem Haus ist kein Platz';
   if (K.dep && !depNear(I, K.dep, p.x, p.y, K.depR)) return `nur in einem Haus nah am ${DEPOSITS[K.dep].n}`;
   if (K.near && nearCount(I, K.near.kind, p.x, p.y, K.near.r) < K.near.n) return `braucht ${K.near.n} ${NEAR_PL[K.near.kind]} nah am Haus`;
+  if (K.coast && !nearShore(I, p)) return 'nur in einem Haus am Strand';
   return '';
 }
-const placeWhy = (I, k) => { const K = KINDS[k]; return !craftIsle(I, k) && (K.dep || K.near); };   // a house elsewhere would do
+const nearShore = (I, p) => { const L = landAt(I, p); return !!L && polyDist(p, L.poly) < 26; };   // lime and shell rings by the reef
+const placeWhy = (I, k) => { const K = KINDS[k]; return !craftIsle(I, k) && (K.dep || K.near || K.coast); };   // a house elsewhere would do
 /* where a house for a craft would have to stand: by the clay, among the pandanus, beside the mulberry */
 function craftPlace(I, k){
   const K = KINDS[k];
   if (K.dep){ const d = depsOf(I, K.dep)[0]; return d ? {x:d.x, y:d.y + 10} : null; }
   if (K.near){ const kinds = [].concat(K.near.kind), src = I.buildings.filter(b => kinds.includes(b.kind) && !b.bt); if (!src.length) return null;
     return src.reduce((m, q) => nearCount(I, K.near.kind, q.x, q.y, K.near.r * .7) > nearCount(I, K.near.kind, m.x, m.y, K.near.r * .7) ? q : m); }
+  if (K.coast){ const c = centerOf(I) || I.anchor || I.center, L = landAt(I, c); if (!L) return null; const q = L.poly.reduce((m, v) => Math.hypot(v.x - c.x, v.y - c.y) < Math.hypot(m.x - c.x, m.y - c.y) ? v : m);
+    const d = Math.hypot(c.x - q.x, c.y - q.y) || 1; return {x:q.x + (c.x - q.x) / d * 16, y:q.y + (c.y - q.y) / d * 16}; }   // the beach nearest the village
   return null;
 }
 function setCraft(I, h, k){

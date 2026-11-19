@@ -36,7 +36,7 @@ const QUESTS = [
     n:() => count('heimat', 'schnur'), of:1, show:{build:'schnur'}, unlock:[], gift:{faser:3}},
   {id:'ausbau', t:'Ein Familienhaus', d:'Baue eine Hütte aus.', get why(){ return `Tippe auf eine Hütte. Dort steht, wer wohnt, eine Kachel für jedes Bedürfnis und was zum Ausbau fehlt: alle Kacheln grün und ${costText(TIERS[2].cost)}. Ist alles da, schwebt ein Knoten mit Blüte über der Hütte: Ausbauen. Im Familienhaus kommen Kinder, und die Familie will Gekochtes.`; },
     n:() => homesOf(isl('heimat')).filter(b => tierOf(b) >= 2).length, of:1, show:{needs:true}, unlock:[], gift:{}},
-  {id:'umu', t:'Der Erdofen', d:'Baue einen Erdofen.', why:'Heiße Steine, Blätter und Erde: so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
+  {id:'umu', t:'Der Erdofen', d:'Lass eine Familie im Erdofen kochen.', why:'Tippe auf ein Haus und wähle unter Hauswerk den Erdofen. Jede Familie hatte ihren eigenen: heiße Steine, Blätter und Erde, so kochte man im ganzen Pazifik. Gekochtes wollen die Familienhäuser. Kochsteine holen die Fischer vom Riff.',
     n:() => count('heimat', 'umu'), of:1, show:{build:'umu'}, unlock:[], gift:{steine:3}},
   {id:'wald', t:'Der Wald wächst nach', d:'Baue einen Baumpflanzer am Wald.', why:'Der Pflanzer setzt junge Bäume auf die Stümpfe. Wo zu viel Wald fällt, spült der Regen die Erde ins Meer.',
     n:() => count('heimat', 'pflanzer'), of:1, show:{build:'pflanzer'}, unlock:[], gift:{}},
@@ -44,7 +44,7 @@ const QUESTS = [
     n:() => isl('heimat').pop, of:20, show:{build:'haus'}, unlock:[], gift:{dach:2}},
   {id:'ton', t:'Ton und Feuer', d:'Lass eine Familie am Ton töpfern.', why:'Ab 20 Bewohnern braucht jede Familie Töpfe. Getöpfert wird zu Hause, aber nur nah am Ton: Steht dort kein Haus, baue eine Hütte am Ton und wähle Töpfern. Mit den ersten Töpfen findet das Dorf sein eigenes Muster.',
     n:() => count('heimat', 'toepfer'), of:1, show:{build:'toepfer'}, unlock:[], gift:{}},
-  {id:'beile', t:'Steinbeile', d:'Baue eine Beilwerkstatt am Felsen.', why:'Ohne Steinbeile lässt sich kein Stamm für ein Kanu aushöhlen.',
+  {id:'beile', t:'Steinbeile', d:'Lass eine Familie am Felsen Beile schleifen.', why:'Geschliffen wird zu Hause, aber nur nah am Basalt: Steht dort kein Haus, baue eine Hütte am Felsen und wähle Beile. Ohne Steinbeile lässt sich kein Stamm für ein Kanu aushöhlen.',
     n:() => count('heimat', 'beil'), of:1, show:{build:'beil'}, unlock:['werft', 'harzer'], gift:{holz:4}},
   {id:'dreissig', t:'Auf dem Weg zum Dorf', d:'Erreiche 30 Bewohner.', why:'Bei 30 Menschen ist es ein Dorf: Öl, Doppelkanu, Sternhaus, Taucher und Versammlungshaus kommen dazu.',
     n:() => isl('heimat').pop, of:30, show:{build:'haus'}, unlock:[], gift:{holz:4}},
@@ -62,7 +62,7 @@ const QUESTS = [
     n:() => Math.min(3, stockOf('heimat', 'matten')) + Math.min(3, stockOf('heimat', 'schnur')), of:6, show:{route:'tochter'}, unlock:['gaergrube', 'oelhuette'], gift:{}},
   {id:'dorf', t:'Ein Dorf', d:`Erreiche ${VILLAGE_POP} Bewohner und ein Handwerkerhaus.`, why:'Eine Familie mit einem Hauswerk, dazu Töpfe, Matten und Kokosöl im Lager, baut das Familienhaus aus: ein Handwerkerhaus. Mehr Platz, mehr Bedürfnisse.',
     n:() => Math.min(1, isl('heimat').pop >= VILLAGE_POP ? 1 : 0) + Math.min(1, tier3Pop(isl('heimat')) ? 1 : 0), of:2, show:{needs:true}, unlock:[], gift:{}},
-  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube; auch getrocknete Kanarinüsse halten auf See. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit.',
+  {id:'proviant', t:'Vorrat für die Reise', d:'Lagere 6 Proviant auf Panua.', why:'Proviant entsteht in der Gärgrube einer Familie (Hauswerk, nah bei Brotfruchtbäumen); auch getrocknete Kanarinüsse halten auf See. Ins Unbekannte nimmt das Doppelkanu nur Proviant mit.',
     n:() => stockOf('heimat', 'proviant'), of:6, show:{build:'gaergrube'}, unlock:['dc', 'pfosten'], gift:{}},
   {id:'kanu', t:'Das große Kanu', d:'Baue im Kanuhaus ein Doppelkanu.', why:'Nur das Doppelkanu fährt über das offene Meer. Der Bau dauert etwa fünf Minuten. Neu: das Haus der Navigatoren.',
     n:() => fleetOf('dc') || newLand() ? 1 : 0, of:1, show:{sheet:'werft'}, unlock:['sternhaus'], gift:{}},
@@ -378,7 +378,7 @@ function showCraft(k){
   const h = ok.find(q => !craftOf(I, q)) || ok.find(q => craftOf(I, q).kind === k) || ok[0];
   if (h){ closeSheet(); flyTo(h.x, h.y, Math.max(cam.z, 2.2)); select(h); if (sheetKind === 'info'){ sheetData = {...sheetData, tab:'haus', crafts:true}; renderSheet(); } return; }   // the choice of crafts open, also in the village centre
   const why = craftIsle(I, k); if (why){ toast(`${K.craft}: ${why}.`, 3200, false); return; }
-  toast(`${K.craft} geht ${K.dep ? `nur nah am ${DEPOSITS[K.dep].n}` : `nur nah bei ${NEAR_PL[K.near.kind]}`}. Baue dort eine Hütte, die Familie macht es dann.`, 4200, false);
+  toast(`${K.craft} geht ${K.dep ? `nur nah am ${DEPOSITS[K.dep].n}` : K.near ? `nur nah bei ${NEAR_PL[K.near.kind]}` : 'nur am Strand'}. Baue dort eine Hütte, die Familie macht es dann.`, 4200, false);
   const p = craftPlace(I, k); setBuildOpen(true); if (!p || !canPay(I, costOf('haus', I))){ hintBuild('haus'); return; }
   startPlace('haus'); if (placing){ const s = findSpot(I, 'haus', p); if (s){ placing.x = s.x; placing.y = s.y; ghostRender(); } }
 }
