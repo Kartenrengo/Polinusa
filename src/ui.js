@@ -699,6 +699,10 @@ function peopleTab(I, nd){
     const some = w => homesOf(I).some(b => rowKey(b) === w);
     const shown = hs.length || (t === 2 && unlocked('schnur')) || (t === 3 && some(2)) || (t === 'see' && unlocked('werft') && homesOf(I).some(b => tierOf(b) === 2 && onShore(I, b))) || (t === 'nav' && some('see')) || (t === 'wis' && some('nav')); if (!shown) continue;
     const ready = hs.filter(b => canUpgrade(I, b, nd.list)).length, name = sea ? sea.n : TIERS[t].n;
+    // a step no house has reached yet: one short line with only what it wants on top of the step before, instead of a
+    // whole row of pale tiles
+    if (!hs.length){ const before = sea ? TIERS[2].needs : TIERS[t === 4 ? 3 : t - 1].needs, more = (sea ? seaGoods(t) : TIERS[t].needs).filter(k => !before.includes(k));
+      h += `<div class="tier none slim" data-tip="${esc(`<b>${name}</b>: ${sea ? 'nur nah am Strand, ' : ''}braucht dazu ${andList(more.map(needName))}.`)}"><b>${name}</b><small>dazu</small><span class="slimk">${more.map(k => `<span role="img" aria-label="${needName(k)}">${icon(needIcon(k))}</span>`).join('')}</span></div>`; continue; }
     h += `<div class="tier${hs.length ? '' : ' none'}"><div class="tier-head"><b>${name}</b><small>${icon('haus')}${hs.length} ${seatIc}${people}</small>${ready && !I.autoUp ? `<button class="btn primary small tie" type="button" data-act="upall" data-t="${t}">${knotIc}${ready}</button>` : ''}</div>`;
     // what the families of this step need, one tile each with its name and a word, as in the house; a step not reached yet
     // shows its needs pale, with "später"
@@ -1454,7 +1458,7 @@ function select(b){ const craft = b.at && findB(b.at); if (craft) b = craft; sel
 const TIP_SEL = '.rc, .hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .wt, .hc, .lt, .seat, .hud-who .top-right > button, .sattile, .kinds, #mascot, #compass', TIP_HOLD = 380;
 /* tiles: a tap shows what the picture is at once; what the tile did before (go to the store, build, mend the roof …) is a
    button in the bubble. Buttons in the bar and in the build menu keep their tap; held, they show the bubble. */
-const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds';
+const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds, .tier.slim';
 const TIP_GO = {ware:'Woher ›', store:'Lager ›', hint:'Bauen ›', roof:'Dach flicken ›', fleetbar:'Kanus ›', foodopen:'Sorten ›', stab:'Zeigen ›', goto:'Hin ›', craftpick:'Wählen ›'};
 let tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0, tipPass = null;
 const tipNow = el => el.matches(TIP_TAP) || (!el.matches('button') && !el.closest('button'));

@@ -1328,3 +1328,9 @@ body.landing #lizard{display:none}
 .rend .padd{min-width:0;min-height:30px;padding:1px 5px;border:0;border-radius:15px;box-shadow:inset 0 0 0 1.5px rgba(62,36,22,.4);background:var(--cloth-hi)}
 .rplus{min-height:30px;padding:0 10px;margin-top:5px;border:0;border-radius:15px;box-shadow:inset 0 0 0 1.5px rgba(62,36,22,.4);background:var(--cloth-hi);font:800 12.5px/1 var(--font-ui);color:var(--ink);cursor:pointer}.rplus:disabled{opacity:.4}
 .rwant{display:flex;align-items:center;gap:4px;margin:0}.rwant .rc .ic{width:18px;height:18px}
+/* a house step not reached yet: one short line, what it wants on top */
+.tier.slim{display:flex;align-items:center;gap:6px;padding:4px 2px;opacity:.75;border-top:1px dashed rgba(62,36,22,.25)}
+.tier.slim b{font:800 13px/1.1 var(--font-ui)}
+.tier.slim small{font:700 11px/1 var(--font-ui);color:var(--muted)}
+.tier.slim .slimk{display:flex;gap:4px;flex-wrap:wrap}
+.tier.slim .slimk .ic{width:18px;height:18px}
