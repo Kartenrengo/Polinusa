@@ -2357,3 +2357,32 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   gezeichnet, Kanus rechnen in Dreierschritten, der Bedarf einer Insel nur einmal je Takt).
 - **Häuser-Übersicht knapper:** Stufen, die noch kein Haus erreicht hat, stehen nur noch als eine Zeile mit dem, was sie dazu
   brauchen (Gedrückthalten erklärt es), statt zwei Reihen blasser „später“-Kacheln.
+
+## Atoll, Pfahlhäuser und der Abend im Dorf (Version 111)
+
+- **Atolle und Riffe sind ohne Hürde spielbar.** Das ersetzt den Teil von Version 106, nach dem der Einbaum des Kanuhauses bis zu
+  8 Plätze bedient und erst das Atoll öffnet; das gilt nicht mehr.
+  - Kanus fahren jederzeit durch die Riffpassagen in die Lagune.
+  - Auf einem Atoll gehen die Leute über das Riffdach von Inselchen zu Inselchen; sie waten, langsamer als an Land, mit kleinen
+    Wellenringen um die Beine. Auf hohen Inseln waten sie kurze nasse Stücke und paddeln nur längere.
+  - Auf schmalen Inselchen lässt sich jetzt fast überall bauen (vorher scheiterte etwa die Hälfte am „Zu nah am Wasser“).
+  - Pfahlhäuser gehen ohne Grenze, in der Lagune und auf dem flachen Riff nah am Ufer, in drei Formen: ein langes Haus auf
+    sechs verstrebten Pfosten mit Veranda und Kerbleiter, ein steiles Giebelhaus auf vier Pfosten mit Fischgestell, eine
+    runde Hütte mit kurzem Steg und Netz. An jedem liegt ein kleines Kanu.
+  - Der Einbaum am Kanuhaus fährt weiter Leute hinüber, aber nur zum Ansehen; er hält nichts mehr auf.
+- **Der Abend:** In der Dämmerung endet die Arbeit; nur die Nachtfischer fahren mit Fackeln hinaus, und Bauleute bauen den Tag zu
+  Ende. Viele setzen sich im Kreis um das Dorffeuer auf dem Platz, reden und fächeln sich Luft zu, Kinder rollen sich auf einer
+  Matte am Feuer ein; die anderen sitzen vor ihrem Haus. Ins Bett geht nicht jeder zur selben Zeit: Einige, vor allem Alte,
+  sitzen als Nachteulen noch lange am Feuer. Ein Teil schläft sichtbar auf einer Matte vor dem Haus unter der Traufe, wo es
+  kühler ist, die anderen im Haus; in Sturmnächten alle drinnen. Für die Vorräte zählt der Abend wie Arbeitszeit, so wie der
+  Schlaf.
+- **Kein Kava vor Hawaiki:** Abends am Versammlungshaus wurde Kava getrunken, obwohl Kava im Spiel erst mit Hawaiki kommt. Jetzt
+  wird dort geredet und gefächelt.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Pfahlhäuser über der flachen Lagune in Lapita-Siedlungen (Talepakemalai auf Mussau, Pfostenreihen im Wasser). Das
+  Waten über Riffdächer bei Ebbe zwischen den Inselchen eines Atolls ist aus allen Atollen Ozeaniens bezeugt.
+- **Vermutet:** die genaue Form der Lapita-Pfahlhäuser (Grundriss und Dach sind nicht erhalten; die drei Formen folgen späteren
+  Häusern der Region), Schlafen auf Matten vor dem Haus und der Abendkreis am Feuer (aus späterer Ethnographie, für die Lapita
+  nicht direkt belegt).
