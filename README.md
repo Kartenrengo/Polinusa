@@ -2329,3 +2329,31 @@ Die Feinheiten zeigen sich nur in der Nähe und bei guter Bildrate; auf schwache
   Hauswerk, und von dort durfte die Baustelle ihn nicht zurückholen. Dann sprang ein anderer Freier ein, beim nächsten Mal wieder
   der erste: Die Bauleute wechselten ständig, und der Bau stand still. Jetzt bleibt so ein Helfer bei seiner Baustelle, bis sie
   fertig ist. Der lange Bot hatte das ab und zu gemeldet; in 18 Läufen danach nicht mehr.
+
+## Schönbau, glatte Fahrt, schneller Start (Version 110)
+
+- **Schönbau wie bei Anno** (nachgelesen in Anno-Union-Blogs, Anleitungen und Foren: Zierde in Lücken, Zäune und Hecken an
+  Wegen, Gebäude drehen, eigenes Schmuck-Menü, Fotomodus):
+  - **Drehen und Spiegeln** beim Bauen und Versetzen. Feine Stücke drehen sich in 45-Grad-Schritten, Häuser, Speicher, Palmen,
+    Pfosten und anderes lassen sich spiegeln. Versetzen kostet nichts; gespiegelt wird erst bei „Hier hin“.
+  - **Fünf feine Schmuckstücke** im Schmuck-Reiter (ab 20 Menschen): Flechtzaun aus Pandanus, Hibiskushecke, Korallenrand,
+    Trittsteine, Trockengestell. Sie sind klein, brauchen keine Bauleute, und das nächste Stück wartet am Ende des letzten in
+    derselben Richtung. „Reihe“ legt bis zu sechs auf einmal. Für die Schönheit zählen sie nur ein wenig, zusammen höchstens 6,
+    damit man die Stufe nicht mit Zäunen kauft.
+  - **Fotomodus** (Menü und Schmuck-Reiter): Alle Leisten verschwinden; ein Tipp auf die Karte bringt sie zurück.
+  - Belegt bzw. vermutet für die Lapita-Zeit: Blüten als Schmuck; geflochtene Zäune, Korallenränder und Trockengestelle sind
+    einfache Dinge, wie sie in Ozeanien überall vorkommen. Nichts aus der späteren polynesischen Zeit.
+- **Boote fahren glatt:** Das Zickzack-Kreuzen ist heraus. Der Weg wird zu weichen Bögen gerundet, ohne Land zu berühren; ein
+  umgelenktes Kanu fährt erst ein Stück weiter und biegt dann ab. Der Wind wirkt nur noch auf die Geschwindigkeit: gegen den Wind
+  etwa 1,8-mal langsamer als bei Wind von der Seite.
+- **Steuern einfacher:** Ein gewähltes Kanu bleibt gewählt; jeder Tipp aufs Meer oder auf eine Insel ist das neue Ziel, auch über
+  Häusern und Sprechblasen. Am Ziel stehen ein Ring und die Fahrzeit. Im kleinen Blatt gibt es „Halt“ und „Heim“. Ein anderes
+  eigenes Kanu antippen wechselt, das gewählte antippen hebt die Wahl auf.
+- **Handelskette kompakt:** oben die Kanus als kleine Chips, darunter die beiden Häfen nebeneinander, je Ware ein Bild mit − Zahl
+  +, „+ Ware“ öffnet eine kleine Bildauswahl. Ausgeladen wird von selbst. Erklärungen nur beim Gedrückthalten.
+- **Schneller Start:** Warst du lange fort, rechnete das Spiel die Zeit beim Öffnen am Stück nach, nach 8 Stunden auf einem
+  langsamen Handy rund 30 Sekunden ohne Bild. Jetzt kommt zuerst die Karte (etwa 2 Sekunden), dann rechnet es in Stücken nach,
+  mit dem Balken „Die Zeit vergeht auf den Inseln“; das ist zudem gut doppelt so schnell (die Leiste wird dabei nicht ständig neu
+  gezeichnet, Kanus rechnen in Dreierschritten, der Bedarf einer Insel nur einmal je Takt).
+- **Häuser-Übersicht knapper:** Stufen, die noch kein Haus erreicht hat, stehen nur noch als eine Zeile mit dem, was sie dazu
+  brauchen (Gedrückthalten erklärt es), statt zwei Reihen blasser „später“-Kacheln.
