@@ -1337,3 +1337,27 @@ body.landing #lizard{display:none}
 .tier.slim small{font:700 11px/1 var(--font-ui);color:var(--muted)}
 .tier.slim .slimk{display:flex;gap:4px;flex-wrap:wrap}
 .tier.slim .slimk .ic{width:18px;height:18px}
+/* the fleet at a glance: a card per trade chain (its two ports, what goes each way, its canoes) and per canoe */
+.fhead{display:flex;align-items:center;gap:6px;margin:10px 0 4px;font:800 12px/1 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:#6B4428}
+.fhead .ic{width:18px;height:18px}
+.fcards{display:flex;flex-direction:column;gap:6px}
+.fcard{display:flex;flex-direction:column;gap:4px;width:100%;box-sizing:border-box;text-align:left;padding:8px 10px;border-radius:12px;background:#FBF3E1;border:1.5px solid #2B1D14;box-shadow:0 2px 0 rgba(43,29,20,.25);font:600 13px/1.3 var(--font-ui);color:var(--ink)}
+button.fcard{cursor:pointer}
+.fcard.warn{background:#F9E1D6;border-color:#A84A2C}
+.fcard.idle{border-style:dashed}
+.fends{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.fknots{color:#A84A2C;letter-spacing:2px;font-size:10px}
+.fway{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.fdir{font-weight:800;color:#6B4428;width:14px}
+.fgood{display:inline-flex;align-items:center;gap:1px;padding:1px 5px 1px 2px;border-radius:8px;background:#EFE2C6}
+.fgood .ic{width:16px;height:16px}
+.fgood small{font-weight:800;font-size:11px}
+.fboats{display:flex;flex-wrap:wrap;gap:6px}
+.fboat{display:inline-flex;align-items:center;gap:3px;font-size:12px;padding:1px 6px 1px 2px;border-radius:9px;background:#EFE2C6}
+.fboat .ic.ship{width:26px;height:16px}
+.fboat.out{background:#F3C9B4}.fboat.way{background:#D6E8E2}
+.fship{display:flex;align-items:center;gap:6px}
+.fship .ic.ship{width:30px;height:18px}
+.fwhere{margin-left:auto;font-size:12px;color:#6B4428}
+.fcard.ship.out{background:#F9E1D6}
+.fbtns{display:flex;gap:6px;flex-wrap:wrap}

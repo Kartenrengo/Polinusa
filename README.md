@@ -2495,3 +2495,7 @@ seit Version 110 in Stücken mit Balken.
 - **Kleine Wege:** Wer auf die Plattform eines Pfahlhauses oder den Boden eines Handwerkerhauses will, steigt auf den letzten
   Schritten langsam hinauf, statt hochzuspringen. Töpfe, Schnurrollen und Speisepakete gehen an der Tragestange zum Speicher.
   Kinder bleiben am Tag oft bei einem Elternteil, das arbeitet: Sie hocken neben der Matte und schauen zu.
+- **Flotte auf einen Blick:** Ein Tipp auf „Flotte“ (oder die untere Leiste nach oben schieben) öffnet die ganze Übersicht:
+  jede Handelskette als Karte mit beiden Häfen, ihren Knoten, was in jede Richtung fährt und welche Kanus darauf sind; darunter
+  jedes Kanu mit Ort, Aufgabe, Ladung und den Knöpfen „Steuern“, „Kette“ und „Mehr“. Eine Kette mit Problem (Lager voll, kein
+  Weg) ist rötlich, eine ohne Kanu gestrichelt. Die Linien der Ketten stehen dabei auf der Karte.

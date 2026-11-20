@@ -1912,7 +1912,10 @@ $('buildTabs').addEventListener('click', e => { const t = e.target.closest('[dat
 $('satBtn').addEventListener('click', () => openSheet('sat', {id:active}));
 $('isleName').addEventListener('click', () => { if (landing){ if (!landing.found) openSheet('landing', {}); return; } openSheet('rename', {id:active}); const i = $('nameIn'); if (i){ i.focus(); i.select(); } });
 $('sheetBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'nameIn'){ e.preventDefault(); renameIsland(isl(sheetData.id), e.target.value); } });
-$('tradeBtn').addEventListener('click', () => { closeSheet(); closeNews(); setBar(barMode === 'fleet' ? null : 'fleet'); });
+/* pushing the bottom bar up opens the fleet at a glance */
+{ let y0 = null; $('bottom').addEventListener('pointerdown', e => { y0 = e.clientY; }, {passive:true});
+  $('bottom').addEventListener('pointerup', e => { if (y0 != null && y0 - e.clientY > 40 && barMode !== 'build' && (own().length || routes.length)){ closeNews(); openSheet('fleet'); } y0 = null; }, {passive:true}); }
+$('tradeBtn').addEventListener('click', () => { closeNews(); if (sheetKind === 'fleet'){ closeSheet(); return; } setBar(null); openSheet('fleet'); });   // Flotte: all routes and canoes at once
 $('moreBtn').addEventListener('click', () => setSideOpen(!sideOpen));
 $('compass').addEventListener('click', () => openSheet('calendar'));
 $('compass').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSheet('calendar'); } });

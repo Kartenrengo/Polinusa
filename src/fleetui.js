@@ -146,12 +146,29 @@ function routeMarkup(ri){
 }
 function openRoute(ri){ const r = routes[ri]; if (isl(r.a).settled && r.a !== active && r.b !== active) setActive(r.a); selectedId = null; invalidate(); openSheet('route', {r:ri}); }
 /* All canoes and trade chains at a glance */
+/* All routes and canoes at a glance (Flotte): every trade chain as a card, its two ports with what goes each way and the canoes
+   on it; then every canoe with where it is, what it does and what it carries. A tap on a chain opens it, on a canoe steers it. */
 function fleetMarkup(){
-  const mine = own();
-  let h = head('Flotte', mine.length ? 'Tippe auf Steuern, dann auf das Meer oder eine Insel.' : 'Kanus entstehen im Kanuhaus.');
-  h += mine.length ? `<ul class="list needs">${mine.map(s => `<li>${shipIcon(s.kind)}<span class="nm">${s.name}<small>${SHIPS[s.kind].crew} ${SHIPS[s.kind].crewN}${s.people ? `, ${s.people} Siedler` : ''}${cargoLoad(s) ? `, ${giftText(s.cargo)}` : ''}. ${shipStatus(s)}${s.hungry ? ' Kein Proviant.' : ''}</small></span><button class="btn small" type="button" data-act="steer" data-s="${s.id}">Steuern</button></li>`).join('')}</ul>` : '';
-  if (routes.length) h += `<p><b>Handelsketten</b></p><ul class="list needs">${routes.map((r, i) => { const A = isl(r.a), B = isl(r.b), n = ships.filter(s => s.own && s.route === i).length;
-    return `<li>${icon('schnur')}<span class="nm">${A.name} – ${B.name}<small>${r.knots} Knoten, ${n ? `${n} ${n === 1 ? 'Kanu' : 'Kanus'}` : 'kein Kanu'}</small></span><button class="btn small" type="button" data-act="chain" data-r="${i}">Ansehen</button></li>`; }).join('')}</ul>`;
+  const mine = own(), dot = s => s.hungry || s.noWay || s.full ? 'out' : s.state === 'sail' ? 'way' : s.route != null ? 'on' : 'free';
+  const goods = plan => { const e = Object.entries(plan || {}).filter(([, n]) => n > 0); return e.length ? e.map(([k, n]) => `<span class="fgood" role="img" aria-label="${n} ${GN[k]}">${icon(k)}<small>${n}</small></span>`).join('') : '<span class="sub">nichts</span>'; };
+  const where = s => s.state === 'sail' ? (s.dest && s.dest.isl ? `→ ${isl(s.dest.isl).name}` : 'auf See') : s.state === 'sea' ? 'vor Anker' : isl(s.port) ? isl(s.port).name : '';
+  let h = head('Flotte', `${routes.length} ${routes.length === 1 ? 'Handelskette' : 'Handelsketten'} · ${mine.length} ${mine.length === 1 ? 'Kanu' : 'Kanus'}`);
+  if (!mine.length && !routes.length) return h + '<p class="sub">Kanus entstehen im Kanuhaus. Eine Handelskette knüpfst du, wenn ein Kanu eine andere Insel erreicht.</p>';
+  if (routes.length){
+    h += `<p class="fhead">${icon('schnur')}Handelsketten</p><div class="fcards">` + routes.map((r, i) => { const A = isl(r.a), B = isl(r.b), on = ships.filter(q => q.own && q.route === i), bad = on.some(q => q.noWay || q.full);
+      return `<button class="fcard route${bad ? ' warn' : ''}${on.length ? '' : ' idle'}" type="button" data-act="chain" data-r="${i}" aria-label="Handelskette ${A.name} – ${B.name}, ${on.length} Kanus. Öffnen">` +
+        `<span class="fends"><b>${A.name}</b><span class="fknots" aria-label="${r.knots} Knoten">${'●'.repeat(Math.min(5, r.knots || 0))}${'○'.repeat(Math.max(0, Math.min(5, 5 - (r.knots || 0))))}</span><b>${B.name}</b></span>` +
+        `<span class="fway"><span class="fdir">→</span>${A.settled ? goods(r.plan && r.plan.a) : '<span class="sub">Gabe</span>'}</span>` +
+        `<span class="fway"><span class="fdir">←</span>${B.settled ? goods(r.plan && r.plan.b) : `<span class="sub">${B.clan ? 'Gegengabe' : 'nichts'}</span>`}</span>` +
+        `<span class="fboats">${on.length ? on.map(q => `<span class="fboat ${dot(q)}">${shipIcon(q.kind)}${q.name}</span>`).join('') : '<span class="sub">kein Kanu: tippen und eines einsetzen</span>'}</span></button>`; }).join('') + '</div>';
+  }
+  if (mine.length){
+    h += `<p class="fhead">${icon('einbaum')}Kanus</p><div class="fcards">` + mine.map(s => { const r = s.route != null ? routes[s.route] : null;
+      return `<div class="fcard ship ${dot(s)}"><span class="fship">${shipIcon(s.kind)}<b>${s.name}</b><span class="fwhere">${where(s)}</span></span>` +
+        `<span class="sub fdo">${r ? `Kette ${isl(r.a).name} – ${isl(r.b).name}` : s.auto ? 'erkundet von selbst' : s.state === 'sail' ? 'unterwegs' : 'frei'}${s.hungry ? ' · kein Proviant' : s.noWay ? ' · findet keinen Weg' : s.full ? ` · Lager auf ${s.fullAt} voll` : ''}</span>` +
+        (cargoLoad(s) || s.people ? `<span class="fway">${Object.entries(s.cargo || {}).filter(([, n]) => n > 0).map(([k, n]) => `<span class="fgood" role="img" aria-label="${n} ${GN[k]}">${icon(k)}<small>${n}</small></span>`).join('')}${s.people ? `<span class="fgood" role="img" aria-label="${s.people} Siedler">${icon('pop')}<small>${s.people}</small></span>` : ''}</span>` : '') +
+        `<span class="fbtns"><button class="chip" type="button" data-act="steer" data-s="${s.id}">Steuern</button>${r ? `<button class="chip" type="button" data-act="chain" data-r="${s.route}">Kette</button>` : ''}<button class="chip" type="button" data-act="shipopen" data-s="${s.id}">Mehr</button></span></div>`; }).join('') + '</div>';
+  }
   return h;
 }
 function steerShip(s){ closeSheet(); selectShip(s); flyTo(s.x, s.y, Math.max(cam.z, 1)); }
@@ -264,6 +281,7 @@ function fleetAct(act, btn, quiet = false){
   if (sheetKind === 'fleet'){
     if (act === 'steer'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s) steerShip(s); return true; }
     if (act === 'chain'){ openRoute(+btn.dataset.r); return true; }
+    if (act === 'shipopen'){ const sh = ships.find(q => q.id === +btn.dataset.s); if (sh) openSheet('ship', {id:sh.id, mini:false}); return true; }
     return false;
   }
   if (sheetKind === 'calendar' && act === 'rahui'){ declareRahui(isl(active)); renderSheet(); return true; }

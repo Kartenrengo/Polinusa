@@ -1395,7 +1395,7 @@ $('sheetBody').addEventListener('click', e => {
   if (act === 'stab'){ storeTab = btn.dataset.v; renderSheet(); return; }
   if (act === 'tab' && sheetKind === 'needs'){ sheetData = {...(sheetData || {}), tab:btn.dataset.v}; renderSheet(); return; }
   if (act === 'hint'){ closeSheet(); hintBuild(btn.dataset.k); return; }
-  if (act === 'fleetbar'){ closeSheet(); setBar('fleet'); return; }
+  if (act === 'fleetbar'){ setBar(null); openSheet('fleet'); return; }
   if (act === 'store'){ openSheet('store'); return; }
   if (act === 'upall'){ const I = sheetKind === 'info' ? islOfB(sheetData.id) : isl(active), t = btn.dataset.t || 0, list = needsOf(I).list; let n = 0; for (const b of readyHomes(I, list)) if ((!t || String(rowKey(b)) === String(t)) && canUpgrade(I, b) && upgradeHouse(I, b, anyWay(I, b))) n++; if (n > 1) toast(`${n} Häuser ausgebaut.`, 2600, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
   if (act === 'immig' && sheetKind === 'immig'){ const sh = ships.find(q => q.id === sheetData.ship); if (sh) immigAnswer(sh, btn.dataset.v === 'yes'); updateHUD(); return; }
