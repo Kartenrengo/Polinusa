@@ -31,9 +31,10 @@ const {PAGE} = require('./lib');
       for (let m = 0; m < 30 && cc.bt; m++) run(15); if (cc.bt) bad.push('called site not built'); if (cc.prio) bad.push('call stays after building');
       const e = J.buildings.find(q => q.kind === 'ernte'); J.handWork = true; for (const q of J.people) if (q.job === e.id) q.job = 0; J.staff = null;
       setPrio(J, e, true); out.push(`called workplace: ${crewAt(J, e)} of ${KINDS.ernte.crew}`); if (crewAt(J, e) < KINDS.ernte.crew) bad.push('called workplace not filled');
-      // the called place keeps its people: no flipping between places from one count to the next
+      // the called place keeps its people: nobody of its crew is taken away from one count to the next (a newcomer who
+      // lands by canoe may join as a helper; that is no flipping)
       J.handWork = false; J.staff = null; run(1);
-      { const ids0 = (staffOf(J).crewP.get(e) || []).join(); let flips = 0; for (let t = 0; t < 30; t++){ run(1); if ((staffOf(J).crewP.get(e) || []).join() !== ids0) flips++; } if (flips) bad.push(`called workplace changed its people ${flips} times`); }
+      { const ids0 = (staffOf(J).crewP.get(e) || []).slice(); let flips = 0; for (let t = 0; t < 30; t++){ run(1); const now = staffOf(J).crewP.get(e) || []; if (ids0.some(id => !now.includes(id))) flips++; } if (flips) bad.push(`called workplace lost its people ${flips} times`); }
       setPrio(J, J.buildings.find(q => q.kind === 'fisch'), true); setPrio(J, J.buildings.find(q => q.kind === 'quelle'), true); if (J.buildings.filter(q => q.prio).length > 2) bad.push('more than two calls');
       select(J.buildings.find(q => q.kind === 'quelle')); if (!/data-act="prio"/.test($('sheetBody').innerHTML)) bad.push('no conch button'); closeSheet(); }
     // 3. the dugout at the jetty of the canoe house gets a carver (it has no crew of its own) and is finished

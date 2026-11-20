@@ -29,7 +29,7 @@ const giftWorth = (T, cargo) => giftValue(T.clan, cargo) * (kin(T) ? KIN_GIFT : 
 function receiveGift(T, cargo, from, r){
   const C = T.clan, worth = giftWorth(T, cargo);
   T.debt = (T.debt || 0) + worth * returnRate(r.knots);
-  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++; teachTick();
+  r.knots = Math.min(12, r.knots + 1 + (cargo.schmuck ? 1 : 0)); r.lastGift = tick; stats.gaben++; teachTick(); clanFavor(T);
   T.lastFrom = from; if (!(T.returnAt > tick)) T.returnAt = tick + 15 + Math.round(Math.random() * 10);
   mana += Math.min(4, Math.round(worth / 4)) + 1; invalidate();
   toast(`${clanDer(C)} ${C.culture ? 'nehmen' : 'nimmt'} eure Gabe an. Die Gegengabe kommt später. ${r.knots} Knoten Vertrauen.`, 4200);
@@ -1699,7 +1699,7 @@ function econ(){
   if (tick % 10 === 0 && !stats.signs && !awayQuiet && dayPhase() < .62 && navHints().some(h => boxIn(h.I.box, view(200)))){ stats.signs = 1; toast('Seevögel fliegen aus dem Nebel und wieder hinein: Dort liegt Land. Tippe auf die Vögel.', 6000); }
   cycloneTick();
   if (tick % 10 === 0) for (const I of islands) if (I.settled || (I.clan && I.discovered)) motifTick(I);
-  answerGifts(); stepYards(); feedCrews(); stepTreasure(); driftTick(); calendarTick(); eventTick(); if (tick % 5 === 0) chronikTick();
+  answerGifts(); stepYards(); feedCrews(); stepTreasure(); driftTick(); calendarTick(); eventTick(); fortuneTick(); if (tick % 5 === 0) chronikTick();
   // a cord to a clan slackens when no gift has gone along it for a long time
   for (const r of routes){ const T = clanOfRoute(r); if (T && r.knots > 0 && tick - (r.lastGift || 0) > 90){ r.lastGift = tick; if (!bondsWith(T)){ r.knots--; invalidate(); } } }   // kin by marriage: the cord holds
   if (tick % 8 === 0) invalidate();   // roofs age

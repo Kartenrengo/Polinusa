@@ -330,9 +330,15 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 - **Hauswerk-Liste im Haus** ist mit 17 Arten lang. Nur die Arten zeigen, die auf der Insel gehen, tut sie schon; beobachten,
   ob die Wahl auf dem Handy übersichtlich bleibt.
 - **Clan-Dörfer** haben noch eigene Werkstätten (Schmuck, Flechten, Klingen); sie könnten auch Hauswerk an den Häusern zeigen.
-- **Test `build` wackelt:** „called workplace changed its people“ kommt in etwa einem von vier Läufen, schon seit Version 112. Ursache suchen.
+- ~~**Test `build` wackelt.**~~ **Geklärt in Version 115:** Ein Neuankömmling half am gerufenen Platz mit, der Test zählte das als Wechsel. Jetzt prüft er, ob jemand weggeht.
 
 ## Offen nach Version 114
 
 - **Ebbe und Flut** (Vorschlag 1) und **die Natur antwortet** (Vorschlag 2) sind noch nicht gebaut.
 - **Häuser leicht gedreht:** Die Zeichnungen sind von schräg vorn; drehen geht nur durch Spiegeln. Weiler wirken trotzdem unregelmäßig.
+
+## Offen nach Version 115 (Spannung und Belohnung)
+
+- **Clans als Rivalen:** Zwei Clans werben um dieselbe Insel; wer zuerst ein Dorf gründet oder die bessere Gabe bringt. Noch nicht gebaut.
+- **Funde mit Wirkung:** Eine volle Reihe könnte zusätzlich etwas dauerhaft verbessern (Meer: Fischer schneller). Bisher nur Ansehen.
+- **Ebbe und Flut** und **die Natur antwortet** (aus Version 114) stehen weiter aus.

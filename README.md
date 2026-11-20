@@ -2499,3 +2499,39 @@ seit Version 110 in Stücken mit Balken.
   jede Handelskette als Karte mit beiden Häfen, ihren Knoten, was in jede Richtung fährt und welche Kanus darauf sind; darunter
   jedes Kanu mit Ort, Aufgabe, Ladung und den Knöpfen „Steuern“, „Kette“ und „Mehr“. Eine Kette mit Problem (Lager voll, kein
   Weg) ist rötlich, eine ohne Kanu gestrichelt. Die Linien der Ketten stehen dabei auf der Karte.
+
+## Spannung und Belohnung (Version 115)
+
+Ein langes Spiel braucht Höhen: etwas wagen, sich vorbereiten, auf etwas hinfiebern. Das Belohnungssystem im Gehirn spricht
+besonders auf drei Dinge an: auf Unerwartetes (ein Fund, der selten sein könnte), auf sichtbaren Fortschritt (eine Sammlung,
+der nur noch wenig fehlt) und auf einen spürbaren Moment beim Erfolg. Darauf baut `src/fortune.js`. Bewusst fair: Wer
+fortbleibt, verliert nichts, es gibt keine Tagesserien, und nichts ist zu kaufen.
+
+- **Der Fundkorb** (Menü › Fundkorb): 24 Funde in vier Reihen (Meer, Land, Himmel, Ahnen), gewöhnlich, selten oder kostbar.
+  Ein neuer Fund kommt mit einer Karte, die aufspringt: das Ding, wie selten es ist, wie voll der Korb ist, Ansehen (+1, +2
+  oder +4); bei kostbaren Funden mit Strahlen und dem Muschelhorn. Eine volle Reihe bringt Ansehen +5 (Ahnen +8). Fehlende
+  Funde stehen als Schatten im Korb, mit einem Hinweis, wo man sie trifft.
+- **1. Zeichen auf See:** Ist ein Kanu auf Erkundung, sieht die Navigatorin alle paar Minuten ein Zeichen: Seeschwalben, die
+  abends zum Land fliegen, ein grüner Schimmer unter einer Wolke, eine andere Dünung, treibende Kokosnüsse. Das Zeichen zeigt
+  wirklich zur nächsten unentdeckten Insel. Du wählst: **folgen** (neues Land oder ein Fund; aber auch Sturm, halbe Ladung
+  verloren, oder leeres Meer und Proviant weg), **Kurs halten** (sicher, manchmal ein Fund) oder **heimkehren**. Je
+  erfahrener die Navigatoren, desto öfter stimmt das Zeichen.
+- **2. Krisen mit Vorwarnung:** Etwa alle 20 bis 30 Minuten kündigt sich auf einem Dorf eine Krise an: **Dürre** (Wasser
+  und Essen), **Sturmflut** (Holz und Wedel) oder ein **Rattenjahr** (Essen und Proviant). Sieben Minuten vorher warnen die
+  Alten; unter der Kopfleiste steht eine Karte mit Zeit und je einem Balken pro Ware. Ist genug da, ist die Krise
+  überstanden: ein Fest, Ansehen +4 und ein Fund. Sonst gehen Vorräte verloren.
+- **3. Lebensträume:** Einzelne Menschen haben einen Traum: Navigatorin werden, ein Handwerker- oder Seefahrerhaus, das
+  Tatau, ein großes Fest, einen Ahnenpfosten setzen. Er steht auf ihrem Blatt und im Fundkorb. Wird er wahr, gibt es eine
+  Karte, Ansehen +3 und manchmal ein Erbstück für den Korb. Ein Traum, der nicht wahr wird, verblasst ohne Strafe.
+- **4. Die Clans erinnern sich:** Nach der 3., 7. und jeder 12. Gabe schickt ein Clan etwas Kostbares zurück: Obsidian vom
+  Feuerberg, einen Armring vom Riff, Tapa vom Maulbeerhain.
+- **5. Seltene Sichtungen:** Auf der Insel, die du ansiehst, zeigt sich manchmal etwas: ein Buckelwal, eine Schildkröte,
+  ein Regenbogen, eine Sternschnuppe, leuchtendes Meer. Eine gelbe Blase mit Wasserringen markiert es für etwa anderthalb
+  Minuten. Antippen legt es in den Fundkorb. Auch Treibgut und Tauchgänge bringen manchmal einen Fund.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Landfinden über Vögel, Wolkenschimmer, Dünung und Treibgut; Muscheltrompeten, Kegelschnecken-Armringe,
+  Obsidianhandel (Talasea), Rindenstoff, feine Matten als Ehrengaben; rote Federn als Kostbarkeit (eher spätere Zeit, in der
+  Lapita-Zeit vermutet); Dürren, Sturmfluten und Ratten (mit den Kanus eingeschleppt) als Gefahren.
+- **Vermutet:** Stabkarten sind von den Marshallinseln bekannt, aus viel späterer Zeit; hier als Erbstück der Ahnen.

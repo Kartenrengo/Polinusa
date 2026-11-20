@@ -1361,3 +1361,47 @@ button.fcard{cursor:pointer}
 .fwhere{margin-left:auto;font-size:12px;color:#6B4428}
 .fcard.ship.out{background:#F9E1D6}
 .fbtns{display:flex;gap:6px;flex-wrap:wrap}
+/* the moment of reward (fortune.js): a card that pops up over the map, with rays for what is rare */
+#reward{position:absolute;inset:0;z-index:40;display:grid;place-items:center;pointer-events:auto;background:rgba(30,20,12,.28)}
+#reward .rwcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:min(300px,82vw);padding:18px 18px 14px;border-radius:18px;background:#F7EEDB;color:#2B1D14;box-shadow:0 0 0 2px #2B1D14,0 10px 30px rgba(30,20,12,.4);text-align:center;font:600 13.5px/1.35 var(--font-ui);overflow:hidden}
+#reward .rwrays{position:absolute;left:50%;top:70px;width:420px;height:420px;margin:-210px 0 0 -210px;background:repeating-conic-gradient(from 0deg,rgba(243,201,90,.35) 0 10deg,transparent 10deg 24deg);border-radius:50%;pointer-events:none}
+#reward.r1 .rwrays{opacity:.35}#reward.r3 .rwrays{background:repeating-conic-gradient(from 0deg,rgba(232,120,60,.45) 0 9deg,transparent 9deg 20deg)}
+#reward .rwrare{position:relative;font:800 11px var(--font-ui);letter-spacing:.12em;text-transform:uppercase;padding:2px 9px;border-radius:9px;background:#EFE2C6}
+#reward.r2 .rwrare{background:#BFE1DA}#reward.r3 .rwrare{background:#A84A2C;color:#F7EEDB}
+#reward .rwic{position:relative;display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:#FBF3E1;box-shadow:0 0 0 2px #2B1D14,0 0 0 6px rgba(243,201,90,.6)}
+#reward.r3 .rwic{box-shadow:0 0 0 2px #2B1D14,0 0 0 7px rgba(232,120,60,.7)}
+#reward .rwic .ic{width:50px;height:50px}
+#reward .rwt{position:relative;font:800 20px/1.15 var(--font-name)}
+#reward .rwtext{position:relative;color:#5A4434}
+#reward .rwset{position:relative;font-weight:800;color:#A84A2C}
+#reward .rwsub{position:relative;font-size:12px;font-weight:800;color:#6B4428}
+#reward .rwbar{position:relative;width:100%;height:7px;border-radius:4px;background:#E3D2AC;overflow:hidden}
+#reward .rwbar i{display:block;height:100%;background:linear-gradient(90deg,#D9A021,#A84A2C);border-radius:4px}
+#reward .rwfoot{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:4px}
+#reward .rwgain{display:inline-flex;align-items:center;gap:2px;font:800 15px var(--font-ui);color:#A84A2C}
+#reward .rwgain .ic{width:20px;height:20px}
+#reward.in .rwcard{animation:rwpop .55s cubic-bezier(.3,1.6,.5,1) both}
+#reward.in .rwrays{animation:rwspin 9s linear infinite}
+#reward.in .rwbar i{animation:rwfill 1.1s .35s ease-out both}
+@keyframes rwpop{from{transform:scale(.4) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes rwspin{to{transform:rotate(360deg)}}
+@keyframes rwfill{from{width:0}}
+@media (prefers-reduced-motion:reduce){#reward.in .rwcard,#reward.in .rwrays,#reward.in .rwbar i{animation:none}}
+/* a crisis on the way: what, when, and how full the stores are */
+#crisis{position:absolute;left:10px;top:calc(var(--hudH, 96px) + 14px);z-index:9;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;max-width:calc(100% - 20px);padding:6px 10px;border-radius:12px;border:none;background:#F9E1D6;box-shadow:0 0 0 1.5px #A84A2C,0 2px 6px rgba(43,29,20,.3);font:600 12.5px/1.2 var(--font-ui);color:#2B1D14;text-align:left;cursor:pointer}
+#crisis .cr-t{display:flex;align-items:center;gap:4px;width:100%}
+#crisis .ic{width:18px;height:18px}
+#crisis .cr-g{display:inline-flex;align-items:center;gap:3px}
+#crisis .cr-bar{width:44px;height:6px;border-radius:3px;background:#E8C9BC;overflow:hidden}
+#crisis .cr-bar i{display:block;height:100%;background:#A84A2C}
+#crisis .cr-g.ok .cr-bar i{background:#5E8A3A}
+#crisis small{font-weight:800}
+/* the Fundkorb: found things and shadows of the missing */
+.fkorb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.fslot{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px 6px;border-radius:12px;background:#EFE2C6;border:1.5px dashed rgba(43,29,20,.35);font:700 11px/1.15 var(--font-ui);color:#7A6450;text-align:center;min-height:62px;box-sizing:border-box}
+.fslot b{font:800 22px var(--font-name);color:#B9A27C}
+.fslot.on{border-style:solid;border-color:#2B1D14;background:#FBF3E1;color:#2B1D14}
+.fslot.on.r2{background:#E2F1EC}.fslot.on.r3{background:#F7DCCB}
+.fslot .ic{width:30px;height:30px}
+.dream{display:flex;align-items:flex-start;gap:6px;margin:4px 0;padding:6px 8px;border-radius:10px;background:#FFF1B8;font-size:13px}
+.dream .ic{width:20px;height:20px;flex:none}

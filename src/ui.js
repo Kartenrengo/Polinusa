@@ -398,7 +398,7 @@ function openSheet(kind, data){
   closeNews();   // a sheet covers the map; the news would hang over it
   if (kind !== 'ship') endSteer(); sliding = false; sheetKind = kind; sheetData = data;
   const el = $('sheet'); if (el.hidden && !reduced){ el.classList.add('opening'); clearTimeout(el._op); el._op = setTimeout(() => el.classList.remove('opening'), 700); }
-  el.hidden = false; renderSheet(); measure();
+  el.hidden = false; renderSheet(); measure(); if (typeof crisisCard === 'function') crisisCard();
 }
 /* the meter strip (see meterTick) */
 function showMeter(){ let el = $('meter'); if (!el){ el = document.createElement('div'); el.id = 'meter'; el.setAttribute('aria-hidden', 'true'); $('app').appendChild(el); } el.hidden = !opts.meter; if (opts.meter) el.textContent = 'misst …'; }
@@ -411,7 +411,7 @@ document.addEventListener('pointerdown', e => {
   for (const k of ['', ' b']){ const d = document.createElement('i'); d.className = 'tapring' + k; d.style.left = (e.clientX - r.left) + 'px'; d.style.top = (e.clientY - r.top) + 'px'; app.appendChild(d); setTimeout(() => d.remove(), 900); }
 }, {passive:true});
 function closeSheet(){ endSteer(); if (!sheetKind) return; if (sheetKind === 'event') eventNow = null;   // closing an event lets it pass
-  sliding = false; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); }
+  sliding = false; sheetKind = null; sheetData = null; $('sheet').hidden = true; selectedId = null; invalidate(); measure(); if (typeof crisisCard === 'function') crisisCard(); }
 function endSteer(){ if (mode === 'steer'){ mode = 'idle'; selShip = null; requestDraw(); } }
 const perMin = v => v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
 function growText(I, nd){
@@ -800,6 +800,7 @@ function personMarkup(){
   const I = sheetData && isl(sheetData.id), p = I && I.people && I.people.find(q => q.id === sheetData.p); if (!p) return '';
   const f = famOf(I, p.h), w = walkers.find(q => q.pid === p.id && q.isl === I.id), st = stageOf(p), job = p.job && findB(p.job), D = dayShares(I, st === 'adult' ? p : null), pc = x => Math.round(x * 100);
   let h = head(p.n, `${Math.floor(ageOf(p))} Jahre${p.tt ? ', mit Tatau' : ''}${f ? ` · ${famName(f)}` : ''}${I.chief === p.id ? ' · Häuptling' : I.mat === p.id ? ' · Matriarchin' : ''}`);
+  { const d = dreamOf(I, p); if (d) h += `<p class="dream">${icon(DREAMS[d.k].ic)}<span><b>Traum:</b> ${p.n} ${DREAMS[d.k].n}. ${DREAMS[d.k].how}</span></p>`; }
   h += `<p class="sub">Gerade: ${w ? whatDoes(w) : 'im Haus'}.${p.meal ? ` <b class="meal-bad">Heute früh ${p.meal === 3 ? 'ohne Essen und Wasser' : p.meal === 1 ? 'ohne Essen' : 'ohne Wasser'}: ${st === 'adult' ? 'arbeitet langsamer' : 'ist müde'}.</b>` : I.meal ? ' Hat heute früh gegessen und getrunken.' : ''}${p.cold ? ` <b class="meal-bad">Letzte Nacht ohne Feuer: friert.</b>` : ''}${satOfIsle(I).by.has(p.id) ? ` <button class="link" type="button" data-act="satopen">Zufriedenheit ${satOfIsle(I).by.get(p.id)}</button>` : ''}</p>`;
   h += `<ul class="list needs">${st === 'kid' ? rowS('kind', 'Kind', `Spielt und lernt. ${ageOf(p) >= GATHER.age ? 'Sammelt Brennholz, sobald es einen Herd gibt. ' : 'Ab drei sammelt es Brennholz. '}Mit sechs Jahren arbeitet es mit.`) : st === 'old' ? job ? rowS('pop', `Alt · ${placeName(job)}`, 'Sitzt beim Hauswerk vor dem Haus, halb so schnell wie die Jüngeren, und erzählt dabei von den Ahnen.', '', `<button class="chip" type="button" data-act="goto" data-b="${job.id}">Hingehen</button>`) : rowS('pop', 'Alt', 'Geht nicht mehr aufs Feld. Ein Hauswerk im Haus ihrer Familie gibt ihr noch Arbeit.') :
     rowS(job ? '' : 'idle', job ? `Stammplatz: ${placeName(job)}` : staffOf(I).rest ? 'Freizeit, ohne Stammplatz' : 'Ohne Stammplatz', job ? `${personWork(I, p).includes('·') ? `Gerade ${personWork(I, p).split(' · ')[1]}. ` : ''}${crewAt(I, job) || 0} von ${crewOf(job)} sind dort.` : staffOf(I).rest ? 'Alle Plätze sind besetzt. Viel Freizeit: ruht sich aus und sammelt nebenbei.' : 'Sammelt im Wald und am Strand. Ein Arbeitsplatz mit freiem Platz holt sie von selbst.', '',
@@ -1274,6 +1275,8 @@ function renderSheet(){
   } else if (sheetKind === 'event'){
     if (!eventNow){ closeSheet(); return; }
     h += eventMarkup();
+  } else if (sheetKind === 'finds'){
+    h += findsMarkup();
   } else if (sheetKind === 'chronik'){
     h += chronikMarkup();
   } else if (sheetKind === 'ziel'){
@@ -1284,7 +1287,7 @@ function renderSheet(){
     h += head('Menü', `Spielstand ${curSlot} · Welt Nr. ${seed}`);
     if (sheetData && sheetData.confirm) h += `<div class="rowx"><span>Spielstand ${curSlot} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="reset">Neu beginnen</button></span></div>`;
     else if (sheetData && sheetData.slotNew) h += `<div class="rowx"><span>Spielstand ${sheetData.slotNew} neu beginnen, mit neuen Inseln? Die Kopien bleiben eine Weile im Menü.</span><span class="chips"><button class="btn" type="button" data-act="close">Nein</button><button class="btn primary" type="button" data-act="slotnew" data-n="${sheetData.slotNew}">Neu beginnen</button></span></div>`;
-    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="photo">Foto</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
+    else h += `<div class="rowx"><span class="chips"><button class="btn" type="button" data-act="help">So geht es</button><button class="btn" type="button" data-act="finds">Fundkorb</button><button class="btn" type="button" data-act="chronik">Chronik</button><button class="btn" type="button" data-act="photo">Foto</button><button class="btn" type="button" data-act="koruru">Knöchelwurf</button>${quest >= QUESTS.length ? '<button class="btn" type="button" data-act="finale">Rückblick</button>' : '<button class="btn" type="button" data-act="skipq">Ohne Einführung</button>'}</span></div>` +
       `<p class="sec">Spielstände</p><ul class="list needs slots">${Array.from({length:SLOTS}, (_, i) => slotRow(i + 1)).join('')}</ul>` +
       keptMarkup() +
       `<p class="sec">Als Datei</p><div class="rowx"><span class="chips"><button class="btn" type="button" data-act="export">Sichern</button><button class="btn" type="button" data-act="import">Laden</button></span></div>` +
@@ -1420,6 +1423,7 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'help'){ openSheet('intro'); return; }
     if (act === 'finale'){ openSheet('finale'); return; }
     if (act === 'chronik'){ openSheet('chronik'); return; }
+    if (act === 'finds'){ openSheet('finds'); return; }
     if (act === 'photo'){ photoOn(); return; }
     if (act === 'sound'){ setSound(!opts.sound); renderSheet(); return; }
     if (act === 'music'){ setMusic(opts.music === false); renderSheet(); return; }

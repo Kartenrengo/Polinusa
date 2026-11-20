@@ -79,6 +79,7 @@ function collectDrift(d){
   const D = DRIFT[d.k], got = {}, cap = storeCap(I);
   for (const [k, v] of Object.entries(D.get)){ const n = Math.min(v, Math.max(0, cap - (I.stock[k] || 0))); if (n > 0){ I.stock[k] = (I.stock[k] || 0) + n; got[k] = n; } }
   drift.splice(drift.indexOf(d), 1); stats.treibgut = (stats.treibgut || 0) + 1; if (d.k === 'kauri') stats.kauri = (stats.kauri || 0) + 1;
+  if (!awayQuiet && Math.random() < .18) setTimeout(() => gainFind(rollFind(['meer']), 'Zwischen dem Treibgut lag noch etwas.'), 1800);   // now and then more than the drift itself (fortune.js)
   driftFx.push({x:d.x, y:d.y, t0:performance.now(), k:Object.keys(got)[0] || Object.keys(D.get)[0], resin:d.k === 'kauri'});
   const m = matriarchOf(I);
   if (d.k === 'kauri'){ sfx('rise'); toast(`Kauri-Harz! Ganz selten treibt ein Klumpen an, vom Kauri-Baum der großen Inseln. Am Dorfzentrum schnitzt ${m ? m.n : 'die Matriarchin'} daraus einen Talisman gegen den Sturm.`, 5200); }
@@ -122,7 +123,7 @@ function diveTick(){
     D.n++; D.strain++; q.left--;
     const r = Math.random(); let acc = 0, got = null;
     for (const [k, p, rich] of DIVE_LOOT){ acc += rich ? p * q.rich : p; if (r < acc){ got = k; break; } }
-    if (got){ stats.tauchfund = (stats.tauchfund || 0) + 1; s.cargo[got] = (s.cargo[got] || 0) + 1; D.found[got] = (D.found[got] || 0) + 1; if (TREASURE_GOODS.includes(got) && !awayQuiet) toast(`${s.name}: Ein Taucher bringt ${G1[got]} herauf!`, 3600); }
+    if (got){ stats.tauchfund = (stats.tauchfund || 0) + 1; if (!awayQuiet && Math.random() < .12) setTimeout(() => gainFind(rollFind(['meer'], 1), 'Vom Grund des Meeres heraufgebracht.'), 1500); s.cargo[got] = (s.cargo[got] || 0) + 1; D.found[got] = (D.found[got] || 0) + 1; if (TREASURE_GOODS.includes(got) && !awayQuiet) toast(`${s.name}: Ein Taucher bringt ${G1[got]} herauf!`, 3600); }
     if (D.strain > 6 && Math.random() < (D.strain - 6) * .15){ stats.taravana = (stats.taravana || 0) + 1; stopDive(s, 'Ein Taucher hat die Taucherkrankheit: Schwindel, die Glieder lahm. Die Mannschaft hört auf und rudert ihn in Ruhe.'); continue; }
     if (q.left <= 0){ diveSpots.splice(diveSpots.indexOf(q), 1); stopDive(s, 'Der Grund hier ist leer getaucht.'); }
   }

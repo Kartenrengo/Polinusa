@@ -2225,6 +2225,10 @@ function drawNeeds(c, v, now){
       bub('p' + b.id, b.x - 10, b.y - top - 12 + (reduced ? 0 : Math.sin(now / 500 + b.id) * .8), s * pulse, 0, 'need|horn', needBubble('horn')); hit(b.x - 10, b.y - top - 12, () => select(b)); } }
   // a canoe from far away waits at the beach: the family asks to stay
   for (const sh of ships) if (sh.immig && sh.state === 'moored' && ptIn(sh.x, sh.y, v)){ const bob = reduced ? 0 : Math.sin(now / 500 + sh.id) * 1.2; bub('m' + sh.id, sh.x, sh.y - 16 + bob, s * 1.15, 0, 'need|pop', needBubble('pop')); const id = sh.id; hit(sh.x, sh.y - 16, () => openSheet('immig', {ship:id})); }
+  // a rare sight: a sparkle and a bubble with a question; tapped, it goes into the Fundkorb (fortune.js)
+  for (const q of sights){ if (!ptIn(q.x, q.y, v)) continue; const pulse = reduced ? 1 : 1 + Math.sin(now / 300) * .08, by = q.y - 12 + (reduced ? 0 : Math.sin(now / 520) * 1.2);
+    if (!reduced){ const f = (now / 1400) % 1; stroke(c, ellipse(q.x, q.y + 1, 4 + f * 14, (4 + f * 14) * .45), '#FFF6D8', 1.4, null, null, (1 - f) * .9); }
+    bub('x' + q.x + q.y, q.x, by, s * 1.15 * pulse, 0, 'need|sight', bubbleArt('<use href="#ic-mana" transform="translate(-4.6 -12.8) scale(.46)"/>').replace('#F4ECD8', '#FFF1B8')); const qq = q; hit(q.x, by, () => claimSight(qq)); }
   fxBubbleEnd(c, v, now);
   const t = now;
   // a house newly bound: blossoms rain on its roof, as garlands are laid on a new house at its blessing
