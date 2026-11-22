@@ -19,7 +19,7 @@ const EVENTS = [
     when:() => seasonOf().id === 'sturm' && pickOf(villages().filter(I => I.buildings.some(b => KINDS[b.kind].crew && !b.bt))),
     text:I => `Die Alten sehen den Himmel über ${I.name} gelb werden, die Vögel fliegen landeinwärts. Ein Wirbelsturm kommt.`,
     choices:[
-      {n:'Alle an die Dächer!', text:I => `In einer Minute ist er da. Wer kann, bindet die Dächer fest: je Dach eine Schnur oder zwei Kokosfasern. Im Lager: ${I.stock.schnur || 0} Schnur, ${I.stock.faser || 0} Fasern.`, go:I => { stormWarn(I, true); return `Die Leute laufen zu den Häusern von ${I.name}. Jedes Dach braucht eine Schnur.`; }},
+      {n:'Alle an die Dächer!', text:I => `In einer Minute ist er da. Wer kann, bindet die Dächer fest: je Dach ein Sennit oder zwei Kokosfasern. Im Lager: ${I.stock.schnur || 0} Sennit, ${I.stock.faser || 0} Fasern.`, go:I => { stormWarn(I, true); return `Die Leute laufen zu den Häusern von ${I.name}. Jedes Dach braucht eine Schnur.`; }},
       {n:'Abwarten', text:I => I.stock.talisman > 0 ? 'Der Talisman der Matriarchin hält ihn von den Dächern.' : 'Die Dächer bleiben lose. Festbinden geht auch später noch.', go:I => { stormWarn(I, false); return `Der Sturm kommt in einer Minute über ${I.name}.`; }}]},
   {id:'treibgut', t:'Schiffbrüchige',
     when:() => pickOf(villages().filter(I => I.pop >= 8 && canPay(I, {nahrung:3}))),

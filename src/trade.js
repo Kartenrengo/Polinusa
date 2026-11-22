@@ -8,7 +8,7 @@ const STRENGTHS = {
   toepfer:{n:'Töpfer', ic:'toepfe', kinds:['toepfer', 'beil', 'klingen', 'kalkbrenner'], text:'Töpfern, Beile schleifen, Klingen schlagen und Kalk brennen gehen ein Viertel schneller.'},
   fischer:{n:'Fischer', ic:'fisch', kinds:['fisch', 'taucher', 'hakenmacher'], text:'Fischerhütten, Tauchplätze und Hakenschleifer arbeiten ein Viertel schneller.'},
   pflanzer:{n:'Pflanzer', ic:'nahrung', kinds:['ernte', 'taro', 'yams', 'pulaka', 'bananen', 'pansammler', 'pflanzer', 'harzer'], text:'Erntehaus und Felder arbeiten ein Viertel schneller.'},
-  weberin:{n:'Weberinnen', ic:'matten', kinds:['flecht', 'schnur', 'weberin', 'malerin', 'klopf'], text:'Flechthütte, Seilerei, Weberei und Klopfhütte arbeiten ein Viertel schneller.'},
+  weberin:{n:'Weberinnen', ic:'matten', kinds:['flecht', 'schnur', 'weberin', 'malerin', 'klopf'], text:'Flechthütte, Sennitdreherei, Weberei und Klopfhütte arbeiten ein Viertel schneller.'},
   navigator:{n:'Navigatoren', ic:'plejaden', kinds:['sternhaus'], text:'Wer im Haus der Navigatoren lernt, lernt anderthalbmal so schnell.'}
 };
 const STRENGTH_PAUSE = 2 * YEAR, STRENGTH_BONUS = 1.25;   // a village may change its strength every two years

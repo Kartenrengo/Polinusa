@@ -6,6 +6,15 @@
    - Wherever a canoe sails it lifts the fog; unseen sea is rolled into islands the moment it is first seen. */
 
 let ships = [], nextShip = 1, selShip = null;   // selShip: the canoe being steered
+let follow = 0;   // the id of the canoe the camera rides along with (Mitfahren), 0: none
+/* the time still to sail, as the player reads it */
+const etaText = sec => sec < 50 ? `${Math.max(5, Math.round(sec / 5) * 5)} s` : sec < 3600 ? `${Math.round(sec / 60)} min` : `${Math.round(sec / 360) / 10} h`;
+/* Riding along: the camera follows the canoe gently until it arrives, the player moves the map, or another sheet opens */
+function followTick(){
+  if (!follow) return; const s = ships.find(q => q.id === follow);
+  if (!s || s.state !== 'sail' || camAnim){ if (!s || s.state !== 'sail') follow = 0; return; }
+  const ty = s.y + (botH - topH) / 2 / cam.z; cam.x += (s.x - cam.x) * .12; cam.y += (ty - cam.y) * .12; clampCam(); applyCam();
+}
 
 /* ---------- a sea grid to find a way around land. A cell is shut as soon as land comes near any part of it,
    so a canoe on open cells always keeps clear of the beach. Leaving and reaching a harbour is checked against the coast itself. */
@@ -209,6 +218,7 @@ function sailTo(s, dest, quiet, force){
   if (s.own && s.kind !== 'vaka' && goal.x > EMPTY_X + 150){ if (!quiet) toast('Über die Leere See fährt nur das Reisekanu.', 3200, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }
+  if (s.own && dest.isl) islandPaths(isl(dest.isl));   // the island at the end is made ready during the voyage, so the arrival does not stutter
   // redirected under way: it first carries on a little the way it heads, then bends round (no sudden turn)
   if (s.state === 'sail' && s.hx != null && path.length){ const q = {x:s.x + s.hx * 42, y:s.y + s.hy * 42}, d = Math.hypot(path[0].x - s.x, path[0].y - s.y) || 1;
     if ((path[0].x - s.x) * s.hx / d + (path[0].y - s.y) * s.hy / d < .9 && d > 60 && !overLand(s, q, 2)) path.unshift(q); }
@@ -345,6 +355,7 @@ function arriveShip(s){
   if (!d || !d.isl){ s.state = 'sea'; if (sheetKind === 'ship') renderSheet(); save(); return; }
   const T = isl(d.isl), from = s.last && isl(s.last);
   s.state = 'moored'; s.port = T.id; const m = moorSpot(T, s); s.x = m.x; s.y = m.y;
+  if (!T.reached){ T.reached = true; invalidate(true); }   // the haze over a far island lifts once a canoe lies at its shore
   exploreAt(s.x, s.y, sight(s));
   // a cord grows between where it came from and here, if here is ours or a clan
   if (from && from !== T && (T.settled || T.clan) && routeIndex(from.id, T.id) < 0){
@@ -459,8 +470,8 @@ function startYard(I, kind){
 /* Building a canoe goes in five steps that can be watched at the canoe house; three builders make full speed */
 const YARD_STEPS = {
   vaka:[['Die Stämme', 'Zwei lange Stämme vom höchsten Baum liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden die Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken, mit Sennit genäht und mit Harz gedichtet.'], ['Plattform', 'Querbäume und eine Plattform mit Hütte für die lange Fahrt.'], ['Das Segel', 'Ein Segel wie eine Krebsschere, aus feinen Matten genäht.'], ['Fertig', 'Das Reisekanu ist bereit für die Leere See.']],
-  oc:[['Der Stamm', 'Ein Stamm vom Brotfruchtbaum liegt auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut wird der Rumpf ausgehöhlt.'], ['Bordplanken', 'Planken werden mit Kokosschnur an den Rumpf genäht.'], ['Ausleger', 'Der Schwimmer wird mit zwei Bäumen am Rumpf festgebunden.'], ['Paddel', 'Die Fugen werden mit Brotfruchtharz gedichtet, die Paddel geschnitzt.']],
-  dc:[['Die Stämme', 'Zwei große Stämme liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden beide Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken werden mit Kokosschnur angenäht.'], ['Zweiter Rumpf', 'Querbäume verbinden die Rümpfe, darauf kommt eine Plattform.'], ['Mast und Segel', 'Der Mast wird gesetzt, das Segel aus Pandanusmatten genäht.']]
+  oc:[['Der Stamm', 'Ein Stamm vom Brotfruchtbaum liegt auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut wird der Rumpf ausgehöhlt.'], ['Bordplanken', 'Planken werden mit Sennit an den Rumpf genäht.'], ['Ausleger', 'Der Schwimmer wird mit zwei Bäumen am Rumpf festgebunden.'], ['Paddel', 'Die Fugen werden mit Brotfruchtharz gedichtet, die Paddel geschnitzt.']],
+  dc:[['Die Stämme', 'Zwei große Stämme liegen auf Böcken.'], ['Aushöhlen', 'Mit Steinbeilen und Glut werden beide Rümpfe ausgehöhlt.'], ['Bordplanken', 'Hohe Planken werden mit Sennit angenäht.'], ['Zweiter Rumpf', 'Querbäume verbinden die Rümpfe, darauf kommt eine Plattform.'], ['Mast und Segel', 'Der Mast wird gesetzt, das Segel aus Pandanusmatten genäht.']]
 };
 const yardStage = y => Math.min(4, Math.floor((1 - y.left / SHIPS[y.kind].bt) * 5));
 /* Six steps to show: first the wood is fetched, then the five steps of building */

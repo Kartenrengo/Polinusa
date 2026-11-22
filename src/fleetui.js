@@ -28,7 +28,8 @@ function shipMarkup(s){
   // under way the sheet stays small, so the sea is free to tap; "Mehr" opens all of it
   const mini = sheetData.mini ?? (s.state === 'sail' || s.state === 'sea' || s.route != null);
   if (mini){ const home = islands.some(I => I.settled) && !(P && P.settled);
-    return head(s.name, shipStatus(s)) + `<div class="rowx"><span class="sub">Tippe aufs Meer oder eine Insel.</span><span class="chips">${s.state === 'sail' ? '<button class="chip" type="button" data-act="halt">Halt</button>' : ''}${home ? '<button class="chip" type="button" data-act="homeship">Heim</button>' : ''}${s.route != null ? '<button class="chip" type="button" data-act="unassign">Aus der Kette</button>' : ''}<button class="chip" type="button" data-act="shipmore">Mehr</button></span></div>`; }
+    const go = s.own && s.state === 'sail' && s.dest, D = go && s.dest.isl ? isl(s.dest.isl) : null;
+    return head(s.name, shipStatus(s)) + `<div class="rowx"><span class="sub">${go ? `${icon('wind')}noch ${etaText(etaOf(s))}` : 'Tippe aufs Meer oder eine Insel.'}</span><span class="chips">${go ? `<button class="chip${follow === s.id ? ' on' : ''}" type="button" data-act="follow" aria-pressed="${follow === s.id}">Mitfahren</button>${D ? '<button class="chip" type="button" data-act="togoal">Zum Ziel</button>' : ''}` : ''}${s.state === 'sail' ? '<button class="chip" type="button" data-act="halt">Halt</button>' : ''}${home ? '<button class="chip" type="button" data-act="homeship">Heim</button>' : ''}${s.route != null ? '<button class="chip" type="button" data-act="unassign">Aus der Kette</button>' : ''}<button class="chip" type="button" data-act="shipmore">Mehr</button></span></div>`; }
   let h = head(s.name, shipStatus(s));
   // loading in our own port: only the hold and the store, as in Anno
   if (P && P.settled && s.route == null && sheetData.load){ h += holdMarkup(s, P);
@@ -248,6 +249,8 @@ function fleetAct(act, btn, quiet = false){
     const P = s.port ? isl(s.port) : null, k = btn.dataset.k;
     if (act === 'auto'){ setAuto(s, !s.auto); return true; }
     if (act === 'halt'){ haltShip(s); toast(`${s.name} hält an.`, 1800, false); renderSheet(); return true; }
+    if (act === 'follow'){ follow = follow === s.id ? 0 : s.id; renderSheet(); return true; }   // the camera rides along with the canoe
+    if (act === 'togoal' && s.dest && s.dest.isl){ follow = 0; const D = isl(s.dest.isl); fitBox(D.box, 1.4); return true; }
     if (act === 'homeship'){ homeShip(s); renderSheet(); return true; }
     if (act === 'dive'){ startDive(s); renderSheet(); return true; }
     if (act === 'undive'){ stopDive(s, 'Die Mannschaft hört auf.'); renderSheet(); return true; }

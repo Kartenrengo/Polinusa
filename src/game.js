@@ -601,7 +601,7 @@ function whatDoes(w){
   const pl = w.play && !j ? ' · ' + PLAY[w.play.k].n : '';
   if (w.gather) return `${w.child ? 'Kind' : 'alt'} · ${w.gather === 3 ? 'bringt Brennholz heim' : 'sammelt Brennholz'}`;
   if (w.child) return 'Kind' + pl; if (w.old && !j) return 'alt, arbeitet nicht mehr' + pl; if (!j && pl) return 'hat gerade frei' + pl; if (!j) return foragers(isl(w.isl)) ? (w.forage ? 'sammelt Eier, Krebse und Vögel' : 'hat keine Arbeit und sammelt im Wald und am Strand') : 'hat gerade keine Arbeit';
-  const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Schnur' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
+  const K = KINDS[j.b.kind], way = j.type === 'dive' && w.under ? 'taucht' : j.type === 'dive' && w.leg === 'spot' ? 'wacht im Kanu und hält die Sennitleine' : j.type === 'dive' && w.leg === 'work' && w.strain > 2 ? 'ruht nach vielen Tauchgängen' : !w.on ? 'auf dem Weg' : w.leg === 'fetch' ? 'holt Holz' : w.leg === 'bring' ? 'bringt Holz' : w.fishing ? 'fischt' : w.boat ? 'auf dem Wasser' : w.leg === 'store' && w.carry && j.type !== 'plant' ? 'bringt es ins Lager' : '';
   if (j.type === 'tie' || j.type === 'mend') return `${K.n} · ${!w.on ? 'auf dem Weg' : j.type === 'tie' ? 'bindet das Dach fest' : 'deckt das Dach neu'}`;
   const what = j.type === 'site' ? `Bau ${K.n}` : j.type === 'yard' && I.yard ? `Kanuhaus, ${SHIPS[I.yard.kind].n}` : j.type === 'carve' ? `${K.n}, schnitzt den Einbaum` : K.n;
   return what + (way ? ' · ' + way : '');
@@ -1877,7 +1877,7 @@ mapC.addEventListener('pointermove', e => {
   if (ges.type === 'ghost'){ const wp = toWorld(e.clientX, e.clientY); placing.x = wp.x + ges.gx; placing.y = wp.y + ges.gy; ghostRender(); return; }
   const dx = e.clientX - ges.sx, dy = e.clientY - ges.sy;
   if (ges.type === 'tap' && Math.hypot(dx, dy) > 8){ ges.type = 'pan'; clearTimeout(ges.hold); }
-  if (ges.type === 'pan'){ cam.x = ges.cx - dx / cam.z; cam.y = ges.cy - dy / cam.z; clampCam(); applyCam(); }
+  if (ges.type === 'pan'){ follow = 0; cam.x = ges.cx - dx / cam.z; cam.y = ges.cy - dy / cam.z; clampCam(); applyCam(); }
 });
 function endPtr(e){
   if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId); if (ges) clearTimeout(ges.hold);
@@ -2010,7 +2010,7 @@ function frame(now){
 function frameBody(now){
   const dt = Math.min(64, now - last); last = now;
   if (catching){ if (now - lastDraw > 1500){ draw(now); lastDraw = now; } return; }   // catching up the time away: the map rests, the bar moves
-  stepCam(now); camGuard(); if (ships.length && !catching){ stepShips(now, dt * gameSpeed); driftTouch(); } if (!catching) walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
+  stepCam(now); followTick(); camGuard(); if (ships.length && !catching){ stepShips(now, dt * gameSpeed); driftTouch(); } if (!catching) walkUntil(now); if (cam.z > PEOPLE_Z) stepCritters(dt * gameSpeed);
   try { audioTick(now); } catch (e){ frameErr(e, 'audio'); }
   if (!document.hidden){ dayRing(); mascotTick(now); lizardTick(now); }   // the sun glides round the bar, every frame (it only touches the page when it moved)
   // clouds, whales and fish move all the time, but slowly: a few frames a second are enough when nothing else moves
@@ -2223,9 +2223,12 @@ function switchSlot(n, fresh){
   invalidate(true); renderAll(); updateHUD(); homeView(true); toast(`Spielstand ${n}: ${isl('heimat').name}.`, 2400, false);
   if (savedAt && Date.now() > savedAt) catchUpAsync(Date.now() - savedAt, away => { if (away && away.ms >= 3 * 60000) welcomeBack(away); });
 }
+/* the first picture: its steps follow what really happens, and it fades once the map has its first frame */
+function splashStep(n){ const S = $('splash'); if (!S) return; S.querySelectorAll('li').forEach((li, i) => li.classList.toggle('on', i <= n)); }
+function splashDone(){ const S = $('splash'); if (!S) return; S.classList.add('gone'); setTimeout(() => S.remove(), 500); }
 function start(data){
-  injectDefs();
-  let ok = false, unread = 0; versionGuard();
+  splashStep(1); injectDefs();
+  let ok = false, unread = 0; versionGuard(); pruneKept();
   try { const raw = (data && data.save) || localStorage.getItem(slotKey(curSlot)); if (raw) ok = restore(raw); if (raw && !ok) ok = restoreBackup();   // a broken save: the newest copy
     if (raw && !ok){ unread = curSlot; keepAside(curSlot, raw); const n = freeSlot(); if (n){ curSlot = n; localStorage.setItem('polinusa-slot', String(n)); } } } catch (e){}   // never written over: put aside, and the new game in an empty slot
   // a game from the old rules is not carried over: the island economy works differently now
@@ -2235,9 +2238,11 @@ function start(data){
   renderAll(); measure(); homeView(ok);
   // fonts, patterns and the first bitmaps load before the first frame, so nothing pops in
   const fonts = document.fonts ? Promise.all([document.fonts.load(NAME_FONT), document.fonts.load(SUB_FONT)]).catch(() => {}) : null;
+  splashStep(2);
   const ready = loadPatterns().then(() => { draw(performance.now()); return Promise.all(pendingSprites()); });
   Promise.race([Promise.all([fonts, ready]), new Promise(res => setTimeout(res, 2500))]).then(() => {
-    invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100);
+    invalidate(true); requestAnimationFrame(frame); setInterval(gameClock, 100); requestAnimationFrame(() => requestAnimationFrame(splashDone));
+    if (storageUse() > STORE_MB * .8 * 1048576) setTimeout(() => toast('Der Speicher des Browsers ist fast voll. Sichere das Spiel im Menü als Datei.', 6000, false), 4000);
     if (!ok){ beginLanding(); if (unread) toast(`Spielstand ${unread} ließ sich nicht laden. Er ist sicher aufbewahrt: Menü, „Aufbewahrt“.`, 7000, false); else if (oldGame) toast('Neue Regeln für Haushalte und Rohstoffe: Das Spiel beginnt neu.', 6000); }
     else if (awayMs) catchUpAsync(awayMs, away => { if (away && away.ms >= 3 * 60000) welcomeBack(away); else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000); });
     else if (!islands.some(I => I.settled && I.buildings.some(b => b.kind === 'faeller'))) toast('Neu: Holz kommt jetzt vom Holzfäller. Bau einen am Waldrand.', 6000);

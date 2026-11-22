@@ -242,7 +242,8 @@ function keptMarkup(){
     if (v){ let sum = null; try { sum = JSON.parse(v.raw).sum; } catch (e){}
       rows.push(`<li>${icon('insel')}<span class="nm">Spielstand ${n} vor dem Update<small>${sum ? `${sum.n} · ${sum.p} Menschen · ${sum.y}. Jahr` : 'ein Spiel'}</small></span><button class="btn small" type="button" data-act="kept" data-k="vorher" data-n="${n}">Laden</button></li>`); }
   }
-  return rows.length ? `<p class="sec">Aufbewahrt</p><ul class="list needs slots">${rows.join('')}</ul>` : '';
+  const kb = Math.round(storageUse() / 1024), use = `<p class="sub">Belegt im Browser: ${kb < 1024 ? kb + ' KB' : (kb / 1024).toFixed(1) + ' MB'} von etwa ${STORE_MB} MB. Kopien vor einem Update bleiben ${KEEP_DAYS} Tage.</p>`;
+  return (rows.length ? `<p class="sec">Aufbewahrt</p><ul class="list needs slots">${rows.join('')}</ul>` : '') + use;
 }
 function slotRow(n){
   const me = n === curSlot, info = me ? {at:Date.now(), sum:landing ? null : saveSum()} : slotInfo(n), s = info && info.sum;
@@ -574,7 +575,7 @@ function needTile(I, n, b){
 function stormLine(I, b){
   const S = I.storm; if (!S || tick >= S.at || !b) return '';
   const tied = S.tied.includes(b.id), secs = Math.ceil((S.at - tick) * TICK / 1000), lack = !tieCost(I);
-  const what = tied ? 'Das Dach ist festgebunden.' : !S.tie ? 'Das Dach ist lose.' : lack ? 'Es fehlt Schnur oder Kokosfasern zum Festbinden.' : 'Gleich bindet es jemand fest.';
+  const what = tied ? 'Das Dach ist festgebunden.' : !S.tie ? 'Das Dach ist lose.' : lack ? 'Es fehlt Sennit oder Kokosfasern zum Festbinden.' : 'Gleich bindet es jemand fest.';
   return `<div class="nextline storm ${tied ? 'ok' : 'out'}"><span class="what">${icon('sturm')}<b>Sturm in ${secs} s</b> ${what}</span>${!tied && !S.tie ? '<button class="chip way" type="button" data-act="tieall">Dächer festbinden</button>' : ''}</div>`;
 }
 /* the one thing to do next: what is missing first, else what runs short, and the building that helps */
@@ -585,7 +586,7 @@ function nextStep(I, n, b){
 /* what the next step of the house takes: the needs met, then each good with its name and how much is there. From a family
    house two ways lead on: two buttons choose between them (the sea way only near the shore). */
 const WAY_IC = {fam:'haus', hand:'toepfe', see:'einbaum', nav:'plejaden', wis:'mana'};
-const WAY_FOR = {hand:'Das Hauswerk der Familie arbeitet ein Viertel schneller.', see:'Fisch und Proviant für die Fahrt, Schnur für Netze. Die Kanus fahren schneller.', nav:'Matten für die Segel. Navigatoren dieser Familie lernen schneller.', wis:'Tapa für die Gewänder. Sie bewahren Sternenpfade und Ahnen, auch wenn ein Navigator stirbt.'};
+const WAY_FOR = {hand:'Das Hauswerk der Familie arbeitet ein Viertel schneller.', see:'Fisch und Proviant für die Fahrt, Sennit für Netze. Die Kanus fahren schneller.', nav:'Matten für die Segel. Navigatoren dieser Familie lernen schneller.', wis:'Tapa für die Gewänder. Sie bewahren Sternenpfade und Ahnen, auch wenn ein Navigator stirbt.'};
 const GOOD_FOR = {fisch:'Kost der Fahrer', proviant:'Vorrat für die Fahrt', schnur:'für Netze und Segel', matten:'für die Segel', tapa:'für die Gewänder', toepfe:'zum Kochen', oel:'zur Pflege'};
 function waysRow(I, b, u){
   const sea = u.ways.includes('see'), near = sea && onShore(I, b);
@@ -1318,7 +1319,7 @@ function sheetSig(){
   if (sheetKind === 'ship'){
     const s = ships.find(q => q.id === sheetData.id); if (!s) return 'gone';
     const P = s.port ? isl(s.port) : null;
-    return [s.diving ? s.diving.n + ':' + Object.values(s.diving.found).join('.') : '-', (spotNear(s) || {}).id, s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), (s.life || []).join('+'), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
+    return [s.state === 'sail' && s.dest ? etaText(etaOf(s)) : '', follow, s.diving ? s.diving.n + ':' + Object.values(s.diving.found).join('.') : '-', (spotNear(s) || {}).id, s.state, s.port, s.route, s.hungry, s.people, cargoLoad(s), (s.life || []).join('+'), s.auto, P && P.treasure ? P.treasure.left : "", Math.floor(mana), P && P.pop, ...(P ? GOODS.map(k => Math.min(P.stock[k] || 0, 30)) : [])].join();
   }
   if (sheetKind === 'route'){
     const r = routes[sheetData.r]; if (!r) return 'gone';

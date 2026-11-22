@@ -357,3 +357,16 @@ Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
   im Menü anzeigen, alte Notfallkopien löschen.
 - **Atolle:** Kleine Sandbänke sind nur Bild; Seevögel oder Treibgut könnten dort landen.
 
+## Offen nach Version 117 (Vorschläge geschickt, noch nicht gebaut)
+
+- ~~**Karte:** Rand oben und unten, drei Zonen.~~ **gebaut in Version 117** (A und B). Offen: C (Zeichen statt Karte auf
+  hoher See) und D (Nebelband mit Markierung für spätere Kapitel).
+- ~~**Laden und Speicher:** Startbild, Reisebild, Speicher.~~ **gebaut in Version 117** (A, C, D). Offen: B (Muster erst grob).
+- **Mehr Karte sehen:** einzeilige Kopfleiste, Aufgabe als kleiner Knoten, kürzere Nachrichten, Leisten beim Schieben
+  ausblenden, Blätter mit Griff.
+- **Beladen und losfahren:** Knopf „Ablegen“, Ziele im Ladeblatt, schmalerer Laderaum.
+- **Hütten verschiedener:** kleine Unterschiede je Haus, das Haus zeigt seine Familie, Stufen an der Form, Anbauten.
+- **Wege aus Strandgut:** Ein Trampelpfad auf der tiefsten Stufe lässt sich mit Muschelschalen und Korallenkies ausbauen;
+  Saum aus Strandsteinen. Treibholz nur für Stufen.
+- **Feuer, Dächer, Zuzug, Hochzeit** aus Version 116 sind weiter offen.
+

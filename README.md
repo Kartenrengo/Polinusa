@@ -175,7 +175,7 @@ ohne dass ein Dorf zusammenbricht.
 - **Vier Menschen, vier Arbeitskräfte:** Jeder in der Familie arbeitet, auch die beiden Kinder. Im Lager liegt Vorrat für
   ein paar Minuten. **In den ersten fünf Minuten zieht niemand fort.**
 - **Wenig am Anfang:** Die Bauleiste zeigt nur, was die erste Familie braucht: Hütte, Erntehaus, Holzfäller, Quelle,
-  Fischerhütte, Palme und Brotfrucht. Oben stehen nur Nahrung, Wasser, Holz, Palmwedel und Schnur.
+  Fischerhütte, Palme und Brotfrucht. Oben stehen nur Nahrung, Wasser, Holz, Palmwedel und Sennit.
 - **Stufen wie bei Anno:** Neue Gebäude kommen mit den Menschen, eine Karte sagt, was neu ist, und die neuen Knöpfe tragen
   einen Punkt.
 
@@ -207,7 +207,7 @@ nach Osten; erst um 1000 n. Chr. erreichten sie Tahiti und die Marquesas, danach
 liegt hinter den Fernen Inseln die **Leere See**, drei Felder offenes Meer ohne eine Insel, und dahinter die **Inseln
 des Morgens**, auf denen noch niemand lebt (keine Clans). Die lange Pause endet, wenn in Hawaiki ein Navigator den
 **Sternenpfad** kennt (Stufe 3). Dann lässt sich im Kanuhaus das **Reisekanu** bauen: 14 Holz, 3 Steinbeile, 6 Matten,
-8 Schnur, 3 Harz und 2 feine Matten, etwa elf Minuten, 36 Waren und 10 Menschen, schneller als das Doppelkanu und mit
+8 Sennit, 3 Harz und 2 feine Matten, etwa elf Minuten, 36 Waren und 10 Menschen, schneller als das Doppelkanu und mit
 einem großen Segel. Nur das Reisekanu fährt über die Leere See; Doppelkanus und Handelsketten kehren dort um. Die Namen
 Leere See und Inseln des Morgens stehen erst ab Hawaiki auf der Karte. Der Weg des Dorfes endet mit dem Knoten
 **Die zweite Fahrt**: einem Dorf auf den Inseln des Morgens.
@@ -269,7 +269,7 @@ Wasser ganz, packen alle wieder mit an. Hat eine Handwerkerfamilie freie Hände 
 **Verhältnisse und Ketten.** Die Tafel eines Arbeitsplatzes zeigt „≈3,1“ mit dem Bild für Menschen: so viele versorgt der
 Platz, voll besetzt. Darunter in Worten, etwa „Voll besetzt 3,8 Nahrung pro Minute: genug für etwa 3,1 Menschen. Jeder
 braucht 1,0 pro Minute.“ Das Blatt einer Ware zeigt ihre Kette in Bildern: was hineingeht, die Ware, wohin sie weiter
-geht, zum Beispiel „Kokosfasern → Schnur → Fischerhütte schneller · Ausbau Familienhaus“.
+geht, zum Beispiel „Kokosfasern → Sennit → Fischerhütte schneller · Ausbau Familienhaus“.
 
 **Der Rat und das Wachsen.** Reicht Essen oder Wasser nur gerade, rät der Rat nicht mehr zu Hütten, sondern
 „Mehr Essen als gebraucht“, mit dem, was noch fehlt, etwa „+9 pro Minute“. Der Rat „Auf 40 Menschen wachsen“ baut nur
@@ -314,7 +314,7 @@ auch die Lapita-Leute: gegen den Wind hinaus, damit der Weg zurück leicht war (
 
 - **Rat der Ältesten:** Über der Bauleiste steht immer ein nächster Schritt. Dringendes steht rot als „Jetzt“: kein Dach,
   Wasser fast aus, Nahrung aus, ein fremdes Kanu fragt. Sonst sagt der Rat, was dran ist: Leute verteilen, Palmwedel
-  holen, Holz, Fasern und Schnur, ein Familienhaus, Gekochtes, mehr Hütten, neues Blut, die nächste Stufe.
+  holen, Holz, Fasern und Sennit, ein Familienhaus, Gekochtes, mehr Hütten, neues Blut, die nächste Stufe.
 - Jede neue Stufe wird gefeiert: Ansehen +2, Herzen über dem Dorf.
 
 Über der Bauleiste steht immer genau eine Aufgabe. Antippen erklärt sie, „Zeig es mir“ springt zur richtigen Stelle.
@@ -374,7 +374,7 @@ Einfach und nach Bedeutung geordnet:
   Gekochtes. Ein Werkzeug, das schneller macht, steht als eigene Kachel dabei („macht schneller“ oder „wäre schneller“).
   Eine rote Kachel führt beim Tippen zu dem, was die Ware macht. So sieht jede Werkstatt, jedes Feld und jedes Haus mit
   Hauswerk gleich aus. Die alte Bildreihe mit Pfeilen und „≈“ ist weg. Auch **die Kanus im Kanuhaus** zeigen ihre Kosten
-  so: Holz 6/6 grün, Schnur 1/3 rot. Darunter die Leute mit − und +, und was sie
+  so: Holz 6/6 grün, Sennit 1/3 rot. Darunter die Leute mit − und +, und was sie
   holen sollen. Erst die **festen Plätze** (das Erntehaus hat immer 2), dann die **Helfer**, kleiner, mit einem Plus und
   „hilft“; darunter in Worten „2 feste Plätze, dazu 2 Helfer“. Auch die Marken über dem Gebäude zeigen erst die festen
   Plätze, dann die Helfer mit Plus. So sieht ein Platz nicht mal nach 2, mal nach 4 Plätzen aus.
@@ -384,7 +384,7 @@ Einfach und nach Bedeutung geordnet:
   die fortwill, und ein Kanu mit Zuzug öffnen ihr Blatt.
 - **Die Übersicht** (Bewohnerzahl antippen) hat drei Reiter:
   - **Bewohner:** oben eine Zeile, was das Dorf gerade aufhält, mit dem passenden Knopf: ohne Dach, Wasser fehlt, Häuser
-    sind zum Ausbau bereit, für das Familienhaus fehlt Schnur, für das Handwerkerhaus fehlen Matten von einem Atoll, die Insel ist
+    sind zum Ausbau bereit, für das Familienhaus fehlt Sennit, für das Handwerkerhaus fehlen Matten von einem Atoll, die Insel ist
     voll. Darunter jede Hausstufe mit Häusern und Menschen und **Kacheln wie im Haus** (seit Version 68): Bild, Name und
     ein Wort, da, knapp, fehlt, beim Dach hält, undicht, kaputt. Eine Stufe, die noch kein Haus erreicht hat, zeigt ihre
     Bedürfnisse blass mit „später“. Ein Tipp führt zu dem, was hilft. Dazu Zuzug und Kinder und die Verwandtschaft.
@@ -508,9 +508,9 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen, ab dem Famil
 | Stufe | Bau | Platz | Will |
 | --- | --- | --- | --- |
 | Hütte | 4 Holz, 4 Palmwedel | 2 bis 4 | Dach, Nahrung, Wasser |
-| Familienhaus | neu gebunden: 2 Holz, 3 Kokosfasern, 2 Schnur | 4 bis 6, **Platz für Kinder** | dazu Gekochtes |
+| Familienhaus | neu gebunden: 2 Holz, 3 Kokosfasern, 2 Sennit | 4 bis 6, **Platz für Kinder** | dazu Gekochtes |
 | Handwerkerhaus | die Familie hat ein Hauswerk; 2 Holz, 2 Matten; Töpfe, Matten und Öl im Lager | 4 bis 8 | dazu Töpfe, Matten, Kokosöl |
-| Seefahrerhaus (nur nah am Strand) | 3 Holz, 2 Palmwedel, 2 Schnur; Fisch, Proviant, Schnur im Lager | 4 bis 7 | dazu Fisch, Proviant, Schnur |
+| Seefahrerhaus (nur nah am Strand) | 3 Holz, 2 Palmwedel, 2 Sennit; Fisch, Proviant, Sennit im Lager | 4 bis 7 | dazu Fisch, Proviant, Sennit |
 | Häuptlingshaus | eigenes Gebäude | 4 bis 10 | dazu das Feinste |
 
 - **Familien:** Jeder Mensch gehört zu einer Familie. Eine Familie trägt den Namen der Frau, die sie gegründet hat; die
@@ -520,7 +520,7 @@ Wie bei Anno zählt jedes Haus für sich. Ein Haus hat vier Stufen, ab dem Famil
 - **Ausbau:** Ein Haus kann eine Stufe höher, wenn **alle Bedürfnisse da** sind und das **Material** im Lager liegt; für das Handwerkerhaus müssen dazu Töpfe, Matten und Kokosöl da sein.
   Dann schwebt ein Knoten mit Blüte über dem Haus, oben steht „Ausbau“, und auf der Tafel des Hauses ist der Knopf
   „Ausbauen“ frei. Beim Ausbau regnen Blüten aufs Dach. In der Übersicht baut „Alle ausbauen“ alle bereiten Häuser auf
-  einmal aus. Wer will, schaltet dort „Von selbst ausbauen“ ein; dann bleibt immer etwas Schnur für Netze und Kanus übrig.
+  einmal aus. Wer will, schaltet dort „Von selbst ausbauen“ ein; dann bleibt immer etwas Sennit für Netze und Kanus übrig.
 - **So sieht man die Stufe:** Das Familienhaus hat Tapa an der Tür und zwei geschnitzte Pfosten, das Handwerkerhaus dazu
   Töpfe und eine gerollte Matte davor und einen Blütenkranz über der Tür.
 - **Weiterkommen:** Die Tafel zeigt, was fehlt, und woher es kommt. Manches gibt es nicht auf jeder Insel: Matten nur auf
@@ -553,7 +553,7 @@ im Westen. Es legt am Strand an, und über ihm steht eine Sprechblase: Eine Fami
 sie bleiben darf.
 
 - **Aufnehmen oder weiterschicken:** Ein Tipp aufs Kanu öffnet die Tafel. Sie zeigt die Menschen mit Namen und Alter und
-  was sie mitbringen: Nahrung für die ersten Tage, manchmal Schnur oder einen Topf, manchmal Setzlinge, die dem Dorf noch
+  was sie mitbringen: Nahrung für die ersten Tage, manchmal Sennit oder einen Topf, manchmal Setzlinge, die dem Dorf noch
   fehlen.
 - **Gastfreundschaft:** Wer nicht antwortet, nimmt sie nach gut zwei Minuten nach altem Brauch auf.
 - Jede Familie aus der Ferne bringt eine **neue Linie** mit (siehe Verwandtschaft), und jeder Erwachsene ist eine
@@ -612,7 +612,7 @@ Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht
 | --- | --- | --- |
 | Zu zweit | Holzfäller, Erntehaus, Fischerhütte, Tauchplatz, Bauen | ein Drittel von dem, was zwei schaffen |
 | Hand in Hand | Töpferei, Klopfhütte, Erdofen, Schmuck | etwas langsamer, 40 % von zweien |
-| Jeder für sich | Felder, Quelle, Seilerei, Weben, Beile | jeder seinen Teil |
+| Jeder für sich | Felder, Quelle, Sennit, Weben, Beile | jeder seinen Teil |
 
   Vorbild sind Versuche mit Steinbeilen: Biegt ein Helfer den Stamm mit dem Seil zur Seite, braucht ein Baum fast drei
   Viertel weniger Schläge. Der Weg zählt auch: Je weiter ein Ort vom Lager oder den Häusern steht, desto langsamer.
@@ -621,7 +621,7 @@ Arbeitsplatz. **Jeder Mensch ist auf der Karte eine Figur**, und jede Figur geht
   Die Fischer flicken Netze oder fahren zu zweit hinaus und waten übers Riff. An der Quelle wird Wasser in Bambus gefüllt,
   am Harzbaum tropft der Milchsaft in eine Schale, die Tapamalerin malt mit Kurkuma, in der Ölhütte wird Kokos geraspelt,
   in der Duftölhütte rühren Blüten im Öl, am Bananenhain wird eine Staude geschnitten, die Pandanussammlerin greift nach
-  den Früchten. Töpferei, Beile, Klingen, Matten, Schnur, Tapa, Kava, Schmuck, Erdofen, Pferch und Gärgrube haben ihre
+  den Früchten. Töpferei, Beile, Klingen, Matten, Sennit, Tapa, Kava, Schmuck, Erdofen, Pferch und Gärgrube haben ihre
   eigenen kleinen Handgriffe. Die Leute arbeiten ein paar Runden am Ort, ehe sie eine Last ins Lager tragen.
 - **Wer da ist, arbeitet:** Ein Ort erzeugt erst, wenn die Leute angekommen sind. Die Arbeit läuft auch weiter, wenn die
   Karte nicht gezeichnet wird.
@@ -820,7 +820,7 @@ haben aber eine eigene Geschichte, und jedes Volk gibt etwas, das kein Clan gebe
   Gegengabe bringt **Bananen-Schösslinge**: Damit lässt sich der **Bananenhain** anlegen, der Nahrung gibt, das ganze
   Jahr, auch in der mageren Zeit, ohne am Boden zu zehren.
 - **Die Seefahrer vom Nordmeer** leben im Norden auf Matagi, „Wind“. Sie kamen auf anderen Wegen über das Meer, stempeln
-  Punktkreise in rot bemalte Töpfe und machen Matten und Schnur. Mit ihrer ersten Gegengabe lehren sie eure Navigatoren
+  Punktkreise in rot bemalte Töpfe und machen Matten und Sennit. Mit ihrer ersten Gegengabe lehren sie eure Navigatoren
   ihre **Sternwege**: Das Wissen der Navigatoren reicht eine Stufe weiter als sonst. Ihr Muster kommt mit ihren Töpfen.
 - Beide liegen diesseits der Weiten See, ein paar Tagesfahrten von der Heimat. Das Doppelkanu findet sie beim Erkunden.
   Bei der ersten Begegnung öffnet sich ihr Fenster mit ihrer Geschichte.
@@ -853,7 +853,7 @@ Spiele mit fünf kleinen Knochen gab es im ganzen Pazifik; die Māori nannten si
 - Gold umrandet sind die Knochen, die gerade zählen; rot gestrichelt die, die du neu werfen willst. Ein Band unter der
   Matte sagt, was das Bild bringt. „Was bringt was?“ klappt die ganze Tabelle auf.
 - Fünf gleich: 1 Perlmutt und eine Tauchkarte. Vier gleich: Ansehen +3. Volle Hand: Gekochtes. Drei gleich: Feldfrüchte.
-  Zwei Paare: Schnur. Ein Paar: Kokosnüsse. Nichts: 1 Kokosnuss. Die Gaben wachsen mit dem Dorf.
+  Zwei Paare: Sennit. Ein Paar: Kokosnüsse. Nichts: 1 Kokosnuss. Die Gaben wachsen mit dem Dorf.
 
 ## Wie alles ineinandergreift
 
@@ -914,11 +914,11 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
 - **Kanus:** Gischt am Bug, je mehr, desto stärker der Wind; die Kanus schaukeln in der Dünung und neigen sich in der Kurve;
   das Mattensegel des Doppelkanus bläht sich im Wind.
 - **Treibgut:** Stämme, Kokosnüsse und Wrackteile treiben mit dem Wind und versinken nach einer Weile. Ein Kanu, das daran
-  vorbeifährt, fischt sie auf, so weit Platz an Bord ist: Holz, Kokosnüsse, Holz und Schnur.
+  vorbeifährt, fischt sie auf, so weit Platz an Bord ist: Holz, Kokosnüsse, Holz und Sennit.
 - **Treibgut am Ufer antippen** (seit Version 67, für ruhige Minuten): Vor dem Dorf, das du ansiehst, treibt immer
   wieder etwas, höchstens drei Stück zugleich. Ein langsamer Ring geht davon aus. Ein Tipp, und jemand paddelt hinaus:
   Es spritzt, die Ware steigt auf und kommt ins Lager (ein Stamm 3 Holz, Nüsse 4 Kokosnüsse, ein Wrackteil 2 Holz und
-  1 Schnur). Was den Strand erreicht oder vier Minuten treibt, ist fort. **Ganz selten (etwa jedes 16. Stück) ist es
+  1 Sennit). Was den Strand erreicht oder vier Minuten treibt, ist fort. **Ganz selten (etwa jedes 16. Stück) ist es
   ein Klumpen Kauri-Harz** (seit Version 68, vorher Bernstein): golden, ein wenig trüb, mit schimmerndem Ring. Es stammt
   von den Kauri-Bäumen (Agathis) der großen Inseln. Daraus schnitzt die Matriarchin einen Talisman (siehe „Das
   Dorfzentrum“).
@@ -932,10 +932,10 @@ Nach dem Lapita-Netz ruft die Ferne, wie bei den Lapita, die vor dreitausend Jah
 Nach dem Vorbild der Freitaucher im Pazifik, die seit Jahrtausenden ohne Atemgerät tauchen, bis zu den Perltauchern der
 Tuamotu. Der **Tauchplatz** kommt mit der Aufgabe „Leben auf dem Wasser“ und steht am Strand.
 
-- **Zu zweit:** Zwei Taucher paddeln im Einbaum hinaus. Einer taucht, der andere wacht im Kanu und hält die Schnur, dann
+- **Zu zweit:** Zwei Taucher paddeln im Einbaum hinaus. Einer taucht, der andere wacht im Kanu und hält die Sennitleine, dann
   tauschen sie; nie sind beide zugleich unten. Wer allein ist, ruht länger, weil niemand wacht.
-- **Mit Stein und Schnur:** Ein Stein an einer Schnur zieht den Taucher schnell hinab. Man sieht das leere Kanu, die
-  Schnur ins Wasser und aufsteigende Luftblasen. Ohne Brille, mit offenen Augen; ein Tauchgang dauert ein bis zwei
+- **Mit Stein und Sennitleine:** Ein Stein an einer Sennitleine zieht den Taucher schnell hinab. Man sieht das leere Kanu, die
+  Leine ins Wasser und aufsteigende Luftblasen. Ohne Brille, mit offenen Augen; ein Tauchgang dauert ein bis zwei
   Minuten (im Spiel ein paar Sekunden), dann wird an der Oberfläche Atem geholt.
 - **die Taucherkrankheit:** Nach höchstens fünf Tauchgängen, vor Tifa schon früher, rudern sie zurück und ruhen an Land, bis der Atem
   wieder da ist. Wer zu oft zu tief taucht, bekommt die Taucherkrankheit, die Taucherkrankheit der Tuamotu.
@@ -1041,7 +1041,7 @@ Kanus entstehen im Kanuhaus, eins nach dem anderen. Am Strand liegt dann der hal
 | Kanu | Kosten | Bauzeit | Trägt | Darf |
 | --- | --- | --- | --- | --- |
 | Auslegerkanu | 4 Holz, 1 Steinbeil | etwa 3 min | 12 Waren, 4 Menschen | nur ins Bekannte |
-| Doppelkanu | 6 Holz, 2 Steinbeile, 3 Matten, 3 Schnur | etwa 6 min | 24 Waren, 8 Menschen | auch in den Nebel |
+| Doppelkanu | 6 Holz, 2 Steinbeile, 3 Matten, 3 Sennit | etwa 6 min | 24 Waren, 8 Menschen | auch in den Nebel |
 
 - **Gemächlich und in Bögen:** Kanus fahren langsamer als früher und nie mit dem Lineal. Lange Strecken schwingen in Bögen
   aus, mal links, mal rechts, und werden gerundet, solange kein Land im Weg ist. Auf der Dünung schaukeln sie. Auch die
@@ -1119,7 +1119,7 @@ bekommt Knoten dazu. Danach wächst das Dorf einen Mond lang doppelt so schnell.
 
 ## Wirtschaft: Gabe und Gegengabe
 
-Waren: Feldfrüchte, Fisch, Meeresfrüchte, Wildbeute, Kokosnüsse, Wasser, Holz, Palmwedel, Schnur (Sennit), Kokosfasern,
+Waren: Feldfrüchte, Fisch, Meeresfrüchte, Wildbeute, Kokosnüsse, Wasser, Holz, Palmwedel, Sennit, Kokosfasern,
 Kokosschalen, Brotfruchtharz, Muschelschalen, Proviant, Töpfe, Steinbeile, Klingen, Matten, Tapa, Kokosöl, Schweine, Kava,
 Muschelschmuck und die Schätze Perlmutt, rote Federn und Walzähne.
 Ketten haben höchstens drei Glieder.
@@ -1128,7 +1128,7 @@ Ketten haben höchstens drei Glieder.
 | --- | --- | --- | --- | --- |
 | Erntehaus | überall | 3 Kokospalmen daneben, mehr Palmen mehr Ernte | 7,5 Kokosnüsse mit 7,5 Fasern und 3,75 Schalen, oder 15 Wasser, oder 7,5 Palmwedel | 2, zu zweit |
 | Holzfäller | hoch | Bäume in Reichweite, Steinbeile machen ihn schneller (1 Beil je 20 Holz) | 5 Holz, ohne Beile 3,3 | 2, zu zweit |
-| Fischerhütte | am Strand | Schnur für Netze verdoppelt den Fisch (1 Schnur je 10 Fisch) | etwa 6 bis 8 Fisch oder Meeresfrüchte, Muscheln, Kochsteine | 2, zu zweit |
+| Fischerhütte | am Strand | Sennit für Netze verdoppelt den Fisch (1 Sennit je 10 Fisch) | etwa 6 bis 8 Fisch oder Meeresfrüchte, Muscheln, Kochsteine | 2, zu zweit |
 | Quelle | hohe Insel mit Bach | am Bach | 5 Wasser | 1 |
 | Brunnen | Atoll, Mitte eines Motus | | 5 Wasser | 1 |
 | Tarofeld | hoch | | 3,75 Feldfrüchte, dazu Blätter | 1 |
@@ -1137,7 +1137,7 @@ Ketten haben höchstens drei Glieder.
 | Pulakagrube | Atoll, in der Mitte eines Motus | | 3,3 Feldfrüchte | 1 |
 | Pandanussammlerin | Atoll | 2 Pandanus daneben | 5 Feldfrüchte | 1 |
 | Baumpflanzer | hoch | Stümpfe oder Waldrand in Reichweite | 3,75 junge Bäume | 1 |
-| Sennit drehen (Hauswerk) | überall | 1 Kokosfaser je Schnur | 5 Schnur | 1 |
+| Sennit drehen (Hauswerk) | überall | 1 Kokosfaser je Sennit | 5 Sennit | 1 |
 | Erdofen | überall | 2 rohe Speisen, Brennstoff, Blätter | 7,5 Gekochtes | 2, Hand in Hand |
 | Gärgrube | hoch | 2 Brotfruchtbäume daneben, 1 Feldfrucht je Proviant | 5 Proviant | 1 |
 | Töpfern (Hauswerk) | hoch | Haus nah am Ton, 1 Brennstoff je Topf | 3 Töpfe, in der Sturmzeit weniger | 2, Hand in Hand |
@@ -1152,7 +1152,7 @@ Ketten haben höchstens drei Glieder.
 | Kavagarten | hoch | | 2,1 Kava | 1 |
 
 Jede Werkstatt reicht für ein kleines Dorf. Wer weiter wächst, braucht eine zweite, also mehr
-Arbeitskräfte, mehr Platz und mehr Handel. Schnur und Steinbeile werden dauerhaft verbraucht: Atolle liefern Schnur für die
+Arbeitskräfte, mehr Platz und mehr Handel. Sennit und Steinbeile werden dauerhaft verbraucht: Atolle liefern Sennit für die
 Netze der hohen Inseln, die hohen Inseln Beile und Holz.
 
 - **Vorkommen:** Ton liegt am Bach, Basalt an den grauen Felsen, Obsidian nur am Vulkan. Beim Bauen zeigen Ringe,
@@ -1170,7 +1170,7 @@ oder einmal fällen.
 | Quelle | Wer nutzt sie | Was entsteht |
 | --- | --- | --- |
 | Kokospalme | Erntehaus | reife Nüsse (Nahrung) mit Kokosfasern, Kokosschalen und einem halben Wedel (der fällt beim Klettern mit herunter), grüne Nüsse (Wasser), Palmwedel (Dach), alte Stämme (Holz) |
-| Kokosfasern | Sennit drehen | Sennit, die Schnur für Häuser, Kanus und Netze |
+| Kokosfasern | Sennit drehen | Sennit: gedrehte Kokosfaser für Häuser, Kanus und Netze |
 | Kokosschalen | Herdfeuer, Erdofen, Töpfern | Brennstoff: erst die Schalen, dann Holz. Jede reife Nuss gibt eine Schale (seit Version 67, vorher eine halbe) |
 | Kokosnüsse | Öl pressen | Kokosöl, 2 Nüsse je Öl |
 | Pandanus | Matten flechten, Pandanussammlerin | Matten und Segel; Früchte als Nahrung (Atoll) |
@@ -1240,7 +1240,7 @@ Samoa oder Fidschi oft hundert und mehr Menschen. Danach richten sich die Stufen
 | Dorf | 30 Bewohner | Handwerkerfamilien dazu: Töpfe 0,07, Matten 0,06, Kokosöl 0,04 |
 | Häuptlingsdorf | siehe unten | die Häuptlingsfamilie dazu: Tapa 0,3, Schweine 0,2, Kava 0,2, Muschelschmuck 0,1, Feine Matten 0,1, Bemalte Tapa 0,15, Duftöl 0,15 |
 
-- **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (8 Holz, 6 Palmwedel, 4 Schnur, 1 feine Matte), eines je
+- **Häuptlingshaus:** Ein großes Haus auf einem Steinsockel (8 Holz, 6 Palmwedel, 4 Sennit, 1 feine Matte), eines je
   Insel, nur auf hohen Inseln, mit Hawaiki. Die Familie, deren älteste Frau die älteste unter den
   Handwerkerfamilien ist, zieht ein. Ihre älteste Frau ist die **Matriarchin**, ihr ältester Mann der Häuptling. So war es in Tonga:
   Die Schwester des Häuptlings stand im Rang über ihm (fahu), die Tamahā war die Ranghöchste im Land.
@@ -1395,7 +1395,7 @@ ab. Am Morgen wird der Mond wieder zur Sonne.
 links „Braucht“ und „Macht“ und rechts daneben die Leute mit − und +. Der Knöchelwurf passt mit flacher Matte und kurzen
 Schritten auf ein Blatt, ohne Scrollen.
 
-**Der Ausbau eines Hauses ist zu sehen:** Ein Gerüst aus Bambus lehnt am Haus, ein Bündel Fasern fährt an einer Schnur
+**Der Ausbau eines Hauses ist zu sehen:** Ein Gerüst aus Bambus lehnt am Haus, ein Bündel Fasern fährt an einer Sennitleine
 hinauf, die neue Bindung wächst um das Haus, Späne fliegen, es klopft. Dann fällt das Gerüst, und die Blüten regnen.
 
 **Wenn etwas schiefgeht, läuft das Spiel weiter.** Früher hielt ein einziger Fehler beim Zeichnen oder im Klang das Spiel
@@ -1413,7 +1413,7 @@ Reiter (Dorf, Lager, Stärke, Familie):
   Schätze, sobald ein Schatz gesehen ist), jeweils mit dem, was es kostet oder was noch fehlt, und „Feiern“. Darunter
   der **Regentanz** und der **Knöchelwurf** (einmal am Tag). Ist einmal Kauri-Harz gefunden, steht dort auch der
   **Talisman der Matriarchin**: Die älteste Frau der Gründerfamilie (sonst die älteste Frau im Dorf) schnitzt aus 1
-  Kauri-Harz und 1 Schnur einen Talisman. Ansehen +3. Liegt ein Talisman im Lager, hält er **einen** Sturm von allen
+  Kauri-Harz und 1 Sennit einen Talisman. Ansehen +3. Liegt ein Talisman im Lager, hält er **einen** Sturm von allen
   Dächern ab und ist dann verbraucht.
 - **Lager:** alle Waren als Kacheln mit Namen, wie im Lager oben.
 - **Stärke:** die Stärke des Dorfes (siehe unten, bei „Menschen“).
@@ -1450,13 +1450,13 @@ wählen:
 
 - **„Alle an die Dächer!“** In einer Minute ist er da. Je Haus läuft ein Mensch hin, die nächsten Häuser am Dorfzentrum
   zuerst, vier zugleich, und **bindet das Dach fest**: ein paar Augenblicke Arbeit (Wedel stopfen, Seile über das Dach
-  werfen und anziehen) und **1 Schnur oder 2 Kokosfasern** je Dach. Die Leute werden dafür kurz von ihrer Arbeit
+  werfen und anziehen) und **1 Sennit oder 2 Kokosfasern** je Dach. Die Leute werden dafür kurz von ihrer Arbeit
   ausgeliehen und gehen danach zurück.
 - **„Abwarten“:** Die Dächer bleiben lose. Festbinden geht auch später noch: mit dem Rat unten („Festbinden ›“), mit der
   Zeile im Haus oder mit einem Tipp auf das zitternde Seil über einem losen Dach.
 
 Bis er kommt, bleibt der Himmel dunkel, die Kanus bleiben an Land, und unten zählt der Rat herunter: „Sturm in 40 s! 3
-von 5 Dächern fest.“ Fehlen Schnur und Fasern, sagt er es. Dann kommt der Sturm: **Festgebundene Dächer halten.** Lose
+von 5 Dächern fest.“ Fehlen Sennit und Fasern, sagt er es. Dann kommt der Sturm: **Festgebundene Dächer halten.** Lose
 Dächer werden undicht und brauchen neue Wedel; jedes lose Haus kann einstürzen (höchstens zwei), und waren die meisten
 Dächer lose, trifft es auch einen Arbeitsplatz. Bäume fallen, die Felder werden ausgewaschen, von kahlen Hängen rutscht
 Erde. Ein **Talisman der Matriarchin** im Lager hält einmal alle Dächer. Was einstürzt, wird **mit der Hälfte seines Holzes
@@ -1525,7 +1525,7 @@ drei Antworten, manche kosten Waren:
 
 | Ereignis | Wann | Antworten |
 | --- | --- | --- |
-| Wirbelsturm | Sturmzeit | Dächer mit Schnur und Holz festbinden, oder abwarten: Dächer vergrauen, eine Werkstatt muss neu gebaut werden |
+| Wirbelsturm | Sturmzeit | Dächer mit Sennit und Holz festbinden, oder abwarten: Dächer vergrauen, eine Werkstatt muss neu gebaut werden |
 | Schiffbrüchige | jederzeit | aufnehmen (bis zu 4 neue Bewohner), mit Proviant weiterschicken (Ansehen), nichts geben |
 | Thunfischschwarm | Passatzeit | alle Kanus hinaus (12 Fisch) oder weiterarbeiten |
 | Dürre | Magere Zeit | Regenzeremonie mit Kava, Wasser in Töpfen tragen (halber Mond halbe Ernte), durchhalten (ein Mond) |
@@ -1610,7 +1610,7 @@ Nichts soll aussehen wie mit dem Lineal oder dem Zirkel gezogen:
 - Der Riffring eines Atolls und die Durchfahrt sind keine Ellipsen mehr. Auswahl und Bauvorschau sind wie mit der Hand
   gezogen, Reichweiten Punkte auf dem Boden, das Ziel eines Kanus ein eingeritztes Kreuz. Baustellen zeigen eine gespannte
   Schnur zwischen Pflöcken statt eines Balkens.
-- Die Oberfläche hat handgeschnittene Ränder wie Rindenbaststoff. Rechts hängen nur zwei Tapa-Flicken an einer Schnur,
+- Die Oberfläche hat handgeschnittene Ränder wie Rindenbaststoff. Rechts hängen nur zwei Tapa-Flicken an einer Sennitleine,
   jeder schief aufgenäht: die Muschel für Nachrichten, doppelte Geschwindigkeit und das Menü. Gezoomt wird mit zwei
   Fingern oder dem Mausrad, Knöpfe dafür gibt es nicht.
 - **Doppelte Geschwindigkeit:** Der Flicken mit den zwei Spitzen lässt alles doppelt so schnell gehen: Wirtschaft, Leute,
@@ -1771,7 +1771,7 @@ die Kanus der Töchter Brennholz für das Nachtfeuer (sie schicken zuerst, was d
 
 ## Ruhiger und verspielter (seit Version 85)
 
-- **Nachrichten** (seit Version 87) sehen aus wie eine kleine Schwester der Tagesleiste: genau gleiche Oberkante und Höhe (seit Version 88), derselbe breite Ring mit Tuscherand, innen Creme, runde Ecken; Ring und rundes Abzeichen tragen die Farbe (gelb, rot Warnung, grün gut). Sie hängen an einer kurzen Schnur rechts an der Leiste, fahren nach rechts heraus und wieder hinein. Gezeigt wird nur der erste Satz in kleiner Schrift (höchstens drei Zeilen), der ganze Text steht in der Muschel. Solange eine Nachricht draußen ist, klappt die Leiste ihren Windtext ein, damit Platz ist. Es kommt
+- **Nachrichten** (seit Version 87) sehen aus wie eine kleine Schwester der Tagesleiste: genau gleiche Oberkante und Höhe (seit Version 88), derselbe breite Ring mit Tuscherand, innen Creme, runde Ecken; Ring und rundes Abzeichen tragen die Farbe (gelb, rot Warnung, grün gut). Sie hängen an einer kurzen Sennit rechts an der Leiste, fahren nach rechts heraus und wieder hinein. Gezeigt wird nur der erste Satz in kleiner Schrift (höchstens drei Zeilen), der ganze Text steht in der Muschel. Solange eine Nachricht draußen ist, klappt die Leiste ihren Windtext ein, damit Platz ist. Es kommt
   immer nur eine; was währenddessen geschieht, wartet (höchstens zwei), alles Ältere steht nur in der Muschel. Eine
   Nachricht bleibt mindestens gut zwei Sekunden, lange etwas länger. Antworten auf ein Antippen erscheinen sofort.
 - **Weniger auf einmal:** Ereignisse kommen alle 8 bis 12 Minuten statt alle 5 bis 8. Die Kanus der Tochterdörfer melden
@@ -1932,7 +1932,7 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 - **Die Leiste sieht aus wie die Bauleiste:** Rindenbaststoff mit Punkten. Zwischen den Reihen liegen Bänder wie auf Lapita-Töpfen:
   eine Reihe kleiner Zahnstempel oben und unten, dazwischen ein gestempelter Zickzack mit roten Punkten in den Spitzen. Auch der
   Rand mit Tag und Nacht ist fein punktiert, wie mit einem Zahnstempel gedrückt.
-- **Nachrichten** klappen unter der Leiste nach unten aus, hängen an einer Schnur an der Muschel und fliegen danach klein in
+- **Nachrichten** klappen unter der Leiste nach unten aus, hängen an einer Sennitleine an der Muschel und fliegen danach klein in
   die Muschel zurück; sie nickt. Jahreszeiten ohne Gefahr, die Palolo-Nacht, der Regen und „Nur noch ein Mond“ gehen still in die
   Muschel. Nur Sturmzeit und magere Zeit springen auf. In 30 Minuten Spiel kommen so etwa 19 statt 32 Meldungen. Größere
   Ereignisse kommen alle 12 bis 18 statt 8 bis 12 Minuten.
@@ -1948,7 +1948,7 @@ kennt man **erst aus viel späteren Berichten** (Reisende und Völkerkundler des
 ## Zwei Wege: Handwerker und Seefahrer (Version 89)
 
 Der Ausbau der Häuser war „nicht logisch genug“. Jetzt führt er vom Familienhaus aus auf **zwei Wege**. Jeder Schritt
-kostet genau das, was man am Haus sieht: Pfosten sind Holz, das Dach sind Palmwedel, die Bindung ist Schnur oder
+kostet genau das, was man am Haus sieht: Pfosten sind Holz, das Dach sind Palmwedel, die Bindung ist Sennit oder
 Fasern, der Boden sind Matten.
 
 Hütte → Familienhaus → entweder **Handwerkerhaus** oder **Seefahrerhaus** → Navigatorenhaus → Haus der Wissenden.
@@ -1960,8 +1960,8 @@ Das Häuptlingshaus bleibt, wie es war.
   Verliert das Haus Töpfe, Matten oder Öl eine halbe Minute lang, ist es wieder ein Familienhaus. Ein Haus, das sein
   Hauswerk später abgibt, bleibt Handwerkerhaus; der Rat erinnert dann an das Werk.
 - **Seefahrerhaus** gibt es nur für ein Haus **nah am Strand** (dieselbe Prüfung wie bei Gebäuden, die an den Strand
-  gehören). Die Familie will zusätzlich Fisch (Fisch oder Meeresfrüchte), Proviant und Schnur im Lager. Kosten: 3 Holz,
-  2 Palmwedel, 2 Schnur; Platz für 7. Die Erwachsenen dieser Familien sind die Kanumannschaften des Dorfes: **Kanus
+  gehören). Die Familie will zusätzlich Fisch (Fisch oder Meeresfrüchte), Proviant und Sennit im Lager. Kosten: 3 Holz,
+  2 Palmwedel, 2 Sennit; Platz für 7. Die Erwachsenen dieser Familien sind die Kanumannschaften des Dorfes: **Kanus
   dieser Insel fahren je Erwachsenem 3 % schneller (höchstens 12 %) und geraten seltener in Böen** (Chance ein Viertel
   kleiner). Das Kanublatt sagt es. Ein Haus mit Paddel an der Wand und einem Netz zum Trocknen zeigt es auf der Karte.
 - **Navigatorenhaus:** ein Seefahrerhaus, in dessen Familie jemand Navigator ist (Stufe 1 oder mehr). Will zusätzlich
@@ -1969,10 +1969,10 @@ Das Häuptlingshaus bleibt, wie es war.
   anderthalbmal so schnell**, und im Haus der Navigatoren lernt zuerst, wer in einem solchen Haus wohnt. An der Tür liegt
   ein kleiner Ring aus Steinen, der Sternenkompass.
 - **Haus der Wissenden:** ein Navigatorenhaus, in dem jemand mindestens Stufe 2 kennt (die Wolkenzeichen). Will zusätzlich
-  Tapa für die Gewänder; Kosten 2 Holz, 3 Palmwedel, 2 Schnur; **höchstens eins je Insel.** Weil es keine Schrift gab,
+  Tapa für die Gewänder; Kosten 2 Holz, 3 Palmwedel, 2 Sennit; **höchstens eins je Insel.** Weil es keine Schrift gab,
   bewahren die Wissenden Sternenpfade und Ahnenreihen im Gedächtnis: **Stirbt ein Navigator ohne Schüler, geht sein Wissen
   nicht verloren**, solange das Haus steht. Dazu bringt das Haus etwas Ansehen (1 alle halbe Minute). Eine geknotete
-  Schnur hängt an der Tür.
+  Sennit hängt an der Tür.
 - **Zurückfallen:** Fehlt einem Seefahrerhaus ein Gut seiner Stufe eine halbe Minute lang, fällt es eine Stufe zurück
   (Wissende zu Navigatoren, Navigatoren zu Seefahrern, Seefahrer zum Familienhaus). Das Wissen, das die Wissenden
   bewahrt haben, gilt nur, solange das Haus der Wissenden steht.
@@ -2111,7 +2111,7 @@ Das Häuptlingshaus bleibt, wie es war.
   Knopf in der Blase.
 - **Das Lager hat fünf Reiter nach dem, wofür etwas da ist:** Täglich (Essen, Wasser, Gekochtes, Brennstoff, Blätter,
   Kochsteine), Feuer (Kokosschalen, Brennholz, Bauholz in der Reihenfolge, in der sie brennen), Bauen (Bauholz, Wedel, Fasern,
-  Schnur, Harz, Kalk), Hausrat (Töpfe, Matten, Öl, Tapa, Werkzeug, Tiere) und Meer (Proviant, Muscheln, Haken, Schätze).
+  Sennit, Harz, Kalk), Hausrat (Töpfe, Matten, Öl, Tapa, Werkzeug, Tiere) und Meer (Proviant, Muscheln, Haken, Schätze).
 
 ## Die Tiere geprüft (Version 97)
 
@@ -2259,7 +2259,7 @@ Netze, Grabstock und Korb im Garten. Kauri-Harz als Talisman und der Vogel auf d
 ## Handel, Erkunden, Kanuhaus und Hausansicht (Version 106)
 
 - **Seefahrerhaus geht jetzt:** „Nah am Strand“ heißt jetzt bis 32 Schritte vom Wasser (vorher 18, also fast nur der Sand).
-  Ein Pfahlhaus in der Lagune zählt immer als strandnah. Das Seefahrerhaus will nur noch Fisch und Schnur im Lager, keinen
+  Ein Pfahlhaus in der Lagune zählt immer als strandnah. Das Seefahrerhaus will nur noch Fisch und Sennit im Lager, keinen
   Proviant mehr: Den nehmen die Erkunder mit, und sonst fiel das Haus bei jeder Fahrt zurück. Beim Bauen eines Hauses sagt die
   Leiste, ob es später ein Seefahrerhaus werden kann.
 - **Handel wie bei Anno:** Eine Handelskette wartet nie. Ist ein Lager voll, lädt das Kanu nur ab, was passt, behält den Rest an
@@ -2563,4 +2563,34 @@ fortbleibt, verliert nichts, es gibt keine Tagesserien, und nichts ist zu kaufen
   Taro (Colocasia) hat große, herzförmige Blätter.
 - **Vermutet:** Dass Dörfer ihren Häuptling oder die Alten fragen, bevor sie bauen, ist eine Spielregel nach späteren
   Berichten über Gemeinschaftsarbeit, kein Fund aus der Lapita-Zeit.
+
+## Karte, Laden und Sennit (Version 117)
+
+- **Fester Rand oben und unten:** Am oberen und unteren Rand der See liegt ein dunkles Sturmband mit weißen Kämmen und
+  einer Wolkenwand. Die Kamera hält dort an, ein Stück des Bandes bleibt sichtbar. Auch im Westen ist der Rand fest. Die
+  Welt wächst nur nach Osten, nach rechts; dort ist Platz für spätere Kapitel.
+- **Drei Arten Meer:** Die Heimatgewässer bleiben hell. Die Weite See und die Leere See sind dunkleres, tiefes Meer mit
+  langen Dünungsreihen, die langsam von Osten kommen. Ferne Inseln (ab den Fernen Inseln nach Osten) liegen im Dunst:
+  Man sieht nur ihren gestrichelten Umriss, bis ein eigenes Kanu dort anlegt, eine Handelskette hinführt oder ein Dorf
+  dort steht.
+- **Startbild:** Gleich beim Öffnen erscheint ein Kanu auf dem Wasser mit den Schritten Meer, Inseln, Dorf. Die Schritte
+  folgen dem, was das Spiel wirklich lädt. Ist das erste Bild der Karte fertig, blendet es aus.
+- **Unterwegs:** Das kleine Blatt eines fahrenden Kanus zeigt die Restzeit, dazu **Mitfahren** (die Karte folgt dem Kanu,
+  bis es ankommt oder man die Karte selbst schiebt) und **Zum Ziel** (die Karte springt zur Zielinsel). Die Zielinsel wird
+  schon bei der Abfahrt vorbereitet, damit die Ankunft nicht ruckelt. Die Fahrt selbst lässt sich nicht überspringen.
+- **Speicher:** Das Menü zeigt unter den Spielständen, wie viel das Spiel im Browser belegt (von etwa 5 MB). Kopien „vor
+  dem Update“ und nicht ladbare Spielstände werden nach 30 Tagen gelöscht. Passt ein Spielstand nicht mehr, macht das Spiel
+  erst mit alten Kopien Platz; reicht das nicht, sagt es einmal Bescheid, dass man das Spiel als Datei sichern soll. Ab
+  80 Prozent kommt beim Start ein Hinweis.
+- **Sennit:** Jede Schnur im Spiel ist aus Kokosfasern gedreht, darum heißt sie jetzt überall Sennit: die Ware, das
+  Hauswerk, das Festbinden der Dächer, die Taucherleine und die Bordplanken der Kanus. Die Handelswege heißen weiter
+  „Schnur“: Das ist ein Bild für die Knotenschnur, keine Ware.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Sennit, also aus Kokosfasern gedrehte und geflochtene Schnur, war in ganz Ozeanien das wichtigste Bindemittel
+  für Häuser und Kanus. Seile gab es auch aus Hibiskusbast und Pandanus. Die Lapita überquerten eine weite offene See
+  zwischen Vanuatu und Fidschi; nach Ostpolynesien ging es erst nach einer langen Pause weiter.
+- **Vermutet:** Dass Lapita-Kanus schon mit Sennit genäht waren, kennt man nur aus späteren Booten. Sturmband, Dunst und
+  der feste Kartenrand sind Spielbilder, keine Funde.
 

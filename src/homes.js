@@ -343,7 +343,7 @@ function stormWarn(I, tie){
 function tieRoofs(I){
   const S = I && I.storm; if (!S || tick >= S.at || S.tie) return;
   S.tie = true; I.staff = null; syncWalkers(); invalidate();
-  if (!awayQuiet) toast(tieCost(I) ? `Die Leute von ${I.name} laufen zu den Dächern.` : `Zum Festbinden fehlt Schnur oder Kokosfasern.`, 3000, false);
+  if (!awayQuiet) toast(tieCost(I) ? `Die Leute von ${I.name} laufen zu den Dächern.` : `Zum Festbinden fehlt Sennit oder Kokosfasern.`, 3000, false);
 }
 function stormTick(I){
   const S = I.storm; if (!S) return;

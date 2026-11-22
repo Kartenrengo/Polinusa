@@ -43,7 +43,14 @@ function measure(){
 }
 const zMin = () => clamp(Math.min(vw / (W * 1.05), vh / (H * .9)), .1, .4), zMax = 4.5;
 const clampZ = z => clamp(z, zMin(), zMax);
-function clampCam(){ cam.x = clamp(cam.x, 0, W); cam.y = clamp(cam.y, 0, H); }
+/* Since version 117 the sea has a firm edge above and below (a band of storm and high swell) and to the west: the camera
+   stops there, a little of the band stays in sight. The world grows only to the east. */
+const EDGE_BAND = 300;
+function clampCam(){
+  const hw = vw / cam.z / 2, hh = vh / cam.z / 2, mx = Math.max(EDGE_BAND * .8, hw * .3), my = Math.max(EDGE_BAND * .8, hh * .3);
+  cam.x = W + 2 * mx < hw * 2 ? W / 2 : clamp(cam.x, hw - mx, W - hw + mx);
+  cam.y = H + 2 * my < hh * 2 ? H / 2 : clamp(cam.y, hh - my, H - hh + my);
+}
 function applyCam(){ lod = cam.z < .55 ? 'far' : cam.z < 1.3 ? 'mid' : 'near'; lastCamMove = performance.now(); needDraw = true; followView(); }
 /* Close up, the island you look at is the one you build on: zoom in, build, zoom out, zoom in on the next */
 function followView(){
@@ -502,9 +509,19 @@ function seaRect(c, v, color, pat, from){
 }
 function drawBase(c, v){
   // the open sea is not in this layer: it is painted under it every frame, so its waves can move (drawSea)
-  for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)) drawIsland(c, I, v);
+  for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)){ drawIsland(c, I, v); if (hazy(I)) drawHaze(c, I); }
   if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); }
   drawSel(c); drawCords(c); drawObjects(c, v);
+}
+
+/* A far island (out among the Ferne Inseln or the Inseln des Morgens) that no canoe of yours has reached yet lies in haze:
+   only its outline shows through, as land is first seen from a canoe far off */
+const hazy = I => !I.reached && !I.settled && I.center.x >= FAR_X && !I.start && !routes.some(r => r.a === I.id || r.b === I.id) && !ships.some(s => s.own && s.port === I.id);
+function drawHaze(c, I){
+  const b = I.box, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, r = Math.max(b.x1 - b.x0, b.y1 - b.y0) * .7;
+  const g = c.createRadialGradient(cx, cy, r * .2, cx, cy, r); g.addColorStop(0, 'rgba(196,212,212,.72)'); g.addColorStop(.6, 'rgba(176,198,202,.5)'); g.addColorStop(1, 'rgba(160,186,194,0)');
+  c.fillStyle = g; c.beginPath(); c.ellipse(cx, cy, r, r * .85, 0, 0, TAU); c.fill();
+  for (const L of islandPaths(I).lands) stroke(c, L, '#41575A', 1.6, [5, 4], 'round', .7);
 }
 
 /* ---------- fog: tapa cloth with clearings, cut out on its own layer */
@@ -2458,7 +2475,8 @@ function seaNames(c, k){
 let seaX = 0, seaY = 0, seaAt = 0;
 function drawSea(now){
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2F5F73'; ctx.fillRect(0, 0, mapC.width, mapC.height);
-  const P = pats.pSeaW; if (!P || cam.z <= .3) return;
+  drawSeaZones(now);
+  const P = pats.pSeaW; if (!P || cam.z <= .3){ drawSeaEdge(now); return; }
   const W = wind(), dt = Math.min(100, now - (seaAt || now)); seaAt = now;
   if (!reduced){ seaX += W.tx * (1.6 + 1.4 * W.str) * dt / 1000; seaY += W.ty * (1.6 + 1.4 * W.str) * dt / 1000; }
   camXform(ctx); const v = view(40), t = reduced ? 0 : now / 1000, fade = clamp((cam.z - .3) / .35, 0, 1);
@@ -2469,7 +2487,55 @@ function drawSea(now){
     else { ctx.globalAlpha = fade * a; ctx.fillStyle = P; ctx.fillRect(v.x0 / k - 32, v.y0 / k - 32, (v.x1 - v.x0) / k + 64, (v.y1 - v.y0) / k + 64); ctx.restore(); }
   }
   ctx.globalAlpha = 1;
+  drawSeaEdge(now);
   drawSeaSky(now);
+}
+/* The three kinds of sea (version 117): the home waters stay light; the Weite See and the Leere See are deep ocean, darker,
+   with long rows of swell that come from far away and no little islets; the far islands lie in haze (see drawHaze). */
+const DEEP_ZONES = [[WIDE_X, FAR_X], [EMPTY_X, MORN_X]];
+function drawSeaZones(now){
+  const v = view(60), c = ctx; camXform(c);
+  for (const [a, b] of DEEP_ZONES){
+    if (b < v.x0 || a > v.x1) continue;
+    const g = c.createLinearGradient(a - 160, 0, b + 160, 0), e = 360 / (b - a + 320);
+    g.addColorStop(0, 'rgba(16,40,62,0)'); g.addColorStop(e, 'rgba(16,40,62,.5)'); g.addColorStop(1 - e, 'rgba(16,40,62,.5)'); g.addColorStop(1, 'rgba(16,40,62,0)');
+    c.fillStyle = g; c.fillRect(Math.max(a - 160, v.x0), v.y0, Math.min(b + 160, v.x1) - Math.max(a - 160, v.x0), v.y1 - v.y0);
+    if (cam.z < .16) continue;
+    // long swell: wide, slow crests that keep coming from the east
+    const t = reduced ? 0 : now / 1000, x0 = Math.max(a, v.x0), x1 = Math.min(b, v.x1), step = 120, q = new Path2D();
+    for (let y = Math.floor(v.y0 / step) * step; y < v.y1 + step; y += step){
+      const ph = (y * .37) % TAU, drift = (t * 9 + y * .5) % 340;
+      for (let x = x0 - ((x0 + drift) % 340); x < x1; x += 340){
+        const xs = Math.max(x, a), xe = Math.min(x + 220, b); if (xe - xs < 30) continue;
+        q.moveTo(xs, y + Math.sin(xs * .012 + ph) * 7);
+        for (let xx = xs + 20; xx <= xe; xx += 20) q.lineTo(xx, y + Math.sin(xx * .012 + ph) * 7 - Math.sin((xx - xs) / (xe - xs) * Math.PI) * 5);
+      }
+    }
+    c.globalAlpha = clamp((cam.z - .16) / .3, 0, 1) * .22; c.strokeStyle = '#E6DBBF'; c.lineWidth = 2.2; c.lineCap = 'round'; c.stroke(q); c.globalAlpha = 1;
+  }
+}
+/* the firm edge above and below: dark storm sea, white crests and a wall of cloud; nobody sails there */
+function drawSeaEdge(now){
+  const v = view(80), c = ctx, B = EDGE_BAND; camXform(c);
+  const t = reduced ? 0 : now / 1000;
+  for (const top of [true, false]){
+    const e = top ? 0 : H; if (top ? v.y0 > B : v.y1 < H - B) continue;
+    const g = c.createLinearGradient(0, e + (top ? B : -B), 0, e + (top ? -B * .4 : B * .4));
+    g.addColorStop(0, 'rgba(22,30,40,0)'); g.addColorStop(.55, 'rgba(22,30,40,.55)'); g.addColorStop(1, 'rgba(30,36,44,.92)');
+    c.fillStyle = g; const y0 = top ? Math.min(v.y0, e - B) : e - B, y1 = top ? e + B : Math.max(v.y1, e + B); c.fillRect(v.x0, y0, v.x1 - v.x0, y1 - y0);
+    if (top && v.y0 < e - B * .4){ c.fillStyle = 'rgba(30,36,44,.92)'; c.fillRect(v.x0, v.y0, v.x1 - v.x0, e - B * .4 - v.y0); }
+    if (!top && v.y1 > e + B * .4){ c.fillStyle = 'rgba(30,36,44,.92)'; c.fillRect(v.x0, e + B * .4, v.x1 - v.x0, v.y1 - e - B * .4); }
+    if (cam.z < .12) continue;
+    // broken white crests, more and bigger toward the edge
+    const q = new Path2D();
+    for (let k = 0; k < 5; k++){ const y = e + (top ? 1 : -1) * (40 + k * 46), len = 30 + (4 - k) * 9, gap = 120 - k * 12, off = (t * (14 + k * 3) + k * 57) % gap;
+      for (let x = Math.floor(v.x0 / gap) * gap - off; x < v.x1; x += gap){ const j = hsh(x | 0, k) * 30; q.moveTo(x + j, y + Math.sin(x * .03 + t) * 3); q.quadraticCurveTo(x + j + len / 2, y - 6, x + j + len, y + Math.sin((x + len) * .03 + t) * 3); } }
+    c.globalAlpha = .5; c.strokeStyle = '#F1F0E6'; c.lineWidth = 2.4; c.lineCap = 'round'; c.stroke(q);
+    // the cloud wall on the very edge
+    c.globalAlpha = .85; c.fillStyle = '#3A424C';
+    for (let x = Math.floor(v.x0 / 90) * 90 - 90; x < v.x1 + 90; x += 90){ const r = 70 + hsh(x | 0, top ? 3 : 4) * 50, y = e + (top ? -1 : 1) * (60 + hsh(x | 0, 5) * 40); c.beginPath(); c.ellipse(x, y, r, r * .62, 0, 0, TAU); c.fill(); }
+    c.globalAlpha = 1;
+  }
 }
 /* ---------- soft transitions: nothing on the map pops in or out. Bubbles, new buildings, people and canoes ease in and
    out, with a little spring where it suits a hand-drawn world. All of it lives here, apart from the drawing code. With

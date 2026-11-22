@@ -151,7 +151,7 @@ function serialize(){
   return JSON.stringify({v:5, wv:worldV, nl:nextLine, ln:liveLines(), hs:homeSwap || undefined, cu:home0.cultures.map(c => [c.k, c.cx, c.cy]), qn:QUESTS.length, at:Date.now(), sum:saveSum(), np:nextPid, nf:nextFam, nd:nextDrift, dr:drift.map(d => [d.id, d.k, Math.round(d.x), Math.round(d.y), d.t0]), dv:diveSpots.map(q => [q.id, q.x, q.y, q.rich, q.left, q.via]), seed, tick, nextId, nextShip, active, qid:quest < QUESTS.length ? QUESTS[quest].id : 'done', qo:3, mana, cells:[...cells], st:stats, ch:chronik, ev:[nextEvent, lastEvent],
     routes:routes.map(r => ({a:r.a, b:r.b, knots:r.knots, lg:r.lastGift || 0, plan:r.plan, kp:r.keep})),
     fog:fogHoles.map(h => [Math.round(h.cx), Math.round(h.cy), Math.round(h.rx), Math.round(h.ry), h.seed | 0]),
-    isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0, bm:I.bmax,
+    isl:islands.filter(keep).map(I => ({id:I.id, d:I.discovered, rc:I.reached ? 1 : undefined, s:I.settled, st:I.stock, pop:I.pop, lv:I.lvl || 1, fa:I.feastAt || 0, fe:I.feastEnd || 0, bm:I.bmax,
       fy:I.festYear, ya:I.yamAt || undefined, kp:I.keep || undefined, zl:I.zeal != null && I.zeal !== 1 ? I.zeal : undefined, dr:I.drought || 0, gr:I.grace || undefined, rf:I.reefLife != null ? Math.round(I.reefLife * 1000) / 1000 : undefined, ia:I.immigAt || undefined, au:I.autoUp ? 1 : undefined, rt:I.rat != null ? (I.rat ? 1 : 0) : undefined, hp:I.helps || undefined, pk:I.packs || undefined, rs:I.ratSaid ? 1 : undefined, ak:I.ask ? [I.ask.k, I.ask.why, I.ask.at, I.ask.no || 0] : undefined, wi:I.wish ? [I.wish.k, I.wish.f, I.wish.at, I.wish.until, I.wish.n] : undefined, wa:I.wishAt || undefined, wo:I.wishOk && Object.keys(I.wishOk).length ? Object.entries(I.wishOk).filter(([, u]) => u > tick) : undefined, ba:I.birthAcc ? Math.round(I.birthAcc) : undefined, ra:I.rainAt || undefined, sg:I.str || undefined, sa:I.strAt || undefined, sm:I.storm ? [I.storm.at, I.storm.tie ? 1 : 0, I.storm.tied] : undefined, ru:I.rainUntil && I.rainUntil + MOON > tick ? I.rainUntil : undefined, lb:I.lastBirth != null ? I.lastBirth : undefined, rh:I.rahui || false, rx:I.rahuiDone, jy:I.joyUntil || 0, yd:I.yard || null,
       lf:I.life || undefined, wl:I.wild != null ? Math.round(I.wild * 1000) / 1000 : undefined, wg:I.gone || undefined, tp:I.tapu || undefined, ta:I.tapuAway || undefined, mo:I.motif || undefined, mk:I.mot && Object.keys(I.mot).length ? I.mot : undefined,
       cl:I.clan ? {debt:I.debt || 0, ra:I.returnAt || 0, lf:I.lastFrom || '', il:I.inlaws && I.inlaws.length ? I.inlaws.map(x => [x.n, x.from, x.at]) : undefined} : undefined,
@@ -169,7 +169,7 @@ function restore(raw){
     savedAt = +s.at || 0; nextPid = s.np || 1; nextFam = s.nf || 1; nextLine = s.nl || 1; LINES = s.ln || {}; nextDrift = s.nd || 1; drift = (s.dr || []).filter(d => DRIFT[d[1]]).map(([id, k, x, y, t0]) => ({id, k, x, y, t0})); diveSpots = (s.dv || []).map(([id, x, y, rich, left, via]) => ({id, x, y, rich, left, via})); tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;
     quest = questFromSave(s);
     stats = {gepflanzt:0, gefaellt:0, fisch:0, gaben:0, stuerme:0, ereignisse:0, ...(s.st || {})}; if (stats.bernstein){ stats.kauri = stats.bernstein; delete stats.bernstein; }   // version 67 called the resin amber chronik = s.ch || {}; [nextEvent, lastEvent] = s.ev || [tick + 300, '']; eventNow = null;
-    for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; if (I.stock.bernstein != null){ I.stock.kauri = (I.stock.kauri || 0) + I.stock.bernstein; delete I.stock.bernstein; } I.pop = d.pop | 0;
+    for (const d of s.isl){ const I = isl(d.id); if (!I) continue; I.discovered = !!d.d; I.reached = !!d.rc || !!d.s || (I.buildings && I.buildings.length > 0); I.settled = !!d.s; I.stock = {...emptyStock(), ...d.st}; if (I.stock.bernstein != null){ I.stock.kauri = (I.stock.kauri || 0) + I.stock.bernstein; delete I.stock.bernstein; } I.pop = d.pop | 0;
       I.yamAt = d.ya || 0; I.zeal = d.zl != null ? d.zl : 1; I.keep = d.kp || 0; I.drought = d.dr || 0; I.grace = d.gr || 0; I.reefLife = d.rf; I.immigAt = d.ia || 0; I.autoUp = !!d.au; I.rat = d.rt != null ? !!d.rt : undefined; I.helps = d.hp || 0; I.packs = d.pk || 0; I.ratSaid = !!d.rs; I.bmax = d.bm !== undefined ? d.bm : undefined; I.ask = d.ak && (d.ak[0] === 'tie' || d.ak[0] === 'rain' || KINDS[d.ak[0]]) ? {k:d.ak[0], why:d.ak[1], at:d.ak[2], ...(d.ak[3] ? {no:d.ak[3]} : {})} : null; I.wish = d.wi && (WISH_TXT[d.wi[0]]) ? {k:d.wi[0], f:d.wi[1], at:d.wi[2], until:d.wi[3], n:d.wi[4] || 0} : null; I.wishAt = d.wa; I.wishOk = d.wo && d.wo.length ? Object.fromEntries(d.wo) : undefined; I.birthAcc = d.ba || 0; I.rainAt = d.ra || 0; I.str = d.sg || null; I.strAt = d.sa || 0; I.storm = d.sm ? {at:d.sm[0], tie:!!d.sm[1], tied:d.sm[2] || [], p:{}} : null; I.rainUntil = d.ru || 0; I.lastBirth = d.lb != null ? d.lb : null; I.lvl = d.lv || 1; I.feastAt = d.fa || 0; I.feastEnd = d.fe || 0; I.festYear = d.fy; I.rahui = !!d.rh; I.rahuiDone = d.rx; I.joyUntil = d.jy || 0; I.yard = d.yd || null;
       I.life = d.lf || null; I.wild = d.wl; I.gone = d.wg; I.tapu = !!d.tp; I.tapuAway = !!d.ta; I.motif = d.mo || null; I.mot = d.mk || {};
       if (I.clan && d.cl){ I.debt = d.cl.debt || 0; I.returnAt = d.cl.ra || 0; I.lastFrom = d.cl.lf || ''; I.inlaws = (d.cl.il || []).map(([n, from, at]) => ({n, from, at})); }
@@ -224,7 +224,7 @@ const SLOTS = 2;
 /* A save is never lost to a new version of the game. Before a new version saves for the first time, every slot is copied
    aside as it was ("vor dem Update"), and a save that cannot be read is put aside instead of being written over. The menu
    offers both again. */
-const GAME_V = 116, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
+const GAME_V = 117, keepKey = n => `${slotKey(n)}-keep`, preKey = n => `${slotKey(n)}-vorher`;
 let lastLoadErr = '';
 function keptOf(key){ try { const o = JSON.parse(localStorage.getItem(key) || 'null'); return o && o.raw ? o : null; } catch (e){ return null; } }
 function keepAside(n, raw){ try { const k = keptOf(keepKey(n)); if (!k || k.raw !== raw) localStorage.setItem(keepKey(n), JSON.stringify({at:Date.now(), why:lastLoadErr, raw})); } catch (e){} }
@@ -240,7 +240,22 @@ let curSlot = (() => { try { return clamp(Math.round(+localStorage.getItem('poli
 const slotKey = n => n === 1 ? SAVE_KEY : `${SAVE_KEY}-s${n}`;
 const saveSum = () => { const vs = islands.filter(I => I.settled), H0 = islands.find(I => I.id === 'heimat'); return {n:H0 ? H0.name : '', p:vs.reduce((t, I) => t + I.pop, 0), d:vs.length, y:yearOf() + 1}; };
 function slotInfo(n){ try { const raw = localStorage.getItem(slotKey(n)); if (!raw) return null; const s = JSON.parse(raw); return {at:+s.at || 0, sum:s.sum || null}; } catch (e){ return {at:0, sum:null}; } }
-function save(){ if (landing) return; try { const raw = serialize(); localStorage.setItem(slotKey(curSlot), raw); backupTick(raw); } catch (e){} }   // nothing to keep before the clan has landed
+function save(){ if (landing) return; let raw = ''; try { raw = serialize(); localStorage.setItem(slotKey(curSlot), raw); backupTick(raw); } catch (e){ saveFull(raw); } }
+/* The browser keeps about 5 MB for the game. What it holds is shown in the menu; copies put aside more than 30 days ago go;
+   and if a save no longer fits, the old copies make room first, then the player is told once to keep the game as a file. */
+const KEEP_DAYS = 30, STORE_MB = 5;
+function storageUse(){ let n = 0; try { for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if (k && k.startsWith('polinusa')) n += (k.length + (localStorage.getItem(k) || '').length) * 2; } } catch (e){} return n; }
+function pruneKept(days = KEEP_DAYS){
+  let gone = 0; const old = Date.now() - days * 864e5;
+  for (let n = 1; n <= SLOTS; n++) for (const key of [keepKey(n), preKey(n)]){ const k = keptOf(key); if (k && (k.at || 0) < old){ try { localStorage.removeItem(key); gone++; } catch (e){} } }
+  return gone;
+}
+let fullSaid = false;
+function saveFull(raw){
+  if (raw && pruneKept(0)){ try { localStorage.setItem(slotKey(curSlot), raw); return; } catch (e){} }   // the old copies made room
+  if (raw){ try { for (let i = 0; i < BACKUPS; i++) localStorage.removeItem(backupKey(i)); localStorage.setItem(slotKey(curSlot), raw); return; } catch (e){} }
+  if (!fullSaid && typeof toast === 'function'){ fullSaid = true; toast('Der Speicher des Browsers ist voll. Sichere das Spiel im Menü als Datei.', 7000, false); }
+}   // nothing to keep before the clan has landed
 /* Copies: every five minutes the game is also kept in one of three slots, the oldest overwritten. If the save itself is
    ever broken, the newest copy that loads is used. From the menu the game can be saved to a file and loaded again. */
 const BACKUP_EVERY = 5 * 60 * 1000, BACKUPS = 3, backupKey = i => `${slotKey(curSlot)}-b${i}`;

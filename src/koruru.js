@@ -28,7 +28,7 @@ function koruruMat(x){
    gift: five alike brings a treasure and a diving chart, four alike standing, a full hand cooked food, three alike food,
    two pairs cord, a pair coconuts, and when nothing matches the ancestors stay silent. The gifts grow with the village. */
 const KOR_SIDES = ['Punkt', 'Kreuz', 'Ring', 'Striche'];
-const KOR_TABLE = [['Fünf gleich', '1 Perlmutt und eine Tauchkarte'], ['Vier gleich', 'Ansehen +3'], ['Volle Hand (3 + 2)', 'Gekochtes'], ['Drei gleich', 'Feldfrüchte'], ['Zwei Paare', 'Schnur'], ['Ein Paar', 'Kokosnüsse'], ['Nichts', '1 Kokosnuss']];
+const KOR_TABLE = [['Fünf gleich', '1 Perlmutt und eine Tauchkarte'], ['Vier gleich', 'Ansehen +3'], ['Volle Hand (3 + 2)', 'Gekochtes'], ['Drei gleich', 'Feldfrüchte'], ['Zwei Paare', 'Sennit'], ['Ein Paar', 'Kokosnüsse'], ['Nichts', '1 Kokosnuss']];
 let kor = null;
 const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 const korCanThrow = () => stats.korDay !== todayKey();

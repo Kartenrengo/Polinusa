@@ -1405,3 +1405,16 @@ button.fcard{cursor:pointer}
 .fslot .ic{width:30px;height:30px}
 .dream{display:flex;align-items:flex-start;gap:6px;margin:4px 0;padding:6px 8px;border-radius:10px;background:#FFF1B8;font-size:13px}
 .dream .ic{width:20px;height:20px;flex:none}
+/* the first picture, before the game is ready: a canoe on the water and three real steps (version 117) */
+#splash{position:absolute;inset:0;z-index:60;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#2F5F73;color:#F4ECD8;transition:opacity .45s}
+#splash b{font:800 26px/1 Alegreya,Georgia,serif;letter-spacing:.02em}
+#splash ol{display:flex;gap:14px;margin:4px 0 0;padding:0;list-style:none;font:700 13px/1 'Alegreya Sans',system-ui,sans-serif;color:rgba(244,236,216,.45)}
+#splash li.on{color:#F4ECD8}
+#splash li+li::before{content:"·";margin-right:14px;color:rgba(244,236,216,.45)}
+#splash .cn{animation:spBob 2.4s ease-in-out infinite;transform-origin:80px 48px}
+#splash .sw{animation:spSw 3s linear infinite}
+#splash.gone{opacity:0;pointer-events:none}
+@keyframes spBob{50%{transform:translateY(2px) rotate(-1.5deg)}}
+@keyframes spSw{to{transform:translateX(-24px)}}
+@media (prefers-reduced-motion:reduce){#splash .cn,#splash .sw{animation:none}}
+

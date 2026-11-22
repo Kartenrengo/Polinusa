@@ -110,7 +110,7 @@ const spotNear = s => diveSpots.filter(q => Math.hypot(q.x - s.x, q.y - s.y) < 4
 function startDive(s){
   const q = spotNear(s); if (!q || s.state === 'sail' || s.route != null) return;
   s.auto = false; s.diving = {spot:q.id, n:0, strain:0, found:{}}; s.state = s.port ? s.state : 'sea';
-  toast(`Die Mannschaft der ${s.name} taucht. Ein Stein zieht hinab, der Partner im Kanu hält die Schnur.`, 3200, false);
+  toast(`Die Mannschaft der ${s.name} taucht. Ein Stein zieht hinab, der Partner im Kanu hält die Leine aus Sennit.`, 3200, false);
 }
 function stopDive(s, why){ if (!s.diving) return; const f = s.diving.found; s.diving = null; if (why && !awayQuiet) note(`${s.name}: ${why}${Object.keys(f).length ? ` Gefunden: ${giftText(f)}.` : ''}`); }
 function diveTick(){
