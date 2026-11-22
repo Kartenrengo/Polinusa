@@ -281,6 +281,21 @@ function upgradeHouse(I, b, way){
 }
 /* a house falls back a step when one of its goods is gone for half a minute: the craft house to the family house, a sea
    house one step down the sea way */
+/* Rückbau (version 117): the player takes a house one step back, from a craftsman's or seafarer's house to a family house,
+   from a family house to a hut. Half of what that step cost comes back. Not when the family would no longer fit in. */
+function downStep(b){ const w = wayOf(b); return w === 'hand' ? {to:'Familienhaus', cost:TIERS[3].cost} : SEA[w] ? {to:'Familienhaus', cost:SEA[w].cost} : tierOf(b) >= 2 ? {to:'Hütte', cost:TIERS[2].cost} : null; }
+function downWhy(I, b){
+  const d = downStep(b); if (!d) return 'Eine Hütte ist schon die kleinste Stufe.'; if (b.bt) return 'Es wird gerade gebaut.';
+  const f = famOfHome(I, b), n = f ? membersOf(I, f).length : 0, cap = d.to === 'Hütte' ? TIERS[1].cap : TIERS[2].cap;
+  return n > cap ? `Die Familie hat ${n} Menschen, ein${d.to === 'Hütte' ? 'e Hütte' : ' Familienhaus'} fasst nur ${cap}.` : '';
+}
+function downHome(I, b){
+  if (downWhy(I, b)) return false; const d = downStep(b), w = wayOf(b);
+  if (w === 'hand') b.t = 2; else if (SEA[w]) delete b.way; else { b.t = 1; delete b.way; }
+  for (const [k, v] of Object.entries(d.cost || {})) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + Math.floor(v / 2));
+  b.miss = 0; I.staff = null; loreCache = null; syncWalkers(); invalidate(true); save();
+  return d;
+}
 function tierTick(I, list, force = false){
   if (tick % 10 && !force) return;
   const out = new Set(list.filter(n => n.state === 'out').map(n => n.k));

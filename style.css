@@ -1432,3 +1432,4 @@ button.fcard{cursor:pointer}
 body.landing #qknot,body.photo #qknot{display:none!important}
 
 #toast .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.crafts .craftinfo{flex-basis:100%;margin:2px 0 0;font-size:12.5px;line-height:1.3}

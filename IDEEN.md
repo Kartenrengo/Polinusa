@@ -370,3 +370,12 @@ Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
   Saum aus Strandsteinen. Treibholz nur für Stufen.
 - **Feuer, Dächer, Zuzug, Hochzeit** aus Version 116 sind weiter offen.
 
+## Nach dem Durchgang der Vorschläge (Version 118)
+
+- **Gebaut:** Feuer A, B, C; Zuzug-Häkchen; Hilfe in der Not; Nebelband D; Aufgabe als Knoten; kürzere Nachrichten; Ablegen und
+  Ziele im Ladeblatt; Häuser A bis D; Rückbau; Hauswerk erklärt.
+- **Abgelehnt, nicht bauen:** Dächer A bis C, Karte C (Zeichen statt Karte), Laden B (Muster erst grob), Kopfleiste einzeilig,
+  Leisten beim Schieben ausblenden, Laderaum schmaler, Wege aus Strandgut und Saum aus Steinen, Feuer D (Glut hüten).
+- **Offen:** Kanus der verwandten Clans werden nicht gespeichert; lädt man während ihrer Fahrt, kommt die Hilfe nicht an
+  (die Jahressperre bleibt). Anbauten am Haus können auf engen Plätzen ins Nachbarhaus ragen.
+

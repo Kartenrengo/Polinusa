@@ -540,6 +540,20 @@ function craftChip(I, h){
   return `<button class="who chip pers hw on${ws ? ' idle' : ''}" type="button" data-act="craftpick" aria-label="Hauswerk: ${K.craft}, ${n} von ${crewOf(cur)}${ws ? `. ${ws.text}` : ''}. Tippen zum Ändern"><span class="nm">${icon(K.prod)}Hauswerk${DRY_WORK.has(cur.kind) && dryPace() > 1 ? `<span class="wet" role="img" aria-label="Regenzeit: trocknet langsam">${icon('sturm')}</span>` : ''}</span><span class="job">${K.craft} ${n}/${crewOf(cur)}</span></button>` + (ws && ws.k ? `<span class="cost out" role="img" aria-label="${ws.text}">${icon(ws.k)}</span>` : '');
 }
 /* hands for the craft, as at a workplace: − takes one off (and keeps the place smaller), + sends one */
+/* A household work in plain words (version 117): what it needs, what it makes, and what that is good for */
+const NEAR_N = {pandanus:'Pandanus', garten:'Maulbeergarten', baum:'Brotfruchtbäume', palme:'Kokospalmen', hibiskus:'Hibiskus', blumen:'Blumenbeete'}, DEP_N = {basalt:'am Basaltfelsen', obsidian:'am Obsidian', ton:'an der Tongrube'};
+const CRAFT_FOR = {proviant:'Proviant für Fahrten über See', haken:'Angelhaken: die Fischer fangen mehr', kalk:'Kalk: die Töpferei arbeitet schneller', schnur:'Sennit für Netze: die Fischer fangen doppelt', beile:'Beile: der Holzfäller schlägt schneller', steine:'Kochsteine: der Erdofen kocht schneller'};
+function craftInfo(k){
+  const K = KINDS[k], p = K.prod, out = K.out || 1, one = (g, n) => `${n} ${n === 1 ? (G1[g] || GN[g] || g) : (GN[g] || g)}`;
+  const need = Object.entries(K.use || {}).map(([g, n]) => one(g, n));
+  if (K.near){ const ks = [].concat(K.near.kind).map(q => NEAR_N[q] || q); need.push(`${K.near.n} ${ks.join(' oder ')} in der Nähe`); }
+  if (K.dep) need.push(`einen Platz ${DEP_N[K.dep] || ''}`.trim());
+  const homes = [...new Set(Object.values(TIERS).filter(T => T.needs.includes(p)).map(T => T.n).concat(Object.values(SEA).filter(S => S.add.includes(p)).map(S => S.n)))];
+  const into = [...new Set(Object.keys(KINDS).filter(q => KINDS[q].use && KINDS[q].use[p]).map(q => KINDS[q].craft || KINDS[q].n))];
+  const build = [...new Set(Object.values(TIERS).filter(T => T.cost && T.cost[p]).map(T => T.n).concat(Object.values(SEA).filter(S => S.cost[p]).map(S => S.n)))], boat = Object.values(SHIPS).some(S => S.cost && S.cost[p]);
+  const fors = [homes.length ? `Bedarf im ${andList(homes)}` : '', CRAFT_FOR[p] || '', build.length ? `Ausbau zum ${andList(build)}` : '', boat ? 'Kanubau' : '', into.length ? `daraus wird: ${andList(into)}` : '', (VALUE[p] || 0) >= 1.5 ? 'gute Gabe für Clans' : ''].filter(Boolean);
+  return `${K.craft}. Braucht: ${need.length ? andList(need) : 'nur Hände'}. Macht: ${one(p, out)}.${fors.length ? ` Wofür: ${fors.join(', ')}.` : ''}`;
+}
 function craftStep(I, h){
   const cur = craftOf(I, h); if (!cur) return '';
   const n = (I.people || []).filter(p => p.job === cur.id).length, max = crewOf(cur), full = KINDS[cur.kind].crew || 1;
@@ -552,7 +566,7 @@ function craftRow(I, h){
   if (!open) return `<div class="crafts">${craftChip(I, h)}${craftStep(I, h)}</div>`;
   const show = ks.length > 10 ? ks.filter(k => (cur && cur.kind === k) || !craftWhy(I, h, k)) : ks;   // many kinds: only what goes at this house, so the sheet does not scroll
   return `<div class="crafts open" role="group" aria-label="Hauswerk wählen"><span class="lbl">Hauswerk</span>${show.map(k => { const K = KINDS[k], on = !!cur && cur.kind === k, why = on ? '' : craftWhy(I, h, k);
-    return `<button class="chip craft${why ? ' no' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${K.craft}${why ? `: ${why}` : ''}">${icon(K.prod)}<small>${K.craft}</small></button>`; }).join('')}<button class="chip" type="button" data-act="craftpick">Fertig</button></div>`;
+    return `<button class="chip craft${why ? ' no' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${esc(craftInfo(k))}${why ? ` ${why}` : ''}" data-tip="${esc(`<b>${K.craft}</b> ${craftInfo(k).replace(/^[^.]*\. /, '')}${why ? ` ${why}` : ''}`)}">${icon(K.prod)}<small>${K.craft}</small></button>`; }).join('')}<button class="chip" type="button" data-act="craftpick">Fertig</button>${cur ? `<p class="sub craftinfo">${craftInfo(cur.kind)}</p>` : '<p class="sub craftinfo">Halte ein Hauswerk gedrückt: Es sagt, was es braucht und wofür.</p>'}</div>`;
 }
 /* ---------- a house at a glance, nothing to decode: who lives here and what each one does; what the family needs, one
    tile each with its name and a plain word (da, knapp, fehlt); the one thing to do next; and what the next step of the
@@ -1236,7 +1250,9 @@ function renderSheet(){
     if (sheetData.confirm) h += more + `<div class="rowx"><span>${Object.keys(costOf(b.kind, I)).length ? 'Wirklich entfernen? Die Hälfte kommt zurück.' : 'Wirklich entfernen?'}</span><span class="chips"><button class="btn" type="button" data-act="nokill">Behalten</button><button class="btn primary" type="button" data-act="kill">Entfernen</button></span></div>`;
     else if (!K.fixed && !home) foot = `<div class="rowx"><span class="chips">${FELL_WOOD[b.kind] && !b.bt ? `<button class="btn" type="button" data-act="fell">Fällen: ${FELL_WOOD[b.kind]} Holz</button>` : ''}<button class="chip" type="button" data-act="move">Versetzen</button><button class="chip" type="button" data-act="askkill">Entfernen</button></span></div>`;
     if (!sheetData.confirm) h += home || !more ? more : more.replace(/<\/details>$/, foot + '</details>');
-    if (!sheetData.confirm && !K.fixed && home) h += `<div class="rowx foot">${houseLine(I, b)}<span class="chips"><button class="chip" type="button" data-act="move">Versetzen</button><button class="chip" type="button" data-act="askkill">Entfernen</button></span></div>`;
+    if (sheetData.down && home){ const d = downStep(b), why = downWhy(I, b);
+      h += `<div class="rowx"><span>${why || `Zurück ${d.to === 'Hütte' ? 'zur Hütte' : 'zum Familienhaus'}? Die Hälfte vom Baustoff kommt zurück: ${costText(Object.fromEntries(Object.entries(d.cost || {}).map(([k, v]) => [k, Math.floor(v / 2)]).filter(([, v]) => v > 0))) || 'nichts'}.`}</span><span class="chips"><button class="btn" type="button" data-act="nodown">${why ? 'Gut' : 'Behalten'}</button>${why ? '' : '<button class="btn primary" type="button" data-act="down">Zurückbauen</button>'}</span></div>`; }
+    else if (!sheetData.confirm && !K.fixed && home) h += `<div class="rowx foot">${houseLine(I, b)}<span class="chips">${downStep(b) && !b.bt ? '<button class="chip" type="button" data-act="askdown">Rückbau</button>' : ''}<button class="chip" type="button" data-act="move">Versetzen</button><button class="chip" type="button" data-act="askkill">Entfernen</button></span></div>`;
   } else if (sheetKind === 'away'){
     // while you were away: one row for each thing that happened
     const {R, lines, years} = sheetData;
@@ -1389,6 +1405,9 @@ $('sheetBody').addEventListener('click', e => {
       setCraft(I, b, off ? null : k); sheetData.crafts = false; const f = famOfHome(I, b); if (!off && f) toast(`${famName(f)}: ${K.craft}.`, 2000, false);
       updateHUD(); renderSheet(); save(); checkQuest(); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
+    if (act === 'askdown'){ sheetData.down = true; renderSheet(); return; }
+    if (act === 'nodown'){ sheetData.down = false; renderSheet(); return; }
+    if (act === 'down'){ const I = islOfB(b.id), d = downHome(I, b); sheetData.down = false; if (d) toast(`Zurückgebaut: jetzt ${houseName(b)}.`, 2600, false); renderSheet(); updateHUD(); return; }
     if (act === 'nokill'){ sheetData.confirm = false; renderSheet(); return; }
     if (act === 'kill'){ const I = islOfB(b.id), c = costOf(b.kind, I); for (const [k, v] of Object.entries(c)) I.stock[k] = Math.min(storeCap(I), (I.stock[k] || 0) + Math.floor(v / 2)); I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} ist weg.`, 2600, false); return; }
     if (act === 'feast'){ holdFeast(islOfB(b.id), FEASTS.find(F => F.id === btn.dataset.f)); return; }

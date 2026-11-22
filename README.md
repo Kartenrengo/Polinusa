@@ -2594,3 +2594,42 @@ fortbleibt, verliert nichts, es gibt keine Tagesserien, und nichts ist zu kaufen
 - **Vermutet:** Dass Lapita-Kanus schon mit Sennit genäht waren, kennt man nur aus späteren Booten. Sturmband, Dunst und
   der feste Kartenrand sind Spielbilder, keine Funde.
 
+## Gewählt und gebaut (Version 118)
+
+Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
+
+- **Feuer und Holz:** Bauholz brennt nicht mehr. Herdfeuer, Töpferei, Kalkbrennen und Erdofen brennen nur Kokosschalen und
+  Brennholz. Brennholz kommt von Kindern und Alten, als Äste vom Holzfäller (zu jedem Holz ein Brennholz) und aus den alten
+  Wedeln, wenn ein Dach neu gedeckt wird. Bauholz hat ein eigenes Bild: behauene Balken; Brennholz ist ein gebundenes Bündel.
+  Ein neues Dorf beginnt mit 6 Brennholz.
+- **Zuzug mit vier Häkchen:** In der Übersicht der Bewohner zeigt „Zuzug und Kinder“ vier Häkchen: leere Hütte, Platz auf der
+  Insel, jeder hat ein Dach, genug Essen und Wasser. Was rot ist, hält Familien von weit her ab.
+- **Hilfe in der Not:** Ein Clan, mit dem ihr durch Heirat oder gemeinsame Muster verwandt seid und zu dem eine Schnur führt,
+  schickt einmal im Jahr ein Kanu mit Hilfe: bei einer angekündigten Dürre Feldfrüchte und Kokosnüsse, bei Sturmflut oder nach
+  einem Sturm Feldfrüchte, Palmwedel und Holz, im Rattenjahr Feldfrüchte. Das Clanblatt sagt, wie viel mehr eure Gaben zählen.
+- **Nebel im Osten:** Hinter den Inseln des Morgens schließt eine Nebelbank die bekannte See. Ein geschnitzter Pfosten mit
+  einem Rindenbaststreifen steht davor; wer ihn antippt, liest, dass dort spätere Kapitel beginnen. Kein Kanu fährt hinein.
+  In neuen Welten liegt in der letzten Spalte keine Insel mehr.
+- **Aufgabe als Knoten:** Die Aufgabe sitzt als kleiner runder Knoten mit Fortschrittsring über der Bauleiste rechts. Ein Tipp
+  klappt die Karte auf; eine neue Aufgabe oder ein neuer Rat klappt sie für ein paar Sekunden von selbst auf.
+- **Nachrichten kürzer:** Eine Zeile, kürzer zu sehen, höchstens eine wartet. Alles steht weiter in der Muschel.
+- **Beladen und losfahren:** Im Ladeblatt steht „Losfahren nach“ mit den nächsten eigenen Häfen und verbundenen Clans. Ein Tipp,
+  und das Kanu fährt. „Ablegen“ macht das Blatt klein, damit man das Ziel auf der Karte antippen kann.
+- **Häuser verschiedener:** Jedes Haus hat seine eigene Dachneigung und, ab dem Familienhaus, eigene Wände (Matten, Rinde oder
+  offen). Das Familienhaus hat ein Vordach, das Häuptlingshaus steht auf einem Steinsockel. Vor der Tür liegt, womit die
+  Familie arbeitet: ein Trockengestell für Fisch, Balken, Nüsse, ein Korb Knollen, Töpfe, Matten oder eine Rolle Sennit. Mit
+  jedem Jahr wächst etwas dazu: ein Kochunterstand, ein Vorratskorb auf einem Pfosten, ein kurzer Zaun.
+- **Rückbau:** Im Hausblatt steht neben „Versetzen“ und „Entfernen“ jetzt „Rückbau“. Ein Handwerker- oder Seefahrerhaus wird
+  wieder Familienhaus, ein Familienhaus wieder Hütte. Die Hälfte vom Baustoff dieser Stufe kommt zurück. Passt die Familie
+  nicht in das kleinere Haus, sagt das Blatt es und baut nicht zurück.
+- **Hauswerk erklärt:** Wer das Hauswerk eines Hauses wählt, liest unter der Auswahl in einem Satz, was es braucht, was es macht
+  und wofür. Beispiel: „Öl pressen. Braucht: 2 Kokosnüsse. Macht: 6 Kokosöl. Wofür: Bedarf im Handwerkerhaus und
+  Häuptlingshaus, daraus wird: Duftöl ansetzen, gute Gabe für Clans.“ Gedrückt halten zeigt dasselbe für jedes andere Hauswerk.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Kokosschalen, Äste und Treibholz als Brennstoff; Kokosöl zur Pflege von Haut und Haar und als Gabe; Trockengestelle
+  für Fisch; Vorratsbehälter auf Pfosten gegen Ratten.
+- **Vermutet:** Dass verwandte Gruppen einander in der Not mit Essen beistehen, kennt man aus späteren Berichten in ganz
+  Ozeanien; für die Lapita-Zeit ist es eine Annahme. Der Nebel im Osten ist ein Spielbild.
+
