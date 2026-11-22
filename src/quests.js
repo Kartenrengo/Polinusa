@@ -306,14 +306,21 @@ function goalMarkup(){
   return head('Das große Ziel', G.t) + epochCord() + `<p><b>${G.d}</b></p><span class="mbar big"><i style="width:${clamp(G.f, 0, 1) * 100}%"></i></span>` +
     `<p class="sub">Der Weg des Dorfes: Mit mehr Menschen kommen neue Zeiten und Gebäude. Dann die große Fahrt nach Osten, in Hawaiki der Sternenpfad, zuletzt die zweite Fahrt zu den Inseln des Morgens.</p>`;
 }
+/* Since version 117 the task folds into a small knot with a ring of progress in the corner, so more of the map shows.
+   A tap opens the card; a new task or new advice opens it by itself for a few seconds; then it folds again. */
+let questOpen = 0, questFoldT = 0;
+function questUnfold(ms = 6000){ questOpen = 1; clearTimeout(questFoldT); questFoldT = setTimeout(() => { questOpen = 0; renderQuest(); measure(); }, ms); renderQuest(); measure(); }
 function renderQuest(){
   if (awayQuiet) return;
   const el = $('quest'), I = isl(active), A = !landing && I && I.settled ? (quest < QUESTS.length ? adviceOf(I, true) : adviceOf(I)) : null;
   const G = !landing && I && I.settled ? goalOf() : null;
   const show = (quest < QUESTS.length || A || G) && !sheetKind && mode !== 'place' && mode !== 'move' && !landing;
-  el.hidden = !show; curAdvice = A; { const g = el.querySelector('.q-g'); if (g){ g.hidden = !G || (!A && quest >= QUESTS.length); g.textContent = G ? `Ziel › ${G.short}` : ''; } } el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
+  const kn = $('qknot'); el.hidden = !show || !questOpen; if (kn) kn.hidden = !show || !!questOpen; curAdvice = A; { const g = el.querySelector('.q-g'); if (g){ g.hidden = !G || (!A && quest >= QUESTS.length); g.textContent = G ? `Ziel › ${G.short}` : ''; } } el.classList.toggle('urgent', !!(A && A.urgent)); el.classList.toggle('advice', !!A); if (!show) return;
   // a new task or new advice slides in, so the eye catches that something changed
-  { const key = A ? A.key || A.t : 'q' + quest; if (el.dataset.k !== key){ if (el.dataset.k && !reduced){ el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); } el.dataset.k = key; } }
+  { const key = A ? A.key || A.t : 'q' + quest; if (el.dataset.k !== key){ const was = el.dataset.k; el.dataset.k = key; if (was && !reduced){ el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); } if (was && show && !questOpen){ setTimeout(() => questUnfold(5000)); } } }
+  if (kn && show){ const f = A ? 0 : quest >= QUESTS.length ? clamp(G.f, 0, 1) : clamp(QUESTS[quest].n(), 0, QUESTS[quest].of) / QUESTS[quest].of;
+    kn.querySelector('.qr').setAttribute('stroke-dashoffset', (113.1 * (1 - f)).toFixed(1)); kn.querySelector('b').textContent = A ? (A.urgent ? '!' : 'Rat') : quest >= QUESTS.length ? 'Ziel' : String(quest + 1);
+    kn.classList.toggle('urgent', !!(A && A.urgent)); kn.setAttribute('aria-label', A ? `Rat der Ältesten: ${A.t}. Tippen zeigt mehr.` : quest >= QUESTS.length ? `Großes Ziel: ${G.t}. Tippen zeigt mehr.` : `Aufgabe ${quest + 1}: ${qn(QUESTS[quest].t)}. Tippen zeigt mehr.`); }
   if (A){
     el.querySelector('.q-n').textContent = A.urgent ? 'Jetzt' : 'Die Alten';
     el.querySelector('.q-t').textContent = A.t; el.querySelector('.q-d').textContent = A.d; el.querySelector('.q-p').textContent = A.go || 'Zeigen ›';
@@ -398,4 +405,5 @@ setInterval(() => {
   const r = t.getBoundingClientRect(), a = $('app').getBoundingClientRect(); if (r.right < a.left + 8 || r.left > a.right - 8){ fingerEl.hidden = true; return; }
   fingerEl.hidden = false; fingerEl.style.left = (r.left - a.left + r.width / 2 - 14) + 'px'; fingerEl.style.top = (r.top - a.top - 36) + 'px';
 }, 300);
+$('qknot').addEventListener('click', () => { sfx && sfx('tap'); questUnfold(8000); });
 $('quest').addEventListener('click', e => { if (e.target.closest('.q-g') || (!curAdvice && quest >= QUESTS.length)){ openSheet('ziel'); return; } if (curAdvice){ toast(curAdvice.d, 3600, false); followAdvice(curAdvice); return; } openSheet('quest'); });

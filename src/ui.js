@@ -199,7 +199,7 @@ const TOAST_BAD = /fehlt|fehlen|\bohne\b|Sturm|\bfort\b|Hunger|hungert|Durst|ver
 const toastTone = m => TOAST_BAD.test(m) ? 'warn' : TOAST_GOOD.test(m) ? 'good' : '';
 /* Messages unfold downwards under the bar, hanging from the conch, and fly back into it. One at a time: what comes while one is shown
    waits its turn (at most two wait; older ones are only kept in the conch). An answer to a tap shows at once. */
-const TOAST = {gap:700, min:2600, wait:2};
+const TOAST = {gap:600, min:2200, wait:1, max:3600};
 let toastQ = [], toastBusy = false;
 function toast(msg, ms = 2600, keep = true){
   if (awayQuiet) return;
@@ -212,12 +212,12 @@ function toast(msg, ms = 2600, keep = true){
 /* a message that only goes into the conch, without popping up: the shell counts it */
 function hush(msg){ if (awayQuiet) return; newsAdd(msg); if (newsOpen()) renderNews(); else { unread++; newsBadge(); } }
 // the strip has room for a few words: the first sentence; the whole message stays in the conch
-const toastShort = m => { const c = m.match(/^.+?[.!?](?=\s|$)/), f = c ? c[0] : m; return f.length > 70 ? f.slice(0, 66).replace(/\s+\S*$/, '') + ' …' : f; };
+const toastShort = m => { const c = m.match(/^.+?[.!?](?=\s|$)/), f = c ? c[0] : m; return f.length > 58 ? f.slice(0, 54).replace(/\s+\S*$/, '') + ' …' : f; };
 function showToast(msg, ms){
   if (typeof crabOnToast === 'function') crabOnToast();
   toastBusy = true;
   const t = $('toast'); t.innerHTML = ''; const tt = document.createElement('span'); tt.className = 'tt'; tt.textContent = toastShort(msg); t.appendChild(tt); t.dataset.tone = toastTone(msg); t.hidden = false; t.classList.remove('open', 'fly'); t.style.transform = ''; t.style.transformOrigin = ''; void t.offsetWidth; t.classList.add('open');
-  clearTimeout(toastT); toastT = setTimeout(foldToast, Math.max(TOAST.min, ms) + Math.min(2400, msg.length * 25));
+  clearTimeout(toastT); toastT = setTimeout(foldToast, Math.min(TOAST.max, Math.max(TOAST.min, ms * .7) + Math.min(900, toastShort(msg).length * 12)));
 }
 function foldToast(){
   const t = $('toast'); clearTimeout(toastT);

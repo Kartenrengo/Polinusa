@@ -38,7 +38,7 @@ function measure(){
   { const T = $('toast'), nb = $('newsBtn'), cx = nb.offsetParent ? nb.getBoundingClientRect().left + nb.offsetWidth / 2 - hb.offsetLeft : hb.offsetWidth * .7;
     T.style.top = (topH + 10) + 'px'; T.style.setProperty('--tx', hb.offsetLeft + 'px'); T.style.setProperty('--tw', hb.offsetWidth + 'px'); T.style.setProperty('--cx', Math.round(cx) + 'px'); }
   $('newsList').style.top = (topH + 6) + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - topH - 6 - botH - 16) + 'px';
-  $('quest').style.bottom = (botH + 8) + 'px'; renderQuest();
+  $('quest').style.bottom = (botH + 8) + 'px'; { const k = $('qknot'); if (k) k.style.bottom = (botH + 8) + 'px'; } renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
 const zMin = () => clamp(Math.min(vw / (W * 1.05), vh / (H * .9)), .1, .4), zMax = 4.5;
