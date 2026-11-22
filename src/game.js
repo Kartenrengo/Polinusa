@@ -660,7 +660,7 @@ const WADE_MAX = 46, WADE_SLOW = .62;
 function dryAt(I, x, y, to){
   if (landAt(I, {x, y})) return {x, y};
   for (let k = 1; k <= 8; k++){ const f = k / 8, p = {x:x + (to.x - x) * f, y:y + (to.y - y) * f}; if (landAt(I, p)) return p; }
-  return {x:to.x, y:to.y + 3};
+  const t = {x:to.x, y:to.y + 3}; return I.lands && !landAt(I, t) ? dryNear(I, t) : t;   // the house itself stands in the water (a mat crowded off the land): the nearest beach
 }
 /* the nearest dry spot to a point in the water: the closest point of the shore, a few steps up the beach */
 function dryNear(I, p){

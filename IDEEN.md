@@ -342,3 +342,18 @@ Der Code ist da und getestet, nur `WAYS_DEEP` in `src/homes.js` steht auf `false
 - **Clans als Rivalen:** Zwei Clans werben um dieselbe Insel; wer zuerst ein Dorf gründet oder die bessere Gabe bringt. Noch nicht gebaut.
 - **Funde mit Wirkung:** Eine volle Reihe könnte zusätzlich etwas dauerhaft verbessern (Meer: Fischer schneller). Bisher nur Ansehen.
 - **Ebbe und Flut** und **die Natur antwortet** (aus Version 114) stehen weiter aus.
+
+## Offen nach Version 116 (Vorschläge geschickt, noch nicht gebaut)
+
+Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
+
+- **Feuer und Holz:** Bauholz nicht mehr als Brennstoff; Äste vom Holzfäller und alte Dachwedel als Brennstoff; getrennte
+  Bilder und Lagergruppen; Glut hüten mit Feuerpflug.
+- **Dächer:** sichtbares Altern (lockere Wedel, Lücken, Moos); Dachplatten als Hauswerk flechten; Nachbarn helfen beim Decken.
+- **Zuzug:** eine Zeile mit vier Häkchen für die Bedingungen. **Hochzeit:** verwandte Clans helfen einmal in der Not.
+- **Karte:** fester Rand oben und unten, Welt nur nach rechts; drei Zonen (Heimat, Weite See, Ferne im Dunst); Platz für
+  spätere Kapitel rechts hinter einem Nebelband.
+- **Laden und Speicher:** sofort ein Bild beim Start; Muster erst grob; Reisebild mit Route und Überspringen; Speicherplatz
+  im Menü anzeigen, alte Notfallkopien löschen.
+- **Atolle:** Kleine Sandbänke sind nur Bild; Seevögel oder Treibgut könnten dort landen.
+

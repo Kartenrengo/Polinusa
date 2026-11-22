@@ -2510,7 +2510,8 @@ fortbleibt, verliert nichts, es gibt keine Tagesserien, und nichts ist zu kaufen
 - **Der Fundkorb** (Menü › Fundkorb): 24 Funde in vier Reihen (Meer, Land, Himmel, Ahnen), gewöhnlich, selten oder kostbar.
   Ein neuer Fund kommt mit einer Karte, die aufspringt: das Ding, wie selten es ist, wie voll der Korb ist, Ansehen (+1, +2
   oder +4); bei kostbaren Funden mit Strahlen und dem Muschelhorn. Eine volle Reihe bringt Ansehen +5 (Ahnen +8). Fehlende
-  Funde stehen als Schatten im Korb, mit einem Hinweis, wo man sie trifft.
+  Funde stehen als Fragezeichen im Korb, nur mit ihrer Seltenheit (seit Version 116 ohne Fundort-Hinweis). Jeder 5. Fund
+  bringt ein **Geschenk der Alten**: ein paar Waren und Ansehen +3; der Korb zeigt, wie viele Funde bis dahin fehlen.
 - **1. Zeichen auf See:** Ist ein Kanu auf Erkundung, sieht die Navigatorin alle paar Minuten ein Zeichen: Seeschwalben, die
   abends zum Land fliegen, ein grüner Schimmer unter einer Wolke, eine andere Dünung, treibende Kokosnüsse. Das Zeichen zeigt
   wirklich zur nächsten unentdeckten Insel. Du wählst: **folgen** (neues Land oder ein Fund; aber auch Sturm, halbe Ladung
@@ -2535,3 +2536,31 @@ fortbleibt, verliert nichts, es gibt keine Tagesserien, und nichts ist zu kaufen
   Obsidianhandel (Talasea), Rindenstoff, feine Matten als Ehrengaben; rote Federn als Kostbarkeit (eher spätere Zeit, in der
   Lapita-Zeit vermutet); Dürren, Sturmfluten und Ratten (mit den Kanus eingeschleppt) als Gefahren.
 - **Vermutet:** Stabkarten sind von den Marshallinseln bekannt, aus viel späterer Zeit; hier als Erbstück der Ahnen.
+
+## Fragen, Bauen, Natürlicher (Version 116)
+
+- **Die Inseln fragen:** Jedes eigene Dorf, auch das erste, fragt um Erlaubnis, bevor es etwas Nötiges baut: Hütten,
+  Wasser, Essen, einen Holzfäller (wenn Brennstoff oder Holz fehlt), einen Erdofen (wenn Gekochtes fehlt) oder einen
+  Speicher (wenn das Lager voll ist). Eine Nachricht nennt das Dorf und die Frage; die gelbe Blase auf der Karte führt hin.
+- **Hauswerk zuweisen:** Am Hauswerk eines Hauses stehen − und +, wie an den Werkstätten. So arbeiten dort 0, 1 oder 2
+  Leute; die anderen werden frei.
+- **Neues Dorf gründen:** Liegt ein Kanu an einer leeren Insel, zeigt sein Blatt „Ein Dorf gründen“ mit drei Kacheln:
+  Siedler an Bord (4 nötig), die Waren für die erste Hütte an Bord und das nötige Ansehen. Grün ist erfüllt, rot fehlt.
+  Ein Tipp auf eine leere Insel sagt dasselbe kurz.
+- **Krisenkarte und Nachrichten:** Die Karte einer kommenden Krise rückt unter eine offene Nachricht, statt sie zu verdecken.
+- **Schlichtere Texte:** Funde, erfüllte Wünsche, Krisen und Zeichen auf See sind kürzer und klingen weniger feierlich.
+- **Natürlicher:** Taro-Felder zeigen herzförmige Blätter in losen Reihen statt runder Knubbel. Das Gras hat keine
+  Punktreihen mehr, sondern verstreute Halme, Flecken und kahle Stellen. Herdrauch steigt als weiche, ausgefranste Schwaden
+  ohne Umriss auf und treibt mit dem Wind. Trampelpfade und Muschelwege biegen sich leicht und sind unterschiedlich breit.
+- **Atolle in neuen Welten (Welt 6):** Die Motu sind ungleich breit, an einem Ende voller, an der Lagunenseite ausgefranst,
+  mit spitzen Sandzungen. In manchen Lücken des Riffs liegen kleine kahle Sandbänke, auf denen man nicht baut. Manche
+  Atolle sind Hufeisen mit weit offener Leeseite, der Riffring hat Dellen. Alte Spielstände behalten ihre Atolle.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Motu entstehen auf der Windseite des Riffs aus aufgeschüttetem Korallensand und Geröll; sie sind ungleich,
+  oft mit Sandzungen, und es gibt kahle Sandbänke (Cays). Hufeisenförmige Atolle mit offener Leeseite gibt es im Pazifik.
+  Taro (Colocasia) hat große, herzförmige Blätter.
+- **Vermutet:** Dass Dörfer ihren Häuptling oder die Alten fragen, bevor sie bauen, ist eine Spielregel nach späteren
+  Berichten über Gemeinschaftsarbeit, kein Fund aus der Lapita-Zeit.
+
