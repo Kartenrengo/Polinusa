@@ -35,6 +35,9 @@ function shipMarkup(s){
   if (P && P.settled && s.route == null && sheetData.load){ h += holdMarkup(s, P);
     const here = routes.map((r, i) => [r, i]).filter(([r]) => r.a === P.id || r.b === P.id);
     if (here.length) h += `<div class="rowx"><span class="sub">In eine Handelskette:</span><span class="chips">${here.map(([r, i]) => `<button class="chip" type="button" data-act="assign" data-r="${i}">${isl(r.a === P.id ? r.b : r.a).name}</button>`).join('')}</span></div>`;
+    // loaded: sail straight off to a known harbour or clan, or cast off and tap the target on the map (version 117)
+    const goals = islands.filter(J => J.id !== P.id && J.discovered && (J.settled || (J.clan && routes.some(r => r.a === J.id || r.b === J.id)))).sort((a, b) => Math.hypot(a.center.x - P.center.x, a.center.y - P.center.y) - Math.hypot(b.center.x - P.center.x, b.center.y - P.center.y)).slice(0, 5);
+    h += `<div class="rowx"><span class="sub">Losfahren nach:</span><span class="chips">${goals.map(J => `<button class="chip" type="button" data-act="sailgo" data-i="${J.id}">${J.name}</button>`).join('')}<button class="btn primary" type="button" data-act="castoff">Ablegen</button></span></div>`;
     return h; }
   { const sw = sailWord(s); if (sw) h += `<p class="sub">${icon('wind')}<b>${sw}.</b></p>`; }
   h += `<p class="sub"><b>Besatzung:</b> ${S.crew} ${S.crewN}${s.kind !== 'oc' ? ', darunter ein Navigator, der nach Sternen und Wellen steuert' : ''}.${s.people ? ` Dazu ${s.people} Siedler.` : ''}${seaCrew(s) ? ` Seefahrerfamilien: ${Math.round((seaF(s) - 1) * 100)} % schneller, weniger Böen.` : ''}</p>`;
@@ -268,6 +271,8 @@ function fleetAct(act, btn, quiet = false){
     else if (act === 'shipmore' || act === 'shipless'){ sheetData = {...sheetData, mini:act === 'shipless'}; renderSheet(); measure(); return true; }
     else if (act === 'load' || act === 'fold'){ sheetData.load = act === 'load'; renderSheet(); measure(); return true; }
     else if (act === 'assign'){ assignRoute(s, +btn.dataset.r); }
+    else if (act === 'castoff'){ selShip = s; mode = 'steer'; sheetData.load = false; sheetData.mini = true; renderSheet(); measure(); toast('Tippe das Ziel auf der Karte.', 2600, false); }
+    else if (act === 'sailgo'){ const J = isl(btn.dataset.i); if (J && sailTo(s, {isl:J.id})){ sheetData.load = false; sheetData.mini = true; renderSheet(); measure(); toast(`${s.name} legt ab nach ${J.name}.`, 2400, false); } }
     else if (act === 'unassign') unassign(s);
     else if (act === 'settle'){ settleFrom(s); closeSheet(); return true; }
     else if (act === 'gift') giveGift(s);
