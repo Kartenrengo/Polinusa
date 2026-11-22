@@ -154,7 +154,7 @@ function storyTick(I){
    And at every dawn a daughter sends a small canoe to the mother village with what it has to spare (packTick). */
 const ELDERS = {every:30}, PACK = {max:8, from:.6, keep:.45, mother:.85};
 const SPEC_GOODS = new Set(Object.keys(SPEC_OF_KIND).map(q => KINDS[q].prod).filter(Boolean));   // what only special ground makes
-const eldersOn = I => !!I && I.settled && !I.clan && (I.rat ?? I.id !== 'heimat');
+const eldersOn = I => !!I && I.settled && !I.clan && (I.rat ?? true);   // since version 116 every village asks, the mother village too; the overview turns it off
 /* dry: only asks whether it could be built now (nothing paid, nothing placed) */
 function eldersBuild(I, kind, dry = false){
   const K = KINDS[kind]; if (!K || !unlocked(kind) || K.fixed || !K.on.includes(I.type)) return false;
@@ -186,6 +186,12 @@ function askCause(I){
   if (F.food < F.n && !has(foodBuild(I))){ const c = dry(foodBuild(I), 'Essen reicht nicht bis morgen'); if (c) return c; }
   // people sleeping without a roof: one hut
   if (roofless(I) && !I.buildings.some(b => b.bt && HOME_KINDS.has(b.kind))) return dry('haus', `${roofless(I)} ${roofless(I) === 1 ? 'Mensch schläft' : 'Menschen schlafen'} ohne Dach`);
+  // what else the village needs to go on (since version 116): fuel for the hearths, cooked food for the family houses, room in the store
+  const L = needsOf(I).list, lack = k => L.find(n => n.k === k && n.state !== 'ok');
+  if (lack('brenn') && !has('faeller')){ const c = dry('faeller', 'Für die Herdfeuer fehlt Brennholz'); if (c) return c; }
+  if (lack('speisen') && !has('umu')){ const c = dry('umu', 'Die Familien wollen Gekochtes'); if (c) return c; }
+  if ((I.stock.holz || 0) < 3 && !has('faeller') && I.type === 'hoch'){ const c = dry('faeller', 'Zum Bauen fehlt Holz'); if (c) return c; }
+  if (['nahrung', 'holz', 'dach', 'wasser'].some(k => (I.stock[k] || 0) >= storeCap(I) - 1) && I.buildings.filter(b => b.kind === 'speicher').length < 3){ const c = dry('speicher', 'Das Lager ist voll'); if (c) return c; }
   return null;
 }
 const ASK_NO = 180;   // ticks (one day) a "no" holds
@@ -202,7 +208,7 @@ function eldersTick(I, force = false){
   if (!c){ I.ask = null; return; }
   if (a && a.k === c.k){ a.why = c.why; if (a.no && a.no <= tick) delete a.no; return; }   // the same request stands; a "no" that has run out asks again
   I.ask = {k:c.k, why:c.why, at:tick};
-  hush(`Bitte aus ${I.name}: ${askName(c.k)}. ${c.why}.`);
+  if (!awayQuiet) toast(`Die Leute von ${I.name} fragen: ${askName(c.k)}? ${c.why}. Tippe auf die gelbe Blase.`, 4200); else hush(`Bitte aus ${I.name}: ${askName(c.k)}. ${c.why}.`);
 }
 /* the answer: "Ja" does what the elders would have done; "Nein" holds the request back for a day */
 function askYes(I){

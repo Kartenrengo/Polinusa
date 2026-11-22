@@ -380,7 +380,7 @@ const r = await p.evaluate(()=>{
     // fronds, and it sends what it has plenty of to the mother; the player can take the lead back
     { const T = islands.find(J => !J.settled && !J.clan && !J.treasure), H = isl('heimat'); if (T){ const s = makeShip('oc', H), m0 = mana; s.port = T.id; s.people = SETTLE.people; s.cargo = {...costOf('haus', T), nahrung:6}; mana = 999;
       settleFrom(s); mana = m0; ships.splice(ships.indexOf(s), 1);
-      want(T.settled && eldersOn(T) && !eldersOn(H), `elders: a daughter village is not led by its elders (${T.settled})`);
+      want(T.settled && eldersOn(T) && eldersOn(H), `elders: a village does not ask (${T.settled})`);   // since version 116 the mother village asks too
       if (T.settled){ T.stock.holz = 0; T.stock.dach = 0; const keepH = {...H.stock}; Object.assign(H.stock, {holz:30, dach:30, schnur:2});
         const g = helpOf(H, T); want(g.holz > 0 && g.dach > 0, `elders: the mother sends no wood and fronds to a young village: ${JSON.stringify(g)}`);
         packGive(H, T, g, true); want(T.stock.holz > 0 && T.helps === 1, 'elders: the help does not arrive');

@@ -1841,7 +1841,7 @@ function onTap(p){
   const I = hitIsland(p);
   // from further out a tap on an island takes you close to it, and you build there
   if (I && I.clan){ closeSheet(); openSheet('clan', {id:I.id}); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
-  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Bring ${SETTLE.people} Siedler mit einem Kanu her.`, 3600, false); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
+  if (I && !I.settled){ toast(`${I.name} ist noch unbewohnt. Für ein Dorf braucht es im Kanu ${SETTLE.people} Siedler und ${costText(costOf('haus', I))} für das erste Haus, dazu Ansehen ${manaNeeded()} (jetzt ${Math.floor(mana)}).`, 5200, false); if (lod === 'far') flyTo(I.center.x, I.center.y, 1.4); return; }
   if (I){ closeSheet(); setActive(I.id); updateHUD(); if (lod !== 'near'){ const c = villageCenter(I); flyTo(c.x, c.y, 1.8); } return; }
   { const t = signAt(p); if (t){ toast(t, 5200, false); return; } }
   closeSheet(); if (barMode) setBar(null);   // a tap on empty sea folds the bar away

@@ -6,6 +6,13 @@ const shipIcon = kind => kind === 'oc' ? '<svg class="ic ship" viewBox="-13 -10 
 const stepper = (act, k, n, canMinus, canPlus, label) => `<span class="step"><button type="button" data-act="${act}-" data-k="${k}" aria-label="${label} weniger" ${canMinus ? '' : 'disabled'}>−</button><output aria-live="polite">${n}</output><button type="button" data-act="${act}+" data-k="${k}" aria-label="${label} mehr" ${canPlus ? '' : 'disabled'}>+</button></span>`;
 /* a slider for amounts: drag to load or unload; the number beside it is what really went aboard */
 const slider = (act, k, n, max, label) => `<span class="slide"><input type="range" min="0" max="${Math.max(max, n, 1)}" step="1" value="${n}" data-act="${act}" data-k="${k}" data-v="${n}" aria-label="${label}"${max > 0 || n > 0 ? '' : ' disabled'}><output>${n}</output></span>`;
+/* what a new village takes, all at once as tiles (green: there, red: missing): settlers aboard, the wood and fronds of the
+   first house aboard, and standing for one more village */
+const settleOk = (s, T) => s.people >= SETTLE.people && !Object.keys(hutLack(s, T)).length && mana >= manaNeeded();
+function settleTiles(s, T){
+  const t = (ic, label, have, need) => `<span class="rtile ${have >= need ? 'ok' : 'out'}" role="img" aria-label="${label}: ${Math.min(have, need)} von ${need}">${icon(ic)}<small>${label}</small><b>${Math.floor(Math.min(have, need))}/${need}</b></span>`;
+  return `<div class="rtiles">${t('pop', 'Siedler', s.people || 0, SETTLE.people)}${Object.entries(costOf('haus', T)).map(([k, v]) => t(k, GN[k] || k, (s.cargo || {})[k] || 0, v)).join('')}${t('mana', 'Ansehen', mana, manaNeeded())}</div>`;
+}
 function shipStatus(s){
   const r = s.route != null ? routes[s.route] : null;
   if (s.auto) return s.state === 'sail' && s.dest && s.dest.isl ? `Erkundet von selbst, holt Proviant auf ${isl(s.dest.isl).name}.` : 'Erkundet von selbst.';
@@ -43,8 +50,8 @@ function shipMarkup(s){
   // the hold at a glance, as in Anno: its places and what fills them; in our own port a tap on Beladen opens the store
   h += holdView(s) + (P && P.settled && s.route == null ? `<div class="rowx"><span class="sub">${aboard}</span><button class="btn primary" type="button" data-act="load">Beladen</button></div>` : cargoLoad(s) && s.route == null && !(P && P.clan) ? `<div class="rowx"><span class="sub">${aboard}</span>${dumpBtn()}</div>` : '');
   if (s.route != null) h += `<div class="rowx"><span></span><button class="btn" type="button" data-act="unassign">Aus der Kette nehmen</button></div>`;
-  if (P && !P.settled && !P.clan){ const hl = hutLack(s, P), hut = !Object.keys(hl).length, ok = s.people >= SETTLE.people && mana >= manaNeeded() && hut;
-    h += `<div class="rowx"><span class="sub">${s.people < SETTLE.people ? `Für ein Dorf braucht es ${SETTLE.people} Siedler an Bord.` : !hut ? `Für das erste Haus fehlen an Bord ${giftText(hl)}.` : mana >= manaNeeded() ? 'Hier kann ein Dorf entstehen.' : `Es braucht Ansehen ${manaNeeded()}, jetzt ${Math.floor(mana)}.`}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Dorf gründen</button></div>`; }
+  if (P && !P.settled && !P.clan){ const ok = settleOk(s, P);
+    h += `<p class="fhead">${icon('haus')}Ein Dorf gründen</p>${settleTiles(s, P)}<div class="rowx"><span class="sub">${ok ? 'Alles ist da.' : 'Was rot ist, fehlt noch. Siedler und Waren lädst du in einem eigenen Hafen.'}</span><button class="btn primary" type="button" data-act="settle" ${ok ? '' : 'disabled'}>Dorf gründen</button></div>`; }
   if (P && P.clan) h += `<div class="rowx"><span class="sub">${load ? `Diese Gabe bringt später etwa ${giftGuess(P.clan, giftWorth(P, s.cargo) * returnRate((routes[routeIndex(s.last, P.id)] || {knots:0}).knots))} zurück.` : 'Lade in einem eigenen Hafen etwas ein, das sie schätzen.'}</span><button class="btn primary" type="button" data-act="gift" ${load ? '' : 'disabled'}>Gabe übergeben</button></div>`;
   return h;
 }
