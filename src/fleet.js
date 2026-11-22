@@ -350,7 +350,7 @@ function arriveShip(s){
     if (C.motif) bringMotifs(isl(s.clan), T);   // the gift comes in their stamped pots; a people without pots brings none
     const fresh = T.settled ? landLife(T, s, true) : [];
     ships.splice(ships.indexOf(s), 1); updateHUD(); save(); checkQuest(); sfx('shells');
-    toast(`${s.guest ? 'Gäste' : 'Gegengabe'} ${clanVom(C)}: ${giftText(s.cargo) || 'leere Hände'}.${fresh.length ? ` Dazu ${andList(fresh.map(id => LIFE[id].s))}: Auf ${T.name} lässt sich jetzt ${andList(LIFE[fresh[0]].kinds.map(k => KINDS[k].n))} anlegen.` : ''}`, 5200); return;
+    toast(`${s.help ? 'Hilfe in der Not' : s.guest ? 'Gäste' : 'Gegengabe'} ${clanVom(C)}: ${giftText(s.cargo) || 'leere Hände'}.${fresh.length ? ` Dazu ${andList(fresh.map(id => LIFE[id].s))}: Auf ${T.name} lässt sich jetzt ${andList(LIFE[fresh[0]].kinds.map(k => KINDS[k].n))} anlegen.` : ''}`, 5200); return;
   }
   if (!d || !d.isl){ s.state = 'sea'; if (sheetKind === 'ship') renderSheet(); save(); return; }
   const T = isl(d.isl), from = s.last && isl(s.last);
@@ -513,8 +513,8 @@ function squall(s){
   return n;
 }
 /* A clan canoe: a return gift, or guests for the feast */
-function clanShip(T, toId, cargo, guest, life = []){
-  const s = {id:nextShip++, kind:'oc', own:false, clan:T.id, to:toId, guest:!!guest, cargo, life, people:0, path:[], pi:0, state:'moored', x:T.harbor.x, y:T.harbor.y, hx:1, hy:0, dist:0};
+function clanShip(T, toId, cargo, guest, life = [], help = false){
+  const s = {id:nextShip++, kind:'oc', own:false, clan:T.id, to:toId, guest:!!guest, help:!!help, cargo, life, people:0, path:[], pi:0, state:'moored', x:T.harbor.x, y:T.harbor.y, hx:1, hy:0, dist:0};
   ships.push(s); if (!sailTo(s, {isl:toId})) ships.splice(ships.indexOf(s), 1);
 }
 

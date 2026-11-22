@@ -732,7 +732,7 @@ function peopleTab(I, nd){
   h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">${knotIc}Von selbst ausbauen</button></div>`;
   h += `<ul class="list needs">`;
   { const imm = immigFor(I), emp = emptyHome(I), grow = imm || (emp && wantsSettlers(I)) || nd.growing;
-    h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), '', grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }
+    h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), immigChecks(I, nd), grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }
   { const K = kinText(I); h += rowS('pop', `Verwandtschaft: ${K.soft ? `${linesOf(I).length} ${linesOf(I).length === 1 ? 'Linie' : 'Linien'}` : kinWord(I)}`, `${K.line}. ${K.help}`, barS(Math.min(1, K.d / KIN_OK)), chipS(K.soft ? 'low' : K.st, K.st === 'ok' ? 'gesund' : K.soft ? 'später' : K.st === 'low' ? 'eng' : 'zu nah'), K.st === 'ok' || K.soft ? '' : 'need'); }
   h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Alle mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${ancCount(I)} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li></ul>`;
   return h;
@@ -874,6 +874,12 @@ function isleTab(I, nd){
 }
 const activeCount = I => I.buildings.filter(b => b.bt && !KINDS[b.kind].plant).length;
 /* Who comes next: a family by canoe for an empty hut, or a child in a family house; and why nobody does */
+/* the four things a family from far away looks for, as ticks: what is missing shows at once (version 117) */
+function immigChecks(I, nd){
+  const food = !nd.missing.some(n => n.k === 'essen' || n.k === 'wasser') && surplus(I, nd.list);
+  const c = [[!!emptyHome(I), 'leere Hütte'], [I.pop < islandMax(I), 'Platz auf der Insel'], [!roofless(I), 'jeder hat ein Dach'], [food, 'genug Essen und Wasser']];
+  return `<span class="ichecks" role="list" aria-label="Was eine Familie von weit her braucht">${c.map(([ok, t]) => `<span class="ick ${ok ? 'ok' : 'no'}" role="listitem" aria-label="${t}: ${ok ? 'ja' : 'fehlt'}">${ok ? '✓' : '✗'} ${t}</span>`).join('')}</span>`;
+}
 function arrivalText(I, nd){
   const imm = immigFor(I), emp = emptyHome(I), g = growTarget(I, nd.list), f = g && famOfHome(I, g), kids = homesOf(I).some(b => tierOf(b) >= 2);
   const birth = g ? ` Kinder: das nächste bei ${famName(f)}${kinState(I) !== 'ok' ? ', aber seltener, die Familien sind eng verwandt' : ''}.` : kids ? '' : ' Kinder kommen erst in Familienhäusern, mit Sennit gebunden.';
@@ -973,7 +979,7 @@ function clanMarkup(T){
   { const wed = islands.filter(I => I.settled).flatMap(I => (I.people || []).filter(p => p.w === T.id && !p.f).map(p => [p, I])), out = inlawsOf(T), c = weddingCheck(T);
     h += `<p class="sec">Heiraten</p>`;
     if (wed.length || out.length) h += `<ul class="list needs">${wed.map(([p, I]) => `<li>${icon('pop')}<span class="nm">${p.n} und ${p.sp || 'Partner'}<small>leben auf ${I.name}</small></span></li>`).join('')}${out.map(x => `<li>${icon('pop')}<span class="nm">${x.n}<small>aus ${x.from}, lebt jetzt ${clanBeim(C)}</small></span></li>`).join('')}</ul>`;
-    h += `<p class="sub">${wed.length || out.length ? 'Ihr seid verwandt: Die Schnur löst sich nicht, eure Gaben zählen mehr, und sie kommen als Gäste zum Fest der Plejaden.' : 'Eine Hochzeit bindet zwei Völker: Die Schnur löst sich nicht mehr, Gaben zählen mehr, und die Verwandten kommen zum Fest.'}</p>`;
+    h += `<p class="sub">${wed.length || out.length ? `Ihr seid verwandt: Die Schnur löst sich nicht, eure Gaben zählen ${Math.round(((kin(T) ? KIN_GIFT : 1) * (1 + .1 * Math.min(2, bondsWith(T))) - 1) * 100)} % mehr, sie kommen als Gäste zum Fest der Plejaden und schicken in der Not einmal im Jahr Hilfe.` : 'Eine Hochzeit bindet zwei Völker: Die Schnur löst sich nicht mehr, Gaben zählen mehr, und die Verwandten kommen zum Fest.'}</p>`;
     h += `<div class="rowx"><span class="sub">${c.ok ? `${c.p.n} aus ${c.I.name}, ${Math.floor(ageOf(c.p))} Jahre, könnte heiraten. Brautgaben: ${costText(BRIDE_GIFTS)}. Der neue Partner zieht zu euch.` : c.why}</span><button class="btn primary" type="button" data-act="wed" ${c.ok ? '' : 'disabled'}>Hochzeit</button></div>`; }
   if (r) h += `<p>${r.knots} Knoten Vertrauen. ${T.debt >= 1 ? 'Eine Gegengabe ist unterwegs oder kommt bald.' : 'Gerade schulden sie euch nichts.'}</p>`;
   h += r ? `<div class="rowx"><span class="sub">Fahr mit einem beladenen Kanu hin oder setze eines in die Schnur.</span><button class="btn primary" type="button" data-act="gift">Schnur ansehen</button></div>` : `<p class="sub">Fahr mit einem Kanu hin, dann entsteht eine Schnur.</p>`;

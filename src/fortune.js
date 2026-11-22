@@ -148,7 +148,7 @@ function crisisTick(){
     const I = pickOf(villages().filter(q => q.pop >= 10)); if (!I){ stats.crisisAt = tick + 120; return; }
     const k = seasonOf().id === 'sturm' ? 'flut' : seasonOf().id === 'mager' ? 'duerre' : pickOf(Object.keys(CRISES));
     stats.crisis = {k, isl:I.id, at:tick + CRISIS_WARN}; stats.crisis.need = crisisNeed(I, stats.crisis);
-    if (!awayQuiet){ sfx('horn'); toast(`${CRISES[k].warn(I)} Legt Vorräte an: ${costText(stats.crisis.need)}.`, 7000); } note(CRISES[k].warn(I)); crisisCard(); return; }
+    if (!awayQuiet){ sfx('horn'); toast(`${CRISES[k].warn(I)} Legt Vorräte an: ${costText(stats.crisis.need)}.`, 7000); } note(CRISES[k].warn(I)); crisisCard(); kinHelp(I, k); return; }
   const I = isl(C.isl); if (!I || !I.settled){ stats.crisis = null; crisisCard(); return; }
   if (tick % 2 === 0) crisisCard();
   if (tick < C.at) return;

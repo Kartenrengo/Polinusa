@@ -361,7 +361,7 @@ function stormTick(I){
     return;
   }
   I.storm = null; I.staff = null;
-  const msg = stormStrike(I, S); cycloneStart(I, 10); syncWalkers();
+  const msg = stormStrike(I, S); cycloneStart(I, 10); syncWalkers(); kinHelp(I, 'sturm');
   if (I.id === active && !awayQuiet){ toast(msg, 6000); sfx && sfx('horn'); } else note(msg);
 }
 /* What a storm wrecked is built anew with half of what it cost, from the store. What is not there yet the site waits

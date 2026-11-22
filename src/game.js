@@ -472,6 +472,18 @@ function motifTick(I){
 const BRIDE_GIFTS = {matten:2, schweine:1}, WED_KNOTS = 3, KIN_YEARS = 40;
 const FOREIGN_NAMES = {alte:['Kaimo', 'Waiyu', 'Biromo', 'Siwan', 'Tamugu', 'Ilaga', 'Owari', 'Nupa'], nord:['Malo', 'Sapi', 'Rilo', 'Fena', 'Lahi', 'Kiri', 'Toma', 'Ulai']};
 const inlawsOf = T => (T.inlaws || []).filter(x => tick - x.at < KIN_YEARS * YEAR);   // yours who went to live with them
+/* Kin help in need (version 117): a clan you are related to by marriage or shared patterns sends a canoe with food once,
+   when a crisis is announced on one of your villages or a storm has hit it; then not again for a year */
+const KIN_HELP = {duerre:{nahrung:6, kokos:6}, flut:{nahrung:5, dach:6}, ratten:{nahrung:8}, sturm:{nahrung:5, dach:6, holz:3}};
+const kinClans = () => islands.filter(T => T.clan && (bondsWith(T) > 0 || kin(T)) && routes.some(r => r.a === T.id || r.b === T.id));
+function kinHelp(I, why){
+  if (!I || !I.settled) return false; const H = stats.kinHelp || (stats.kinHelp = {});
+  const T = kinClans().filter(t => tick >= (H[t.id] || 0)).sort((a, b) => Math.hypot(a.center.x - I.center.x, a.center.y - I.center.y) - Math.hypot(b.center.x - I.center.x, b.center.y - I.center.y))[0];
+  if (!T) return false;
+  H[T.id] = tick + YEAR; clanShip(T, I.id, {...(KIN_HELP[why] || KIN_HELP.ratten)}, false, [], true);
+  if (!awayQuiet) note(`Der ${T.clan.name} hört von der Not auf ${I.name}. Ein Kanu der Verwandten ist unterwegs.`);
+  return true;
+}
 const bondsWith = T => islands.reduce((n, I) => n + (I.settled && I.people ? I.people.filter(p => p.w === T.id && !p.f).length : 0), 0) + inlawsOf(T).length;
 const canWed = p => isAdult(p) && !p.w && ageOf(p) >= 16 && ageOf(p) <= 34;
 const clanOfRoute = r => isl(r.a).clan ? isl(r.a) : isl(r.b).clan ? isl(r.b) : null;
