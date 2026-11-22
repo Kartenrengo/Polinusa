@@ -903,7 +903,7 @@ function vitalLine(I, skip = []){
 /* Storage sheet: every good on the island with what comes in and goes out per minute */
 /* what one day takes, in one line each: so it is clear what food, water, fuel and cooked food are for */
 const DAILY_WHY = {essen:n => `${n} Portionen: jeder isst morgens eine`, wasser:n => `${n} Portionen: jeder trinkt morgens eine`,
-  brenn:n => `${n} Feuer nachts, eins je Haus. Erst Kokosschalen, dann Brennholz, zuletzt Bauholz`, speisen:n => `${n} für die Familienhäuser, vom Erdofen`};
+  brenn:n => `${n} Feuer nachts, eins je Haus. Erst Kokosschalen, dann Brennholz. Bauholz brennt nicht`, speisen:n => `${n} für die Familienhäuser, vom Erdofen`};
 function dailyMarkup(I){
   const nd = needsOf(I), day = dailyNeed(I, nd);
   return `<p class="sec">Jeden Tag</p><ul class="list daily">${dailyGoods(I, nd).filter(k => day[k]).map(k => `<li>${icon(k)}<b>${needShort(k)}</b><span class="sub">${DAILY_WHY[k](day[k])}.</span></li>`).join('')}</ul>`;
@@ -923,7 +923,7 @@ let foodOpen = false;   // the single foods are folded into one tile "Essen"; a 
    building, the house and its crafts, and the sea and treasures */
 const STORE_TABS = [['tag', 'Täglich'], ['brenn', 'Feuer'], ['bau', 'Bauen'], ['werk', 'Hausrat'], ['see', 'Meer']];
 const TAG_GOODS = ['wasser', 'speisen', 'blaetter', 'steine'], SEA_GOODS = ['proviant', 'muschel', 'haken', 'perlmutt', 'federn', 'tabua', 'kauri', 'talisman', 'schmuck', 'hauer'];
-const BAU_GOODS = ['holz', 'dach', 'faser', 'schnur', 'harz', 'kalk'], FUEL_WHY = {schalen:'brennen zuerst. Kommen vom Erntehaus, beim Nüsse-Schälen.', reisig:'brennt als Zweites. Kinder und Alte sammeln es.', holz:'brennt erst, wenn nichts anderes da ist. Eigentlich zum Bauen.'};
+const BAU_GOODS = ['holz', 'dach', 'faser', 'schnur', 'harz', 'kalk'], FUEL_WHY = {schalen:'brennen zuerst. Kommen vom Erntehaus, beim Nüsse-Schälen.', reisig:'brennt als Zweites: Äste vom Holzfäller, alte Dachwedel, Reisig und Treibholz, das Kinder und Alte sammeln.'};
 /* wood and palm fronds: what every building and every roof needs, so they stand with the daily goods */
 const BASE_GOODS = ['holz', 'dach'], BASE_WHY = {holz:'braucht jeder Bau und jede Ausbesserung. Kommt vom Holzfäller.', dach:'decken jedes Dach und jeden Neubau. Kommen vom Erntehaus.'};
 let storeTab = 'tag';

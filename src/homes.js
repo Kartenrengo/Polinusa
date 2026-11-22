@@ -312,9 +312,11 @@ function roofTick(I, n = 1){
   for (const b of homesOf(I)){
     if (b.bt) continue;
     b.rw = (b.rw || 0) + n / ROOF.life;
-    if (awayQuiet && roofDue(I, b)){ pay(I, roofCost(b)); b.rw = 0; b.rf = tick; }   // while you are away it simply happens
+    if (awayQuiet && roofDue(I, b)){ pay(I, roofCost(b)); oldFronds(I, b); b.rw = 0; b.rf = tick; }   // while you are away it simply happens
   }
 }
+/* the old fronds that come down from a roof are dry: they go to the fire as firewood */
+const oldFronds = (I, b) => { I.stock.reisig = Math.min(storeCap(I), (I.stock.reisig || 0) + roofCost(b).dach); };
 /* the roofs to be covered anew now, the worst first; someone of the family goes up for a few moments (see staff) */
 const roofTodo = I => homesOf(I).filter(b => !b.bt && roofDue(I, b)).sort((a, b) => b.rw - a.rw);
 function mendTick(I){
@@ -324,8 +326,8 @@ function mendTick(I){
     if (!(on.get(b) > 0) || (b.rw || 0) < ROOF.mend) continue;
     b.rp = (b.rp || 0) + 1; if (b.rp < ROOF.work) continue;
     b.rp = 0; const c = roofCost(b), f = famOfHome(I, b); if (!canPay(I, c)) continue;
-    const was = b.rw >= ROOF.leak; pay(I, c); b.rw = 0; b.rf = tick; I.staff = null; syncWalkers(); invalidate();
-    if (I.id === active && !awayQuiet && f) note(`${famName(f)} hat das Dach neu gedeckt${was ? ', es war undicht' : ''}: ${costText(c)}.`);
+    const was = b.rw >= ROOF.leak; pay(I, c); oldFronds(I, b); b.rw = 0; b.rf = tick; I.staff = null; syncWalkers(); invalidate();
+    if (I.id === active && !awayQuiet && f) note(`${famName(f)} hat das Dach neu gedeckt${was ? ', es war undicht' : ''}: ${costText(c)}. Die alten Wedel kommen ins Feuer.`);
   }
 }
 /* A cyclone is announced by the elders, and there is about a minute to tie the roofs down: one person to a house, borrowed
