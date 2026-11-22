@@ -332,8 +332,39 @@ function hzBody(tier, sea, v, roof, shadow){
 const HZ_STILTS = `<g fill="none" stroke="#F1EBD9" stroke-width=".8" opacity=".85"><ellipse cy=".6" rx="15" ry="2.4"/><ellipse cy=".6" rx="8" ry="1.3"/></g><path d="M-11 .6V-10M-5.5 .6V-10M0 .6V-10M5.5 .6V-10M11 .6V-10" stroke="#3B2618" stroke-width="1.2"/><path d="M-11-2L-5.5-8.6M-5.5-2L0-8.6M5.5-2L0-8.6M11-2L5.5-8.6" stroke="#3B2618" stroke-width=".55"/>` +
   `<rect x="-15.5" y="-11.6" width="31" height="2.2" fill="#6B4428" stroke="#2B1D14" stroke-width=".6"/><path d="M-12.5-9.4V-8.6M-8.5-9.4V-8.6M-4.5-9.4V-8.6M-.5-9.4V-8.6M3.5-9.4V-8.6M7.5-9.4V-8.6M11.5-9.4V-8.6" stroke="#2B1D14" stroke-width=".4" opacity=".7"/>` +
   `<path d="M13.4-9.4L15.4.6M15.4-9.4L17.4.6M14-7H16M14.5-4.4H16.5M15-1.8H17" stroke="#3B2618" stroke-width=".7"/>` + hzCanoe(-20, 1.4, .8) + `<path d="M-15-9.6Q-17-4-18-1" fill="none" stroke="#2B1D14" stroke-width=".4"/>`;
+/* Since version 117 no two houses are quite alike, and the step shows in the form:
+   - every house has its own pitch and its own walls (plaited mats, bark, or open between the posts), from its id;
+   - a family house has a lean-to porch at the side, a chief's house stands on a platform of stones;
+   - in front lies what the family works with (a fish rack, beams, nuts, a basket of tubers, pots, mats, a coil of sennit);
+   - the older the house, the more stands around it: a cooking shelter, a raised store basket, a short fence. */
+const HZ_WALLS = ['', 'fill="#8A6642"', 'fill="#2B1D14" fill-opacity=".55"'];
+const hzWalls = (s, w) => w ? s.replace(/(<rect [^>]*height="[\d.]+") fill="url\(#pWeave\)"/g, (m, a) => `${a} ${HZ_WALLS[w]}`) : s;
+const hzPorch = (t, v, roof) => { const x = t === 2 && v ? 13 : 9.5;
+  return `<rect x="${x + .6}" y="-1.6" width="6" height="1.8" rx=".4" fill="url(#pWeave)" stroke="${HZ_INK}" stroke-width=".3"/><path d="M${x + 6.6} 0V-5.2M${x + 1} 0V-7" stroke="#3B2618" stroke-width=".9"/>` +
+    `<path d="M${x - .4}-8.4L${x + 7.8}-5.6L${x + 7.6}-4.4L${x - .4}-6.8Z" fill="${roof}" stroke="${HZ_INK}" stroke-width=".7" stroke-linejoin="round"/><path d="M${x + 2}-7.8L${x + 2.2}-6.2M${x + 4.4}-7L${x + 4.6}-5.4" stroke="${HZ_INK}" stroke-opacity=".3" stroke-width=".45"/>`; };
+const HZ_PLINTH = `<path d="M-17.5 1.2Q-18.4-2.4-16.6-4.2H16.6Q18.4-2.4 17.5 1.2Z" fill="#8E8A80" stroke="${HZ_INK}" stroke-width=".7"/>` +
+  [-14, -9.6, -5.2, -.8, 3.6, 8, 12.4].map((x, i) => `<path d="M${x}-${i % 2 ? 3.9 : 4.1}Q${x + 2.2}-${i % 2 ? 4.6 : 4.4} ${x + 4.2}-3.9" fill="none" stroke="#5E5A52" stroke-width=".45"/>`).join('') + `<path d="M-16.8-1.4H16.8" stroke="#5E5A52" stroke-width=".4" stroke-dasharray="3 1.4"/>`;
+/* what the family works with, in front of the door */
+const FAM_PROPS = {
+  rack:'<g transform="translate(12 3)"><path d="M-3.4 0V-6M3.4 0V-6M-4-5.6H4" stroke="#3B2618" stroke-width=".7" stroke-linecap="round"/><path d="M-2.6-5.4l.5 2.4l.5-2.4M-.3-5.4l.5 2.6l.5-2.6M2-5.4l.5 2.3l.5-2.3" fill="#8FA9B0" stroke="#2B1D14" stroke-width=".3"/></g>',
+  logs:HOUSE_PROPS[1], pots:HOUSE_PROPS[2], mats:HOUSE_PROPS[3], basket:HOUSE_PROPS[4],
+  nuts:'<g transform="translate(11.6 3.6)">' + [[-2, .2, '#7A5634'], [0, .4, '#8C6A42'], [2, .1, '#6E9A3E'], [-1, -1.1, '#7A5634'], [1, -1, '#8C6A42']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="1.1" fill="${c}" stroke="#2B1D14" stroke-width=".3"/>`).join('') + '</g>',
+  coil:'<g transform="translate(11.6 3.4)"><ellipse rx="2.6" ry="1.4" fill="#B88A55" stroke="#2B1D14" stroke-width=".35"/><ellipse rx="1.6" ry=".8" fill="none" stroke="#7A5634" stroke-width=".35"/><path d="M2.4.4q1.6.6 2.4-.2" fill="none" stroke="#B88A55" stroke-width=".5" stroke-linecap="round"/></g>'
+};
+/* what grows around an older house: a cooking shelter, a store basket on a post, a short fence (n: 0 to 3) */
+const hzAdd = (n, t) => { if (!n) return ''; const x = t === 1 ? -17 : t === 2 ? -22 : -24; let h = '';
+  h += `<g transform="translate(${x} 2)"><path d="M-3.4 0V-4.6M3.4 0V-5.6" stroke="#3B2618" stroke-width=".7"/><path d="M-4.6-4.2L4.4-5.8L4.6-4.8L-4.4-3.4Z" fill="#C9A86A" stroke="${HZ_INK}" stroke-width=".55"/>${hzStones(0, .4).replace(/rx="1.1" ry=".75"/g, 'rx=".8" ry=".55"')}</g>`;
+  if (n >= 2) h += `<g transform="translate(${x + 1} -3)"><path d="M0 4.6V-2" stroke="#3B2618" stroke-width=".7"/><path d="M-2.4-2.2L0-6.2L2.4-2.2Q0-1.2-2.4-2.2Z" fill="#B08456" stroke="${HZ_INK}" stroke-width=".45"/><path d="M-2.6-2.4Q0-1.4 2.6-2.4" fill="none" stroke="${HZ_INK}" stroke-width=".55"/></g>`;
+  if (n >= 3) h += `<path d="M${x - 5} -1.6Q${x + 4}-3.4 ${x + 12}-2.4M${x - 5}-.4Q${x + 4}-2.2 ${x + 12}-1.2" fill="none" stroke="#6B4A2E" stroke-width=".5"/><path d="M${x - 4.6}-.2V-3M${x - 1}-.6V-3.6M${x + 2.6}-1V-3.8M${x + 6.2}-1V-3.7M${x + 9.8}-.8V-3.4" stroke="#3B2618" stroke-width=".65" stroke-linecap="round"/>`;
+  return h; };
 const homeArt = (o, stilt, roof) => { const t = o.t3 ? 3 : o.t2 ? 2 : 1, v = Math.max(0, (stilt ? STILT_SHAPES : HOUSE_SHAPES).indexOf(o.shape)) % 2, sea = (o.sea || 0) > 0;
-  return stilt ? HZ_STILTS + `<g transform="translate(0 -11.4)">${hzBody(t, sea, v, roof, false)}</g>` : hzBody(t, sea, v, roof, true); };
+  const hk = o.hk || 0, pitch = [.93, 1, 1.08][hk % 3], walls = t >= 2 ? Math.floor(hk / 3) % 3 : 0;
+  let body = hzWalls(hzBody(t, sea, v, roof, !stilt), walls);
+  if (t === 2 && !sea && !stilt) body += hzPorch(t, v, roof);
+  if (pitch !== 1) body = `<g transform="scale(1 ${pitch})">${body}</g>`;
+  if (stilt) return HZ_STILTS + `<g transform="translate(0 -11.4)">${body}</g>`;
+  if (o.t4) body = HZ_PLINTH + `<g transform="translate(0 -4.2)">${body}</g>`;
+  return hzAdd(o.add || 0, t) + body; };
 /* the second look of a workplace: an open lean-to, its roof sloping to one side over a mat, on posts of two heights */
 const HUT_B = roof => `<ellipse cx="1.6" cy=".4" rx="10" ry="2" fill="#1F140D" opacity=".2"/><rect x="-7" y="-1.4" width="12.6" height="2" rx=".4" fill="url(#pWeave)" stroke="#2B1D14" stroke-width=".35"/><path d="M-7.6 0V-5.6M7.6 0V-7.6M-2.6 0V-6.2M2.6 0V-6.9" stroke="#3B2618" stroke-width="1"/>` +
   `<path d="M-10.2-5.2Q0-4.6 10.2-7.4L8.8-12.8Q0-11.2-8.8-10.4Z" fill="${roof}" stroke="#2B1D14" stroke-width=".9" stroke-linejoin="round"/><path d="M-7.4-5.4L-6.6-10.6M-3.6-5.2L-3.2-11.1M0-5.4V-11.6M3.6-5.8L3.4-12M7.2-6.6L7-12.4" stroke="#2B1D14" stroke-opacity=".3" stroke-width=".6"/><path d="M-8.8-10.4Q0-11.2 8.8-12.8" fill="none" stroke="#2B1D14" stroke-width="1.2" stroke-linecap="round"/>`;
@@ -341,7 +372,7 @@ function artOf(kind, o = {}){
   const roof = o.roof || ROOF_NEW, hut = o.alt ? HUT_B(roof) : `<use href="#hc" fill="${roof}" transform="scale(.9)"/>`;   // every workplace in two looks: the small hut or an open lean-to
   switch (kind){
     // a house of the second step: a bark cloth hung at the door and two carved posts in front
-    case 'haus': return homeArt(o, false, roof) + (o.t3 ? '' : HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '');
+    case 'haus': return homeArt(o, false, roof) + (o.t3 ? '' : FAM_PROPS[o.fp] || HOUSE_PROPS[o.prop] || '') + (o.chief ? '<use href="#ornament"/>' : '');
     case 'pfahl': return homeArt(o, true, roof);
     case 'speicher': return `<use href="#hs" fill="${roof}"/>` + (o.alt ? '<path d="M8.6 1.2L5.4-9.6" stroke="#2B1D14" stroke-width="2" stroke-linecap="round"/><path d="M8.6 1.2L5.4-9.6" stroke="#9C7246" stroke-width="1.1" stroke-linecap="round"/><path d="M7.4-2.4h1.6M6.6-5.2h1.6M5.8-8h1.6" stroke="#2B1D14" stroke-width=".5"/><g fill="#8A5A3A" stroke="#2B1D14" stroke-width=".35"><ellipse cx="-9.4" cy="2" rx="1.7" ry="1.1"/><ellipse cx="-7.4" cy="2.6" rx="1.5" ry="1"/><ellipse cx="-8.6" cy=".8" rx="1.4" ry=".9"/></g>' : '');   // the second look: a notched log to climb and yams waiting to go up
     // the village plaza in front of the first house: trodden earth, the hearth with its cooking stones, a log to sit on
