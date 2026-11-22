@@ -332,15 +332,18 @@ function smallThings(I, r, coast, reef, inland){
 
 /* ---------- atoll: a ring of low sandy islets around a lagoon, the widest gap is the passage */
 function genAtoll(s, hdir, r){
-  const v5 = worldV >= 5, rs = rng((Math.round(s.x * 11 + s.y * 17) ^ 0x7e31) >>> 0);
+  const v5 = worldV >= 5, v6 = worldV >= 6, rs = rng((Math.round(s.x * 11 + s.y * 17) ^ 0x7e31) >>> 0), rv = rng((Math.round(s.x * 5 + s.y * 23) ^ 0x2c95) >>> 0);
   // since world 5: every atoll its own: round or long, tilted, with bulges; a ring of many small motu, a long crescent on the
   // windward side with open reef elsewhere, or a few big islets
   const form = v5 ? ['ring', 'crescent', 'few', 'ring', 'crescent'][Math.floor(rs() * 5)] : 'ring';
+  const horse = v6 && rv() < .22;   // since world 6 some are horseshoes: the lee side of the ring has sunk, a wide open reef
   const cx = s.x, cy = s.y, rx = s.size, ry0 = s.size * (.62 + r() * .1), ry = v5 ? s.size * (.46 + rs() * .44) : ry0;
   const tilt = v5 ? (rs() - .5) * 1.1 : 0, lob = v5 ? [.04 + rs() * .07, rs() * TAU, .02 + rs() * .05, rs() * TAU] : null;
-  const ct = Math.cos(tilt), st = Math.sin(tilt), lw = a => lob ? 1 + lob[0] * Math.sin(2 * a + lob[1]) + lob[2] * Math.sin(3 * a + lob[3]) : 1;
+  // since world 6 the reef ring also gets a fifth-order wobble and a dent, so no two rings share one smooth oval
+  if (v6) lob.push(.015 + rv() * .035, rv() * TAU, (rv() - .5) * .12, rv() * TAU);
+  const ct = Math.cos(tilt), st = Math.sin(tilt), lw = a => lob ? lobW(lob, a) : 1;
   const hl = {x:hdir.x * ct + hdir.y * st, y:-hdir.x * st + hdir.y * ct};   // the harbour side in the atoll's own turn
-  const th = Math.atan2(hl.y / ry, hl.x / rx) * 180 / Math.PI, gap = 32 + r() * 14;
+  const th = Math.atan2(hl.y / ry, hl.x / rx) * 180 / Math.PI, gap = (32 + r() * 14) * (horse ? 2.3 : 1);
   const R = (t, k) => { const a = t * Math.PI / 180, w = lw(a), x = rx * k * w * Math.cos(a), y = ry * k * w * Math.sin(a); return {x:cx + x * ct - y * st, y:cy + x * st + y * ct}; };
   const segs = []; let t = th + gap / 2; const end = th + 360 - gap / 2;
   const span0 = form === 'few' ? 70 : form === 'crescent' ? 26 : 34, spanR = form === 'few' ? 60 : form === 'crescent' ? 20 : 56, gap0 = form === 'few' ? 22 : 14, gapR = form === 'few' ? 30 : 24;
@@ -352,12 +355,16 @@ function genAtoll(s, hdir, r){
     t += span + (form === 'crescent' && !far ? 30 + r() * 30 : gap0 + r() * gapR);
   }
   segs.reduce((a, b) => b[1] - b[0] > a[1] - a[0] ? b : a)[2] = .62;   // the longest islet is wide enough for a village
-  const lands = segs.map(([t0, t1, kin]) => {
+  const lands = segs.map(([t0, t1, kin]) => v6 ? isletV6(R, t0, t1, kin, rv) : (() => {
     const steps = Math.max(3, Math.round((t1 - t0) / 14)), ts = [];
     for (let i = 0; i < steps; i++) ts.push(t0 + (t1 - t0) * i / (steps - 1));
     const kout = 1.02, mid = (kout + kin) / 2;
     return smooth([...ts.map(q => R(q, kout)), R(t1 + 5, mid), ...ts.slice().reverse().map(q => R(q, kin)), R(t0 - 5, mid)]);
-  });
+  })());
+  // since world 6: little bare sand cays in some of the reef gaps (never in the passage); too small to build on, so they are
+  // no land of the island, only sand awash on the reef
+  const cays = [];
+  if (v6) for (let i = 0; i < segs.length - 1; i++){ const a = segs[i][1], b = segs[i + 1][0]; if (b - a > 16 && rv() < .5){ const m = a + (b - a) * (.35 + rv() * .3), w = 1.6 + rv() * 2; cays.push(isletV6(R, m - w, m + w, .9 + rv() * .03, rv)); } }
   const patches = [];
   for (let i = 0; i < 7; i++){ const a = r() * TAU, k = .2 + r() * .45; patches.push({x:fx(cx + Math.cos(a) * rx * k), y:fx(cy + Math.sin(a) * ry * k), rx:fx(2 + r() * 2), ry:fx(1.4 + r())}); }
   const hb = R(th, 1), deco = [], r2 = rng((Math.round(cx * 7 + cy * 13) ^ 0x51ab) >>> 0), put = (t, p, rot = 0) => deco.push({t, x:fx(p.x), y:fx(p.y), rot:Math.round(rot), s:1});
@@ -370,8 +377,25 @@ function genAtoll(s, hdir, r){
   for (let i = 0; i < 9; i++){ const a = r2() * TAU, k = .25 + r2() * .4; put('coral', {x:cx + Math.cos(a) * rx * k, y:cy + Math.sin(a) * ry * k}, r2() * 360); }
   const ring = []; for (let q = 0; q < 360; q += 6) ring.push(R(q, 1.13));
   const bx = polyBox(ring, 0);
-  return {type:'atoll', center:{x:cx, y:cy}, lands, R, segs, patches, atoll:v5 ? {cx, cy, rx, ry, tilt, lob} : {cx, cy, rx, ry}, harbor:{x:fx(hb.x), y:fx(hb.y)}, blocked:[], deco, trees:[],
+  return {type:'atoll', center:{x:cx, y:cy}, lands, cays, R, segs, patches, atoll:v5 ? {cx, cy, rx, ry, tilt, lob} : {cx, cy, rx, ry}, harbor:{x:fx(hb.x), y:fx(hb.y)}, blocked:[], deco, trees:[],
     box:v5 ? {x0:bx.x0 - 4, y0:bx.y0 - 4, x1:bx.x1 + 4, y1:bx.y1 + 4} : {x0:cx - rx - 8, y0:cy - ry - 8, x1:cx + rx + 8, y1:cy + ry + 8}, labelAt:{x:fx(cx), y:fx(v5 ? bx.y0 - 10 : cy - ry - 18)}};
+}
+
+/* the bulge of a v5/v6 atoll ring at angle a (radians); v6 rings carry two more terms */
+const lobW = (lob, a) => 1 + lob[0] * Math.sin(2 * a + lob[1]) + lob[2] * Math.sin(3 * a + lob[3]) + (lob.length > 4 ? lob[4] * Math.sin(5 * a + lob[5]) + lob[6] * Math.max(0, Math.cos(a - lob[7])) ** 6 : 0);
+/* A coral islet as it grows: sand piles up on the outer reef, the lagoon side is ragged, one end often trails off into a
+   curved sand spit, the other ends blunt; its width swells and narrows along the way */
+function isletV6(R, t0, t1, kin, rv){
+  const len = t1 - t0, steps = Math.max(4, Math.round(len / 6)), kout = 1.02, wd = kout - kin, ph = rv() * TAU, ph2 = rv() * TAU, ph3 = rv() * TAU, lean = rv() < .5 ? -1 : 1;
+  const out = [], inn = [];
+  for (let i = 0; i <= steps; i++){
+    const u = i / steps, q = t0 + len * u, end = Math.pow(Math.sin(Math.PI * u), .5), sk = 1 + .16 * lean * (u - .5);   // one end a little fuller
+    const swell = 1 + .13 * Math.sin(u * 4.7 + ph) + .06 * Math.sin(u * 10.3 + ph2), rag = .01 * Math.sin(u * 19 + ph3);
+    out.push(R(q, kout + .004 * Math.sin(u * 7 + ph2)));
+    inn.push(R(q, kout - wd * (.62 + .42 * end) * swell * sk + rag));
+  }
+  const tipA = R(t1 + 3 + rv() * 3, kout - wd * (.4 + rv() * .25)), tipB = R(t0 - 3 - rv() * 3, kout - wd * (.4 + rv() * .25));
+  return smooth([...out, tipA, ...inn.reverse(), tipB]);
 }
 
 /* ---------- island rules */
@@ -398,7 +422,7 @@ const beautyOf = I => fineBeauty(I) + Math.min(8, Math.floor(roadCells(I) / 25))
 /* where a point lies in an atoll, as a share of its ring (1 on the reef line), also for a tilted and bulging one */
 function atollE(a, p){
   const dx = p.x - a.cx, dy = p.y - a.cy; if (!a.lob) return (dx / a.rx) ** 2 + (dy / a.ry) ** 2;
-  const c = Math.cos(a.tilt), s = Math.sin(a.tilt), x = dx * c + dy * s, y = -dx * s + dy * c, an = Math.atan2(y / a.ry, x / a.rx), w = 1 + a.lob[0] * Math.sin(2 * an + a.lob[1]) + a.lob[2] * Math.sin(3 * an + a.lob[3]);
+  const c = Math.cos(a.tilt), s = Math.sin(a.tilt), x = dx * c + dy * s, y = -dx * s + dy * c, an = Math.atan2(y / a.ry, x / a.rx), w = lobW(a.lob, an);
   return ((x / a.rx) ** 2 + (y / a.ry) ** 2) / (w * w);
 }
 function landAt(I, p){ return I.lands.find(L => inPoly(p, L.poly)); }

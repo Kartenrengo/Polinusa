@@ -196,19 +196,22 @@ function drawRats(c, I, v, now){
 /* ---------- smoke: soft puffs that rise in a lazy curl, widen and thin out. A strong wind lays the column over and drags it
    off faster, a calm lets it stand and curl; gusts bend it for a moment. (x0, y0: the mouth; lit 0..1; k: size) */
 function drawPlume(c, x0, y0, id, lit, now, k = 1, dark = 0){
-  const W = wind(), t = now / 1000, gust = .75 + .5 * (.5 + .5 * Math.sin(t * .9 + x0 * .03)), str = W.str, fine = lod === 'near' && quality, N = fine ? 7 : 5, per = 2900 - 500 * str;
+  // smoke is no row of bubbles: each puff is a ragged cluster of soft blobs without an outline, pulled long by the wind,
+  // thinning from a narrow wisp at the fire to a broad haze that drifts off
+  const W = wind(), t = now / 1000, gust = .75 + .5 * (.5 + .5 * Math.sin(t * .9 + x0 * .03)), str = W.str, fine = lod === 'near' && quality, N = fine ? 8 : 5, per = 2900 - 500 * str;
   for (let i = 0; i < N; i++){
-    const cyc = now / per + id * .37 + i / N, gen = Math.floor(cyc), q = cyc - gen, jr = .85 + hsh(gen, id * 3 + i) * .35, jx = (hsh(gen, id * 5 + i + 1) - .5) * 1.4 * q;   // every puff is its own size and starts a little aside
-    const r = (1 + q * 3.4) * k * jr, rise = q * (19 - 7 * str) * k * (.92 + hsh(gen, id + i * 7) * .16);
+    const cyc = now / per + id * .37 + i / N, gen = Math.floor(cyc), q = cyc - gen, h = j => hsh(gen, id * 7 + i * 13 + j), jr = .8 + h(1) * .45, jx = (h(2) - .5) * 1.6 * q;
+    const r = (.7 + q * 3.6) * k * jr, rise = q * (19 - 7 * str) * k * (.9 + h(3) * .2);
     const drift = q * q * (10 + 26 * str) * gust * k, curl = Math.sin(q * 6.5 + id * 1.9 + t * .5 + i * .4) * (.4 + q * 2.1) * (1.15 - str * .6) * k;
-    const a = Math.min(1, lit * 1.25) * Math.pow(1 - q, 1.2) * (.9 - str * .22) * Math.min(1, q * 7);
-    c.globalAlpha = a; c.fillStyle = dark ? (i % 2 ? '#B9B4A8' : '#9E998E') : (i % 2 ? '#F6F1E6' : '#E9E2D3');
-    const px = x0 + W.tx * drift + curl + jx, py = y0 - rise + W.ty * drift * .4;
-    c.beginPath(); c.ellipse(px, py, r, r * .78, curl * .12, 0, TAU);
-    if (fine && q > .15){ const rr = r * .62; c.moveTo(px + r * .5 + rr, py - r * .3); c.ellipse(px + r * .5, py - r * .3, rr, rr * .8, 0, 0, TAU); }   // a second lobe: the puff billows as it widens
-    c.fill();
-    c.globalAlpha = a * (.35 + .35 * (1 - q)); c.strokeStyle = INKC; c.lineWidth = .4; c.stroke();
-    if (fine && q > .2 && q < .8){ c.globalAlpha = a * .5; c.fillStyle = dark ? '#8A857B' : '#D6CEBB'; c.beginPath(); c.ellipse(px - r * .2, py + r * .3, r * .6, r * .3, 0, 0, TAU); c.fill(); }   // the shaded underside
+    const a = Math.min(1, lit * 1.1) * Math.pow(1 - q, 1.4) * (.75 - str * .2) * Math.min(1, q * 6);
+    const px = x0 + W.tx * drift + curl + jx, py = y0 - rise + W.ty * drift * .4, stretch = 1 + str * q * 1.2, ang = Math.atan2(W.ty * .4, W.tx || .001) * str * q;
+    const blobs = fine ? 3 : 2;
+    for (let j = 0; j < blobs; j++){
+      const ox = (h(10 + j) - .5) * r * 1.3 + (j ? W.tx * r * .5 : 0), oy = (h(20 + j) - .5) * r * .8, rr = r * (.55 + h(30 + j) * .5);
+      c.globalAlpha = a * (j ? .55 : .8); c.fillStyle = dark ? (j % 2 ? '#B3AEA3' : '#9C978C') : (j % 2 ? '#EEE9DE' : '#F7F3EA');
+      c.beginPath(); c.ellipse(px + ox, py + oy, rr * stretch, rr * (.7 + h(40 + j) * .2), ang + (h(50 + j) - .5) * .6, 0, TAU); c.fill();
+    }
+    if (fine && q > .25){ c.globalAlpha = a * .35; c.fillStyle = dark ? '#8A857B' : '#D9D2C2'; c.beginPath(); c.ellipse(px - r * .1, py + r * .35, r * .7 * stretch, r * .28, ang, 0, TAU); c.fill(); }   // a greyer underside
   }
   c.globalAlpha = 1;
 }

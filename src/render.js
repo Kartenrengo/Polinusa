@@ -292,6 +292,7 @@ const seen = I => I.discovered || fogHoles.some(h => ((h.cx - I.center.x) / (h.r
 function islandPaths(I){
   if (I._p) return I._p;
   const p = {lands:I.lands.map(L => new Path2D(L.d))};
+  if (I.cays && I.cays.length){ p.cays = new Path2D(); for (const q of I.cays) p.cays.addPath(new Path2D(q.d)); }
   // the reef of an atoll is no drawn ellipse but wavers like the real thing; the passage is an uneven gap of deep water
   p.ring = I.atoll ? (I.atoll.lob ? new Path2D(smooth(Array.from({length:48}, (_, i) => { const q = I.R(i * 7.5, 1), j = 1 + (hsh(I.center.x | 0, i) - .5) * .02; return {x:I.atoll.cx + (q.x - I.atoll.cx) * j, y:I.atoll.cy + (q.y - I.atoll.cy) * j}; })).d) : loopPath(I.atoll.cx, I.atoll.cy, I.atoll.rx, I.atoll.ry, I.center.x | 0, .022, 44)) : new Path2D(I.reef.d);
   p.harbor = loopPath(I.harbor.x, I.harbor.y, 11, 7.5, I.center.y | 0, .18, 9);
@@ -333,6 +334,7 @@ function drawIsland(c, I, area){
   const ero = I.settled ? I._ero || 0 : 0, mouths = I.delta ? I.delta.exits : I.river && I.river.length ? [I.river[I.river.length - 1]] : [];
   if (ero) for (const q of mouths){ const R = 34 + ero * 26, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, `rgba(140,104,58,${.45 + ero * .15})`); g.addColorStop(.6, 'rgba(140,104,58,.22)'); g.addColorStop(1, 'rgba(140,104,58,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, R, 0, TAU); c.fill(); }
   if (I.delta) for (const q of I.delta.exits){ const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, 20); g.addColorStop(0, 'rgba(201,214,170,.75)'); g.addColorStop(1, 'rgba(201,214,170,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, 20, 0, TAU); c.fill(); }
+  if (p.cays){ stroke(c, p.cays, '#F1F6EC', 3.4, null, null, .45); c.fillStyle = look.sand[0]; c.fill(p.cays); stroke(c, p.cays, '#2B1D14', 1, [1.8, 1.6], null, .55); }   // bare sand cays awash on the reef
   p.lands.forEach((L, i) => {
     stroke(c, L, '#F1F6EC', 4.4, null, null, .4);   // surf along the beach
     fillWith(c, L, look.grass, 'pDots');
@@ -384,7 +386,7 @@ const WEAR_W = [0, 6.2, 4.4, 3, 1.7], WEAR_C = [null, ['#B5B47A', .26], ['#9C7E4
 function drawWear(c, I){
   const g = I._wg; if (!g) return;
   if (!I._wp){
-    const band = [null, new Path2D(), new Path2D(), new Path2D(), new Path2D()], road = new Path2D(), bits = new Path2D(), pebbles = new Path2D(), tufts = new Path2D();
+    const band = [null, 1, 2, 3, 4].map(k => k && [new Path2D(), new Path2D(), new Path2D()]), road = new Path2D(), bits = new Path2D(), pebbles = new Path2D(), tufts = new Path2D();
     const pt = [], ok = [];
     for (let i = 0; i < g.lv.length; i++){
       const l = g.road[i] ? WEAR_TOP : g.lv[i]; if (!l) continue;
@@ -398,11 +400,13 @@ function drawWear(c, I){
       const P = pt[i], cx = i % g.w, nb = [cx + 1 < g.w ? i + 1 : -1, i + g.w, cx + 1 < g.w ? i + g.w + 1 : -1, cx > 0 ? i + g.w - 1 : -1];
       for (let k = 1; k <= P.l; k++){
         let joined = false;
-        for (const j of nb){ if (j < 0 || lvAt(j) < k) continue; const Q = pt[j]; band[k].moveTo(P.x, P.y); band[k].lineTo(Q.x, Q.y); joined = true; }
-        // a spot with no worn neighbour on its own step is a small round patch; it joins once the neighbours wear too
-        if (!joined && !(i - 1 >= 0 && lvAt(i - 1) >= k) && !(lvAt(i - g.w) >= k) && !(lvAt(i - g.w - 1) >= k) && !(lvAt(i - g.w + 1) >= k)){ band[k].moveTo(P.x, P.y); band[k].lineTo(P.x + .01, P.y); }
+        // each stretch bends a little and is a little wider or narrower than the next, as feet wander: no ruled lines
+        for (const j of nb){ if (j < 0 || lvAt(j) < k) continue; const Q = pt[j], hh = Math.imul(P.h ^ Q.h, 2246822519) >>> 0, B = band[k][hh % 3], dx = Q.x - P.x, dy = Q.y - P.y, d = Math.hypot(dx, dy) || 1, off = (((hh >> 3) & 63) / 63 - .5) * 2.4;
+          B.moveTo(P.x, P.y); B.quadraticCurveTo((P.x + Q.x) / 2 - dy / d * off, (P.y + Q.y) / 2 + dx / d * off, Q.x, Q.y); joined = true; }
+        // a spot with no worn neighbour on its own step is a small patch, longish and turned at random; it joins once the neighbours wear too
+        if (!joined && !(i - 1 >= 0 && lvAt(i - 1) >= k) && !(lvAt(i - g.w) >= k) && !(lvAt(i - g.w - 1) >= k) && !(lvAt(i - g.w + 1) >= k)){ const a = ((P.h >> 5) & 31) / 31 * Math.PI, l = .8 + ((P.h >> 10) & 3) * .4; band[k][P.h % 3].moveTo(P.x - Math.cos(a) * l, P.y - Math.sin(a) * l * .6); band[k][P.h % 3].lineTo(P.x + Math.cos(a) * l, P.y + Math.sin(a) * l * .6); }
       }
-      if (P.r) for (const j of nb){ if (j >= 0 && ok[j] && pt[j].r){ road.moveTo(P.x, P.y); road.lineTo(pt[j].x, pt[j].y); } }
+      if (P.r) for (const j of nb){ if (j >= 0 && ok[j] && pt[j].r){ const Q = pt[j], hh = Math.imul(P.h ^ Q.h, 3266489917) >>> 0, dx = Q.x - P.x, dy = Q.y - P.y, d = Math.hypot(dx, dy) || 1, off = (((hh >> 3) & 63) / 63 - .5) * 1.4; road.moveTo(P.x, P.y); road.quadraticCurveTo((P.x + Q.x) / 2 - dy / d * off, (P.y + Q.y) / 2 + dx / d * off, Q.x, Q.y); } }
       if (P.r && (P.h & 3) === 0){ const sx = P.x + (((P.h >> 12) & 7) - 3.5) * .6, sy = P.y + (((P.h >> 15) & 7) - 3.5) * .45; bits.moveTo(sx + .7, sy); bits.ellipse(sx, sy, .7, .45, 0, 0, TAU); }
       // pebbles on the bare ground, grass tufts at the edge of the flattened grass
       if (P.l >= 3 && !P.r && (P.h >> 7) % 5 === 0){ const px = P.x + (((P.h >> 18) & 7) - 3.5) * .5, py = P.y + (((P.h >> 21) & 7) - 3.5) * .35, pr = .45 + ((P.h >> 24) & 3) * .15; pebbles.moveTo(px + pr, py); pebbles.ellipse(px, py, pr, pr * .7, 0, 0, TAU); }
@@ -412,7 +416,7 @@ function drawWear(c, I){
   }
   const {band, road, bits, pebbles, tufts} = I._wp;
   c.lineCap = 'round'; c.lineJoin = 'round'; c.setLineDash([]);
-  for (let k = 1; k <= WEAR_TOP; k++){ c.strokeStyle = WEAR_C[k][0]; c.globalAlpha = WEAR_C[k][1]; c.lineWidth = WEAR_W[k]; c.stroke(band[k]); }
+  for (let k = 1; k <= WEAR_TOP; k++){ c.strokeStyle = WEAR_C[k][0]; c.globalAlpha = WEAR_C[k][1]; band[k].forEach((B, n) => { c.lineWidth = WEAR_W[k] * [.72, 1, 1.28][n]; c.stroke(B); }); }
   c.globalAlpha = .8; c.lineWidth = 5.4; c.strokeStyle = '#B9A06C'; c.stroke(road); c.globalAlpha = .95; c.lineWidth = 4.2; c.strokeStyle = '#EDE3C8'; c.stroke(road);
   c.fillStyle = '#FFFFFF'; c.globalAlpha = .8; c.fill(bits);
   c.fillStyle = '#8E8576'; c.globalAlpha = .55; c.fill(pebbles);
