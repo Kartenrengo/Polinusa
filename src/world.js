@@ -81,6 +81,7 @@ function genCell(seed, cx, cy, start, used){
   if (K) return cultureIsle(cx, cy, start, K, r);
   if (start.v >= 2 && cx * CELL >= WIDE_X && !far && !morn) return null;   // the Weite See: nothing but water
   if (cx * CELL >= EMPTY_X && !morn) return null;   // the Leere See, in every world
+  if (start.v >= 6 && (cx + 1) * CELL > W - 1) return null;   // since world 6 the last column lies in the mist of the east (see drawFogBank)
   if (r() > (far || morn ? .68 : dc <= 1 ? .75 : dc <= 3 ? .6 : .45)) return null;
   const roll = r(), kind = roll < .42 ? 'atoll' : roll < .66 ? 'vulkan' : 'hoch';
   const size = kind === 'atoll' ? 92 + r() * 36 : kind === 'vulkan' ? 104 + r() * 22 : 108 + r() * 32, rad = radOf(kind, size), m = rad + 50;

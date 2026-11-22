@@ -215,6 +215,7 @@ function sailTo(s, dest, quiet, force){
   const goal = dest.isl ? moorSpot(isl(dest.isl), s) : {x:dest.x, y:dest.y};
   // past the Weite See only the double canoe goes; an outrigger is not made for days of open sea
   if (s.own && s.kind === 'oc' && goal.x > FAR_X){ if (!quiet) toast('Über die Weite See zu den Fernen Inseln fährt nur das Doppelkanu.', 3200, false); return false; }
+  if (s.own && goal.x > W - FOG_W * .45){ if (!quiet) toast('In den Nebel fährt kein Kanu. Was dahinter liegt, kommt später.', 3200, false); return false; }
   if (s.own && s.kind !== 'vaka' && goal.x > EMPTY_X + 150){ if (!quiet) toast('Über die Leere See fährt nur das Reisekanu.', 3200, false); return false; }
   const path = findPath(s, goal);
   if (!path){ if (s.own && !quiet) toast('Dorthin findet das Kanu keinen Weg.', 2600, false); return false; }

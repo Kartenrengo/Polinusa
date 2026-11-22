@@ -1834,6 +1834,7 @@ function onTap(p){
   if (steerOnTap(p)) return;   // steering: every tap is the canoe's target (fleet.js)
   // a bubble over a house or a workplace: what it lacks, and where that comes from
   { const q = hitBubble(p); if (q){ q.go(); return; } }
+  if (hitFogPost(p)){ toast('Hier endet die bekannte See. Was hinter dem Nebel liegt, erzählen spätere Kapitel.', 4200, false); return; }
   if (hitWhale(p)){ seeWhale(); return; }
   if (hitEye(p)) return;   // a tap on a dolphin, a heron, a rainbow: a word (hingucker.js)
   if (palmDouble(p)) return;   // a second quick tap on a palm shakes it

@@ -2514,10 +2514,36 @@ function drawSeaZones(now){
     c.globalAlpha = clamp((cam.z - .16) / .3, 0, 1) * .22; c.strokeStyle = '#E6DBBF'; c.lineWidth = 2.2; c.lineCap = 'round'; c.stroke(q); c.globalAlpha = 1;
   }
 }
+/* Far in the east, behind the Inseln des Morgens, a bank of white mist closes the known sea, with a carved post where it
+   begins. There later chapters can go on (version 117). */
+const FOG_W = 520, fogPost = () => ({x:W - FOG_W * .55, y:clamp(home0 && home0.home ? home0.home.y : H / 2, 600, H - 600)});
+function drawFogBank(c, v, t){
+  if (v.x1 < W - FOG_W - 60) return;
+  const g = c.createLinearGradient(W - FOG_W, 0, W + 40, 0);
+  g.addColorStop(0, 'rgba(226,232,228,0)'); g.addColorStop(.45, 'rgba(226,232,228,.55)'); g.addColorStop(1, 'rgba(236,240,236,.97)');
+  c.fillStyle = g; c.fillRect(W - FOG_W, v.y0, Math.max(0, v.x1 - (W - FOG_W)), v.y1 - v.y0);
+  if (v.x1 > W + 40){ c.fillStyle = 'rgba(236,240,236,.97)'; c.fillRect(W + 40, v.y0, v.x1 - W - 40, v.y1 - v.y0); }
+  if (cam.z < .1) return;
+  // slow drifting wisps
+  c.fillStyle = 'rgba(246,248,244,.5)';
+  for (let y = Math.floor(v.y0 / 160) * 160 - 160; y < v.y1 + 160; y += 160){ const k = hsh(y | 0, 9), x = W - FOG_W * (.15 + .5 * k), dy = Math.sin(t * .05 + k * 6) * 40;
+    c.beginPath(); for (let j = 0; j < 4; j++){ const q = hsh(y | 0, 20 + j), r = (60 + q * 70) * (j === 1 ? 1.3 : 1); c.moveTo(x + (j - 1.5) * 70 + r, y + dy + (q - .5) * 30); c.ellipse(x + (j - 1.5) * 70, y + dy + (q - .5) * 30, r, r * (.28 + q * .14), (q - .5) * .2, 0, TAU); } c.fill(); }
+  // the carved post on a little sand bar, with a strip of bark cloth in the wind
+  const P = fogPost(); if (P.x < v.x0 - 80 || P.y < v.y0 - 120 || P.y > v.y1 + 80) return;
+  c.save(); c.translate(P.x, P.y); c.globalAlpha = 1;
+  c.fillStyle = '#E8D9A8'; c.beginPath(); c.ellipse(0, 4, 34, 9, 0, 0, TAU); c.fill(); c.strokeStyle = '#2B1D14'; c.lineWidth = 1.2; c.stroke();
+  c.fillStyle = '#7A4A2A'; c.beginPath(); c.moveTo(-5, 4); c.lineTo(-4, -58); c.quadraticCurveTo(0, -66, 4, -58); c.lineTo(5, 4); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = '#E8C98E'; c.lineWidth = 1.3; for (let k = 0; k < 5; k++){ const y = -12 - k * 9; c.beginPath(); c.moveTo(-3.6, y); c.lineTo(0, y - 3); c.lineTo(3.6, y); c.stroke(); }
+  const fl = Math.sin(t * 2.2) * 3; c.fillStyle = '#C8893A'; c.strokeStyle = '#2B1D14'; c.lineWidth = 1; c.beginPath(); c.moveTo(4, -54); c.quadraticCurveTo(16, -58 + fl, 26, -52 + fl); c.lineTo(24, -46 + fl); c.quadraticCurveTo(14, -50 + fl, 4, -47); c.closePath(); c.fill(); c.stroke();
+  if (cam.z > .25){ c.font = NAME_FONT; c.textAlign = 'center'; c.fillStyle = '#41575A'; c.fillText('Hinter dem Nebel', 0, 28); c.font = SUB_FONT; c.fillText('kommt später', 0, 42); }
+  c.restore();
+}
+const hitFogPost = p => { const P = fogPost(); return Math.hypot(p.x - P.x, (p.y - P.y + 25) * .7) < Math.max(40, 26 / cam.z); };
 /* the firm edge above and below: dark storm sea, white crests and a wall of cloud; nobody sails there */
 function drawSeaEdge(now){
   const v = view(80), c = ctx, B = EDGE_BAND; camXform(c);
   const t = reduced ? 0 : now / 1000;
+  drawFogBank(c, v, t);
   for (const top of [true, false]){
     const e = top ? 0 : H; if (top ? v.y0 > B : v.y1 < H - B) continue;
     const g = c.createLinearGradient(0, e + (top ? B : -B), 0, e + (top ? -B * .4 : B * .4));
