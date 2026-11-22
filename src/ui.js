@@ -538,11 +538,17 @@ function craftChip(I, h){
   const K = KINDS[cur.kind], n = crewAt(I, cur) || 0;
   return `<button class="who chip pers hw on${ws ? ' idle' : ''}" type="button" data-act="craftpick" aria-label="Hauswerk: ${K.craft}, ${n} von ${crewOf(cur)}${ws ? `. ${ws.text}` : ''}. Tippen zum Ändern"><span class="nm">${icon(K.prod)}Hauswerk${DRY_WORK.has(cur.kind) && dryPace() > 1 ? `<span class="wet" role="img" aria-label="Regenzeit: trocknet langsam">${icon('sturm')}</span>` : ''}</span><span class="job">${K.craft} ${n}/${crewOf(cur)}</span></button>` + (ws && ws.k ? `<span class="cost out" role="img" aria-label="${ws.text}">${icon(ws.k)}</span>` : '');
 }
+/* hands for the craft, as at a workplace: − takes one off (and keeps the place smaller), + sends one */
+function craftStep(I, h){
+  const cur = craftOf(I, h); if (!cur) return '';
+  const n = (I.people || []).filter(p => p.job === cur.id).length, max = crewOf(cur), full = KINDS[cur.kind].crew || 1;
+  return `<span class="step cwstep"><button type="button" data-act="cw-" data-b="${cur.id}" aria-label="Eine Person vom Hauswerk abziehen" ${max > 0 ? '' : 'disabled'}>−</button><button type="button" data-act="cw+" data-b="${cur.id}" aria-label="Eine Person zum Hauswerk schicken" ${max < full || n < max ? '' : 'disabled'}>+</button></span>`;
+}
 function craftRow(I, h){
   const ks = craftsHere(I); if (!ks.length) return '';
   const cur = craftOf(I, h), ws = cur && cur.idle && !['way', 'grow'].includes(cur.idle.why) ? cur.idle : null, open = !!(sheetData && sheetData.crafts);
   const lack = ws && ws.k ? `<span class="cost out" role="img" aria-label="${ws.text}">${icon(ws.k)}</span>` : '';
-  if (!open) return `<div class="crafts">${craftChip(I, h)}</div>`;
+  if (!open) return `<div class="crafts">${craftChip(I, h)}${craftStep(I, h)}</div>`;
   const show = ks.length > 10 ? ks.filter(k => (cur && cur.kind === k) || !craftWhy(I, h, k)) : ks;   // many kinds: only what goes at this house, so the sheet does not scroll
   return `<div class="crafts open" role="group" aria-label="Hauswerk wählen"><span class="lbl">Hauswerk</span>${show.map(k => { const K = KINDS[k], on = !!cur && cur.kind === k, why = on ? '' : craftWhy(I, h, k);
     return `<button class="chip craft${why ? ' no' : ''}" type="button" data-act="craft" data-b="${h.id}" data-k="${k}" aria-pressed="${on}" aria-label="${K.craft}${why ? `: ${why}` : ''}">${icon(K.prod)}<small>${K.craft}</small></button>`; }).join('')}<button class="chip" type="button" data-act="craftpick">Fertig</button></div>`;
@@ -608,7 +614,7 @@ function houseMarkup(I, b, withHead = true){
   let h = withHead ? head(famName(f), sub) : `<p class="sub hsub">${sub}</p>`;
   // the people: name and age, under it what they do
   const picking = !!(sheetData && sheetData.crafts);
-  h += `<div class="folk home">${m.map(p => `<button class="who chip pers" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${jobShort(I, p)}</span></button>`).join('')}${picking ? '' : craftChip(I, b)}</div>`;
+  h += `<div class="folk home">${m.map(p => `<button class="who chip pers" type="button" data-act="who" data-p="${p.id}" aria-label="${p.n}, ${Math.floor(ageOf(p))}, ${personWork(I, p)}"><span class="nm">${p.n}<small>${Math.floor(ageOf(p))}</small></span><span class="job">${jobShort(I, p)}</span></button>`).join('')}${picking ? '' : craftChip(I, b) + craftStep(I, b)}</div>`;
   if (picking) return h + craftRow(I, b);   // while a craft is chosen, the choice stands in the place of the rest
   // what the family needs, one tile each; then the one thing to do next
   const fn = famNeeds(I, f, nd.list), lack = fn.filter(n => n.state === 'out').concat(fn.filter(n => n.state === 'low'));
@@ -1365,6 +1371,10 @@ $('sheetBody').addEventListener('click', e => {
     if (act === 'pick'){ const I = islOfB(b.id), v = btn.dataset.v; b.v = {...(b.v || {})}; if (v) b.v.pick = v; else delete b.v.pick; b._by = null; b.idle = null; if (!v) choosePick(I, b); syncWalkers(); updateHUD(); renderSheet(); save(); return; }
     if (act === 'fell'){ const I = islOfB(b.id), n = FELL_WOOD[b.kind] || 0; I.stock.holz = Math.min(storeCap(I), (I.stock.holz || 0) + n); stats.gefaellt = (stats.gefaellt || 0) + 1; I.buildings = I.buildings.filter(x => x.id !== b.id); I.staff = null; syncWalkers(); closeSheet(); invalidate(); updateHUD(); save(); toast(`${KINDS[b.kind].n} gefällt: ${n} Holz. Was sie trug, ist fort.`, 2800, false); return; }
     if (act === 'fallow'){ const I = islOfB(b.id); b.fallow = !b.fallow; if (b.fallow) stats.brache = (stats.brache || 0) + 1; b.idle = null; I.staff = null; syncWalkers(); invalidate(); updateHUD(); save(); renderSheet(); return; }
+    if (act === 'cw-' || act === 'cw+'){ const c = findB(+btn.dataset.b), I = c && islOfB(c.id); if (!c || !I) return; const full = KINDS[c.kind].crew || 1;
+      c.v = {...(c.v || {})}; if (act === 'cw-'){ c.v.mc = Math.max(0, crewOf(c) - 1); const p = workDel(I, c); if (p && !awayQuiet) toast(`${p.n} hört mit ${KINDS[c.kind].craft} auf.`, 1800, false); }
+      else { c.v.mc = Math.min(full, crewOf(c) + ((I.people || []).filter(p => p.job === c.id).length >= crewOf(c) ? 1 : 0)); const p = workAdd(I, c); if (p && !awayQuiet) toast(`${p.n} macht jetzt ${KINDS[c.kind].craft}.`, 1800, false); }
+      if (c.v.mc >= full) delete c.v.mc; I.staff = null; syncWalkers(); updateHUD(); renderSheet(); save(); return; }
     if (act === 'workadd' || act === 'workdel'){ const I = islOfB(b.id), p = act === 'workadd' ? workAdd(I, b) : workDel(I, b); if (p && !awayQuiet) toast(act === 'workadd' ? `${p.n} geht zu ${KINDS[b.kind].n}.` : `${p.n} ist jetzt frei.`, 1800, false); updateHUD(); renderSheet(); save(); checkQuest(); return; }
     if (act === 'mc-' || act === 'mc+'){ const K = KINDS[b.kind], I = islOfB(b.id), n = clamp(capOf(b) + (act === 'mc+' ? 1 : -1), 0, K.crew); b.v = {...b.v, mc:n}; if (n === K.crew) delete b.v.mc; I.staff = null; syncWalkers(); updateHUD(); save(); renderSheet(); return; }
     if (act === 'craft'){ const I = islOfB(b.id), k = btn.dataset.k, K = KINDS[k], cur = craftOf(I, b), off = !!cur && cur.kind === k, why = off ? '' : craftWhy(I, b, k);

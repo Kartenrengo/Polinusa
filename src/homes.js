@@ -407,7 +407,7 @@ const workOrder = (b, ad) => { const w = WOMEN_WORK.has(b.kind) ? 'f' : MEN_WORK
 const famAdults = (I, f) => (I.people || []).filter(p => p.h === f.id && isAdult(p));
 const placesOf = I => I.buildings.filter(b => !b.bt && (KINDS[b.kind].crew || b.boat > 0) && !b.fallow && !(b.grow > 0) && !(KINDS[b.kind].yam && b.ys !== 1) && !(b.nutRest && NUT_PICKS.has(prodOf(b)) && !b.prio));   // a growing garden needs nobody yet; a yam field only at planting; palms picked clean wait for nuts (unless called)
 /* how many work at a place: its crew, or one who carves the dugout of a jetty (a jetty has no crew of its own) */
-const crewOf = b => KINDS[b.kind].crew || (b.boat > 0 ? 1 : 0);
+const crewOf = b => b.at && b.v && b.v.mc != null ? Math.min(b.v.mc, KINDS[b.kind].crew || 0) : KINDS[b.kind].crew || (b.boat > 0 ? 1 : 0);   // a household craft can be given fewer hands with − and +
 const autoWork = I => !I.handWork;
 const prodOfB = b => prodOf(b) || KINDS[b.kind].prod || '';
 /* how much a place is needed now: 0 its good is short, 1 as usual, 2 its store is nearly full */
