@@ -419,7 +419,7 @@ const nearCount = (I, kind, x, y, r) => I.buildings.filter(b => (Array.isArray(k
 /* Beauty: what adorns an island, counted from finished decorations */
 /* Beauty of the buildings: whole pieces count in full; fine pieces (fences, hedges, borders: beauty under 1) a fraction each, at most 6 in all */
 const fineBeauty = I => { let f = 0, s = 0; for (const b of I.buildings){ if (b.bt) continue; const q = KINDS[b.kind].beauty || 0; if (q < 1) f += q; else s += q; } return s + Math.min(6, Math.floor(f + 1e-9)); };
-const beautyOf = I => fineBeauty(I) + Math.min(8, Math.floor(roadCells(I) / 25)) + Math.min(3, Object.keys(I.mot || {}).length);   // laid paths adorn the village too, and pots with patterns from elsewhere
+const beautyOf = I => fineBeauty(I) + Math.min(8, Math.floor(roadCells(I) / 25)) + Math.min(3, Object.keys(I.mot || {}).length) + hofBeauty(I);   // and the tended yards (hof.js)   // laid paths adorn the village too, and pots with patterns from elsewhere
 /* where a point lies in an atoll, as a share of its ring (1 on the reef line), also for a tilted and bulging one */
 function atollE(a, p){
   const dx = p.x - a.cx, dy = p.y - a.cy; if (!a.lob) return (dx / a.rx) ** 2 + (dy / a.ry) ** 2;

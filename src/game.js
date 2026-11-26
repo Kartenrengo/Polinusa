@@ -733,14 +733,14 @@ function landCatch(I, b, crew, k){
 const PLAY = {
   surf:{n:'reitet auf einem Brett die Wellen'}, swim:{n:'schwimmt in der Lagune'}, kite:{n:'lässt einen Drachen aus Pandanusblatt steigen'},
   string:{n:'legt Fadenfiguren'}, hiko:{n:'jongliert mit Kerzennüssen'}, nap:{n:'döst im Schatten'}, drum:{n:'schlägt die Schlitztrommel'},
-  toy:{n:'lässt ein kleines Auslegerkanu schwimmen'}, garland:{n:'flicht einen Blütenkranz'}, story:{n:'erzählt von den Ahnen'}, listen:{n:'hört den Geschichten der Alten zu'},
+  toy:{n:'lässt ein kleines Auslegerkanu schwimmen'}, hof:{n:'pflegt den Hof'}, garland:{n:'flicht einen Blütenkranz'}, story:{n:'erzählt von den Ahnen'}, listen:{n:'hört den Geschichten der Alten zu'},
 };
 const onScreen = w => typeof cam !== 'undefined' && cam.z > PEOPLE_Z && ptIn(w.x, w.y, view(10));
 /* each game has at least two looks: a string figure made and then held up to be guessed; three nuts in a loop, or two in one
    hand and one thrown high; a kite of leaf flown steady, or a bird kite swooping; a garland threaded, then worn; the old tell
    with their hands, or draw in the sand; the slit drum beaten fast with two sticks, or slow with the big beater */
-const PLAY_FX = {string:['string', 'stringshow'], hiko:['hiko', 'hiko2'], garland:['garland', 'wear'], story:['story', 'sand'], drum:['drum', 'drum2'], kite:['kite', 'kitepull'], toy:['toy', 'toyline'], nap:['~lie', 'doze'], listen:['nod', 'clap']};
-const STAND_FX = new Set(['hiko', 'hiko2', 'kite', 'kitepull', 'drum2', 'wear']);
+const PLAY_FX = {hof:['plant', 'dig'], string:['string', 'stringshow'], hiko:['hiko', 'hiko2'], garland:['garland', 'wear'], story:['story', 'sand'], drum:['drum', 'drum2'], kite:['kite', 'kitepull'], toy:['toy', 'toyline'], nap:['~lie', 'doze'], listen:['nod', 'clap']};
+const STAND_FX = new Set(['hiko', 'hiko2', 'kite', 'kitepull', 'drum2', 'wear', 'dig']);
 /* gathering without work: grubbing on the ground, a crab caught on the shore, eggs from the nests */
 const FORAGE_FX = ['plant', 'crab', 'eggs'], GATHER_FX = ['twigs', 'snap'];
 /* the village sitting together: kava in the evening, a meal by the earth oven, talk and fanning on a mat; and the dance */
@@ -793,6 +793,7 @@ function startPlay(I, w, force){
   if (kid){ add('kite', W.str > .3 ? 2 : .3); add('toy', 1.1); add('hiko', .9); add('string', .9); if (playersOf(I, 'story').some(q => q.play.ph === 'do')) add('listen', 3); }
   else if (old){ add('story', playersOf(I, 'story').length ? 0 : 2.4); add('nap', 2); add('string', .8); add('garland', 1.1); }
   else { add('nap', .7); add('hiko', .5); add('garland', .7); add('string', .6); }
+  { const p = personOf(w), f = p && famOf(I, p.h), h = f && f.home && findB(f.home); if (h && HOF_KINDS.has(h.kind) && !h.bt && hofStep(h) < 3 && zealIdx(I, kid ? null : p) !== 2) add('hof', kid ? .5 : old ? 1 : 1.6); }   // the own yard: sweep, set a plant
   if (ph > .45 && ph < .66 && !kid && !playersOf(I, 'drum').length) add('drum', 2.6);
   let r = Math.random() * ch.reduce((s, o) => s + o[1], 0), k = force || null; if (!k) for (const [q, wt] of ch) if ((r -= wt) <= 0){ k = q; break; }
   if (!k) return false;
@@ -802,6 +803,7 @@ function startPlay(I, w, force){
     const sp = shoreSpot(I, w, k === 'surf' ? 14 : 6, k === 'surf' ? 24 : 12, k === 'surf'); if (!sp) return false;
     Object.assign(P, sp); to = sp.b;
   } else if (k === 'listen'){ const s = playersOf(I, 'story').find(q => q.play.ph === 'do'); if (!s) return false; const a = Math.random() * Math.PI; P.teller = s; to = {x:s.x + Math.cos(a) * 7, y:s.y + 2 + Math.sin(a) * 3}; }
+  else if (k === 'hof'){ const p = personOf(w), f = p && famOf(I, p.h), h = f && findB(f.home); if (!h) return false; to = dryAt(I, h.x + rnd(11), h.y + 7 + Math.random() * 5, h); }
   else if (k === 'drum'){ const h = I.buildings.find(b => b.kind === 'halle' && !b.bt) || I.buildings.find(b => b.kind === 'platz'); if (!h || landOfB(I, h) !== landOf(I, w)) return false; to = {x:h.x + 12 + rnd(3), y:h.y + 10 + rnd(2)}; }
   else to = restSpot(I, w, k === 'nap' || k === 'story' || Math.random() < .5);
   if (!to || landAt(I, to) !== landAt(I, w)) return false;
@@ -1503,7 +1505,7 @@ const fireShort = I => { const F = fireFore(I); return F.n > 0 && F.fuel < F.n; 
    them, what their house step wants, room, the village's share of work and free time, a feast, a beautiful village.
    Very content people work a little faster, discontent ones slower (mealOf). The top bar shows the village's average;
    a tap shows the least content person, why, and what helps. */
-const SAT = {wish:6, fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8, orders:[-4, -8], stores:5, spare:4, variety:4, sameFood:-3};
+const SAT = {hof:3, wish:6, fern:6, full:-4, base:72, low:35, high:85, hungry:-20, thirsty:-20, cold:-12, roofless:-25, leak:-5, broken:-12, needOut:-7, needLow:-2, crowded:-8, zeal:[8, 0, -15], feast:10, beauty:8, orders:[-4, -8], stores:5, spare:4, variety:4, sameFood:-3};
 const ZEAL_SAT_TXT = ['viel Freizeit', '', 'viel Arbeit'];
 /* what is the same for everyone in the village (worked out once for a round of satTick):
    open building sites per grown-up, full stores, little to do, the kinds of food in store */
@@ -1527,6 +1529,7 @@ function satOf(I, p, nd = needsOf(I), C = satCtx(I, nd)){
     const r = roofState(h); if (r === 'out') add('dach', SAT.broken, 'Dach kaputt'); else if (r === 'low') add('dach', SAT.leak, 'Dach undicht');
     for (const n of famNeeds(I, f, nd.list)) if (!['dach', 'essen', 'wasser', 'brenn'].includes(n.k)){ if (n.state === 'out') add(n.k, SAT.needOut, `${GN[n.k]} fehlt`); else if (n.state === 'low') add(n.k, SAT.needLow, `${GN[n.k]} knapp`); }
     if (membersOf(I, f).length > homeCap(I, h)) add('enge', SAT.crowded, 'zu eng');
+    if (HOF_KINDS.has(h.kind) && hofStep(h) >= 2) add('hof', SAT.hof, 'schöner Hof');
   }
   const z = zealIdx(I, p), a = stageOf(p); if (a !== 'kid' && z !== 1) add('zeit', a === 'old' ? Math.round(SAT.zeal[z] / 2) : SAT.zeal[z], ZEAL_SAT_TXT[z]);
   if (C.orders >= 0 && C.builders.has(p.h)) add('bau', SAT.orders[C.orders], 'viele Bauaufträge');
@@ -1678,6 +1681,7 @@ function econ(){
     if ((tick + 30) % DAY_TICKS === 0){ mealTick(I); packTick(I); }
     if ((tick + 30) % DAY_TICKS === DUSK_AT) fireTick(I);
     if (tick % 15 === 0) satTick(I);
+    if (tick % 10 === 0) hofTick(I, 10);   // free hands tend the yards (hof.js)
     if (I.id === active) whaleTick();
     eldersTick(I);   // a daughter village asks you in need
     if (tick % 10 === 3) wishTick(I);   // the families wish for something

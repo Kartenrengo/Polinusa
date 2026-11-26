@@ -538,7 +538,7 @@ function seaRect(c, v, color, pat, from){
 function drawBase(c, v){
   // the open sea is not in this layer: it is painted under it every frame, so its waves can move (drawSea)
   for (const I of islands) if (boxIn(I.box, grow(v, 20)) && seen(I)){ drawIsland(c, I, v); if (hazy(I)) drawHaze(c, I); }
-  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); }
+  if (lod !== 'far') for (const I of islands) if (lived(I) && boxIn(I.box, v)){ drawWear(c, I); drawYards(c, I); }
   drawSel(c); drawCords(c); drawObjects(c, v);
 }
 

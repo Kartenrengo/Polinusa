@@ -393,3 +393,11 @@ Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
 - **Gebaut:** Dorfsteg mit Beladen und Handel; Zuzug in Wellen nach Zufriedenheit mit sichtbarer Uhr.
 - **Offen:** Der Steg wird über Palmen am Strand gezeichnet. Leute tragen Waren noch nicht sichtbar zum Steg.
 
+## Nach Version 121
+
+- **Gebaut:** Hofpflege in der freien Zeit (M, N, O, P, V, X1) mit Häusergruppen und gemeinsamem Platz (Q); Regler in
+  Bildern; Warennamen beim Beladen; Hof und Weg im Hausblatt.
+- **Noch nicht gebaut:** R (Felder als Flickenteppich), S (Werkdach für Hauswerk-Nachbarn), T (Planken zwischen Steg und
+  Kanuhaus), U (Alleen, gemeinsame Speicherplattform, Türen zum Weg), W (Hof als Ausbau-Kachel). Pfahlhäuser haben noch
+  keinen Hof.
+

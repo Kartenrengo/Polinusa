@@ -1468,3 +1468,27 @@ body.landing #overBtn,body.photo #overBtn{display:none!important}
 .wtile .wn{position:absolute;top:-7px;right:-6px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ochre);color:#fff;font:800 12px/1 var(--font-ui);font-style:normal}
 .golist .chip.go{font-weight:800}
 .iclock{display:block;margin-top:5px}.iclock small{display:block;margin-top:2px;font-size:11.5px;color:var(--muted)}
+/* Version 121: the yard in the house sheet, the slider in pictures, names under the goods when loading */
+.hofmini{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:0 5px 0 2px;border-radius:9px;background:#EFE6CF;vertical-align:-4px;cursor:pointer}
+.hofmini .ic{width:17px;height:17px}
+.hofmini i{display:inline-block;width:6px;height:6px;border-radius:50%;border:1px solid #6B4A2E;background:transparent}
+.hofmini i.on{background:#A8324A;border-color:#5A1A28}
+.hofmini .hw{display:inline-flex;margin-left:2px;opacity:.45}.hofmini .hw.on{opacity:1}
+.hofmini.still{opacity:.7}
+.zeal-l > span{display:flex;flex-direction:column;align-items:center;text-align:center;flex:1}
+.zeal-l > span:first-child{align-items:flex-start;text-align:left}.zeal-l > span:last-child{align-items:flex-end;text-align:right}
+.zcs{display:flex;gap:4px;min-height:17px;margin-top:2px}
+.zc{display:inline-flex;align-items:center;gap:1px;font:800 11px/1 var(--font-ui);font-style:normal;color:var(--ink);padding:1px 4px 1px 1px;border-radius:8px;background:#EFE6CF;cursor:pointer}
+.zc.own{background:#F3DCC2;box-shadow:inset 0 0 0 1.5px #C9783E}
+.zc .ic{width:14px;height:14px}
+.zfx{display:flex;gap:5px;margin:6px 0 2px}
+.zfx > span{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:3px 2px;border-radius:8px;background:#EFE6CF;cursor:pointer}
+.zfx > span .ic{width:17px;height:17px}
+.zfx > span small{font:800 11.5px/1 var(--font-ui)}
+.zfx > span.up{background:#E4EED6;box-shadow:inset 0 0 0 1.5px var(--ok)}
+.zfx > span.dn{background:#F6E0D2;box-shadow:inset 0 0 0 1.5px #C9783E}
+.ltiles .lt{width:52px;height:54px;gap:1px}
+.ltiles .lt em{font:700 9.5px/1 var(--font-ui);font-style:normal;color:var(--ink);max-width:48px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fgood em{font:600 10px/1 var(--font-ui);font-style:normal;margin-left:2px;color:var(--muted)}
+
+.zeal .chip{display:inline-flex;align-items:center;gap:3px}.zeal .chip .ic{width:15px;height:15px}

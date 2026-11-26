@@ -625,7 +625,7 @@ function houseMarkup(I, b, withHead = true){
   const f = famOfHome(I, b), t = tierOf(b), T = {n:houseName(b)}, nd = needsOf(I);
   if (!f){ const imm = immigFor(I); return (withHead ? head(T.n, 'leer') : '') + `<p class="sub">${imm ? `${icon('einbaum')} Ein Kanu bringt eine Familie.` : 'Wartet auf eine Familie aus der Ferne.'}</p>` + craftRow(I, b); }   // a hut by the clay can take up its craft before anyone lives there
   const m = membersOf(I, f), cap = homeCap(I, b), max = homeCapMax(I, b);
-  const sub = `${T.n} · ${m.length} von ${cap} Plätzen${cap < max ? ` (bis ${max})` : ''}`;
+  const sub = `${T.n} · ${m.length} von ${cap} Plätzen${cap < max ? ` (bis ${max})` : ''}` + hofMini(I, b);
   let h = withHead ? head(famName(f), sub) : `<p class="sub hsub">${sub}</p>`;
   // the people: name and age, under it what they do
   const picking = !!(sheetData && sheetData.crafts);
@@ -752,21 +752,29 @@ function peopleTab(I, nd){
   return h;
 }
 /* Arbeit und Freizeit: the slider for a whole village, with what it does */
-const ZEAL_TEXT = ['Alle Arbeit geht langsamer (85 %), dafür ist mehr Zeit für Familie und Spiel: Kinder kommen öfter.', 'Abends hat ein Teil frei, mittags ruhen einige.', 'Alle arbeiten schneller (125 %), niemand nimmt den Abend frei. Für Kinder bleibt keine Zeit: Sie kommen halb so oft.'];
+/* what a setting does, as four little pictures with a number: work, children (only for the whole village), contentment,
+   the yard. A tap on one says it in words. */
+const ZEAL_FX = [['beile', 'Arbeit', ['85 %', '100 %', '125 %']], ['kind', 'Kinder', ['+25 %', '±0', '−50 %']], ['idle', 'Zufriedenheit', ['+8', '±0', '−15']], ['hof', 'Hof', ['+50 %', '±0', 'steht']]];
+const zealFx = (z, kids = true) => `<div class="zfx">${ZEAL_FX.filter(([k]) => kids || k !== 'kind').map(([k, n, v]) => `<span class="${v[z][0] === '+' ? 'up' : v[z][0] === '−' || v[z] === 'steht' ? 'dn' : ''}${k === 'beile' && z === 2 ? ' up' : k === 'beile' && z === 0 ? ' dn' : ''}" role="img" aria-label="${n}: ${v[z]}" data-tip="${esc(`<b>${n}: ${v[z]}</b> bei „${ZEAL[z].n}“.`)}">${icon(k)}<small>${v[z]}</small></span>`).join('')}</div>`;
+/* how many grown-ups stand at each setting: those who follow the village (house) and those with their own choice (person) */
+function zealCount(I){ const fol = [0, 0, 0], own = [0, 0, 0]; for (const p of I.people || []){ if (stageOf(p) === 'kid') continue; (p.zeal != null ? own : fol)[zealIdx(I, p)]++; } return {fol, own}; }
+const ZEAL_N = ['Viel Freizeit', 'Ausgewogen', 'Dringend Arbeit'];
 function zealMarkup(I){
-  const z = I.zeal != null ? I.zeal : 1;
-  return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><p class="sub">${ZEAL_TEXT[z]}</p>${ownZeal(I) ? `<div class="rowx"><span class="sub">${ownZeal(I)} ${ownZeal(I) === 1 ? 'Mensch hat' : 'Menschen haben'} eine eigene Einstellung.</span><button class="chip" type="button" data-act="zealall" data-i="${I.id}">Alle wie das Dorf</button></div>` : ''}</div>`;
+  const z = I.zeal != null ? I.zeal : 1, C = zealCount(I), o = ownZeal(I);
+  const cnt = i => (C.fol[i] ? `<em class="zc" role="img" aria-label="${C.fol[i]} wie das Dorf" data-tip="${esc(`<b>${C.fol[i]} wie das Dorf</b> Sie folgen diesem Regler.`)}">${icon('haus')}${C.fol[i]}</em>` : '') + (C.own[i] ? `<em class="zc own" role="img" aria-label="${C.own[i]} mit eigener Wahl" data-tip="${esc(`<b>${C.own[i]} mit eigener Wahl</b> Sie bleiben hier, wenn du den Regler des Dorfes verschiebst.`)}">${icon('pop')}${C.own[i]}</em>` : '');
+  return `<div class="zeal"><input id="zealIn" data-i="${I.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit auf ${I.name}: ${ZEAL[z].n}"><div class="zeal-l">${ZEAL_N.map((n, i) => `<span${z === i ? ' class="on"' : ''}>${n}<span class="zcs">${cnt(i)}</span></span>`).join('')}</div>${zealFx(z)}${o ? `<div class="rowx"><span></span><button class="chip" type="button" data-act="zealall" data-i="${I.id}">${icon('haus')}Alle wie das Dorf</button></div>` : ''}</div>`;
 }
 /* the same for one person: the three steps, and "wie alle" to follow the village again */
 function zealPersonMarkup(I, p, extra = ''){
   const z = zealIdx(I, p), own = p.zeal != null;
-  return `<div class="zeal zealp"><input id="zealP" data-i="${I.id}" data-p="${p.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit für ${p.n}: ${ZEAL[z].n}"><div class="zeal-l"><span${z === 0 ? ' class="on"' : ''}>Viel Freizeit</span><span${z === 1 ? ' class="on"' : ''}>Ausgewogen</span><span${z === 2 ? ' class="on"' : ''}>Dringend Arbeit</span></div><div class="rowx"><span class="sub">${own ? 'Eigene Wahl' : 'Wie alle'}</span><span class="chips"><button class="chip" type="button" data-act="zealfollow" data-p="${p.id}" aria-pressed="${!own}">wie alle</button>${extra}</span></div></div>`;
+  const vz = I.zeal != null ? I.zeal : 1, mark = i => (i === vz ? `<em class="zc" role="img" aria-label="Regler des Dorfes" data-tip="${esc('<b>Das Dorf</b> steht hier. Mit „wie alle“ folgt die Person ihm, auch wenn er sich ändert.')}">${icon('haus')}</em>` : '') + (own && i === z ? `<em class="zc own" role="img" aria-label="eigene Wahl" data-tip="${esc('<b>Eigene Wahl</b> Sie bleibt, wenn du den Regler des Dorfes verschiebst.')}">${icon('pop')}</em>` : '');
+  return `<div class="zeal zealp"><input id="zealP" data-i="${I.id}" data-p="${p.id}" type="range" min="0" max="2" step="1" value="${z}" aria-label="Arbeit und Freizeit für ${p.n}: ${ZEAL[z].n}"><div class="zeal-l">${ZEAL_N.map((n, i) => `<span${z === i ? ' class="on"' : ''}>${n}<span class="zcs">${mark(i)}</span></span>`).join('')}</div>${zealFx(z, false)}<div class="rowx"><span></span><span class="chips"><button class="chip" type="button" data-act="zealfollow" data-p="${p.id}" aria-pressed="${!own}">${icon('haus')}wie alle</button>${extra}</span></div></div>`;
 }
 /* Contentment (satOf): the village's average, how many are content, so-so or not, and the least content person, with
    what pulls them down and what helps: the share of work and free time for everyone, their house, food, water, fuel */
 const SAT_BANDS = ['gut', 'mittel', 'schlecht'], satBand = v => v >= 70 ? 'gut' : v >= 45 ? 'mittel' : 'schlecht';
 const SAT_FACE = {gut:['M6.6 11.8Q10 15 13.4 11.8', '#F3D98A'], mittel:['M6.8 12.9H13.2', '#E9DCC0'], schlecht:['M6.6 14Q10 11.2 13.4 14', '#E8A88A']};
-const SAT_ICON = {fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen', bau:'beile', vorrat:'proviant', frei:'idle', sorten:'essen', wunsch:'schoen'};
+const SAT_ICON = {hof:'hof', fern:'einbaum', gaben:'mana', voll:'insel', essen:'essen', wasser:'wasser', feuer:'brenn', dach:'dach', enge:'haus', zeit:'idle', fest:'mana', schoen:'schoen', bau:'beile', vorrat:'proviant', frei:'idle', sorten:'essen', wunsch:'schoen'};
 function satHelp(I, p, w){
   const f = famOf(I, p.h), h = f && f.home && findB(f.home);
   if (w.k === 'essen') return {a:'ware', k:'nahrung', t:'Mehr Essen'};
@@ -1371,7 +1379,7 @@ $('sheetBody').addEventListener('toggle', e => { if (e.target.matches('details.m
 $('sheetBody').addEventListener('change', e => {
   if (e.target.id !== 'zealIn') return;
   const I = isl(e.target.dataset.i); if (!I) return;
-  I.zeal = clamp(Math.round(+e.target.value), 0, 2); I.staff = null; I._sat = null; I._mf = null; save(); renderSheet(); updateHUD(); toast(`${I.name}: ${ZEAL[I.zeal].n}.`, 2200, false);
+  I.zeal = clamp(Math.round(+e.target.value), 0, 2); I.staff = null; I._sat = null; I._mf = null; save(); renderSheet(); updateHUD(); toast(`${I.name}: ${ZEAL[I.zeal].n}.${ownZeal(I) ? ` ${ownZeal(I)} mit eigener Wahl bleiben.` : ''}`, 2400, false);
 });
 $('sheetBody').addEventListener('change', e => {
   if (e.target.id !== 'zealP') return;
@@ -1511,10 +1519,10 @@ function select(b){ const craft = b.at && findB(b.at); if (craft) b = craft; sel
 /* ---------- names only on demand. Tiles, goods and buttons show their picture; the name and a line about it pop up in a little
    bubble: at a tap where the tap does nothing else (a picture, a good in the bar), or when held a moment on a button that does
    something when tapped (then the tap is not done). The text is the element's data-tip, else its aria-label. */
-const TIP_SEL = '.rc, .hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .wt, .hc, .lt, .seat, .hud-who .top-right > button, .sattile, .kinds, #mascot, #compass', TIP_HOLD = 380;
+const TIP_SEL = '.hofmini, .zfx > span, .zc, .rc, .hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .bbtn.bk, .wt, .hc, .lt, .seat, .hud-who .top-right > button, .sattile, .kinds, #mascot, #compass', TIP_HOLD = 380;
 /* tiles: a tap shows what the picture is at once; what the tile did before (go to the store, build, mend the roof …) is a
    button in the bubble. Buttons in the bar and in the build menu keep their tap; held, they show the bubble. */
-const TIP_TAP = '.hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds, .tier.slim';
+const TIP_TAP = '.hofmini, .zfx > span, .zc, .hud-goods .g, .mt, .rtile, .ftile, .ntile, .tile, .sattile, .kinds, .tier.slim';
 const TIP_GO = {ware:'Woher ›', store:'Lager ›', hint:'Bauen ›', roof:'Dach flicken ›', fleetbar:'Kanus ›', foodopen:'Sorten ›', stab:'Zeigen ›', goto:'Hin ›', craftpick:'Wählen ›'};
 let tipHeld = false, tipHold = 0, tipEl = null, tipFor = null, tipAt = null, tipEat = false, tipHide = 0, tipPass = null;
 const tipNow = el => el.matches(TIP_TAP) || (!el.matches('button') && !el.closest('button'));

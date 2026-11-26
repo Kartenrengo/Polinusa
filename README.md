@@ -2680,3 +2680,36 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
 - **Vermutet:** Stege aus Holz auf Pfosten kennt man aus späteren Dörfern Ozeaniens; für Lapita-Dörfer an der Lagune sind
   Pfahlbauten belegt, einzelne Stege nicht. Dass Zufriedenheit Familien anzieht, ist eine Spielregel.
 
+## Der Hof und der Regler in Bildern (Version 121)
+
+- **Freie Zeit pflegt den Hof:** Wer Feierabend oder Mittagsruhe hat, geht manchmal zum eigenen Haus, kniet sich hin und
+  setzt eine Pflanze oder lockert den Boden. Jeder Hof hat drei Stufen: gefegt (heller Sand vor der Tür), bepflanzt (rote
+  Ti-Pflanzen, gelber Kroton oder Hibiskus, je nach Familie), prächtig (eine niedrige Hecke, die die Tür freilässt, und eine
+  Bananenstaude). Es kostet keine Arbeit und keine Waren.
+- **Der Regler bestimmt das Tempo:** Ausgewogen: gefegt nach etwa anderthalb Tagen, prächtig nach etwa fünf (eine Familie
+  von vier). Viel Freizeit: anderthalbmal so schnell. Dringend Arbeit: Der Hof wächst nicht weiter, verliert aber nichts.
+  Wer eine eigene Einstellung hat, pflegt nach dieser; Alte halb so viel, Kinder fegen nur. Hat das Haus ein Hauswerk, ist
+  die Familie nach Feierabend schon zu Hause und pflegt ein Viertel schneller.
+- **Was der Hof bringt:** Je drei Hofstufen im Dorf zählen einen Punkt Schönheit (höchstens acht). Ab „bepflanzt“ ist die
+  Familie zufriedener (+3, „schöner Hof“).
+- **Nebeneinander weniger, allein mehr:** Drei Häuser und mehr nah beieinander bilden eine Gruppe. Sind die meisten gefegt,
+  teilen sie sich einen Sandplatz in der Mitte oder vor den Türen; jedes Haus zeigt dann nur eine Pflanze und eine kurze
+  Hecke nach außen. Ein Haus für sich zeigt alles. Nichts wird auf ein anderes Gebäude, einen Baum, ein Feld oder ins
+  Wasser gezeichnet; was keinen Platz hat, fällt weg.
+- **Im Hausblatt:** Neben „Hütte · 4 von 4 Plätzen“ steht eine kleine Ti-Pflanze mit drei Punkten für die Stufen. Führt
+  ein Trampelpfad zur Tür, erscheint ein blasser Weg; wird er ein Muschelweg, ist er kräftig. Ein Tipp sagt, wie lange es
+  bis zur nächsten Stufe dauert.
+- **Der Regler „Arbeit und Freizeit“ in Bildern:** Unter jeder Stellung steht, wer dort ist: ein Haus mit Zahl für alle,
+  die dem Dorf folgen, eine Figur mit Zahl für alle mit eigener Wahl. Darunter vier Kacheln: Arbeit (85 %, 100 %, 125 %),
+  Kinder (+25 %, ±0, −50 %), Zufriedenheit (+8, ±0, −15) und Hof (+50 %, ±0, steht). Verschiebst du den Regler des Dorfes,
+  bleiben die Leute mit eigener Wahl, wo sie sind; „Alle wie das Dorf“ holt sie zurück. Im Blatt einer Person zeigt ein
+  kleines Haus, wo das Dorf steht, und „wie alle“ lässt sie wieder dem Dorf folgen.
+- **Beladen:** Unter jedem Bild im Lager steht der Name der Ware, auch in der kleinen Ladungszeile eines Kanus.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Ti-Pflanzen (Cordyline) und bunte Sträucher wie Kroton wachsen in Dörfern Melanesiens und Polynesiens rund um
+  die Häuser; Ti pflanzte man auch zum Schutz. Taro- und Yamsgärten lagen draußen vor dem Dorf.
+- **Vermutet:** Für Lapita-Dörfer selbst sind Höfe mit Ti und Hecken nicht belegt; wir kennen sie aus späteren Dörfern
+  Ozeaniens. Dass freie Zeit den Hof pflegt und Höfe zufrieden machen, ist eine Spielregel.
+
