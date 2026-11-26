@@ -44,6 +44,7 @@ const EVENTS = [
   {id:'bitte', t:'Eine Bitte',
     when:() => { const r = pickOf(routes.filter(q => (isl(q.a).clan || isl(q.b).clan) && q.knots >= 1)); if (!r) return false; const C = (isl(r.a).clan ? isl(r.a) : isl(r.b)), k = clanWants(C.clan).find(k => richest(k, 3)); return k ? {I:richest(k, 3), C, k, r} : false; },
     text:o => `Boten ${clanVom(o.C.clan)} kommen nach ${o.I.name}. Sie bereiten ein Totenfest vor und bitten um ${amount(o.k, 3)}.`,
+    who:o => o.C, say:o => `Wir bereiten ein Totenfest vor. Könnt ihr uns ${amount(o.k, 3)} schicken? Wir vergessen es nicht.`,
     cost:o => ({[o.k]:3}), place:o => o.I,
     choices:[
       {n:'Gern schicken', ask:true, text:'Eine Gabe in schwerer Zeit vergisst man nicht.', go:o => { o.r.knots = Math.min(12, o.r.knots + 2); o.C.debt = (o.C.debt || 0) + 3 * VALUE[o.k] * returnRate(o.r.knots); o.C.lastFrom = o.I.id; if (!(o.C.returnAt > tick)) o.C.returnAt = tick + 20; mana += 3; stats.gaben++; invalidate(); return `${clanDer(o.C.clan)} ${o.C.clan.culture ? 'danken' : 'dankt'} euch. Zwei Knoten mehr, Ansehen +3, und eine Gegengabe wird kommen.`; }},
@@ -52,6 +53,7 @@ const EVENTS = [
   {id:'braut', t:'Brautwerbung',
     when:() => pickOf(routes.filter(r => r.knots >= 2).map(r => { const T = clanOfRoute(r), I = T && weddingIsland(T), p = I && I.pop >= 12 && (I.people || []).filter(q => canWed(q) && q.id !== I.chief).sort((a, b) => b.b - a.b)[0]; return p ? {T, I, p, r} : null; }).filter(Boolean)) || false,
     place:o => o.I,
+    who:o => o.T, say:o => `Einer von uns möchte ${o.p.n} heiraten. Wir bringen Matten und ein Schwein. Nach unserem Brauch zöge ${o.p.n} zu uns nach ${o.T.name}.`,
     text:o => `Boten ${clanVom(o.T.clan)} kommen nach ${o.I.name}, mit Matten und einem Schwein. Jemand aus ihrem ${o.T.clan.culture ? 'Volk' : 'Clan'} möchte ${o.p.n} heiraten, ${Math.floor(ageOf(o.p))} Jahre alt. Nach ihrem Brauch zöge ${o.p.n} zu ihnen nach ${o.T.name}.`,
     choices:[
       {n:'Zustimmen', text:'Die Hochzeit wird gefeiert, ihre Brautgaben bleiben hier, und ihr werdet verwandt.', go:o => {
@@ -111,6 +113,42 @@ function cycloneTick(){
   { const S = isl(cyclone.isl) && isl(cyclone.isl).storm; if (S && tick < S.at) cyclone.end = Math.max(cyclone.end, S.at + 2); }   // and the sky stays dark until it strikes
   if (tick >= cyclone.end || !isl(cyclone.isl)){ cyclone = null; invalidate(true); }
 }
+/* ---------- the leader of a clan speaks (version 117): a small head that moves a little, blinks and talks while the words
+   stand beside it. Each clan has its own look: the Feuerberg a band of red ochre and a boar's tusk, the Riff a band of
+   cowries and a shell disc, the Maulbeerhain a band of bark cloth and a hibiscus flower; the Alten from the Great Land grey
+   hair and a beard, the seafarers of the north red dots on the cheeks. Name and whether a man or a woman lead come from the
+   island, so they stay the same. */
+const LEAD_LOOK = {
+  feuer:{bg:'#C9785A', hair:'#1E1410', band:'<path d="M18 22Q32 17 46 22" stroke="#A84A2C" stroke-width="3" fill="none" stroke-linecap="round"/>', neck:'<path d="M27 52q5 4 10 0" stroke="#2B1D14" stroke-width=".8" fill="none"/><path d="M29.5 54.5q2.5 3.6 5 0q-2.5 1.6-5 0Z" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".6"/>'},
+  riff:{bg:'#7FB3B0', hair:'#2A1C14', band:'<path d="M18 22Q32 17 46 22" stroke="#E8DFC8" stroke-width="3.2" fill="none" stroke-linecap="round"/>' + [20, 24, 28, 32, 36, 40, 44].map(x => `<ellipse cx="${x}" cy="${21.2 - Math.sin((x - 18) / 28 * Math.PI) * 3.2}" rx="1" ry="1.3" fill="#F8F4E8" stroke="#2B1D14" stroke-width=".35"/>`).join(''), neck:'<circle cx="32" cy="55" r="2.6" fill="#F4ECD8" stroke="#2B1D14" stroke-width=".6"/><path d="M27 51.5Q32 56 37 51.5" stroke="#3B2618" stroke-width=".6" fill="none"/>'},
+  hain:{bg:'#9CB07A', hair:'#241812', band:'<path d="M18 22Q32 17 46 22" stroke="#D9B98A" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M21 21.4l1.4-1.6l1.4 1.6M27 19.8l1.4-1.6l1.4 1.6M33 19.5l1.4-1.6l1.4 1.6M39 20.2l1.4-1.6l1.4 1.6" stroke="#7A4A2A" stroke-width=".6" fill="none"/><g transform="translate(46 27)">' + [0, 72, 144, 216, 288].map(a => `<ellipse rx="1.7" ry="2.8" transform="rotate(${a}) translate(0 -2.4)" fill="#D2452E" stroke="#2B1D14" stroke-width=".35"/>`).join('') + '<circle r="1" fill="#F0C040"/></g>', neck:'<path d="M27 52q5 4 10 0" stroke="#7A5634" stroke-width=".9" fill="none"/>'},
+  alte:{bg:'#B69A76', hair:'#B8B2A6', band:'', neck:'', beard:true, old:true},
+  nord:{bg:'#C79A6A', hair:'#1E1410', band:'<path d="M38 15q4-6 9-6q-3 3-6 8Z" fill="#E0A23A" stroke="#2B1D14" stroke-width=".5"/>', neck:'<path d="M27 52q5 4 10 0" stroke="#2B1D14" stroke-width=".8" fill="none"/>', dots:true}
+};
+const leadOf = T => { const k = T.clan.id, r = rng((Math.round(T.center.x * 3 + T.center.y * 7) ^ 0x1ead) >>> 0), pool = FOREIGN_NAMES[k] || PEOPLE_NAMES, n = pool[Math.floor(r() * pool.length)], f = r() < .45; return {k, n, f}; };
+function leaderSvg(T){
+  const L = leadOf(T), K = LEAD_LOOK[L.k] || LEAD_LOOK.hain, skin = '#8A5A3A', ink = '#2B1D14';
+  const hair = L.f ? `<path d="M17 30Q15 14 32 12Q49 14 47 30Q48 40 45 46Q46 32 42 24Q32 20 22 24Q18 32 19 46Q16 40 17 30Z" fill="${K.hair}" stroke="${ink}" stroke-width=".8"/>`
+    : `<path d="M18 28Q17 13 32 12Q47 13 46 28Q44 21 32 20Q20 21 18 28Z" fill="${K.hair}" stroke="${ink}" stroke-width=".8"/>${L.k === 'feuer' ? `<ellipse cx="32" cy="11" rx="5" ry="3.4" fill="${K.hair}" stroke="${ink}" stroke-width=".8"/>` : ''}`;
+  const beard = K.beard && !L.f ? `<path d="M22 38Q23 48 32 49Q41 48 42 38Q38 42 32 42Q26 42 22 38Z" fill="${K.hair}" stroke="${ink}" stroke-width=".7"/>` : '';
+  const dots = K.dots ? [[24, 37], [40, 37]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="none" stroke="#B8402A" stroke-width=".7" stroke-dasharray=".7 .9"/>`).join('') : '';
+  const lines = K.old ? '<path d="M23 24.5q3-1 5 0M36 24.5q3-1 5 0M26 34q-1 1.5 0 3M38 34q1 1.5 0 3" stroke="#5A3A26" stroke-width=".5" fill="none"/>' : '';
+  return `<svg class="lhead" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="${K.bg}" stroke="${ink}" stroke-width="1.4"/>` +
+    `<g class="lbob"><path d="M14 64Q16 52 26 50H38Q48 52 50 64Z" fill="${skin}" stroke="${ink}" stroke-width=".9"/>${K.neck}` +
+    `<ellipse cx="32" cy="32" rx="13.6" ry="16" fill="${skin}" stroke="${ink}" stroke-width=".9"/><ellipse cx="18.6" cy="33" rx="2" ry="3" fill="${skin}" stroke="${ink}" stroke-width=".7"/><ellipse cx="45.4" cy="33" rx="2" ry="3" fill="${skin}" stroke="${ink}" stroke-width=".7"/>` +
+    hair + K.band + lines + dots +
+    `<path d="M24 26.6q2.4-1.4 5 0M35 26.6q2.6-1.4 5 0" stroke="${ink}" stroke-width="1" fill="none" stroke-linecap="round"/>` +
+    `<ellipse cx="26.6" cy="30" rx="1.5" ry="1.7" fill="#1E1410"/><ellipse cx="37.4" cy="30" rx="1.5" ry="1.7" fill="#1E1410"/>` +
+    `<g class="llid"><rect x="24.4" y="27.8" width="4.4" height="4.4" fill="${skin}"/><rect x="35.2" y="27.8" width="4.4" height="4.4" fill="${skin}"/></g>` +
+    `<path d="M32 31.5q-1.6 4.2-.2 4.8q1.6.4 2.6-.2" stroke="${ink}" stroke-width=".8" fill="none" stroke-linecap="round"/>` +
+    `<path class="lm0" d="M28 40.6q4 1.6 8 0" stroke="${ink}" stroke-width="1" fill="none" stroke-linecap="round"/><ellipse class="lm1" cx="32" cy="40.9" rx="3.2" ry="1.9" fill="#4A1E14" stroke="${ink}" stroke-width=".8"/>` +
+    beard + '</g></svg>';
+}
+function leaderSays(T, words){
+  const L = leadOf(T), who = `${L.n}, ${L.f ? 'Älteste' : 'Ältester'} ${clanVom(T.clan)}`;
+  clearTimeout(leaderSays._t); leaderSays._t = setTimeout(() => { const e = document.querySelector('.leader.talk'); if (e) e.classList.remove('talk'); }, Math.min(6500, 900 + words.length * 45));
+  return `<div class="leader talk">${leaderSvg(T)}<div class="say"><b>${esc(who)}</b><span>„${esc(words)}“</span></div></div>`;
+}
 function eventTick(){
   if (eventNow || tick < nextEvent || tick < YEAR || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;   // the first year is calm
   if (sheetKind || placing){ nextEvent = tick + 5; return; }
@@ -126,7 +164,8 @@ function eventTick(){
 function eventMarkup(){
   const {E, o} = eventNow, I = E.place ? E.place(o) : o;
   let h = head(E.t, `Auf ${I.name}`);
-  h += `<p>${E.text(o)}</p><ul class="list needs">`;
+  const T = E.who && E.who(o);
+  h += (T && T.clan ? leaderSays(T, E.say(o)) : `<p>${E.text(o)}</p>`) + '<ul class="list needs">';
   let first = true;
   E.choices.forEach((ch, i) => {
     if (ch.late && !hawaiki()) return;   // a kava ceremony only in the later time

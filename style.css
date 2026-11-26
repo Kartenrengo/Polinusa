@@ -1433,3 +1433,20 @@ body.landing #qknot,body.photo #qknot{display:none!important}
 
 #toast .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .crafts .craftinfo{flex-basis:100%;margin:2px 0 0;font-size:12.5px;line-height:1.3}
+/* the leader of a clan who speaks: a head beside the words, it bobs a little, blinks, and talks while they are read */
+.leader{display:flex;gap:10px;align-items:flex-start;margin:6px 0 10px}
+.leader .lhead{flex:none;width:64px;height:64px}
+.leader .say{position:relative;min-width:0;padding:8px 11px 9px;border:1.5px solid var(--brown);border-radius:12px;background:var(--cloth-hi);font:500 14.5px/1.35 var(--font-ui)}
+.leader .say::before{content:"";position:absolute;left:-8px;top:18px;width:12px;height:12px;background:var(--cloth-hi);border-left:1.5px solid var(--brown);border-bottom:1.5px solid var(--brown);transform:rotate(45deg)}
+.leader .say b{display:block;font:800 12px/1.2 var(--font-ui);letter-spacing:.03em;color:var(--ochre);margin-bottom:2px}
+.lhead .lbob{transform-box:view-box;transform-origin:32px 60px;animation:lhBob 3.4s ease-in-out infinite}
+.lhead .llid{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);animation:lhBlink 4.8s infinite}
+.lhead .lm1{opacity:0}
+.leader.talk .lhead .lm1{animation:lhTalk .34s steps(1) infinite}
+.leader.talk .lhead .lm0{animation:lhTalk0 .34s steps(1) infinite}
+@keyframes lhBob{0%,100%{transform:rotate(-1.6deg) translateY(0)}50%{transform:rotate(1.6deg) translateY(.6px)}}
+@keyframes lhBlink{0%,93%,100%{transform:scaleY(0)}95.5%{transform:scaleY(1)}}
+@keyframes lhTalk{0%{opacity:1}50%{opacity:0}}
+@keyframes lhTalk0{0%{opacity:0}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.lhead .lbob,.lhead .llid,.leader.talk .lhead .lm1,.leader.talk .lhead .lm0{animation:none}}
+
