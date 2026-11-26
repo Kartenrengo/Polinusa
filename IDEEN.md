@@ -401,3 +401,8 @@ Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
   Kanuhaus), U (Alleen, gemeinsame Speicherplattform, Türen zum Weg), W (Hof als Ausbau-Kachel). Pfahlhäuser haben noch
   keinen Hof.
 
+## Nach Version 122
+
+- **Gebaut:** Nachbarhäuser verbinden sich sichtbar (Trittsteine, Leine mit Tapa und Blüten), mit Wachsen beim Entstehen;
+  Familien und Hauswerk bleiben getrennt.
+

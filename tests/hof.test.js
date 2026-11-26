@@ -58,6 +58,16 @@ const {PAGE} = require('./lib');
       // per house: in a group never more than two things of its own, alone up to the full set
       const own = new Map(); for (const q of P.items){ const H = I.buildings.filter(B => HOF_KINDS.has(B.kind)).sort((x, y) => Math.hypot(x.x - q.x, x.y - q.y) - Math.hypot(y.x - q.x, y.y - q.y))[0]; own.set(H, (own.get(H) || 0) + 1); }
       out.push('per house: ' + [...own.values()].join(' '));
+      // neighbours are joined for the eye only: stones and a line, each house keeps its family and its craft
+      want(P.links.length >= 1 && P.links.every(L => L.stones.length || L.line), 'links: neighbours are not joined');
+      { const deg = new Map(); for (const L of P.links) for (const q of [L.a, L.b]) deg.set(q, (deg.get(q) || 0) + 1); want([...deg.values()].every(n => n <= 2), 'links: a house has more than two'); }
+      want(P.links.every(L => !famOfHome(I, L.a) || !famOfHome(I, L.b) || famOfHome(I, L.a) !== famOfHome(I, L.b)), 'links: two houses share a family');
+      { const L = P.links[0]; for (const s of L.stones){ if (!landAt(I, s)) hit.push('stone in water'); for (const B of I.buildings){ if (B === L.a || B === L.b || B.kind === 'anleger' || B.at === L.a.id || B.at === L.b.id) continue; const K = KINDS[B.kind], w = (K.r || 6) * ((B.v && B.v.scale) || 1) * (K.roof ? 1.75 : 1), dx = s.x - B.x, dy = s.y - B.y; if (!(FLAT.has(B.kind) || K.soil) && Math.abs(dx) < w && dy > -(K.hy || w) && dy < w * .5) hit.push('stone on ' + B.kind); } }
+        want(!hit.length, 'links: ' + hit.slice(0, 3).join(', ')); }
+      // a new neighbour grows in: not there at once, there after a few seconds
+      { const n0 = P.links.length, s = findSpot(I, 'haus', {x:a.x + 112, y:a.y + 86}); if (s){ const q = addB(I, 'haus', s, variant('haus'), tick - YEAR); const P2 = hofPlan(I), L = P2.links.find(x => x.a === q || x.b === q);
+        if (L){ want(hofGrow(I, L) < .5, 'links: a new link does not grow'); I._lkSeen.set(L.key, performance.now() - HOF_GROW - 10); want(hofGrow(I, L) === 1, 'links: does not finish growing'); } out.push(`links ${n0} → ${P2.links.length}`); } }
+      { const keepL = lod, v = view(1e4); lod = 'near'; cam.z = 3; ctx.save(); try { drawHofLinks(ctx, v, 5000); } catch (e){ bad.push('links draw: ' + e.message); } ctx.restore(); lod = keepL; }
       // it draws without trouble at every distance
       const keepL = lod; for (const L of ['far', 'mid', 'near']){ lod = L; ctx.save(); try { drawYards(ctx, I); } catch (e){ bad.push('draw ' + L + ': ' + e.message); } ctx.restore(); } lod = keepL;
       // free time: someone goes to tend the yard

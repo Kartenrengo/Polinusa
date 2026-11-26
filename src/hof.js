@@ -53,10 +53,10 @@ function hofMini(I, h){
 
 /* ---------- where things may go. A point is free when it lies on land, off the beach, and outside the picture of every
    building (its width, its height above the ground, a little below) and away from the trees. */
-function hofFree(I, x, y, rad, own, ground){
+function hofFree(I, x, y, rad, own, ground, skip){
   const L = landAt(I, {x, y}); if (!L || polyDist({x, y}, L.poly) < rad + 2) return false;
   for (const b of I.buildings){
-    if (b.kind === 'anleger' || ground && own && (b === own || b.at === own.id)) continue;   // the swept sand lies under its own house and craft
+    if (b.kind === 'anleger' || ground && own && (b === own || b.at === own.id) || skip && (skip.includes(b) || skip.some(q => b.at === q.id))) continue;   // the swept sand lies under its own house and craft
     const K = KINDS[b.kind], dx = x - b.x, dy = y - b.y, w = (K.r || 6) * ((b.v && b.v.scale) || 1) * (K.roof ? 1.75 : 1);   // a house is wider than its ground: eaves and the porch
     if (b === own){ if (Math.abs(dx) < w + rad && dy > -(K.hy || w) - rad - 2 && dy < 4 + rad) return false; continue; }
     if (FLAT.has(b.kind) || K.soil){ if (Math.hypot(dx, dy * 1.6) < w + rad + 1) return false; continue; }
@@ -107,7 +107,30 @@ function hofPlan(I){
     else { for (const s of [-1, 1]) for (const [dx, dy] of [[18, 5], [17, 10], [14, 15]]) place(h.x + s * dx, h.y + dy, 'hecke', 2.4);
       place(h.x + 20, h.y - 4, 'banane', 4) || place(h.x - 20, h.y - 4, 'banane', 4); }
   }
-  return I._yp = {sig, items, sand};
+  // neighbours: two houses close together are joined, each with at most two, the nearest first: stepping stones from door to
+  // door on the ground, and where they stand side by side a line of sennit between the eaves with tapa and blossoms on it.
+  // Only for the eye: each family keeps its house, its people and its craft.
+  const links = [], deg = new Map(), pairs = [];
+  for (let i = 0; i < hs.length; i++) for (let j = i + 1; j < hs.length; j++){ const a = hs[i], b = hs[j], d = Math.hypot(a.x - b.x, (a.y - b.y) * 1.2); if (d >= 18 && d <= 44) pairs.push([d, a, b]); }
+  pairs.sort((p, q) => p[0] - q[0]);
+  for (const [, a0, b0] of pairs){
+    if ((deg.get(a0) || 0) >= 2 || (deg.get(b0) || 0) >= 2) continue;
+    const [a, b] = a0.x <= b0.x ? [a0, b0] : [b0, a0], skip = [a, b], stones = [];
+    // the stones: along a gentle curve between the doors, only where the ground is free
+    const ax = a.x, ay = a.y + 8, bx = b.x, by = b.y + 8, n = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay) / 6));
+    for (let k = 1; k < n; k++){ const t = k / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t + Math.sin(t * Math.PI) * 2.5; if (hofFree(I, x, y, 1.6, null, false, skip)) stones.push({x, y, t}); }
+    // the line: only between houses side by side, from eave to eave, and not over a third building
+    const wa = KINDS[a.kind].r * ((a.v && a.v.scale) || 1), wb = KINDS[b.kind].r * ((b.v && b.v.scale) || 1);
+    let line = null; const L = {x1:a.x + wa * 1.05, y1:a.y - 6, x2:b.x - wb * 1.05, y2:b.y - 6};
+    if (Math.abs(b.x - a.x) > Math.abs(b.y - a.y) * 1.1 && L.x2 - L.x1 > 4 && [.3, .5, .7].every(t => hofFree(I, L.x1 + (L.x2 - L.x1) * t, L.y1 + (L.y2 - L.y1) * t + 8, 1, null, false, skip))) line = L;
+    if (!stones.length && !line) continue;
+    deg.set(a0, (deg.get(a0) || 0) + 1); deg.set(b0, (deg.get(b0) || 0) + 1);
+    links.push({key:a.id + '-' + b.id, a, b, stones, line, seed:(a.id * 7 + b.id * 13) % 97});
+  }
+  // a link that is new while the game runs grows in; the ones there at the start are simply there
+  const seen = I._lkSeen || (I._lkSeen = new Map()), first = !I._lkInit; I._lkInit = true;
+  for (const L of links) if (!seen.has(L.key)) seen.set(L.key, first ? -1e9 : performance.now());
+  return I._yp = {sig, items, sand, links};
 }
 
 /* ---------- drawing, on the ground under the houses (base layer) */
@@ -137,5 +160,46 @@ function drawYards(c, I){
     c.strokeStyle = 'rgba(176,150,100,.55)'; c.lineWidth = .35; c.beginPath();
     for (let i = -2; i <= 2; i++){ const yy = s.y + i * s.ry * .36, w = s.rx * Math.sqrt(Math.max(0, 1 - (i * .36) ** 2)) * .7; c.moveTo(s.x - w, yy); c.quadraticCurveTo(s.x, yy + .8, s.x + w, yy); } c.stroke();
   }
+  for (const L of P.links) if (hofGrow(I, L) >= 1) for (const s of L.stones) drawHofStone(c, s, L.seed);
   for (const q of [...P.items].sort((a, b) => a.y - b.y)) drawHofPlant(c, q);
+}
+const HOF_GROW = 2600;   // ms: the stones are set one by one, then the line is drawn across and the things are hung on it
+const hofGrow = (I, L) => { const t0 = I._lkSeen && I._lkSeen.get(L.key); return t0 == null ? 1 : clamp((performance.now() - t0) / HOF_GROW, 0, 1); };
+function drawHofStone(c, s, seed, k = 1){
+  const r = 1.7 * k, j = ((s.t * 31 + seed) % 7) / 7;
+  c.fillStyle = 'rgba(43,29,20,.16)'; c.beginPath(); c.ellipse(s.x + .4, s.y + .5, r * 1.15, r * .62, 0, 0, TAU); c.fill();
+  c.fillStyle = j < .5 ? '#C9C0AA' : '#B8AE98'; c.strokeStyle = '#5A4A38'; c.lineWidth = .35; c.beginPath(); c.ellipse(s.x, s.y, r * (1 + j * .25), r * .55, j - .5, 0, TAU); c.fill(); c.stroke();
+}
+/* the top layer, every frame: what is still growing, and the line between the eaves swaying in the wind */
+function drawHofLinks(c, v, now){
+  if (lod === 'far' || cam.z < .9) return;
+  const W = wind(), str = reduced ? 0 : W.str, dir = W.tx < 0 ? -1 : 1;
+  for (const I of islands){
+    if (!I.settled || !boxIn(I.box, v)) continue;
+    const P = hofPlan(I);
+    for (const L of P.links){
+      const g = hofGrow(I, L); if (!ptIn((L.a.x + L.b.x) / 2, L.a.y, v)) continue;
+      if (g < 1){
+        // the stones pop in one after the other during the first third
+        L.stones.forEach((s, i) => { const f = clamp(g * 3 * L.stones.length / (L.stones.length + 1) - i, 0, 1); if (f > 0) drawHofStone(c, s, L.seed, f < 1 ? .4 + .6 * f + Math.sin(f * Math.PI) * .35 : 1); });
+        if (g >= .99 && !L.done){ L.done = true; invalidate(); }
+      }
+      const Q = L.line; if (!Q) continue;
+      const lf = clamp((g - .33) / .4, 0, 1); if (lf <= 0) continue;   // the line: drawn across from one eave to the other
+      const sag = 3.2 + str * 1.2, sw = Math.sin(now / 900 + L.seed) * str * 1.2, pt = t => ({x:Q.x1 + (Q.x2 - Q.x1) * t + sw * Math.sin(t * Math.PI) * .5, y:Q.y1 + (Q.y2 - Q.y1) * t + Math.sin(t * Math.PI) * sag});
+      c.save(); c.lineCap = 'round';
+      const p = new Path2D(); const e = pt(0); p.moveTo(e.x, e.y); for (let t = .1; t <= lf + 1e-6; t += .1){ const q = pt(Math.min(t, lf)); p.lineTo(q.x, q.y); }
+      stroke(c, p, '#2B1D14', .9); stroke(c, p, '#C9A46A', .45);
+      // what hangs on it: tapa cloths and a string of blossoms, each dropping onto the line in turn, then swaying
+      const things = [.25, .45, .62, .8], hf = clamp((g - .73) / .27, 0, 1);
+      things.forEach((t, i) => { const f = clamp(hf * things.length - i, 0, 1); if (f <= 0 || t > lf) return;
+        const q = pt(t), drop = (1 - f) * -4, a = (reduced ? 0 : Math.sin(now / (520 + i * 70) + L.seed + i) * .22 * (.3 + str)) + dir * str * .18;
+        c.save(); c.translate(q.x, q.y + drop); c.rotate(a);
+        if ((i + L.seed) % 3 === 2){ for (let k = 0; k < 4; k++){ c.fillStyle = k % 2 ? '#E9B23A' : '#D8402C'; c.beginPath(); c.arc(0, .9 + k * 1.05, .62, 0, TAU); c.fill(); } }   // a garland of blossoms
+        else { c.fillStyle = '#EDE0C2'; c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.rect(-1.5, .2, 3, 3.6); c.fill(); c.stroke();   // a tapa cloth with its pattern
+          c.strokeStyle = '#7A3A22'; c.lineWidth = .3; c.beginPath(); c.moveTo(-1.5, 1.4); c.lineTo(1.5, 1.4); c.moveTo(-1.5, 2.6); c.lineTo(1.5, 2.6); c.moveTo(0, .2); c.lineTo(0, 3.8); c.stroke(); }
+        c.restore(); });
+      c.restore();
+    }
+  }
 }

@@ -2378,7 +2378,7 @@ function drawDockGoods(c, v){
 }
 function drawTop(c, now){
   const v = view(120), far = lod === 'far', ks = far ? clamp(.6 / cam.z, 1, 2.4) : 1;
-  drawDockGoods(c, v);
+  drawDockGoods(c, v); drawHofLinks(c, v, now);   // neighbours joined by a line with tapa (hof.js)
   // the steered canoe: a ring around it and the way it still has to go
   const S = selShip && ships.includes(selShip) ? selShip : null;
   if (S && S.state === 'sail' && S.pi < S.path.length){

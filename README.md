@@ -2713,3 +2713,21 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
 - **Vermutet:** Für Lapita-Dörfer selbst sind Höfe mit Ti und Hecken nicht belegt; wir kennen sie aus späteren Dörfern
   Ozeaniens. Dass freie Zeit den Hof pflegt und Höfe zufrieden machen, ist eine Spielregel.
 
+## Nachbarn sind verbunden (Version 122)
+
+- **Zwei Häuser nah beieinander verbinden sich:** Am Boden führen Trittsteine von Tür zu Tür. Stehen die Häuser
+  nebeneinander, hängt eine Sennitleine von Dachkante zu Dachkante, mit Tapa-Tüchern und einer Kette aus Blüten. Sie
+  schwingen im Wind, bei Sturm stärker. Jedes Haus hat höchstens zwei solche Nachbarn, die nächsten zuerst. Über einem
+  dritten Gebäude, im Wasser oder auf einem Feld wird nichts gezeichnet.
+- **Es wächst sichtbar:** Kommt ein neues Haus dazu, werden erst die Steine einer nach dem anderen gelegt, dann wird die
+  Leine hinübergezogen, und zuletzt werden die Tücher und Blüten aufgehängt. Verbindungen, die beim Laden schon da sind,
+  sind einfach da.
+- **Nur fürs Auge:** Jede Familie bleibt in ihrem Haus, mit ihren Leuten, ihren Bedürfnissen und ihrem Hauswerk. Ein Tipp
+  auf ein Haus zeigt nur diese Familie.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Tapa (Rindenbaststoff) und Schnur aus Kokosfasern gab es im Lapita-Raum und später in ganz Ozeanien.
+- **Vermutet:** Leinen zwischen Häusern und Trittsteine von Tür zu Tür sind ein Bild aus späteren Dörfern und eine
+  Spielidee.
+
