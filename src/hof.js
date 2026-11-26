@@ -121,8 +121,9 @@ function hofPlan(I){
     for (let k = 1; k < n; k++){ const t = k / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t + Math.sin(t * Math.PI) * 2.5; if (hofFree(I, x, y, 1.6, null, false, skip)) stones.push({x, y, t}); }
     // the line: only between houses side by side, from eave to eave, and not over a third building
     const wa = KINDS[a.kind].r * ((a.v && a.v.scale) || 1), wb = KINDS[b.kind].r * ((b.v && b.v.scale) || 1);
-    let line = null; const L = {x1:a.x + wa * 1.05, y1:a.y - 6, x2:b.x - wb * 1.05, y2:b.y - 6};
-    if (Math.abs(b.x - a.x) > Math.abs(b.y - a.y) * 1.1 && L.x2 - L.x1 > 4 && [.3, .5, .7].every(t => hofFree(I, L.x1 + (L.x2 - L.x1) * t, L.y1 + (L.y2 - L.y1) * t + 8, 1, null, false, skip))) line = L;
+    // the anchors: a forked pole planted beside each house, just past its eaves; the line is tied to their tops
+    let line = null; const L = {x1:a.x + wa * 1.2, y1:a.y - 6, x2:b.x - wb * 1.2, y2:b.y - 6, p1:{x:a.x + wa * 1.2, y:a.y + 2}, p2:{x:b.x - wb * 1.2, y:b.y + 2}};
+    if (Math.abs(b.x - a.x) > Math.abs(b.y - a.y) * 1.1 && L.x2 - L.x1 > 4 && hofFree(I, L.p1.x, L.p1.y, .8, null, false, skip) && hofFree(I, L.p2.x, L.p2.y, .8, null, false, skip) && [.3, .5, .7].every(t => hofFree(I, L.x1 + (L.x2 - L.x1) * t, L.y1 + (L.y2 - L.y1) * t + 10, 1, null, false, skip))) line = L;
     if (!stones.length && !line) continue;
     deg.set(a0, (deg.get(a0) || 0) + 1); deg.set(b0, (deg.get(b0) || 0) + 1);
     links.push({key:a.id + '-' + b.id, a, b, stones, line, seed:(a.id * 7 + b.id * 13) % 97});
@@ -209,17 +210,34 @@ function drawHofLinks(c, v, now){
       }
       if (g >= 1 && I._lkSeen.get(L.key) > 0){ I._lkSeen.set(L.key, -1e9); invalidate(); }   // done: the stones go down into the ground layer
       const Q = L.line; if (!Q) continue;
-      const lf = clamp((g - .38) / .17, 0, 1); if (lf <= 0) continue;   // the line: drawn across from one eave to the other
+      // the two poles spring up out of the ground, one after the other, each with a plop
+      const pole = (P, f, side) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), h = 8 * e, lean = (1 - e) * side * .25;
+        c.save(); c.translate(P.x, P.y); c.rotate(lean); c.lineCap = 'round';
+        if (f < 1){ c.globalAlpha = (1 - f) * .5; c.strokeStyle = '#E8DCC0'; c.lineWidth = .45; c.beginPath(); c.ellipse(0, .3, 1.5 + f * 3, .7 + f * 1.2, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; }
+        c.fillStyle = 'rgba(43,29,20,.2)'; c.beginPath(); c.ellipse(.5, .4, 1.4, .5, 0, 0, TAU); c.fill();
+        c.lineCap = 'butt'; c.lineJoin = 'round';
+        const fork = () => { c.beginPath(); c.moveTo(0, .2); c.lineTo(0, -h * .82); c.lineTo(-.9, -h); c.moveTo(0, -h * .82); c.lineTo(.9, -h); c.stroke(); };
+        c.strokeStyle = '#2B1D14'; c.lineWidth = .95; fork(); c.strokeStyle = '#9C6A40'; c.lineWidth = .45; fork();
+        c.restore(); };
+      const pf1 = g >= 1 ? 1 : clamp((g - .34) / .08, 0, 1), pf2 = g >= 1 ? 1 : clamp((g - .38) / .08, 0, 1);
+      if (pf1 > .35) hofSound(I, L, 'p1', 'pop', 6); if (pf2 > .35) hofSound(I, L, 'p2', 'pop', 7);
+      pole(Q.p1, pf1, -1); pole(Q.p2, pf2, 1);
+      const lf = clamp((g - .42) / .14, 0, 1); if (lf <= 0) continue;   // the line: carried across from one pole to the other
       // pulled taut at the end: it twangs, sags deep and swings out, smaller and smaller
-      const tq = clamp((g - .55) / .25, 0, 1), twang = g >= .55 && g < 1 ? Math.cos(tq * Math.PI * 5) * Math.exp(-tq * 4.5) * 2.6 : 0;
-      if (g >= .55) hofSound(I, L, 'line', 'twang', 0);
+      const tq = clamp((g - .56) / .25, 0, 1), twang = g >= .56 && g < 1 ? Math.cos(tq * Math.PI * 5) * Math.exp(-tq * 4.5) * 2.6 : 0;
+      if (g >= .56) hofSound(I, L, 'line', 'twang', 0);
       const sag = 3.2 + str * 1.2 + twang + (lf < 1 ? 2 * (1 - lf) : 0), sw = Math.sin(now / 900 + L.seed) * str * 1.2, pt = t => ({x:Q.x1 + (Q.x2 - Q.x1) * t + sw * Math.sin(t * Math.PI) * .5, y:Q.y1 + (Q.y2 - Q.y1) * t + Math.sin(t * Math.PI) * sag});
       c.save(); c.lineCap = 'round';
       const p = new Path2D(); const e = pt(0); p.moveTo(e.x, e.y); for (let t = .08; t <= lf + 1e-6; t += .08){ const q = pt(Math.min(t, lf)); p.lineTo(q.x, q.y); } { const q = pt(lf); p.lineTo(q.x, q.y); }
       stroke(c, p, '#2B1D14', .9); stroke(c, p, '#C9A46A', .45);
       if (lf < 1){ const q = pt(lf); c.fillStyle = '#C9A46A'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.arc(q.x, q.y, .9, 0, TAU); c.fill(); c.stroke(); }   // the end of the line in a hand, travelling across
+      // the knots: tied at the first pole as the line sets off, at the second when it arrives; each pulls tight with a pop
+      const knot = (q, f) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), r = .95 * e * (1 + (1 - e) * .6); c.fillStyle = '#B08048'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.ellipse(q.x, q.y, r * 1.15, r, 0, 0, TAU); c.fill(); c.stroke(); c.beginPath(); c.moveTo(q.x - r * .5, q.y - r * .3); c.lineTo(q.x + r * .5, q.y + r * .3); c.stroke(); };
+      const k1 = g >= 1 ? 1 : clamp((g - .42) / .06, 0, 1), k2 = g >= 1 ? 1 : clamp((g - .56) / .06, 0, 1);
+      if (k1 > .3) hofSound(I, L, 'k1', 'tick', 0); if (k2 > .3) hofSound(I, L, 'k2', 'tick', 2);
+      knot(pt(0), k1); if (lf >= 1) knot(pt(1), k2);
       // what hangs on it: tapa cloths and a string of blossoms, each dropping onto the line in turn and bouncing on its string
-      const things = [.25, .45, .62, .8];
+      const span = Math.hypot(Q.x2 - Q.x1, Q.y2 - Q.y1), things = span < 14 ? [.5] : span < 22 ? [.33, .67] : span < 30 ? [.25, .5, .75] : [.25, .45, .62, .8];
       things.forEach((t, i) => { const f = hofPhase(g, i, things.length, .62, .92); if (f <= 0 || t > lf) return;
         if (f > .3) hofSound(I, L, 'h' + i, 'tick', i);
         const q = pt(t), land = f < .3 ? f / .3 : 1, drop = f < .3 ? -6 * (1 - land * land) : 0, e = f < .3 ? 0 : springy((f - .3) / .7), bounce = f < .3 ? 0 : (1 - e) * 2.2;
