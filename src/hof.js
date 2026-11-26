@@ -70,6 +70,26 @@ const hofEllFree = (I, x, y, rx, ry, own) => [[0, 0], [1, 0], [-1, 0], [0, 1], [
 const HOF_PLANTS = [['ti', 'ti', 'kroton'], ['kroton', 'ti', 'kroton'], ['hibiskus', 'ti', 'hibiskus']];
 
 /* ---------- the plan of the yards of an island, made again only when a house, a step or a tree changes */
+/* Where a line may be tied to a house: only to what is rigid, never to what moves. Rigid are the corner posts of the walls,
+   the outer post of the lean-to porch, the ends of the beam of a platform, the paddle and the drying pole stuck in the
+   ground by a house at the shore, the post of the cooking shelter beside an old house, and the crossed poles at the ridge of a
+   small hut (it has no posts: its thatch reaches the ground). What moves is never used: the tapa curtains in the doors, the
+   nets, the fringe of the eaves, the thatch itself. The points are those of the drawings (art.js, hzBody, hzPorch, hzAdd),
+   on the side that faces the neighbour; then scaled and mirrored as the house is drawn. */
+function hofAnchor(I, b, toX){
+  const v = b.v || {}, X = xformOf(b.kind, v), sc = X.s * (b.kind === 'haus' && I && I.lvl === 3 ? 1.12 : 1), m = X.m, sw = toX >= b.x ? 1 : -1, side = sw * m;
+  if (b.kind === 'fale') return {x:b.x + sw * 13 * sc, y:b.y - 7 * sc, what:'post'};
+  const tier = b.t >= 3 ? 3 : b.t >= 2 ? 2 : 1, shape = HOUSE_SHAPES.includes(v.shape) && v.shape !== 'hw' ? v.shape : '', vv = Math.max(0, HOUSE_SHAPES.indexOf(shape)) % 2, sea = seaRank(b) > 0;
+  const hk = Math.floor(hsh(b.id || 0, 11) * 1000), pitch = [.93, 1, 1.08][hk % 3], add = b.kind === 'haus' && !b.bt ? clamp(Math.floor((tick - (b.born || 0)) / YEAR), 0, 3) : 0, t4 = b.kind === 'haus' && b.t >= 4;
+  let p = null, body = true;
+  if (side < 0 && add){ const x0 = tier === 1 ? -17 : tier === 2 ? -22 : -24; p = {x:x0 - 3.4, y:-1.4, what:'post'}; body = false; }   // the cooking shelter's post
+  else if (tier >= 3) p = vv ? {x:side * 15.2, y:-5.1, what:'beam'} : {x:side * 12.3, y:-5.3, what:'beam'};
+  else if (tier === 2 && sea) p = vv ? (side < 0 ? {x:-13, y:-6.6, what:'post'} : {x:10, y:-6, what:'post'}) : (side < 0 ? {x:-13.4, y:-9, what:'post'} : {x:9.6, y:-15.6, what:'ridge'});
+  else if (tier === 2) p = side > 0 ? {x:vv ? 19.6 : 16.1, y:-4.4, what:'post'} : {x:vv ? -13 : -9.5, y:-5.4, what:'post'};
+  else p = vv ? {x:side * 1.8, y:-15, what:'ridge'} : {x:side * 3, y:-19.4, what:'ridge'};
+  let y = p.y; if (body){ y *= pitch; if (t4) y -= 4.2; }
+  return {x:b.x + p.x * m * sc, y:b.y + y * sc, what:p.what};
+}
 /* which buildings join their neighbours, and how: houses with stepping stones and a line, fields with an earth bank,
    workplaces with a strip of crushed shell, the places at the shore with planks. Decorations, trees, palms, plazas and
    what stands in the water do not join. */
@@ -139,9 +159,9 @@ function hofPlan(I){
       ax = a.x + ux * wa * k; ay = a.y + uy * wa * k * .6 + oy; bx = b.x - ux * wb * k; by = b.y - uy * wb * k * .6 + oy; }
     const n = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay) / STEP[f])), bend = f === 'haus' ? 2.5 : 0, ang = Math.atan2(by - ay, bx - ax);
     for (let k = f === 'feld' ? 0 : 1; k < (f === 'feld' ? n + 1 : n); k++){ const t = k / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t + Math.sin(t * Math.PI) * bend; if (hofFree(I, x, y, f === 'feld' ? .9 : 1.6, null, false, skip)) stones.push({x, y, t, ang}); }
-    // the line, only between houses side by side: from a peg in one wall to a peg in the other, not over a third building
+    // the line, only between houses side by side: tied to something rigid on each (hofAnchor), not over a third building
     let line = null;
-    if (f === 'haus'){ const L = {x1:a.x + wa * .8 + 1.6, y1:a.y - 5, x2:b.x - wb * .8 - 1.6, y2:b.y - 5, w1:{x:a.x + wa * .8, y:a.y - 5}, w2:{x:b.x - wb * .8, y:b.y - 5}};
+    if (f === 'haus'){ const A = hofAnchor(I, a, b.x), B = hofAnchor(I, b, a.x), L = {x1:A.x, y1:A.y, x2:B.x, y2:B.y, w1:A, w2:B};
       if (Math.abs(b.x - a.x) > Math.abs(b.y - a.y) * 1.1 && L.x2 - L.x1 > 4 && [.3, .5, .7].every(t => hofFree(I, L.x1 + (L.x2 - L.x1) * t, L.y1 + (L.y2 - L.y1) * t + 9, 1, null, false, skip))) line = L; }
     if (stones.length < (f === 'feld' ? 3 : 1) && !line) continue;
     deg.set(a0, (deg.get(a0) || 0) + 1); deg.set(b0, (deg.get(b0) || 0) + 1);
@@ -245,16 +265,15 @@ function drawHofLinks(c, v, now){
       }
       if (g >= 1 && I._lkSeen.get(L.key) > 0){ I._lkSeen.set(L.key, -1e9); invalidate(); }   // done: the stones go down into the ground layer
       const Q = L.line; if (!Q) continue;
-      // the anchors: a wooden peg pushed out of each wall, bound round with sennit; each pops out in turn
-      const peg = (W, f, side) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), len = 1.9 * e;
-        c.save(); c.translate(W.x, W.y); c.scale(side, 1); c.lineCap = 'round';
-        c.strokeStyle = '#2B1D14'; c.lineWidth = 1.15; c.beginPath(); c.moveTo(-.4, 0); c.lineTo(len, 0); c.stroke();
-        c.strokeStyle = '#9C6A40'; c.lineWidth = .6; c.beginPath(); c.moveTo(-.2, 0); c.lineTo(len, 0); c.stroke();
-        c.strokeStyle = '#D9B87A'; c.lineWidth = .3; c.beginPath(); for (let k = 0; k < 3; k++){ const x = -.1 + k * .42; c.moveTo(x, -.55); c.lineTo(x + .3, .55); } c.stroke();   // the binding
+      // the anchors: the line is bound round a rigid part of each house, a few turns of sennit that pop on in turn
+      const peg = (W, f) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), k = e * (1 + (1 - e) * .5);
+        c.save(); c.translate(W.x, W.y); c.scale(k, k); c.lineCap = 'round';
+        c.strokeStyle = '#2B1D14'; c.lineWidth = .9; c.beginPath(); for (let i = 0; i < 3; i++){ const y = -.9 + i * .75; c.moveTo(-.85, y - .25); c.lineTo(.85, y + .25); } c.stroke();
+        c.strokeStyle = '#D9B87A'; c.lineWidth = .45; c.beginPath(); for (let i = 0; i < 3; i++){ const y = -.9 + i * .75; c.moveTo(-.85, y - .25); c.lineTo(.85, y + .25); } c.stroke();
         c.restore(); };
       const pf1 = g >= 1 ? 1 : clamp((g - .34) / .07, 0, 1), pf2 = g >= 1 ? 1 : clamp((g - .38) / .07, 0, 1);
       if (pf1 > .3) hofSound(I, L, 'p1', 'tick', -4); if (pf2 > .3) hofSound(I, L, 'p2', 'tick', -2);
-      peg(Q.w1, pf1, 1); peg(Q.w2, pf2, -1);
+      peg(Q.w1, pf1); peg(Q.w2, pf2);
       const lf = clamp((g - .42) / .14, 0, 1); if (lf <= 0) continue;   // the line: carried across from one peg to the other
       // pulled taut at the end: it twangs, sags deep and swings out, smaller and smaller
       const tq = clamp((g - .56) / .25, 0, 1), twang = g >= .56 && g < 1 ? Math.cos(tq * Math.PI * 5) * Math.exp(-tq * 4.5) * 2.6 : 0;

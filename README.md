@@ -2716,13 +2716,16 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
 ## Nachbarn sind verbunden (Version 122)
 
 - **Zwei Häuser nah beieinander verbinden sich:** Am Boden führen Trittsteine von Tür zu Tür. Stehen die Häuser
-  nebeneinander, hängt eine Sennitleine zwischen zwei Holzpflöcken, die mit Sennit umwickelt aus den Hauswänden ragen, mit Tapa-Tüchern und einer Kette aus Blüten. Sie
-  schwingen im Wind, bei Sturm stärker. Jedes Haus hat höchstens zwei solche Nachbarn, die nächsten zuerst. Über einem
+  nebeneinander, hängt eine Sennitleine dazwischen. Sie ist nur an festen Teilen festgebunden: an Eckpfosten, am äußeren Pfosten des
+  Vordachs, an den Balkenenden der Plattform, am Paddel oder Fischpfosten der Strandhäuser, am Pfosten der Kochhütte oder,
+  bei der kleinen Hütte ohne Pfosten, an den gekreuzten Firststangen. Nie an Beweglichem wie Tür-Tapa, Netz oder Dachfransen.
+  Die Ankerpunkte bleiben fest, nur die Leine dazwischen und die Tapa-Tücher und Blüten daran schwingen im Wind, bei
+  Sturm stärker. Jedes Haus hat höchstens zwei solche Nachbarn, die nächsten zuerst. Über einem
   dritten Gebäude, im Wasser oder auf einem Feld wird nichts gezeichnet.
 - **Es wächst sichtbar, zum Zuschauen:** Kommt ein neues Haus dazu, fällt ein Stein nach dem anderen von oben, wird beim
   Aufsetzen flach gedrückt, federt rund zurück und stößt ein Wölkchen Staub aus; jeder mit einem weichen „Plopp“, jeder
-  einen Ton höher. Dann springt aus jeder der beiden Hauswände ein Holzpflock, jeder mit einem Klick. Am ersten wird die Leine
-  festgeknotet, eine Hand zieht sie zum zweiten hinüber, der Knoten dort zieht sich zu, die Leine wird straff, klingt wie eine gezupfte Saite und
+  einen Ton höher. Dann legen sich an beiden Ankerpunkten ein paar Windungen Sennit um den Pfosten, jede mit einem Klick. Am ersten wird
+  die Leine festgeknotet, eine Hand zieht sie zum zweiten hinüber, der Knoten dort zieht sich zu, die Leine wird straff, klingt wie eine gezupfte Saite und
   schwingt nach. Zuletzt fallen die Tücher und Blüten auf die Leine und hüpfen an ihren Fäden aus, jedes mit einem leisen
   Klick, am Ende ein heller Ton. Alles dauert etwa dreieinhalb Sekunden. Verbindungen, die beim Laden schon da sind, sind
   einfach da.
