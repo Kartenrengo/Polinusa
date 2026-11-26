@@ -2716,16 +2716,19 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
 ## Nachbarn sind verbunden (Version 122)
 
 - **Zwei Häuser nah beieinander verbinden sich:** Am Boden führen Trittsteine von Tür zu Tür. Stehen die Häuser
-  nebeneinander, hängt eine Sennitleine zwischen zwei Pfosten mit Astgabel, die neben den Häusern stehen, mit Tapa-Tüchern und einer Kette aus Blüten. Sie
+  nebeneinander, hängt eine Sennitleine zwischen zwei Holzpflöcken, die mit Sennit umwickelt aus den Hauswänden ragen, mit Tapa-Tüchern und einer Kette aus Blüten. Sie
   schwingen im Wind, bei Sturm stärker. Jedes Haus hat höchstens zwei solche Nachbarn, die nächsten zuerst. Über einem
   dritten Gebäude, im Wasser oder auf einem Feld wird nichts gezeichnet.
 - **Es wächst sichtbar, zum Zuschauen:** Kommt ein neues Haus dazu, fällt ein Stein nach dem anderen von oben, wird beim
   Aufsetzen flach gedrückt, federt rund zurück und stößt ein Wölkchen Staub aus; jeder mit einem weichen „Plopp“, jeder
-  einen Ton höher. Dann springen neben den beiden Häusern zwei Pfosten mit Astgabel aus dem Boden, ebenfalls mit Plopp. Am ersten wird die
-  Leine festgeknotet, eine Hand zieht sie zum zweiten hinüber, der Knoten dort zieht sich zu, die Leine wird straff, klingt wie eine gezupfte Saite und
+  einen Ton höher. Dann springt aus jeder der beiden Hauswände ein Holzpflock, jeder mit einem Klick. Am ersten wird die Leine
+  festgeknotet, eine Hand zieht sie zum zweiten hinüber, der Knoten dort zieht sich zu, die Leine wird straff, klingt wie eine gezupfte Saite und
   schwingt nach. Zuletzt fallen die Tücher und Blüten auf die Leine und hüpfen an ihren Fäden aus, jedes mit einem leisen
   Klick, am Ende ein heller Ton. Alles dauert etwa dreieinhalb Sekunden. Verbindungen, die beim Laden schon da sind, sind
   einfach da.
+- **Auch andere Bauten verbinden sich, mit derselben Animation:** Zwei Felder nebeneinander bekommen einen Erddamm aus
+  Erdklumpen, die einer nach dem anderen ploppen, tiefer im Ton. Werkstätten bekommen einen Streifen aus zerstoßenen
+  Muscheln, Fischer, Taucher und Kanuhaus am Strand Planken. Jeder Bau höchstens zwei Verbindungen, nur zum gleichen Typ.
 - **Nur fürs Auge:** Jede Familie bleibt in ihrem Haus, mit ihren Leuten, ihren Bedürfnissen und ihrem Hauswerk. Ein Tipp
   auf ein Haus zeigt nur diese Familie.
 

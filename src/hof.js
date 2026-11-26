@@ -70,7 +70,18 @@ const hofEllFree = (I, x, y, rx, ry, own) => [[0, 0], [1, 0], [-1, 0], [0, 1], [
 const HOF_PLANTS = [['ti', 'ti', 'kroton'], ['kroton', 'ti', 'kroton'], ['hibiskus', 'ti', 'hibiskus']];
 
 /* ---------- the plan of the yards of an island, made again only when a house, a step or a tree changes */
-function hofSig(I){ let s = I.buildings.length + '|' + (I.trees || []).length; for (const b of I.buildings) if (HOF_KINDS.has(b.kind) && !b.bt) s += `|${b.id}:${b.x | 0}:${b.y | 0}:${hofStep(b)}`; return s; }
+/* which buildings join their neighbours, and how: houses with stepping stones and a line, fields with an earth bank,
+   workplaces with a strip of crushed shell, the places at the shore with planks. Decorations, trees, palms, plazas and
+   what stands in the water do not join. */
+function linkFam(b){
+  const K = KINDS[b.kind]; if (!K || b.bt || b.at) return '';
+  if (HOF_KINDS.has(b.kind)) return 'haus';
+  if (K.soil || b.kind === 'garten' || b.kind === 'bananen') return 'feld';
+  if (b.kind === 'fisch' || b.kind === 'taucher' || b.kind === 'werft' || b.kind === 'steg') return 'see';
+  if (K.plant || K.water || b.kind === 'anleger' || FLAT.has(b.kind) || (K.beauty && !K.prod)) return '';
+  return 'werk';
+}
+function hofSig(I){ let s = I.buildings.length + '|' + (I.trees || []).length; for (const b of I.buildings){ const f = linkFam(b); if (f) s += `|${b.id}:${b.x | 0}:${b.y | 0}:${f === 'haus' ? hofStep(b) : ''}`; } return s; }
 function hofPlan(I){
   const sig = hofSig(I); if (I._yp && I._yp.sig === sig) return I._yp;
   const hs = I.buildings.filter(b => HOF_KINDS.has(b.kind) && !b.bt), items = [], sand = [];
@@ -107,26 +118,34 @@ function hofPlan(I){
     else { for (const s of [-1, 1]) for (const [dx, dy] of [[18, 5], [17, 10], [14, 15]]) place(h.x + s * dx, h.y + dy, 'hecke', 2.4);
       place(h.x + 20, h.y - 4, 'banane', 4) || place(h.x - 20, h.y - 4, 'banane', 4); }
   }
-  // neighbours: two houses close together are joined, each with at most two, the nearest first: stepping stones from door to
-  // door on the ground, and where they stand side by side a line of sennit between the eaves with tapa and blossoms on it.
-  // Only for the eye: each family keeps its house, its people and its craft.
-  const links = [], deg = new Map(), pairs = [];
-  for (let i = 0; i < hs.length; i++) for (let j = i + 1; j < hs.length; j++){ const a = hs[i], b = hs[j], d = Math.hypot(a.x - b.x, (a.y - b.y) * 1.2); if (d >= 18 && d <= 44) pairs.push([d, a, b]); }
+  // neighbours: two buildings of the same kind close together are joined, each with at most two, the nearest first.
+  // Houses: stepping stones from door to door, and where they stand side by side a line of sennit, tied to a peg in each
+  // wall, with tapa and blossoms on it. Fields: an earth bank between them. Workplaces: a strip of crushed shell. At the
+  // shore: planks. Only for the eye: each family keeps its house, its people and its craft; each place its work.
+  const links = [], deg = new Map(), pairs = [], lk = I.buildings.filter(b => linkFam(b)), fam = new Map(lk.map(b => [b, linkFam(b)])), rOf = b => KINDS[b.kind].r * ((b.v && b.v.scale) || 1);
+  for (let i = 0; i < lk.length; i++) for (let j = i + 1; j < lk.length; j++){
+    const a = lk[i], b = lk[j], f = fam.get(a); if (f !== fam.get(b)) continue;
+    const d = Math.hypot(a.x - b.x, (a.y - b.y) * 1.2), e = d - rOf(a) - rOf(b);
+    if (f === 'haus' ? d >= 18 && d <= 44 : e >= -3 && e <= 20) pairs.push([d, a, b, f]);
+  }
   pairs.sort((p, q) => p[0] - q[0]);
-  for (const [, a0, b0] of pairs){
+  const STEP = {haus:6, feld:2.3, werk:3.4, see:3};
+  for (const [, a0, b0, f] of pairs){
     if ((deg.get(a0) || 0) >= 2 || (deg.get(b0) || 0) >= 2) continue;
-    const [a, b] = a0.x <= b0.x ? [a0, b0] : [b0, a0], skip = [a, b], stones = [];
-    // the stones: along a gentle curve between the doors, only where the ground is free
-    const ax = a.x, ay = a.y + 8, bx = b.x, by = b.y + 8, n = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay) / 6));
-    for (let k = 1; k < n; k++){ const t = k / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t + Math.sin(t * Math.PI) * 2.5; if (hofFree(I, x, y, 1.6, null, false, skip)) stones.push({x, y, t}); }
-    // the line: only between houses side by side, from eave to eave, and not over a third building
-    const wa = KINDS[a.kind].r * ((a.v && a.v.scale) || 1), wb = KINDS[b.kind].r * ((b.v && b.v.scale) || 1);
-    // the anchors: a forked pole planted beside each house, just past its eaves; the line is tied to their tops
-    let line = null; const L = {x1:a.x + wa * 1.2, y1:a.y - 6, x2:b.x - wb * 1.2, y2:b.y - 6, p1:{x:a.x + wa * 1.2, y:a.y + 2}, p2:{x:b.x - wb * 1.2, y:b.y + 2}};
-    if (Math.abs(b.x - a.x) > Math.abs(b.y - a.y) * 1.1 && L.x2 - L.x1 > 4 && hofFree(I, L.p1.x, L.p1.y, .8, null, false, skip) && hofFree(I, L.p2.x, L.p2.y, .8, null, false, skip) && [.3, .5, .7].every(t => hofFree(I, L.x1 + (L.x2 - L.x1) * t, L.y1 + (L.y2 - L.y1) * t + 10, 1, null, false, skip))) line = L;
-    if (!stones.length && !line) continue;
+    const [a, b] = a0.x <= b0.x ? [a0, b0] : [b0, a0], skip = [a, b], stones = [], wa = rOf(a), wb = rOf(b);
+    // the way: houses from door to door on a gentle curve; the others from edge to edge, straight
+    let ax, ay, bx, by; if (f === 'haus'){ ax = a.x; ay = a.y + 8; bx = b.x; by = b.y + 8; }
+    else { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, k = f === 'feld' ? .92 : .75, oy = f === 'feld' ? 0 : 4;
+      ax = a.x + ux * wa * k; ay = a.y + uy * wa * k * .6 + oy; bx = b.x - ux * wb * k; by = b.y - uy * wb * k * .6 + oy; }
+    const n = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay) / STEP[f])), bend = f === 'haus' ? 2.5 : 0, ang = Math.atan2(by - ay, bx - ax);
+    for (let k = f === 'feld' ? 0 : 1; k < (f === 'feld' ? n + 1 : n); k++){ const t = k / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t + Math.sin(t * Math.PI) * bend; if (hofFree(I, x, y, f === 'feld' ? .9 : 1.6, null, false, skip)) stones.push({x, y, t, ang}); }
+    // the line, only between houses side by side: from a peg in one wall to a peg in the other, not over a third building
+    let line = null;
+    if (f === 'haus'){ const L = {x1:a.x + wa * .8 + 1.6, y1:a.y - 5, x2:b.x - wb * .8 - 1.6, y2:b.y - 5, w1:{x:a.x + wa * .8, y:a.y - 5}, w2:{x:b.x - wb * .8, y:b.y - 5}};
+      if (Math.abs(b.x - a.x) > Math.abs(b.y - a.y) * 1.1 && L.x2 - L.x1 > 4 && [.3, .5, .7].every(t => hofFree(I, L.x1 + (L.x2 - L.x1) * t, L.y1 + (L.y2 - L.y1) * t + 9, 1, null, false, skip))) line = L; }
+    if (stones.length < (f === 'feld' ? 3 : 1) && !line) continue;
     deg.set(a0, (deg.get(a0) || 0) + 1); deg.set(b0, (deg.get(b0) || 0) + 1);
-    links.push({key:a.id + '-' + b.id, a, b, stones, line, seed:(a.id * 7 + b.id * 13) % 97});
+    links.push({key:a.id + '-' + b.id, a, b, fam:f, stones, line, seed:(a.id * 7 + b.id * 13) % 97});
   }
   // a link that is new while the game runs grows in; the ones there at the start are simply there
   const seen = I._lkSeen || (I._lkSeen = new Map()), first = !I._lkInit; I._lkInit = true;
@@ -161,20 +180,36 @@ function drawYards(c, I){
     c.strokeStyle = 'rgba(176,150,100,.55)'; c.lineWidth = .35; c.beginPath();
     for (let i = -2; i <= 2; i++){ const yy = s.y + i * s.ry * .36, w = s.rx * Math.sqrt(Math.max(0, 1 - (i * .36) ** 2)) * .7; c.moveTo(s.x - w, yy); c.quadraticCurveTo(s.x, yy + .8, s.x + w, yy); } c.stroke();
   }
-  for (const L of P.links) if (hofGrow(I, L) >= 1) for (const s of L.stones) drawHofStone(c, s, L.seed);
+  for (const L of P.links) if (hofGrow(I, L) >= 1) for (const s of L.stones) drawHofStone(c, s, L.seed, 1, 1, 1, L.fam);
   for (const q of [...P.items].sort((a, b) => a.y - b.y)) drawHofPlant(c, q);
 }
 /* The joining is meant to be watched, like a small toy: soft, springy, with a sound for each step.
-   0 – .38  the stones drop in one after the other, squash on landing, spring back, a puff of dust, a "plop" each, a little higher
-   .38 – .58 the line is drawn across from eave to eave, then pulled taut: it twangs and swings out
+   0 – .38  the stones (clods, shell, planks) drop in one after the other, squash on landing, spring back, a puff of dust,
+            a "plop" each, a little higher
+   .34 – .45 houses: a peg pops out of each wall; the line is knotted to the first, carried across, knotted to the second
+   .56      pulled taut: it twangs and swings out
    .62 – .92 the cloths and the blossoms drop onto it one by one and bounce on their strings, a soft tick each
    .95      a last bright note */
 const HOF_GROW = 3600;
 const hofGrow = (I, L) => { const t0 = I._lkSeen && I._lkSeen.get(L.key); return t0 == null ? 1 : clamp((performance.now() - t0) / HOF_GROW, 0, 1); };
 const springy = f => f >= 1 ? 1 : 1 - Math.cos(f * Math.PI * 3) * Math.exp(-f * 5.2);   // overshoots, settles
 const hofPhase = (g, i, n, from, to) => clamp(((g - from) / (to - from)) * n - i, 0, 1);   // the share of step i of n in a span
-function drawHofStone(c, s, seed, k = 1, sx = 1, sy = 1){
-  const r = 1.7 * k, j = ((s.t * 31 + seed) % 7) / 7;
+function drawHofStone(c, s, seed, k = 1, sx = 1, sy = 1, fam = 'haus'){
+  const j = ((s.t * 31 + seed) % 7) / 7;
+  if (fam === 'feld'){   // a clod of the earth bank: brown, round, a tuft of grass on some
+    const r = 1.25 * k; c.fillStyle = 'rgba(43,29,20,.18)'; c.beginPath(); c.ellipse(s.x + .3, s.y + .45, r * 1.2 * sx, r * .55, 0, 0, TAU); c.fill();
+    c.fillStyle = j < .5 ? '#7A5434' : '#8A6440'; c.strokeStyle = '#3B2618'; c.lineWidth = .3; c.beginPath(); c.ellipse(s.x, s.y - (sy - 1) * r * .5, r * 1.15 * sx, r * .7 * sy, 0, 0, TAU); c.fill(); c.stroke();
+    if (j > .6 && k === 1){ c.strokeStyle = '#6E9A48'; c.lineWidth = .35; c.beginPath(); c.moveTo(s.x - .3, s.y - .4); c.lineTo(s.x - .6, s.y - 1.4); c.moveTo(s.x + .2, s.y - .4); c.lineTo(s.x + .5, s.y - 1.3); c.stroke(); }
+    return; }
+  if (fam === 'werk'){   // a handful of crushed shell, white
+    const r = 1.1 * k; for (let q = 0; q < 3; q++){ const ox = (q - 1) * 1.1 * sx, oy = ((q * 7 + seed) % 3 - 1) * .45; c.fillStyle = q % 2 ? '#F1EADA' : '#E2D8C2'; c.strokeStyle = 'rgba(90,74,56,.55)'; c.lineWidth = .25; c.beginPath(); c.ellipse(s.x + ox, s.y + oy - (sy - 1) * r * .4, r * .62 * sx, r * .42 * sy, j, 0, TAU); c.fill(); c.stroke(); }
+    return; }
+  if (fam === 'see'){   // a plank laid across the way
+    const r = 1.6 * k; c.save(); c.translate(s.x, s.y); c.rotate((s.ang || 0) + Math.PI / 2); c.scale(sx, sy);
+    c.fillStyle = 'rgba(43,29,20,.18)'; c.fillRect(-r * 1.4 + .3, -r * .38 + .4, r * 2.8, r * .76);
+    c.fillStyle = j < .5 ? '#B08048' : '#A0723E'; c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.rect(-r * 1.4, -r * .38, r * 2.8, r * .76); c.fill(); c.stroke();
+    c.strokeStyle = 'rgba(43,29,20,.4)'; c.beginPath(); c.moveTo(-r, 0); c.lineTo(r, 0); c.stroke(); c.restore(); return; }
+  const r = 1.7 * k;
   c.fillStyle = 'rgba(43,29,20,.16)'; c.beginPath(); c.ellipse(s.x + .4, s.y + .5, r * 1.15 * sx, r * .62, 0, 0, TAU); c.fill();
   c.fillStyle = j < .5 ? '#C9C0AA' : '#B8AE98'; c.strokeStyle = '#5A4A38'; c.lineWidth = .35; c.beginPath(); c.ellipse(s.x, s.y - (sy - 1) * r * .5, r * (1 + j * .25) * sx, r * .55 * sy, j - .5, 0, TAU); c.fill(); c.stroke();
   if (k === 1 && sx === 1){ c.fillStyle = 'rgba(255,250,235,.45)'; c.beginPath(); c.ellipse(s.x - r * .3, s.y - r * .2, r * .45, r * .18, j - .5, 0, TAU); c.fill(); }   // a glint of wet stone
@@ -196,12 +231,12 @@ function drawHofLinks(c, v, now){
       if (g < 1){
         const n = L.stones.length;
         L.stones.forEach((s, i) => { const f = hofPhase(g, i, n, 0, .38); if (f <= 0) return;
-          if (f >= 1){ drawHofStone(c, s, L.seed); return; }
+          if (f >= 1){ drawHofStone(c, s, L.seed, 1, 1, 1, L.fam); return; }
           // drops from a little above, lands at 40 %, squashes flat, springs up round, settles
-          if (f < .4){ const q = f / .4, y = -7 * (1 - q * q); c.save(); c.translate(0, y); c.globalAlpha = .4 + .6 * q; drawHofStone(c, s, L.seed, .9, .85, 1.25); c.restore(); return; }
-          hofSound(I, L, 's' + i, 'pop', i);
+          if (f < .4){ const q = f / .4, y = -7 * (1 - q * q); c.save(); c.translate(0, y); c.globalAlpha = .4 + .6 * q; drawHofStone(c, s, L.seed, .9, .85, 1.25, L.fam); c.restore(); return; }
+          hofSound(I, L, 's' + i, 'pop', L.fam === 'feld' ? Math.floor(i / 2) - 3 : L.fam === 'see' ? i - 1 : i);
           const q = (f - .4) / .6, e = springy(q), sq = (1 - e) * .55;
-          drawHofStone(c, s, L.seed, 1, 1 + sq, 1 - sq * .8);
+          drawHofStone(c, s, L.seed, 1, 1 + sq, 1 - sq * .8, L.fam);
           // a puff of dust running out from under it
           c.save(); c.globalAlpha = (1 - q) * .55; c.strokeStyle = '#E8DCC0'; c.lineWidth = .5; c.beginPath(); c.ellipse(s.x, s.y + .3, 2 + q * 4.5, .9 + q * 1.8, 0, 0, TAU); c.stroke();
           for (let k = 0; k < 3; k++){ const a = (k / 3) * TAU + L.seed; c.fillStyle = '#E8DCC0'; c.beginPath(); c.arc(s.x + Math.cos(a) * (2 + q * 5), s.y - q * 2 + Math.sin(a) * (1 + q * 2), .45 * (1 - q), 0, TAU); c.fill(); }
@@ -210,19 +245,17 @@ function drawHofLinks(c, v, now){
       }
       if (g >= 1 && I._lkSeen.get(L.key) > 0){ I._lkSeen.set(L.key, -1e9); invalidate(); }   // done: the stones go down into the ground layer
       const Q = L.line; if (!Q) continue;
-      // the two poles spring up out of the ground, one after the other, each with a plop
-      const pole = (P, f, side) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), h = 8 * e, lean = (1 - e) * side * .25;
-        c.save(); c.translate(P.x, P.y); c.rotate(lean); c.lineCap = 'round';
-        if (f < 1){ c.globalAlpha = (1 - f) * .5; c.strokeStyle = '#E8DCC0'; c.lineWidth = .45; c.beginPath(); c.ellipse(0, .3, 1.5 + f * 3, .7 + f * 1.2, 0, 0, TAU); c.stroke(); c.globalAlpha = 1; }
-        c.fillStyle = 'rgba(43,29,20,.2)'; c.beginPath(); c.ellipse(.5, .4, 1.4, .5, 0, 0, TAU); c.fill();
-        c.lineCap = 'butt'; c.lineJoin = 'round';
-        const fork = () => { c.beginPath(); c.moveTo(0, .2); c.lineTo(0, -h * .82); c.lineTo(-.9, -h); c.moveTo(0, -h * .82); c.lineTo(.9, -h); c.stroke(); };
-        c.strokeStyle = '#2B1D14'; c.lineWidth = .95; fork(); c.strokeStyle = '#9C6A40'; c.lineWidth = .45; fork();
+      // the anchors: a wooden peg pushed out of each wall, bound round with sennit; each pops out in turn
+      const peg = (W, f, side) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), len = 1.9 * e;
+        c.save(); c.translate(W.x, W.y); c.scale(side, 1); c.lineCap = 'round';
+        c.strokeStyle = '#2B1D14'; c.lineWidth = 1.15; c.beginPath(); c.moveTo(-.4, 0); c.lineTo(len, 0); c.stroke();
+        c.strokeStyle = '#9C6A40'; c.lineWidth = .6; c.beginPath(); c.moveTo(-.2, 0); c.lineTo(len, 0); c.stroke();
+        c.strokeStyle = '#D9B87A'; c.lineWidth = .3; c.beginPath(); for (let k = 0; k < 3; k++){ const x = -.1 + k * .42; c.moveTo(x, -.55); c.lineTo(x + .3, .55); } c.stroke();   // the binding
         c.restore(); };
-      const pf1 = g >= 1 ? 1 : clamp((g - .34) / .08, 0, 1), pf2 = g >= 1 ? 1 : clamp((g - .38) / .08, 0, 1);
-      if (pf1 > .35) hofSound(I, L, 'p1', 'pop', 6); if (pf2 > .35) hofSound(I, L, 'p2', 'pop', 7);
-      pole(Q.p1, pf1, -1); pole(Q.p2, pf2, 1);
-      const lf = clamp((g - .42) / .14, 0, 1); if (lf <= 0) continue;   // the line: carried across from one pole to the other
+      const pf1 = g >= 1 ? 1 : clamp((g - .34) / .07, 0, 1), pf2 = g >= 1 ? 1 : clamp((g - .38) / .07, 0, 1);
+      if (pf1 > .3) hofSound(I, L, 'p1', 'tick', -4); if (pf2 > .3) hofSound(I, L, 'p2', 'tick', -2);
+      peg(Q.w1, pf1, 1); peg(Q.w2, pf2, -1);
+      const lf = clamp((g - .42) / .14, 0, 1); if (lf <= 0) continue;   // the line: carried across from one peg to the other
       // pulled taut at the end: it twangs, sags deep and swings out, smaller and smaller
       const tq = clamp((g - .56) / .25, 0, 1), twang = g >= .56 && g < 1 ? Math.cos(tq * Math.PI * 5) * Math.exp(-tq * 4.5) * 2.6 : 0;
       if (g >= .56) hofSound(I, L, 'line', 'twang', 0);
@@ -231,7 +264,7 @@ function drawHofLinks(c, v, now){
       const p = new Path2D(); const e = pt(0); p.moveTo(e.x, e.y); for (let t = .08; t <= lf + 1e-6; t += .08){ const q = pt(Math.min(t, lf)); p.lineTo(q.x, q.y); } { const q = pt(lf); p.lineTo(q.x, q.y); }
       stroke(c, p, '#2B1D14', .9); stroke(c, p, '#C9A46A', .45);
       if (lf < 1){ const q = pt(lf); c.fillStyle = '#C9A46A'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.arc(q.x, q.y, .9, 0, TAU); c.fill(); c.stroke(); }   // the end of the line in a hand, travelling across
-      // the knots: tied at the first pole as the line sets off, at the second when it arrives; each pulls tight with a pop
+      // the knots: tied at the first peg as the line sets off, at the second when it arrives; each pulls tight with a pop
       const knot = (q, f) => { if (f <= 0) return; const e = f >= 1 ? 1 : springy(f), r = .95 * e * (1 + (1 - e) * .6); c.fillStyle = '#B08048'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.ellipse(q.x, q.y, r * 1.15, r, 0, 0, TAU); c.fill(); c.stroke(); c.beginPath(); c.moveTo(q.x - r * .5, q.y - r * .3); c.lineTo(q.x + r * .5, q.y + r * .3); c.stroke(); };
       const k1 = g >= 1 ? 1 : clamp((g - .42) / .06, 0, 1), k2 = g >= 1 ? 1 : clamp((g - .56) / .06, 0, 1);
       if (k1 > .3) hofSound(I, L, 'k1', 'tick', 0); if (k2 > .3) hofSound(I, L, 'k2', 'tick', 2);
