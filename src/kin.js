@@ -208,7 +208,7 @@ function eldersTick(I, force = false){
   if (!c){ I.ask = null; return; }
   if (a && a.k === c.k){ a.why = c.why; if (a.no && a.no <= tick) delete a.no; return; }   // the same request stands; a "no" that has run out asks again
   I.ask = {k:c.k, why:c.why, at:tick};
-  if (!awayQuiet) toast(`Die Leute von ${I.name} fragen: ${askName(c.k)}? ${c.why}. Tippe auf die gelbe Blase.`, 4200); else hush(`Bitte aus ${I.name}: ${askName(c.k)}. ${c.why}.`);
+  if (!awayQuiet && calmOk(1)){ calmMark(); toast(`Die Leute von ${I.name} fragen: ${askName(c.k)}? ${c.why}. Tippe auf die gelbe Blase.`, 4200); } else hush(`Bitte aus ${I.name}: ${askName(c.k)}. ${c.why}.`);
 }
 /* the answer: "Ja" does what the elders would have done; "Nein" holds the request back for a day */
 function askYes(I){
@@ -417,7 +417,7 @@ function drawPalmDrops(now){
    drum, a dance place, a feast, more free time. I.wish = {k, f, at, until, n}. It shows as a bubble over the house of that
    family and as a line in its sheet. Met within two days, the family is content for three days more (SAT.wish, satOf) and
    one of them has it in their story. Not met, it simply fades: no penalty. */
-const WISH = {first:[180, 300], gap:[180, 300], life:360, joy:540, kinds:['hibiskus', 'blumen', 'fackel', 'trommel', 'tanzplatz', 'pfosten']};
+const WISH = {first:[300, 450], gap:[450, 600], life:360, joy:540, kinds:['hibiskus', 'blumen', 'fackel', 'trommel', 'tanzplatz', 'pfosten']};
 const WISH_TXT = {blumen:'ein Blumenbeet', hibiskus:'Hibiskus', fackel:'eine Fackel', trommel:'eine Trommel', tanzplatz:'einen Tanzplatz', pfosten:'einen Ahnenpfosten', feast:'ein Fest', zeit:'mehr Freizeit'};
 const wishBtn = k => k === 'feast' ? 'Feiern' : k === 'zeit' ? 'Ja, Freizeit' : 'Bauen';
 const wishRand = (I, a, b, salt = 0) => Math.floor(a + rng((seed + tick * 7919 + I.pop * 31 + salt) >>> 0)() * (b - a + 1));
@@ -451,6 +451,7 @@ function wishTick(I){
   }
   if (I.wishAt == null){ I.wishAt = tick + wishRand(I, WISH.first[0], WISH.first[1]); return; }
   if (tick < I.wishAt) return;
+  if (wishOpen() || !calmOk(1)){ I.wishAt = tick + 60; return; }   // one personal wish at a time across all villages
   const n = wishPick(I); if (!n){ I.wishAt = tick + 60; return; }
   I.wish = n; const f = famOf(I, n.f); hush(`${famName(f)} auf ${I.name} wünscht sich ${WISH_TXT[n.k]}.`);
 }

@@ -128,7 +128,7 @@ function voyageFollow(o){
 function voyageTick(){
   if (eventNow || sheetKind || placing || tick < (stats.voyAt || 0)) return;
   const s = own().find(q => q.state === 'sail' && (q.auto || (q.dest && !q.dest.isl))); if (!s){ stats.voyAt = tick + 20; return; }
-  stats.voyAt = tick + 150 + Math.floor(Math.random() * 120);
+  if (!calmOk(2)){ stats.voyAt = tick + 30; return; } calmMark(); stats.voyAt = tick + 150 + Math.floor(Math.random() * 120);
   const T = islands.filter(I => !I.discovered).sort((a, b) => Math.hypot(a.center.x - s.x, a.center.y - s.y) - Math.hypot(b.center.x - s.x, b.center.y - s.y))[0];
   const near = T && Math.hypot(T.center.x - s.x, T.center.y - s.y) < 1400 ? T : null, d = near ? dirName(near.center.x - s.x, near.center.y - s.y) : DIR_N[Math.floor(Math.random() * 8)];
   eventNow = {E:VOYAGE, o:{s, T:near, lvl:Math.min(3, navLore().lvl || 0), sign:pickOf(SIGNS)(d)}}; stats.ereignisse++; sfx('horn'); openSheet('event', {});
@@ -148,13 +148,13 @@ function crisisTick(){
     const I = pickOf(villages().filter(q => q.pop >= 10)); if (!I){ stats.crisisAt = tick + 120; return; }
     const k = seasonOf().id === 'sturm' ? 'flut' : seasonOf().id === 'mager' ? 'duerre' : pickOf(Object.keys(CRISES));
     stats.crisis = {k, isl:I.id, at:tick + CRISIS_WARN}; stats.crisis.need = crisisNeed(I, stats.crisis);
-    if (!awayQuiet){ sfx('horn'); toast(`${CRISES[k].warn(I)} Legt Vorräte an: ${costText(stats.crisis.need)}.`, 7000); } note(CRISES[k].warn(I)); crisisCard(); kinHelp(I, k); return; }
+    calmMark(); if (!awayQuiet){ sfx('horn'); toast(`${CRISES[k].warn(I)} Legt Vorräte an: ${costText(stats.crisis.need)}.`, 7000); } note(CRISES[k].warn(I)); crisisCard(); kinHelp(I, k); return; }
   const I = isl(C.isl); if (!I || !I.settled){ stats.crisis = null; crisisCard(); return; }
   if (tick % 2 === 0) crisisCard();
   if (tick < C.at) return;
   const K = CRISES[C.k], have = Object.entries(C.need).map(([g, n]) => Math.min(1, (I.stock[g] || 0) / n)), share = have.reduce((a, b) => a + b, 0) / have.length;
   for (const [g, n] of Object.entries(C.need)) I.stock[g] = Math.max(0, (I.stock[g] || 0) - Math.round(n * (share >= 1 ? .5 : .8)));   // the reserves are used up; ready, half of them stay
-  stats.crisis = null; stats.crisisAt = tick + 600 + Math.floor(Math.random() * 360); crisisCard();
+  stats.crisis = null; stats.crisisAt = tick + 1350 + Math.floor(Math.random() * 450); crisisCard();
   if (share >= 1){ stats.krisen = (stats.krisen || 0) + 1; mana += 4;
     if (!awayQuiet) rewardPop({ic:K.ic, rare:2, kicker:'Überstanden', title:`${K.n} überstanden`, text:`${I.name} hatte genug Vorräte. Das Dorf feiert.`, gain:4});
     setTimeout(() => gainFind(rollFind(['ahnen', 'land'], 1), 'Beim Fest geschenkt.'), awayQuiet ? 0 : 5200); }
@@ -190,13 +190,13 @@ const DREAMS = {
 function dreamTick(){
   const L = stats.dreams || (stats.dreams = []);
   for (const d of L){ if (d.done) continue; const I = isl(d.isl), p = I && I.people && I.people.find(q => q.id === d.pid);
-    if (!p || tick > d.at + 3600){ d.done = -1; continue; }   // moved away, grown old, or dreamt long enough: it fades, no penalty
+    if (!p || tick > d.at + 900){ d.done = -1; continue; }   // since version 118 a dream lasts half an hour, then the place is free for the next wish   // moved away, grown old, or dreamt long enough: it fades, no penalty
     if (DREAMS[d.k].ok(p, I, d)){ d.done = tick; stats.traeume = (stats.traeume || 0) + 1; mana += 3;
       if (!awayQuiet) rewardPop({ic:DREAMS[d.k].ic, rare:2, kicker:'Wunsch erfüllt', title:p.n, text:`${p.n} auf ${I.name}: ${DREAMS[d.k].done}`, gain:3});
       lifeEvent(p, 'wunsch', DREAMS[d.k].n);
       if (Math.random() < .45) setTimeout(() => gainFind(rollFind(['ahnen']), `Geschenk der Familie von ${p.n}.`), awayQuiet ? 0 : 5200); } }
   for (let i = L.length - 1; i >= 0; i--) if (L[i].done && tick - Math.abs(L[i].done) > 600) L.splice(i, 1);
-  if (tick < (stats.dreamAt ?? YEAR)) return; stats.dreamAt = tick + 240 + Math.floor(Math.random() * 180);
+  if (tick < (stats.dreamAt ?? YEAR)) return; if (wishOpen() || !calmOk(1)){ stats.dreamAt = tick + 60; return; } stats.dreamAt = tick + 600 + Math.floor(Math.random() * 300);
   const I = pickOf(villages().filter(q => q.people && q.people.length >= 6 && L.filter(d => !d.done && d.isl === q.id).length < 2)); if (!I) return;
   const busy = new Set(L.filter(d => !d.done).map(d => d.pid)), adults = I.people.filter(p => isAdult(p) && !busy.has(p.id)); if (!adults.length) return;
   const p = pickOf(adults), ks = Object.keys(DREAMS).filter(k => !DREAMS[k].ok(p, I, {at:tick, n:I.buildings.filter(b => (b.kind === 'pfosten' || b.kind === 'ahnenhaus') && !b.bt).length}) && (k !== 'tatau' || ageOf(p) < 30));
@@ -214,6 +214,14 @@ function clanFavor(T){
     setTimeout(() => gainFind(id, `Geschenk vom ${C.name || 'Clan'} für eure Gaben.`), awayQuiet ? 0 : 1500); }
 }
 
+/* ---------- calm (version 118): at most one thing interrupts the player every four minutes. A crisis always may (3);
+   a clan, a choice or a sign at sea (2) waits for the calm; a family (1) and a sight (0) wait a little longer. Whatever has
+   to wait simply comes a little later; nothing is lost. */
+let calmAt = -1e9; const CALM = 120;
+const calmOk = (prio = 2) => prio >= 3 || tick - calmAt >= CALM * (prio >= 2 ? 1 : prio === 1 ? 1.25 : 1.5);
+const calmMark = () => { calmAt = tick; };
+/* one personal wish at a time across all villages: a dream of a person and the wish of a family share the same place */
+const wishOpen = () => islands.some(I => I.settled && I.wish) || (stats.dreams || []).some(d => !d.done);
 /* ---------- 5. rare sights: now and then something to see on the island you look at; tap it before it is gone */
 let sights = [];
 const SIGHT_POOL = ['wal', 'schildkroete', 'fregatt', 'regenbogen', 'sternschnuppe', 'mondhof', 'leuchtsee', 'plejaden', 'treibstamm', 'kauri', 'quelle', 'kurkuma', 'tritonhorn'];
@@ -221,7 +229,7 @@ function sightTick(){
   sights = sights.filter(q => q.until > tick);
   if (awayQuiet || catching || lod === 'far' || sights.length || tick < (stats.sightAt ?? 200)) return;
   const I = isl(active); if (!I || !I.settled || !I.lands || !I.lands.length) return;
-  stats.sightAt = tick + 120 + Math.floor(Math.random() * 120);
+  if (!calmOk(0)){ stats.sightAt = tick + 30; return; } stats.sightAt = tick + 300 + Math.floor(Math.random() * 150);
   const L = pickOf(I.lands).poly, v = pickOf(L), c = I.center, d = Math.hypot(c.x - v.x, c.y - v.y) || 1, off = Math.random() < .5 ? -10 : 14;
   sights.push({isl:I.id, x:v.x + (v.x - c.x) / d * off, y:v.y + (v.y - c.y) / d * off, find:pickOf(SIGHT_POOL), until:tick + 45});
 }

@@ -536,6 +536,7 @@ const r = await p.evaluate(()=>{
       { const W = isl('heimat'); const keepK = {s:{...W.stock}, ask:W.ask, wish:W.wish, wishAt:W.wishAt, ok:W.wishOk, zeal:W.zeal}; Object.assign(W.stock, {holz:30, dach:30, schnur:10});
         for (const bq of W.buildings.filter(q => q.bt)) delete bq.bt; W.staff = null; W.wish = null; W.wishOk = undefined; W.zeal = 1;
         for (const k of WISH.kinds) if (!unlocked(k)) { /* only what is unlocked is wished */ }
+        calmAt = -1e9; for (const d of stats.dreams || []) if (!d.done) d.done = -1; for (const J of islands) if (J !== W) J.wish = null;   // since 118: one wish at a time, and only after the calm
         W.wishAt = tick - 1; wishTick(W); want(W.wish && famOf(W, W.wish.f) && WISH_TXT[W.wish.k] && W.wish.until > tick, `wish: none appears (${JSON.stringify(W.wish)})`);
         if (W.wish){ const w0 = W.wish; if (WISH.kinds.includes(w0.k)) want(unlocked(w0.k), 'wish: something not unlocked'); wishTick(W); want(W.wish === w0, 'wish: a second one while one is open');
           // the house sheet shows the line with its button

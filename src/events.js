@@ -152,14 +152,15 @@ function leaderSays(T, words){
 function eventTick(){
   if (eventNow || tick < nextEvent || tick < YEAR || quest < QUESTS.findIndex(Q => Q.id === 'ausleger')) return;   // the first year is calm
   if (sheetKind || placing){ nextEvent = tick + 5; return; }
+  if (!calmOk(2)){ nextEvent = tick + 30; return; }   // something else spoke a moment ago: this waits for the calm
   const ok = EVENTS.filter(E => E.id !== lastEvent).map(E => [E, E.when()]).filter(([, o]) => o);
-  nextEvent = tick + 360 + Math.floor(Math.random() * 180);   // every 12 to 18 minutes: time to see what happens, and calm between
+  nextEvent = tick + 600 + Math.floor(Math.random() * 300);   // every 20 to 30 minutes (since version 118): time to see what happens, and calm between
   if (!ok.length) return;
   // in the storm season a cyclone comes more often than anything else
   const storm = ok.find(([E]) => E.id === 'sturm'), [E, o] = storm && Math.random() < .55 ? storm : pickOf(ok); lastEvent = E.id; eventNow = {E, o}; stats.ereignisse++;
   const I = E.place ? E.place(o) : o; setActive(I.id);
   if (E.id === 'sturm') cycloneStart(I, 8);   // the sky darkens as the warning comes
-  sfx('horn'); openSheet('event', {});
+  calmMark(); sfx('horn'); openSheet('event', {});
 }
 function eventMarkup(){
   const {E, o} = eventNow, I = E.place ? E.place(o) : o;
