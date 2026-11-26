@@ -38,7 +38,7 @@ function measure(){
   { const T = $('toast'), nb = $('newsBtn'), cx = nb.offsetParent ? nb.getBoundingClientRect().left + nb.offsetWidth / 2 - hb.offsetLeft : hb.offsetWidth * .7;
     T.style.top = (topH + 10) + 'px'; T.style.setProperty('--tx', hb.offsetLeft + 'px'); T.style.setProperty('--tw', hb.offsetWidth + 'px'); T.style.setProperty('--cx', Math.round(cx) + 'px'); }
   $('newsList').style.top = (topH + 6) + 'px'; $('newsList').style.maxHeight = Math.max(160, vh - topH - 6 - botH - 16) + 'px';
-  $('quest').style.bottom = (botH + 8) + 'px'; { const k = $('qknot'); if (k) k.style.bottom = (botH + 8) + 'px'; } renderQuest();
+  $('quest').style.bottom = (botH + 8) + 'px'; { const k = $('qknot'); if (k) k.style.bottom = (botH + 8) + 'px'; const o = $('overBtn'); if (o) o.style.bottom = (botH + 66) + 'px'; } renderQuest();
   if (!$('quest').hidden) botH += $('quest').offsetHeight + 8;   // the task card covers the map too
 }
 const zMin = () => clamp(Math.min(vw / (W * 1.05), vh / (H * .9)), .1, .4), zMax = 4.5;
@@ -51,6 +51,15 @@ function clampCam(){
   cam.x = W + 2 * mx < hw * 2 ? W / 2 : clamp(cam.x, hw - mx, W - hw + mx);
   cam.y = H + 2 * my < hh * 2 ? H / 2 : clamp(cam.y, hh - my, H - hh + my);
 }
+/* The minus (version 118): all known islands at a glance; pressed again (now a plus), back to where you were. While a canoe
+   is steered a tap on an island sends it there; otherwise a tap on an island flies into its close view. */
+let overCam = null;
+function overview(on = !overCam){
+  if (!on){ const b = overCam; overCam = null; overLabel(); if (b){ camAnim = null; flyTo(b.x, b.y, b.z); } return; }
+  overCam = {x:cam.x, y:cam.y, z:cam.z}; const list = islands.filter(I => I.discovered || I.settled);
+  if (list.length) fitBox(boxOf(list), .9); overLabel();
+}
+function overLabel(){ const o = $('overBtn'); if (!o) return; o.querySelector('b').textContent = overCam ? '+' : '−'; o.setAttribute('aria-label', overCam ? 'Zurück zur Nahansicht' : 'Alle Inseln zeigen'); }
 function applyCam(){ lod = cam.z < .55 ? 'far' : cam.z < 1.3 ? 'mid' : 'near'; lastCamMove = performance.now(); needDraw = true; followView(); }
 /* Close up, the island you look at is the one you build on: zoom in, build, zoom out, zoom in on the next */
 function followView(){
@@ -2325,8 +2334,38 @@ function drawGhost(c){
   sketch(c, placing.x, placing.y + 1, r, r * .45, 7, ok ? '#3E7A3A' : '#A84A2C', 2.2);
   drawBuilding(c, {kind:placing.kind, x:placing.x, y:placing.y, v:placing.v, born:tick}, isl(placing.island), .78);
 }
+/* Goods you can see (version 118): on a canoe small bundles of what it carries; at the landing of a village baskets with
+   what waits there for the next canoe of a trade route, each with the picture of its good */
+const CARGO_C = {holz:'#9C7246', matten:'#DCC48C', feinmatten:'#E8D9A8', toepfe:'#A86A3A', kumete:'#8C5C36', kokos:'#7A5634', nahrung:'#6E9A3E', fisch:'#8FA9B0', meeres:'#C98A6A', schnur:'#B88A55', faser:'#C2A274', dach:'#C9A86A', oel:'#E0B850', tapa:'#E8DCC0', beile:'#6E6A62', klingen:'#3A3A44', proviant:'#8C6A42', schweine:'#C88A7A', steine:'#8E8A80'};
+function cargoBundles(c, s, y = -1.3){
+  const e = Object.entries(s.cargo || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 3); if (!e.length) return;
+  e.forEach(([k], i) => { const x = (i - (e.length - 1) / 2) * 2.1; c.fillStyle = CARGO_C[k] || '#C2A274'; c.strokeStyle = '#2B1D14'; c.lineWidth = .3;
+    c.beginPath(); c.roundRect ? c.roundRect(x - 1, y - 1.5, 2, 1.6, .5) : c.rect(x - 1, y - 1.5, 2, 1.6); c.fill(); c.stroke(); c.beginPath(); c.moveTo(x, y - 1.5); c.lineTo(x, y + .1); c.strokeStyle = 'rgba(43,29,20,.45)'; c.stroke(); });
+}
+function landingOf(I){
+  if (I._land && I._land.n === I.buildings.length) return I._land;
+  const st = I.buildings.find(b => b.kind === 'steg' && !b.bt), p = st ? {x:st.x - 4, y:st.y - 3} : dryNear(I, I.harbor);
+  return I._land = {x:p.x, y:p.y, n:I.buildings.length};
+}
+function drawDockGoods(c, v){
+  if (lod === 'far') return;
+  for (const I of islands){
+    if (!I.settled || !boxIn(I.box, v)) continue;
+    const wait = [];
+    routes.forEach((r, ri) => { const side = r.a === I.id ? 'a' : r.b === I.id ? 'b' : ''; if (!side || !ships.some(s => s.own && s.route === ri)) return;
+      for (const [k, n] of Object.entries((r.plan || {})[side] || {})) if (n > 0 && (I.stock[k] || 0) > routeKeep(r, side, k) && !wait.includes(k)) wait.push(k); });
+    if (!wait.length) continue;
+    const L = landingOf(I);
+    wait.slice(0, 3).forEach((k, i) => { const x = L.x + (i - 1) * 6.4, y = L.y + (i % 2) * 1.2;
+      c.fillStyle = '#1F140D'; c.globalAlpha = .18; c.beginPath(); c.ellipse(x + .6, y + .4, 3.2, 1, 0, 0, TAU); c.fill(); c.globalAlpha = 1;
+      c.fillStyle = '#C9A86A'; c.strokeStyle = '#2B1D14'; c.lineWidth = .5; c.beginPath(); c.moveTo(x - 2.8, y - 3.6); c.lineTo(x + 2.8, y - 3.6); c.lineTo(x + 2.2, y); c.lineTo(x - 2.2, y); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#9C7246'; c.lineWidth = .35; c.beginPath(); c.moveTo(x - 2.5, y - 2.4); c.lineTo(x + 2.5, y - 2.4); c.moveTo(x - 2.3, y - 1.2); c.lineTo(x + 2.3, y - 1.2); c.stroke();
+      if (cam.z > 1.1) put(c, x, y - 4, .3, 1, 0, 'ic-' + k, `<use href="#ic-${k}" transform="translate(-10 -20)"/>`); });
+  }
+}
 function drawTop(c, now){
   const v = view(120), far = lod === 'far', ks = far ? clamp(.6 / cam.z, 1, 2.4) : 1;
+  drawDockGoods(c, v);
   // the steered canoe: a ring around it and the way it still has to go
   const S = selShip && ships.includes(selShip) ? selShip : null;
   if (S && S.state === 'sail' && S.pi < S.path.length){
@@ -2366,7 +2405,7 @@ function drawTop(c, now){
     // the swell rocks the canoe, it heels in a turn
     c.save(); if (!reduced && !far){ c.rotate(Math.sin(now / 820 + s.id) * (s.state === 'sail' ? .03 : .015) + (s.state === 'sail' ? (s.heel || 0) + windHeel(s, now) : 0)); if (quality) canoeSwell(c, s, now); }
     const crew = !far && cam.z > .45 && !s.race;   // close enough to see who is aboard
-    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); if (!far && !reduced && quality && s.state === 'sail') floatWash(c, s, now);
+    if (s.kind === 'oc'){ c.scale(1.3, 1.3); if ((s.face || (s.hx < 0 ? -1 : 1)) < 0) c.scale(-1, 1); blit(c, 'oc', '<use href="#oc"/>'); if (!far && !reduced && quality && s.state === 'sail') floatWash(c, s, now); if (!far && cam.z > .7) cargoBundles(c, s);
       // two paddlers in the hull of the outrigger canoe
       if (crew) for (let k = 0; k < 2; k++){ const px = k ? 4.6 : -4.4; seatedFig(c, crewLook(s, k), false, px, -.9, .82); if (s.state === 'sail') paddleStroke(c, px, -.9, .82, now, s.id + k * 1.7); } }
     else { const up = s.up ?? s.hy < 0, left = (s.face || (s.hx < 0 ? -1 : 1)) < 0; if (up ? left : !left) c.scale(-1, 1); if (s.kind === 'vaka') c.scale(1.25, 1.25);   // the voyaging canoe: a bigger double canoe
@@ -2376,6 +2415,7 @@ function drawTop(c, now){
         blit(c, up ? 'dcB' : 'dcInB', up ? '<use href="#dcBase"/>' : '<use href="#dcInBase"/>');
         const a = (up ? -24 : 156) * Math.PI / 180, co = Math.cos(a), si = Math.sin(a), at = (px, py) => ({x:px * co - py * si, y:px * si + py * co});
         const spots = [[-12.6, -1.4], [-5.4, -1.2], [2.6, -1.4], [-1.4, .4], [5.2, .6]].slice(0, Math.min(5, 3 + Math.ceil((s.people || 0) / 3))).map(([px, py]) => at(px, py)).sort((p, q) => p.y - q.y);
+        if (cam.z > .7){ c.save(); c.translate(at(8.4, -.4).x, at(8.4, -.4).y); cargoBundles(c, s, 0); c.restore(); }
         spots.forEach((p, k) => { c.save(); c.translate(p.x, p.y + 1.2); c.scale(.78, .78); blit(c, 'fig|' + crewLook(s, k), () => figureArt(crewLook(s, k))); c.restore(); });
         // the mat sail fills with the wind: fuller when it blows hard, slack in a calm
         { const fill = s.state === 'sail' ? .88 + wind().str * .26 : .9, lift = sailLift(s, now), bx = up ? 2.5 : -2.5; c.save(); c.scale(fill * (.45 + .55 * lift), 1); if (lift < 1){ c.translate(bx, -3); c.scale(1, .12 + .88 * lift); c.translate(-bx, 3); }

@@ -379,3 +379,12 @@ Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
 - **Offen:** Kanus der verwandten Clans werden nicht gespeichert; lädt man während ihrer Fahrt, kommt die Hilfe nicht an
   (die Jahressperre bleibt). Anbauten am Haus können auf engen Plätzen ins Nachbarhaus ragen.
 
+## Nach Version 119
+
+- **Gebaut:** sprechender Kopf bei Clan-Bitten; Ruhe A, B, C; Handel B (Waren sichtbar); Handelsroute in drei Schritten wie
+  bei Anno; Ziele oben im Ladeblatt; Minus-Knopf für alle Inseln.
+- **Nicht gewählt:** Ruhe D (Regler) und E (nur die Insel vor dir); Handel A (Bedarf zieht Ware), C (Schnur als Bild),
+  D (Gaben als Zeremonie), E (Flotte auf der Karte), F (Tauschfest).
+- **Offen:** Der sprechende Kopf könnte auch bei Gegengaben und Gästen der Clans erscheinen. Körbe am Strand können eine
+  Palme überdecken. In der Übersicht liegt die oberste Insel manchmal halb unter der Kopfleiste.
+

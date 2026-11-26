@@ -2633,3 +2633,33 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
 - **Vermutet:** Dass verwandte Gruppen einander in der Not mit Essen beistehen, kennt man aus späteren Berichten in ganz
   Ozeanien; für die Lapita-Zeit ist es eine Annahme. Der Nebel im Osten ist ein Spielbild.
 
+## Ruhe, sprechende Älteste und Handel wie bei Anno (Version 119)
+
+- **Der Älteste spricht:** Bittet ein Clan um etwas oder wirbt um eine Braut, steht der Kopf seines Ältesten neben seinen
+  Worten. Er bewegt sich leicht, blinzelt und bewegt beim Sprechen den Mund. Die Bitte steht als wörtliche Rede da. Jeder Clan
+  hat seinen Schmuck: Feuerberg ein Band aus roter Erde und ein Eberzahn, Riff ein Band aus Kaurischnecken und eine
+  Muschelscheibe, Maulbeerhain ein Band aus Rindenbaststoff und eine Hibiskusblüte; die Alten vom Großen Land graues Haar, die
+  Seefahrer vom Nordmeer rote Punkte auf den Wangen. Name und ob ein Mann oder eine Frau spricht bleiben je Insel gleich.
+- **Ruhe:** Höchstens eine Unterbrechung alle vier Minuten. Eine Krise darf immer; Ereignisse, Clans und Zeichen auf See
+  warten auf die Ruhe; Familien und Sichtungen warten etwas länger. Was warten muss, kommt etwas später, nichts geht verloren.
+  Ereignisse kommen alle 20 bis 30 Minuten, Krisen alle 45 bis 60, Träume alle 20 bis 30, Sichtungen alle 10 bis 15, Wünsche
+  alle 15 bis 20. Über alle Dörfer gibt es nur einen offenen Wunsch zur Zeit, ob Traum einer Person oder Wunsch einer Familie;
+  ein Traum verblasst nach einer halben Stunde. Statt etwa 55 sind es nun etwa 12 bis 15 Meldungen in der Stunde.
+- **Neue Handelsroute in drei Schritten (wie bei Anno):** Im Flottenblatt „+ Neue Handelsroute“. 1. Zwei Inseln wählen (eigene
+  Dörfer und Clans, zu denen eine Schnur führt). 2. Die Waren je Richtung einstellen. 3. Die Kanus antippen, die fahren sollen.
+  „Fertig“, und die Route läuft von selbst. Zwischen zwei eigenen Dörfern entsteht die Schnur dabei sofort.
+- **Beladen und losfahren:** Im Ladeblatt stehen die nächsten Ziele jetzt oben. Ein Tipp nach dem Beladen, und das Kanu fährt.
+  „− Alle Inseln“ zeigt alle Inseln; ein Tipp auf eine davon schickt das Kanu hin.
+- **Der Minus-Knopf:** Rechts über der Leiste zeigt „−“ alle bekannten Inseln auf einen Blick. Ein Tipp auf eine Insel fliegt
+  in ihre Nahansicht; steuerst du gerade ein Kanu, fährt es dorthin. „+“ bringt dich zurück, wo du warst.
+- **Waren sieht man:** Auf einem Kanu liegen kleine Bündel in der Farbe dessen, was es trägt. Am Strand eines Dorfes stehen
+  Körbe mit dem, was auf das nächste Kanu einer Route wartet, jeder mit dem Bild seiner Ware. Das kleine Blatt eines Kanus
+  zeigt die Ladung als Bilder mit Zahlen.
+
+### Was davon belegt ist und was vermutet
+
+- **Belegt:** Obsidian, Töpfe, Muscheln und Steinbeile wanderten in der Lapita-Zeit über Hunderte Kilometer von Insel zu Insel.
+  Körbe aus Kokos- und Pandanusblättern als Behälter.
+- **Vermutet:** Dass Gaben zwischen Verwandten und Partnern statt Preisen den Tausch trugen, kennt man aus späteren
+  Tauschringen in Melanesien. Schmuck und Gesichter der Ältesten folgen späteren Bildern aus Ozeanien.
+
