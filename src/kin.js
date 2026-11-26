@@ -60,12 +60,21 @@ function immigStart(I){
   }
   return {x:I.harbor.x - 260, y:I.harbor.y};
 }
+/* How long until the next family (version 119, as in Foundation): the more content the village, the sooner. Contentment 30
+   or less: almost twice as long; 90 and more: little more than half. The cone shell gift shortens it too. */
+const immigGap = I => { const a = (satOfIsle(I) || {}).avg ?? 60; return Math.round(IMMIG_GAP * (1.8 - 1.2 * clamp((a - 30) / 60, 0, 1)) * giftF('conus')); };
+/* the clock: 0..1 how far the wait is, and the seconds still to go; null when the four conditions do not hold */
+function immigClock(I){
+  if (!I || !I.settled || immigFor(I) || !wantsSettlers(I)) return null;
+  const gap = immigGap(I), left = Math.max(0, (I.immigAt || 0) - tick);
+  return {f:clamp(1 - left / gap, 0, 1), sec:Math.round(left * TICK / 1000), sat:(satOfIsle(I) || {}).avg ?? 60};
+}
 function immigTick(I){
   const s = immigFor(I);
   // a family that is not answered stays, by custom
   if (s){ if (s.state === 'moored' && s.askAt && tick - s.askAt > IMMIG_WAIT) immigAnswer(s, true, true); return; }
   if (tick < (I.immigAt || 0) || !wantsSettlers(I)) return;
-  I.immigAt = tick + Math.round(IMMIG_GAP * giftF('conus'));
+  I.immigAt = tick + immigGap(I);
   const F = newImmig(I);
   if (awayQuiet){ immigLand(I, F); return; }   // while you were away they came and stayed
   const from = immigStart(I), sh = {id:nextShip++, kind:'oc', own:false, immig:F, to:I.id, cargo:{}, life:[], people:F.people.length, folk:F.people, path:[], pi:0, state:'moored', x:from.x, y:from.y, hx:1, hy:0, dist:0, home:from};

@@ -13,6 +13,13 @@ let walkers = [], mana = 0;   // mana: the clan's standing, from feasts, gifts a
 const isl = id => islands.find(I => I.id === id);
 function findB(id){ for (const I of islands){ const b = I.buildings.find(x => x.id === id); if (b) return b; } return null; }
 function islOfB(id){ return islands.find(I => I.buildings.some(b => b.id === id)); }
+/* Every village has its landing (version 119): a jetty from the beach out toward the harbour, where the canoes lie and are
+   loaded. It is laid when the village is founded, and in older games the first time the village is looked at. */
+function ensureLanding(I){
+  if (!I || !I.settled || !I.lands || !I.harbor || I.buildings.some(b => b.kind === 'anleger')) return null;
+  const L = dryNear(I, I.harbor), d = Math.hypot(I.harbor.x - L.x, I.harbor.y - L.y) || 1, ux = (I.harbor.x - L.x) / d, uy = (I.harbor.y - L.y) / d;
+  return addB(I, 'anleger', {x:L.x - ux * 3, y:L.y - uy * 3}, {ang:Math.round(Math.atan2(uy, ux) * 100) / 100, len:Math.round(clamp(d - 2, 18, 62))}, -999);
+}
 function addB(I, kind, p, v = {}, born = 0){
   const b = {id:nextId++, kind, x:fx(p.x), y:fx(p.y), born, v}; I.buildings.push(b);
   if (kind === 'werft' && v.rot == null && I.lands && I.lands.length) v.rot = seaward(I, b);   // the jetty of the canoe house points to the water
@@ -52,6 +59,7 @@ function foundHome(I){
   const Hm = isl('heimat'), r = rng(seed ^ 0x5eed ^ 0x1a4d), sh = ships.find(s => s.founder);
   if (sh) ships.splice(ships.indexOf(sh), 1);
   selShip = null; if (mode === 'steer') mode = 'idle';
+  setTimeout(() => { ensureLanding(Hm); invalidate(true); });
   Object.assign(Hm, {discovered:true, settled:true, pop:START_POP, people:null, fams:[], stock:{...emptyStock(), ...START_STOCK}, life:LIFE_BASE.slice(), wild:1, gone:0});
   landing.found = 'heimat'; active = 'heimat';   // time still stands until the meeting house has its place (foundAt)
   return true;
@@ -163,7 +171,7 @@ function serialize(){
 function restore(raw){
   try {
     const s = JSON.parse(raw); if (!s || s.v !== 5 || !s.seed) return false;
-    seed = s.seed >>> 0; worldV = s.wv || 1; homeSwap = s.hs ? 1 : 0; home0 = makeWorld(seed, worldV, homeSwap); resetCaches(); loadNews(); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
+    seed = s.seed >>> 0; worldV = s.wv || 1; setTimeout(() => { for (const J of islands) ensureLanding(J); invalidate(true); }); homeSwap = s.hs ? 1 : 0; home0 = makeWorld(seed, worldV, homeSwap); resetCaches(); loadNews(); islands = home0.islands; cells = new Set(); resetGrid(); for (const I of islands) markLand(I);
     home0.cultures = s.cu ? s.cu.filter(c => CULTURES[c[0]]).map(([k, cx, cy]) => ({k, cx, cy})) : placeCultures(home0.cultures, new Set(s.cells || []));
     for (const key of s.cells || []){ const [cx, cy] = key.split(',').map(Number); ensureCell(cx, cy, false); }
     savedAt = +s.at || 0; nextPid = s.np || 1; nextFam = s.nf || 1; nextLine = s.nl || 1; LINES = s.ln || {}; nextDrift = s.nd || 1; drift = (s.dr || []).filter(d => DRIFT[d[1]]).map(([id, k, x, y, t0]) => ({id, k, x, y, t0})); diveSpots = (s.dv || []).map(([id, x, y, rich, left, via]) => ({id, x, y, rich, left, via})); tick = s.tick | 0; nextId = s.nextId | 0 || 1; nextShip = s.nextShip | 0 || 1; active = s.active || 'heimat'; mana = +s.mana || 0;

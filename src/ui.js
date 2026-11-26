@@ -746,7 +746,7 @@ function peopleTab(I, nd){
   h += `<div class="rowx"><span></span><button class="chip" type="button" data-act="autoup" aria-pressed="${!!I.autoUp}">${knotIc}Von selbst ausbauen</button></div>`;
   h += `<ul class="list needs">`;
   { const imm = immigFor(I), emp = emptyHome(I), grow = imm || (emp && wantsSettlers(I)) || nd.growing;
-    h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), immigChecks(I, nd), grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }
+    const ck = immigClock(I); h += rowS('pop', 'Zuzug und Kinder', arrivalText(I, nd), immigChecks(I, nd) + (ck ? `<span class="iclock">${barS(ck.f)}<small>${ck.sec > 5 ? `nächste Familie in etwa ${secsText(ck.sec)}` : 'ein Kanu legt gleich ab'} · Zufriedenheit ${ck.sat}: ${ck.sat >= 75 ? 'schnell' : ck.sat >= 50 ? 'normal' : 'langsam'}</small></span>` : ''), grow ? chipS('ok', imm ? 'Kanu kommt' : 'wächst') : chipS(nd.missing.length ? 'out' : 'low', nd.missing.length ? 'stockt' : 'voll')); }
   { const K = kinText(I); h += rowS('pop', `Verwandtschaft: ${K.soft ? `${linesOf(I).length} ${linesOf(I).length === 1 ? 'Linie' : 'Linien'}` : kinWord(I)}`, `${K.line}. ${K.help}`, barS(Math.min(1, K.d / KIN_OK)), chipS(K.soft ? 'low' : K.st, K.st === 'ok' ? 'gesund' : K.soft ? 'später' : K.st === 'low' ? 'eng' : 'zu nah'), K.st === 'ok' || K.soft ? '' : 'need'); }
   h += `<li class="sub-row"><span class="nm">${I.lvl === 3 && I.people && I.people.find(p => p.id === I.chief) ? `Häuptling: ${I.people.find(p => p.id === I.chief).n}` : 'Alle mit Namen und Alter'}${(I.ahnen || []).length ? `<small>${ancCount(I)} Ahnen</small>` : ''}</span><button class="chip" type="button" data-act="folk">Alle Menschen</button></li></ul>`;
   return h;
@@ -901,7 +901,7 @@ function arrivalText(I, nd){
   if (nd.missing.length) return `Niemand kommt dazu, es fehlt ${nd.missing.map(n => GN[n.k]).join(' und ')}.`;
   if (nd.atMax) return `Die Insel ist voll: ${islandMax(I)} Menschen trägt sie, mehr nicht. Siedler können anderswo ein Dorf gründen.`;
   if (nd.roofless) return `${nd.roofless} ohne Dach warten auf eine Hütte. Erst dann kommen neue Familien.` + birth;
-  if (emp) return `Eine Hütte steht leer: Bald kommt ein Kanu von weit her mit einer Familie, in etwa ${Math.max(5, Math.ceil(((I.immigAt || 0) - tick) * TICK / 1000) + 30)} Sekunden.` + birth;
+  if (emp) return `Eine Hütte steht leer. Neue Familien kommen in Wellen: Je zufriedener das Dorf, desto schneller.` + birth;
   return 'Alle Hütten sind belegt. Eine neue Hütte zieht eine Familie von weit her an.' + birth;
 }
 /* The line under the goods: work, builders, how long the food lasts, the next arrival */
@@ -917,6 +917,7 @@ function vitalLine(I, skip = []){
   if (nd.atMax) return `<span>${ic('insel')}Insel voll</span>`;
   if (nd.full) return `<span>${ic('pop')}Häuser voll</span>`;
   if (immigFor(I)) return `<span>${ic('einbaum')}Kanu kommt</span>`;
+  { const ck = immigClock(I); if (ck) return `<span>${ic('einbaum')}Familie in ${ck.sec > 5 ? secsText(ck.sec) : 'Kürze'}</span>`; }
   if (emptyHome(I)) return `<span>${ic('haus')}Hütte frei</span>`;
   return hid ? '' : `<span>${ic('pop')}wächst</span>`;
 }
@@ -1243,6 +1244,9 @@ function renderSheet(){
       else if (!crewAt(I, b)) h += '<p class="sub">Niemand sitzt bei den Steinen. Ohne Lehrer lernt keiner.</p>';
     }
     if (b.kind === 'toepfer' && !b.bt) h += `<p class="sec">Muster</p>${motifRows(I) || '<p class="sub">Sobald die ersten Töpfe gebrannt sind, findet das Dorf sein Muster.</p>'}<p class="sub">${motifHelp(I)}</p>`;
+    if (b.kind === 'anleger'){ const here = ships.filter(s => s.own && s.port === I.id && s.state !== 'sail'), rs = routes.map((r, i) => [r, i]).filter(([r]) => r.a === I.id || r.b === I.id);
+      h += `<p class="fhead">${icon('einbaum')}Im Hafen</p>` + (here.length ? `<div class="wtiles">${here.map(s => `<button class="wtile" type="button" data-act="jload" data-s="${s.id}" aria-label="${s.name} beladen">${shipIcon(s.kind)}<b>${s.name}</b><small>${s.route != null ? 'fährt eine Route' : cargoLoad(s) ? `${cargoLoad(s)} an Bord` : 'Beladen'}</small></button>`).join('')}</div>` : '<p class="sub">Gerade liegt kein Kanu am Steg.</p>');
+      h += `<p class="fhead">${icon('schnur')}Handelsrouten</p>` + (rs.length ? `<div class="chips">${rs.map(([r, i]) => `<button class="chip" type="button" data-act="jroute" data-r="${i}">${isl(r.a === I.id ? r.b : r.a).name}</button>`).join('')}</div>` : '') + `<div class="rowx"><span></span><button class="btn primary" type="button" data-act="jnew">+ Neue Handelsroute</button></div>`; }
     if (b.kind === 'ahnenhaus' && !b.bt) h += `<div class="rowx"><span class="sub">${ancCount(I)} Ahnen${I.chiefs && I.chiefs.length ? `, ${I.chiefs.length} Häuptlinge` : ''}</span><button class="chip" type="button" data-act="folk">Ahnenreihe</button></div>`;
     if ((b.kind === 'halle' || b.kind === 'platz') && !b.bt) h += `<div class="rowx"><span class="sub">${korCanThrow() ? 'Im Schatten wird mit fünf Knochen geworfen, einmal am Tag.' : 'Der Knöchelwurf ist für heute geworfen.'}</span><button class="btn" type="button" data-act="koruru">Knöchelwurf</button></div>`;
     if (b.kind === 'halle' && !b.bt){ if (feastsOpen()) h += `<p class="sub">Ansehen des Clans: ${Math.floor(mana)}.</p>` + feastMarkup(I); h += festivalMarkup(I); }
@@ -1405,6 +1409,9 @@ $('sheetBody').addEventListener('click', e => {
       setCraft(I, b, off ? null : k); sheetData.crafts = false; const f = famOfHome(I, b); if (!off && f) toast(`${famName(f)}: ${K.craft}.`, 2000, false);
       updateHUD(); renderSheet(); save(); checkQuest(); return; }
     if (act === 'askkill'){ sheetData.confirm = true; renderSheet(); return; }
+    if (act === 'jload'){ const s = ships.find(q => q.id === +btn.dataset.s); if (s){ selectShip(s); sheetData = {...sheetData, load:true, mini:false}; renderSheet(); measure(); } return; }
+    if (act === 'jroute'){ openRoute(+btn.dataset.r); return; }
+    if (act === 'jnew'){ openSheet('fleet', {wiz:{pick:[islOfB(b.id).id]}}); return; }
     if (act === 'askdown'){ sheetData.down = true; renderSheet(); return; }
     if (act === 'nodown'){ sheetData.down = false; renderSheet(); return; }
     if (act === 'down'){ const I = islOfB(b.id), d = downHome(I, b); sheetData.down = false; if (d) toast(`Zurückgebaut: jetzt ${houseName(b)}.`, 2600, false); renderSheet(); updateHUD(); return; }

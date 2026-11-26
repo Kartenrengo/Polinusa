@@ -225,7 +225,19 @@ function famProp(I, h){
   const f = famOfHome(I, h), n = {}; if (!f){ return h._fp = ''; }
   for (const p of I.people) if (p.h === f.id && p.job){ const j = I.buildings.find(q => q.id === p.job); const k = j && FAM_PROP_OF[j.kind]; if (k) n[k] = (n[k] || 0) + (j.at ? 1 : 2); }
   return h._fp = Object.keys(n).sort((a, b) => n[b] - n[a])[0] || ''; }
+/* the village jetty: planks on posts from the beach out into the water, a mooring post at the end */
+function drawLanding(c, b, alpha){
+  const v = b.v || {}, a = v.ang || 0, len = v.len || 20, ca = Math.cos(a), sa = Math.sin(a), n = Math.max(3, Math.round(len / 4.2));
+  c.save(); c.globalAlpha = alpha; c.translate(b.x, b.y); c.rotate(a);
+  c.fillStyle = 'rgba(31,20,13,.18)'; c.fillRect(2, 1.6, len, 3.4);
+  for (let i = 1; i <= n; i++){ const x = i / n * len; c.strokeStyle = '#3B2618'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(x, -2.3); c.lineTo(x, -2.3 + 4.6); c.stroke(); }
+  c.fillStyle = '#B08048'; c.strokeStyle = '#2B1D14'; c.lineWidth = .7; c.beginPath(); c.rect(0, -2.6, len, 5); c.fill(); c.stroke();
+  c.strokeStyle = 'rgba(43,29,20,.55)'; c.lineWidth = .4; c.beginPath(); for (let x = 2.2; x < len; x += 2.2){ c.moveTo(x, -2.4); c.lineTo(x, 1.8); } c.stroke();
+  c.fillStyle = '#5A3A26'; c.beginPath(); c.arc(len + .6, -2.6, 1.2, 0, TAU); c.fill(); c.strokeStyle = '#2B1D14'; c.lineWidth = .4; c.stroke();
+  c.restore(); c.globalAlpha = 1; void ca; void sa;
+}
 function drawBuilding(c, b, I, alpha = 1, sh = null){
+  if (b.kind === 'anleger') return;   // drawn over the water with the canoes (drawDockGoods), not under the surf
   if (b.at){ if (!sh){ const up = craftLift(b); put(c, b.x, b.y - up, up ? .78 : 1, 1, 0, 'craft|' + b.kind, craftArt(b.kind), alpha); } return; }
   // houses of a chief's village are a little bigger, with carved posts and shell ornaments
   const v = b.v || {}, K = KINDS[b.kind], canoe = b.kind === 'werft' && I && I.yard ? I.yard.kind + yardStage(I.yard) : '', chief = b.kind === 'haus' && !!I && I.lvl === 3;
@@ -2344,13 +2356,14 @@ function cargoBundles(c, s, y = -1.3){
 }
 function landingOf(I){
   if (I._land && I._land.n === I.buildings.length) return I._land;
-  const st = I.buildings.find(b => b.kind === 'steg' && !b.bt), p = st ? {x:st.x - 4, y:st.y - 3} : dryNear(I, I.harbor);
+  const an = I.buildings.find(b => b.kind === 'anleger'), st = I.buildings.find(b => b.kind === 'steg' && !b.bt), p = an ? {x:an.x - Math.sin(an.v.ang || 0) * 7, y:an.y + Math.cos(an.v.ang || 0) * 5} : st ? {x:st.x - 4, y:st.y - 3} : dryNear(I, I.harbor);
   return I._land = {x:p.x, y:p.y, n:I.buildings.length};
 }
 function drawDockGoods(c, v){
   if (lod === 'far') return;
   for (const I of islands){
     if (!I.settled || !boxIn(I.box, v)) continue;
+    for (const b of I.buildings) if (b.kind === 'anleger') drawLanding(c, b, 1);
     const wait = [];
     routes.forEach((r, ri) => { const side = r.a === I.id ? 'a' : r.b === I.id ? 'b' : ''; if (!side || !ships.some(s => s.own && s.route === ri)) return;
       for (const [k, n] of Object.entries((r.plan || {})[side] || {})) if (n > 0 && (I.stock[k] || 0) > routeKeep(r, side, k) && !wait.includes(k)) wait.push(k); });

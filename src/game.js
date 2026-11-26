@@ -7,7 +7,7 @@ const routeIndex = (a, b) => routes.findIndex(r => (r.a === a && r.b === b) || (
 const manaNeeded = () => Math.max(0, islands.filter(I => I.settled).length - 2) * MANA_PER_COLONY;
 /* Settlers land: the island gets its first house and a cord to where they came from */
 function settle(T, S, o){
-  T.discovered = true; T.settled = true; T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock}; T.people = (o.folk || []).slice(0, o.pop); syncPeople(T);
+  T.discovered = true; T.settled = true; setTimeout(() => { ensureLanding(T); invalidate(true); }); T.pop = o.pop; T.lvl = 1; T.stock = {...emptyStock(), ...o.stock}; T.people = (o.folk || []).slice(0, o.pop); syncPeople(T);
   // only what came in the canoe grows here; the wild is as the island kept it
   T.life = []; T.wild = wildOf(T); const fresh = landLife(T, {life:o.life || []}, true);
   if (S) T.mot = Object.fromEntries(motifsOf(S).map(k => [k, tick]));   // and their patterns, in the pots they carry

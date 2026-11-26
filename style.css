@@ -1467,4 +1467,4 @@ body.landing #overBtn,body.photo #overBtn{display:none!important}
 .wtile.on{border-color:var(--ochre);background:#F6E3C8}
 .wtile .wn{position:absolute;top:-7px;right:-6px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ochre);color:#fff;font:800 12px/1 var(--font-ui);font-style:normal}
 .golist .chip.go{font-weight:800}
-
+.iclock{display:block;margin-top:5px}.iclock small{display:block;margin-top:2px;font-size:11.5px;color:var(--muted)}
