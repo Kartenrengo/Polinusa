@@ -62,10 +62,16 @@ function noise(t, dur, peak, type, freq, q = 1){
 /* wooden notes like a marimba: a sine and a quickly fading overtone */
 const wood = (f, t, peak = .12) => { tone(f, t, peak, .9); tone(f * 4, t, peak * .25, .12); };
 const SFX_GAP = {tap:60, plop:350, fall:600, rise:900};
-function sfx(name){
+function sfx(name, step = 0){
   if (awayQuiet || !actx || !opts.sound || actx.state !== 'running') return;
   const ms = performance.now(); if (ms - (lastSfx[name] || 0) < (SFX_GAP[name] || 0)) return; lastSfx[name] = ms;
   const t = now0() + .02;
+  // the joining of two houses (hof.js): a soft wet pop for each stone, a little higher each; the twang of the line pulled
+  // taut; a tiny wooden tick for each cloth hung up; a bright last note
+  if (name === 'pop'){ const f = 330 * Math.pow(1.122, step); tone(f * 1.9, t, .07, .09, 'sine', f * .9); tone(f * .5, t + .01, .05, .12, 'sine', f * .35); noise(t, .025, .025, 'bandpass', 2200, 3); return; }
+  if (name === 'twang'){ tone(196, t, .06, .7, 'triangle', 188); tone(392, t, .025, .45, 'sine', 384); tone(588, t, .012, .3, 'sine'); noise(t, .03, .03, 'bandpass', 1500, 2); return; }
+  if (name === 'tick'){ const f = 1320 * Math.pow(1.06, step); tone(f, t, .035, .06, 'triangle'); tone(f * 2.01, t, .012, .04, 'sine'); return; }
+  if (name === 'pling'){ wood(784, t, .09); wood(1175, t + .09, .06); return; }
   if (name === 'tap'){ tone(1180, t, .025, .06, 'triangle'); noise(t, .02, .02, 'bandpass', 2600, 4); return; }   // a fingertip on bark cloth
   if (name === 'rise'){ [392, 494, 587, 784].forEach((f, i) => wood(f, t + i * .1, .1)); for (let i = 0; i < 5; i++) noise(t + .45 + i * .05, .03, .05, 'bandpass', 3400 + Math.random() * 1200, 6); return; }   // notes rising, then shells of the garland
   if (name === 'leave'){ [523, 440, 349].forEach((f, i) => wood(f, t + i * .2, .09)); return; }

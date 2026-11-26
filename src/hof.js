@@ -163,12 +163,25 @@ function drawYards(c, I){
   for (const L of P.links) if (hofGrow(I, L) >= 1) for (const s of L.stones) drawHofStone(c, s, L.seed);
   for (const q of [...P.items].sort((a, b) => a.y - b.y)) drawHofPlant(c, q);
 }
-const HOF_GROW = 2600;   // ms: the stones are set one by one, then the line is drawn across and the things are hung on it
+/* The joining is meant to be watched, like a small toy: soft, springy, with a sound for each step.
+   0 – .38  the stones drop in one after the other, squash on landing, spring back, a puff of dust, a "plop" each, a little higher
+   .38 – .58 the line is drawn across from eave to eave, then pulled taut: it twangs and swings out
+   .62 – .92 the cloths and the blossoms drop onto it one by one and bounce on their strings, a soft tick each
+   .95      a last bright note */
+const HOF_GROW = 3600;
 const hofGrow = (I, L) => { const t0 = I._lkSeen && I._lkSeen.get(L.key); return t0 == null ? 1 : clamp((performance.now() - t0) / HOF_GROW, 0, 1); };
-function drawHofStone(c, s, seed, k = 1){
+const springy = f => f >= 1 ? 1 : 1 - Math.cos(f * Math.PI * 3) * Math.exp(-f * 5.2);   // overshoots, settles
+const hofPhase = (g, i, n, from, to) => clamp(((g - from) / (to - from)) * n - i, 0, 1);   // the share of step i of n in a span
+function drawHofStone(c, s, seed, k = 1, sx = 1, sy = 1){
   const r = 1.7 * k, j = ((s.t * 31 + seed) % 7) / 7;
-  c.fillStyle = 'rgba(43,29,20,.16)'; c.beginPath(); c.ellipse(s.x + .4, s.y + .5, r * 1.15, r * .62, 0, 0, TAU); c.fill();
-  c.fillStyle = j < .5 ? '#C9C0AA' : '#B8AE98'; c.strokeStyle = '#5A4A38'; c.lineWidth = .35; c.beginPath(); c.ellipse(s.x, s.y, r * (1 + j * .25), r * .55, j - .5, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = 'rgba(43,29,20,.16)'; c.beginPath(); c.ellipse(s.x + .4, s.y + .5, r * 1.15 * sx, r * .62, 0, 0, TAU); c.fill();
+  c.fillStyle = j < .5 ? '#C9C0AA' : '#B8AE98'; c.strokeStyle = '#5A4A38'; c.lineWidth = .35; c.beginPath(); c.ellipse(s.x, s.y - (sy - 1) * r * .5, r * (1 + j * .25) * sx, r * .55 * sy, j - .5, 0, TAU); c.fill(); c.stroke();
+  if (k === 1 && sx === 1){ c.fillStyle = 'rgba(255,250,235,.45)'; c.beginPath(); c.ellipse(s.x - r * .3, s.y - r * .2, r * .45, r * .18, j - .5, 0, TAU); c.fill(); }   // a glint of wet stone
+}
+/* a sound for a step, only when the link is on screen and close enough to see; each sound once */
+function hofSound(I, L, k, name, step){
+  const S = I._lkSnd || (I._lkSnd = new Map()), done = S.get(L.key) || new Set(); if (done.has(k)) return; done.add(k); S.set(L.key, done);
+  if (cam.z > PEOPLE_Z * .8 && typeof sfx === 'function') sfx(name, step);
 }
 /* the top layer, every frame: what is still growing, and the line between the eaves swaying in the wind */
 function drawHofLinks(c, v, now){
@@ -180,22 +193,39 @@ function drawHofLinks(c, v, now){
     for (const L of P.links){
       const g = hofGrow(I, L); if (!ptIn((L.a.x + L.b.x) / 2, L.a.y, v)) continue;
       if (g < 1){
-        // the stones pop in one after the other during the first third
-        L.stones.forEach((s, i) => { const f = clamp(g * 3 * L.stones.length / (L.stones.length + 1) - i, 0, 1); if (f > 0) drawHofStone(c, s, L.seed, f < 1 ? .4 + .6 * f + Math.sin(f * Math.PI) * .35 : 1); });
-        if (g >= .99 && !L.done){ L.done = true; invalidate(); }
+        const n = L.stones.length;
+        L.stones.forEach((s, i) => { const f = hofPhase(g, i, n, 0, .38); if (f <= 0) return;
+          if (f >= 1){ drawHofStone(c, s, L.seed); return; }
+          // drops from a little above, lands at 40 %, squashes flat, springs up round, settles
+          if (f < .4){ const q = f / .4, y = -7 * (1 - q * q); c.save(); c.translate(0, y); c.globalAlpha = .4 + .6 * q; drawHofStone(c, s, L.seed, .9, .85, 1.25); c.restore(); return; }
+          hofSound(I, L, 's' + i, 'pop', i);
+          const q = (f - .4) / .6, e = springy(q), sq = (1 - e) * .55;
+          drawHofStone(c, s, L.seed, 1, 1 + sq, 1 - sq * .8);
+          // a puff of dust running out from under it
+          c.save(); c.globalAlpha = (1 - q) * .55; c.strokeStyle = '#E8DCC0'; c.lineWidth = .5; c.beginPath(); c.ellipse(s.x, s.y + .3, 2 + q * 4.5, .9 + q * 1.8, 0, 0, TAU); c.stroke();
+          for (let k = 0; k < 3; k++){ const a = (k / 3) * TAU + L.seed; c.fillStyle = '#E8DCC0'; c.beginPath(); c.arc(s.x + Math.cos(a) * (2 + q * 5), s.y - q * 2 + Math.sin(a) * (1 + q * 2), .45 * (1 - q), 0, TAU); c.fill(); }
+          c.restore(); });
+        if (g >= .95) hofSound(I, L, 'end', 'pling', 0);
       }
+      if (g >= 1 && I._lkSeen.get(L.key) > 0){ I._lkSeen.set(L.key, -1e9); invalidate(); }   // done: the stones go down into the ground layer
       const Q = L.line; if (!Q) continue;
-      const lf = clamp((g - .33) / .4, 0, 1); if (lf <= 0) continue;   // the line: drawn across from one eave to the other
-      const sag = 3.2 + str * 1.2, sw = Math.sin(now / 900 + L.seed) * str * 1.2, pt = t => ({x:Q.x1 + (Q.x2 - Q.x1) * t + sw * Math.sin(t * Math.PI) * .5, y:Q.y1 + (Q.y2 - Q.y1) * t + Math.sin(t * Math.PI) * sag});
+      const lf = clamp((g - .38) / .17, 0, 1); if (lf <= 0) continue;   // the line: drawn across from one eave to the other
+      // pulled taut at the end: it twangs, sags deep and swings out, smaller and smaller
+      const tq = clamp((g - .55) / .25, 0, 1), twang = g >= .55 && g < 1 ? Math.cos(tq * Math.PI * 5) * Math.exp(-tq * 4.5) * 2.6 : 0;
+      if (g >= .55) hofSound(I, L, 'line', 'twang', 0);
+      const sag = 3.2 + str * 1.2 + twang + (lf < 1 ? 2 * (1 - lf) : 0), sw = Math.sin(now / 900 + L.seed) * str * 1.2, pt = t => ({x:Q.x1 + (Q.x2 - Q.x1) * t + sw * Math.sin(t * Math.PI) * .5, y:Q.y1 + (Q.y2 - Q.y1) * t + Math.sin(t * Math.PI) * sag});
       c.save(); c.lineCap = 'round';
-      const p = new Path2D(); const e = pt(0); p.moveTo(e.x, e.y); for (let t = .1; t <= lf + 1e-6; t += .1){ const q = pt(Math.min(t, lf)); p.lineTo(q.x, q.y); }
+      const p = new Path2D(); const e = pt(0); p.moveTo(e.x, e.y); for (let t = .08; t <= lf + 1e-6; t += .08){ const q = pt(Math.min(t, lf)); p.lineTo(q.x, q.y); } { const q = pt(lf); p.lineTo(q.x, q.y); }
       stroke(c, p, '#2B1D14', .9); stroke(c, p, '#C9A46A', .45);
-      // what hangs on it: tapa cloths and a string of blossoms, each dropping onto the line in turn, then swaying
-      const things = [.25, .45, .62, .8], hf = clamp((g - .73) / .27, 0, 1);
-      things.forEach((t, i) => { const f = clamp(hf * things.length - i, 0, 1); if (f <= 0 || t > lf) return;
-        const q = pt(t), drop = (1 - f) * -4, a = (reduced ? 0 : Math.sin(now / (520 + i * 70) + L.seed + i) * .22 * (.3 + str)) + dir * str * .18;
-        c.save(); c.translate(q.x, q.y + drop); c.rotate(a);
-        if ((i + L.seed) % 3 === 2){ for (let k = 0; k < 4; k++){ c.fillStyle = k % 2 ? '#E9B23A' : '#D8402C'; c.beginPath(); c.arc(0, .9 + k * 1.05, .62, 0, TAU); c.fill(); } }   // a garland of blossoms
+      if (lf < 1){ const q = pt(lf); c.fillStyle = '#C9A46A'; c.strokeStyle = '#2B1D14'; c.lineWidth = .35; c.beginPath(); c.arc(q.x, q.y, .9, 0, TAU); c.fill(); c.stroke(); }   // the end of the line in a hand, travelling across
+      // what hangs on it: tapa cloths and a string of blossoms, each dropping onto the line in turn and bouncing on its string
+      const things = [.25, .45, .62, .8];
+      things.forEach((t, i) => { const f = hofPhase(g, i, things.length, .62, .92); if (f <= 0 || t > lf) return;
+        if (f > .3) hofSound(I, L, 'h' + i, 'tick', i);
+        const q = pt(t), land = f < .3 ? f / .3 : 1, drop = f < .3 ? -6 * (1 - land * land) : 0, e = f < .3 ? 0 : springy((f - .3) / .7), bounce = f < .3 ? 0 : (1 - e) * 2.2;
+        const a = (reduced ? 0 : Math.sin(now / (520 + i * 70) + L.seed + i) * .22 * (.3 + str)) + dir * str * .18 + (f < 1 ? Math.sin(f * 14) * (1 - f) * .5 : 0);
+        c.save(); c.translate(q.x, q.y + drop + bounce); c.rotate(a); c.scale(1 - bounce * .06, 1 + bounce * .1);
+        if ((i + L.seed) % 3 === 2){ for (let k = 0; k < 4; k++){ c.fillStyle = k % 2 ? '#E9B23A' : '#D8402C'; c.beginPath(); c.arc(0, .9 + k * 1.05 * (1 + bounce * .08), .62, 0, TAU); c.fill(); } }   // a garland of blossoms
         else { c.fillStyle = '#EDE0C2'; c.strokeStyle = '#2B1D14'; c.lineWidth = .3; c.beginPath(); c.rect(-1.5, .2, 3, 3.6); c.fill(); c.stroke();   // a tapa cloth with its pattern
           c.strokeStyle = '#7A3A22'; c.lineWidth = .3; c.beginPath(); c.moveTo(-1.5, 1.4); c.lineTo(1.5, 1.4); c.moveTo(-1.5, 2.6); c.lineTo(1.5, 2.6); c.moveTo(0, .2); c.lineTo(0, 3.8); c.stroke(); }
         c.restore(); });
@@ -203,3 +233,4 @@ function drawHofLinks(c, v, now){
     }
   }
 }
+

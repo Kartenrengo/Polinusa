@@ -2719,9 +2719,12 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
   nebeneinander, hängt eine Sennitleine von Dachkante zu Dachkante, mit Tapa-Tüchern und einer Kette aus Blüten. Sie
   schwingen im Wind, bei Sturm stärker. Jedes Haus hat höchstens zwei solche Nachbarn, die nächsten zuerst. Über einem
   dritten Gebäude, im Wasser oder auf einem Feld wird nichts gezeichnet.
-- **Es wächst sichtbar:** Kommt ein neues Haus dazu, werden erst die Steine einer nach dem anderen gelegt, dann wird die
-  Leine hinübergezogen, und zuletzt werden die Tücher und Blüten aufgehängt. Verbindungen, die beim Laden schon da sind,
-  sind einfach da.
+- **Es wächst sichtbar, zum Zuschauen:** Kommt ein neues Haus dazu, fällt ein Stein nach dem anderen von oben, wird beim
+  Aufsetzen flach gedrückt, federt rund zurück und stößt ein Wölkchen Staub aus; jeder mit einem weichen „Plopp“, jeder
+  einen Ton höher. Dann zieht eine Hand die Leine hinüber, sie wird straff gezogen, klingt wie eine gezupfte Saite und
+  schwingt nach. Zuletzt fallen die Tücher und Blüten auf die Leine und hüpfen an ihren Fäden aus, jedes mit einem leisen
+  Klick, am Ende ein heller Ton. Alles dauert etwa dreieinhalb Sekunden. Verbindungen, die beim Laden schon da sind, sind
+  einfach da.
 - **Nur fürs Auge:** Jede Familie bleibt in ihrem Haus, mit ihren Leuten, ihren Bedürfnissen und ihrem Hauswerk. Ein Tipp
   auf ein Haus zeigt nur diese Familie.
 
