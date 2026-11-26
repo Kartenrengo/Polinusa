@@ -388,3 +388,8 @@ Siehe die Vorschlagsseite der Runde. Gebaut wird, was gewählt wird.
 - **Offen:** Der sprechende Kopf könnte auch bei Gegengaben und Gästen der Clans erscheinen. Körbe am Strand können eine
   Palme überdecken. In der Übersicht liegt die oberste Insel manchmal halb unter der Kopfleiste.
 
+## Nach Version 120
+
+- **Gebaut:** Dorfsteg mit Beladen und Handel; Zuzug in Wellen nach Zufriedenheit mit sichtbarer Uhr.
+- **Offen:** Der Steg wird über Palmen am Strand gezeichnet. Leute tragen Waren noch nicht sichtbar zum Steg.
+

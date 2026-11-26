@@ -2663,3 +2663,20 @@ Die Vorschläge wurden einzeln durchgegangen; gebaut ist, was gewählt wurde.
 - **Vermutet:** Dass Gaben zwischen Verwandten und Partnern statt Preisen den Tausch trugen, kennt man aus späteren
   Tauschringen in Melanesien. Schmuck und Gesichter der Ältesten folgen späteren Bildern aus Ozeanien.
 
+## Der Dorfsteg und der Zuzug in Wellen (Version 120)
+
+- **Der Steg:** Jedes Dorf hat einen Steg, der vom Strand hinaus zum Hafen reicht. Er entsteht mit dem Dorf; in älteren
+  Spielständen wird er beim Laden gelegt. Dort liegen die Kanus, dort stehen die Körbe mit den Waren, die auf das nächste Kanu
+  warten. Ein Tipp auf den Steg zeigt die Kanus im Hafen (ein Tipp: beladen), die Handelsrouten von hier und „+ Neue
+  Handelsroute“, die gleich mit dieser Insel beginnt. Der Steg lässt sich weder versetzen noch entfernen.
+- **Zuzug in Wellen (nach dem Vorbild von Foundation):** Neue Familien kommen, wenn die vier Bedingungen erfüllt sind (leere
+  Hütte, Platz auf der Insel, jeder hat ein Dach, genug Essen und Wasser). Wie schnell die nächste kommt, hängt von der
+  Zufriedenheit ab: bei 30 oder weniger fast doppelt so lange, ab 90 gut halb so lange. In der Übersicht der Bewohner zeigt ein
+  Balken, wie weit die Wartezeit ist, mit „nächste Familie in etwa …“ und dem Tempo (langsam, normal, schnell). Die Kopfzeile
+  sagt „Familie in …“.
+
+### Was davon belegt ist und was vermutet
+
+- **Vermutet:** Stege aus Holz auf Pfosten kennt man aus späteren Dörfern Ozeaniens; für Lapita-Dörfer an der Lagune sind
+  Pfahlbauten belegt, einzelne Stege nicht. Dass Zufriedenheit Familien anzieht, ist eine Spielregel.
+
